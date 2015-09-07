@@ -261,22 +261,26 @@ const bool TerrainHolder::GetAreaInfo(float x, float y, float z, uint32 &mogp_fl
 
 void TileMap::Load(char* filename)
 {
-    sLog.Debug("Terrain", "Loading %s", filename);
+    sLog.Debug("TerrainMgr", "Loading %s", filename);
     FILE* f = fopen(filename, "rb");
 
     if (f == NULL)
     {
-        sLog.Error("Terrain", "%s does not exist", filename);
+        sLog.Error("TerrainMgr", "%s does not exist", filename);
         return;
     }
 
     TileMapHeader header;
 
-    fread(&header, 1, sizeof(header), f);
+    if (fread(&header, sizeof(header), 1, f) != 1)
+    {
+        fclose(f);
+        return;
+    }
 
     if (header.buildMagic != 12340)  //wow version
     {
-        sLog.Error("Terrain", "%s: from incorrect client (you: %u us: %u)", filename, header.buildMagic, 12340);
+        sLog.Error("TerrainMgr", "%s: from incorrect client (you: %u us: %u)", filename, header.buildMagic, 12340);
         fclose(f);
         return;
     }
@@ -301,7 +305,8 @@ void TileMap::LoadLiquidData(FILE* f, TileMapHeader & header)
     if (fseek(f, header.areaMapOffset, SEEK_SET) != 0)
         return;
 
-    fread(&liquidHeader, 1, sizeof(liquidHeader), f);
+    if (fread(&liquidHeader, sizeof(liquidHeader), 1, f) != 1)
+        return;
 
     m_defaultLiquidType = liquidHeader.liquidType;
     m_liquidLevel = liquidHeader.liquidLevel;
@@ -313,13 +318,15 @@ void TileMap::LoadLiquidData(FILE* f, TileMapHeader & header)
     if (!(liquidHeader.flags & MAP_LIQUID_NO_TYPE))
     {
         m_liquidType = new uint8[16 * 16];
-        fread(m_liquidType, sizeof(uint8), 16 * 16, f);
+        if (fread(m_liquidType, sizeof(uint8), 16 * 16, f) != 16 * 16)
+            return;
     }
 
     if (!(liquidHeader.flags & MAP_LIQUID_NO_HEIGHT))
     {
         m_liquidMap = new float[m_liquidWidth * m_liquidHeight];
-        fread(m_liquidMap, sizeof(float), m_liquidWidth * m_liquidHeight, f);
+        if (fread(m_liquidMap, sizeof(float), m_liquidWidth * m_liquidHeight, f) != 16 * 16)
+            return;
     }
 }
 
@@ -330,7 +337,8 @@ void TileMap::LoadHeightData(FILE* f, TileMapHeader & header)
     if (fseek(f, header.areaMapOffset, SEEK_SET) != 0)
         return;
 
-    fread(&mapHeader, 1, sizeof(mapHeader), f);
+    if (fread(&mapHeader, sizeof(mapHeader), 1, f) != 1)
+        return;
 
     m_tileHeight = mapHeader.gridHeight;
     m_heightMapFlags = mapHeader.flags;
@@ -341,8 +349,9 @@ void TileMap::LoadHeightData(FILE* f, TileMapHeader & header)
 
         m_heightMap9S = new uint16[129 * 129];
         m_heightMap8S = new uint16[128 * 128];
-        fread(m_heightMap9S, sizeof(uint16), 129 * 129, f);
-        fread(m_heightMap8S, sizeof(uint16), 128 * 128, f);
+        if (fread(m_heightMap9S, sizeof(uint16), 129 * 129, f) != 129 * 129 ||
+            fread(m_heightMap8S, sizeof(uint16), 128 * 128, f) != 128 * 128)
+            return;
     }
     else if (m_heightMapFlags & MAP_HEIGHT_AS_INT8)
     {
@@ -350,15 +359,17 @@ void TileMap::LoadHeightData(FILE* f, TileMapHeader & header)
 
         m_heightMap9B = new uint8[129 * 129];
         m_heightMap8B = new uint8[128 * 128];
-        fread(m_heightMap9B, sizeof(uint8), 129 * 129, f);
-        fread(m_heightMap8B, sizeof(uint8), 128 * 128, f);
+        if (fread(m_heightMap9B, sizeof(uint8), 129 * 129, f) != 129 * 129 ||
+            fread(m_heightMap8B, sizeof(uint8), 128 * 128, f) != 128 * 128)
+            return;
     }
     else
     {
         m_heightMap9F = new float[129 * 129];
         m_heightMap8F = new float[128 * 128];
-        fread(m_heightMap9F, sizeof(float), 129 * 129, f);
-        fread(m_heightMap8F, sizeof(float), 128 * 128, f);
+        if (fread(m_heightMap9F, sizeof(float), 129 * 129, f) != 129 * 129 ||
+            fread(m_heightMap8F, sizeof(float), 128 * 128, f) != 128 * 128)
+            return;
     }
 }
 
@@ -369,13 +380,15 @@ void TileMap::LoadAreaData(FILE* f, TileMapHeader & header)
     if (fseek(f, header.areaMapOffset, SEEK_SET) != 0)
         return;
 
-    fread(&areaHeader, 1, sizeof(areaHeader), f);
+    if (fread(&areaHeader, sizeof(areaHeader), 1, f) != 1)
+        return;
 
     m_area = areaHeader.gridArea;
     if (!(areaHeader.flags & MAP_AREA_NO_AREA))
     {
         m_areaMap = new uint16[16 * 16];
-        fread(m_areaMap, sizeof(uint16), 16 * 16, f);
+        if (fread(m_areaMap, sizeof(uint16), 16 * 16, f) != 16 * 16)
+            return;
     }
 }
 
