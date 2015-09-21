@@ -1,0 +1,41 @@
+Opensource software in this folder:
+
+Folder: lualib
+   Web: http://www.lua.org
+   Version: 5.3.1 (2015/06/03)
+   
+Folder: libmpq (Currently unused libmpq_new is in use)
+   Web: https://github.com/mbroemme/libmpq/
+   Version: d59b4cf1d107b5f6a0f67d6bc545c6c6ebef3d74 (2011/11/08)
+
+Folder: bzip2
+   Web: http://www.bzip.org/
+   Version: 1.0.5 (2007/12/10)
+   
+Folder: zlib
+   Web: http://www.zlib.net/
+   Version: 1.2.3 (2005/07/18)
+
+Folder: recastnavigation
+   Web: https://github.com/memononen/recastnavigation
+   Version: ??? (2010/??/??)
+   
+Folder: loadlib
+   Web: 
+   Version:
+   
+Folder: openssl
+   Web:
+   Version:
+   
+Folder: pcre
+   Web: http://www.pcre.org
+   Version: 7.4 (2007/09/21)
+   
+Folder: g3dlite
+   Web: http://g3d.sourceforge.net/
+   Version: (2010/01/30)
+
+Folder: mysql (dev-files)
+   Web: http://www.mysql.com/
+   Version:
