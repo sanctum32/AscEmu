@@ -135,7 +135,7 @@ bool Charge(uint32 i, Spell* s)
     uint32 rage_to_gen = s->GetProto()->EffectBasePoints[i] + 1;
     if (s->p_caster)
     {
-        for (set<uint32>::iterator itr = s->p_caster->mSpells.begin(); itr != s->p_caster->mSpells.end(); ++itr)
+        for (std::set<uint32>::iterator itr = s->p_caster->mSpells.begin(); itr != s->p_caster->mSpells.end(); ++itr)
         {
             if (*itr == 12697)
             {
@@ -181,7 +181,7 @@ bool BerserkerRage(uint32 i, Aura* a, bool apply)
 
     if (u->IsPlayer())
     {
-        p_target = TO_PLAYER(u);
+        p_target = static_cast<Player*>(u);
     }
 
     if (p_target == NULL)
@@ -239,7 +239,7 @@ bool TacticalAndStanceMastery(uint32 i, Aura* a, bool apply)
         return true;
     }
 
-    Player* p_target = TO_PLAYER(u_target);
+    Player* p_target = static_cast<Player*>(u_target);
 
     if (p_target == NULL)
     {

@@ -28,6 +28,7 @@
 #define BASE_RESOURCES_GAIN 10
 #define RESOURCES_WARNING_THRESHOLD 1400
 #define RESOURCES_WINVAL 1600
+#include <QuestLogEntry.hpp>
 
 uint32 buffentries[3] = {180380, 180362, 180146};
 
@@ -340,14 +341,14 @@ void ArathiBasin::OnStart()
 {
     for(uint32 i = 0; i < 2; ++i)
     {
-        for(set<Player*>::iterator itr = m_players[i].begin(); itr != m_players[i].end(); ++itr)
+        for(std::set<Player*>::iterator itr = m_players[i].begin(); itr != m_players[i].end(); ++itr)
         {
             (*itr)->RemoveAura(BG_PREPARATION);
         }
     }
 
     // open gates
-    for(list<GameObject*>::iterator itr = m_gates.begin(); itr != m_gates.end(); ++itr)
+    for(std::list<GameObject*>::iterator itr = m_gates.begin(); itr != m_gates.end(); ++itr)
     {
         (*itr)->SetFlags(64);
         (*itr)->SetState(GAMEOBJECT_STATE_OPEN);
@@ -440,7 +441,7 @@ ArathiBasin::~ArathiBasin()
         }
     }
 
-    for(list<GameObject*>::iterator itr = m_gates.begin(); itr != m_gates.end(); ++itr)
+    for(std::list<GameObject*>::iterator itr = m_gates.begin(); itr != m_gates.end(); ++itr)
     {
         if((*itr) != nullptr)
         {
@@ -490,7 +491,7 @@ void ArathiBasin::EventUpdateResources(uint32 Team)
     if((current_resources - m_lastRepGainResources[Team]) >= resourcesToGainBR)
     {
         std::lock_guard<std::recursive_mutex> lock(m_mutex);
-        for(set<Player*>::iterator itr = m_players[Team].begin(); itr != m_players[Team].end(); ++itr)
+        for(std::set<Player*>::iterator itr = m_players[Team].begin(); itr != m_players[Team].end(); ++itr)
         {
             uint32 fact = (*itr)->IsTeamHorde() ? 510 : 509; //The Defilers : The League of Arathor
             (*itr)->ModStanding(fact, 10);
@@ -502,7 +503,7 @@ void ArathiBasin::EventUpdateResources(uint32 Team)
     {
         uint32 honorToAdd = m_honorPerKill;
         std::lock_guard<std::recursive_mutex> lock(m_mutex);
-        for(set<Player*>::iterator itr = m_players[Team].begin(); itr != m_players[Team].end(); ++itr)
+        for(std::set<Player*>::iterator itr = m_players[Team].begin(); itr != m_players[Team].end(); ++itr)
         {
             (*itr)->m_bgScore.BonusHonor += honorToAdd;
             HonorHandler::AddHonorPointsToPlayer((*itr), honorToAdd);
@@ -527,7 +528,7 @@ void ArathiBasin::EventUpdateResources(uint32 Team)
     if(current_resources == RESOURCES_WINVAL)
     {
         sEventMgr.RemoveEvents(this);
-        sEventMgr.AddEvent(TO<CBattleground*>(this), &CBattleground::Close, EVENT_BATTLEGROUND_CLOSE, 120000, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+        sEventMgr.AddEvent(static_cast<CBattleground*>(this), &CBattleground::Close, EVENT_BATTLEGROUND_CLOSE, 120000, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
 
         this->EndBattleground(Team == TEAM_ALLIANCE ? TEAM_ALLIANCE : TEAM_HORDE);
     }
@@ -735,7 +736,7 @@ void ArathiBasin::CaptureControlPoint(uint32 Id, uint32 Team)
     {
         std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
-        for(set<Player*>::iterator itr = m_players[Team].begin(); itr != m_players[Team].end(); ++itr)
+        for(std::set<Player*>::iterator itr = m_players[Team].begin(); itr != m_players[Team].end(); ++itr)
         {
             if(Team)
             {
@@ -812,10 +813,10 @@ void ArathiBasin::AssaultControlPoint(Player* pPlayer, uint32 Id)
         // this control point just got taken over by someone! oh noes!
         if(m_spiritGuides[Id] != nullptr)
         {
-            map<Creature*, set<uint32> >::iterator itr = m_resurrectMap.find(m_spiritGuides[Id]);
+            std::map<Creature*, std::set<uint32> >::iterator itr = m_resurrectMap.find(m_spiritGuides[Id]);
             if(itr != m_resurrectMap.end())
             {
-                for(set<uint32>::iterator it2 = itr->second.begin(); it2 != itr->second.end(); ++it2)
+                for(std::set<uint32>::iterator it2 = itr->second.begin(); it2 != itr->second.end(); ++it2)
                 {
                     Player* r_plr = m_mapMgr->GetPlayer(*it2);
                     if(r_plr != nullptr && r_plr->IsDead())

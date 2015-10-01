@@ -34,6 +34,7 @@
 #if PLATFORM != PLATFORM_WIN32
 #include <dirent.h>
 #endif
+#include <QuestLogEntry.hpp>
 
 ScriptMgr* m_scriptMgr = NULL;
 LuaEngine g_luaMgr;
@@ -122,7 +123,7 @@ void LuaEngine::ScriptLoadDir(char* Dirname, LUALoadScripts* pak)
         }
         else
         {
-            string fname = Dirname;
+            std::string fname = Dirname;
             fname += "\\";
             fname += FindData.cFileName;
 
@@ -196,7 +197,7 @@ void LuaEngine::LoadScripts()
     RegisterCoreFunctions();
     Log.Notice("LuaEngine", "Loading Scripts...");
 
-    for (set<string>::iterator itr = rtn.luaFiles.begin(); itr != rtn.luaFiles.end(); ++itr)
+    for (std::set<std::string>::iterator itr = rtn.luaFiles.begin(); itr != rtn.luaFiles.end(); ++itr)
     {
         if (luaL_loadfile(lu, itr->c_str()) != 0)
         {
@@ -275,7 +276,7 @@ void LuaEngine::PushUnit(Object* unit, lua_State* L)
 {
     Unit* pUnit = NULL;
     if (unit != NULL && unit->IsUnit())
-        pUnit = TO_UNIT(unit);
+        pUnit = static_cast<Unit*>(unit);
     if (L == NULL)
         ArcLuna<Unit>::push(lu, pUnit);
     else
@@ -285,7 +286,7 @@ void LuaEngine::PushGo(Object* go, lua_State* L)
 {
     GameObject* pGo = NULL;
     if (go != NULL && go->IsGameObject())
-        pGo = TO< GameObject* >(go);
+        pGo = static_cast< GameObject* >(go);
     if (L == NULL)
         ArcLuna<GameObject>::push(lu, pGo);
     else
@@ -295,7 +296,7 @@ void LuaEngine::PushItem(Object* item, lua_State* L)
 {
     Item* pItem = NULL;
     if (item != NULL && (item->IsItem() || item->IsContainer()))
-        pItem = TO< Item* >(item);
+        pItem = static_cast< Item* >(item);
     if (L == NULL)
         ArcLuna<Item>::push(lu, pItem);
     else
@@ -358,7 +359,7 @@ void LuaEngine::PushAura(Aura* aura, lua_State* L)
 void LuaEngine::HyperCallFunction(const char* FuncName, int ref)  //hyper as in hypersniper :3
 {
     GET_LOCK
-        string sFuncName = string(FuncName);
+        std::string sFuncName = std::string(FuncName);
     char* copy = strdup(FuncName);
     char* token = strtok(copy, ".:");
     int top = 1;
@@ -472,7 +473,7 @@ void LuaEngine::DestroyAllLuaEvents()
 {
     GET_LOCK
         //Clean up for all events.
-        set<int>::iterator itr = m_functionRefs.begin();
+        std::set<int>::iterator itr = m_functionRefs.begin();
     for (; itr != m_functionRefs.end(); ++itr)
     {
         sEventMgr.RemoveEvents(World::getSingletonPtr(), (*itr) + LUA_EVENTS_END);
@@ -849,7 +850,7 @@ static int RegisterTimedEvent(lua_State* L)  //in this case, L == lu
     EventInfoHolder* ek = new EventInfoHolder;
     ek->funcName = funcName;
     ek->te = te;
-    sLuaMgr.m_registeredTimedEvents.insert(pair<int, EventInfoHolder*>(ref, ek));
+    sLuaMgr.m_registeredTimedEvents.insert(std::pair<int, EventInfoHolder*>(ref, ek));
     sLuaEventMgr.event_AddEvent(te);
     lua_settop(L, 0);
     lua_pushnumber(L, ref);
@@ -869,7 +870,7 @@ bool LuaHookOnNewCharacter(uint32 Race, uint32 Class, WorldSession* Session, con
 {
     GET_LOCK
         bool result = true;
-    for (vector<uint16>::iterator itr = EventAsToFuncName[SERVER_HOOK_EVENT_ON_NEW_CHARACTER].begin(); itr != EventAsToFuncName[SERVER_HOOK_EVENT_ON_NEW_CHARACTER].end(); ++itr)
+    for (std::vector<uint16>::iterator itr = EventAsToFuncName[SERVER_HOOK_EVENT_ON_NEW_CHARACTER].begin(); itr != EventAsToFuncName[SERVER_HOOK_EVENT_ON_NEW_CHARACTER].end(); ++itr)
     {
         sLuaMgr.BeginCall((*itr));
         sLuaMgr.PUSH_INT(SERVER_HOOK_EVENT_ON_NEW_CHARACTER);
@@ -959,7 +960,7 @@ bool LuaHookOnRepop(Player* pPlayer)
 {
     GET_LOCK
         bool result = true;
-    for (vector<uint16>::iterator itr = EventAsToFuncName[SERVER_HOOK_EVENT_ON_REPOP].begin(); itr != EventAsToFuncName[SERVER_HOOK_EVENT_ON_REPOP].end(); ++itr)
+    for (std::vector<uint16>::iterator itr = EventAsToFuncName[SERVER_HOOK_EVENT_ON_REPOP].begin(); itr != EventAsToFuncName[SERVER_HOOK_EVENT_ON_REPOP].end(); ++itr)
     {
         sLuaMgr.BeginCall((*itr));
         sLuaMgr.PUSH_INT(SERVER_HOOK_EVENT_ON_REPOP);
@@ -1009,7 +1010,7 @@ bool LuaHookOnCastSpell(Player* pPlayer, SpellEntry* pSpell, Spell* spell)
 {
     GET_LOCK
         bool result = true;
-    for (vector<uint16>::iterator itr = EventAsToFuncName[SERVER_HOOK_EVENT_ON_CAST_SPELL].begin(); itr != EventAsToFuncName[SERVER_HOOK_EVENT_ON_CAST_SPELL].end(); ++itr)
+    for (std::vector<uint16>::iterator itr = EventAsToFuncName[SERVER_HOOK_EVENT_ON_CAST_SPELL].begin(); itr != EventAsToFuncName[SERVER_HOOK_EVENT_ON_CAST_SPELL].end(); ++itr)
     {
         sLuaMgr.BeginCall((*itr));
         sLuaMgr.PUSH_INT(SERVER_HOOK_EVENT_ON_CAST_SPELL);
@@ -1043,7 +1044,7 @@ bool LuaHookOnLogoutRequest(Player* pPlayer)
 {
     GET_LOCK
         bool result = true;
-    for (vector<uint16>::iterator itr = EventAsToFuncName[SERVER_HOOK_EVENT_ON_LOGOUT_REQUEST].begin(); itr != EventAsToFuncName[SERVER_HOOK_EVENT_ON_LOGOUT_REQUEST].end(); ++itr)
+    for (std::vector<uint16>::iterator itr = EventAsToFuncName[SERVER_HOOK_EVENT_ON_LOGOUT_REQUEST].begin(); itr != EventAsToFuncName[SERVER_HOOK_EVENT_ON_LOGOUT_REQUEST].end(); ++itr)
     {
         sLuaMgr.BeginCall((*itr));
         sLuaMgr.PUSH_INT(SERVER_HOOK_EVENT_ON_LOGOUT_REQUEST);
@@ -1116,7 +1117,7 @@ bool LuaHookOnChat(Player* pPlayer, uint32 Type, uint32 Lang, const char* Messag
 {
     GET_LOCK
         bool result = true;
-    for (vector<uint16>::iterator itr = EventAsToFuncName[SERVER_HOOK_EVENT_ON_CHAT].begin(); itr != EventAsToFuncName[SERVER_HOOK_EVENT_ON_CHAT].end(); ++itr)
+    for (std::vector<uint16>::iterator itr = EventAsToFuncName[SERVER_HOOK_EVENT_ON_CHAT].begin(); itr != EventAsToFuncName[SERVER_HOOK_EVENT_ON_CHAT].end(); ++itr)
     {
         sLuaMgr.BeginCall((*itr));
         sLuaMgr.PUSH_INT(SERVER_HOOK_EVENT_ON_CHAT);
@@ -1308,7 +1309,7 @@ bool LuaHookOnPreUnitDie(Unit* Killer, Unit* Victim)
 {
     GET_LOCK
         bool result = true;
-    for (vector<uint16>::iterator itr = EventAsToFuncName[SERVER_HOOK_EVENT_ON_PRE_DIE].begin(); itr != EventAsToFuncName[SERVER_HOOK_EVENT_ON_PRE_DIE].end(); ++itr)
+    for (std::vector<uint16>::iterator itr = EventAsToFuncName[SERVER_HOOK_EVENT_ON_PRE_DIE].begin(); itr != EventAsToFuncName[SERVER_HOOK_EVENT_ON_PRE_DIE].end(); ++itr)
     {
         sLuaMgr.BeginCall((*itr));
         sLuaMgr.PUSH_INT(SERVER_HOOK_EVENT_ON_PRE_DIE);
@@ -1372,7 +1373,7 @@ bool LuaHookOnResurrect(Player* pPlayer)
 {
     GET_LOCK
         bool result = true;
-    for (vector<uint16>::iterator itr = EventAsToFuncName[SERVER_HOOK_EVENT_ON_RESURRECT].begin(); itr != EventAsToFuncName[SERVER_HOOK_EVENT_ON_RESURRECT].end(); ++itr)
+    for (std::vector<uint16>::iterator itr = EventAsToFuncName[SERVER_HOOK_EVENT_ON_RESURRECT].begin(); itr != EventAsToFuncName[SERVER_HOOK_EVENT_ON_RESURRECT].end(); ++itr)
     {
         sLuaMgr.BeginCall((*itr));
         sLuaMgr.PUSH_INT(SERVER_HOOK_EVENT_ON_RESURRECT);
@@ -2309,7 +2310,7 @@ CreatureAIScript* CreateLuaCreature(Creature* src)
             typedef std::multimap<uint32, LuaCreature*> CRCMAP;
             CRCMAP & cMap = sLuaMgr.getLuCreatureMap();
             script = new LuaCreature(src);
-            cMap.insert(make_pair(id, script));
+            cMap.insert(std::make_pair(id, script));
             script->m_binding = pBinding;
         }
     }
@@ -2326,10 +2327,10 @@ GameObjectAIScript* CreateLuaGameObjectScript(GameObject* src)
         pBinding = sLuaMgr.getGameObjectBinding(id);
         if (pBinding != NULL)
         {
-            typedef multimap<uint32, LuaGameObjectScript*> GMAP;
+            typedef std::multimap<uint32, LuaGameObjectScript*> GMAP;
             GMAP & gMap = sLuaMgr.getLuGameObjectMap();
             script = new LuaGameObjectScript(src);
-            gMap.insert(make_pair(id, script));
+            gMap.insert(std::make_pair(id, script));
             script->m_binding = pBinding;
         }
     }
@@ -2355,7 +2356,7 @@ QuestScript* CreateLuaQuestScript(uint32 id)
         else
         {
             pLua = new LuaQuest();
-            qMap.insert(make_pair(id, pLua));
+            qMap.insert(std::make_pair(id, pLua));
         }
         pLua->m_binding = pBinding;
     }
@@ -2382,7 +2383,7 @@ InstanceScript* CreateLuaInstance(MapMgr* pMapMgr)
         else
         {
             pLua = new LuaInstance(pMapMgr);
-            iMap.insert(make_pair(id, pLua));
+            iMap.insert(std::make_pair(id, pLua));
         }
         pLua->m_binding = pBinding;
     }
@@ -2408,7 +2409,7 @@ Arcemu::Gossip::Script* CreateLuaUnitGossipScript(uint32 id)
         else
         {
             pLua = new LuaGossip();
-            gMap.insert(make_pair(id, pLua));
+            gMap.insert(std::make_pair(id, pLua));
         }
         pLua->m_unit_gossip_binding = pBinding;
     }
@@ -2433,7 +2434,7 @@ Arcemu::Gossip::Script* CreateLuaItemGossipScript(uint32 id)
         else
         {
             pLua = new LuaGossip();
-            gMap.insert(make_pair(id, pLua));
+            gMap.insert(std::make_pair(id, pLua));
 
         }
         pLua->m_item_gossip_binding = pBinding;
@@ -2459,7 +2460,7 @@ Arcemu::Gossip::Script* CreateLuaGOGossipScript(uint32 id)
         else
         {
             pLua = new LuaGossip();
-            gMap.insert(make_pair(id, pLua));
+            gMap.insert(std::make_pair(id, pLua));
         }
         pLua->m_go_gossip_binding = pBinding;
     }
@@ -2478,13 +2479,13 @@ void LuaEngine::Startup()
     for (LuaObjectBindingMap::iterator itr = m_unitBinding.begin(); itr != m_unitBinding.end(); ++itr)
     {
         m_scriptMgr->register_creature_script(itr->first, CreateLuaCreature);
-        sLuaMgr.getLuCreatureMap().insert(make_pair(itr->first, (LuaCreature*)NULL));
+        sLuaMgr.getLuCreatureMap().insert(std::make_pair(itr->first, (LuaCreature*)NULL));
     }
 
     for (LuaObjectBindingMap::iterator itr = m_gameobjectBinding.begin(); itr != m_gameobjectBinding.end(); ++itr)
     {
         m_scriptMgr->register_gameobject_script(itr->first, CreateLuaGameObjectScript);
-        sLuaMgr.getLuGameObjectMap().insert(make_pair(itr->first, (LuaGameObjectScript*)NULL));
+        sLuaMgr.getLuGameObjectMap().insert(std::make_pair(itr->first, (LuaGameObjectScript*)NULL));
     }
 
     for (LuaObjectBindingMap::iterator itr = m_questBinding.begin(); itr != m_questBinding.end(); ++itr)
@@ -2493,14 +2494,14 @@ void LuaEngine::Startup()
         if (qs != NULL)
         {
             m_scriptMgr->register_quest_script(itr->first, qs);
-            sLuaMgr.getLuQuestMap().insert(make_pair(itr->first, (LuaQuest*)NULL));
+            sLuaMgr.getLuQuestMap().insert(std::make_pair(itr->first, (LuaQuest*)NULL));
         }
     }
 
     for (LuaObjectBindingMap::iterator itr = m_instanceBinding.begin(); itr != m_instanceBinding.end(); ++itr)
     {
         m_scriptMgr->register_instance_script(itr->first, CreateLuaInstance);
-        sLuaMgr.getLuInstanceMap().insert(make_pair(itr->first, (LuaInstance*)NULL));
+        sLuaMgr.getLuInstanceMap().insert(std::make_pair(itr->first, (LuaInstance*)NULL));
     }
 
     for (LuaObjectBindingMap::iterator itr = m_unit_gossipBinding.begin(); itr != m_unit_gossipBinding.end(); ++itr)
@@ -2509,7 +2510,7 @@ void LuaEngine::Startup()
         if (gs != NULL)
         {
             m_scriptMgr->register_creature_gossip(itr->first, gs);
-            sLuaMgr.getUnitGossipInterfaceMap().insert(make_pair(itr->first, (LuaGossip*)NULL));
+            sLuaMgr.getUnitGossipInterfaceMap().insert(std::make_pair(itr->first, (LuaGossip*)NULL));
         }
     }
 
@@ -2519,7 +2520,7 @@ void LuaEngine::Startup()
         if (gs != NULL)
         {
             m_scriptMgr->register_item_gossip(itr->first, gs);
-            sLuaMgr.getItemGossipInterfaceMap().insert(make_pair(itr->first, (LuaGossip*)NULL));
+            sLuaMgr.getItemGossipInterfaceMap().insert(std::make_pair(itr->first, (LuaGossip*)NULL));
         }
     }
 
@@ -2529,7 +2530,7 @@ void LuaEngine::Startup()
         if (gs != NULL)
         {
             m_scriptMgr->register_go_gossip(itr->first, gs);
-            sLuaMgr.getGameObjectGossipInterfaceMap().insert(make_pair(itr->first, (LuaGossip*)NULL));
+            sLuaMgr.getGameObjectGossipInterfaceMap().insert(std::make_pair(itr->first, (LuaGossip*)NULL));
         }
     }
 
@@ -2591,7 +2592,7 @@ void LuaEngine::RegisterEvent(uint8 regtype, uint32 id, uint32 evt, uint16 funct
                     LuaObjectBinding nbind;
                     memset(&nbind, 0, sizeof(LuaObjectBinding));
                     nbind.m_functionReferences[evt] = functionRef;
-                    m_unitBinding.insert(make_pair(id, nbind));
+                    m_unitBinding.insert(std::make_pair(id, nbind));
                 }
                 else
                 {
@@ -2612,7 +2613,7 @@ void LuaEngine::RegisterEvent(uint8 regtype, uint32 id, uint32 evt, uint16 funct
                     LuaObjectBinding nbind;
                     memset(&nbind, 0, sizeof(LuaObjectBinding));
                     nbind.m_functionReferences[evt] = functionRef;
-                    m_gameobjectBinding.insert(make_pair(id, nbind));
+                    m_gameobjectBinding.insert(std::make_pair(id, nbind));
                 }
                 else
                 {
@@ -2633,7 +2634,7 @@ void LuaEngine::RegisterEvent(uint8 regtype, uint32 id, uint32 evt, uint16 funct
                     LuaObjectBinding nbind;
                     memset(&nbind, 0, sizeof(LuaObjectBinding));
                     nbind.m_functionReferences[evt] = functionRef;
-                    m_questBinding.insert(make_pair(id, nbind));
+                    m_questBinding.insert(std::make_pair(id, nbind));
                 }
                 else
                 {
@@ -2653,7 +2654,7 @@ void LuaEngine::RegisterEvent(uint8 regtype, uint32 id, uint32 evt, uint16 funct
         case REGTYPE_DUMMYSPELL:
         {
             if (id)
-                m_luaDummySpells.insert(pair<uint32, uint16>(id, functionRef));
+                m_luaDummySpells.insert(std::pair<uint32, uint16>(id, functionRef));
         }
         break;
         case REGTYPE_INSTANCE:
@@ -2666,7 +2667,7 @@ void LuaEngine::RegisterEvent(uint8 regtype, uint32 id, uint32 evt, uint16 funct
                     LuaObjectBinding nbind;
                     memset(&nbind, 0, sizeof(LuaObjectBinding));
                     nbind.m_functionReferences[evt] = functionRef;
-                    m_instanceBinding.insert(make_pair(id, nbind));
+                    m_instanceBinding.insert(std::make_pair(id, nbind));
                 }
                 else
                 {
@@ -2687,7 +2688,7 @@ void LuaEngine::RegisterEvent(uint8 regtype, uint32 id, uint32 evt, uint16 funct
                     LuaObjectBinding nbind;
                     memset(&nbind, 0, sizeof(LuaObjectBinding));
                     nbind.m_functionReferences[evt] = functionRef;
-                    m_unit_gossipBinding.insert(make_pair(id, nbind));
+                    m_unit_gossipBinding.insert(std::make_pair(id, nbind));
                 }
                 else
                 {
@@ -2708,7 +2709,7 @@ void LuaEngine::RegisterEvent(uint8 regtype, uint32 id, uint32 evt, uint16 funct
                     LuaObjectBinding nbind;
                     memset(&nbind, 0, sizeof(LuaObjectBinding));
                     nbind.m_functionReferences[evt] = functionRef;
-                    m_item_gossipBinding.insert(make_pair(id, nbind));
+                    m_item_gossipBinding.insert(std::make_pair(id, nbind));
                 }
                 else
                 {
@@ -2729,7 +2730,7 @@ void LuaEngine::RegisterEvent(uint8 regtype, uint32 id, uint32 evt, uint16 funct
                     LuaObjectBinding nbind;
                     memset(&nbind, 0, sizeof(LuaObjectBinding));
                     nbind.m_functionReferences[evt] = functionRef;
-                    m_go_gossipBinding.insert(make_pair(id, nbind));
+                    m_go_gossipBinding.insert(std::make_pair(id, nbind));
                 }
                 else
                 {
@@ -2814,15 +2815,15 @@ void LuaEngine::Unload()
     //Serv hooks : had forgotten these.
     for (int i = 0; i < NUM_SERVER_HOOKS; ++i)
     {
-        vector<uint16> & next = EventAsToFuncName[i];
-        for (vector<uint16>::iterator itr = next.begin(); itr != next.end(); ++itr)
+        std::vector<uint16> & next = EventAsToFuncName[i];
+        for (std::vector<uint16>::iterator itr = next.begin(); itr != next.end(); ++itr)
             luaL_unref(lu, LUA_REGISTRYINDEX, (*itr));
         next.clear();
     }
-    for (map<uint32, uint16>::iterator itr = m_luaDummySpells.begin(); itr != m_luaDummySpells.end(); ++itr)
+    for (std::map<uint32, uint16>::iterator itr = m_luaDummySpells.begin(); itr != m_luaDummySpells.end(); ++itr)
         luaL_unref(lu, LUA_REGISTRYINDEX, itr->second);
     m_luaDummySpells.clear();
-    for (set<int>::iterator itr = m_pendingThreads.begin(); itr != m_pendingThreads.end(); ++itr)
+    for (std::set<int>::iterator itr = m_pendingThreads.begin(); itr != m_pendingThreads.end(); ++itr)
         luaL_unref(lu, LUA_REGISTRYINDEX, (*itr));
     m_pendingThreads.clear();
     m_functionRefs.clear();
@@ -2839,14 +2840,14 @@ void LuaEngine::Restart()
     LoadScripts();
     for (LuaObjectBindingMap::iterator itr = m_unitBinding.begin(); itr != m_unitBinding.end(); ++itr)
     {
-        typedef multimap<uint32, LuaCreature*> CMAP;
+        typedef std::multimap<uint32, LuaCreature*> CMAP;
         CMAP & cMap = sLuaMgr.getLuCreatureMap();
         CMAP::iterator it = cMap.find(itr->first);
         CMAP::iterator itend = cMap.upper_bound(itr->first);
         if (it == cMap.end())
         {
             m_scriptMgr->register_creature_script(itr->first, CreateLuaCreature);
-            cMap.insert(make_pair(itr->first, (LuaCreature*)NULL));
+            cMap.insert(std::make_pair(itr->first, (LuaCreature*)NULL));
         }
         else
         {
@@ -2859,14 +2860,14 @@ void LuaEngine::Restart()
     }
     for (LuaObjectBindingMap::iterator itr = m_gameobjectBinding.begin(); itr != m_gameobjectBinding.end(); ++itr)
     {
-        typedef multimap<uint32, LuaGameObjectScript*> GMAP;
+        typedef std::multimap<uint32, LuaGameObjectScript*> GMAP;
         GMAP & gMap = sLuaMgr.getLuGameObjectMap();
         GMAP::iterator it = gMap.find(itr->first);
         GMAP::iterator itend = gMap.upper_bound(itr->first);
         if (it == gMap.end())
         {
             m_scriptMgr->register_gameobject_script(itr->first, CreateLuaGameObjectScript);
-            gMap.insert(make_pair(itr->first, (LuaGameObjectScript*)NULL));
+            gMap.insert(std::make_pair(itr->first, (LuaGameObjectScript*)NULL));
         }
         else
         {
@@ -2885,7 +2886,7 @@ void LuaEngine::Restart()
         if (it == qMap.end())
         {
             m_scriptMgr->register_quest_script(itr->first, CreateLuaQuestScript(itr->first));
-            qMap.insert(make_pair(itr->first, (LuaQuest*)NULL));
+            qMap.insert(std::make_pair(itr->first, (LuaQuest*)NULL));
         }
         else
         {
@@ -2902,7 +2903,7 @@ void LuaEngine::Restart()
         if (it == iMap.end())
         {
             m_scriptMgr->register_instance_script(itr->first, CreateLuaInstance);
-            iMap.insert(make_pair(itr->first, (LuaInstance*)NULL));
+            iMap.insert(std::make_pair(itr->first, (LuaInstance*)NULL));
         }
         else
         {
@@ -2921,7 +2922,7 @@ void LuaEngine::Restart()
             if (gs != NULL)
             {
                 m_scriptMgr->register_creature_gossip(itr->first, gs);
-                gMap.insert(make_pair(itr->first, (LuaGossip*)NULL));
+                gMap.insert(std::make_pair(itr->first, (LuaGossip*)NULL));
             }
         }
         else
@@ -2942,7 +2943,7 @@ void LuaEngine::Restart()
             if (gs != NULL)
             {
                 m_scriptMgr->register_item_gossip(itr->first, gs);
-                gMap.insert(make_pair(itr->first, (LuaGossip*)NULL));
+                gMap.insert(std::make_pair(itr->first, (LuaGossip*)NULL));
             }
         }
         else
@@ -2963,7 +2964,7 @@ void LuaEngine::Restart()
             if (gs != NULL)
             {
                 m_scriptMgr->register_go_gossip(itr->first, gs);
-                gMap.insert(make_pair(itr->first, (LuaGossip*)NULL));
+                gMap.insert(std::make_pair(itr->first, (LuaGossip*)NULL));
             }
         }
         else
@@ -3021,9 +3022,9 @@ void LuaEngine::Restart()
         getcoLock().Release();
 
     //hyper: do OnSpawns for spawned creatures.
-    vector<uint32> temp = OnLoadInfo;
+    std::vector<uint32> temp = OnLoadInfo;
     OnLoadInfo.clear();
-    for (vector<uint32>::iterator itr = temp.begin(); itr != temp.end(); itr += 3)
+    for (std::vector<uint32>::iterator itr = temp.begin(); itr != temp.end(); itr += 3)
     {
         //*itr = mapid; *(itr+1) = iid; *(itr+2) = lowguid
         MapMgr* mgr = NULL;
@@ -3099,7 +3100,7 @@ void LuaEngine::ResumeLuaThread(int ref)
 
 // Simplicity macros.
 #define CHECK_UNIT(L,narg) sLuaMgr.CheckUnit(L,narg)
-#define CHECK_PLAYER(L,narg) TO_PLAYER(CHECK_UNIT(L,narg))
+#define CHECK_PLAYER(L,narg) static_cast<Player*>(CHECK_UNIT(L,narg))
 #define CHECK_GO(L,narg) sLuaMgr.CheckGo(L,narg)
 #define CHECK_ITEM(L,narg) sLuaMgr.CheckItem(L,narg)
 #define CHECK_PACKET(L,narg) sLuaMgr.CheckPacket(L,narg)
@@ -3118,10 +3119,10 @@ void LuaEngine::ResumeLuaThread(int ref)
 #define CHECK_BOOL(L,narg) sLuaMgr.CheckBool(L,narg)
 #define CHECK_UINT8( L, narg ) static_cast< uint8 >( luaL_checkinteger( ( L ), ( narg ) ) )
 
-#define PUSH_UNIT(L, unit) sLuaMgr.PushUnit(TO_UNIT(unit),L)
-#define PUSH_GO(L, go) sLuaMgr.PushGo(TO< GameObject* >(go),L)
+#define PUSH_UNIT(L, unit) sLuaMgr.PushUnit(static_cast<Unit*>(unit),L)
+#define PUSH_GO(L, go) sLuaMgr.PushGo(static_cast< GameObject* >(go),L)
 #define PUSH_PACKET(L,pack) sLuaMgr.PushPacket(pack,L)
-#define PUSH_ITEM(L,item) sLuaMgr.PushItem(TO< Item* >(item),L)
+#define PUSH_ITEM(L,item) sLuaMgr.PushItem(static_cast< Item* >(item),L)
 #define PUSH_GUID(L, obj) sLuaMgr.PushGuid(obj,L)
 #define PUSH_TAXIPATH(L, tp) sLuaMgr.PushTaxiPath(tp,L)
 #define PUSH_SPELL(L, sp) sLuaMgr.PushSpell(sp,L)

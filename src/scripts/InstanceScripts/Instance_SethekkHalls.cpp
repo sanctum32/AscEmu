@@ -1493,11 +1493,11 @@ class LakkaAI : public MoonScriptCreatureAI
                     SetWaypointToMove(2);
                     Player* pPlayer = NULL;
                     QuestLogEntry* pQuest = NULL;
-                    for (set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
+                    for (std::set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
                     {
                         if ((*itr)->IsPlayer())
                         {
-                            pPlayer = TO_PLAYER((*itr));
+                            pPlayer = static_cast<Player*>((*itr));
                             if (pPlayer != NULL)
                             {
                                 pQuest = pPlayer->GetQuestLogForEntry(10097);
@@ -1677,7 +1677,7 @@ class DarkweaverSythAI : public CreatureAIScript
 
             if (mLakka != NULL && mLakka->GetScript())
             {
-                MoonScriptCreatureAI* pLakkaAI = TO< MoonScriptCreatureAI* >(mLakka->GetScript());
+                MoonScriptCreatureAI* pLakkaAI = static_cast< MoonScriptCreatureAI* >(mLakka->GetScript());
                 mLakka->GetAIInterface()->SetAIState(STATE_SCRIPTMOVE);
                 pLakkaAI->SetMoveType(Move_WantedWP);
                 pLakkaAI->SetWaypointToMove(1);
@@ -1975,12 +1975,12 @@ class TalonKingIkissAI : public CreatureAIScript
             if (_unit->GetCurrentSpell() == NULL && _unit->GetAIInterface()->getNextTarget())
             {
                 std::vector<Unit*> TargetTable;        // From M4ksiu - Big THX to Capt
-                for (set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
+                for (std::set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
                 {
                     if (((spells[i].targettype == TARGET_RANDOM_FRIEND && isFriendly(_unit, (*itr))) || (spells[i].targettype != TARGET_RANDOM_FRIEND && isHostile(_unit, (*itr)) && (*itr) != _unit)) && (*itr)->IsUnit())  // isAttackable(_unit, (*itr)) &&
                     {
                         Unit* RandomTarget = NULL;
-                        RandomTarget = TO_UNIT(*itr);
+                        RandomTarget = static_cast<Unit*>(*itr);
 
                         if (RandomTarget->isAlive() && _unit->GetDistance2dSq(RandomTarget) >= mindist2cast * mindist2cast && _unit->GetDistance2dSq(RandomTarget) <= maxdist2cast * maxdist2cast && ((RandomTarget->GetHealthPct() >= minhp2cast && RandomTarget->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND) || (_unit->GetAIInterface()->getThreatByPtr(RandomTarget) > 0 && isHostile(_unit, RandomTarget))))
                         {
@@ -2019,12 +2019,12 @@ class TalonKingIkissAI : public CreatureAIScript
         void BlinkCast()
         {
             std::vector<Unit*> TargetTable;        // From M4ksiu - Big THX to Capt
-            for (set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
+            for (std::set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
             {
                 if (isHostile(_unit, (*itr)) && (*itr) != _unit && (*itr)->IsUnit())
                 {
                     Unit* RandomTarget = NULL;
-                    RandomTarget = TO_UNIT(*itr);
+                    RandomTarget = static_cast<Unit*>(*itr);
                     if (RandomTarget->isAlive() && _unit->GetDistance2dSq(RandomTarget) >= 0.0f && _unit->GetDistance2dSq(RandomTarget) <= 900.0f && _unit->GetAIInterface()->getThreatByPtr(RandomTarget) > 0)
                     {
                         TargetTable.push_back(RandomTarget);
@@ -2159,12 +2159,12 @@ class ANZUAI : public CreatureAIScript
 
                 else
                 {
-                    for (set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
+                    for (std::set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
                     {
                         if ((*itr) != _unit && (*itr)->IsCreature())
                         {
                             Creature* Check = NULL;
-                            Check = TO_CREATURE(*itr);
+                            Check = static_cast<Creature*>(*itr);
 
                             if (Check->GetEntry() != 23132)
                                 continue;
@@ -2265,12 +2265,12 @@ class ANZUAI : public CreatureAIScript
             Unit* pUnit;
             float dist;
 
-            for (set<Object*>::iterator itr = _unit->GetInRangeOppFactsSetBegin(); itr != _unit->GetInRangeOppFactsSetEnd(); itr++)
+            for (std::set<Object*>::iterator itr = _unit->GetInRangeOppFactsSetBegin(); itr != _unit->GetInRangeOppFactsSetEnd(); itr++)
             {
                 if (!(*itr)->IsUnit())
                     continue;
 
-                pUnit = TO_UNIT((*itr));
+                pUnit = static_cast<Unit*>((*itr));
 
                 if (pUnit->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_FEIGN_DEATH))
                     continue;

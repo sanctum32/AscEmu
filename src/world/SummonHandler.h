@@ -26,6 +26,11 @@
 
 class Unit;
 
+#include "CommonTypes.hpp"
+#include <array>
+#include <vector>
+#include <set>
+
 ///////////////////////////////////////////////
 //class SummonHandler
 //  Manages the summons for Units.
@@ -255,7 +260,7 @@ class SERVER_DECL SummonHandler
         void RemoveSanctuaryFlags();
 
     private:
-        std::tr1::array< Unit*, SUMMON_SLOTS > summonslots;
+        std::array< Unit*, SUMMON_SLOTS > summonslots;
         std::set< Unit* > guardians;
 };
 

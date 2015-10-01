@@ -5,13 +5,13 @@ project(shared)
 
 set(prefix ${ROOT_PATH}/src/shared)
 set(sources
-    CThreads.cpp 
-    CrashHandler.cpp 
-    Log.cpp 
-    MersenneTwister.cpp 
-    printStackTrace.cpp 
-    Util.cpp 
-    crc32.cpp 
+    CThreads.cpp
+    CrashHandler.cpp
+    Log.cpp
+    MersenneTwister.cpp
+    printStackTrace.cpp
+    Util.cpp
+    crc32.cpp
     MapFile.cpp
     MapFileEntry.cpp
     TextFile.cpp
@@ -20,27 +20,28 @@ set(sources
     SysInfo.cpp
     PerformanceCounter.cpp
     Threading/Mutex.cpp
-    Threading/Threading.h  
-    Threading/ThreadPool.cpp 
-    Threading/AtomicULong.cpp 
-    Threading/AtomicFloat.cpp 
-    Threading/AtomicCounter.cpp 
-    Threading/AtomicBoolean.cpp 
+    Threading/Threading.h
+    Threading/ThreadPool.cpp
+    Threading/AtomicULong.cpp
+    Threading/AtomicFloat.cpp
+    Threading/AtomicCounter.cpp
+    Threading/AtomicBoolean.cpp
     Threading/ConditionVariable.cpp
-    ascemu_getopt.cpp 
-    Auth/BigNumber.cpp 
-    Auth/MD5.cpp 
-    Auth/Sha1.cpp 
-    Auth/WowCrypt.cpp 
-    Config/Config.cpp 
-    Database/Database.cpp 
-    Database/MySQLDatabase.cpp 
-    Database/CreateInterface.cpp 
-    Network/CircularBuffer.cpp 
+    ascemu_getopt.cpp
+    Auth/BigNumber.cpp
+    Auth/MD5.cpp
+    Auth/Sha1.cpp
+    Auth/WowCrypt.cpp
+    Config/Config.cpp
+    Database/Database.cpp
+		Database/Field.cpp
+    Database/MySQLDatabase.cpp
+    Database/CreateInterface.cpp
+    Network/CircularBuffer.cpp
     Network/Socket.cpp
 	)
-	
-set(headers 
+
+set(headers
 	ascemu_getopt.h
 	ascemuConfig.h
 	Array.h
@@ -49,6 +50,9 @@ set(headers
 	CallBack.h
 	CircularQueue.h
 	Common.h
+  CommonTypes.hpp
+  CommonHelpers.hpp
+  CommonDefines.hpp
 	CrashHandler.h
 	crc32.h
 	CRefcounter.h
@@ -95,6 +99,7 @@ set(headers
 	Network/ListenSocketLinux.h
 	Network/ListenSocketWin32.h
 	Network/Network.h
+    Network/NetworkIncludes.hpp
 	Network/Socket.h
 	Network/SocketMgrFreeBSD.h
 	Network/SocketMgrLinux.h
@@ -131,7 +136,10 @@ foreach(src IN ITEMS ${headers})
    set(HEADERS ${HEADERS} ${prefix}/${src})
 endforeach(src)
 
-include_directories(${GLOBAL_INCLUDE_DIRS})
+include_directories(
+   ${GLOBAL_INCLUDE_DIRS}
+   ${DEPENDENCY_ROOT}/zlib
+   )
 if(IS_64BIT)
    link_directories(${DEPENDENCY_DLLS64})
 else()

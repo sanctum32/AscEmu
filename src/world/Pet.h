@@ -21,6 +21,8 @@
 #ifndef _PET_H
 #define _PET_H
 
+#include "Creature.h"
+
 #define PET_SPELL_SPAM_COOLDOWN 2000        /// applied only to spells that have no cooldown
 
 /* Taken from ItemPetFood.dbc
@@ -119,7 +121,7 @@ enum PetType
     WARLOCKPET  = 2,
 };
 
-typedef map<SpellEntry*, uint16> PetSpellMap;
+typedef std::map<SpellEntry*, uint16> PetSpellMap;
 struct PlayerPet;
 
 
@@ -144,7 +146,7 @@ class SERVER_DECL Pet : public Creature
         void Update(unsigned long time_passed);
         void OnPushToWorld();
 
-        ARCEMU_INLINE uint32 GetXP(void) { return GetUInt32Value(UNIT_FIELD_PETEXPERIENCE); }
+        inline uint32 GetXP(void) { return GetUInt32Value(UNIT_FIELD_PETEXPERIENCE); }
 
         void InitializeSpells();
         void InitializeMe(bool first);
@@ -153,17 +155,17 @@ class SERVER_DECL Pet : public Creature
         void SendActionFeedback(PetActionFeedback value);
         void BuildPetSpellList(WorldPacket& data);
 
-        ARCEMU_INLINE void SetPetAction(uint32 act) { m_Action = act; }
-        ARCEMU_INLINE uint32 GetPetAction(void) { return m_Action; }
+        inline void SetPetAction(uint32 act) { m_Action = act; }
+        inline uint32 GetPetAction(void) { return m_Action; }
 
-        ARCEMU_INLINE void SetPetState(uint32 state) { m_State = state; }
-        ARCEMU_INLINE uint32 GetPetState(void) { return m_State; }
+        inline void SetPetState(uint32 state) { m_State = state; }
+        inline uint32 GetPetState(void) { return m_State; }
 
-        ARCEMU_INLINE void SetPetDiet(uint32 diet) { m_Diet = diet; }
-        ARCEMU_INLINE void SetPetDiet() { m_Diet = myFamily->petdietflags; }
-        ARCEMU_INLINE uint32 GetPetDiet(void) { return m_Diet; }
+        inline void SetPetDiet(uint32 diet) { m_Diet = diet; }
+        inline void SetPetDiet() { m_Diet = myFamily->petdietflags; }
+        inline uint32 GetPetDiet(void) { return m_Diet; }
 
-        ARCEMU_INLINE AI_Spell* GetAISpellForSpellId(uint32 spellid)
+        inline AI_Spell* GetAISpellForSpellId(uint32 spellid)
         {
             std::map<uint32, AI_Spell*>::iterator itr = m_AISpellStore.find(spellid);
             if (itr != m_AISpellStore.end())
@@ -183,8 +185,8 @@ class SERVER_DECL Pet : public Creature
         void DelayedRemove(bool bTime, bool dismiss = false, uint32 delay = PET_DELAYED_REMOVAL_TIME);
         void Despawn(uint32 delay, uint32 respawntime);
 
-        ARCEMU_INLINE Player* GetPetOwner() { return m_Owner; }
-        ARCEMU_INLINE void ClearPetOwner() { m_Owner = NULL; }
+        inline Player* GetPetOwner() { return m_Owner; }
+        inline void ClearPetOwner() { m_Owner = NULL; }
         bool CanGainXP();
         void GiveXP(uint32 xp);
         uint32 GetNextLevelXP(uint32 currentlevel);
@@ -209,17 +211,17 @@ class SERVER_DECL Pet : public Creature
                 return mSpells.find(sp) != mSpells.end();
             return false;
         }
-        ARCEMU_INLINE void RemoveSpell(uint32 SpellID)
+        inline void RemoveSpell(uint32 SpellID)
         {
             SpellEntry* sp = dbcSpell.LookupEntryForced(SpellID);
             if (sp) RemoveSpell(sp);
         }
-        ARCEMU_INLINE void SetSpellState(uint32 SpellID, uint16 State)
+        inline void SetSpellState(uint32 SpellID, uint16 State)
         {
             SpellEntry* sp = dbcSpell.LookupEntryForced(SpellID);
             if (sp) SetSpellState(sp, State);
         }
-        ARCEMU_INLINE uint16 GetSpellState(uint32 SpellID)
+        inline uint16 GetSpellState(uint32 SpellID)
         {
             if (SpellID == 0)
                 return DEFAULT_SPELL_STATE;
@@ -231,21 +233,21 @@ class SERVER_DECL Pet : public Creature
         }
 
         AI_Spell* CreateAISpell(SpellEntry* info);
-        ARCEMU_INLINE PetSpellMap* GetSpells() { return &mSpells; }
-        ARCEMU_INLINE bool IsSummonedPet() { return Summon; }
+        inline PetSpellMap* GetSpells() { return &mSpells; }
+        inline bool IsSummonedPet() { return Summon; }
 
         void SetAutoCastSpell(AI_Spell* sp);
-        void Rename(string NewName);
-        ARCEMU_INLINE string & GetName() { return m_name; }
+        void Rename(std::string NewName);
+        inline std::string & GetName() { return m_name; }
         uint32 CanLearnSpell(SpellEntry* sp);
         void UpdateSpellList(bool showLearnSpells = true);
 
         // talents
         void SendTalentsToOwner();        /// Send talentpoints and talent spells to owner
-        ARCEMU_INLINE uint8 GetTPsForLevel(uint32 level) { return (level >= 20) ? uint8(level - 16) >> 2 : 0; }    /// pet gain first talent point at lvl 20, then every 4 lvls another point
-        ARCEMU_INLINE void SetTPs(uint8 TP) { SetByte(UNIT_FIELD_BYTES_1, 1, TP); }            /// sets talent points
-        ARCEMU_INLINE uint8 GetTPs() { return GetByte(UNIT_FIELD_BYTES_1, 1); }                /// returns available talent points
-        ARCEMU_INLINE uint8 GetSpentTPs() { return GetTPsForLevel(getLevel()) - GetTPs(); }    /// returns amount of spent talent points
+        inline uint8 GetTPsForLevel(uint32 level) { return (level >= 20) ? uint8(level - 16) >> 2 : 0; }    /// pet gain first talent point at lvl 20, then every 4 lvls another point
+        inline void SetTPs(uint8 TP) { SetByte(UNIT_FIELD_BYTES_1, 1, TP); }            /// sets talent points
+        inline uint8 GetTPs() { return GetByte(UNIT_FIELD_BYTES_1, 1); }                /// returns available talent points
+        inline uint8 GetSpentTPs() { return GetTPsForLevel(getLevel()) - GetTPs(); }    /// returns amount of spent talent points
 
         void HandleAutoCastEvent(AutoCastEvents Type);
         AI_Spell* HandleAutoCastEvent();
@@ -285,13 +287,13 @@ class SERVER_DECL Pet : public Creature
         bool bExpires;
         bool Summon;
         bool ScheduledForDeletion;
-        string m_name;
+        std::string m_name;
         HappinessState GetHappinessState();
         void SetNameForEntry(uint32 entry);
         uint32 GetAutoCastTypeForSpell(SpellEntry* ent);
         void SafeDelete();
 
-        list<AI_Spell*> m_autoCastSpells[AUTOCAST_EVENT_COUNT];
+    std::list<AI_Spell*> m_autoCastSpells[AUTOCAST_EVENT_COUNT];
 };
 
 #define PET_HAPPINESS_UPDATE_VALUE 333000

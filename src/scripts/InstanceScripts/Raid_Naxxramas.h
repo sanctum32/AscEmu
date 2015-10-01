@@ -290,8 +290,8 @@ class GrandWidowFaerlinaAI : public MoonScriptBossAI
     void AIUpdate();
     void Destroy();
 
-    set< NaxxramasWorshipperAI* >    mWorshippers;
-    set< NaxxramasFollowerAI* >        mFollowers;
+    std::set< NaxxramasWorshipperAI* >    mWorshippers;
+    std::set< NaxxramasFollowerAI* >        mFollowers;
     SpellDesc*                        mFrenzy;
     SpellDesc*                        mPoisonVolleyBolt;
     int32                            mFrenzyTimer;
@@ -366,9 +366,9 @@ class AnubRekhanAI : public MoonScriptBossAI
     void AIUpdate();
     void Destroy();
 
-    set< CorpseScarabAI* >    mScarabs;
-    set< CryptGuardAI* >    mCryptGuards;
-    set< uint32 >            mUsedCorpseGuids;
+    std::set< CorpseScarabAI* >    mScarabs;
+    std::set< CryptGuardAI* >    mCryptGuards;
+    std::set< uint32 >            mUsedCorpseGuids;
     SpellDesc*                mLocustSwarm;
     int32                    mLocustSwarmTimer;
     int32                    mCryptSpawnTimer;
@@ -501,9 +501,9 @@ class NothThePlaguebringerAI : public MoonScriptBossAI
     void AIUpdate();
     void Destroy();
 
-    set< PlaguedWarriorAI*>        mWarriors;
-    set< PlaguedChampionAI*>    mChampions;
-    set< PlaguedGuardianAI* >    mGuardians;
+    std::set< PlaguedWarriorAI*>        mWarriors;
+    std::set< PlaguedChampionAI*>    mChampions;
+    std::set< PlaguedGuardianAI* >    mGuardians;
     SpellDesc*                    mCriple;
     SpellDesc*                    mBlink;
     SpellDesc*                    mToBalconySwitch;
@@ -597,7 +597,7 @@ class HeiganTheUncleanAI : public MoonScriptBossAI
     void    AIUpdate();
     void    Destroy();
 
-    set< pair< uint32, PlagueFissureGO* > >        mFissures;
+    std::set<std::pair< uint32, PlagueFissureGO* > >        mFissures;
     int32                                        mPhaseSwitchTimer;
     int32                                        mEruptionTimer;
     int32                                        mEruptionPhase;
@@ -656,7 +656,7 @@ class LoathebAI : public MoonScriptBossAI
     void AIUpdate();
     void Destroy();
 
-    set< SporeAI* >    mSpores;
+    std::set< SporeAI* >    mSpores;
     uint32            mDoomStaticTimer;
     int32            mSporeTimer;
     int32            mDoomTimer;
@@ -746,7 +746,7 @@ class ShadeOfNaxxramasAI : public MoonScriptCreatureAI
     void OnDied(Unit* pKiller);
     void Destroy();
 
-    set< PortalOfShadowsAI* >    mPortals;
+    std::set< PortalOfShadowsAI* >    mPortals;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -935,7 +935,7 @@ class InstructorRazuviousAI : public MoonScriptBossAI
     void OnDied(Unit* pKiller);
     void AIUpdate();
 
-    set< DeathKnightUnderstudyAI* >    mStudents;
+    std::set< DeathKnightUnderstudyAI* >    mStudents;
 };
 
 InstructorRazuviousAI::InstructorRazuviousAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
@@ -1051,7 +1051,7 @@ void DeathKnightUnderstudyAI::Destroy()
 {
     if (mRazuviousAI != NULL)
     {
-        set< DeathKnightUnderstudyAI* >::iterator Iter = mRazuviousAI->mStudents.find(this);
+        std::set< DeathKnightUnderstudyAI* >::iterator Iter = mRazuviousAI->mStudents.find(this);
         if (Iter != mRazuviousAI->mStudents.end())
             mRazuviousAI->mStudents.erase(Iter);
 
@@ -3310,12 +3310,12 @@ class SapphironAI : public CreatureAIScript
         {
             std::vector<Unit*> TargetTable;        /* From M4ksiu - Big THX to Capt who helped me with std stuff to make it simple and fully working <3 */
             /* If anyone wants to use this function, then leave this note!                                         */
-            for (set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
+            for (std::set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
             {
                 if (isHostile(_unit, (*itr)) && (*itr) != _unit && (*itr)->IsUnit())
                 {
                     Unit* RandomTarget = NULL;
-                    RandomTarget = TO_UNIT(*itr);
+                    RandomTarget = static_cast<Unit*>(*itr);
 
                     if (RandomTarget->isAlive() && _unit->GetDistance2dSq(RandomTarget) >= mindist2cast * mindist2cast && _unit->GetDistance2dSq(RandomTarget) <= maxdist2cast * maxdist2cast && _unit->GetAIInterface()->getThreatByPtr(RandomTarget) > 0 && isHostile(_unit, RandomTarget))
                     {
@@ -4103,12 +4103,12 @@ class KelthuzadAI : public CreatureAIScript
         {
             std::vector<Unit*> TargetTable;        /* From M4ksiu - Big THX to Capt who helped me with std stuff to make it simple and fully working <3 */
             /* If anyone wants to use this function, then leave this note!                                         */
-            for (set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
+            for (std::set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
             {
                 if (((spells[i].targettype == TARGET_RANDOM_FRIEND && isFriendly(_unit, (*itr))) || (spells[i].targettype != TARGET_RANDOM_FRIEND && isHostile(_unit, (*itr)) && (*itr) != _unit)) && (*itr)->IsUnit())  // isAttackable(_unit, (*itr)) &&
                 {
                     Unit* RandomTarget = NULL;
-                    RandomTarget = TO_UNIT(*itr);
+                    RandomTarget = static_cast<Unit*>(*itr);
 
                     if (RandomTarget->isAlive() && _unit->GetDistance2dSq(RandomTarget) >= mindist2cast * mindist2cast && _unit->GetDistance2dSq(RandomTarget) <= maxdist2cast * maxdist2cast && ((RandomTarget->GetHealthPct() >= minhp2cast && RandomTarget->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND) || (_unit->GetAIInterface()->getThreatByPtr(RandomTarget) > 0 && isHostile(_unit, RandomTarget))))
                     {
@@ -4248,7 +4248,7 @@ class SoldierOfTheFrozenWastesAI : public CreatureAIScript
         else if (Kelthuzad->GetScript())
         {
             CreatureAIScript* pScript = Kelthuzad->GetScript();
-            if (TO< KelthuzadAI* >(pScript)->GetDespawnTrash())
+            if (static_cast< KelthuzadAI* >(pScript)->GetDespawnTrash())
             {
                 _unit->Despawn(0, 0);
                 return;
@@ -4377,7 +4377,7 @@ class UnstoppableAbominationAI : public CreatureAIScript
         else if (Kelthuzad->GetScript())
         {
             CreatureAIScript* pScript = Kelthuzad->GetScript();
-            if (TO< KelthuzadAI* >(pScript)->GetDespawnTrash())
+            if (static_cast< KelthuzadAI* >(pScript)->GetDespawnTrash())
             {
                 _unit->Despawn(0, 0);
                 return;
@@ -4549,7 +4549,7 @@ class SoulWeaverAI : public CreatureAIScript
         else if (Kelthuzad->GetScript())
         {
             CreatureAIScript* pScript = Kelthuzad->GetScript();
-            if (TO< KelthuzadAI* >(pScript)->GetDespawnTrash())
+            if (static_cast< KelthuzadAI* >(pScript)->GetDespawnTrash())
             {
                 _unit->Despawn(0, 0);
                 return;

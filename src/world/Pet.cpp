@@ -19,6 +19,7 @@
  *
  */
 
+#include "Creature.h"
 #include "StdAfx.h"
 
 #define WATER_ELEMENTAL         510
@@ -534,7 +535,7 @@ AI_Spell* Pet::CreateAISpell(SpellEntry* info)
     ARCEMU_ASSERT(info != NULL);
 
     // Create an AI_Spell
-    map<uint32, AI_Spell*>::iterator itr = m_AISpellStore.find(info->Id);
+    std::map<uint32, AI_Spell*>::iterator itr = m_AISpellStore.find(info->Id);
     if (itr != m_AISpellStore.end())
         return itr->second;
 
@@ -780,7 +781,7 @@ void Pet::InitializeMe(bool first)
                 SpellEntry* spell = dbcSpell.LookupEntryForced(f[2].GetUInt32());
                 uint16 flags = f[3].GetUInt16();
                 if (spell != NULL && mSpells.find(spell) == mSpells.end())
-                    mSpells.insert(make_pair(spell, flags));
+                    mSpells.insert(std::make_pair(spell, flags));
 
             }
             while (query->NextRow());
@@ -1058,8 +1059,8 @@ void Pet::UpdateSpellList(bool showLearnSpells)
 
     if (GetCreatureInfo()->Family == 0 && Summon)
     {
-        map<uint32, set<uint32> >::iterator it1;
-        set<uint32>::iterator it2;
+        std::map<uint32, std::set<uint32> >::iterator it1;
+        std::set<uint32>::iterator it2;
         it1 = m_Owner->SummonSpells.find(GetEntry());       // Get spells from the owner
         if (it1 != m_Owner->SummonSpells.end())
         {
@@ -1297,13 +1298,13 @@ void Pet::WipeTalents()
 void Pet::RemoveSpell(SpellEntry* sp, bool showUnlearnSpell)
 {
     mSpells.erase(sp);
-    map<uint32, AI_Spell*>::iterator itr = m_AISpellStore.find(sp->Id);
+    std::map<uint32, AI_Spell*>::iterator itr = m_AISpellStore.find(sp->Id);
     if (itr != m_AISpellStore.end())
     {
         if (itr->second->autocast_type != AUTOCAST_EVENT_NONE)
         {
-            list<AI_Spell*>::iterator it3;
-            for (list<AI_Spell*>::iterator it2 = m_autoCastSpells[itr->second->autocast_type].begin(); it2 != m_autoCastSpells[itr->second->autocast_type].end();)
+            std::list<AI_Spell*>::iterator it3;
+            for (std::list<AI_Spell*>::iterator it2 = m_autoCastSpells[itr->second->autocast_type].begin(); it2 != m_autoCastSpells[itr->second->autocast_type].end();)
             {
                 it3 = it2++;
                 if ((*it3) == itr->second)
@@ -1312,7 +1313,7 @@ void Pet::RemoveSpell(SpellEntry* sp, bool showUnlearnSpell)
                 }
             }
         }
-        for (list<AI_Spell*>::iterator it = m_aiInterface->m_spells.begin(); it != m_aiInterface->m_spells.end(); ++it)
+        for (std::list<AI_Spell*>::iterator it = m_aiInterface->m_spells.begin(); it != m_aiInterface->m_spells.end(); ++it)
         {
             if ((*it) == itr->second)
             {
@@ -1327,7 +1328,7 @@ void Pet::RemoveSpell(SpellEntry* sp, bool showUnlearnSpell)
     }
     else
     {
-        for (list<AI_Spell*>::iterator it = m_aiInterface->m_spells.begin(); it != m_aiInterface->m_spells.end(); ++it)
+        for (std::list<AI_Spell*>::iterator it = m_aiInterface->m_spells.begin(); it != m_aiInterface->m_spells.end(); ++it)
         {
             if ((*it)->spell == sp)
             {
@@ -1350,7 +1351,7 @@ void Pet::RemoveSpell(SpellEntry* sp, bool showUnlearnSpell)
         m_Owner->GetSession()->OutPacket(SMSG_PET_UNLEARNED_SPELL, 4, &sp->Id);
 }
 
-void Pet::Rename(string NewName)
+void Pet::Rename(std::string NewName)
 {
     m_name = NewName;
     // update petinfo
@@ -1664,7 +1665,7 @@ HappinessState Pet::GetHappinessState()
 
 AI_Spell* Pet::HandleAutoCastEvent()
 {
-    list<AI_Spell*>::iterator itr, itr2;
+    std::list<AI_Spell*>::iterator itr, itr2;
     bool chance = true;
     uint32 size = 0;
 
@@ -1696,7 +1697,7 @@ AI_Spell* Pet::HandleAutoCastEvent()
 
 void Pet::HandleAutoCastEvent(AutoCastEvents Type)
 {
-    list<AI_Spell*>::iterator itr, it2;
+    std::list<AI_Spell*>::iterator itr, it2;
     AI_Spell* sp;
     if (m_Owner == NULL)
         return;
@@ -1774,7 +1775,7 @@ void Pet::SetAutoCast(AI_Spell* sp, bool on)
     {
         if (!on)
         {
-            for (list<AI_Spell*>::iterator itr = m_autoCastSpells[sp->autocast_type].begin(); itr != m_autoCastSpells[sp->autocast_type].end(); ++itr)
+            for (std::list<AI_Spell*>::iterator itr = m_autoCastSpells[sp->autocast_type].begin(); itr != m_autoCastSpells[sp->autocast_type].end(); ++itr)
             {
                 if ((*itr) == sp)
                 {
@@ -1785,7 +1786,7 @@ void Pet::SetAutoCast(AI_Spell* sp, bool on)
         }
         else
         {
-            for (list<AI_Spell*>::iterator itr = m_autoCastSpells[sp->autocast_type].begin(); itr != m_autoCastSpells[sp->autocast_type].end(); ++itr)
+            for (std::list<AI_Spell*>::iterator itr = m_autoCastSpells[sp->autocast_type].begin(); itr != m_autoCastSpells[sp->autocast_type].end(); ++itr)
             {
                 if ((*itr) == sp)
                     return;
@@ -1823,7 +1824,7 @@ void Pet::DealDamage(Unit* pVictim, uint32 damage, uint32 targetEvent, uint32 un
 {
     if (!pVictim || !pVictim->isAlive() || !pVictim->IsInWorld() || !IsInWorld())
         return;
-    if (pVictim->IsPlayer() && TO< Player* >(pVictim)->GodModeCheat == true)
+    if (pVictim->IsPlayer() && static_cast< Player* >(pVictim)->GodModeCheat == true)
         return;
     if (pVictim->bInvincible)
         return;
@@ -1883,13 +1884,13 @@ void Pet::DealDamage(Unit* pVictim, uint32 damage, uint32 targetEvent, uint32 un
             m_Owner->m_bg->HookOnUnitKill(m_Owner, pVictim);
 
             if (pVictim->IsPlayer())
-                m_Owner->m_bg->HookOnPlayerKill(m_Owner, TO< Player* >(pVictim));
+                m_Owner->m_bg->HookOnPlayerKill(m_Owner, static_cast< Player* >(pVictim));
         }
 
         if (pVictim->IsPlayer())
         {
 
-            Player* playerVictim = TO_PLAYER(pVictim);
+            Player* playerVictim = static_cast<Player*>(pVictim);
             sHookInterface.OnKillPlayer(m_Owner, playerVictim);
 
             bool setAurastateFlag = false;
@@ -1911,7 +1912,7 @@ void Pet::DealDamage(Unit* pVictim, uint32 damage, uint32 targetEvent, uint32 un
                 SetFlag(UNIT_FIELD_AURASTATE, AURASTATE_FLAG_LASTKILLWITHHONOR);
 
                 if (!sEventMgr.HasEvent(m_Owner, EVENT_LASTKILLWITHHONOR_FLAG_EXPIRE))
-                    sEventMgr.AddEvent(TO< Unit* >(m_Owner), &Unit::EventAurastateExpire, static_cast<uint32>(AURASTATE_FLAG_LASTKILLWITHHONOR), EVENT_LASTKILLWITHHONOR_FLAG_EXPIRE, 20000, 1, 0);
+                    sEventMgr.AddEvent(static_cast< Unit* >(m_Owner), &Unit::EventAurastateExpire, static_cast<uint32>(AURASTATE_FLAG_LASTKILLWITHHONOR), EVENT_LASTKILLWITHHONOR_FLAG_EXPIRE, 20000, 1, 0);
                 else
                     sEventMgr.ModifyEventTimeLeft(m_Owner, EVENT_LASTKILLWITHHONOR_FLAG_EXPIRE, 20000);
 
@@ -1969,9 +1970,9 @@ void Pet::DealDamage(Unit* pVictim, uint32 damage, uint32 targetEvent, uint32 un
 
             if (uTagger != NULL && uTagger->IsPlayer())
             {
-                Player* pTagger = TO_PLAYER(uTagger);
+                Player* pTagger = static_cast<Player*>(uTagger);
                 if (pTagger == NULL && (uTagger->IsPet() || uTagger->IsSummon()) && uTagger->GetPlayerOwner())
-                    pTagger = TO_PLAYER(uTagger->GetPlayerOwner());
+                    pTagger = static_cast<Player*>(uTagger->GetPlayerOwner());
                 if (pTagger != NULL)
                 {
 
@@ -1988,7 +1989,7 @@ void Pet::DealDamage(Unit* pVictim, uint32 damage, uint32 targetEvent, uint32 un
                             SetFlag(UNIT_FIELD_AURASTATE, AURASTATE_FLAG_LASTKILLWITHHONOR);
 
                             if (!sEventMgr.HasEvent(this, EVENT_LASTKILLWITHHONOR_FLAG_EXPIRE))
-                                sEventMgr.AddEvent(TO_UNIT(this), &Unit::EventAurastateExpire, (uint32)AURASTATE_FLAG_LASTKILLWITHHONOR, EVENT_LASTKILLWITHHONOR_FLAG_EXPIRE, 20000, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+                                sEventMgr.AddEvent(static_cast<Unit*>(this), &Unit::EventAurastateExpire, (uint32)AURASTATE_FLAG_LASTKILLWITHHONOR, EVENT_LASTKILLWITHHONOR_FLAG_EXPIRE, 20000, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
                             else
                                 sEventMgr.ModifyEventTimeLeft(this, EVENT_LASTKILLWITHHONOR_FLAG_EXPIRE, 20000);
 
@@ -2005,7 +2006,7 @@ void Pet::DealDamage(Unit* pVictim, uint32 damage, uint32 targetEvent, uint32 un
 
                         if (pVictim->IsCreature())
                         {
-                            sQuestMgr.OnPlayerKill(pTagger, TO_CREATURE(pVictim), true);
+                            sQuestMgr.OnPlayerKill(pTagger, static_cast<Creature*>(pVictim), true);
 
                             //////////////////////////////////////////////////////////////////////////////////////////
                             //Kill creature/creature type Achievements
@@ -2119,7 +2120,7 @@ void Pet::Die(Unit* pAttacker, uint32 damage, uint32 spellid)
     //Stop players from casting
     for (std::set< Object* >::iterator itr = GetInRangePlayerSetBegin(); itr != GetInRangePlayerSetEnd(); itr++)
     {
-        Unit* attacker = TO< Unit* >(*itr);
+        Unit* attacker = static_cast< Unit* >(*itr);
 
         if (attacker->GetCurrentSpell() != NULL)
         {

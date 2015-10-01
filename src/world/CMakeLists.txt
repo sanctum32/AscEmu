@@ -5,6 +5,7 @@ project(world)
 
 set(prefix ${ROOT_PATH}/src/world)
 set(sources
+   Commands/AccountCommands.cpp
    DBC/DBCStores.cpp
    DBC/DBCLoader.cpp
    DBC/DBCRecord.cpp
@@ -97,11 +98,13 @@ set(sources
 	Opcodes.cpp 
 	Pet.cpp 
 	PetHandler.cpp 
-	Player.cpp 
-	PlayerPacketWrapper.cpp 
+	Player.cpp
+		PlayerCache.cpp
+	PlayerPacketWrapper.cpp
 	QueryHandler.cpp 
 	Quest.cpp 
 	QuestHandler.cpp 
+    QuestLogEntry.cpp
 	QuestMgr.cpp 
 	QuestCommands.cpp 
 	RaidHandler.cpp 
@@ -193,16 +196,19 @@ set(headers
    CalendarMgr.h
 	CConsole.h
 	CellHandler.h
+    CellHandlerDefines.hpp
 	Channel.h
 	ChannelMgr.h
 	Chat.h
 	CollideInterface.h
 	CommonScheduleThread.h
 	Entities/Summons/CompanionSummon.h
+    Entities/Summons/SummonDefines.hpp
 	ConsoleCommands.h
 	Container.h
 	Corpse.h
 	Creature.h
+    CreatureDefines.hpp
 	DatabaseCleaner.h
 	DayWatcherThread.h
     DBC/DBCGlobals.hpp
@@ -252,6 +258,7 @@ set(headers
 	Map.h
 	MapCell.h
 	MapMgr.h
+    MapMgrDefines.hpp
 	MapScriptInterface.h
 	Master.h
 	MiscHandler.h
@@ -268,7 +275,10 @@ set(headers
 	Entities/Summons/PossessedSummon.h
 	Priest.h
 	Quest.h
+    QuestDefines.hpp
+    QuestLogEntry.hpp
 	QuestMgr.h
+    RecastIncludes.hpp
 	Rogue.h
 	ScriptMgr.h
 	ScriptSetup.h
@@ -292,6 +302,7 @@ set(headers
 	Entities/Summons/TotemSummon.h
 	TransporterHandler.h
 	Unit.h
+    UnitDefines.hpp
 	UpdateFields.h
 	UpdateMask.h
 	Vehicle.h
@@ -302,6 +313,7 @@ set(headers
 	WordFilter.h
 	World.h
 	WorldCreator.h
+    WorldCreatorDefines.hpp
 	WorldRunnable.h
 	WorldSession.h
 	WorldSocket.h
@@ -319,7 +331,16 @@ foreach(src IN ITEMS ${headers})
 endforeach(src)
 
 include(PCHSupport)
-include_directories( ${GLOBAL_INCLUDE_DIRS})
+include_directories(
+   ${CMAKE_CURRENT_SOURCE_DIR}
+   ${ROOT_PATH}/src/shared
+   ${DEPENDENCY_ROOT}/zlib
+   ${DEPENDENCY_ROOT}/openssl
+   ${DEPENDENCY_ROOT}/pcre/include
+   ${RECASTNAVIGATION}/Detour/Include
+   ${DEPENDENCY_ROOT}/vmaplib/include
+   ${DEPENDENCY_ROOT}/g3dlite/include
+   )
 link_directories( ${DEPENDENCY_LIBS} ${EXTRA_LIBS_PATH})
 
 set(WIN_RESOURCE_FILE ${ROOT_PATH}/src/world/resources.rc)
@@ -331,6 +352,6 @@ if(CMAKE_GENERATOR MATCHES Visual*)
 endif()
 set_target_properties(${PROJECT_NAME} PROPERTIES ENABLE_EXPORTS TRUE)
 
-add_dependencies( ${PROJECT_NAME} shared g3dlite vmaplib detour recast)
-target_link_libraries( ${PROJECT_NAME} shared  g3dlite vmaplib detour recast ${PCRE_LIBRARIES})
+add_dependencies( ${PROJECT_NAME} shared g3dlite vmaplib Detour Recast)
+target_link_libraries( ${PROJECT_NAME} shared  g3dlite vmaplib Detour Recast ${PCRE_LIBRARIES})
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)

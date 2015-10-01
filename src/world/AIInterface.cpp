@@ -18,11 +18,27 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "StdAfx.h"
+#include "AIEvents.h"
+
+#include "Unit.h"
+
+#include "CommonTypes.hpp"
+#include "CommonDefines.hpp"
+#include "Player.h"
 
 #ifndef UNIX
 #include <cmath>
 #endif
+
+#include <G3D/Vector3.h>
+#include "AIInterface.h"
+
+#include "Pet.h"
+#include "Creature.h"
+#include "MapMgr.h"
+#include "WorldCreatorDefines.hpp"
+#include "World.h"
+#include "SpellMgr.h"
 
 AIInterface::AIInterface()
     :
@@ -165,7 +181,7 @@ void AIInterface::Init(Unit* un, AIType at, MovementType mt)
 
 AIInterface::~AIInterface()
 {
-    for (list<AI_Spell*>::iterator itr = m_spells.begin(); itr != m_spells.end(); ++itr)
+    for (std::list<AI_Spell*>::iterator itr = m_spells.begin(); itr != m_spells.end(); ++itr)
         delete(*itr);
     m_spells.clear();
 
@@ -222,7 +238,7 @@ void AIInterface::Update(unsigned long time_passed)
         {
             if (!m_Unit->bInvincible && m_Unit->IsPet())
             {
-                Pet* pPet = TO< Pet* >(m_Unit);
+                Pet* pPet = static_cast< Pet* >(m_Unit);
 
                 if (pPet->GetPetAction() == PET_ACTION_ATTACK || pPet->GetPetState() != PET_STATE_PASSIVE)
                 {
@@ -360,7 +376,7 @@ void AIInterface::_UpdateTargets()
 {
     if (m_Unit->IsPlayer() || (m_AIType != AITYPE_PET && disable_targeting))
         return;
-    if (TO_CREATURE(m_Unit)->GetCreatureInfo()->Type == UNIT_TYPE_CRITTER && TO_CREATURE(m_Unit)->GetType() != CREATURE_TYPE_GUARDIAN)
+    if (static_cast<Creature*>(m_Unit)->GetCreatureInfo()->Type == UNIT_TYPE_CRITTER && static_cast<Creature*>(m_Unit)->GetType() != CREATURE_TYPE_GUARDIAN)
         return;
 
     if (m_Unit->GetMapMgr() == NULL)
@@ -488,7 +504,7 @@ void AIInterface::_UpdateTargets()
                     AttackReaction(target, 1, 0);
             }
         }
-        else if (m_aiTargets.size() == 0 && ((m_AIType == AITYPE_PET && (m_Unit->IsPet() && TO< Pet* >(m_Unit)->GetPetState() == PET_STATE_AGGRESSIVE)) || (!m_Unit->IsPet() && disable_melee == false)))
+        else if (m_aiTargets.size() == 0 && ((m_AIType == AITYPE_PET && (m_Unit->IsPet() && static_cast< Pet* >(m_Unit)->GetPetState() == PET_STATE_AGGRESSIVE)) || (!m_Unit->IsPet() && disable_melee == false)))
         {
             Unit* target = FindTarget();
             if (target)
@@ -576,9 +592,9 @@ void AIInterface::_UpdateCombat(uint32 p_time)
                         if (target_land_z > m_Unit->GetMapMgr()->GetLiquidHeight(getNextTarget()->GetPositionX(), getNextTarget()->GetPositionY()))
                             HandleEvent(EVENT_LEAVECOMBAT, m_Unit, 0);  //bugged npcs, probably db fault
                     }
-                    else if (TO< Player* >(getNextTarget())->GetSession() != NULL)
+                    else if (static_cast< Player* >(getNextTarget())->GetSession() != NULL)
                     {
-                        MovementInfo* mi = TO_PLAYER(getNextTarget())->GetSession()->GetMovementInfo();
+                        MovementInfo* mi = static_cast<Player*>(getNextTarget())->GetSession()->GetMovementInfo();
 
                         if (mi->flags & MOVEFLAG_AIR_SWIMMING)
                             HandleEvent(EVENT_LEAVECOMBAT, m_Unit, 0);
@@ -597,9 +613,9 @@ void AIInterface::_UpdateCombat(uint32 p_time)
         if (getNextTarget()->event_GetCurrentInstanceId() == m_Unit->event_GetCurrentInstanceId())
         {
             if (m_Unit->IsCreature())
-                cansee = TO< Creature* >(m_Unit)->CanSee(getNextTarget());
+                cansee = static_cast< Creature* >(m_Unit)->CanSee(getNextTarget());
             else
-                cansee = TO< Player* >(m_Unit)->CanSee(getNextTarget());
+                cansee = static_cast< Player* >(m_Unit)->CanSee(getNextTarget());
         }
         else
         {
@@ -653,7 +669,7 @@ void AIInterface::_UpdateCombat(uint32 p_time)
                 if (getNextTarget()->IsPlayer())
                 {
                     float dist = m_Unit->GetDistanceSq(getNextTarget());
-                    if (TO< Player* >(getNextTarget())->m_currentMovement == MOVE_ROOT || dist >= 64.0f)
+                    if (static_cast< Player* >(getNextTarget())->m_currentMovement == MOVE_ROOT || dist >= 64.0f)
                     {
                         agent = AGENT_RANGED;
                     }
@@ -884,7 +900,7 @@ void AIInterface::_UpdateCombat(uint32 p_time)
                             break;
                         }
                         default:
-                            LOG_ERROR("AI Agents: Targettype of AI agent spell %u for creature %u not set", spellInfo->Id, TO< Creature* >(m_Unit)->GetCreatureInfo()->Id);
+                            LOG_ERROR("AI Agents: Targettype of AI agent spell %u for creature %u not set", spellInfo->Id, static_cast< Creature* >(m_Unit)->GetCreatureInfo()->Id);
                     }
                     // CastSpell(m_Unit, spellInfo, targets);
                     if (m_nextSpell && m_nextSpell->cooldown)
@@ -936,11 +952,11 @@ void AIInterface::_UpdateCombat(uint32 p_time)
                 resetNextTarget();
 
                 WorldPacket data(SMSG_MESSAGECHAT, 100);
-                string msg = "%s attempts to run away in fear!";
+                std::string msg = "%s attempts to run away in fear!";
                 data << (uint8)CHAT_MSG_CHANNEL;
                 data << (uint32)LANG_UNIVERSAL;
-                data << (uint32)(strlen(TO< Creature* >(m_Unit)->GetCreatureInfo()->Name) + 1);
-                data << TO< Creature* >(m_Unit)->GetCreatureInfo()->Name;
+                data << (uint32)(strlen(static_cast< Creature* >(m_Unit)->GetCreatureInfo()->Name) + 1);
+                data << static_cast< Creature* >(m_Unit)->GetCreatureInfo()->Name;
                 data << (uint64)0;
                 data << (uint32)(msg.size() + 1);
                 data << msg;
@@ -959,7 +975,7 @@ void AIInterface::_UpdateCombat(uint32 p_time)
                 FindFriends(64.0f /*8.0f*/);
                 m_hasCalledForHelp = true; // We only want to call for Help once in a Fight.
                 if (m_Unit->IsCreature())
-                    TO< Creature* >(m_Unit)->HandleMonsterSayEvent(MONSTER_SAY_EVENT_CALL_HELP);
+                    static_cast< Creature* >(m_Unit)->HandleMonsterSayEvent(MONSTER_SAY_EVENT_CALL_HELP);
                 CALL_SCRIPT_EVENT(m_Unit, OnCallForHelp)();
             }
             break;
@@ -1008,6 +1024,30 @@ void AIInterface::DismissPet()
     sEventMgr.AddEvent(((Creature*)this->m_Unit), &Creature::DeleteMe, EVENT_DELETE_TIMER, 1, 1);*/
 }
 
+void AIInterface::SetUnitToFollow(Unit* un)
+{
+    if (un == NULL)
+        m_UnitToFollow = 0;
+    else
+        m_UnitToFollow = un->GetGUID();
+}
+
+void AIInterface::SetUnitToFear(Unit* un)
+{
+    if (un == NULL)
+        m_UnitToFear = 0;
+    else
+        m_UnitToFear = un->GetGUID();
+}
+
+void AIInterface::SetUnitToFollowBackup(Unit* un)
+{
+    if (un == NULL)
+        m_UnitToFollow_backup = 0;
+    else
+        m_UnitToFollow_backup = un->GetGUID();
+}
+
 void AIInterface::AttackReaction(Unit* pUnit, uint32 damage_dealt, uint32 spellId)
 {
     if (m_AIState == STATE_EVADE || !pUnit || !pUnit->isAlive() || m_Unit->IsDead() || (m_Unit == pUnit) || (m_AIType == AITYPE_PASSIVE) || disable_combat)
@@ -1025,9 +1065,9 @@ void AIInterface::AttackReaction(Unit* pUnit, uint32 damage_dealt, uint32 spellI
                 {
                     if (!pUnit->IsPlayer() && target_land_z > m_Unit->GetMapMgr()->GetLiquidHeight(pUnit->GetPositionX(), pUnit->GetPositionY()))
                         return;
-                    else if (TO< Player* >(pUnit)->GetSession() != NULL)
+                    else if (static_cast< Player* >(pUnit)->GetSession() != NULL)
                     {
-                        MovementInfo* mi = TO< Player* >(pUnit)->GetSession()->GetMovementInfo();
+                        MovementInfo* mi = static_cast< Player* >(pUnit)->GetSession()->GetMovementInfo();
 
                         if (mi != NULL && !(mi->flags & MOVEFLAG_FALLING) && !(mi->flags & MOVEFLAG_SWIMMING) && !(mi->flags & MOVEFLAG_LEVITATE))
                             return;
@@ -1037,9 +1077,9 @@ void AIInterface::AttackReaction(Unit* pUnit, uint32 damage_dealt, uint32 spellI
         }
     }
 
-    if (pUnit->IsPlayer() && TO< Player* >(pUnit)->GetMisdirectionTarget() != 0)
+    if (pUnit->IsPlayer() && static_cast< Player* >(pUnit)->GetMisdirectionTarget() != 0)
     {
-        Unit* mTarget = m_Unit->GetMapMgr()->GetUnit(TO< Player* >(pUnit)->GetMisdirectionTarget());
+        Unit* mTarget = m_Unit->GetMapMgr()->GetUnit(static_cast< Player* >(pUnit)->GetMisdirectionTarget());
         if (mTarget != NULL && mTarget->isAlive())
             pUnit = mTarget;
     }
@@ -1101,7 +1141,7 @@ void AIInterface::HealReaction(Unit* caster, Unit* victim, SpellEntry* sp, uint3
         // both are players so they might be in the same group
         if (caster->IsPlayer() && victim->IsPlayer())
         {
-            if (TO< Player* >(caster)->GetGroup() == TO< Player* >(victim)->GetGroup())
+            if (static_cast< Player* >(caster)->GetGroup() == static_cast< Player* >(victim)->GetGroup())
             {
                 // get victim into combat since they are both
                 // in the same party
@@ -1115,7 +1155,7 @@ void AIInterface::HealReaction(Unit* caster, Unit* victim, SpellEntry* sp, uint3
 void AIInterface::OnDeath(Object* pKiller)
 {
     if (pKiller->IsUnit())
-        HandleEvent(EVENT_UNITDIED, TO< Unit* >(pKiller), 0);
+        HandleEvent(EVENT_UNITDIED, static_cast< Unit* >(pKiller), 0);
     else
         HandleEvent(EVENT_UNITDIED, m_Unit, 0);
 }
@@ -1203,7 +1243,7 @@ Unit* AIInterface::FindTarget()
         Player* tmpPlr;
         for (std::set< Object*>::iterator itrPlr = m_Unit->GetInRangePlayerSetBegin(); itrPlr != m_Unit->GetInRangePlayerSetEnd(); ++itrPlr)
         {
-            tmpPlr = TO< Player* >(*itrPlr);
+            tmpPlr = static_cast< Player* >(*itrPlr);
 
             if (tmpPlr == NULL)
                 continue;
@@ -1233,13 +1273,13 @@ Unit* AIInterface::FindTarget()
                     if (CollideInterface.CheckLOS(m_Unit->GetMapId(), m_Unit->GetPositionNC(), tmpPlr->GetPositionNC()))
                     {
                         distance = dist;
-                        target = TO_UNIT(tmpPlr);
+                        target = static_cast<Unit*>(tmpPlr);
                     }
                 }
                 else
                 {
                     distance = dist;
-                    target = TO_UNIT(tmpPlr);
+                    target = static_cast<Unit*>(tmpPlr);
                 }
             }
         }
@@ -1263,7 +1303,7 @@ Unit* AIInterface::FindTarget()
         pitr = pitr2;
         ++pitr2;
 
-        pUnit = TO< Player* >(*pitr);
+        pUnit = static_cast< Player* >(*pitr);
 
         if (UnsafeCanOwnerAttackUnit(pUnit) == false)
             continue;
@@ -1305,7 +1345,7 @@ Unit* AIInterface::FindTarget()
             if (!(*itr)->IsUnit())
                 continue;
 
-            pUnit = TO< Unit* >(*itr);
+            pUnit = static_cast< Unit* >(*itr);
 
             if (UnsafeCanOwnerAttackUnit(pUnit) == false)
                 continue;
@@ -1435,7 +1475,7 @@ bool AIInterface::FindFriends(float dist)
         if (!(*itr)->IsUnit())
             continue;
 
-        pUnit = TO< Unit* >(*itr);
+        pUnit = static_cast< Unit* >(*itr);
         if (!pUnit->isAlive())
             continue;
 
@@ -1475,9 +1515,9 @@ bool AIInterface::FindFriends(float dist)
         }
     }
 
-    uint32 family = TO_CREATURE(m_Unit)->GetCreatureInfo()->Type;
+    uint32 family = static_cast<Creature*>(m_Unit)->GetCreatureInfo()->Type;
 
-    CreatureProto* pt = TO< Creature* >(m_Unit)->GetProto();
+    CreatureProto* pt = static_cast< Creature* >(m_Unit)->GetProto();
 
     uint32 summonguard = 0;
 
@@ -1527,7 +1567,7 @@ bool AIInterface::FindFriends(float dist)
         for (; hostileItr != m_Unit->GetInRangePlayerSetEnd(); hostileItr++)
         {
 
-            Player* p = TO< Player* >(*hostileItr);
+            Player* p = static_cast< Player* >(*hostileItr);
 
             if (spawned >= 3)
                 break;
@@ -1589,7 +1629,7 @@ float AIInterface::_CalcAggroRange(Unit* target)
     {
         lvlDiff = -8;
     }
-    if (!TO_CREATURE(m_Unit)->CanSee(target))
+    if (!static_cast<Creature*>(m_Unit)->CanSee(target))
         return 0;
 
     // Retrieve aggrorange from table
@@ -1617,9 +1657,9 @@ float AIInterface::_CalcAggroRange(Unit* target)
     }
 
     // Multiply by elite value
-    if (m_Unit->IsCreature() && TO_CREATURE(m_Unit)->GetCreatureInfo()->Rank > 0)
+    if (m_Unit->IsCreature() && static_cast<Creature*>(m_Unit)->GetCreatureInfo()->Rank > 0)
     {
-        AggroRange *= (TO_CREATURE(m_Unit)->GetCreatureInfo()->Rank) * 1.50f;
+        AggroRange *= (static_cast<Creature*>(m_Unit)->GetCreatureInfo()->Rank) * 1.50f;
     }
 
     // Cap Aggro range at 40.0f
@@ -1641,7 +1681,7 @@ float AIInterface::_CalcAggroRange(Unit* target)
     AggroRange += modDetectRange;
     if (target->IsPlayer())
     {
-        AggroRange += TO< Player* >(target)->DetectedRange;
+        AggroRange += static_cast< Player* >(target)->DetectedRange;
     }
 
     // Re-check if aggro range exceeds Minimum/Maximum caps
@@ -1685,7 +1725,7 @@ void AIInterface::_CalcDestinationAndMove(Unit* target, float dist)
         float x = dist * cosf(angle);
         float y = dist * sinf(angle);
 
-        if (target->IsPlayer() && TO_PLAYER(target)->m_isMoving)
+        if (target->IsPlayer() && static_cast<Player*>(target)->m_isMoving)
         {
             // cater for moving player vector based on orientation
             x -= cosf(target->GetOrientation());
@@ -1896,7 +1936,7 @@ bool AIInterface::IsFlying()
     if (Flying())
         return true;
     if (m_Unit->IsPlayer())
-        return TO_PLAYER(m_Unit)->FlyCheat;
+        return static_cast<Player*>(m_Unit)->FlyCheat;
     return false;
 }
 
@@ -2099,7 +2139,7 @@ bool AIInterface::showWayPoints(Player* pPlayer, bool Backwards)
         if ((*itr) != NULL)
         {
             wp = *itr;
-            Creature* c = TO_CREATURE(GetUnit());    // yes this is terrible
+            Creature* c = static_cast<Creature*>(GetUnit());    // yes this is terrible
 
             //Create
             Creature* pWayPoint = new Creature((uint64)HIGHGUID_TYPE_WAYPOINT << 32 | wp->id);
@@ -2178,7 +2218,7 @@ bool AIInterface::saveWayPoints()
     if (!GetUnit()) return false;
     if (!GetUnit()->IsCreature()) return false;
 
-    WorldDatabase.Execute("DELETE FROM creature_waypoints WHERE spawnid = %u", TO_CREATURE(GetUnit())->GetSQL_id());
+    WorldDatabase.Execute("DELETE FROM creature_waypoints WHERE spawnid = %u", static_cast<Creature*>(GetUnit())->GetSQL_id());
     WayPointMap::const_iterator itr;
     WayPoint* wp = NULL;
     std::stringstream ss;
@@ -2195,7 +2235,7 @@ bool AIInterface::saveWayPoints()
 
         ss << "INSERT INTO creature_waypoints ";
         ss << "(spawnid,waypointid,position_x,position_y,position_z,waittime,flags,forwardemoteoneshot,forwardemoteid,backwardemoteoneshot,backwardemoteid,forwardskinid,backwardskinid) VALUES (";
-        ss << TO_CREATURE(GetUnit())->GetSQL_id() << ", ";
+        ss << static_cast<Creature*>(GetUnit())->GetSQL_id() << ", ";
         ss << wp->id << ", ";
         ss << wp->x << ", ";
         ss << wp->y << ", ";
@@ -2287,7 +2327,7 @@ void AIInterface::_UpdateMovement(uint32 p_time)
                     if (wp)
                     {
                         CALL_SCRIPT_EVENT(m_Unit, OnReachWP)(wp->id, !m_moveBackward);
-                        TO_CREATURE(m_Unit)->HandleMonsterSayEvent(MONSTER_SAY_EVENT_RANDOM_WAYPOINT);
+                        static_cast<Creature*>(m_Unit)->HandleMonsterSayEvent(MONSTER_SAY_EVENT_RANDOM_WAYPOINT);
 
                         //Lets face to correct orientation
                         wayO = wp->o;
@@ -2350,7 +2390,7 @@ void AIInterface::_UpdateMovement(uint32 p_time)
             if (m_formationLinkTarget == 0)
             {
                 // haven't found our target yet
-                Creature* c = TO< Creature* >(m_Unit);
+                Creature* c = static_cast< Creature* >(m_Unit);
                 if (!c->haslinkupevent)
                 {
                     // register linkup event
@@ -2761,11 +2801,11 @@ AI_Spell* AIInterface::getSpell()
 
     if (m_Unit->IsPet())
     {
-        sp = def_spell = TO< Pet* >(m_Unit)->HandleAutoCastEvent();
+        sp = def_spell = static_cast< Pet* >(m_Unit)->HandleAutoCastEvent();
     }
     else
     {
-        for (list<AI_Spell*>::iterator itr = m_spells.begin(); itr != m_spells.end();)
+        for (std::list<AI_Spell*>::iterator itr = m_spells.begin(); itr != m_spells.end();)
         {
             sp = *itr;
             ++itr;
@@ -2920,7 +2960,7 @@ Unit* AIInterface::GetMostHated()
     if (ResultUnit != NULL)
         return ResultUnit;
 
-    pair<Unit*, int32> currentTarget;
+    std::pair<Unit*, int32> currentTarget;
     currentTarget.first = 0;
     currentTarget.second = -1;
 
@@ -2967,7 +3007,7 @@ Unit* AIInterface::GetSecondHated()
 
     Unit* ResultUnit = GetMostHated();
 
-    pair<Unit*, int32> currentTarget;
+    std::pair<Unit*, int32> currentTarget;
     currentTarget.first = 0;
     currentTarget.second = -1;
 
@@ -3047,7 +3087,7 @@ bool AIInterface::modThreatByPtr(Unit* obj, int32 mod)
     }
     else
     {
-        m_aiTargets.insert(make_pair(obj->GetGUID(), mod));
+        m_aiTargets.insert(std::make_pair(obj->GetGUID(), mod));
 
         tempthreat = mod + obj->GetThreatModifyer();
         if (tempthreat < 1)
@@ -3370,14 +3410,14 @@ void AIInterface::WipeReferences()
     tauntedBy = 0;
 
     //Clear targettable
-    for (set<Object*>::iterator itr = m_Unit->GetInRangeSetBegin(); itr != m_Unit->GetInRangeSetEnd(); ++itr)
-        if ((*itr)->IsUnit() && TO< Unit* >(*itr)->GetAIInterface())
-            TO< Unit* >(*itr)->GetAIInterface()->RemoveThreatByPtr(m_Unit);
+    for (std::set<Object*>::iterator itr = m_Unit->GetInRangeSetBegin(); itr != m_Unit->GetInRangeSetEnd(); ++itr)
+        if ((*itr)->IsUnit() && static_cast< Unit* >(*itr)->GetAIInterface())
+            static_cast< Unit* >(*itr)->GetAIInterface()->RemoveThreatByPtr(m_Unit);
 }
 
 void AIInterface::ResetProcCounts()
 {
-    for (list<AI_Spell*>::iterator itr = m_spells.begin(); itr != m_spells.end(); ++itr)
+    for (std::list<AI_Spell*>::iterator itr = m_spells.begin(); itr != m_spells.end(); ++itr)
         if ((*itr)->procCount)
             (*itr)->procCounter = 0;
 }
@@ -3395,20 +3435,20 @@ void AIInterface::EventChangeFaction(Unit* ForceAttackersToHateThisInstead)
     //Clear targettable
     if (ForceAttackersToHateThisInstead == NULL)
     {
-        for (set<Object*>::iterator itr = m_Unit->GetInRangeSetBegin(); itr != m_Unit->GetInRangeSetEnd(); ++itr)
-            if ((*itr)->IsUnit() && TO< Unit* >(*itr)->GetAIInterface())
-                TO< Unit* >(*itr)->GetAIInterface()->RemoveThreatByPtr(m_Unit);
+        for (std::set<Object*>::iterator itr = m_Unit->GetInRangeSetBegin(); itr != m_Unit->GetInRangeSetEnd(); ++itr)
+            if ((*itr)->IsUnit() && static_cast< Unit* >(*itr)->GetAIInterface())
+                static_cast< Unit* >(*itr)->GetAIInterface()->RemoveThreatByPtr(m_Unit);
 
         resetNextTarget();
     }
     else
     {
-        for (set<Object*>::iterator itr = m_Unit->GetInRangeSetBegin(); itr != m_Unit->GetInRangeSetEnd(); ++itr)
-            if ((*itr)->IsUnit() && TO< Unit* >(*itr)->GetAIInterface()
-                && TO< Unit* >(*itr)->GetAIInterface()->getThreatByPtr(m_Unit))   //this guy will join me in fight since I'm telling him "sorry i was controlled"
+        for (std::set<Object*>::iterator itr = m_Unit->GetInRangeSetBegin(); itr != m_Unit->GetInRangeSetEnd(); ++itr)
+            if ((*itr)->IsUnit() && static_cast< Unit* >(*itr)->GetAIInterface()
+                && static_cast< Unit* >(*itr)->GetAIInterface()->getThreatByPtr(m_Unit))   //this guy will join me in fight since I'm telling him "sorry i was controlled"
             {
-                TO< Unit* >(*itr)->GetAIInterface()->modThreatByPtr(ForceAttackersToHateThisInstead, 10);   //just aping to be bale to hate him in case we got nothing else
-                TO< Unit* >(*itr)->GetAIInterface()->RemoveThreatByPtr(m_Unit);
+                static_cast< Unit* >(*itr)->GetAIInterface()->modThreatByPtr(ForceAttackersToHateThisInstead, 10);   //just aping to be bale to hate him in case we got nothing else
+                static_cast< Unit* >(*itr)->GetAIInterface()->RemoveThreatByPtr(m_Unit);
             }
 
         modThreatByPtr(ForceAttackersToHateThisInstead, 1);
@@ -3734,7 +3774,7 @@ bool AIInterface::CreatePath(float x, float y, float z, bool onlytest /*= false*
     dtPolyRef path[256];
     int pathcount;
 
-    if (nav->query->findPath(startref, endref, start, end, &filter, path, &pathcount, 256) != DT_SUCCESS)
+    if (dtStatusFailed(nav->query->findPath(startref, endref, start, end, &filter, path, &pathcount, 256)))
         return false;
 
     if (pathcount == 0 || path[pathcount - 1] != endref)
@@ -3744,7 +3784,7 @@ bool AIInterface::CreatePath(float x, float y, float z, bool onlytest /*= false*
     int32 pointcount;
     bool usedoffmesh;
 
-    if (findSmoothPath(start, end, path, pathcount, points, &pointcount, usedoffmesh, MAX_PATH_LENGTH, nav->mesh, nav->query, filter) != DT_SUCCESS)
+    if (dtStatusFailed(findSmoothPath(start, end, path, pathcount, points, &pointcount, usedoffmesh, MAX_PATH_LENGTH, nav->mesh, nav->query, filter)))
         return false;
 
     //add to spline
@@ -3767,11 +3807,11 @@ dtStatus AIInterface::findSmoothPath(const float* startPos, const float* endPos,
     uint32 npolys = polyPathSize;
 
     float iterPos[VERTEX_SIZE], targetPos[VERTEX_SIZE];
-    if (DT_SUCCESS != query->closestPointOnPolyBoundary(polys[0], startPos, iterPos))
-        return DT_FAILURE;
+    if (dtStatusFailed(query->closestPointOnPolyBoundary(polys[0], startPos, iterPos)))
+        return DT_FAILURE | DT_OUT_OF_MEMORY;
 
-    if (DT_SUCCESS != query->closestPointOnPolyBoundary(polys[npolys - 1], endPos, targetPos))
-        return DT_FAILURE;
+    if (dtStatusFailed(query->closestPointOnPolyBoundary(polys[npolys - 1], endPos, targetPos)))
+        return DT_FAILURE | DT_OUT_OF_MEMORY;
 
     dtVcopy(&smoothPath[nsmoothPath * VERTEX_SIZE], iterPos);
     nsmoothPath++;
@@ -3794,7 +3834,7 @@ dtStatus AIInterface::findSmoothPath(const float* startPos, const float* endPos,
         // Find movement delta.
         float delta[VERTEX_SIZE];
         dtVsub(delta, steerPos, iterPos);
-        float len = dtSqrt(dtVdot(delta, delta));
+        float len = dtMathSqrtf(dtVdot(delta, delta));
         // If the steer target is end of path or off-mesh link, do not move past the location.
         if ((endOfPath || offMeshConnection) && len < SMOOTH_PATH_STEP_SIZE)
             len = 1.0f;
@@ -3851,7 +3891,7 @@ dtStatus AIInterface::findSmoothPath(const float* startPos, const float* endPos,
 
             // Handle the connection.
             float startPos[VERTEX_SIZE], endPos[VERTEX_SIZE];
-            if (DT_SUCCESS == mesh->getOffMeshConnectionPolyEndPoints(prevRef, polyRef, startPos, endPos))
+            if (dtStatusFailed(mesh->getOffMeshConnectionPolyEndPoints(prevRef, polyRef, startPos, endPos)))
             {
                 if (nsmoothPath < maxSmoothPathSize)
                 {
@@ -3888,7 +3928,7 @@ bool AIInterface::getSteerTarget(const float* startPos, const float* endPos, con
     uint32 nsteerPath = 0;
     dtStatus dtResult = query->findStraightPath(startPos, endPos, path, pathSize,
                                                 steerPath, steerPathFlags, steerPathPolys, (int*)&nsteerPath, MAX_STEER_POINTS);
-    if (!nsteerPath || DT_SUCCESS != dtResult)
+    if (!nsteerPath || dtStatusFailed(dtResult))
         return false;
 
     // Find vertex far enough to steer to.
@@ -3973,7 +4013,7 @@ void AIInterface::EventEnterCombat(Unit* pUnit, uint32 misc1)
     /* send the message */
     if (m_Unit->IsCreature())
     {
-        Creature* creature = TO_CREATURE(m_Unit);
+        Creature* creature = static_cast<Creature*>(m_Unit);
         creature->HandleMonsterSayEvent(MONSTER_SAY_EVENT_ENTER_COMBAT);
 
         CALL_SCRIPT_EVENT(m_Unit, OnCombatStart)(pUnit);
@@ -3999,7 +4039,7 @@ void AIInterface::EventEnterCombat(Unit* pUnit, uint32 misc1)
 
 
     // dismount if mounted
-    if (m_Unit->IsCreature() && !(TO_CREATURE(m_Unit)->GetCreatureInfo()->Flags1 & CREATURE_FLAG1_FIGHT_MOUNTED))
+    if (m_Unit->IsCreature() && !(static_cast<Creature*>(m_Unit)->GetCreatureInfo()->Flags1 & CREATURE_FLAG1_FIGHT_MOUNTED))
         m_Unit->SetMount(0);
 
     if (m_AIState != STATE_ATTACKING)
@@ -4010,16 +4050,16 @@ void AIInterface::EventEnterCombat(Unit* pUnit, uint32 misc1)
     {
         if (m_Unit->IsCreature())
         {
-            if (TO< Creature* >(m_Unit)->GetCreatureInfo()->Rank == 3)
+            if (static_cast< Creature* >(m_Unit)->GetCreatureInfo()->Rank == 3)
             {
                 m_Unit->GetMapMgr()->AddCombatInProgress(m_Unit->GetGUID());
             }
         }
     }
-    if (pUnit->IsPlayer() && TO< Player* >(pUnit)->InGroup())
+    if (pUnit->IsPlayer() && static_cast< Player* >(pUnit)->InGroup())
     {
         m_Unit->GetAIInterface()->modThreatByPtr(pUnit, 1);
-        Group* pGroup = TO< Player* >(pUnit)->GetGroup();
+        Group* pGroup = static_cast< Player* >(pUnit)->GetGroup();
 
         Player* pGroupGuy;
         GroupMembersSet::iterator itr;
@@ -4087,7 +4127,7 @@ void AIInterface::EventLeaveCombat(Unit* pUnit, uint32 misc1)
     // restart emote
     if (m_Unit->IsCreature())
     {
-        Creature* creature = TO_CREATURE(m_Unit);
+        Creature* creature = static_cast<Creature*>(m_Unit);
         creature->HandleMonsterSayEvent(MONSTER_SAY_EVENT_ON_COMBAT_STOP);
 
         if (creature->original_emotestate)
@@ -4141,10 +4181,10 @@ void AIInterface::EventLeaveCombat(Unit* pUnit, uint32 misc1)
         m_lastFollowX = m_lastFollowY = 0;
         if (m_Unit->IsPet())
         {
-            TO< Pet* >(m_Unit)->SetPetAction(PET_ACTION_FOLLOW);
+            static_cast< Pet* >(m_Unit)->SetPetAction(PET_ACTION_FOLLOW);
             if (m_Unit->isAlive() && m_Unit->IsInWorld())
             {
-                TO< Pet* >(m_Unit)->HandleAutoCastEvent(AUTOCAST_EVENT_LEAVE_COMBAT);
+                static_cast< Pet* >(m_Unit)->HandleAutoCastEvent(AUTOCAST_EVENT_LEAVE_COMBAT);
             }
         }
         HandleEvent(EVENT_FOLLOWOWNER, 0, 0);
@@ -4165,7 +4205,7 @@ void AIInterface::EventLeaveCombat(Unit* pUnit, uint32 misc1)
             else
                 m_AIState = STATE_FOLLOWING;
 
-            Creature* aiowner = TO< Creature* >(m_Unit);
+            Creature* aiowner = static_cast< Creature* >(m_Unit);
             //clear tagger.
             aiowner->UnTag();
             aiowner->SetUInt32Value(UNIT_DYNAMIC_FLAGS, aiowner->GetUInt32Value(UNIT_DYNAMIC_FLAGS) & ~(U_DYN_FLAG_TAGGED_BY_OTHER | U_DYN_FLAG_LOOTABLE));
@@ -4177,7 +4217,7 @@ void AIInterface::EventLeaveCombat(Unit* pUnit, uint32 misc1)
     {
         if (m_Unit->IsCreature())
         {
-            if (TO< Creature* >(m_Unit)->GetCreatureInfo()->Rank == 3)
+            if (static_cast< Creature* >(m_Unit)->GetCreatureInfo()->Rank == 3)
             {
                 m_Unit->GetMapMgr()->RemoveCombatInProgress(m_Unit->GetGUID());
             }
@@ -4187,7 +4227,7 @@ void AIInterface::EventLeaveCombat(Unit* pUnit, uint32 misc1)
     // Remount if mounted
     if (m_Unit->IsCreature())
     {
-        Creature* creature = TO< Creature* >(m_Unit);
+        Creature* creature = static_cast< Creature* >(m_Unit);
         if (creature->m_spawn)
             m_Unit->SetMount(creature->m_spawn->MountedDisplayID);
         //m_Unit->SetMount(TO< Creature* >(m_Unit)->GetSpawnO->MountedDisplayID);
@@ -4203,7 +4243,7 @@ void AIInterface::EventDamageTaken(Unit* pUnit, uint32 misc1)
     if (pUnit == NULL) return;
 
     if (m_Unit->IsCreature())
-        TO< Creature* >(m_Unit)->HandleMonsterSayEvent(MONSTER_SAY_EVENT_ON_DAMAGE_TAKEN);
+        static_cast< Creature* >(m_Unit)->HandleMonsterSayEvent(MONSTER_SAY_EVENT_ON_DAMAGE_TAKEN);
 
     pUnit->RemoveAura(24575);
 
@@ -4221,7 +4261,7 @@ void AIInterface::EventFollowOwner(Unit* pUnit, uint32 misc1)
         return;
     m_AIState = STATE_FOLLOWING;
     if (m_Unit->IsPet())
-        TO< Pet* >(m_Unit)->SetPetAction(PET_ACTION_FOLLOW);
+        static_cast< Pet* >(m_Unit)->SetPetAction(PET_ACTION_FOLLOW);
     SetUnitToFollow(m_PetOwner);
     m_lastFollowX = m_lastFollowY = 0;
     FollowDistance = 4.0f;
@@ -4327,11 +4367,11 @@ void AIInterface::EventUnitDied(Unit* pUnit, uint32 misc1)
     if (pUnit == NULL) return;
 
     if (m_Unit->IsCreature())
-        TO< Creature* >(m_Unit)->HandleMonsterSayEvent(MONSTER_SAY_EVENT_ON_DIED);
+        static_cast< Creature* >(m_Unit)->HandleMonsterSayEvent(MONSTER_SAY_EVENT_ON_DIED);
 
     CALL_SCRIPT_EVENT(m_Unit, OnDied)(pUnit);
     if (m_Unit->IsCreature())
-        CALL_INSTANCE_SCRIPT_EVENT(m_Unit->GetMapMgr(), OnCreatureDeath)(TO_CREATURE(m_Unit), pUnit);
+        CALL_INSTANCE_SCRIPT_EVENT(m_Unit->GetMapMgr(), OnCreatureDeath)(static_cast<Creature*>(m_Unit), pUnit);
 
     m_AIState = STATE_IDLE;
 
@@ -4383,7 +4423,7 @@ void AIInterface::EventUnitDied(Unit* pUnit, uint32 misc1)
         || pInstance->m_mapInfo->type == INSTANCE_MULTIMODE))
     {
         InstanceBossInfoMap* bossInfoMap = objmgr.m_InstanceBossInfoMap[m_Unit->GetMapMgr()->GetMapId()];
-        Creature* pCreature = TO< Creature* >(m_Unit);
+        Creature* pCreature = static_cast< Creature* >(m_Unit);
         bool found = false;
 
         if (IS_PERSISTENT_INSTANCE(pInstance) && bossInfoMap != NULL)
@@ -4425,7 +4465,7 @@ void AIInterface::EventUnitDied(Unit* pUnit, uint32 misc1)
     {
         if (m_Unit->IsCreature())
         {
-            if (TO< Creature* >(m_Unit)->GetCreatureInfo()->Rank == 3)
+            if (static_cast< Creature* >(m_Unit)->GetCreatureInfo()->Rank == 3)
             {
                 m_Unit->GetMapMgr()->RemoveCombatInProgress(m_Unit->GetGUID());
             }

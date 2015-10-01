@@ -18,11 +18,14 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "FastQueue.h"
+#include "Threading/Mutex.h"
+#include "WorldPacket.h"
 #include "StdAfx.h"
 
 OpcodeHandler WorldPacketHandlers[NUM_MSG_TYPES];
 
-WorldSession::WorldSession(uint32 id, string Name, WorldSocket* sock) :
+WorldSession::WorldSession(uint32 id, std::string Name, WorldSocket* sock) :
     m_loggingInPlayer(NULL),
     m_currMsTime(getMSTime()),
     bDeleted(false),
@@ -261,10 +264,10 @@ void WorldSession::LogoutPlayer(bool Save)
                 switch (obj->GetTypeId())
                 {
                     case TYPEID_UNIT:
-                        TO <Creature*>(obj)->loot.looters.erase(_player->GetLowGUID());
+                        static_cast <Creature*>(obj)->loot.looters.erase(_player->GetLowGUID());
                         break;
                     case TYPEID_GAMEOBJECT:
-                        TO <GameObject*>(obj)->loot.looters.erase(_player->GetLowGUID());
+                        static_cast <GameObject*>(obj)->loot.looters.erase(_player->GetLowGUID());
                         break;
                 }
             }
@@ -470,7 +473,7 @@ void WorldSession::SetSecurity(std::string securitystring)
     LoadSecurity(securitystring);
 
     // update db
-    CharacterDatabase.Execute("UPDATE accounts SET gm=\'%s\' WHERE acct=%u", CharacterDatabase.EscapeString(string(permissions)).c_str(), _accountId);
+    CharacterDatabase.Execute("UPDATE accounts SET gm=\'%s\' WHERE acct=%u", CharacterDatabase.EscapeString(std::string(permissions)).c_str(), _accountId);
 }
 
 bool WorldSession::CanUseCommand(char cmdstr)
@@ -1748,4 +1751,34 @@ void WorldSession::SendClientCacheVersion(uint32 version)
     WorldPacket data(SMSG_CLIENTCACHE_VERSION, 4);
     data << uint32(version);
     SendPacket(&data);
+}
+
+void WorldSession::SendPacket(WorldPacket* packet) {
+    if (_socket && _socket->IsConnected())
+        _socket->SendPacket(packet);
+}
+
+void WorldSession::SendPacket(StackBufferBase* packet) {
+    if (_socket && _socket->IsConnected())
+        _socket->SendPacket(packet);
+}
+
+void WorldSession::OutPacket(uint16 opcode) {
+    if (_socket && _socket->IsConnected())
+        _socket->OutPacket(opcode, 0, NULL);
+}
+
+void WorldSession::OutPacket(uint16 opcode, uint16 len, const void* data) {
+    if (_socket && _socket->IsConnected())
+        _socket->OutPacket(opcode, len, data);
+}
+
+void WorldSession::QueuePacket(WorldPacket* packet) {
+    m_lastPing = (uint32)UNIXTIME;
+    _recvQueue.Push(packet);
+}
+
+void WorldSession::Disconnect() {
+    if (_socket && _socket->IsConnected())
+        _socket->Disconnect();
 }

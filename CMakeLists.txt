@@ -12,14 +12,12 @@ include(cmake/CompilerDefs.cmake)
 #set our PATH variables
 set(ROOT_PATH ${CMAKE_SOURCE_DIR})
 #We have our own custom modules that we use. This tells cmakes where to find them.
-set(CMAKE_SOURCE_DIR ${ROOT_PATH}/cmake)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${ROOT_PATH}/cmake)
+set(CMAKE_MODULE_PATH ${ROOT_PATH}/cmake)
 set(DEPENDENCY_ROOT ${ROOT_PATH}/dep)
-set(DEPENDENCY_SOURCES ${DEPENDENCY_ROOT}/src)
 set(DEPENDENCY_LIBS ${DEPENDENCY_ROOT}/lib)
-set(DEPENDENCY_INCLUDE_ROOT ${DEPENDENCY_ROOT}/include)
 set(DEPENDENCY_DLLS64 ${DEPENDENCY_ROOT}/dll64)
 set(RECASTNAVIGATION ${DEPENDENCY_ROOT}/recastnavigation)
+set(LOADLIB_PATH ${ROOT_PATH}/src/tools/loadlib)
 
 #check for including our dependencies
 if(IS_64BIT)
@@ -57,13 +55,11 @@ set(GLOBAL_INCLUDE_DIRS
    ${ROOT_PATH}/src/shared
    ${ROOT_PATH}/src/world
    ${ROOT_PATH}/src/logonserver
-   ${DEPENDENCY_INCLUDE_ROOT}
    ${DEPENDENCY_ROOT}/g3dlite/include
    ${DEPENDENCY_ROOT}/vmaplib/include
    ${DEPENDENCY_ROOT}/pcre/include
-   ${DEPENDENCY_ROOT}/zlib
-   ${RECASTNAVIGATION}/recast/include
-   ${RECASTNAVIGATION}/detour/include
+   ${RECASTNAVIGATION}/Recast/Include
+   ${RECASTNAVIGATION}/Detour/Include
    )
 
 #find our needed packages

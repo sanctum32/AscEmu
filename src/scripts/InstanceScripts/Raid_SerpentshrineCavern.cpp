@@ -404,11 +404,11 @@ class HydrossTheUnstableAI : public CreatureAIScript
             Unit* RandomTarget = NULL;
             std::vector<Unit*> TargetTable;        /* From M4ksiu - Big THX to Capt who helped me with std stuff to make it simple and fully working <3 */
             /* If anyone wants to use this function, then leave this note!                                         */
-            for (set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
+            for (std::set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
             {
                 if (isHostile(_unit, (*itr)) && (*itr)->IsUnit())
                 {
-                    RandomTarget = TO_UNIT(*itr);
+                    RandomTarget = static_cast<Unit*>(*itr);
 
                     if (RandomTarget->isAlive() && _unit->GetDistance2dSq(RandomTarget) >= mindist2cast * mindist2cast && _unit->GetDistance2dSq(RandomTarget) <= maxdist2cast * maxdist2cast)
                         TargetTable.push_back(RandomTarget);
@@ -643,11 +643,11 @@ class LeotherasAI : public CreatureAIScript
         {
             //count greyheart spellbinders
             Creature* creature = NULL;
-            for (set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
+            for (std::set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
             {
                 if ((*itr)->IsCreature())
                 {
-                    creature = TO_CREATURE((*itr));
+                    creature = static_cast<Creature*>((*itr));
 
                     if (creature->GetCreatureInfo()->Id == CN_GREYHEART_SPELLBINDER && creature->isAlive())
                         LeotherasEventGreyheartToKill[_unit->GetInstanceID()]++;
@@ -1029,12 +1029,12 @@ class GreyheartSpellbinderAI : public CreatureAIScript
                     //attack nearest player
                     Player* NearestPlayer = NULL;
                     float NearestDist = 0;
-                    for (set< Object* >::iterator itr = _unit->GetInRangePlayerSetBegin(); itr != _unit->GetInRangePlayerSetEnd(); ++itr)
+                    for (std::set< Object* >::iterator itr = _unit->GetInRangePlayerSetBegin(); itr != _unit->GetInRangePlayerSetEnd(); ++itr)
                     {
                         if (isHostile(_unit, (*itr)) && ((*itr)->GetDistance2dSq(_unit) < NearestDist || !NearestDist))
                         {
                             NearestDist = (*itr)->GetDistance2dSq(_unit);
-                            NearestPlayer = TO< Player* >(*itr);
+                            NearestPlayer = static_cast< Player* >(*itr);
                         }
                     }
 
@@ -1095,11 +1095,11 @@ class GreyheartSpellbinderAI : public CreatureAIScript
             Unit* RandomTarget = NULL;
             std::vector<Unit*> TargetTable;        /* From M4ksiu - Big THX to Capt who helped me with std stuff to make it simple and fully working <3 */
             /* If anyone wants to use this function, then leave this note!                                         */
-            for (set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
+            for (std::set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
             {
                 if (isHostile(_unit, (*itr)) && (*itr)->IsUnit() && isAttackable(_unit, (*itr)))
                 {
-                    RandomTarget = TO_UNIT(*itr);
+                    RandomTarget = static_cast<Unit*>(*itr);
 
                     if (RandomTarget->isAlive() && _unit->GetDistance2dSq(RandomTarget) >= mindist2cast * mindist2cast && _unit->GetDistance2dSq(RandomTarget) <= maxdist2cast * maxdist2cast)
                         TargetTable.push_back(RandomTarget);
@@ -1147,7 +1147,7 @@ class ShadowofLeotherasAI : public CreatureAIScript
             _unit->SendChatMessage(CHAT_MSG_MONSTER_YELL, LANG_UNIVERSAL, "At last I am liberated. It has been too long since I have tasted true freedom!");
             _unit->PlaySoundToSet(11309);
 
-            sEventMgr.AddEvent(TO_OBJECT(_unit), &Object::EventSetUInt32Value, (uint32)UNIT_FIELD_FLAGS, (uint32)0, EVENT_CREATURE_UPDATE, 7500, 0, 1);
+            sEventMgr.AddEvent(static_cast<Object*>(_unit), &Object::EventSetUInt32Value, (uint32)UNIT_FIELD_FLAGS, (uint32)0, EVENT_CREATURE_UPDATE, 7500, 0, 1);
         }
 
         void OnCombatStart(Unit* mTarget)
@@ -1272,11 +1272,11 @@ class KarathressAI : public CreatureAIScript
                 CataclysmicBoltTimer = 10;
                 Unit* RandomTarget = NULL;
                 std::vector<Unit*> TargetTable;
-                for (set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
+                for (std::set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
                 {
                     if (isHostile(_unit, (*itr)) && (*itr)->IsUnit())
                     {
-                        RandomTarget = TO_UNIT(*itr);
+                        RandomTarget = static_cast<Unit*>(*itr);
 
                         if (RandomTarget->isAlive() && _unit->GetDistance2dSq(RandomTarget) <= 80.0f && _unit->GetPowerType() == POWER_TYPE_MANA)
                             TargetTable.push_back(RandomTarget);
@@ -1364,8 +1364,8 @@ class FathomGuardSharkissAI : public MoonScriptCreatureAI
             {
                 FLK->CastSpell(FLK, dbcSpell.LookupEntry(38455), true); //Power of Sharkkis
                 FLK->SendScriptTextChatMessage(4743);     // I am more powerful than ever!
-                if (TO< KarathressAI* >(FLK->GetScript())->AdvisorsLeft > 0)
-                    TO< KarathressAI* >(FLK->GetScript())->AdvisorsLeft--;
+                if (static_cast< KarathressAI* >(FLK->GetScript())->AdvisorsLeft > 0)
+                    static_cast< KarathressAI* >(FLK->GetScript())->AdvisorsLeft--;
                 FLK->RemoveAura(BLESSING_OF_THE_TIDES);
             }
 
@@ -1431,8 +1431,8 @@ class FathomGuardTidalvessAI : public MoonScriptCreatureAI
             {
                 FLK->CastSpell(FLK, dbcSpell.LookupEntry(38452), true); //Power of Tidalvess
                 FLK->SendScriptTextChatMessage(4742);     // Go on, kill them! I'll be the better for it!
-                if (TO< KarathressAI* >(FLK->GetScript())->AdvisorsLeft > 0)
-                    TO< KarathressAI* >(FLK->GetScript())->AdvisorsLeft--;
+                if (static_cast< KarathressAI* >(FLK->GetScript())->AdvisorsLeft > 0)
+                    static_cast< KarathressAI* >(FLK->GetScript())->AdvisorsLeft--;
                 FLK->RemoveAura(BLESSING_OF_THE_TIDES);
             }
 
@@ -1488,8 +1488,8 @@ class FathomGuardCaribdisAI : public MoonScriptCreatureAI
             {
                 FLK->CastSpell(FLK, dbcSpell.LookupEntry(38451), true); //Power of Caribdis
                 FLK->SendScriptTextChatMessage(4744);     // More knowledge, more power!
-                if (TO< KarathressAI* >(FLK->GetScript())->AdvisorsLeft > 0)
-                    TO< KarathressAI* >(FLK->GetScript())->AdvisorsLeft--;
+                if (static_cast< KarathressAI* >(FLK->GetScript())->AdvisorsLeft > 0)
+                    static_cast< KarathressAI* >(FLK->GetScript())->AdvisorsLeft--;
                 FLK->RemoveAura(BLESSING_OF_THE_TIDES);
             }
             MoonScriptCreatureAI::OnDied(pKiller);
@@ -1686,12 +1686,12 @@ class TidewalkerLurkerAI : public CreatureAIScript
             Unit* pUnit;
             float dist;
 
-            for (set<Object*>::iterator itr = _unit->GetInRangeOppFactsSetBegin(); itr != _unit->GetInRangeOppFactsSetEnd(); itr++)
+            for (std::set<Object*>::iterator itr = _unit->GetInRangeOppFactsSetBegin(); itr != _unit->GetInRangeOppFactsSetEnd(); itr++)
             {
                 if (!(*itr)->IsUnit())
                     continue;
 
-                pUnit = TO_UNIT((*itr));
+                pUnit = static_cast<Unit*>((*itr));
 
                 if (pUnit->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_FEIGN_DEATH))
                     continue;
@@ -1897,11 +1897,11 @@ class VashjAI : public CreatureAIScript
         {
             //despawn enchanted elemental, tainted elemental, coilfang elite, coilfang strider
             Creature* creature = NULL;
-            for (set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
+            for (std::set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
             {
                 if ((*itr)->IsCreature())
                 {
-                    creature = TO_CREATURE((*itr));
+                    creature = static_cast<Creature*>((*itr));
 
                     if ((creature->GetCreatureInfo()->Id == CN_ENCHANTED_ELEMENTAL ||
                             creature->GetCreatureInfo()->Id == CN_TAINTED_ELEMENTAL ||
@@ -1989,7 +1989,7 @@ class VashjAI : public CreatureAIScript
 
             //if nobody is in range, shot or multishot
             bool InRange = false;
-            for (set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
+            for (std::set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
             {
                 if (isHostile(_unit, (*itr)) && _unit->GetDistance2dSq((*itr)) < 100) //10 yards
                 {
@@ -2072,12 +2072,12 @@ class VashjAI : public CreatureAIScript
                     //attack nearest target
                     Unit* nearest = NULL;
                     float nearestdist = 0;
-                    for (set<Object*>::iterator itr = summoned->GetInRangeSetBegin(); itr != summoned->GetInRangeSetEnd(); ++itr)
+                    for (std::set<Object*>::iterator itr = summoned->GetInRangeSetBegin(); itr != summoned->GetInRangeSetEnd(); ++itr)
                     {
                         if ((*itr)->IsUnit() && isHostile(summoned, (*itr)) && (summoned->GetDistance2dSq((*itr)) < nearestdist || !nearestdist))
                         {
                             nearestdist = summoned->GetDistance2dSq((*itr));
-                            nearest = TO_UNIT((*itr));
+                            nearest = static_cast<Unit*>((*itr));
                         }
                     }
                     if (nearest)
@@ -2096,12 +2096,12 @@ class VashjAI : public CreatureAIScript
                     //attack nearest target
                     Unit* nearest = NULL;
                     float nearestdist = 0;
-                    for (set<Object*>::iterator itr = summoned->GetInRangeSetBegin(); itr != summoned->GetInRangeSetEnd(); ++itr)
+                    for (std::set<Object*>::iterator itr = summoned->GetInRangeSetBegin(); itr != summoned->GetInRangeSetEnd(); ++itr)
                     {
                         if ((*itr)->IsUnit() && isHostile(summoned, (*itr)) && (summoned->GetDistance2dSq((*itr)) < nearestdist || !nearestdist))
                         {
                             nearestdist = summoned->GetDistance2dSq((*itr));
-                            nearest = TO_UNIT((*itr));
+                            nearest = static_cast<Unit*>((*itr));
                         }
                     }
                     if (nearest)
@@ -2121,11 +2121,11 @@ class VashjAI : public CreatureAIScript
             {
                 //despawn enchanted elementals
                 Creature* creature = NULL;
-                for (set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
+                for (std::set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
                 {
                     if ((*itr)->IsCreature())
                     {
-                        creature = TO_CREATURE((*itr));
+                        creature = static_cast<Creature*>((*itr));
 
                         if (creature->GetCreatureInfo()->Id == CN_ENCHANTED_ELEMENTAL && creature->isAlive())
                             creature->Despawn(0, 0);
@@ -2245,11 +2245,11 @@ class VashjAI : public CreatureAIScript
             Unit* RandomTarget = NULL;
             std::vector<Unit*> TargetTable;        /* From M4ksiu - Big THX to Capt who helped me with std stuff to make it simple and fully working <3 */
             /* If anyone wants to use this function, then leave this note!                                         */
-            for (set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
+            for (std::set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
             {
                 if (isHostile(_unit, (*itr)) && (*itr)->IsUnit())
                 {
-                    RandomTarget = TO_UNIT(*itr);
+                    RandomTarget = static_cast<Unit*>(*itr);
 
                     if (RandomTarget->isAlive() && _unit->GetDistance2dSq(RandomTarget) >= mindist2cast * mindist2cast && _unit->GetDistance2dSq(RandomTarget) <= maxdist2cast * maxdist2cast)
                         TargetTable.push_back(RandomTarget);
@@ -2338,8 +2338,8 @@ class TaintedElementalAI : public CreatureAIScript
             Vashj = _unit->GetMapMgr()->GetInterface()->GetCreatureNearestCoords(_unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), CN_LADY_VASHJ);
             if (Vashj)
             {
-                if (TO< VashjAI* >(Vashj->GetScript())->TaintedElementalTimer > 50)
-                    TO< VashjAI* >(Vashj->GetScript())->TaintedElementalTimer = 50;
+                if (static_cast< VashjAI* >(Vashj->GetScript())->TaintedElementalTimer > 50)
+                    static_cast< VashjAI* >(Vashj->GetScript())->TaintedElementalTimer = 50;
             }
         }
 
@@ -2378,7 +2378,7 @@ class TaintedCoreGO : public GameObjectAIScript
         {
             Creature* Vashj = NULL;
             Vashj = pPlayer->GetMapMgr()->GetInterface()->GetCreatureNearestCoords(29.798161f, -923.358276f, 42.900517f, CN_LADY_VASHJ);
-            if (Vashj != NULL && TO< VashjAI* >(Vashj->GetScript())->Phase == 2)
+            if (Vashj != NULL && static_cast< VashjAI* >(Vashj->GetScript())->Phase == 2)
             {
                 Vashj->ModHealth(-((Vashj->GetUInt32Value(UNIT_FIELD_MAXHEALTH) / 100) * 5));
                 Creature* channel = NULL;

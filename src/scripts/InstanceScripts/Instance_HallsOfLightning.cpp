@@ -449,11 +449,11 @@ class Volkhan : public MoonScriptCreatureAI
 
     void DoStomp()
     {
-        for (set< Object* >::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
+        for (std::set< Object* >::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
         {
             if ((*itr) && (*itr)->IsCreature() && (*itr)->GetEntry() == CN_BRITTLE_GOLEM)
             {
-                Creature* pCreature = TO< Creature* >((*itr));
+                Creature* pCreature = static_cast< Creature* >((*itr));
                 pCreature->CastSpell(pCreature, SPELL_SHATTER, true);
 
                 pCreature->Despawn(1000, 0);

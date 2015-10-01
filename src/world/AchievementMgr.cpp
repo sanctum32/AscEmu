@@ -450,7 +450,7 @@ void AchievementMgr::SendAchievementEarned(AchievementEntry const* achievement)
         for (; inRangeItr != inRangeItrLast; ++inRangeItr)
         {
 
-            Player* p = TO< Player* >((*inRangeItr));
+            Player* p = static_cast< Player* >((*inRangeItr));
 
             if (p && p->GetSession() && !p->Social_IsIgnoring(GetPlayer()->GetLowGUID()))
             {
@@ -1116,7 +1116,7 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, in
                     if (pUnit->IsCreature())
                     {
                         crTotem = pUnit->IsTotem();
-                        crType = TO_CREATURE(pUnit)->GetCreatureInfo()->Type;
+                        crType = static_cast<Creature*>(pUnit)->GetCreatureInfo()->Type;
                         if ((achievementCriteria->ID == 4944)                                  // Total NPC kills              refAch==1197
                             || ((achievementCriteria->ID == 4946) && (yieldXP))                // Kill an NPC that yields XP   refAch==1198
                             || ((achievementCriteria->ID == 4948) && (crType == UNIT_TYPE_BEAST))        // Beasts                       refAch== 107
@@ -1253,7 +1253,7 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type)
             case ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_QUESTS_IN_ZONE:
             {
                 uint32 qcinzone = 0;
-                set<uint32>::iterator qc = GetPlayer()->m_finishedQuests.begin();
+                std::set<uint32>::iterator qc = GetPlayer()->m_finishedQuests.begin();
                 for (; qc != GetPlayer()->m_finishedQuests.end(); ++qc)
                 {
                     Quest* qst = QuestStorage.LookupEntry(*qc);
@@ -1268,7 +1268,7 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type)
             case ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_QUEST:
             {
                 uint32 completed = 0;
-                set<uint32>::iterator it = GetPlayer()->m_finishedQuests.find(achievementCriteria->complete_quest.questID);
+                std::set<uint32>::iterator it = GetPlayer()->m_finishedQuests.find(achievementCriteria->complete_quest.questID);
                 if (it != GetPlayer()->m_finishedQuests.end())
                 {
                     ++completed;

@@ -43,7 +43,7 @@ bool ChatHandler::HandleWPAddCommand(const char* args, WorldSession* m_session)
             return true;
         }
 
-        pCreature = TO_CREATURE(ai->GetUnit());
+        pCreature = static_cast<Creature*>(ai->GetUnit());
         if (!pCreature || pCreature->IsPet())
         {
             SystemMessage(m_session, "Invalid Creature, please select another one.");
@@ -130,10 +130,10 @@ bool ChatHandler::HandleWPMoveTypeCommand(const char* args, WorldSession* m_sess
     if (option != 0 && option != 1 && option != 2)
     {
         std::stringstream ss;
-        ss << "Incorrect value." << endl;
-        ss << "0 is Move from WP 1 ->  10 then 10 -> 1." << endl;
-        ss << "1 is Move from WP to a random WP." << endl;
-        ss << "2 is Move from WP 1 -> 10 then 1 -> 10." << endl;
+        ss << "Incorrect value." << std::endl;
+        ss << "0 is Move from WP 1 ->  10 then 10 -> 1." << std::endl;
+        ss << "1 is Move from WP to a random WP." << std::endl;
+        ss << "2 is Move from WP 1 -> 10 then 1 -> 10." << std::endl;
         SendMultilineMessage(m_session, ss.str().c_str());
         return true;
     }
@@ -850,7 +850,7 @@ bool ChatHandler::HandleWaypointAddFlyCommand(const char* args, WorldSession* m_
             return true;
         }
 
-        pCreature = TO_CREATURE(ai->GetUnit());
+        pCreature = static_cast<Creature*>(ai->GetUnit());
         if (!pCreature || pCreature->IsPet())
         {
             SystemMessage(m_session, "Invalid Creature, please select another one.");
@@ -930,12 +930,12 @@ bool ChatHandler::HandleNpcSelectCommand(const char* args, WorldSession* m_sessi
     float dist = 999999.0f;
     float dist2;
     Player* plr = m_session->GetPlayer();
-    set<Object*>::iterator itr;
+    std::set<Object*>::iterator itr;
     for (itr = plr->GetInRangeSetBegin(); itr != plr->GetInRangeSetEnd(); ++itr)
     {
         if ((dist2 = plr->GetDistance2dSq(*itr)) < dist && (*itr)->IsCreature())
         {
-            un = TO_CREATURE(*itr);
+            un = static_cast<Creature*>(*itr);
             dist = dist2;
         }
     }

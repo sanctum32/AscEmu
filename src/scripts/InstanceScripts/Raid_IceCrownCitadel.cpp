@@ -330,14 +330,14 @@ class LordMarrowgarAI : public MoonScriptBossAI
             }
 
             std::vector<Player*> TargetTable;
-            set<Object*>::iterator itr = _unit->GetInRangePlayerSetBegin();
+            std::set<Object*>::iterator itr = _unit->GetInRangePlayerSetBegin();
 
             for (; itr != _unit->GetInRangePlayerSetEnd(); ++itr)
             {
                 if (isHostile(_unit, (*itr)))
                 {
                     Player* RandomTarget = NULL;
-                    RandomTarget = TO<Player*>(*itr);
+                    RandomTarget = static_cast<Player*>(*itr);
                     if (RandomTarget && RandomTarget->isAlive() && isHostile(_unit, RandomTarget))
                         TargetTable.push_back(RandomTarget);
                 }

@@ -283,7 +283,7 @@ void WorldSession::HandleSpellClick(WorldPacket& recvPacket)
         {
             if (target_unit->IsCreature())
             {
-                Creature* c = TO< Creature* >(target_unit);
+                Creature* c = static_cast< Creature* >(target_unit);
 
                 sChatHandler.BlueSystemMessage(this, "NPC Id %u (%s) has no spellclick spell associated with it.", c->GetProto()->Id, c->GetCreatureInfo()->Name);
                 LOG_ERROR("Spellclick packet received for creature %u but there is no spell associated with it.", creature_id);
@@ -298,7 +298,7 @@ void WorldSession::HandleSpellClick(WorldPacket& recvPacket)
 
 
         if (!target_unit->HasAura(59907))
-            TO_CREATURE(target_unit)->Despawn(0, 0); //IsCreature() check is not needed, refer to r2387 and r3230
+            static_cast<Creature*>(target_unit)->Despawn(0, 0); //IsCreature() check is not needed, refer to r2387 and r3230
 
         return;
     }
@@ -308,7 +308,7 @@ void WorldSession::HandleSpellClick(WorldPacket& recvPacket)
     {
         if (target_unit->IsCreature())
         {
-            Creature* c = TO< Creature* >(target_unit);
+            Creature* c = static_cast< Creature* >(target_unit);
 
             sChatHandler.BlueSystemMessage(this, "NPC Id %u (%s) has no spellclick spell associated with it.", c->GetProto()->Id, c->GetCreatureInfo()->Name);
             LOG_ERROR("Spellclick packet received for creature %u but there is no spell associated with it.", creature_id);
@@ -593,7 +593,7 @@ void WorldSession::HandlePetCastSpell(WorldPacket& recvPacket)
         if (nc)
         {
             bool check = false;
-            for (list<AI_Spell*>::iterator itr = nc->GetAIInterface()->m_spells.begin(); itr != nc->GetAIInterface()->m_spells.end(); ++itr)//.......meh. this is a crappy way of doing this, I bet.
+            for (std::list<AI_Spell*>::iterator itr = nc->GetAIInterface()->m_spells.begin(); itr != nc->GetAIInterface()->m_spells.end(); ++itr)//.......meh. this is a crappy way of doing this, I bet.
             {
                 if ((*itr)->spell->Id == spellid)
                 {
@@ -604,7 +604,7 @@ void WorldSession::HandlePetCastSpell(WorldPacket& recvPacket)
 
             if (nc->IsCreature())
             {
-                Creature* c = TO< Creature* >(nc);
+                Creature* c = static_cast< Creature* >(nc);
 
                 if (c->GetProto()->spelldataid != 0)
                 {

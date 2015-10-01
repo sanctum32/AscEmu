@@ -10,7 +10,6 @@ set(sources
    AutoPatcher.cpp
    LogonCommServer.cpp
    LogonConsole.cpp
-   LogonOpcodes.cpp
    LogonStdAfx.cpp
    Main.cpp
    )
@@ -22,10 +21,10 @@ set(headers
 	AutoPatcher.h
 	LogonCommServer.h
 	LogonConsole.h
-	LogonOpcodes.h
 	LogonStdAfx.h
 	Main.h
 	PeriodicFunctionCall_Thread.h
+   Opcodes/LogonRealmOpcodes.hpp
    )
 
 foreach(src IN ITEMS ${sources})
@@ -35,7 +34,14 @@ foreach(src IN ITEMS ${headers})
    set(HEADERS ${HEADERS} ${prefix}/${src})
 endforeach(src)
 
-include_directories( ${GLOBAL_INCLUDE_DIRS})
+include_directories(
+   ${CMAKE_CURRENT_SOURCE_DIR}
+   ${CMAKE_CURRENT_SOURCE_DIR}/Opcodes
+   ${ROOT_PATH}/src/shared
+   ${DEPENDENCY_ROOT}/zlib
+   ${DEPENDENCY_ROOT}/openssl
+   ${DEPENDENCY_ROOT}/pcre/include
+   )
 link_directories(${EXTRA_LIBS_PATH} ${DEPENDENCY_LIBS})
 
 if(IS_64BIT)

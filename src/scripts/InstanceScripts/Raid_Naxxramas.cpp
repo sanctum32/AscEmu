@@ -353,7 +353,7 @@ void MaexxnaAI::AIUpdate()
 
 void SpellFunc_MaexxnaWebWrap(SpellDesc* pThis, MoonScriptCreatureAI* pCreatureAI, Unit* pTarget, TargetType pType)
 {
-    MaexxnaAI* Maexxna = (pCreatureAI != NULL) ? TO< MaexxnaAI* >(pCreatureAI) : NULL;
+    MaexxnaAI* Maexxna = (pCreatureAI != NULL) ? static_cast< MaexxnaAI* >(pCreatureAI) : NULL;
     if (Maexxna != NULL)
     {
         // Is target really added everytime and isn't this check redundant ?
@@ -364,19 +364,19 @@ void SpellFunc_MaexxnaWebWrap(SpellDesc* pThis, MoonScriptCreatureAI* pCreatureA
         if (!Maexxna->mLeftWall)
             Id += 3;
 
-        WebWrapAI* WebWrap = TO< WebWrapAI* >(Maexxna->SpawnCreature(CN_WEB_WRAP, WebWrapPos[Id].x, WebWrapPos[Id].y, WebWrapPos[Id].z, pTarget->GetOrientation()));
+        WebWrapAI* WebWrap = static_cast< WebWrapAI* >(Maexxna->SpawnCreature(CN_WEB_WRAP, WebWrapPos[Id].x, WebWrapPos[Id].y, WebWrapPos[Id].z, pTarget->GetOrientation()));
         if (WebWrap == NULL)
             return;
 
         WebWrap->GetUnit()->m_noRespawn = true;
         WebWrap->RegisterAIUpdateEvent(5000);
-        WebWrap->mPlayerGuid = TO_PLAYER(pTarget)->GetGUID();
+        WebWrap->mPlayerGuid = static_cast<Player*>(pTarget)->GetGUID();
 
         if (pTarget->GetCurrentSpell() != NULL)
             pTarget->GetCurrentSpell()->cancel();
 
         // Somewhy root does not apply at all
-        TO_PLAYER(pTarget)->SafeTeleport(Maexxna->GetUnit()->GetMapId(), Maexxna->GetUnit()->GetInstanceID(), LocationVector(WebWrapPos[Id].x, WebWrapPos[Id].y, WebWrapPos[Id].z));
+        static_cast<Player*>(pTarget)->SafeTeleport(Maexxna->GetUnit()->GetMapId(), Maexxna->GetUnit()->GetInstanceID(), LocationVector(WebWrapPos[Id].x, WebWrapPos[Id].y, WebWrapPos[Id].z));
         pTarget->CastSpell(pTarget, MAEXXNA_WEB_WRAP, true);
     };
 };
@@ -411,9 +411,9 @@ void NaxxramasWorshipperAI::OnDied(Unit* pKiller)
     ParentClass::OnDied(pKiller);
     if (mGrandWidow != NULL)   //&& !IsHeroic())
     {
-        if (GetRange(TO< MoonScriptCreatureAI* >(mGrandWidow)) <= 15.0f)
+        if (GetRange(static_cast< MoonScriptCreatureAI* >(mGrandWidow)) <= 15.0f)
         {
-            for (set< NaxxramasWorshipperAI* >::iterator Iter = mGrandWidow->mWorshippers.begin(); Iter != mGrandWidow->mWorshippers.end(); ++Iter)
+            for (std::set< NaxxramasWorshipperAI* >::iterator Iter = mGrandWidow->mWorshippers.begin(); Iter != mGrandWidow->mWorshippers.end(); ++Iter)
             {
                 if (!(*Iter)->IsAlive())
                     continue;
@@ -515,7 +515,7 @@ void NaxxramasWorshipperAI::Destroy()
 {
     if (mGrandWidow != NULL)
     {
-        set< NaxxramasWorshipperAI* >::iterator Iter = mGrandWidow->mWorshippers.find(this);
+        std::set< NaxxramasWorshipperAI* >::iterator Iter = mGrandWidow->mWorshippers.find(this);
         if (Iter != mGrandWidow->mWorshippers.end())
             mGrandWidow->mWorshippers.erase(Iter);
 
@@ -540,7 +540,7 @@ void NaxxramasFollowerAI::Destroy()
 {
     if (mGrandWidow != NULL)
     {
-        set< NaxxramasFollowerAI* >::iterator Iter = mGrandWidow->mFollowers.find(this);
+        std::set< NaxxramasFollowerAI* >::iterator Iter = mGrandWidow->mFollowers.find(this);
         if (Iter != mGrandWidow->mFollowers.end())
             mGrandWidow->mFollowers.erase(Iter);
 
@@ -552,7 +552,7 @@ void NaxxramasFollowerAI::Destroy()
 
 void SpellFunc_NaxxramasFollowerCharge(SpellDesc* pThis, MoonScriptCreatureAI* pCreatureAI, Unit* pTarget, TargetType pType)
 {
-    NaxxramasFollowerAI* NaxxramasFollower = (pCreatureAI != NULL) ? TO< NaxxramasFollowerAI* >(pCreatureAI) : NULL;
+    NaxxramasFollowerAI* NaxxramasFollower = (pCreatureAI != NULL) ? static_cast< NaxxramasFollowerAI* >(pCreatureAI) : NULL;
     if (NaxxramasFollower != NULL)
     {
         Unit* CurrentTarget = NaxxramasFollower->GetUnit()->GetAIInterface()->getNextTarget();
@@ -578,8 +578,8 @@ GrandWidowFaerlinaAI::GrandWidowFaerlinaAI(Creature* pCreature) : MoonScriptBoss
         if (AddAI != NULL)
         {
             AddAI->GetUnit()->m_noRespawn = true;
-            TO< NaxxramasWorshipperAI* >(AddAI)->mGrandWidow = this;
-            mWorshippers.insert(TO< NaxxramasWorshipperAI* >(AddAI));
+            static_cast< NaxxramasWorshipperAI* >(AddAI)->mGrandWidow = this;
+            mWorshippers.insert(static_cast< NaxxramasWorshipperAI* >(AddAI));
         };
     };
 
@@ -591,8 +591,8 @@ GrandWidowFaerlinaAI::GrandWidowFaerlinaAI(Creature* pCreature) : MoonScriptBoss
             if (AddAI != NULL)
             {
                 AddAI->GetUnit()->m_noRespawn = true;
-                TO< NaxxramasFollowerAI* >(AddAI)->mGrandWidow = this;
-                mFollowers.insert(TO< NaxxramasFollowerAI* >(AddAI));
+                static_cast< NaxxramasFollowerAI* >(AddAI)->mGrandWidow = this;
+                mFollowers.insert(static_cast< NaxxramasFollowerAI* >(AddAI));
             };
         };
 
@@ -628,12 +628,12 @@ void GrandWidowFaerlinaAI::OnCombatStart(Unit* pTarget)
     if (WebGate != NULL)
         WebGate->SetState(GAMEOBJECT_STATE_CLOSED);
 
-    for (set< NaxxramasWorshipperAI* >::iterator Iter = mWorshippers.begin(); Iter != mWorshippers.end(); ++Iter)
+    for (std::set< NaxxramasWorshipperAI* >::iterator Iter = mWorshippers.begin(); Iter != mWorshippers.end(); ++Iter)
     {
         (*Iter)->AggroNearestPlayer(200);
     };
 
-    for (set< NaxxramasFollowerAI* >::iterator Iter = mFollowers.begin(); Iter != mFollowers.end(); ++Iter)
+    for (std::set< NaxxramasFollowerAI* >::iterator Iter = mFollowers.begin(); Iter != mFollowers.end(); ++Iter)
     {
         (*Iter)->AggroNearestPlayer(200);
     };
@@ -648,7 +648,7 @@ void GrandWidowFaerlinaAI::OnCombatStop(Unit* pTarget)
     if (WebGate != NULL)
         WebGate->SetState(GAMEOBJECT_STATE_OPEN);
 
-    for (set< NaxxramasWorshipperAI* >::iterator Iter = mWorshippers.begin(); Iter != mWorshippers.end(); ++Iter)
+    for (std::set< NaxxramasWorshipperAI* >::iterator Iter = mWorshippers.begin(); Iter != mWorshippers.end(); ++Iter)
     {
         (*Iter)->mGrandWidow = NULL;
         if (IsAlive())
@@ -657,7 +657,7 @@ void GrandWidowFaerlinaAI::OnCombatStop(Unit* pTarget)
 
     mWorshippers.clear();
 
-    for (set< NaxxramasFollowerAI* >::iterator Iter = mFollowers.begin(); Iter != mFollowers.end(); ++Iter)
+    for (std::set< NaxxramasFollowerAI* >::iterator Iter = mFollowers.begin(); Iter != mFollowers.end(); ++Iter)
     {
         (*Iter)->mGrandWidow = NULL;
         if (IsAlive())
@@ -675,8 +675,8 @@ void GrandWidowFaerlinaAI::OnCombatStop(Unit* pTarget)
             if (AddAI != NULL)
             {
                 AddAI->GetUnit()->m_noRespawn = true;
-                TO< NaxxramasWorshipperAI* >(AddAI)->mGrandWidow = this;
-                mWorshippers.insert(TO< NaxxramasWorshipperAI* >(AddAI));
+                static_cast< NaxxramasWorshipperAI* >(AddAI)->mGrandWidow = this;
+                mWorshippers.insert(static_cast< NaxxramasWorshipperAI* >(AddAI));
             };
         };
 
@@ -688,8 +688,8 @@ void GrandWidowFaerlinaAI::OnCombatStop(Unit* pTarget)
                 if (AddAI != NULL)
                 {
                     AddAI->GetUnit()->m_noRespawn = true;
-                    TO< NaxxramasFollowerAI* >(AddAI)->mGrandWidow = this;
-                    mFollowers.insert(TO< NaxxramasFollowerAI* >(AddAI));
+                    static_cast< NaxxramasFollowerAI* >(AddAI)->mGrandWidow = this;
+                    mFollowers.insert(static_cast< NaxxramasFollowerAI* >(AddAI));
                 };
             };
         };
@@ -717,7 +717,7 @@ void GrandWidowFaerlinaAI::AIUpdate()
 
 void GrandWidowFaerlinaAI::Destroy()
 {
-    for (set< NaxxramasWorshipperAI* >::iterator Iter = mWorshippers.begin(); Iter != mWorshippers.end(); ++Iter)
+    for (std::set< NaxxramasWorshipperAI* >::iterator Iter = mWorshippers.begin(); Iter != mWorshippers.end(); ++Iter)
     {
         (*Iter)->mGrandWidow = NULL;
         (*Iter)->Despawn();
@@ -725,7 +725,7 @@ void GrandWidowFaerlinaAI::Destroy()
 
     mWorshippers.clear();
 
-    for (set< NaxxramasFollowerAI* >::iterator Iter = mFollowers.begin(); Iter != mFollowers.end(); ++Iter)
+    for (std::set< NaxxramasFollowerAI* >::iterator Iter = mFollowers.begin(); Iter != mFollowers.end(); ++Iter)
     {
         (*Iter)->mGrandWidow = NULL;
         (*Iter)->Despawn();
@@ -771,7 +771,7 @@ void CryptGuardAI::Destroy()
 {
     if (mAnubRekhanAI != NULL)
     {
-        set< CryptGuardAI* >::iterator Iter = mAnubRekhanAI->mCryptGuards.find(this);
+        std::set< CryptGuardAI* >::iterator Iter = mAnubRekhanAI->mCryptGuards.find(this);
         if (Iter != mAnubRekhanAI->mCryptGuards.end())
             mAnubRekhanAI->mCryptGuards.erase(this);
 
@@ -792,7 +792,7 @@ void CorpseScarabAI::Destroy()
 {
     if (mAnubRekhanAI != NULL)
     {
-        set< CorpseScarabAI* >::iterator Iter = mAnubRekhanAI->mScarabs.find(this);
+        std::set< CorpseScarabAI* >::iterator Iter = mAnubRekhanAI->mScarabs.find(this);
         if (Iter != mAnubRekhanAI->mScarabs.end())
             mAnubRekhanAI->mScarabs.erase(this);
 
@@ -811,7 +811,7 @@ AnubRekhanAI::AnubRekhanAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
         CryptGuardAI* CryptAI = NULL;
         for (uint8 i = 0; i < 2; ++i)
         {
-            CryptAI = TO< CryptGuardAI* >(SpawnCreature(CN_CRYPT_GUARD, CryptGuards[i].x, CryptGuards[i].y, CryptGuards[i].z, CryptGuards[i].o));
+            CryptAI = static_cast< CryptGuardAI* >(SpawnCreature(CN_CRYPT_GUARD, CryptGuards[i].x, CryptGuards[i].y, CryptGuards[i].z, CryptGuards[i].o));
             if (CryptAI != NULL)
             {
                 CryptAI->GetUnit()->m_noRespawn = true;
@@ -851,7 +851,7 @@ void AnubRekhanAI::OnCombatStart(Unit* pTarget)
 
     if (IsHeroic())
     {
-        for (set< CryptGuardAI* >::iterator Iter = mCryptGuards.begin(); Iter != mCryptGuards.end(); ++Iter)
+        for (std::set< CryptGuardAI* >::iterator Iter = mCryptGuards.begin(); Iter != mCryptGuards.end(); ++Iter)
         {
             (*Iter)->AggroRandomPlayer(200);
         };
@@ -865,7 +865,7 @@ void AnubRekhanAI::OnCombatStop(Unit* pTarget)
     ParentClass::OnCombatStop(pTarget);
     mLocustSwarmTimer = mCryptSpawnTimer = INVALIDATE_TIMER;
 
-    for (set< CryptGuardAI* >::iterator Iter = mCryptGuards.begin(); Iter != mCryptGuards.end(); ++Iter)
+    for (std::set< CryptGuardAI* >::iterator Iter = mCryptGuards.begin(); Iter != mCryptGuards.end(); ++Iter)
     {
         (*Iter)->mAnubRekhanAI = NULL;
         if (IsAlive())
@@ -874,7 +874,7 @@ void AnubRekhanAI::OnCombatStop(Unit* pTarget)
 
     mCryptGuards.clear();
 
-    for (set< CorpseScarabAI* >::iterator Iter = mScarabs.begin(); Iter != mScarabs.end(); ++Iter)
+    for (std::set< CorpseScarabAI* >::iterator Iter = mScarabs.begin(); Iter != mScarabs.end(); ++Iter)
     {
         (*Iter)->mAnubRekhanAI = NULL;
         if (IsAlive())
@@ -888,7 +888,7 @@ void AnubRekhanAI::OnCombatStop(Unit* pTarget)
         CryptGuardAI* CryptAI = NULL;
         for (uint8 i = 0; i < 2; ++i)
         {
-            CryptAI = TO< CryptGuardAI* >(SpawnCreature(CN_CRYPT_GUARD, CryptGuards[i].x, CryptGuards[i].y, CryptGuards[i].z, CryptGuards[i].o));
+            CryptAI = static_cast< CryptGuardAI* >(SpawnCreature(CN_CRYPT_GUARD, CryptGuards[i].x, CryptGuards[i].y, CryptGuards[i].z, CryptGuards[i].o));
             if (CryptAI != NULL)
             {
                 CryptAI->GetUnit()->m_noRespawn = true;
@@ -906,7 +906,7 @@ void AnubRekhanAI::AIUpdate()
         if (mCryptSpawnTimer != INVALIDATE_TIMER && IsTimerFinished(mCryptSpawnTimer))
         {
             RemoveTimer(mCryptSpawnTimer);
-            CryptGuardAI* CryptAI = TO< CryptGuardAI* >(SpawnCreature(CN_CRYPT_GUARD, CryptGuards[2].x, CryptGuards[2].y, CryptGuards[2].z, CryptGuards[2].o));
+            CryptGuardAI* CryptAI = static_cast< CryptGuardAI* >(SpawnCreature(CN_CRYPT_GUARD, CryptGuards[2].x, CryptGuards[2].y, CryptGuards[2].z, CryptGuards[2].o));
             if (CryptAI != NULL)
             {
                 CryptAI->GetUnit()->m_noRespawn = true;
@@ -918,7 +918,7 @@ void AnubRekhanAI::AIUpdate()
 
         if (IsTimerFinished(mLocustSwarmTimer))
         {
-            CryptGuardAI* CryptAI = TO< CryptGuardAI* >(SpawnCreature(CN_CRYPT_GUARD, CryptGuards[2].x, CryptGuards[2].y, CryptGuards[2].z, CryptGuards[2].o));
+            CryptGuardAI* CryptAI = static_cast< CryptGuardAI* >(SpawnCreature(CN_CRYPT_GUARD, CryptGuards[2].x, CryptGuards[2].y, CryptGuards[2].z, CryptGuards[2].o));
             if (CryptAI != NULL)
             {
                 CryptAI->GetUnit()->m_noRespawn = true;
@@ -937,7 +937,7 @@ void AnubRekhanAI::AIUpdate()
 
 void AnubRekhanAI::Destroy()
 {
-    for (set< CryptGuardAI* >::iterator Iter = mCryptGuards.begin(); Iter != mCryptGuards.end(); ++Iter)
+    for (std::set< CryptGuardAI* >::iterator Iter = mCryptGuards.begin(); Iter != mCryptGuards.end(); ++Iter)
     {
         (*Iter)->mAnubRekhanAI = NULL;
         (*Iter)->Despawn();
@@ -945,7 +945,7 @@ void AnubRekhanAI::Destroy()
 
     mCryptGuards.clear();
 
-    for (set< CorpseScarabAI* >::iterator Iter = mScarabs.begin(); Iter != mScarabs.end(); ++Iter)
+    for (std::set< CorpseScarabAI* >::iterator Iter = mScarabs.begin(); Iter != mScarabs.end(); ++Iter)
     {
         (*Iter)->mAnubRekhanAI = NULL;
         (*Iter)->Despawn();
@@ -958,19 +958,19 @@ void AnubRekhanAI::Destroy()
 
 void SpellFunc_AnubRekhanCorpseScarabsPlayer(SpellDesc* pThis, MoonScriptCreatureAI* pCreatureAI, Unit* pTarget, TargetType pType)
 {
-    AnubRekhanAI* AnubRekhan = (pCreatureAI != NULL) ? TO< AnubRekhanAI* >(pCreatureAI) : NULL;
+    AnubRekhanAI* AnubRekhan = (pCreatureAI != NULL) ? static_cast< AnubRekhanAI* >(pCreatureAI) : NULL;
     if (AnubRekhan != NULL)
     {
-        std::vector< pair< Player* , Location > > PlayerCorpses;
+        std::vector<std::pair< Player* , Location > > PlayerCorpses;
         Player* PlayerPtr = NULL;
         LocationVector spawnLocation;
-        for (set< Object* >::iterator Iter = AnubRekhan->GetUnit()->GetInRangePlayerSetBegin(); Iter != AnubRekhan->GetUnit()->GetInRangePlayerSetEnd(); ++Iter)
+        for (std::set< Object* >::iterator Iter = AnubRekhan->GetUnit()->GetInRangePlayerSetBegin(); Iter != AnubRekhan->GetUnit()->GetInRangePlayerSetEnd(); ++Iter)
         {
             if ((*Iter) == NULL)
                 continue;
 
-            PlayerPtr = TO< Player* >(*Iter);
-            set< uint32 >::iterator PlayerIter = AnubRekhan->mUsedCorpseGuids.find(static_cast<uint32>(PlayerPtr->GetGUID()));
+            PlayerPtr = static_cast< Player* >(*Iter);
+            std::set< uint32 >::iterator PlayerIter = AnubRekhan->mUsedCorpseGuids.find(static_cast<uint32>(PlayerPtr->GetGUID()));
             if (PlayerIter != AnubRekhan->mUsedCorpseGuids.end())
             {
                 if (PlayerPtr->isAlive())
@@ -1003,7 +1003,7 @@ void SpellFunc_AnubRekhanCorpseScarabsPlayer(SpellDesc* pThis, MoonScriptCreatur
             ObjectCoords.y = spawnLocation.y;
             ObjectCoords.z = spawnLocation.z;
             ObjectCoords.o = spawnLocation.o;
-            PlayerCorpses.push_back(make_pair(PlayerPtr, ObjectCoords));
+            PlayerCorpses.push_back(std::make_pair(PlayerPtr, ObjectCoords));
         };
 
         if (PlayerCorpses.size() > 0)
@@ -1015,7 +1015,7 @@ void SpellFunc_AnubRekhanCorpseScarabsPlayer(SpellDesc* pThis, MoonScriptCreatur
             CorpseScarabAI* ScarabAI = NULL;
             for (uint8 i = 0; i < 5; ++i)
             {
-                ScarabAI = TO< CorpseScarabAI* >(AnubRekhan->SpawnCreature(CN_CORPSE_SCARAB, PlayerCorpses[Id].second.x, PlayerCorpses[Id].second.y, PlayerCorpses[Id].second.z, PlayerCorpses[Id].second.o));
+                ScarabAI = static_cast< CorpseScarabAI* >(AnubRekhan->SpawnCreature(CN_CORPSE_SCARAB, PlayerCorpses[Id].second.x, PlayerCorpses[Id].second.y, PlayerCorpses[Id].second.z, PlayerCorpses[Id].second.o));
                 if (ScarabAI != NULL)
                 {
                     ScarabAI->GetUnit()->m_noRespawn = true;
@@ -1030,17 +1030,17 @@ void SpellFunc_AnubRekhanCorpseScarabsPlayer(SpellDesc* pThis, MoonScriptCreatur
 
 void SpellFunc_AnubRekhanCorpseScarabsCryptGuard(SpellDesc* pThis, MoonScriptCreatureAI* pCreatureAI, Unit* pTarget, TargetType pType)
 {
-    AnubRekhanAI* AnubRekhan = (pCreatureAI != NULL) ? TO< AnubRekhanAI* >(pCreatureAI) : NULL;
+    AnubRekhanAI* AnubRekhan = (pCreatureAI != NULL) ? static_cast< AnubRekhanAI* >(pCreatureAI) : NULL;
     if (AnubRekhan != NULL)
     {
         std::vector< Creature* > CryptCorpses;
         Creature* CreaturePtr = NULL;
-        for (set< Object* >::iterator Iter = AnubRekhan->GetUnit()->GetInRangeSetBegin(); Iter != AnubRekhan->GetUnit()->GetInRangeSetEnd(); ++Iter)
+        for (std::set< Object* >::iterator Iter = AnubRekhan->GetUnit()->GetInRangeSetBegin(); Iter != AnubRekhan->GetUnit()->GetInRangeSetEnd(); ++Iter)
         {
             if ((*Iter) == NULL || !(*Iter)->IsCreature())
                 continue;
 
-            CreaturePtr = TO_CREATURE(*Iter);
+            CreaturePtr = static_cast<Creature*>(*Iter);
             if (CreaturePtr->GetEntry() != CN_CRYPT_GUARD)
                 continue;
 
@@ -1067,7 +1067,7 @@ void SpellFunc_AnubRekhanCorpseScarabsCryptGuard(SpellDesc* pThis, MoonScriptCre
             CorpseScarabAI* ScarabAI = NULL;
             for (uint8 i = 0; i < 10; ++i)
             {
-                ScarabAI = TO< CorpseScarabAI* >(AnubRekhan->SpawnCreature(CN_CORPSE_SCARAB, X, Y, Z, O));
+                ScarabAI = static_cast< CorpseScarabAI* >(AnubRekhan->SpawnCreature(CN_CORPSE_SCARAB, X, Y, Z, O));
                 if (ScarabAI != NULL)
                 {
                     ScarabAI->GetUnit()->m_noRespawn = true;
@@ -1305,7 +1305,7 @@ void NothThePlaguebringerAI::OnCombatStop(Unit* pTarget)
             Gate->SetState(GAMEOBJECT_STATE_OPEN);
     };
 
-    for (set< PlaguedWarriorAI* >::iterator Iter = mWarriors.begin(); Iter != mWarriors.end(); ++Iter)
+    for (std::set< PlaguedWarriorAI* >::iterator Iter = mWarriors.begin(); Iter != mWarriors.end(); ++Iter)
     {
         (*Iter)->mNothAI = NULL;
         (*Iter)->Despawn();
@@ -1313,7 +1313,7 @@ void NothThePlaguebringerAI::OnCombatStop(Unit* pTarget)
 
     mWarriors.clear();
 
-    for (set< PlaguedChampionAI* >::iterator Iter = mChampions.begin(); Iter != mChampions.end(); ++Iter)
+    for (std::set< PlaguedChampionAI* >::iterator Iter = mChampions.begin(); Iter != mChampions.end(); ++Iter)
     {
         (*Iter)->mNothAI = NULL;
         (*Iter)->Despawn();
@@ -1321,7 +1321,7 @@ void NothThePlaguebringerAI::OnCombatStop(Unit* pTarget)
 
     mChampions.clear();
 
-    for (set< PlaguedGuardianAI* >::iterator Iter = mGuardians.begin(); Iter != mGuardians.end(); ++Iter)
+    for (std::set< PlaguedGuardianAI* >::iterator Iter = mGuardians.begin(); Iter != mGuardians.end(); ++Iter)
     {
         (*Iter)->mNothAI = NULL;
         (*Iter)->Despawn();
@@ -1387,7 +1387,7 @@ void NothThePlaguebringerAI::AIUpdate()
                     };
                 };
 
-                WarriorAI = TO< PlaguedWarriorAI* >(SpawnCreature(CN_PLAGUED_WARRIOR, SkelPosPhase1[Id].x, SkelPosPhase1[Id].y, SkelPosPhase1[Id].z, SkelPosPhase1[Id].o));
+                WarriorAI = static_cast< PlaguedWarriorAI* >(SpawnCreature(CN_PLAGUED_WARRIOR, SkelPosPhase1[Id].x, SkelPosPhase1[Id].y, SkelPosPhase1[Id].z, SkelPosPhase1[Id].o));
                 if (WarriorAI != NULL)
                 {
                     WarriorAI->GetUnit()->m_noRespawn = true;
@@ -1450,7 +1450,7 @@ void NothThePlaguebringerAI::AIUpdate()
                     };
                 };
 
-                ChampionAI = TO< PlaguedChampionAI* >(SpawnCreature(CN_PLAGUED_CHAMPION, SkelPosPhase2[Id].x, SkelPosPhase2[Id].y, SkelPosPhase2[Id].z, SkelPosPhase2[Id].o));
+                ChampionAI = static_cast< PlaguedChampionAI* >(SpawnCreature(CN_PLAGUED_CHAMPION, SkelPosPhase2[Id].x, SkelPosPhase2[Id].y, SkelPosPhase2[Id].z, SkelPosPhase2[Id].o));
                 if (ChampionAI != NULL)
                 {
                     ChampionAI->GetUnit()->m_noRespawn = true;
@@ -1478,7 +1478,7 @@ void NothThePlaguebringerAI::AIUpdate()
                     };
                 };
 
-                GuardianAI = TO< PlaguedGuardianAI* >(SpawnCreature(CN_PLAGUED_GUARDIAN, SkelPosPhase2[Id].x, SkelPosPhase2[Id].y, SkelPosPhase2[Id].z, SkelPosPhase2[Id].o));
+                GuardianAI = static_cast< PlaguedGuardianAI* >(SpawnCreature(CN_PLAGUED_GUARDIAN, SkelPosPhase2[Id].x, SkelPosPhase2[Id].y, SkelPosPhase2[Id].z, SkelPosPhase2[Id].o));
                 if (GuardianAI != NULL)
                 {
                     GuardianAI->GetUnit()->m_noRespawn = true;
@@ -1504,7 +1504,7 @@ void NothThePlaguebringerAI::AIUpdate()
 
 void NothThePlaguebringerAI::Destroy()
 {
-    for (set< PlaguedWarriorAI* >::iterator Iter = mWarriors.begin(); Iter != mWarriors.end(); ++Iter)
+    for (std::set< PlaguedWarriorAI* >::iterator Iter = mWarriors.begin(); Iter != mWarriors.end(); ++Iter)
     {
         (*Iter)->mNothAI = NULL;
         (*Iter)->Despawn();
@@ -1512,7 +1512,7 @@ void NothThePlaguebringerAI::Destroy()
 
     mWarriors.clear();
 
-    for (set< PlaguedChampionAI* >::iterator Iter = mChampions.begin(); Iter != mChampions.end(); ++Iter)
+    for (std::set< PlaguedChampionAI* >::iterator Iter = mChampions.begin(); Iter != mChampions.end(); ++Iter)
     {
         (*Iter)->mNothAI = NULL;
         (*Iter)->Despawn();
@@ -1520,7 +1520,7 @@ void NothThePlaguebringerAI::Destroy()
 
     mChampions.clear();
 
-    for (set< PlaguedGuardianAI* >::iterator Iter = mGuardians.begin(); Iter != mGuardians.end(); ++Iter)
+    for (std::set< PlaguedGuardianAI* >::iterator Iter = mGuardians.begin(); Iter != mGuardians.end(); ++Iter)
     {
         (*Iter)->mNothAI = NULL;
         (*Iter)->Despawn();
@@ -1533,7 +1533,7 @@ void NothThePlaguebringerAI::Destroy()
 
 void SpellFunc_NothToBalconyPhaseSwitch(SpellDesc* pThis, MoonScriptCreatureAI* pCreatureAI, Unit* pTarget, TargetType pType)
 {
-    NothThePlaguebringerAI* Noth = (pCreatureAI != NULL) ? TO< NothThePlaguebringerAI* >(pCreatureAI) : NULL;
+    NothThePlaguebringerAI* Noth = (pCreatureAI != NULL) ? static_cast< NothThePlaguebringerAI* >(pCreatureAI) : NULL;
     if (Noth != NULL)
     {
         // Are these coords correct ? Or maybe it should be just disappear / appear thing ? And is this spell correct ? I doubt it ...
@@ -1547,7 +1547,7 @@ void SpellFunc_NothToBalconyPhaseSwitch(SpellDesc* pThis, MoonScriptCreatureAI* 
 
 void SpellFunc_NothFromBalconyPhaseSwitch(SpellDesc* pThis, MoonScriptCreatureAI* pCreatureAI, Unit* pTarget, TargetType pType)
 {
-    NothThePlaguebringerAI* Noth = (pCreatureAI != NULL) ? TO< NothThePlaguebringerAI* >(pCreatureAI) : NULL;
+    NothThePlaguebringerAI* Noth = (pCreatureAI != NULL) ? static_cast< NothThePlaguebringerAI* >(pCreatureAI) : NULL;
     if (Noth != NULL)
     {
         Noth->SetBehavior(Behavior_Default);
@@ -1564,7 +1564,7 @@ void SpellFunc_NothFromBalconyPhaseSwitch(SpellDesc* pThis, MoonScriptCreatureAI
 
 void SpellFunc_NothCriple(SpellDesc* pThis, MoonScriptCreatureAI* pCreatureAI, Unit* pTarget, TargetType pType)
 {
-    NothThePlaguebringerAI* Noth = (pCreatureAI != NULL) ? TO< NothThePlaguebringerAI* >(pCreatureAI) : NULL;
+    NothThePlaguebringerAI* Noth = (pCreatureAI != NULL) ? static_cast< NothThePlaguebringerAI* >(pCreatureAI) : NULL;
     if (Noth != NULL)
     {
         // Dunno if target count that should be affected is correct
@@ -1575,7 +1575,7 @@ void SpellFunc_NothCriple(SpellDesc* pThis, MoonScriptCreatureAI* pCreatureAI, U
 
 void SpellFunc_NothBlink(SpellDesc* pThis, MoonScriptCreatureAI* pCreatureAI, Unit* pTarget, TargetType pType)
 {
-    NothThePlaguebringerAI* Noth = (pCreatureAI != NULL) ? TO< NothThePlaguebringerAI* >(pCreatureAI) : NULL;
+    NothThePlaguebringerAI* Noth = (pCreatureAI != NULL) ? static_cast< NothThePlaguebringerAI* >(pCreatureAI) : NULL;
     if (Noth != NULL)
     {
         Noth->ApplyAura(NOTH_THE_PLAGUEBRINGER_BLINK_HEROIC);
@@ -1605,7 +1605,7 @@ void PlaguedWarriorAI::Destroy()
 {
     if (mNothAI != NULL)
     {
-        set< PlaguedWarriorAI* >::iterator Iter = mNothAI->mWarriors.find(this);
+        std::set< PlaguedWarriorAI* >::iterator Iter = mNothAI->mWarriors.find(this);
         if (Iter != mNothAI->mWarriors.end())
             mNothAI->mWarriors.erase(Iter);
     };
@@ -1635,7 +1635,7 @@ void PlaguedChampionAI::Destroy()
 {
     if (mNothAI != NULL)
     {
-        set< PlaguedChampionAI* >::iterator Iter = mNothAI->mChampions.find(this);
+        std::set< PlaguedChampionAI* >::iterator Iter = mNothAI->mChampions.find(this);
         if (Iter != mNothAI->mChampions.end())
             mNothAI->mChampions.erase(Iter);
     };
@@ -1659,7 +1659,7 @@ void PlaguedGuardianAI::Destroy()
 {
     if (mNothAI != NULL)
     {
-        set< PlaguedGuardianAI* >::iterator Iter = mNothAI->mGuardians.find(this);
+        std::set< PlaguedGuardianAI* >::iterator Iter = mNothAI->mGuardians.find(this);
         if (Iter != mNothAI->mGuardians.end())
             mNothAI->mGuardians.erase(Iter);
     };
@@ -1716,7 +1716,7 @@ void HeiganTheUncleanAI::CallEruptionEvent(int32 pTimerId, int32 pNewTime)
     if (pTimerId < 0)
         return;
 
-    for (set< pair< uint32, PlagueFissureGO* > >::iterator Iter = mFissures.begin(); Iter != mFissures.end(); ++Iter)
+    for (std::set< std::pair< uint32, PlagueFissureGO* > >::iterator Iter = mFissures.begin(); Iter != mFissures.end(); ++Iter)
     {
         if ((int)(*Iter).first != mEruptionPhase)
         {
@@ -1758,12 +1758,12 @@ void HeiganTheUncleanAI::OnCombatStart(Unit* pTarget)
         {
             GameObject* Fissure = NULL;
             PlagueFissureGO* FissureGO = NULL;
-            for (set< Object* >::iterator Iter = _unit->GetInRangeSetBegin(); Iter != _unit->GetInRangeSetEnd(); ++Iter)
+            for (std::set< Object* >::iterator Iter = _unit->GetInRangeSetBegin(); Iter != _unit->GetInRangeSetEnd(); ++Iter)
             {
                 if ((*Iter) == NULL || !(*Iter)->IsGameObject())
                     continue;
 
-                Fissure = TO< GameObject* >(*Iter);
+                Fissure = static_cast< GameObject* >(*Iter);
 
                 if (Fissure->GetInfo() == NULL)
                     continue;
@@ -1775,8 +1775,8 @@ void HeiganTheUncleanAI::OnCombatStart(Unit* pTarget)
                     continue;
 
                 uint32 AreaId = CalculateTriggerArea(Fissure->GetPositionX(), Fissure->GetPositionY());
-                FissureGO = TO< PlagueFissureGO* >(Fissure->GetScript());
-                mFissures.insert(make_pair(AreaId, FissureGO));
+                FissureGO = static_cast< PlagueFissureGO* >(Fissure->GetScript());
+                mFissures.insert(std::make_pair(AreaId, FissureGO));
                 FissureGO->mHeiganAI = this;
                 FissureGO->SetState(GAMEOBJECT_STATE_CLOSED);
             };
@@ -1852,7 +1852,7 @@ void HeiganTheUncleanAI::AIUpdate()
 
 void HeiganTheUncleanAI::Destroy()
 {
-    for (set< pair< uint32, PlagueFissureGO* > >::iterator itr = mFissures.begin(); itr != mFissures.end(); ++itr)
+    for (std::set< std::pair< uint32, PlagueFissureGO* > >::iterator itr = mFissures.begin(); itr != mFissures.end(); ++itr)
     {
         (*itr).second->ResetHeiganAI();
     };
@@ -1886,7 +1886,7 @@ void PlagueFissureGO::DoErrupt()
     //send packet to inrange players
     for (std::set<Object*>::iterator plrIter = _gameobject->GetInRangePlayerSetBegin(); plrIter != _gameobject->GetInRangePlayerSetEnd(); plrIter++)
     {
-        TO_PLAYER(*plrIter)->SendPacket(&data);
+        static_cast<Player*>(*plrIter)->SendPacket(&data);
     };
 
     Creature* pFissureTrigger = _gameobject->GetMapMgr()->GetInterface()->SpawnCreature(15384, _gameobject->GetPositionX(), _gameobject->GetPositionY(), _gameobject->GetPositionZ(), _gameobject->GetOrientation(), true, false, 0, 0, 1);
@@ -1901,7 +1901,7 @@ void PlagueFissureGO::Destroy()
 {
     if (mHeiganAI != NULL)
     {
-        for (set< pair< uint32, PlagueFissureGO* > >::iterator Iter = mHeiganAI->mFissures.begin(); Iter != mHeiganAI->mFissures.end(); ++Iter)
+        for (std::set< std::pair< uint32, PlagueFissureGO* > >::iterator Iter = mHeiganAI->mFissures.begin(); Iter != mHeiganAI->mFissures.end(); ++Iter)
         {
             if ((*Iter).second == this)
             {
@@ -1944,7 +1944,7 @@ void LoathebAI::OnCombatStart(Unit* pTarget)
 void LoathebAI::OnCombatStop(Unit* pTarget)
 {
     ParentClass::OnCombatStop(pTarget);
-    for (set< SporeAI* >::iterator Iter = mSpores.begin(); Iter != mSpores.end(); ++Iter)
+    for (std::set< SporeAI* >::iterator Iter = mSpores.begin(); Iter != mSpores.end(); ++Iter)
     {
         (*Iter)->mLoathebAI = NULL;
         (*Iter)->Despawn();
@@ -1980,7 +1980,7 @@ void LoathebAI::AIUpdate()
                 };
             };
 
-            Spore = TO< SporeAI* >(SpawnCreature(CN_SPORE, Spores[Id].x, Spores[Id].y, Spores[Id].z, Spores[Id].o, true));
+            Spore = static_cast< SporeAI* >(SpawnCreature(CN_SPORE, Spores[Id].x, Spores[Id].y, Spores[Id].z, Spores[Id].o, true));
             if (Spore != NULL)
             {
                 Spore->GetUnit()->m_noRespawn = true;
@@ -2018,12 +2018,12 @@ void LoathebAI::AIUpdate()
             if (mDeathbloomDamagePhase)
             {
                 Player* PlayerPtr = NULL;
-                for (set< Object* >::iterator Iter = _unit->GetInRangePlayerSetBegin(); Iter != _unit->GetInRangePlayerSetEnd(); ++Iter)
+                for (std::set< Object* >::iterator Iter = _unit->GetInRangePlayerSetBegin(); Iter != _unit->GetInRangePlayerSetEnd(); ++Iter)
                 {
                     if ((*Iter) == NULL)
                         continue;
 
-                    PlayerPtr = TO< Player* >(*Iter);
+                    PlayerPtr = static_cast< Player* >(*Iter);
                     if (!PlayerPtr->isAlive())
                         continue;
 
@@ -2057,7 +2057,7 @@ void LoathebAI::AIUpdate()
 
 void LoathebAI::Destroy()
 {
-    for (set< SporeAI* >::iterator Iter = mSpores.begin(); Iter != mSpores.end(); ++Iter)
+    for (std::set< SporeAI* >::iterator Iter = mSpores.begin(); Iter != mSpores.end(); ++Iter)
     {
         (*Iter)->mLoathebAI = NULL;
         (*Iter)->Despawn();
@@ -2087,7 +2087,7 @@ void SporeAI::Destroy()
 {
     if (mLoathebAI != NULL)
     {
-        set< SporeAI* >::iterator Iter = mLoathebAI->mSpores.find(this);
+        std::set< SporeAI* >::iterator Iter = mLoathebAI->mSpores.find(this);
         if (Iter != mLoathebAI->mSpores.end())
             mLoathebAI->mSpores.erase(Iter);
 
@@ -2169,7 +2169,7 @@ void ShadeOfNaxxramasAI::OnDied(Unit* pKiller)
         Ghost->AggroNearestPlayer(200);
     };
 
-    for (set< PortalOfShadowsAI* >::iterator Iter = mPortals.begin(); Iter != mPortals.end(); ++Iter)
+    for (std::set< PortalOfShadowsAI* >::iterator Iter = mPortals.begin(); Iter != mPortals.end(); ++Iter)
     {
         (*Iter)->mShadeAI = NULL;
         (*Iter)->Despawn();
@@ -2180,7 +2180,7 @@ void ShadeOfNaxxramasAI::OnDied(Unit* pKiller)
 
 void ShadeOfNaxxramasAI::Destroy()
 {
-    for (set< PortalOfShadowsAI* >::iterator Iter = mPortals.begin(); Iter != mPortals.end(); ++Iter)
+    for (std::set< PortalOfShadowsAI* >::iterator Iter = mPortals.begin(); Iter != mPortals.end(); ++Iter)
     {
         (*Iter)->mShadeAI = NULL;
         (*Iter)->Despawn();
@@ -2208,7 +2208,7 @@ PortalOfShadowsAI::PortalOfShadowsAI(Creature* pCreature) : MoonScriptCreatureAI
         Unit* UnitPtr = ForceCreatureFind(CN_SHADE_OF_NAXXRAMAS);
         if (UnitPtr != NULL)
         {
-            mShadeAI = TO< ShadeOfNaxxramasAI* >(TO_CREATURE(UnitPtr)->GetScript());
+            mShadeAI = static_cast< ShadeOfNaxxramasAI* >(static_cast<Creature*>(UnitPtr)->GetScript());
             if (mShadeAI != NULL)
                 mShadeAI->mPortals.insert(this);
         };
@@ -2264,7 +2264,7 @@ void PortalOfShadowsAI::Destroy()
 {
     if (mShadeAI != NULL)
     {
-        set< PortalOfShadowsAI* >::iterator Iter = mShadeAI->mPortals.find(this);
+        std::set< PortalOfShadowsAI* >::iterator Iter = mShadeAI->mPortals.find(this);
         if (Iter != mShadeAI->mPortals.end())
             mShadeAI->mPortals.erase(Iter);
 
@@ -2288,7 +2288,7 @@ NecroKnightAI::NecroKnightAI(Creature* pCreature) : MoonScriptCreatureAI(pCreatu
 
 void SpellFunc_NecroKnightBlink(SpellDesc* pThis, MoonScriptCreatureAI* pCreatureAI, Unit* pTarget, TargetType pType)
 {
-    NecroKnightAI* NecroKnight = (pCreatureAI != NULL) ? TO< NecroKnightAI* >(pCreatureAI) : NULL;
+    NecroKnightAI* NecroKnight = (pCreatureAI != NULL) ? static_cast< NecroKnightAI* >(pCreatureAI) : NULL;
     if (NecroKnight != NULL && pTarget != NULL)
     {
         NecroKnight->ApplyAura(NECRO_KNIGHT_BLINK);
@@ -2387,7 +2387,7 @@ DeathchargerSteedAI::DeathchargerSteedAI(Creature* pCreature) : MoonScriptCreatu
     // I don't like this method anyway.
     if (_unit->GetSummonedByGUID() != 0 && _unit->GetMapMgr() != NULL && _unit->GetMapMgr()->GetInterface() != NULL)
     {
-        mDeathKnightAI = TO< DeathKnightCavalierAI* >(GetNearestCreature(CN_DEATH_KNIGHT_CAVALIER));
+        mDeathKnightAI = static_cast< DeathKnightCavalierAI* >(GetNearestCreature(CN_DEATH_KNIGHT_CAVALIER));
         if (mDeathKnightAI != NULL && mDeathKnightAI->mChargerAI == NULL)
             mDeathKnightAI->mChargerAI = this;
     };
@@ -2422,7 +2422,7 @@ void DeathchargerSteedAI::Destroy()
 
 void SpellFunc_DeathchargerSteedCharge(SpellDesc* pThis, MoonScriptCreatureAI* pCreatureAI, Unit* pTarget, TargetType pType)
 {
-    DeathchargerSteedAI* Deathcharger = (pCreatureAI != NULL) ? TO< DeathchargerSteedAI* >(pCreatureAI) : NULL;
+    DeathchargerSteedAI* Deathcharger = (pCreatureAI != NULL) ? static_cast< DeathchargerSteedAI* >(pCreatureAI) : NULL;
     if (Deathcharger != NULL)
     {
         Unit* CurrentTarget = Deathcharger->GetUnit()->GetAIInterface()->getNextTarget();
@@ -2707,14 +2707,14 @@ void SpellFunc_PatchwerkHatefulStrike(SpellDesc* pThis, MoonScriptCreatureAI* pC
     uint32 _mostHP = 0;
     Player* pBestTarget = NULL;
 
-    for (set< Object* >::iterator PlayerIter = pCreatureAI->GetUnit()->GetInRangePlayerSetBegin();
+    for (std::set< Object* >::iterator PlayerIter = pCreatureAI->GetUnit()->GetInRangePlayerSetBegin();
             PlayerIter != pCreatureAI->GetUnit()->GetInRangePlayerSetEnd(); ++PlayerIter)
     {
-        if ((*PlayerIter) && (TO< Player* >(*PlayerIter))->isAlive() && (*PlayerIter)->GetDistance2dSq(pCreatureAI->GetUnit()) <= 5.0f
+        if ((*PlayerIter) && (static_cast< Player* >(*PlayerIter))->isAlive() && (*PlayerIter)->GetDistance2dSq(pCreatureAI->GetUnit()) <= 5.0f
                 && (*PlayerIter)->GetUInt32Value(UNIT_FIELD_HEALTH) > _mostHP)
         {
             _mostHP = (*PlayerIter)->GetUInt32Value(UNIT_FIELD_HEALTH);
-            pBestTarget = TO< Player* >(*PlayerIter);
+            pBestTarget = static_cast< Player* >(*PlayerIter);
         };
     };
 

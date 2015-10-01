@@ -449,7 +449,7 @@ void IsleOfConquest::OnStart()
     m_started = true;
     
     for(uint32 i = 0; i < 2; ++i){
-        for(set<Player*  >::iterator itr = m_players[i].begin(); itr != m_players[i].end(); ++itr){
+        for(std::set<Player*  >::iterator itr = m_players[i].begin(); itr != m_players[i].end(); ++itr){
             (*itr)->RemoveAura(BG_PREPARATION);
         }
     }
@@ -654,7 +654,7 @@ void IsleOfConquest::Finish( uint32 losingTeam ){
             return;
 
         sEventMgr.RemoveEvents(this);
-        sEventMgr.AddEvent(TO< CBattleground* >(this), &CBattleground::Close, EVENT_BATTLEGROUND_CLOSE, 120 * 1000, 1,0);
+        sEventMgr.AddEvent(static_cast< CBattleground* >(this), &CBattleground::Close, EVENT_BATTLEGROUND_CLOSE, 120 * 1000, 1,0);
 
         this->EndBattleground(losingTeam == TEAM_ALLIANCE ? TEAM_HORDE : TEAM_ALLIANCE);
 }
@@ -748,7 +748,7 @@ void IsleOfConquest::HookOnUnitKill( Player* plr, Unit* pVictim ){
 
 void IsleOfConquest::HookOnUnitDied( Unit *victim ){
     if( victim->IsCreature() ){
-        Creature *c = TO< Creature* >( victim );
+        Creature *c = static_cast< Creature* >( victim );
 
         if( ( generals[ TEAM_ALLIANCE ] != NULL ) && ( c->GetEntry() == generals[ TEAM_ALLIANCE ]->GetEntry() ) ){
             Finish( TEAM_ALLIANCE );
