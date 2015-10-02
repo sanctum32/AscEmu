@@ -2545,7 +2545,8 @@ bool Spell::HasPower()
 
     int32 currentPower = m_caster->GetUInt32Value(powerField);
 
-    int32 cost;
+    int32 cost = 0;
+
     if (GetProto()->ManaCostPercentage) //Percentage spells cost % of !!!BASE!!! mana
     {
         if (u_caster != nullptr)
@@ -6058,7 +6059,11 @@ void Spell::SpellEffectJumpTarget(uint32 i)
     if (u_caster->GetCurrentVehicle() || u_caster->isTrainingDummy())
         return;
 
-    float x, y, z;
+    float x = 0;
+    float y = 0;
+    float z = 0;
+    float o = 0;
+
     if (m_targets.m_targetMask & TARGET_FLAG_UNIT)
     {
         Object* uobj = m_caster->GetMapMgr()->_GetObject(m_targets.m_unitTarget);
@@ -6108,7 +6113,7 @@ void Spell::SpellEffectJumpTarget(uint32 i)
     else if (m_spellInfo->EffectMiscValueB[i])
         speedZ = float(m_spellInfo->EffectMiscValueB[i]) / 10;
 
-    float o = unitTarget->calcRadAngle(u_caster->GetPositionX(), u_caster->GetPositionY(), x, y);
+    o = unitTarget->calcRadAngle(u_caster->GetPositionX(), u_caster->GetPositionY(), x, y);
 
     if (speedZ <= 0.0f)
         u_caster->GetAIInterface()->MoveJump(x, y, z, o, GetProto()->Effect[i] == 145);

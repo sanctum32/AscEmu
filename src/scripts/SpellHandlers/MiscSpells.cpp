@@ -303,17 +303,14 @@ bool ReturnFlash(uint32 i, Aura* pAura, bool apply)
 
 bool EatenRecently(uint32 i, Aura* pAura, bool apply)
 {
-    if (pAura == NULL)
+    if (pAura == nullptr)
         return true;
 
-    Unit* caster = pAura->GetUnitCaster();
-    if (caster == NULL || caster->IsPlayer())
+    auto unit_caster = pAura->GetUnitCaster();
+    if (unit_caster == nullptr || unit_caster->IsPlayer())
         return true;
 
-    Creature* NetherDrake = static_cast<Creature*>(caster);
-
-    if (NetherDrake == NULL)
-        return true;
+    Creature* NetherDrake = static_cast<Creature*>(unit_caster);
 
     if (apply)
     {
@@ -433,16 +430,11 @@ bool CrystalSpikes(uint32 i, Spell* pSpell)
 
 
 ////////////////////////////////////////////////////////////////
-//Listening To Music scripted spell effect
-//( SpellId 50499 )
-//
-//Precondition(s)
-//  Casted by Player
-//
-//Effect(s)
-//  Makes the player cast "Listening to Music"
-//
-//
+/// bool Listening To Music scripted spell effect (SpellId 50499)
+///
+/// \brief
+///  Casted by Player. Makes the player cast "Listening to Music"
+///
 ////////////////////////////////////////////////////////////////
 bool ListeningToMusicParent(uint32 i, Spell* s)
 {
