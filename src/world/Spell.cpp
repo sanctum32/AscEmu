@@ -143,9 +143,7 @@ void SpellCastTargets::read(WorldPacket & data, uint64 caster)
 
     if (m_targetMask & TARGET_FLAG_STRING)
     {
-        std::string ss;
-        data >> ss;
-        m_strTarget = strdup(ss.c_str());
+        data >> m_strTarget;
     }
 }
 
@@ -2690,7 +2688,7 @@ bool Spell::TakePower()
 
     int32 currentPower = m_caster->GetUInt32Value(powerField);
 
-    int32 cost;
+    int32 cost = 0;
     if (GetProto()->ManaCostPercentage) //Percentage spells cost % of !!!BASE!!! mana
     {
         if (u_caster != nullptr)
