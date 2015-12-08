@@ -91,8 +91,8 @@ struct AchievementReward
     std::string text;
 };
 
-typedef HM_NAMESPACE::hash_map<uint32, CriteriaProgress*> CriteriaProgressMap;
-typedef HM_NAMESPACE::hash_map<uint32, time_t> CompletedAchievementMap;
+typedef std::unordered_map<uint32, CriteriaProgress*> CriteriaProgressMap;
+typedef std::unordered_map<uint32, time_t> CompletedAchievementMap;
 typedef std::multimap<uint32, AchievementReward> AchievementRewardsMap;
 typedef std::pair<AchievementRewardsMap::const_iterator, AchievementRewardsMap::const_iterator> AchievementRewardsMapBounds;
 typedef std::set<uint32> AchievementSet;
@@ -294,6 +294,7 @@ class SERVER_DECL AchievementMgr
         void SendAllAchievementData(Player* player);
         void UpdateAchievementCriteria(AchievementCriteriaTypes type, int32 miscvalue1, int32 miscvalue2, uint32 time);
         void UpdateAchievementCriteria(AchievementCriteriaTypes type);
+        bool UpdateAchievementCriteria(Player* player, int32 criteriaID, uint32 count);
         bool GMCompleteAchievement(WorldSession* gmSession, int32 achievementID);
         bool GMCompleteCriteria(WorldSession* gmSession, int32 criteriaID);
         void GMResetAchievement(int achievementID);

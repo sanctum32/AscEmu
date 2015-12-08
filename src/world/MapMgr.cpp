@@ -606,7 +606,7 @@ void MapMgr::ChangeObjectLocation(Object* obj)
             curObj = *iter;
             ++iter;
 
-            if (curObj->IsPlayer() && plObj != NULL && plObj->transporter_info.guid && plObj->transporter_info.guid == static_cast< Player* >(curObj)->transporter_info.guid)
+            if (curObj->IsPlayer() && plObj != NULL && plObj->obj_movement_info.transporter_info.guid && plObj->obj_movement_info.transporter_info.guid == static_cast< Player* >(curObj)->obj_movement_info.transporter_info.guid)
                 fRange = 0.0f;                      // unlimited distance for people on same boat
             else if (curObj->GetTypeFromGUID() == HIGHGUID_TYPE_TRANSPORTER)
                 fRange = 0.0f;                      // unlimited distance for transporters (only up to 2 cells +/- anyway.)
@@ -778,7 +778,7 @@ void MapMgr::UpdateInRangeSet(Object* obj, Player* plObj, MapCell* cell, ByteBuf
         if (curObj == NULL)
             continue;
 
-        if (curObj->IsPlayer() && obj->IsPlayer() && plObj != NULL && plObj->transporter_info.guid && plObj->transporter_info.guid == static_cast< Player* >(curObj)->transporter_info.guid)
+        if (curObj->IsPlayer() && obj->IsPlayer() && plObj != NULL && plObj->obj_movement_info.transporter_info.guid && plObj->obj_movement_info.transporter_info.guid == static_cast< Player* >(curObj)->obj_movement_info.transporter_info.guid)
             fRange = 0.0f;                              // unlimited distance for people on same boat
         else if (curObj->GetTypeFromGUID() == HIGHGUID_TYPE_TRANSPORTER)
             fRange = 0.0f;                              // unlimited distance for transporters (only up to 2 cells +/- anyway.)
@@ -1393,7 +1393,8 @@ void MapMgr::BeginInstanceExpireCountdown()
     forced_expire = true;
 
     // send our sexy packet
-    data << uint32(60000) << uint32(1);
+    data << uint32(60000);
+    data << uint32(1);
     for (itr = m_PlayerStorage.begin(); itr != m_PlayerStorage.end(); ++itr)
     {
         if (!itr->second->raidgrouponlysent)
@@ -1885,8 +1886,8 @@ GameObject* MapMgr::CreateAndSpawnGameObject(uint32 entryID, float x, float y, f
     go_spawn->rotation_1 = go->GetParentRotation(1);
     go_spawn->rotation_2 = go->GetParentRotation(2);
     go_spawn->rotation_3 = go->GetParentRotation(3);
-    go_spawn->state = go->GetByte(GAMEOBJECT_BYTES_1, 0);
-    go_spawn->flags = go->GetUInt32Value(GAMEOBJECT_FLAGS);
+    go_spawn->state = go->GetState();
+    go_spawn->flags = go->GetFlags();
     go_spawn->faction = go->GetFaction();
     go_spawn->scale = go->GetScale();
     //go_spawn->stateNpcLink = 0;

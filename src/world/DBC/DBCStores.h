@@ -17,8 +17,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _SPELLSTORE_H
-#define _SPELLSTORE_H
+#ifndef _DBC_STORES_H
+#define _DBC_STORES_H
 
 #include "DBCGlobals.hpp"
 #include "Definitions.h"
@@ -487,174 +487,6 @@ struct AchievementCriteriaEntry
     uint32 maxLevel;                // 31 Max level
 };*/
 
-struct BankSlotPrice
-{
-    uint32 Id;
-    uint32 Price;
-};
-
-struct CharTitlesEntry
-{
-    uint32 ID;                      // 0, title ids
-    uint32 unk1;                    // 1 flags?
-    const char* name;               // 2-17, unused
-    uint32 name_flag;               // 18 string flag, unused
-    const char* name2;              // 19-34, unused
-    const char* name2_flag;         // 35 string flag, unused
-    uint32 bit_index;               // 36 used in PLAYER_CHOSEN_TITLE and 1<<index in PLAYER__FIELD_KNOWN_TITLES
-};
-
-struct CurrencyTypesEntry
-{
-    //uint32 ID;                    // 0 not used
-    uint32 ItemId;                  // 1 used as real index
-    //uint32 Category;              // 2 may be category
-    uint32 BitIndex;                // 3 bit index in PLAYER_FIELD_KNOWN_CURRENCIES (1 << (index-1))
-};
-
-struct ItemEntry
-{
-   uint32   ID;                         // 0
-   uint32   Class;                      // 1
-   uint32   SubClass;                   // 2 some items have strange subclasses
-   int32    SoundOverrideSubclass;      // 3
-   int32    Material;                   // 4
-   uint32   DisplayId;                  // 5
-   uint32   InventoryType;              // 6
-   uint32   Sheath;                     // 7
-};
-
-struct ItemSetEntry
-{
-    uint32 id;                      //1
-    const char* name;               //2
-  //uint32 unused_shit[15];         //3 - 9
-  //uint32 localeflag;              //10 constant
-    uint32 itemid[8];               //11 - 18
-  //uint32 more_unused_shit[9];     //19 - 27
-    uint32 SpellID[8];              //28 - 35
-    uint32 itemscount[8];           //36 - 43
-    uint32 RequiredSkillID;         //44
-    uint32 RequiredSkillAmt;        //45
-};
-
-struct ItemLimitCategoryEntry
-{
-    uint32 Id;              // 0    - Id
-    char* name;             // 1    - Displayed name
-    uint32 maxAmount;       // 18   - Max amount of items
-    uint32 equippedFlag;    // 19   - equipped (bool?)
-};
-
-#define LOCK_NUM_CASES 8
-
-struct Lock
-{
-    uint32 Id;
-    uint32 locktype[LOCK_NUM_CASES];        /// If this is 1, then the next lockmisc is an item ID, if it's 2, then it's an iRef to LockTypes.dbc.
-    uint32 lockmisc[LOCK_NUM_CASES];        /// Item to unlock or iRef to LockTypes.dbc depending on the locktype.
-    uint32 minlockskill[LOCK_NUM_CASES];    /// Required skill needed for lockmisc (if locktype = 2).
-    //uint32 action[8];                     /// Something to do with direction / opening / closing.
-};
-
-struct emoteentry
-{
-    uint32 Id;
-  //uint32 name;
-    uint32 textid;
-    uint32 textid2;
-    uint32 textid3;
-    uint32 textid4;
-  //uint32 unk1;
-    uint32 textid5;
-  //uint32 unk2;
-    uint32 textid6;
-  //uint32 unk3;
-  //uint32 unk4;
-  //uint32 unk5;
-  //uint32 unk6;
-  //uint32 unk7;
-  //uint32 unk8;
-  //uint32 unk9;
-  //uint32 unk10;
-  //uint32 unk11;
-};
-
-//SkillLineAbility.dbc
-struct skilllinespell
-{
-    uint32 Id;
-    uint32 skilline;
-    uint32 spell;
-  //uint32 raceMask;
-  //uint32 classMask;
-  //uint32 excludeRace;
-  //uint32 excludeClass;
-    uint32 minSkillLineRank;
-    uint32 next;
-    uint32 acquireMethod;
-    uint32 grey;
-    uint32 green;
-  //uint32 abandonable;
-    uint32 reqTP;
-};
-
-struct EnchantEntry
-{
-    uint32 Id;
-    uint32 type[3];
-    int32 min[3];      /// for compat, in practice min==max
-    int32 max[3];
-    uint32 spell[3];
-    const char* Name;
-  //uint32 NameAlt1;
-  //uint32 NameAlt2;
-  //uint32 NameAlt3;
-  //uint32 NameAlt4;
-  //uint32 NameAlt5;
-  //uint32 NameAlt6;
-  //uint32 NameAlt7;
-  //uint32 NameAlt8;
-  //uint32 NameAlt9;
-  //uint32 NameAlt10;
-  //uint32 NameAlt11;
-  //uint32 NameAlt12;
-  //uint32 NameAlt13;
-  //uint32 NameAlt14;
-  //uint32 NameAlt15;
-  //uint32 NameFlags;
-    uint32 visual;
-    uint32 EnchantGroups;
-    uint32 GemEntry;
-    uint32 unk7;        /// Gem Related
-
-};
-
-struct GemPropertyEntry
-{
-    uint32 Entry;
-    uint32 EnchantmentID;
-    uint32 unk1;            /// bool
-    uint32 unk2;            /// bool
-    uint32 SocketMask;
-};
-
-//GlyphProperties.dbc
-struct GlyphPropertyEntry
-{
-    uint32 Entry;
-    uint32 SpellID;
-    uint32 Type;        /// 0 = Major, 1 = Minor
-    uint32 unk;         /// some flag
-};
-
-struct GlyphSlotEntry
-{
-    uint32 Id;
-    uint32 Type;
-    uint32 Slot;
-};
-
 //SkillLine.dbc
 struct skilllineentry
 {
@@ -1050,67 +882,6 @@ struct SpellEntry
     }
 };
 
-struct SpellRuneCostEntry
-{
-    uint32 ID;
-    uint32 bloodRuneCost;
-    uint32 frostRuneCost;
-    uint32 unholyRuneCost;
-    uint32 runePowerGain;
-};
-
-struct ItemExtendedCostEntry
-{
-    uint32 costid;
-    uint32 honor;
-    uint32 arena;
-    uint32 item[5];
-    uint32 count[5];
-    uint32 personalrating;
-};
-
-struct TalentEntry
-{
-    uint32 TalentID;
-    uint32 TalentTree;
-    uint32 Row;
-    uint32 Col;
-    uint32 RankID[5];
-  //uint32 unk[4];
-    uint32 DependsOn;
-  //uint32 unk1[2];
-    uint32 DependsOnRank;
-  //uint32 unk2[4];
-};
-
-struct TalentTabEntry
-{
-    uint32 TalentTabID;
-    //char* Name;
-    //uint32 unk3;
-    //uint32 unk4;
-    //uint32 unk5;
-    //uint32 unk6;
-    //uint32 unk7;
-    //uint32 unk8;
-    //uint32 unk9;
-    //uint32 unk10;
-    //uint32 unk11;
-    //uint32 unk12;
-    //uint32 unk13;
-    //uint32 unk14;
-    //uint32 unk15;
-    //uint32 unk16;
-    //uint32 unk17;
-    //uint32 unk18;
-    //uint32 unk19;
-    //uint32 unk20;
-    uint32 ClassMask;
-    uint32 PetTalentMask;
-    uint32 TabPage;
-    //char* InternalName;
-};
-
 struct Trainerspell
 {
     uint32 Id;
@@ -1119,46 +890,6 @@ struct Trainerspell
     uint32 skilline3;
     uint32 maxlvl;
     uint32 charclass;
-};
-
-struct SpellDifficultyEntry
-{
-    uint32 ID;
-    int32 SpellId[NUM_INSTANCE_MODES];
-};
-
-struct SpellCastTime
-{
-    uint32 ID;
-    uint32 CastTime;
-    //uint32 unk1;
-    //uint32 unk2;
-};
-
-struct SpellRadius
-{
-    uint32 ID;
-    float Radius;
-    //float unk1;
-    float Radius2;
-};
-
-struct SpellRange
-{
-    uint32 ID;
-    float minRange;
-    float minRangeFriendly;
-    float maxRange;
-    float maxRangeFriendly;
-    //uint32 unks[35];
-};
-
-struct SpellDuration
-{
-    uint32 ID;
-    uint32 Duration1;
-    uint32 Duration2;
-    uint32 Duration3;
 };
 
 struct RandomProps
@@ -1187,115 +918,6 @@ struct RandomProps
     //uint32 RankFlags;
 };
 
-struct AreaGroup
-{
-    uint32 AreaGroupId;
-    uint32 AreaId[7];
-};
-
-struct FactionTemplateDBC
-{
-    uint32 ID;
-    uint32 Faction;
-    uint32 FactionGroup;
-    uint32 Mask;
-    uint32 FriendlyMask;
-    uint32 HostileMask;
-    uint32 EnemyFactions[4];
-    uint32 FriendlyFactions[4];
-};
-
-struct AuctionHouseDBC
-{
-    uint32 id;
-    uint32 unk;
-    uint32 fee;
-    uint32 tax;
-    //char* name;
-    //char* nameAlt1;
-    //char* nameAlt2;
-    //char* nameAlt3;
-    //char* nameAlt4;
-    //char* nameAlt5;
-    //char* nameAlt6;
-    //char* nameAlt7;
-    //char* nameAlt8;
-    //char* nameAlt9;
-    //char* nameAlt10;
-    //char* nameAlt11;
-    //char* nameAlt12;
-    //char* nameAlt13;
-    //char* nameAlt14;
-    //char* nameAlt15;
-    //char* nameFlags;
-};
-
-struct FactionDBC
-{
-    uint32 ID;
-    int32 RepListId;
-    uint32 RaceMask[4];
-    uint32 ClassMask[4];
-    int32 baseRepValue[4];
-    uint32 repFlags[4];
-    uint32 parentFaction;
-    const char* Name;
-    //uint32 poo[16];
-    //uint32 Description;
-    //uint32 poo2[16];
-};
-
-struct DBCTaxiNode
-{
-    uint32 id;
-    uint32 mapid;
-    float x;
-    float y;
-    float z;
-    //uint32 name;
-    //uint32 namealt1;
-    //uint32 namealt2;
-    //uint32 namealt3;
-    //uint32 namealt4;
-    //uint32 namealt5;
-    //uint32 namealt6;
-    //uint32 namealt7;
-    //uint32 namealt8;
-    //uint32 namealt9;
-    //uint32 namealt10;
-    //uint32 namealt11;
-    //uint32 namealt12;
-    //uint32 namealt13;
-    //uint32 namealt14;
-    //uint32 namealt15;
-    //uint32 nameflags;
-    uint32 horde_mount;
-    uint32 alliance_mount;
-};
-
-struct DBCTaxiPath
-{
-    uint32 id;
-    uint32 from;
-    uint32 to;
-    uint32 price;
-};
-
-struct DBCTaxiPathNode
-{
-    uint32 id;
-    uint32 path;
-    uint32 seq;            /// nodeIndex
-    uint32 mapid;
-    float x;
-    float y;
-    float z;
-    uint32 flags;
-    uint32 waittime;
-    //uint32 arivalEventID;
-    //uint32 departureEventID;
-};
-
 struct CreatureSpellDataEntry
 {
     uint32 id;
@@ -1305,101 +927,6 @@ struct CreatureSpellDataEntry
     uint32 PH;
 };
 
-struct CharRaceEntry
-{
-    uint32 race_id;
-    uint32 team_id;
-    uint32 cinematic_id;
-    const char* name1;
-};
-
-struct CharClassEntry
-{
-    uint32 class_id;
-    //uint32 unk1;
-    uint32 power_type;
-    //uint32 unk2;
-    const char* name;
-    //uint32 namealt1;
-    //uint32 namealt2;
-    //uint32 namealt3;
-    //uint32 namealt4;
-    //uint32 namealt5;
-    //uint32 namealt6;
-    //uint32 namealt7;
-    //uint32 namealt8;
-    //uint32 namealt9;
-    //uint32 namealt10;
-    //uint32 namealt11;
-    //uint32 namealt12;
-    //uint32 namealt13;
-    //uint32 namealt14;
-    //uint32 namealt15;
-    //uint32 nameflags;
-    //uint32 unk3;
-    //uint32 unk4;
-    //uint32 unk5;
-};
-
-struct CreatureFamilyEntry
-{
-    uint32 ID;
-    float minsize;
-    uint32 minlevel;
-    float maxsize;
-    uint32 maxlevel;
-    uint32 skilline;
-    uint32 tameable;        /// second skill line - 270 Generic
-    uint32 petdietflags;
-    uint32 talenttree;      /// -1 = none, 0 = ferocity(410), 1 = tenacity(409), 2 = cunning(411)
-    //uint32 unk;           /// some index 0 - 63
-    const char* name;
-    //uint32 namealt[15];
-    //uint32 nameflags;
-    //uint32 iconFile;
-};
-
-#define MAX_HOLIDAY_DURATIONS 10
-#define MAX_HOLIDAY_DATES 26
-#define MAX_HOLIDAY_FLAGS 10
-
-struct HolidaysEntry
-{
-    uint32 Id;                                              // 0        m_ID
-    uint32 Duration[MAX_HOLIDAY_DURATIONS];                 // 1-10     m_duration
-    uint32 Date[MAX_HOLIDAY_DATES];                         // 11-36    m_date (dates in unix time starting at January, 1, 2000)
-    uint32 Region;                                          // 37       m_region (wow region)
-    uint32 Looping;                                         // 38       m_looping
-    uint32 CalendarFlags[MAX_HOLIDAY_FLAGS];                // 39-48    m_calendarFlags
-    //uint32 holidayNameId;                                 // 49       m_holidayNameID (HolidayNames.dbc)
-    //uint32 holidayDescriptionId;                          // 50       m_holidayDescriptionID (HolidayDescriptions.dbc)
-    char* TextureFilename;                                  // 51       m_textureFilename
-    uint32 Priority;                                        // 52       m_priority
-    uint32 CalendarFilterType;                              // 53       m_calendarFilterType (-1 = Fishing Contest, 0 = Unk, 1 = Darkmoon Festival, 2 = Yearly holiday)
-    //uint32 flags;                                         // 54       m_flags (0 = Darkmoon Faire, Fishing Contest and Wotlk Launch, rest is 1)
-};
-
-struct MapEntry
-{
-    uint32 id;
-    const char* name_internal;
-    uint32 map_type;
-    uint32 is_pvp_zone;
-    const char* real_name;
-    uint32 linked_zone;             /// common zone for instance and continent map
-    const char* hordeIntro;         /// text for PvP Zones
-    const char* allianceIntro;      /// text for PvP Zones
-    uint32 multimap_id;
-    const char* normalReqText;      /// normal mode requirement text
-    const char* heroicReqText;      /// heroic mode requirement text
-    int32 parent_map;               /// map_id of parent map
-    float start_x;                  /// enter x coordinate (if exist single entry)
-    float start_y;                  /// enter y coordinate (if exist single entry)
-    //uint32 resetTimeRaid;         /// REMOVED IN 3.2.0
-    //uint32 resetTimeHeroic;       /// REMOVED IN 3.2.0
-    uint32 addon;                   /// 0-original maps, 1-tbc addon, 2-wotlk addon
-};
-
 struct ItemRandomSuffixEntry
 {
     uint32 id;
@@ -1407,106 +934,11 @@ struct ItemRandomSuffixEntry
     uint32 prefixes[3];
 };
 
-struct BarberShopStyleEntry
-{
-    uint32 id;              // 0
-    uint32 type;            // 1 value 0 -> hair, value 2 -> facialhair
-    //char* name;           // 2 string hairstyle name
-    //char* name[15];       // 3-17 name of hair style
-    //uint32 name_flags;    // 18
-    //uint32 unk_name[16];  // 19-34, all empty
-    //uint32 unk_flags;     // 35
-    //float unk3;           // 36 values 1 and 0,75
-    uint32 race;            // 37 race
-    uint32 gender;          // 38 0 male, 1 female
-    uint32 hair_id;         // 39 Hair ID
-};
-
-struct gtFloat
-{
-    float val;
-};
-
-struct CombatRatingDBC
-{
-    float val;
-};
-
-struct ChatChannelDBC
-{
-    uint32 id;
-    uint32 flags;
-    char* name_pattern[16];
-};
-
-struct DurabilityQualityEntry
-{
-    uint32 id;
-    float quality_modifier;
-};
-
-struct DurabilityCostsEntry
-{
-    uint32 itemlevel;
-    uint32 modifier[29];
-};
-
-struct SpellShapeshiftForm
-{
-    uint32 id;
-    uint32 Flags;
-    uint32 unit_type;
-    uint32 AttackSpeed;
-    uint32 modelId;
-    uint32 modelId2;
-    uint32 spells[8];
-};
-
-struct AreaTriggerEntry
-{
-    uint32 id;          // 0
-    uint32 mapid;       // 1
-    float x;            // 2
-    float y;            // 3
-    float z;            // 4
-    float o;            // 5 radius?
-    float box_x;        // 6 extent x edge
-    float box_y;        // 7 extent y edge
-    float box_z;        // 8 extent z edge
-    float box_o;        // 9 extent rotation by about z axis
-};
-
-struct ScalingStatDistributionEntry
-{
-    uint32 id;
-    int32 stat[10];
-    uint32 statmodifier[10];
-    uint32 maxlevel;
-};
-
 struct ScalingStatValuesEntry
 {
     uint32 id;
     uint32 level;
     uint32 multiplier[16];
-};
-
-struct QuestXP
-{
-    uint32 questLevel;     // 0
-    uint32 xpIndex[8];     // 1-9
-    //unk                  // 10
-};
-
-struct MailTemplateEntry
-{
-    uint32 ID;              // 0
-    char* subject;          // 1
-    //float unused1[15]     // 2-16
-    //uint32 flags1         // 17 name flags, unused
-    char* content;          // 18
-    //float unused2[15]     // 19-34
-    //uint32 flags2         // 35 name flags, unused
 };
 
 struct WMOAreaTableEntry
@@ -1560,14 +992,6 @@ struct SummonPropertiesEntry
     uint32 Type;
     uint32 Slot;
     uint32 Flags;
-};
-
-struct NameGenEntry
-{
-    uint32 ID;
-    char* Name;
-    uint32 unk1;
-    uint32 unk2;
 };
 
 struct LFGDungeonEntry
@@ -1737,24 +1161,38 @@ struct VehicleSeatEntry
 
 #pragma pack(pop)
 
-inline float GetRadius(SpellRadius* radius)
+inline float GetRadius(DBC::Structures::SpellRadiusEntry const* radius)
 {
-    return radius->Radius;
+    if (radius == nullptr)
+        return 0;
+
+    return radius->radius_min;
 }
-inline uint32 GetCastTime(SpellCastTime* time)
+inline uint32 GetCastTime(DBC::Structures::SpellCastTimesEntry const* time)
 {
+    if (time == nullptr)
+        return 0;
+
     return time->CastTime;
 }
-inline float GetMaxRange(SpellRange* range)
+inline float GetMaxRange(DBC::Structures::SpellRangeEntry const* range)
 {
+    if (range == nullptr)
+        return 0;
+
     return range->maxRange;
 }
-inline float GetMinRange(SpellRange* range)
+inline float GetMinRange(DBC::Structures::SpellRangeEntry const* range)
 {
+    if (range == nullptr)
+        return 0;
+
     return range->minRange;
 }
-inline uint32 GetDuration(SpellDuration* dur)
+inline uint32 GetDuration(DBC::Structures::SpellDurationEntry const* dur)
 {
+    if (dur == nullptr)
+        return 0;
     return dur->Duration1;
 }
 
@@ -2095,70 +1533,73 @@ extern SERVER_DECL DBCStorage<AchievementCriteriaEntry> dbcAchievementCriteriaSt
 extern SERVER_DECL DBCStorage<AchievementCategoryEntry> dbcAchievementCategoryStore;
 #endif
 //extern SERVER_DECL DBCStorage<BattlemasterListEntry> dbcBattlemasterListStore;
-extern SERVER_DECL DBCStorage<CharTitlesEntry> dbcCharTitlesEntry;
-extern SERVER_DECL DBCStorage<CurrencyTypesEntry> dbcCurrencyTypesStore;
-extern SERVER_DECL DBCStorage<BarberShopStyleEntry> dbcBarberShopStyleStore;
-extern SERVER_DECL DBCStorage<GemPropertyEntry> dbcGemProperty;
-extern SERVER_DECL DBCStorage<GlyphPropertyEntry> dbcGlyphProperty;
-extern SERVER_DECL DBCStorage<GlyphSlotEntry> dbcGlyphSlot;
-extern SERVER_DECL DBCStorage<ItemEntry> dbcItemEntry;
-extern SERVER_DECL DBCStorage<ItemSetEntry> dbcItemSet;
-extern SERVER_DECL DBCStorage<Lock> dbcLock;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::CharTitlesEntry> sCharTitlesStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::CurrencyTypesEntry> sCurrencyTypesStore;
+
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::BarberShopStyleEntry> sBarberShopStyleStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::GemPropertiesEntry> sGemPropertiesStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::GlyphPropertiesEntry> sGlyphPropertiesStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::GlyphSlotEntry> sGlyphSlotStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::ItemEntry> sItemStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::ItemSetEntry> sItemSetStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::LockEntry> sLockStore;
 extern SERVER_DECL DBCStorage<SpellEntry> dbcSpell;
-extern SERVER_DECL DBCStorage<SpellDifficultyEntry> dbcSpellDifficultyEntry;
-extern SERVER_DECL DBCStorage<SpellDuration> dbcSpellDuration;
-extern SERVER_DECL DBCStorage<SpellRange> dbcSpellRange;
-extern SERVER_DECL DBCStorage<SpellShapeshiftForm> dbcSpellShapeshiftForm;
-extern SERVER_DECL DBCStorage<emoteentry> dbcEmoteEntry;
-extern SERVER_DECL DBCStorage<SpellRadius> dbcSpellRadius;
-extern SERVER_DECL DBCStorage<SpellCastTime> dbcSpellCastTime;
-extern SERVER_DECL DBCStorage<AreaGroup> dbcAreaGroup;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::SpellDifficultyEntry> sSpellDifficultyStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::SpellDurationEntry> sSpellDurationStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::SpellRangeEntry> sSpellRangeStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::SpellShapeshiftFormEntry> sSpellShapeshiftFormStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::EmotesTextEntry> sEmotesTextStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::SpellRadiusEntry> sSpellRadiusStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::SpellCastTimesEntry> sSpellCastTimesStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::AreaGroupEntry> sAreaGroupStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::AreaTableEntry> sAreaStore;
-extern SERVER_DECL DBCStorage<FactionTemplateDBC> dbcFactionTemplate;
-extern SERVER_DECL DBCStorage<FactionDBC> dbcFaction;
-extern SERVER_DECL DBCStorage<EnchantEntry> dbcEnchant;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::FactionTemplateEntry> sFactionTemplateStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::FactionEntry> sFactionStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::SpellItemEnchantmentEntry> sSpellItemEnchantmentStore;
 extern SERVER_DECL DBCStorage<RandomProps> dbcRandomProps;
-extern SERVER_DECL DBCStorage<skilllinespell> dbcSkillLineSpell;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::SkillLineAbilityEntry> sSkillLineAbilityStore;
 extern SERVER_DECL DBCStorage<skilllineentry> dbcSkillLine;
-extern SERVER_DECL DBCStorage<DBCTaxiNode> dbcTaxiNode;
-extern SERVER_DECL DBCStorage<DBCTaxiPath> dbcTaxiPath;
-extern SERVER_DECL DBCStorage<DBCTaxiPathNode> dbcTaxiPathNode;
-extern SERVER_DECL DBCStorage<AuctionHouseDBC> dbcAuctionHouse;
-extern SERVER_DECL DBCStorage<TalentEntry> dbcTalent;
-extern SERVER_DECL DBCStorage<TalentTabEntry> dbcTalentTab;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::TaxiNodesEntry> sTaxiNodesStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::TaxiPathEntry> sTaxiPathStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::TaxiPathNodeEntry> sTaxiPathNodeStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::AuctionHouseEntry> sAuctionHouseStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::TalentEntry> sTalentStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::TalentTabEntry> sTalentTabStore;
 extern SERVER_DECL DBCStorage<CreatureSpellDataEntry> dbcCreatureSpellData;
-extern SERVER_DECL DBCStorage<CreatureFamilyEntry> dbcCreatureFamily;
-extern SERVER_DECL DBCStorage<CharClassEntry> dbcCharClass;
-extern SERVER_DECL DBCStorage<CharRaceEntry> dbcCharRace;
-extern SERVER_DECL DBCStorage<MapEntry> dbcMap;
-extern SERVER_DECL DBCStorage <HolidaysEntry> dbcHolidaysStore;
-extern SERVER_DECL DBCStorage<SpellRuneCostEntry> dbcSpellRuneCost;
-extern SERVER_DECL DBCStorage<ItemExtendedCostEntry> dbcItemExtendedCost;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::CreatureFamilyEntry> sCreatureFamilyStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::ChrClassesEntry> sChrClassesStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::ChrRacesEntry> sChrRacesStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::MapEntry> sMapStore;
+extern SERVER_DECL DBC::DBCStorage <DBC::Structures::HolidaysEntry> sHolidaysStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::SpellRuneCostEntry> sSpellRuneCostStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::ItemExtendedCostEntry> sItemExtendedCostStore;
 extern SERVER_DECL DBCStorage<ItemRandomSuffixEntry> dbcItemRandomSuffix;
-extern SERVER_DECL DBCStorage<CombatRatingDBC> dbcCombatRating;
-extern SERVER_DECL DBCStorage<ChatChannelDBC> dbcChatChannels;
-extern SERVER_DECL DBCStorage<DurabilityCostsEntry> dbcDurabilityCosts;
-extern SERVER_DECL DBCStorage<DurabilityQualityEntry> dbcDurabilityQuality;
-extern SERVER_DECL DBCStorage<BankSlotPrice> dbcBankSlotPrices;
-extern SERVER_DECL DBCStorage<BankSlotPrice> dbcStableSlotPrices; //uses same structure as Bank
-extern SERVER_DECL DBCStorage<gtFloat> dbcBarberShopPrices;
-extern SERVER_DECL DBCStorage<gtFloat> dbcMeleeCrit;
-extern SERVER_DECL DBCStorage<gtFloat> dbcMeleeCritBase;
-extern SERVER_DECL DBCStorage<gtFloat> dbcSpellCrit;
-extern SERVER_DECL DBCStorage<gtFloat> dbcSpellCritBase;
-extern SERVER_DECL DBCStorage<gtFloat> dbcManaRegen;
-extern SERVER_DECL DBCStorage<gtFloat> dbcManaRegenBase;
-extern SERVER_DECL DBCStorage<gtFloat> dbcHPRegen;
-extern SERVER_DECL DBCStorage<gtFloat> dbcHPRegenBase;
-extern SERVER_DECL DBCStorage<AreaTriggerEntry> dbcAreaTrigger;
-extern SERVER_DECL DBCStorage<ScalingStatDistributionEntry> dbcScalingStatDistribution;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::GtCombatRatingsEntry> sGtCombatRatingsStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::ChatChannelsEntry> sChatChannelsStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::DurabilityCostsEntry> sDurabilityCostsStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::DurabilityQualityEntry> sDurabilityQualityStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::BankBagSlotPrices> sBankBagSlotPricesStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::StableSlotPrices> sStableSlotPricesStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::GtBarberShopCostBaseEntry> sBarberShopCostBaseStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::GtChanceToMeleeCritEntry> sGtChanceToMeleeCritStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::GtChanceToMeleeCritBaseEntry> sGtChanceToMeleeCritBaseStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::GtChanceToSpellCritEntry> sGtChanceToSpellCritStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::GtChanceToSpellCritBaseEntry> sGtChanceToSpellCritBaseStore;
+
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::GtOCTRegenMPEntry> sGtOCTRegenMPStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::GtRegenMPPerSptEntry> sGtRegenMPPerSptStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::GtOCTRegenHPEntry> sGtOCTRegenHPStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::GtRegenHPPerSptEntry> sGtRegenHPPerSptStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::AreaTriggerEntry> sAreaTriggerStore;
+
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::ScalingStatDistributionEntry> sScalingStatDistributionStore;
 extern SERVER_DECL DBCStorage<ScalingStatValuesEntry> dbcScalingStatValues;
-extern SERVER_DECL DBCStorage<ItemLimitCategoryEntry> dbcItemLimitCategory;
-extern SERVER_DECL DBCStorage<QuestXP> dbcQuestXP;
-extern SERVER_DECL DBCStorage<MailTemplateEntry> dbcMailTemplateEntry;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::ItemLimitCategoryEntry> sItemLimitCategoryStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::QuestXP> sQuestXPStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::MailTemplateEntry> sMailTemplateStore;
 extern SERVER_DECL DBCStorage<WMOAreaTableEntry> dbcWMOAreaTable;
 extern SERVER_DECL DBCStorage<SummonPropertiesEntry> dbcSummonProperties;
-extern SERVER_DECL DBCStorage<NameGenEntry> dbcNameGen;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::NameGenEntry> sNameGenStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::LFGDungeonEntry> sLFGDungeonStore;
 extern SERVER_DECL DBCStorage<VehicleEntry> dbcVehicle;
 extern SERVER_DECL DBCStorage<VehicleSeatEntry> dbcVehicleSeat;
@@ -2167,4 +1608,4 @@ bool LoadDBCs();
 
 const WMOAreaTableEntry* GetWMOAreaTableEntryByTriple(int32 root_id, int32 adt_id, int32 group_id);
 
-#endif // _SPELLSTORE_H
+#endif // _DBC_STORES_H

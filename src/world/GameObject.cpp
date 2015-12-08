@@ -29,10 +29,9 @@ GameObject::GameObject(uint64 guid)
     m_updateMask.SetCount(GAMEOBJECT_END);
     SetUInt32Value(OBJECT_FIELD_TYPE, TYPE_GAMEOBJECT | TYPE_OBJECT);
     SetGUID(guid);
-    SetByte(GAMEOBJECT_BYTES_1, 3, 100);
+    SetAnimProgress(100);
     m_wowGuid.Init(GetGUID());
     SetScale(1);  //info->Size );
-    SetByte(GAMEOBJECT_BYTES_1, 3, 100);
     counter = 0; //not needed at all but to prevent errors that var was not initialized, can be removed in release
     bannerslot = bannerauraslot = -1;
     m_summonedGo = false;
@@ -91,7 +90,7 @@ GameObject::~GameObject()
         m_respawnCell->_respawnObjects.erase(this);
 
     if (m_summonedGo && m_summoner)
-        for (int i = 0; i < 4; i++)
+        for (uint8 i = 0; i < 4; i++)
             if (m_summoner->m_ObjectSlots[i] == GetLowGUID())
                 m_summoner->m_ObjectSlots[i] = 0;
 }
@@ -119,8 +118,8 @@ bool GameObject::CreateFromProto(uint32 entry, uint32 mapid, float x, float y, f
     SetParentRotation(2, r2);
     SetParentRotation(3, r3);
     UpdateRotation();
-    SetByte(GAMEOBJECT_BYTES_1, 3, 0);
-    SetByte(GAMEOBJECT_BYTES_1, 0, 1);
+    SetAnimProgress(0);
+    SetState(1);
     SetDisplayId(pInfo->display_id);
     SetType(static_cast<uint8>(pInfo->type));
     InitAI();
@@ -155,7 +154,7 @@ void GameObject::Update(uint32 p_time)
     if (m_deleted)
         return;
 
-    if (spell && (GetByte(GAMEOBJECT_BYTES_1, 0) == 1))
+    if (spell && (GetState() == 1))
     {
         if (checkrate > 1)
         {
@@ -235,8 +234,8 @@ void GameObject::Despawn(uint32 delay, uint32 respawntime)
     //This is for go get deleted while looting
     if (m_spawn)
     {
-        SetByte(GAMEOBJECT_BYTES_1, 0, static_cast<uint8>(m_spawn->state));
-        SetUInt32Value(GAMEOBJECT_FLAGS, m_spawn->flags);
+        SetState(static_cast<uint8>(m_spawn->state));
+        SetFlags(m_spawn->flags);
     }
 
     CALL_GO_SCRIPT_EVENT(this, OnDespawn)();
@@ -276,8 +275,8 @@ void GameObject::SaveToDB()
         m_spawn->rotation_1 = GetParentRotation(1);
         m_spawn->rotation_2 = GetParentRotation(2);
         m_spawn->rotation_3 = GetParentRotation(3);
-        m_spawn->state = GetByte(GAMEOBJECT_BYTES_1, 0);
-        m_spawn->flags = GetUInt32Value(GAMEOBJECT_FLAGS);
+        m_spawn->state = GetState();
+        m_spawn->flags = GetFlags();
         m_spawn->faction = GetFaction();
         m_spawn->scale = GetScale();
         //m_spawn->stateNpcLink = 0;
@@ -307,12 +306,12 @@ void GameObject::SaveToDB()
         << GetPositionY() << ","
         << GetPositionZ() << ","
         << GetOrientation() << ","
+        << uint64(0) << ","
         << GetParentRotation(0) << ","
-        << GetParentRotation(1) << ","
         << GetParentRotation(2) << ","
         << GetParentRotation(3) << ","
-        << GetUInt32Value(GAMEOBJECT_BYTES_1) << ","
-        << GetUInt32Value(GAMEOBJECT_FLAGS) << ","
+        << "0,"              // initial state
+        << GetFlags() << ","
         << GetFaction() << ","
         << GetScale() << ","
         << "0,"
@@ -339,8 +338,8 @@ void GameObject::SaveToFile(std::stringstream & name)
         << GetParentRotation(0) << ","
         << GetParentRotation(2) << ","
         << GetParentRotation(3) << ","
-        << GetByte(GAMEOBJECT_BYTES_1, 0) << ","
-        << GetUInt32Value(GAMEOBJECT_FLAGS) << ","
+        << GetState() << ","
+        << GetFlags() << ","
         << GetFaction() << ","
         << GetScale() << ","
         << "0,"
@@ -401,7 +400,7 @@ void GameObject::InitAI()
     }
     else if (pInfo->type == GAMEOBJECT_TYPE_CHEST)
     {
-        Lock* pLock = dbcLock.LookupEntryForced(GetInfo()->parameter_0);
+        auto pLock = sLockStore.LookupEntry(GetInfo()->parameter_0);
         if (pLock)
         {
             for (uint32 i = 0; i < LOCK_NUM_CASES; i++)
@@ -452,14 +451,14 @@ void GameObject::InitAI()
     {
         if (sp->Effect[i])
         {
-            float t = GetRadius(dbcSpellRadius.LookupEntry(sp->EffectRadiusIndex[i]));
+            float t = GetRadius(sSpellRadiusStore.LookupEntry(sp->EffectRadiusIndex[i]));
             if (t > r)
                 r = t;
         }
     }
 
     if (r < 0.1)//no range
-        r = GetMaxRange(dbcSpellRange.LookupEntry(sp->rangeIndex));
+        r = GetMaxRange(sSpellRangeStore.LookupEntry(sp->rangeIndex));
 
     range = r * r; //square to make code faster
     checkrate = 20;//once in 2 seconds
@@ -474,9 +473,9 @@ bool GameObject::Load(GameobjectSpawn* go_spawn)
     m_spawn = go_spawn;
     m_phase = go_spawn->phase;
     //SetRotation(spawn->o);
-    SetUInt32Value(GAMEOBJECT_FLAGS, go_spawn->flags);
+    SetFlags(go_spawn->flags);
     //	SetLevel(spawn->level);
-    SetByte(GAMEOBJECT_BYTES_1, 0, static_cast<uint8>(go_spawn->state));
+    SetState(static_cast<uint8>(go_spawn->state));
     if (go_spawn->faction)
     {
         SetFaction(go_spawn->faction);
@@ -494,16 +493,15 @@ void GameObject::DeleteFromDB()
 
 void GameObject::EventCloseDoor()
 {
-    // gameobject_flags +1 closedoor animate restore the pointer flag.
-    // by cebernic
-    SetByte(GAMEOBJECT_BYTES_1, 0, 1);
-    RemoveFlag(GAMEOBJECT_FLAGS, 1);
+    SetState(1);
+    //RemoveFlag(GAMEOBJECT_FLAGS, 1);
+    SetFlags(GetFlags() & ~1);
 }
 
 void GameObject::UseFishingNode(Player* player)
 {
     sEventMgr.RemoveEvents(this);
-    if (!HasFlag(GAMEOBJECT_FLAGS, 32))     // Clicking on the bobber before something is hooked
+    if (GetFlags() != 32)     // Clicking on the bobber before something is hooked
     {
         player->GetSession()->OutPacket(SMSG_FISH_NOT_HOOKED);
         EndFishing(player, true);
@@ -528,22 +526,29 @@ void GameObject::UseFishingNode(Player* player)
     if (player->_GetSkillLineCurrent(SKILL_FISHING, false) < maxskill)
         player->_AdvanceSkillLine(SKILL_FISHING, float2int32(1.0f * sWorld.getRate(RATE_SKILLRATE)));
 
-    GameObject* school = NULL;
+    GameObject* school = nullptr;
     for (InRangeSet::iterator it = GetInRangeSetBegin(); it != GetInRangeSetEnd(); ++it)
     {
-        if ((*it) == NULL || !(*it)->IsGameObject() || static_cast<GameObject*>(*it)->GetType() != GAMEOBJECT_TYPE_FISHINGHOLE)
+        if ((*it)->IsGameObject())
             continue;
+
+        school = static_cast<GameObject*>(*it);
+
+        if (school->GetType() != GAMEOBJECT_TYPE_FISHINGHOLE)
+            continue;
+
         school = static_cast< GameObject* >(*it);
+
         if (!isInRange(school, (float)school->GetInfo()->parameter_1))
         {
-            school = NULL;
+            school = nullptr;
             continue;
         }
         else
             break;
     }
 
-    if (school != NULL)    // open school loot if school exists
+    if (school !=nullptr)    // open school loot if school exists
     {
 
         if (school->GetMapMgr() != NULL)
@@ -602,12 +607,10 @@ void GameObject::FishHooked(Player* player)
 {
     WorldPacket  data(12);
     data.Initialize(SMSG_GAMEOBJECT_CUSTOM_ANIM);
-    data << GetGUID();
-    data << (uint32)(0); // value < 4
+    data << uint64(GetGUID());
+    data << uint32(0);      // value < 4
     player->GetSession()->SendPacket(&data);
-    //SetByte(GAMEOBJECT_BYTES_1, 0, 0);
-    //BuildFieldUpdatePacket(player, GAMEOBJECT_FLAGS, 32);
-    SetUInt32Value(GAMEOBJECT_FLAGS, 32);
+    SetFlags(32);
 }
 
 /////////////
@@ -700,17 +703,6 @@ void GameObject::ExpireAndDelete()
         delete this;
 }
 
-//! Deactivates selected gameobject ex. stops doors from opening/closing.
-void GameObject::Deactivate()
-{
-    SetUInt32Value(GAMEOBJECT_DYNAMIC, 0);
-}
-
-void GameObject::Activate()
-{
-    SetUInt32Value(GAMEOBJECT_DYNAMIC, 1);
-}
-
 void GameObject::CallScriptUpdate()
 {
     ARCEMU_ASSERT(myScript != NULL);
@@ -748,7 +740,7 @@ void GameObject::OnRemoveInRangeObject(Object* pObj)
     Object::OnRemoveInRangeObject(pObj);
     if (m_summonedGo && m_summoner == pObj)
     {
-        for (int i = 0; i < 4; i++)
+        for (uint8 i = 0; i < 4; i++)
             if (m_summoner->m_ObjectSlots[i] == GetLowGUID())
                 m_summoner->m_ObjectSlots[i] = 0;
 
@@ -786,17 +778,11 @@ bool GameObject::HasLoot()
 
 uint32 GameObject::GetGOReqSkill()
 {
-    //! Hardcoded values are BAD.
-    if (GetEntry() == 180215)
-        return 300;
-
-    //! Gameobject does not require a skill, so let everyone use it.
-    if (GetInfo() == NULL)
+    //! Here we check the SpellFocus table against the dbcs
+    auto lock = sLockStore.LookupEntry(GetInfo()->parameter_0);
+    if (!lock)
         return 0;
 
-    //! Here we check the SpellFocus table against the dbcs
-    Lock* lock = dbcLock.LookupEntryForced(GetInfo()->parameter_0);
-    if (!lock) return 0;
     for (uint32 i = 0; i < LOCK_NUM_CASES; i++)
     {
         if (lock->locktype[i] == 2 && lock->minlockskill[i])
@@ -804,6 +790,7 @@ uint32 GameObject::GetGOReqSkill()
     }
     return 0;
 }
+
 //! Set GameObject rotational value
 void GameObject::SetRotation(float rad)
 {
@@ -817,7 +804,6 @@ void GameObject::SetRotation(float rad)
         rad = 1.f + 0.125f * sin;
     else
         rad = 1.25f + 0.125f * sin;
-    //	SetFloatValue(GAMEOBJECT_ROTATION, rad);
 }
 
 void GameObject::UpdateRotation()
@@ -843,16 +829,6 @@ void GameObject::UpdateRotation()
     }
 }
 
-void GameObject::SetState(uint8 state)
-{
-    SetByte(GAMEOBJECT_BYTES_1, 0, state);
-}
-
-uint8 GameObject::GetState()
-{
-    return GetByte(GAMEOBJECT_BYTES_1, 0);
-}
-
 void GameObject::Damage(uint32 damage, uint64 AttackerGUID, uint64 ControllerGUID, uint32 SpellID)
 {
     // If we are already destroyed there's nothing to damage!
@@ -866,7 +842,7 @@ void GameObject::Damage(uint32 damage, uint64 AttackerGUID, uint64 ControllerGUI
 
         SetFlags(GAMEOBJECT_FLAG_DESTROYED);
         SetFlags(GetFlags() & ~GAMEOBJECT_FLAG_DAMAGED);
-        SetDisplayId(pInfo->parameter_9); // destroyed display id
+        SetDisplayId(pInfo->parameter_9);   // destroyed display id
 
         CALL_GO_SCRIPT_EVENT(this, OnDestroyed)();
 

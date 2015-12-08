@@ -71,8 +71,8 @@ enum GAMEOBJECT_OVERRIDES
     /// Later other types might folow, or the upper bytes might get used for the AREAWIDE option in the overrides variable...
 };
 
-typedef HM_NAMESPACE::hash_map<Quest*, uint32 > GameObjectGOMap;
-typedef HM_NAMESPACE::hash_map<Quest*, std::map<uint32, uint32> > GameObjectItemMap;
+typedef std::unordered_map<Quest*, uint32 > GameObjectGOMap;
+typedef std::unordered_map<Quest*, std::map<uint32, uint32> > GameObjectItemMap;
 
 #pragma pack(push,1)
 struct GameObjectInfo
@@ -121,7 +121,7 @@ enum GAMEOBJECT_BYTES
 {
     GAMEOBJECT_BYTES_STATE          = 0,
     GAMEOBJECT_BYTES_TYPE_ID        = 1,
-    GAMEOBJECT_BYTES_UNK            = 2,    ///\todo unknown atm
+    GAMEOBJECT_BYTES_UNK            = 2,        ///\todo unknown atm
     GAMEOBJECT_BYTES_ANIMPROGRESS   = 3,
 };
 
@@ -199,8 +199,10 @@ class SERVER_DECL GameObject : public Object
         void DeleteFromDB();
         void EventCloseDoor();
         void EventCastSpell(uint32 guid, uint32 sp, bool triggered);
+
         void SetRotation(float rad);
-        uint64 m_rotation;
+        uint64 GetRotation() const { return m_rotation; }
+
         void UpdateRotation();
 
         //Fishing stuff
@@ -229,23 +231,13 @@ class SERVER_DECL GameObject : public Object
 
         void ExpireAndDelete();
 
-        void Deactivate();
-        void Activate();
-
-        bool isQuestGiver()
-        {
-            //from GameObject::CreateFromProto - SetType(pInfo->Type);
-            if (GetType() == GAMEOBJECT_TYPE_QUESTGIVER)
-                return true;
-            else
-                return false;
-        };
 
         /// Quest data
         std::list<QuestRelation*>* m_quests;
 
         uint32* m_ritualmembers;
-        uint32 m_ritualcaster, m_ritualtarget;
+        uint32 m_ritualcaster;
+        uint32 m_ritualtarget;
         uint16 m_ritualspell;
 
         void InitAI();
@@ -294,12 +286,30 @@ class SERVER_DECL GameObject : public Object
         uint32 GetGOReqSkill();
         MapCell* m_respawnCell;
 
-        void SetState(uint8 state);
-        uint8 GetState();
+        void SetState(uint8 state) { SetByte(GAMEOBJECT_BYTES_1, 0, state); }
+        uint8 GetState() { return GetByte(GAMEOBJECT_BYTES_1, 0); }
+
+        void SetType(uint8 type) { SetByte(GAMEOBJECT_BYTES_1, 1, type); }
+        uint32 GetType() { return this->GetInfo()->type; }
+
+        void SetArtKit(uint8 artkit) { SetByte(GAMEOBJECT_BYTES_1, 2, artkit); }
+        uint8 GetArtkKit() { return GetByte(GAMEOBJECT_BYTES_1, 2); }
+
+        void SetAnimProgress(uint8 progress) { SetByte(GAMEOBJECT_BYTES_1, 3, progress); }
+        uint8 GetAnimProgress() { return GetByte(GAMEOBJECT_BYTES_1, 3); }
 
         uint32 GetOverrides() { return m_overrides; }
 
-        //Easy Functions
+        void Deactivate() { SetUInt32Value(GAMEOBJECT_DYNAMIC, 0); }
+        void Activate() { SetUInt32Value(GAMEOBJECT_DYNAMIC, 1); }
+        bool IsActive()
+        {
+            if (m_uint32Values[GAMEOBJECT_DYNAMIC] == 1)
+                return true;
+            else
+                return false;
+        }
+
         void SetDisplayId(uint32 id) { SetUInt32Value(GAMEOBJECT_DISPLAYID, id); }
         uint32 GetDisplayId() { return GetUInt32Value(GAMEOBJECT_DISPLAYID); }
 
@@ -316,9 +326,6 @@ class SERVER_DECL GameObject : public Object
         void SetLevel(uint32 level) { SetUInt32Value(GAMEOBJECT_LEVEL, level); }
         uint32 GetLevel() { return GetUInt32Value(GAMEOBJECT_LEVEL); }
 
-        void SetType(uint8 type) { SetByte(GAMEOBJECT_BYTES_1, 1, type); }
-        uint8 GetType() { return GetByte(GAMEOBJECT_BYTES_1, 1); }
-
         void SetFlags(uint32 flags) { SetUInt32Value(GAMEOBJECT_FLAGS, flags); }
         uint32 GetFlags() { return GetUInt32Value(GAMEOBJECT_FLAGS); }
         void RemoveFlags(uint32 flags) { RemoveFlag(GAMEOBJECT_FLAGS, flags); }
@@ -330,12 +337,6 @@ class SERVER_DECL GameObject : public Object
             else
                 return false;
         }
-
-        void SetArtKit(uint8 artkit) { SetByte(GAMEOBJECT_BYTES_1, 2, artkit); }
-        uint8 GetArtkKit() { return GetByte(GAMEOBJECT_BYTES_1, 2); }
-
-        void SetAnimProgress(uint8 progress) { SetByte(GAMEOBJECT_BYTES_1, 3, progress); }
-        uint8 GetAnimProgress() { return GetByte(GAMEOBJECT_BYTES_1, 3); }
 
         //////////////////////////////////////////////////////////////////////////////////////////
         /// void Damage(uint32 damage, uint64 AttackerGUID, uint64 ControllerGUID, uint32 SpellID)
@@ -408,6 +409,8 @@ class SERVER_DECL GameObject : public Object
         uint32 _fields[GAMEOBJECT_END];
         uint32 usage_remaining;         ///used for mining to mark times it can be mined
         uint32 m_overrides;             ///See enum GAMEOBJECT_OVERRIDES!
+
+        uint64 m_rotation;
 
 
         //////////////////////////////////////////////////////////////////////////////////////////

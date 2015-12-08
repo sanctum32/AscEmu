@@ -1387,8 +1387,8 @@ uint32 Unit::HandleProc(uint32 flag, Unit* victim, SpellEntry* CastingSpell, boo
                     if (CastingSpell->School != SCHOOL_FIRE)
                         continue;
                     SpellEntry* spellInfo = dbcSpell.LookupEntry(spellId);   //we already modified this spell on server loading so it must exist
-                    SpellDuration* sd = dbcSpellDuration.LookupEntryForced(spellInfo->DurationIndex);
-                    uint32 tickcount = GetDuration(sd) / spellInfo->EffectAmplitude[0];
+                    auto spell_duration = sSpellDurationStore.LookupEntry(spellInfo->DurationIndex);
+                    uint32 tickcount = GetDuration(spell_duration) / spellInfo->EffectAmplitude[0];
                     dmg_overwrite[0] = ospinfo->EffectBasePoints[0] * dmg / (100 * tickcount);
                 }
                 break;
@@ -1536,10 +1536,10 @@ uint32 Unit::HandleProc(uint32 flag, Unit* victim, SpellEntry* CastingSpell, boo
                     if (CastingSpell == NULL)
                         continue;//this should not occur unless we made a fuckup somewhere
                     //only trigger effect for specified spells
-                    skilllinespell* skillability = objmgr.GetSpellSkill(CastingSpell->Id);
-                    if (!skillability)
+                    auto skill_line_ability = objmgr.GetSpellSkill(CastingSpell->Id);
+                    if (!skill_line_ability)
                         continue;
-                    if (skillability->skilline != SKILL_DESTRUCTION)
+                    if (skill_line_ability->skilline != SKILL_DESTRUCTION)
                         continue;
                 }
                 break;
@@ -2024,8 +2024,8 @@ uint32 Unit::HandleProc(uint32 flag, Unit* victim, SpellEntry* CastingSpell, boo
                     if (CastingSpell->NameHash != SPELL_HASH_FLASH_OF_LIGHT && CastingSpell->NameHash != SPELL_HASH_HOLY_LIGHT)
                         continue;
                     SpellEntry* spellInfo = dbcSpell.LookupEntry(54203);
-                    SpellDuration* sd = dbcSpellDuration.LookupEntryForced(spellInfo->DurationIndex);
-                    uint32 tickcount = GetDuration(sd) / spellInfo->EffectAmplitude[0];
+                    auto spell_duration = sSpellDurationStore.LookupEntry(spellInfo->DurationIndex);
+                    uint32 tickcount = GetDuration(spell_duration) / spellInfo->EffectAmplitude[0];
                     dmg_overwrite[0] = ospinfo->EffectBasePoints[0] * dmg / (100 * tickcount);
                 }
                 break;
@@ -2446,9 +2446,9 @@ uint32 Unit::HandleProc(uint32 flag, Unit* victim, SpellEntry* CastingSpell, boo
 
                 if (CastingSpell)
                 {
-                    SpellCastTime* sd = dbcSpellCastTime.LookupEntryForced(CastingSpell->CastingTimeIndex);
-                    if (!sd)
-                        continue; // this shouldn't happen though :P
+                    auto spell_cast_time = sSpellCastTimesStore.LookupEntry(CastingSpell->CastingTimeIndex);
+                    if (!spell_cast_time)
+                        continue;
 
                     //if we did not proc these then we should not remove them
                     if (CastingSpell->Id == iter2->second.spellId)
@@ -2466,7 +2466,7 @@ uint32 Unit::HandleProc(uint32 flag, Unit* victim, SpellEntry* CastingSpell, boo
                         case 12043: // Mage - Presence of Mind
                         {
                             //if (!sd->CastTime||sd->CastTime>10000) continue;
-                            if (sd->CastTime == 0)
+                            if (spell_cast_time->CastTime == 0)
                                 continue;
                         }
                         break;
@@ -2474,7 +2474,7 @@ uint32 Unit::HandleProc(uint32 flag, Unit* victim, SpellEntry* CastingSpell, boo
                         case 16188:	// Druid - Nature's Swiftness
                         {
                             //if (CastingSpell->School!=SCHOOL_NATURE||(!sd->CastTime||sd->CastTime>10000)) continue;
-                            if (CastingSpell->School != SCHOOL_NATURE || sd->CastTime == 0)
+                            if (CastingSpell->School != SCHOOL_NATURE || spell_cast_time->CastTime == 0)
                                 continue;
                         }
                         break;
@@ -4458,8 +4458,8 @@ void Unit::AddAura(Aura* aur)
                                     EnchantmentInstance* ench = mh->GetEnchantment(TEMP_ENCHANTMENT_SLOT);
                                     if (ench)
                                     {
-                                        EnchantEntry* Entry = ench->Enchantment;
-                                        for (uint32 c = 0; c < 3; c++)
+                                        DBC::Structures::SpellItemEnchantmentEntry const* Entry = ench->Enchantment;
+                                        for (uint8 c = 0; c < 3; c++)
                                         {
                                             if (Entry->type[c] && Entry->spell[c])
                                             {
@@ -4491,8 +4491,8 @@ void Unit::AddAura(Aura* aur)
                                         ench = oh->GetEnchantment(TEMP_ENCHANTMENT_SLOT);
                                         if (ench)
                                         {
-                                            EnchantEntry* Entry = ench->Enchantment;
-                                            for (uint32 c = 0; c < 3; c++)
+                                            DBC::Structures::SpellItemEnchantmentEntry const* Entry = ench->Enchantment;
+                                            for (uint8 c = 0; c < 3; c++)
                                             {
                                                 if (Entry->type[c] && Entry->spell[c])
                                                 {
@@ -5181,7 +5181,7 @@ int32 Unit::GetSpellDmgBonus(Unit* pVictim, SpellEntry* spellInfo, int32 base_dm
             else
             {
                 plus_damage = plus_damage * spellInfo->casttime_coef;
-                float td = static_cast<float>(GetDuration(dbcSpellDuration.LookupEntry(spellInfo->DurationIndex)));
+                float td = static_cast<float>(GetDuration(sSpellDurationStore.LookupEntry(spellInfo->DurationIndex)));
                 if (spellInfo->NameHash == SPELL_HASH_MOONFIRE
                     || spellInfo->NameHash == SPELL_HASH_IMMOLATE
                     || spellInfo->NameHash == SPELL_HASH_ICE_LANCE
@@ -6518,14 +6518,18 @@ void Unit::SetFacing(float newo)
 
     data << GetNewGUID();
     data << uint8(0); //vehicle seat index
-    data << GetPositionX() << GetPositionY() << GetPositionZ();
+    data << GetPositionX();
+    data << GetPositionY();
+    data << GetPositionZ();
     data << getMSTime();
     data << uint8(4); //set orientation
     data << newo;
     data << uint32(0x1000); //move flags: run
     data << uint32(0); //movetime
     data << uint32(1); //1 point
-    data << GetPositionX() << GetPositionY() << GetPositionZ();
+    data << GetPositionX();
+    data << GetPositionY();
+    data << GetPositionZ();
 
     SendMessageToSet(&data, true);
 }
@@ -8341,7 +8345,7 @@ void Unit::BuildMovementPacket(ByteBuffer* data)
 {
     *data << uint32(GetUnitMovementFlags());            // movement flags
     *data << uint16(GetExtraUnitMovementFlags());       // 2.3.0
-    *data << uint32(GetMovementInfo()->time);                       // time / counter
+    *data << uint32(getMSTime());                       // time / counter
     *data << GetPositionX();
     *data << GetPositionY();
     *data << GetPositionZ();
@@ -8351,19 +8355,20 @@ void Unit::BuildMovementPacket(ByteBuffer* data)
     if (GetUnitMovementFlags() & MOVEFLAG_TRANSPORT)
     {
         if (IsPlayer() && static_cast<Player*>(this)->m_CurrentTransporter)
-            transporter_info.guid = static_cast<Player*>(this)->m_CurrentTransporter->GetGUID();
+            obj_movement_info.transporter_info.guid = static_cast<Player*>(this)->m_CurrentTransporter->GetGUID();
         if (Unit* u = GetVehicleBase())
-            transporter_info.guid = u->GetGUID();
-        *data << transporter_info.guid;
-        *data << transporter_info.x;
-        *data << transporter_info.y;
-        *data << transporter_info.z;
-        *data << transporter_info.o;
-        *data << transporter_info.flags;
-        *data << transporter_info.seat;
+            obj_movement_info.transporter_info.guid = u->GetGUID();
+        *data << obj_movement_info.transporter_info.guid;
+        *data << obj_movement_info.transporter_info.guid;
+        *data << GetTransPositionX();
+        *data << GetTransPositionY();
+        *data << GetTransPositionZ();
+        *data << GetTransPositionO();
+        *data << GetTransTime();
+        *data << GetTransSeat();
 
-        if (GetExtraUnitMovementFlags() & MOVEFLAG2_ALLOW_PITCHING)
-            *data << uint32(GetMovementInfo()->transUnk_2);
+        if (GetExtraUnitMovementFlags() & MOVEFLAG2_INTERPOLATED_MOVE)
+            *data << uint32(GetMovementInfo()->transporter_info.time2);
     }
 
     // 0x02200000
@@ -8371,7 +8376,7 @@ void Unit::BuildMovementPacket(ByteBuffer* data)
         || (GetExtraUnitMovementFlags() & MOVEFLAG2_ALLOW_PITCHING))
         *data << (float)GetMovementInfo()->pitch;
 
-    *data << (uint32)GetMovementInfo()->unk12;
+    *data << (uint32)GetMovementInfo()->fall_time;
 
     // 0x00001000
     if (GetUnitMovementFlags() & MOVEFLAG_REDIRECTED)
@@ -8384,7 +8389,7 @@ void Unit::BuildMovementPacket(ByteBuffer* data)
 
     // 0x04000000
     if (GetUnitMovementFlags() & MOVEFLAG_SPLINE_MOVER)
-        *data << (float)GetMovementInfo()->unk13;
+        *data << (float)GetMovementInfo()->spline_elevation;
 }
 
 
@@ -8392,7 +8397,7 @@ void Unit::BuildMovementPacket(ByteBuffer* data, float x, float y, float z, floa
 {
     *data << uint32(GetUnitMovementFlags());            // movement flags
     *data << uint16(GetExtraUnitMovementFlags());       // 2.3.0
-    *data << uint32(GetMovementInfo()->time);                       // time / counter
+    *data << uint32(getMSTime());                       // time / counter
     *data << x;
     *data << y;
     *data << z;
@@ -8402,19 +8407,19 @@ void Unit::BuildMovementPacket(ByteBuffer* data, float x, float y, float z, floa
     if (GetUnitMovementFlags() & MOVEFLAG_TRANSPORT)
     {
         if (IsPlayer() && static_cast<Player*>(this)->m_CurrentTransporter)
-            transporter_info.guid = static_cast<Player*>(this)->m_CurrentTransporter->GetGUID();
+            obj_movement_info.transporter_info.guid = static_cast<Player*>(this)->m_CurrentTransporter->GetGUID();
         if (Unit* u = GetVehicleBase())
-            transporter_info.guid = u->GetGUID();
-        *data << transporter_info.guid;
-        *data << transporter_info.x;
-        *data << transporter_info.y;
-        *data << transporter_info.z;
-        *data << transporter_info.o;
-        *data << transporter_info.flags;
-        *data << transporter_info.seat;
+            obj_movement_info.transporter_info.guid = u->GetGUID();
+        *data << obj_movement_info.transporter_info.guid;
+        *data << GetTransPositionX();
+        *data << GetTransPositionY();
+        *data << GetTransPositionZ();
+        *data << GetTransPositionO();
+        *data << GetTransTime();
+        *data << GetTransSeat();
 
-        if (GetExtraUnitMovementFlags() & MOVEFLAG2_ALLOW_PITCHING)
-            *data << uint32(GetMovementInfo()->transUnk_2);
+        if (GetExtraUnitMovementFlags() & MOVEFLAG2_INTERPOLATED_MOVE)
+            *data << uint32(GetMovementInfo()->transporter_info.time2);
     }
 
     // 0x02200000
@@ -8422,7 +8427,7 @@ void Unit::BuildMovementPacket(ByteBuffer* data, float x, float y, float z, floa
         || (GetExtraUnitMovementFlags() & MOVEFLAG2_ALLOW_PITCHING))
         *data << (float)GetMovementInfo()->pitch;
 
-    *data << (uint32)GetMovementInfo()->unk11;
+    *data << (uint32)GetMovementInfo()->fall_time;
 
     // 0x00001000
     if (GetUnitMovementFlags() & MOVEFLAG_REDIRECTED)
@@ -8435,7 +8440,7 @@ void Unit::BuildMovementPacket(ByteBuffer* data, float x, float y, float z, floa
 
     // 0x04000000
     if (GetUnitMovementFlags() & MOVEFLAG_SPLINE_MOVER)
-        *data << (float)GetMovementInfo()->unk13;
+        *data << (float)GetMovementInfo()->spline_elevation;
 }
 
 void Unit::setLevel(uint32 level)

@@ -75,8 +75,23 @@ void WorldSession::HandleCharCustomizeLooksOpcode(WorldPacket& recv_data)
     recv_data >> guid;
     recv_data >> newname;
 
-    uint8 gender, skin, face, hairStyle, hairColor, facialHair, race, faction;
-    recv_data >> gender >> skin >> hairColor >> hairStyle >> facialHair >> face >> race >> faction;
+    uint8 gender;
+    uint8 skin;
+    uint8 face;
+    uint8 hairStyle;
+    uint8 hairColor;
+    uint8 facialHair;
+    uint8 race;
+    uint8 faction;
+
+    recv_data >> gender;
+    recv_data >> skin;
+    recv_data >> hairColor;
+    recv_data >> hairStyle;
+    recv_data >> facialHair;
+    recv_data >> face;
+    recv_data >> race;
+    recv_data >> faction;
 
     LoginErrorCode res = VerifyName(newname.c_str(), newname.length());
     if (res != E_CHAR_NAME_SUCCESS)
@@ -186,7 +201,7 @@ void WorldSession::CharacterEnumProc(QueryResult* result)
 
     player_item items[23];
     int8 slot;
-    uint32 i;
+
     ItemPrototype* proto;
     QueryResult* res;
     CreatureInfo* info = NULL;
@@ -322,7 +337,7 @@ void WorldSession::CharacterEnumProc(QueryResult* result)
 
             memset(items, 0, sizeof(player_item) * 23);
             uint32 enchantid;
-            EnchantEntry* enc;
+
             if (res)
             {
                 do
@@ -341,9 +356,9 @@ void WorldSession::CharacterEnumProc(QueryResult* result)
                             const char* enchant_field = res->Fetch()[2].GetString();
                             if (sscanf(enchant_field , "%u,0,0;" , (unsigned int*)&enchantid) == 1 && enchantid > 0)
                             {
-                                enc = dbcEnchant.LookupEntryForced(enchantid);
-                                if (enc != NULL)
-                                    items[slot].enchantment = enc->visual;
+                                auto spell_item_enchant = sSpellItemEnchantmentStore.LookupEntry(enchantid);
+                                if (spell_item_enchant != nullptr)
+                                    items[slot].enchantment = spell_item_enchant->visual;
                             }
                         }
                     }
@@ -352,7 +367,7 @@ void WorldSession::CharacterEnumProc(QueryResult* result)
                 delete res;
             }
 
-            for (i = 0; i < INVENTORY_SLOT_BAG_END; ++i)
+            for (uint8 i = 0; i < INVENTORY_SLOT_BAG_END; ++i)
             {
                 data << uint32(items[i].displayid);
                 data << uint8(items[i].invtype);
@@ -505,12 +520,7 @@ void WorldSession::HandleCharCreateOpcode(WorldPacket& recv_data)
     {
         pNewChar->ok_to_remove = true;
         delete pNewChar;
-        /*
-        WorldPacket data(1);
-        data.SetOpcode(SMSG_CHAR_CREATE);
-        data << (uint8)56 + 1; // This errorcode is not the actual one. Need to find a real error code.
-        SendPacket(&data);
-        */
+
         OutPacket(SMSG_CHAR_CREATE, 1, CHAR_CREATE_LEVEL_REQUIREMENT);
         return;
     }
@@ -602,7 +612,7 @@ uint8 WorldSession::DeleteCharacter(uint32 guid)
                 inf->guild->RemoveGuildMember(inf, NULL);
         }
 
-        for (int i = 0; i < NUM_CHARTER_TYPES; ++i)
+        for (uint8 i = 0; i < NUM_CHARTER_TYPES; ++i)
         {
             Charter* c = objmgr.GetCharterByGuid(guid, (CharterTypes)i);
             if (c != NULL)
@@ -610,7 +620,7 @@ uint8 WorldSession::DeleteCharacter(uint32 guid)
         }
 
 
-        for (int i = 0; i < NUM_ARENA_TEAM_TYPES; ++i)
+        for (uint8 i = 0; i < NUM_ARENA_TEAM_TYPES; ++i)
         {
             ArenaTeam* t = objmgr.GetArenaTeamByGuid((uint32)guid, i);
             if (t != NULL && t->m_leader == guid)
@@ -679,7 +689,8 @@ void WorldSession::HandleCharRenameOpcode(WorldPacket& recv_data)
     if (err != E_CHAR_NAME_SUCCESS)
     {
         data << uint8(err);
-        data << guid << name;
+        data << guid;
+        data << name;
         SendPacket(&data);
         return;
     }
@@ -691,7 +702,8 @@ void WorldSession::HandleCharRenameOpcode(WorldPacket& recv_data)
         {
             // That name is banned!
             data << uint8(E_CHAR_NAME_PROFANE);
-            data << guid << name;
+            data << guid;
+            data << name;
             SendPacket(&data);
         }
         delete result2;
@@ -701,7 +713,8 @@ void WorldSession::HandleCharRenameOpcode(WorldPacket& recv_data)
     if (objmgr.GetPlayerInfoByName(name.c_str()) != NULL)
     {
         data << uint8(E_CHAR_CREATE_NAME_IN_USE);
-        data << guid << name;
+        data << guid;
+        data << name;
         SendPacket(&data);
         return;
     }
@@ -718,7 +731,9 @@ void WorldSession::HandleCharRenameOpcode(WorldPacket& recv_data)
     CharacterDatabase.WaitExecute("UPDATE characters SET name = '%s' WHERE guid = %u", name.c_str(), (uint32)guid);
     CharacterDatabase.WaitExecute("UPDATE characters SET login_flags = %u WHERE guid = %u", (uint32)LOGIN_NO_FLAG, (uint32)guid);
 
-    data << uint8(E_RESPONSE_SUCCESS) << guid << name;
+    data << uint8(E_RESPONSE_SUCCESS);
+    data << guid;
+    data << name;
     SendPacket(&data);
 }
 
@@ -972,9 +987,9 @@ void WorldSession::FullLogin(Player* plr)
     bool enter_world = true;
 
     // Find our transporter and add us if we're on one.
-    if (plr->transporter_info.guid != 0)
+    if (plr->obj_movement_info.transporter_info.guid != 0)
     {
-        Transporter* pTrans = objmgr.GetTransporter(Arcemu::Util::GUID_LOPART(plr->transporter_info.guid));
+        Transporter* pTrans = objmgr.GetTransporter(Arcemu::Util::GUID_LOPART(plr->obj_movement_info.transporter_info.guid));
         if (pTrans)
         {
             if (plr->IsDead())
@@ -984,9 +999,9 @@ void WorldSession::FullLogin(Player* plr)
                 plr->SetPower(POWER_TYPE_MANA, plr->GetMaxPower(POWER_TYPE_MANA));
             }
 
-            float c_tposx = pTrans->GetPositionX() + plr->transporter_info.x;
-            float c_tposy = pTrans->GetPositionY() + plr->transporter_info.y;
-            float c_tposz = pTrans->GetPositionZ() + plr->transporter_info.z;
+            float c_tposx = pTrans->GetPositionX() + plr->GetTransPositionX();
+            float c_tposy = pTrans->GetPositionY() + plr->GetTransPositionY();
+            float c_tposz = pTrans->GetPositionZ() + plr->GetTransPositionZ();
 
             if (plr->GetMapId() != pTrans->GetMapId())       // loaded wrong map
             {
@@ -1178,10 +1193,24 @@ void WorldSession::HandleCharFactionOrRaceChange(WorldPacket& recv_data)
 {
     uint64 guid;
     std::string newname;
-    uint8 gender, skin, face, hairStyle, hairColor, facialHair, race;
+    uint8 gender;
+    uint8 skin;
+    uint8 face;
+    uint8 hairStyle;
+    uint8 hairColor;
+    uint8 facialHair;
+    uint8 race;
+
     recv_data >> guid;
     recv_data >> newname;
-    recv_data >> gender >> skin >> hairColor >> hairStyle >> facialHair >> face >> race;
+    recv_data >> gender;
+    recv_data >> skin;
+    recv_data >> hairColor;
+    recv_data >> hairStyle;
+    recv_data >> facialHair;
+    recv_data >> face;
+    recv_data >> race;
+
     uint8 _class = 0;
     PlayerInfo* info = objmgr.GetPlayerInfo(guid);
 

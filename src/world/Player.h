@@ -30,6 +30,7 @@
 #include "ItemPrototype.h"
 #include "AchievementMgr.h"
 #include "Unit.h"
+#include "DBC/DBCStructures.hpp"
 
 class QuestLogEntry;
 struct BGScore;
@@ -159,7 +160,7 @@ struct FactionReputation
     bool Positive() { return standing >= 0; }
 };
 
-typedef HM_NAMESPACE::hash_map<uint32, uint32> PlayerInstanceMap;
+typedef std::unordered_map<uint32, uint32> PlayerInstanceMap;
 class SERVER_DECL PlayerInfo
 {
     public:
@@ -579,7 +580,7 @@ class SERVER_DECL Player : public Unit
         // Quests
         bool HasQuests()
         {
-            for (int i = 0; i < 25; ++i)
+            for (uint8 i = 0; i < 25; ++i)
             {
                 if (m_questlog[i] != 0)
                     return true;
@@ -776,14 +777,14 @@ class SERVER_DECL Player : public Unit
         void                SetAtWar(uint32 Faction, bool Set);
         bool                IsAtWar(uint32 Faction);
         Standing            GetStandingRank(uint32 Faction);
-        bool                IsHostileBasedOnReputation(FactionDBC* dbc);
+        bool                IsHostileBasedOnReputation(DBC::Structures::FactionEntry const* dbc);
         void                UpdateInrangeSetsBasedOnReputation();
         void                Reputation_OnKilledUnit(Unit* pUnit, bool InnerLoop);
-        void                Reputation_OnTalk(FactionDBC* dbc);
+        void                Reputation_OnTalk(DBC::Structures::FactionEntry const* dbc);
         static Standing     GetReputationRankFromStanding(int32 Standing_);
         void                SetFactionInactive(uint32 faction, bool set);
-        bool                AddNewFaction(FactionDBC* dbc, int32 standing, bool base);
-        void                OnModStanding(FactionDBC* dbc, FactionReputation* rep);
+        bool                AddNewFaction(DBC::Structures::FactionEntry const* dbc, int32 standing, bool base);
+        void                OnModStanding(DBC::Structures::FactionEntry const* dbc, FactionReputation* rep);
         uint32              GetExaltedCount(void);
 
         // Factions
@@ -810,7 +811,7 @@ class SERVER_DECL Player : public Unit
             return (GetUInt64Value(PLAYER__FIELD_KNOWN_TITLES + ((title >> 6) << 1)) & (uint64(1) << (title % 64))) != 0;
         }
         void SetKnownTitle(RankTitles title, bool set);
-        void SendAvailSpells(SpellShapeshiftForm* ssf, bool active);
+        void SendAvailSpells(DBC::Structures::SpellShapeshiftFormEntry const* shapeshift_form, bool active);
 
         /************************************************************************/
         // Groups
@@ -1420,8 +1421,8 @@ class SERVER_DECL Player : public Unit
         bool blinked;
         uint32 m_explorationTimer;
         // DBC stuff
-        CharRaceEntry* myRace;
-        CharClassEntry* myClass;
+        DBC::Structures::ChrRacesEntry const* myRace;
+        DBC::Structures::ChrClassesEntry const* myClass;
         Creature* linkTarget;
         bool ItemStackCheat;
         bool AuraStackCheat;

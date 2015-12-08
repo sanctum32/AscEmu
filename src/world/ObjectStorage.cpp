@@ -267,21 +267,21 @@ void ObjectMgr::LoadExtraCreatureProtoStuff()
                         continue;
                     }
 
-                    sp->minrange = GetMinRange(dbcSpellRange.LookupEntry(sp->spell->rangeIndex));
-                    sp->maxrange = GetMaxRange(dbcSpellRange.LookupEntry(sp->spell->rangeIndex));
+                    sp->minrange = GetMinRange(sSpellRangeStore.LookupEntry(sp->spell->rangeIndex));
+                    sp->maxrange = GetMaxRange(sSpellRangeStore.LookupEntry(sp->spell->rangeIndex));
 
                     //omg the poor darling has no clue about making ai_agents
                     if (sp->cooldown == (uint32) - 1)
                     {
                         //now this will not be exact cooldown but maybe a bigger one to not make him spam spells to often
                         int cooldown;
-                        SpellDuration* sd = dbcSpellDuration.LookupEntry(sp->spell->DurationIndex);
+                        auto spell_duration = sSpellDurationStore.LookupEntry(sp->spell->DurationIndex);
                         int Dur = 0;
                         int Casttime = 0; //most of the time 0
                         int RecoveryTime = sp->spell->RecoveryTime;
                         if (sp->spell->DurationIndex)
-                            Dur =::GetDuration(sd);
-                        Casttime = GetCastTime(dbcSpellCastTime.LookupEntry(sp->spell->CastingTimeIndex));
+                            Dur =::GetDuration(spell_duration);
+                        Casttime = GetCastTime(sSpellCastTimesStore.LookupEntry(sp->spell->CastingTimeIndex));
                         cooldown = Dur + Casttime + RecoveryTime;
                         if (cooldown < 0)
                             sp->cooldown = 2000; //huge value that should not loop while adding some timestamp to it

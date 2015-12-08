@@ -55,6 +55,9 @@ bool isHostile(Object* objA, Object* objB)
     if (objB->IsUnit() && objB->HasFlag(UNIT_FIELD_FLAGS, 2 | 128 | 256 | 65536))
         return false;
 
+    if (!objB->m_faction || !objA->m_faction)
+        return false;
+
     uint32 faction = objB->m_faction->Mask;
     uint32 host = objA->m_faction->HostileMask;
 
@@ -244,8 +247,8 @@ bool isCombatSupport(Object* objA, Object* objB)// B combat supports A?
 
 bool isAlliance(Object* objA)// A is alliance?
 {
-    FactionTemplateDBC* m_sw_faction = dbcFactionTemplate.LookupEntry(11);
-    FactionDBC* m_sw_factionDBC = dbcFaction.LookupEntry(72);
+    DBC::Structures::FactionTemplateEntry const* m_sw_faction = sFactionTemplateStore.LookupEntry(11);
+    DBC::Structures::FactionEntry const* m_sw_factionDBC = sFactionStore.LookupEntry(72);
     if (!objA)          // || objA->m_factionDBC == NULL || objA->m_faction == NULL
         return true;
 

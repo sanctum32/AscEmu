@@ -679,15 +679,18 @@ bool World::SetInitialWorldSettings()
     uint32 talent_pos;
     uint32 talent_class;
 
-    for (uint32 i = 0; i < dbcTalent.GetNumRows(); ++i)
+    for (uint32 i = 0; i < sTalentStore.GetNumRows(); ++i)
     {
-        TalentEntry const* talent_info = dbcTalent.LookupRowForced(i);
-        // Don't add invalid talents or Hunter Pet talents (trees 409, 410 and 411) to the inspect table
-        if (talent_info == NULL || talent_info->TalentTree == 409 || talent_info->TalentTree == 410 || talent_info->TalentTree == 411)
+        auto talent_info = sTalentStore.LookupEntry(i);
+        if (talent_info == nullptr)
             continue;
 
-        TalentTabEntry const* tab_info = dbcTalentTab.LookupEntryForced(talent_info->TalentTree);
-        if (tab_info == NULL)
+        // Don't add invalid talents or Hunter Pet talents (trees 409, 410 and 411) to the inspect table
+        if (talent_info->TalentTree == 409 || talent_info->TalentTree == 410 || talent_info->TalentTree == 411)
+            continue;
+
+        auto talent_tab = sTalentTabStore.LookupEntry(talent_info->TalentTree);
+        if (talent_tab == nullptr)
             continue;
 
         talent_max_rank = 0;
@@ -704,32 +707,34 @@ bool World::SetInitialWorldSettings()
         InspectTalentTabSize[talent_info->TalentTree] += talent_max_rank;
     }
 
-    for (uint32 i = 0; i < dbcTalentTab.GetNumRows(); ++i)
+    for (uint32 i = 0; i < sTalentTabStore.GetNumRows(); ++i)
     {
-        TalentTabEntry const* tab_info = dbcTalentTab.LookupRowForced(i);
+        auto talent_tab = sTalentTabStore.LookupEntry(i);
+        if (talent_tab == nullptr)
+            continue;
 
-        // Don't add invalid TalentTabs or Hunter Pet TalentTabs (ClassMask == 0) to the InspectTalentTabPages
-        if (tab_info == NULL || tab_info->ClassMask == 0)
+        // Don't add Hunter Pet TalentTabs (ClassMask == 0) to the InspectTalentTabPages
+        if (talent_tab->ClassMask == 0)
             continue;
 
         talent_pos = 0;
 
         for (talent_class = 0; talent_class < 12; ++talent_class)
         {
-            if (tab_info->ClassMask & (1 << talent_class))
+            if (talent_tab->ClassMask & (1 << talent_class))
                 break;
         }
 
-        InspectTalentTabPages[talent_class + 1][tab_info->TabPage] = tab_info->TalentTabID;
+        InspectTalentTabPages[talent_class + 1][talent_tab->TabPage] = talent_tab->TalentTabID;
 
         for (std::map< uint32, uint32 >::iterator itr = InspectTalentTabBit.begin(); itr != InspectTalentTabBit.end(); ++itr)
         {
             uint32 talent_id = itr->first & 0xFFFF;
-            TalentEntry const* talent_info = dbcTalent.LookupEntryForced(talent_id);
-            if (talent_info == NULL)
+            auto talent_info = sTalentStore.LookupEntry(talent_id);
+            if (talent_info == nullptr)
                 continue;
 
-            if (talent_info->TalentTree != tab_info->TalentTabID)
+            if (talent_info->TalentTree != talent_tab->TalentTabID)
                 continue;
 
             InspectTalentTabPos[talent_id] = talent_pos;
@@ -927,7 +932,9 @@ void World::SendWorldWideScreenText(const char* text, WorldSession* self)
 {
     WorldPacket data(256);
     data.Initialize(SMSG_AREA_TRIGGER_MESSAGE);
-    data << (uint32)0 << text << (uint8)0x00;
+    data << uint32(0);
+    data << text;
+    data << uint8(0x00);
     SendGlobalMessage(&data, self);
 }
 
@@ -1680,15 +1687,17 @@ void World::Rehash(bool load)
 
 void World::LoadNameGenData()
 {
-    for (DBCStorage< NameGenEntry >::iterator itr = dbcNameGen.begin(); itr != dbcNameGen.end(); ++itr)
+    for (uint32 i = 0; i < sNameGenStore.GetNumRows(); ++i)
     {
-        NameGenEntry* nge = *itr;
+        auto const name_gen_entry = sNameGenStore.LookupEntry(i);
+        if (name_gen_entry == nullptr)
+            continue;
 
-        NameGenData d;
+        NameGenData data;
 
-        d.name = std::string(nge->Name);
-        d.type = nge->unk2;
-        _namegendata[d.type].push_back(d);
+        data.name = std::string(name_gen_entry->Name);
+        data.type = name_gen_entry->type;
+        _namegendata[data.type].push_back(data);
     }
 }
 
@@ -2395,7 +2404,7 @@ void World::UpdateTotalTraffic()
     WorldSocket* s = NULL;
 
     objmgr._playerslock.AcquireReadLock();
-    HM_NAMESPACE::hash_map<uint32, Player*>::const_iterator itr;
+    std::unordered_map<uint32, Player*>::const_iterator itr;
 
     for (itr = objmgr._players.begin(); itr != objmgr._players.end(); ++itr)
     {

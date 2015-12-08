@@ -64,20 +64,20 @@ bool Transporter::CreateAsTransporter(uint32 EntryID, const char* Name, int32 Ti
 bool FillPathVector(uint32 PathID, TransportPath & Path)
 {
     // Store dbc values into current Path array
-    Path.Resize(dbcTaxiPathNode.GetNumRows());
+    Path.Resize(sTaxiPathNodeStore.GetNumRows());
 
     uint32 i = 0;
-    for (uint32 j = 0; j < dbcTaxiPathNode.GetNumRows(); j++)
+    for (uint32 j = 0; j < sTaxiPathNodeStore.GetNumRows(); j++)
     {
-        DBCTaxiPathNode* pathnode = dbcTaxiPathNode.LookupRow(j);
-        if (pathnode->path == PathID)
+        auto taxi_path_node = sTaxiPathNodeStore.LookupEntry(j);
+        if (taxi_path_node != nullptr && taxi_path_node->path == PathID)
         {
-            Path[i].mapid = pathnode->mapid;
-            Path[i].x = pathnode->x;
-            Path[i].y = pathnode->y;
-            Path[i].z = pathnode->z;
-            Path[i].actionFlag = pathnode->flags;
-            Path[i].delay = pathnode->waittime;
+            Path[i].mapid = taxi_path_node->mapid;
+            Path[i].x = taxi_path_node->x;
+            Path[i].y = taxi_path_node->y;
+            Path[i].z = taxi_path_node->z;
+            Path[i].actionFlag = taxi_path_node->flags;
+            Path[i].delay = taxi_path_node->waittime;
             ++i;
         }
     }
@@ -413,9 +413,9 @@ void Transporter::TransportPassengers(uint32 mapid, uint32 oldmap, float x, floa
             if (!plr->GetSession() || !plr->IsInWorld())
                 continue;
 
-            v.x = x + plr->transporter_info.x;
-            v.y = y + plr->transporter_info.y;
-            v.z = z + plr->transporter_info.z;
+            v.x = x + plr->GetTransPositionX();
+            v.y = y + plr->GetTransPositionY();
+            v.z = z + plr->GetTransPositionZ();
             v.o = plr->GetOrientation();
 
             if (mapid == 530 && !plr->GetSession()->HasFlag(ACCOUNT_FLAG_XPACK_01))
@@ -597,11 +597,11 @@ void Transporter::AddNPC(uint32 Entry, float offsetX, float offsetY, float offse
 
     Creature* pCreature = new Creature((uint64)HIGHGUID_TYPE_TRANSPORTER << 32 | guid);
     pCreature->Load(proto, m_position.x, m_position.y, m_position.z);
-    pCreature->transporter_info.x = offsetX;
-    pCreature->transporter_info.y = offsetY;
-    pCreature->transporter_info.z = offsetZ;
-    pCreature->transporter_info.o = offsetO;
-    pCreature->transporter_info.guid = GetGUID();
+    pCreature->obj_movement_info.transporter_info.position.x = offsetX;
+    pCreature->obj_movement_info.transporter_info.position.y = offsetY;
+    pCreature->obj_movement_info.transporter_info.position.z = offsetZ;
+    pCreature->obj_movement_info.transporter_info.position.o = offsetO;
+    pCreature->obj_movement_info.transporter_info.guid = GetGUID();
     m_npcs.insert(std::make_pair(guid, pCreature));
 }
 
@@ -621,19 +621,19 @@ void Transporter::MovePassengers(float x, float y, float z, float o)
     for (TransportNPCMap::iterator itr = m_npcs.begin(); itr != m_npcs.end(); ++itr)
     {
         Object *obj = itr->second;
-        obj->SetPosition(x + obj->transporter_info.x, y + obj->transporter_info.y, z + obj->transporter_info.z, o + obj->transporter_info.o, false);
+        obj->SetPosition(x + obj->GetTransPositionX(), y + obj->GetTransPositionY(), z + obj->GetTransPositionZ(), o + obj->GetTransPositionO(), false);
     }
 
     for (PassengerMap::iterator itr = mPassengers.begin(); itr != mPassengers.end(); ++itr)
     {
         Player* p = itr->second;
-        p->SetPosition(x + p->transporter_info.x, y + p->transporter_info.y, z + p->transporter_info.z, o + p->transporter_info.o, false);
+        p->SetPosition(x + p->GetTransPositionX(), y + p->GetTransPositionY(), z + p->GetTransPositionZ(), o + p->GetTransPositionO(), false);
     }
 
     for (std::map< uint64, Object* >::iterator itr = passengers.begin(); itr != passengers.end(); ++itr)
     {
         Object *obj = itr->second;
-        obj->SetPosition(x + obj->transporter_info.x, y + obj->transporter_info.y, z + obj->transporter_info.z, o + obj->transporter_info.o, false);
+        obj->SetPosition(x + obj->GetTransPositionX(), y + obj->GetTransPositionY(), z + obj->GetTransPositionZ(), o + obj->GetTransPositionO(), false);
     }
 }
 

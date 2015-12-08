@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef STORAGE_H_
-#define STORAGE_H_
+#ifndef STORAGE_H
+#define STORAGE_H
 
 #ifdef WIN32
 #pragma warning(disable:4312)
@@ -73,6 +73,7 @@ class SERVER_DECL StorageContainerIterator
          */
         T* Pointer;
     public:
+
         virtual ~StorageContainerIterator() {}
 
         /** Returns the currently stored object
@@ -100,6 +101,7 @@ template<class T>
 class SERVER_DECL ArrayStorageContainer
 {
     public:
+
 #ifdef STORAGE_ALLOCATION_POOLS
         StorageAllocationPool<T> _pool;
         void InitPool(uint32 cnt) { _pool.Init(cnt); }
@@ -250,12 +252,13 @@ template<class T>
 class SERVER_DECL HashMapStorageContainer
 {
     public:
+
 #ifdef STORAGE_ALLOCATION_POOLS
         StorageAllocationPool<T> _pool;
         void InitPool(uint32 cnt) { _pool.Init(cnt); }
 #endif
 
-        typename HM_NAMESPACE::hash_map<uint32, T*> _map;
+        typename std::unordered_map<uint32, T*> _map;
 
         /** Returns an iterator currently referencing the start of the container
          */
@@ -265,7 +268,7 @@ class SERVER_DECL HashMapStorageContainer
          */
         ~HashMapStorageContainer()
         {
-            for(typename HM_NAMESPACE::hash_map<uint32, T*>::iterator itr = _map.begin(); itr != _map.end(); ++itr)
+            for(typename std::unordered_map<uint32, T*>::iterator itr = _map.begin(); itr != _map.end(); ++itr)
                 delete itr->second;
         }
 
@@ -308,7 +311,7 @@ class SERVER_DECL HashMapStorageContainer
          */
         bool DeallocateEntry(uint32 Entry)
         {
-            typename HM_NAMESPACE::hash_map<uint32, T*>::iterator itr = _map.find(Entry);
+            typename std::unordered_map<uint32, T*>::iterator itr = _map.find(Entry);
             if(itr == _map.end())
                 return false;
 
@@ -322,7 +325,7 @@ class SERVER_DECL HashMapStorageContainer
 
         T* LookupEntry(uint32 Entry)
         {
-            typename HM_NAMESPACE::hash_map<uint32, T*>::iterator itr = _map.find(Entry);
+            typename std::unordered_map<uint32, T*>::iterator itr = _map.find(Entry);
             if(itr == _map.end())
                 return reinterpret_cast<T*>(0);
             return itr->second;
@@ -333,7 +336,7 @@ class SERVER_DECL HashMapStorageContainer
          */
         bool SetEntry(uint32 Entry, T* Pointer)
         {
-            typename HM_NAMESPACE::hash_map<uint32, T*>::iterator itr = _map.find(Entry);
+            typename std::unordered_map<uint32, T*>::iterator itr = _map.find(Entry);
             if(itr == _map.end())
             {
                 _map.insert(make_pair(Entry, Pointer));
@@ -361,7 +364,7 @@ class SERVER_DECL HashMapStorageContainer
          */
         void Clear()
         {
-            typename HM_NAMESPACE::hash_map<uint32, T*>::iterator itr = _map.begin();
+            typename std::unordered_map<uint32, T*>::iterator itr = _map.begin();
             for(; itr != _map.end(); ++itr)
                 delete itr->second;
             _map.clear();
@@ -423,7 +426,7 @@ template<class T>
 class SERVER_DECL HashMapStorageIterator : public StorageContainerIterator<T>
 {
         HashMapStorageContainer<T> * Source;
-        typename HM_NAMESPACE::hash_map<uint32, T*>::iterator itr;
+        typename std::unordered_map<uint32, T*>::iterator itr;
     public:
 
         /** Constructor
@@ -834,4 +837,4 @@ class SERVER_DECL SQLStorage : public Storage<T, StorageType>
         }
 };
 
-#endif
+#endif  //STORAGE_H

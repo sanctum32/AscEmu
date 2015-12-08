@@ -39,12 +39,20 @@ void WorldSession::HandleSplitOpcode(WorldPacket& recv_data)
 {
     CHECK_INWORLD_RETURN;
     CHECK_PACKET_SIZE(recv_data, 8);
-    int8 DstInvSlot = 0, DstSlot = 0, SrcInvSlot = 0, SrcSlot = 0;
+
+    int8 DstInvSlot = 0;
+    int8 DstSlot = 0;
+    int8 SrcInvSlot = 0;
+    int8 SrcSlot = 0;
     int32 count = 0;
 
     AddItemResult result;
 
-    recv_data >> SrcInvSlot >> SrcSlot >> DstInvSlot >> DstSlot >> count;
+    recv_data >> SrcInvSlot;
+    recv_data >> SrcSlot;
+    recv_data >> DstInvSlot;
+    recv_data >> DstSlot;
+    recv_data >> count;
 
     /* exploit fix */
     if (count <= 0 || (SrcInvSlot <= 0 && SrcSlot < INVENTORY_SLOT_ITEM_START))
@@ -169,12 +177,17 @@ void WorldSession::HandleSplitOpcode(WorldPacket& recv_data)
 void WorldSession::HandleSwapItemOpcode(WorldPacket& recv_data)
 {
     CHECK_INWORLD_RETURN
+    CHECK_PACKET_SIZE(recv_data, 4);
 
-        CHECK_PACKET_SIZE(recv_data, 4);
+    int8 DstInvSlot = 0;
+    int8 DstSlot = 0;
+    int8 SrcInvSlot = 0;
+    int8 SrcSlot = 0;
 
-    int8 DstInvSlot = 0, DstSlot = 0, SrcInvSlot = 0, SrcSlot = 0;
-
-    recv_data >> DstInvSlot >> DstSlot >> SrcInvSlot >> SrcSlot;
+    recv_data >> DstInvSlot;
+    recv_data >> DstSlot;
+    recv_data >> SrcInvSlot;
+    recv_data >> SrcSlot;
 
     LOG_DETAIL("ITEM: swap, DstInvSlot %i DstSlot %i SrcInvSlot %i SrcSlot %i", DstInvSlot, DstSlot, SrcInvSlot, SrcSlot);
 
@@ -188,10 +201,12 @@ void WorldSession::HandleSwapInvItemOpcode(WorldPacket& recv_data)
 
     CHECK_PACKET_SIZE(recv_data, 2);
     WorldPacket data;
-    int8 srcslot = 0, dstslot = 0;
+    int8 srcslot = 0;
+    int8 dstslot = 0;
     int8 error = 0;
 
-    recv_data >> dstslot >> srcslot;
+    recv_data >> dstslot;
+    recv_data >> srcslot;
 
     LOG_DETAIL("ITEM: swap, src slot: %u dst slot: %u", (uint32)srcslot, (uint32)dstslot);
 
@@ -346,9 +361,11 @@ void WorldSession::HandleDestroyItemOpcode(WorldPacket& recv_data)
 
     CHECK_PACKET_SIZE(recv_data, 2);
 
-    int8 SrcInvSlot, SrcSlot;
+    int8 SrcInvSlot;
+    int8 SrcSlot;
 
-    recv_data >> SrcInvSlot >> SrcSlot;
+    recv_data >> SrcInvSlot;
+    recv_data >> SrcSlot;
 
     LOG_DETAIL("ITEM: destroy, SrcInv Slot: %i Src slot: %i", SrcInvSlot, SrcSlot);
     Item* it = _player->GetItemInterface()->GetInventoryItem(SrcInvSlot, SrcSlot);
@@ -442,9 +459,12 @@ void WorldSession::HandleAutoEquipItemOpcode(WorldPacket& recv_data)
     CHECK_PACKET_SIZE(recv_data, 2);
     WorldPacket data;
 
-    int8 SrcInvSlot, SrcSlot, error = 0;
+    int8 SrcInvSlot;
+    int8 SrcSlot;
+    int8 error = 0;
 
-    recv_data >> SrcInvSlot >> SrcSlot;
+    recv_data >> SrcInvSlot;
+    recv_data >> SrcSlot;
 
     LOG_DETAIL("ITEM: autoequip, Inventory slot: %i Source Slot: %i", SrcInvSlot, SrcSlot);
 
@@ -622,10 +642,13 @@ void WorldSession::HandleAutoEquipItemSlotOpcode(WorldPacket & recvData)
 
     LOG_DETAIL("WORLD: Received CMSG_AUTOEQUIP_ITEM_SLOT");
     CHECK_PACKET_SIZE(recvData, 8 + 1);
+
     uint64 itemguid;
     int8 destSlot;
     //int8 error = 0; // useless?
-    recvData >> itemguid >> destSlot;
+
+    recvData >> itemguid;
+    recvData >> destSlot;
 
     int8    srcSlot = (int8)_player->GetItemInterface()->GetInventorySlotByGuid(itemguid);
     Item*    item = _player->GetItemInterface()->GetItemByGUID(itemguid);
@@ -848,7 +871,8 @@ void WorldSession::HandleBuyBackOpcode(WorldPacket& recv_data)
 
     LOG_DETAIL("WORLD: Received CMSG_BUYBACK_ITEM");
 
-    recv_data >> guid >> stuff;
+    recv_data >> guid;
+    recv_data >> stuff;
     stuff -= 74;
 
     Item* it = _player->GetItemInterface()->GetBuyBack(stuff);
@@ -911,7 +935,8 @@ void WorldSession::HandleBuyBackOpcode(WorldPacket& recv_data)
         data.Initialize(SMSG_BUY_ITEM);
         data << uint64(guid);
         data << getMSTime(); //VLack: seen is Aspire code
-        data << uint32(itemid) << uint32(amount);
+        data << uint32(itemid);
+        data << uint32(amount);
         SendPacket(&data);
     }
 }
@@ -1018,7 +1043,9 @@ void WorldSession::HandleSellItemOpcode(WorldPacket& recv_data)
     }
 
     WorldPacket data(SMSG_SELL_ITEM, 12);
-    data << vendorguid << itemguid << uint8(0);
+    data << vendorguid;
+    data << itemguid;
+    data << uint8(0);
     SendPacket(&data);
 
     LOG_DETAIL("WORLD: Sent SMSG_SELL_ITEM");
@@ -1027,12 +1054,12 @@ void WorldSession::HandleSellItemOpcode(WorldPacket& recv_data)
 void WorldSession::HandleBuyItemInSlotOpcode(WorldPacket& recv_data)   // drag & drop
 {
     CHECK_INWORLD_RETURN
-
     CHECK_PACKET_SIZE(recv_data, 22);
 
     LOG_DETAIL("WORLD: Received CMSG_BUY_ITEM_IN_SLOT");
 
-    uint64 srcguid, bagguid;
+    uint64 srcguid;
+    uint64 bagguid;
     uint32 itemid;
     int8 slot;
     uint8 amount = 0;
@@ -1040,7 +1067,8 @@ void WorldSession::HandleBuyItemInSlotOpcode(WorldPacket& recv_data)   // drag &
     int8 bagslot = INVENTORY_SLOT_NOT_SET;
     int32 vendorslot; //VLack: 3.1.2
 
-    recv_data >> srcguid >> itemid;
+    recv_data >> srcguid;
+    recv_data >> itemid;
     recv_data >> vendorslot; //VLack: 3.1.2 This is the slot's number on the vendor's panel, starts from 1
     recv_data >> bagguid;
     recv_data >> slot; //VLack: 3.1.2 the target slot the player selected - backpack 23-38, other bags 0-15 (Or how big is the biggest bag? 0-127?)
@@ -1240,15 +1268,16 @@ void WorldSession::HandleBuyItemOpcode(WorldPacket& recv_data)   // right-click 
     SlotResult slotresult;
     AddItemResult result;
 
-    recv_data >> srcguid >> itemid;
-    recv_data >> slot >> amount;
-
+    recv_data >> srcguid;
+    recv_data >> itemid;
+    recv_data >> slot;
+    recv_data >> amount;
 
     Creature* unit = _player->GetMapMgr()->GetCreature(GET_LOWGUID_PART(srcguid));
     if (unit == NULL || !unit->HasItems())
         return;
 
-    ItemExtendedCostEntry* ex = unit->GetItemExtendedCostByItemId(itemid);
+    auto ex = unit->GetItemExtendedCostByItemId(itemid);
 
     if (amount < 1)
         amount = 1;
@@ -1502,7 +1531,9 @@ void WorldSession::HandleAutoStoreBagItemOpcode(WorldPacket& recv_data)
     int8 error;
     AddItemResult result;
 
-    recv_data >> SrcInv >> Slot >> DstInv;
+    recv_data >> SrcInv;
+    recv_data >> Slot;
+    recv_data >> DstInv;
 
     srcitem = _player->GetItemInterface()->GetInventoryItem(SrcInv, Slot);
 
@@ -1753,8 +1784,8 @@ void WorldSession::HandleBuyBankSlotOpcode(WorldPacket& recvPacket)
     slots = (uint8)(bytes >> 16);
 
     LOG_DETAIL("PLAYER: Buy bytes bag slot, slot number = %d", slots);
-    BankSlotPrice* bsp = dbcBankSlotPrices.LookupEntryForced(slots + 1);
-    if (bsp == NULL)
+    auto bank_bag_slot_prices = sBankBagSlotPricesStore.LookupEntry(slots + 1);
+    if (bank_bag_slot_prices == nullptr)
     {
         WorldPacket data(SMSG_BUY_BANK_SLOT_RESULT, 4);
         data << uint32(0); // E_ERR_BANKSLOT_FAILED_TOO_MANY
@@ -1762,7 +1793,7 @@ void WorldSession::HandleBuyBankSlotOpcode(WorldPacket& recvPacket)
         return;
     }
 
-    price = bsp->Price;
+    price = bank_bag_slot_prices->Price;
     if (_player->HasGold(price))
     {
         _player->SetUInt32Value(PLAYER_BYTES_2, (bytes & 0xff00ffff) | ((slots + 1) << 16));
@@ -1889,8 +1920,8 @@ void WorldSession::HandleInsertGemOpcode(WorldPacket& recvPacket)
     uint64 itemguid;
     uint64 gemguid[3];
     ItemInterface* itemi = _player->GetItemInterface();
-    GemPropertyEntry* gp;
-    EnchantEntry* Enchantment;
+    DBC::Structures::GemPropertiesEntry const* gem_properties;
+    DBC::Structures::SpellItemEnchantmentEntry const* spell_item_enchant;
     recvPacket >> itemguid;
 
     Item* TargetItem = itemi->GetItemByGUID(itemguid);
@@ -1920,12 +1951,12 @@ void WorldSession::HandleInsertGemOpcode(WorldPacket& recvPacket)
         {
             FilledSlots++;
             ItemPrototype* ip = ItemPrototypeStorage.LookupEntry(EI->Enchantment->GemEntry);
-            if (!ip)
-                gp = NULL;
+            if (ip)
+                gem_properties = nullptr;
             else
-                gp = dbcGemProperty.LookupEntry(ip->GemProperties);
+                gem_properties = sGemPropertiesStore.LookupEntry(ip->GemProperties);
 
-            if (gp && !(gp->SocketMask & TargetProto->Sockets[i].SocketColor))
+            if (gem_properties && !(gem_properties->SocketMask & TargetProto->Sockets[i].SocketColor))
                 ColorMatch = false;
         }
 
@@ -1972,8 +2003,8 @@ void WorldSession::HandleInsertGemOpcode(WorldPacket& recvPacket)
                 }
                 if (ip->ItemLimitCategory)
                 {
-                    ItemLimitCategoryEntry* ile = dbcItemLimitCategory.LookupEntryForced(ip->ItemLimitCategory);
-                    if (ile != NULL && itemi->GetEquippedCountByItemLimit(ip->ItemLimitCategory) >= ile->maxAmount)
+                    auto item_limit_category = sItemLimitCategoryStore.LookupEntry(ip->ItemLimitCategory);
+                    if (item_limit_category != nullptr && itemi->GetEquippedCountByItemLimit(ip->ItemLimitCategory) >= item_limit_category->maxAmount)
                     {
                         itemi->BuildInventoryChangeError(it, TargetItem, INV_ERR_ITEM_MAX_COUNT_EQUIPPED_SOCKETED);
                         continue;
@@ -1985,28 +2016,32 @@ void WorldSession::HandleInsertGemOpcode(WorldPacket& recvPacket)
             if (!it)
                 return; //someone sending hacked packets to crash server
 
-            gp = dbcGemProperty.LookupEntryForced(it->GetProto()->GemProperties);
+            gem_properties = sGemPropertiesStore.LookupEntry(it->GetProto()->GemProperties);
             it->DeleteMe();
 
-            if (!gp)
+            if (!gem_properties)
                 continue;
 
-            if (!(gp->SocketMask & TargetProto->Sockets[i].SocketColor))
+            if (!(gem_properties->SocketMask & TargetProto->Sockets[i].SocketColor))
                 ColorMatch = false;
 
-            if (!gp->EnchantmentID)//this is ok in few cases
+            if (!gem_properties->EnchantmentID)//this is ok in few cases
                 continue;
             //Meta gems only go in meta sockets.
-            if (TargetProto->Sockets[i].SocketColor != GEM_META_SOCKET && gp->SocketMask == GEM_META_SOCKET)
+            if (TargetProto->Sockets[i].SocketColor != GEM_META_SOCKET && gem_properties->SocketMask == GEM_META_SOCKET)
                 continue;
             if (EI)//replace gem
                 TargetItem->RemoveEnchantment(2 + i); //remove previous
             else//add gem
                 FilledSlots++;
 
-            Enchantment = dbcEnchant.LookupEntryForced(gp->EnchantmentID);
-            if (Enchantment && TargetItem->GetProto()->SubClass != ITEM_SUBCLASS_WEAPON_THROWN)
-                TargetItem->AddEnchantment(Enchantment, 0, true, apply, false, 2 + i);
+            spell_item_enchant = sSpellItemEnchantmentStore.LookupEntry(gem_properties->EnchantmentID);
+            if (spell_item_enchant != nullptr)
+            {
+                if (TargetItem->GetProto()->SubClass != ITEM_SUBCLASS_WEAPON_THROWN)
+                    TargetItem->AddEnchantment(spell_item_enchant, 0, true, apply, false, 2 + i);
+            }
+
         }
     }
 
@@ -2018,11 +2053,14 @@ void WorldSession::HandleInsertGemOpcode(WorldPacket& recvPacket)
             if (TargetItem->HasEnchantment(TargetItem->GetProto()->SocketBonus) > 0)
                 return;
 
-            Enchantment = dbcEnchant.LookupEntryForced(TargetItem->GetProto()->SocketBonus);
-            if (Enchantment && TargetItem->GetProto()->SubClass != ITEM_SUBCLASS_WEAPON_THROWN)
+            spell_item_enchant = sSpellItemEnchantmentStore.LookupEntry(TargetItem->GetProto()->SocketBonus);
+            if (spell_item_enchant != nullptr)
             {
-                uint32 Slot = TargetItem->FindFreeEnchantSlot(Enchantment, 0);
-                TargetItem->AddEnchantment(Enchantment, 0, true, apply, false, Slot);
+                if (TargetItem->GetProto()->SubClass != ITEM_SUBCLASS_WEAPON_THROWN)
+                {
+                    uint32 Slot = TargetItem->FindFreeEnchantSlot(spell_item_enchant, 0);
+                    TargetItem->AddEnchantment(spell_item_enchant, 0, true, apply, false, Slot);
+                }
             }
         }
         else  //remove
@@ -2038,14 +2076,18 @@ void WorldSession::HandleWrapItemOpcode(WorldPacket& recv_data)
 {
     CHECK_INWORLD_RETURN
 
-    int8 sourceitem_bagslot, sourceitem_slot;
-    int8 destitem_bagslot, destitem_slot;
+    int8 sourceitem_bagslot;
+    int8 sourceitem_slot;
+    int8 destitem_bagslot;
+    int8 destitem_slot;
     uint32 source_entry;
     uint32 itemid;
     Item* src, *dst;
 
-    recv_data >> sourceitem_bagslot >> sourceitem_slot;
-    recv_data >> destitem_bagslot >> destitem_slot;
+    recv_data >> sourceitem_bagslot;
+    recv_data >> sourceitem_slot;
+    recv_data >> destitem_bagslot;
+    recv_data >> destitem_slot;
 
     src = _player->GetItemInterface()->GetInventoryItem(sourceitem_bagslot, sourceitem_slot);
     dst = _player->GetItemInterface()->GetInventoryItem(destitem_bagslot, destitem_slot);
@@ -2202,25 +2244,13 @@ void WorldSession::HandleItemRefundRequestOpcode(WorldPacket& recvPacket)
 
     LOG_DEBUG("Recieved CMSG_ITEMREFUNDREQUEST.");
 
-    //////////////////////////////////////////////////////////////////////////////////////////
-    //  As of 3.2.0a the client sends this packet to initiate refund of an item
-    //
-    //    {CLIENT} Packet: (0x04B4) UNKNOWN PacketSize = 8 TimeStamp = 266021296
-    //    E6 EE 09 18 02 00 00 42
-    //
-    //
-    //
-    //  Structure:
-    //  uint64 GUID
-    //////////////////////////////////////////////////////////////////////////////////////////
 
     uint64 GUID;
     uint32 error = 1;
     Item* itm = NULL;
     std::pair< time_t, uint32 > RefundEntry;
-    ItemExtendedCostEntry* ex = NULL;
+    DBC::Structures::ItemExtendedCostEntry const* item_extended_cost = NULL;
     ItemPrototype* proto = NULL;
-
 
     recvPacket >> GUID;
 
@@ -2241,10 +2271,10 @@ void WorldSession::HandleItemRefundRequestOpcode(WorldPacket& recvPacket)
                 uint32* played = _player->GetPlayedtime();
 
                 if (played[1] < (RefundEntry.first + 60 * 60 * 2))
-                    ex = dbcItemExtendedCost.LookupEntry(RefundEntry.second);
+                    item_extended_cost = sItemExtendedCostStore.LookupEntry(RefundEntry.second);
             }
 
-            if (ex != NULL)
+            if (item_extended_cost != NULL)
             {
                 proto = itm->GetProto();
 
@@ -2252,11 +2282,11 @@ void WorldSession::HandleItemRefundRequestOpcode(WorldPacket& recvPacket)
 
                 for (int i = 0; i < 5; ++i)
                 {
-                    _player->GetItemInterface()->AddItemById(ex->item[i], ex->count[i], 0);
+                    _player->GetItemInterface()->AddItemById(item_extended_cost->item[i], item_extended_cost->count[i], 0);
                 }
 
-                _player->GetItemInterface()->AddItemById(43308, ex->honor, 0);     // honor points
-                _player->GetItemInterface()->AddItemById(43307, ex->arena, 0);    // arena points
+                _player->GetItemInterface()->AddItemById(43308, item_extended_cost->honor_points, 0);
+                _player->GetItemInterface()->AddItemById(43307, item_extended_cost->arena_points, 0);
                 _player->ModGold(proto->BuyPrice);
 
                 _player->GetItemInterface()->RemoveItemAmtByGuid(GUID, 1);
@@ -2270,38 +2300,6 @@ void WorldSession::HandleItemRefundRequestOpcode(WorldPacket& recvPacket)
         }
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //  As of 3.1.3 the client sends this packet to provide refunded cost info to the client
-    //
-    //    {SERVER} Packet: (0x04B5) UNKNOWN PacketSize = 64 TimeStamp = 266021531
-    //    E6 EE 09 18 02 00 00 42 00 00 00 00 00 00 00 00 4B 25 00 00 00 00 00 00 50 50 00 00 0A 00 00 00 00
-    //  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-    //
-    //
-    //  Structure (on success):
-    //  uint64 GUID
-    //  uint32 errorcode
-    //
-    //
-    //  Structure (on failure):
-    //  uint64 GUID
-    //  uint32 price (in copper)
-    //  uint32 honor
-    //  uint32 arena
-    //  uint32 item1
-    //  uint32 item1cnt
-    //  uint32 item2
-    //  uint32 item2cnt
-    //  uint32 item3
-    //  uint32 item3cnt
-    //  uint32 item4
-    //  uint32 item4cnt
-    //  uint32 item5
-    //  uint32 item5cnt
-    //
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
     WorldPacket packet(SMSG_ITEMREFUNDREQUEST, 60);
     packet << uint64(GUID);
     packet << uint32(error);
@@ -2309,13 +2307,13 @@ void WorldSession::HandleItemRefundRequestOpcode(WorldPacket& recvPacket)
     if (error == 0)
     {
         packet << uint32(proto->BuyPrice);
-        packet << uint32(ex->honor);
-        packet << uint32(ex->arena);
+        packet << uint32(item_extended_cost->honor_points);
+        packet << uint32(item_extended_cost->arena_points);
 
         for (int i = 0; i < 5; ++i)
         {
-            packet << uint32(ex->item[i]);
-            packet << uint32(ex->count[i]);
+            packet << uint32(item_extended_cost->item[i]);
+            packet << uint32(item_extended_cost->count[i]);
         }
 
     }
@@ -2353,7 +2351,9 @@ void WorldSession::SendItemQueryAndNameInfo(uint32 itemid)
 	else
 		data << itemProto->Name1;
 
-	data << uint8(0) << uint8(0) << uint8(0);		// name 2,3,4
+    data << uint8(0);       // name 2
+    data << uint8(0);       // name 3
+    data << uint8(0);       // name 4
 	data << itemProto->DisplayInfoID;
 	data << itemProto->Quality;
 	data << itemProto->Flags;

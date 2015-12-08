@@ -2248,8 +2248,9 @@ void Aura::EventPeriodicHeal(uint32 amount)
         //example : Citrine Pendant of Golden Healing is in AA aura that does not have duration. In this case he would have full healbonus benefit
         if ((dur == 0 || dur == -1) && GetSpellProto()->DurationIndex)
         {
-            SpellDuration* sd = dbcSpellDuration.LookupEntry(GetSpellProto()->DurationIndex);
-            dur = ::GetDuration(sd);
+            auto spell_duration = sSpellDurationStore.LookupEntry(GetSpellProto()->DurationIndex);
+            if (spell_duration != nullptr)
+                dur = ::GetDuration(spell_duration);
         }
         if (dur && dur != -1)
         {
@@ -3581,17 +3582,17 @@ void Aura::SpellAuraModShapeshift(bool apply)
         }
     }
 
-    SpellShapeshiftForm* ssf = dbcSpellShapeshiftForm.LookupEntry(mod->m_miscValue);
-    if (ssf == NULL)
+    auto shapeshift_form = sSpellShapeshiftFormStore.LookupEntry(mod->m_miscValue);
+    if (!shapeshift_form)
         return;
 
     uint32 spellId = 0;
     uint32 spellId2 = 0;
-    uint32 modelId = (uint32)(apply ? ssf->modelId : 0);
+    uint32 modelId = (uint32)(apply ? shapeshift_form->modelId : 0);
 
     bool freeMovements = false;
 
-    switch (ssf->id)
+    switch (shapeshift_form->id)
     {
         case FORM_CAT:
         {
@@ -3741,7 +3742,7 @@ void Aura::SpellAuraModShapeshift(bool apply)
             if (apply)
             {
                 if (m_target->getRace() != RACE_NIGHTELF)
-                    modelId = ssf->modelId2; // Lol, why is this the only one that has it in ShapeShift DBC? =/ lameeee...
+                    modelId = shapeshift_form->modelId2; // Lol, why is this the only one that has it in ShapeShift DBC? =/ lameeee...
             }
         }
         break;
@@ -3768,7 +3769,7 @@ void Aura::SpellAuraModShapeshift(bool apply)
         case FORM_ZOMBIE:
         {
             if (p_target != NULL)
-                p_target->SendAvailSpells(ssf, apply);
+                p_target->SendAvailSpells(shapeshift_form, apply);
         }
         break;
         case FORM_METAMORPHOSIS:
@@ -3876,7 +3877,7 @@ void Aura::SpellAuraModShapeshift(bool apply)
     }
     else
     {
-        if (ssf->id != FORM_STEALTH)
+        if (shapeshift_form->id != FORM_STEALTH)
             m_target->RemoveAllAurasByRequiredShapeShift(DecimalToMask(mod->m_miscValue));
 
         if (m_target->IsCasting() && m_target->m_currentSpell && m_target->m_currentSpell->GetProto()
@@ -4320,8 +4321,8 @@ void Aura::EventPeriodicLeech(uint32 amount)
             if (aura->GetSpellProto()->SpellFamilyName != 5)
                 continue;
 
-            skilllinespell* sk = objmgr.GetSpellSkill(aura->GetSpellId());
-            if (sk == NULL || sk->skilline != SKILL_AFFLICTION)
+            auto skill_line_ability = objmgr.GetSpellSkill(aura->GetSpellId());
+            if (skill_line_ability == nullptr || skill_line_ability->skilline != SKILL_AFFLICTION)
                 continue;
 
             itx = auras.find(aura->GetCasterGUID());
@@ -8359,7 +8360,7 @@ void Aura::SpellAuraComprehendLang(bool apply)
 
 void Aura::SpellAuraModPossessPet(bool apply)
 {
-    Player* pCaster = GetPlayerCaster();;
+    Player* pCaster = GetPlayerCaster();
     if (pCaster == NULL || !pCaster->IsInWorld())
         return;
 

@@ -691,14 +691,19 @@ void QuestMgr::BuildQuestList(WorldPacket* data, Object* qst_giver, Player* plr,
 void QuestMgr::BuildQuestUpdateAddItem(WorldPacket* data, uint32 itemid, uint32 count)
 {
     data->Initialize(SMSG_QUESTUPDATE_ADD_ITEM);
-    *data << itemid << count;
+    *data << itemid;
+    *data << count;
 }
 
 void QuestMgr::SendQuestUpdateAddKill(Player* plr, uint32 questid, uint32 entry, uint32 count, uint32 tcount, uint64 guid)
 {
     WorldPacket data(32);
     data.SetOpcode(SMSG_QUESTUPDATE_ADD_KILL);
-    data << questid << entry << count << tcount << guid;
+    data << questid;
+    data << entry;
+    data << count;
+    data << tcount;
+    data << guid;
     plr->GetSession()->SendPacket(&data);
 }
 
@@ -1316,7 +1321,8 @@ void QuestMgr::OnQuestFinished(Player* plr, Quest* qst, Object* qst_giver, uint3
             {
                 // "Teaching" effect
                 WorldPacket data(SMSG_SPELL_START, 42);
-                data << qst_giver->GetNewGUID() << qst_giver->GetNewGUID();
+                data << qst_giver->GetNewGUID();
+                data << qst_giver->GetNewGUID();
                 data << uint32(7763);
                 data << uint8(0);
                 data << uint16(0);
@@ -1326,7 +1332,8 @@ void QuestMgr::OnQuestFinished(Player* plr, Quest* qst, Object* qst_giver, uint3
                 plr->GetSession()->SendPacket(&data);
 
                 data.Initialize(SMSG_SPELL_GO);
-                data << qst_giver->GetNewGUID() << qst_giver->GetNewGUID();
+                data << qst_giver->GetNewGUID();
+                data << qst_giver->GetNewGUID();
                 data << uint32(7763);		    // spellID
                 data << uint8(0) << uint8(1);   // flags
                 data << uint8(1);			    // amount of targets
@@ -1379,20 +1386,22 @@ void QuestMgr::OnQuestFinished(Player* plr, Quest* qst, Object* qst_giver, uint3
 
     if (qst->MailTemplateId != 0)
     {
-        MailTemplateEntry * mail = dbcMailTemplateEntry.LookupEntryForced(qst->MailTemplateId);
-        if (mail != NULL)
+        auto mail_template = sMailTemplateStore.LookupEntry(qst->MailTemplateId);
+        if (mail_template != nullptr)
         {
-            int mailType = NORMAL;
+            uint8 mailType = MAIL_TYPE_NORMAL;
+
             uint64 itemGuid = 0;
+
             if (qst_giver->IsCreature())
-                mailType = CREATURE;
+                mailType = MAIL_TYPE_CREATURE;
             else if (qst_giver->IsGameObject())
-                mailType = GAMEOBJECT;
+                mailType = MAIL_TYPE_GAMEOBJECT;
 
             if (qst->MailSendItem != 0)
             {
                 // the way it's done in World::PollMailboxInsertQueue
-                Item * pItem = objmgr.CreateItem(qst->MailSendItem, NULL);
+                Item* pItem = objmgr.CreateItem(qst->MailSendItem, NULL);
                 if (pItem != NULL)
                 {
                     pItem->SetStackCount(1);
@@ -1402,7 +1411,7 @@ void QuestMgr::OnQuestFinished(Player* plr, Quest* qst, Object* qst_giver, uint3
                 }
             }
 
-            sMailSystem.SendCreatureGameobjectMail(mailType, qst_giver->GetEntry(), plr->GetGUID(), mail->subject, mail->content, 0, 0, itemGuid, MAIL_STATIONERY_TEST1, MAIL_CHECK_MASK_HAS_BODY, qst->MailDelaySecs);
+            sMailSystem.SendCreatureGameobjectMail(mailType, qst_giver->GetEntry(), plr->GetGUID(), mail_template->subject, mail_template->content, 0, 0, itemGuid, MAIL_STATIONERY_TEST1, MAIL_CHECK_MASK_HAS_BODY, qst->MailDelaySecs);
         }
     }
 }
@@ -1422,21 +1431,21 @@ void QuestMgr::LoadGOQuests(GameObject* go)
 
 QuestRelationList* QuestMgr::GetGOQuestList(uint32 entryid)
 {
-    HM_NAMESPACE::hash_map<uint32, QuestRelationList* > &olist = _GetList<GameObject>();
-    HM_NAMESPACE::hash_map<uint32, QuestRelationList* >::iterator itr = olist.find(entryid);
+    std::unordered_map<uint32, QuestRelationList* > &olist = _GetList<GameObject>();
+    std::unordered_map<uint32, QuestRelationList* >::iterator itr = olist.find(entryid);
     return (itr == olist.end()) ? 0 : itr->second;
 }
 
 QuestRelationList* QuestMgr::GetCreatureQuestList(uint32 entryid)
 {
-    HM_NAMESPACE::hash_map<uint32, std::list<QuestRelation*>* > &olist = _GetList<Creature>();
-    HM_NAMESPACE::hash_map<uint32, QuestRelationList* >::iterator itr = olist.find(entryid);
+    std::unordered_map<uint32, std::list<QuestRelation*>* > &olist = _GetList<Creature>();
+    std::unordered_map<uint32, QuestRelationList* >::iterator itr = olist.find(entryid);
     return (itr == olist.end()) ? 0 : itr->second;
 }
 
 template <class T> void QuestMgr::_AddQuest(uint32 entryid, Quest* qst, uint8 type)
 {
-    HM_NAMESPACE::hash_map<uint32, std::list<QuestRelation*>* > &olist = _GetList<T>();
+    std::unordered_map<uint32, std::list<QuestRelation*>* > &olist = _GetList<T>();
     std::list<QuestRelation*>* nlist;
     QuestRelation* ptr = NULL;
 
@@ -1444,7 +1453,7 @@ template <class T> void QuestMgr::_AddQuest(uint32 entryid, Quest* qst, uint8 ty
     {
         nlist = new std::list < QuestRelation* > ;
 
-        olist.insert(HM_NAMESPACE::hash_map<uint32, std::list<QuestRelation*>* >::value_type(entryid, nlist));
+        olist.insert(std::unordered_map<uint32, std::list<QuestRelation*>* >::value_type(entryid, nlist));
     }
     else
     {
@@ -1595,7 +1604,7 @@ uint32 QuestMgr::GenerateQuestXP(Player* plr, Quest* qst)
             }
         }
 
-        if (const QuestXP* pXPData = dbcQuestXP.LookupEntry(baseLevel))
+        if (const auto pXPData = sQuestXPStore.LookupEntry(baseLevel))
         {
             uint32 rawXP = xpMultiplier * pXPData->xpIndex[qst->RewXPId] / 10;
 
@@ -1701,7 +1710,7 @@ void QuestMgr::SendQuestLogFull(Player* plyr)
 
 uint32 QuestMgr::GetGameObjectLootQuest(uint32 GO_Entry)
 {
-    HM_NAMESPACE::hash_map<uint32, uint32>::iterator itr = m_ObjectLootQuestList.find(GO_Entry);
+    std::unordered_map<uint32, uint32>::iterator itr = m_ObjectLootQuestList.find(GO_Entry);
     if (itr == m_ObjectLootQuestList.end()) return 0;
 
     return itr->second;
@@ -1836,10 +1845,10 @@ bool QuestMgr::OnActivateQuestGiver(Object* qst_giver, Player* plr)
 
 QuestMgr::~QuestMgr()
 {
-    HM_NAMESPACE::hash_map<uint32, Quest*>::iterator itr1;
-    HM_NAMESPACE::hash_map<uint32, std::list<QuestRelation*>* >::iterator itr2;
+    std::unordered_map<uint32, Quest*>::iterator itr1;
+    std::unordered_map<uint32, std::list<QuestRelation*>* >::iterator itr2;
     std::list<QuestRelation*>::iterator itr3;
-    HM_NAMESPACE::hash_map<uint32, std::list<QuestAssociation*>* >::iterator itr4;
+    std::unordered_map<uint32, std::list<QuestAssociation*>* >::iterator itr4;
     std::list<QuestAssociation*>::iterator itr5;
 
     // clear relations
@@ -2271,7 +2280,7 @@ void QuestMgr::LoadExtraQuestStuff()
 
 void QuestMgr::AddItemQuestAssociation(uint32 itemId, Quest* qst, uint8 item_count)
 {
-    HM_NAMESPACE::hash_map<uint32, std::list<QuestAssociation*>* > &associationList = GetQuestAssociationList();
+    std::unordered_map<uint32, std::list<QuestAssociation*>* > &associationList = GetQuestAssociationList();
     std::list<QuestAssociation*>* tempList;
     QuestAssociation* ptr = NULL;
 
@@ -2281,7 +2290,7 @@ void QuestMgr::AddItemQuestAssociation(uint32 itemId, Quest* qst, uint8 item_cou
         // not found. Create a new entry and QuestAssociationList
         tempList = new std::list < QuestAssociation* > ;
 
-        associationList.insert(HM_NAMESPACE::hash_map<uint32, std::list<QuestAssociation*>* >::value_type(itemId, tempList));
+        associationList.insert(std::unordered_map<uint32, std::list<QuestAssociation*>* >::value_type(itemId, tempList));
     }
     else
     {
@@ -2321,8 +2330,8 @@ void QuestMgr::AddItemQuestAssociation(uint32 itemId, Quest* qst, uint8 item_cou
 
 QuestAssociationList* QuestMgr::GetQuestAssociationListForItemId(uint32 itemId)
 {
-    HM_NAMESPACE::hash_map<uint32, QuestAssociationList* > &associationList = GetQuestAssociationList();
-    HM_NAMESPACE::hash_map<uint32, QuestAssociationList* >::iterator itr = associationList.find(itemId);
+    std::unordered_map<uint32, QuestAssociationList* > &associationList = GetQuestAssociationList();
+    std::unordered_map<uint32, QuestAssociationList* >::iterator itr = associationList.find(itemId);
     if (itr == associationList.end())
     {
         return 0;

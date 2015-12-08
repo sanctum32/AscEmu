@@ -23,11 +23,11 @@
 
 #include "TerrainMgr.h"
 #include "CellHandlerDefines.hpp"
+#include "DBC/DBCStructures.hpp"
 
 class MapMgr;
 struct MapInfo;
 class TerrainMgr;
-struct MapEntry;
 
 struct Formation;
 
@@ -121,7 +121,7 @@ class SERVER_DECL Map
 
     const char* GetName();
 
-    inline MapEntry* GetDBCEntry();
+    inline const DBC::Structures::MapEntry* GetDBCEntry();
 
     CellSpawns* GetSpawnsList(uint32 cellx, uint32 celly);
 
@@ -139,7 +139,7 @@ private:
         MapInfo* _mapInfo;
         uint32 _mapId;
         std::string name;
-        MapEntry* me;
+        const DBC::Structures::MapEntry* me;
 
         /// new stuff
         CellSpawns** spawns[_sizeX];

@@ -416,7 +416,9 @@ void WorldSession::SendBuyFailed(uint64 guid, uint32 itemid, uint8 error)
 {
     WorldPacket data(13);
     data.SetOpcode(SMSG_BUY_FAILED);
-    data << guid << itemid << error;
+    data << guid;
+    data << itemid;
+    data << error;
     SendPacket(&data);
 }
 
@@ -424,7 +426,9 @@ void WorldSession::SendSellItem(uint64 vendorguid, uint64 itemid, uint8 error)
 {
     WorldPacket data(17);
     data.SetOpcode(SMSG_SELL_ITEM);
-    data << vendorguid << itemid << error;
+    data << vendorguid;
+    data << itemid;
+    data << error;
     SendPacket(&data);
 }
 
@@ -1235,8 +1239,8 @@ void WorldSession::SendRefundInfo(uint64 GUID)
         if (RefundEntry.first == 0 || RefundEntry.second == 0)
             return;
 
-        ItemExtendedCostEntry* ex = dbcItemExtendedCost.LookupEntryForced(RefundEntry.second);
-        if (ex == NULL)
+        auto item_extended_cost = sItemExtendedCostStore.LookupEntry(RefundEntry.second);
+        if (item_extended_cost == nullptr)
             return;
 
         ItemPrototype* proto = itm->GetProto();
@@ -1283,13 +1287,13 @@ void WorldSession::SendRefundInfo(uint64 GUID)
         WorldPacket packet(SMSG_ITEMREFUNDINFO, 68);
         packet << uint64(GUID);
         packet << uint32(proto->BuyPrice);
-        packet << uint32(ex->honor);
-        packet << uint32(ex->arena);
+        packet << uint32(item_extended_cost->honor_points);
+        packet << uint32(item_extended_cost->arena_points);
 
         for (int i = 0; i < 5; ++i)
         {
-            packet << uint32(ex->item[i]);
-            packet << uint32(ex->count[i]);
+            packet << uint32(item_extended_cost->item[i]);
+            packet << uint32(item_extended_cost->count[i]);
         }
 
         packet << uint32(0);	// always seems to be 0
@@ -1325,11 +1329,17 @@ void WorldSession::SendAccountDataTimes(uint32 mask)
 
 void WorldSession::HandleLearnTalentOpcode(WorldPacket& recv_data)
 {
-    CHECK_INWORLD_RETURN uint32 talent_id, requested_rank, unk;
-    recv_data >> talent_id >> requested_rank >> unk;
+    CHECK_INWORLD_RETURN
+    
+    uint32 talent_id;
+    uint32 requested_rank;
+    uint32 unk;
+
+    recv_data >> talent_id;
+    recv_data >> requested_rank;
+    recv_data >> unk;
 
     _player->LearnTalent(talent_id, requested_rank);
-
 }
 
 void WorldSession::HandleUnlearnTalents(WorldPacket& recv_data)
@@ -1414,7 +1424,7 @@ void WorldSession::HandleLearnMultipleTalentsOpcode(WorldPacket& recvPacket)
 void WorldSession::SendMOTD()
 {
     WorldPacket data(SMSG_MOTD, 50);
-    data << (uint32)0;
+    data << uint32(0);
     uint32 linecount = 0;
     std::string str_motd = sWorld.GetMotd();
     std::string::size_type pos, nextpos;

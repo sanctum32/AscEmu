@@ -1774,11 +1774,16 @@ void Spell::SpellEffectBind(uint32 i)
     playerTarget->SetBindPoint(playerTarget->GetPositionX(), playerTarget->GetPositionY(), playerTarget->GetPositionZ(), mapid, areaid);
 
     data.Initialize(SMSG_BINDPOINTUPDATE);
-    data << playerTarget->GetBindPositionX() << playerTarget->GetBindPositionY() << playerTarget->GetBindPositionZ() << playerTarget->GetBindMapId() << playerTarget->GetBindZoneId();
+    data << playerTarget->GetBindPositionX();
+    data << playerTarget->GetBindPositionY();
+    data << playerTarget->GetBindPositionZ();
+    data << playerTarget->GetBindMapId();
+    data << playerTarget->GetBindZoneId();
     playerTarget->GetSession()->SendPacket(&data);
 
     data.Initialize(SMSG_PLAYERBOUND);
-    data << m_caster->GetGUID() << playerTarget->GetBindZoneId();
+    data << m_caster->GetGUID();
+    data << playerTarget->GetBindZoneId();
     playerTarget->GetSession()->SendPacket(&data);
 }
 
@@ -1950,8 +1955,7 @@ void Spell::SpellEffectCreateItem(uint32 i)
 
     if (p_caster != NULL)
     {
-
-        skilllinespell* skill = objmgr.GetSpellSkill(spellid);
+        auto skill_line_ability = objmgr.GetSpellSkill(spellid);
 
         // potions learned by discovery variables
         uint32 cast_chance = 5;
@@ -1974,7 +1978,7 @@ void Spell::SpellEffectCreateItem(uint32 i)
                 break;
         }
 
-        if ((skill != NULL) && (skill->skilline == SKILL_ALCHEMY))
+        if ((skill_line_ability != nullptr) && (skill_line_ability->skilline == SKILL_ALCHEMY))
         {
             //Potion Master
             if (strstr(m_itemProto->Name1, "Potion"))
@@ -2083,16 +2087,16 @@ void Spell::SpellEffectCreateItem(uint32 i)
             }
         }
 
-        if (skill != 0)
+        if (skill_line_ability != nullptr)
         {
-            DetermineSkillUp(skill->skilline);
+            DetermineSkillUp(skill_line_ability->skilline);
 
             uint32 discovered_recipe = 0;
 
             for (std::set<ProfessionDiscovery*>::iterator itr = objmgr.ProfessionDiscoveryTable.begin(); itr != objmgr.ProfessionDiscoveryTable.end(); itr++)
             {
                 ProfessionDiscovery* pf = *itr;
-                if (spellid == pf->SpellId && p_caster->_GetSkillLineCurrent(skill->skilline) >= pf->SkillValue && !p_caster->HasSpell(pf->SpellToDiscover) && Rand(pf->Chance))
+                if (spellid == pf->SpellId && p_caster->_GetSkillLineCurrent(skill_line_ability->skilline) >= pf->SkillValue && !p_caster->HasSpell(pf->SpellToDiscover) && Rand(pf->Chance))
                 {
                     discovered_recipe = pf->SpellToDiscover;
                     break;
@@ -2719,7 +2723,8 @@ void Spell::SpellEffectLeap(uint32 i) // Leap
         WorldPacket data(SMSG_MOVE_KNOCK_BACK, 50);
         data << playerTarget->GetNewGUID();
         data << getMSTime();
-        data << cosf(playerTarget->GetOrientation()) << sinf(playerTarget->GetOrientation());
+        data << cosf(playerTarget->GetOrientation());
+        data << sinf(playerTarget->GetOrientation());
         data << radius;
         data << float(-10.0f);
         playerTarget->GetSession()->SendPacket(&data);
@@ -2908,8 +2913,10 @@ void Spell::SpellEffectOpenLock(uint32 i) // Open Lock
                 if (!itemTarget->locked)
                     return;
 
-                Lock* lock = dbcLock.LookupEntryForced(itemTarget->GetProto()->LockId);
-                if (!lock) return;
+                auto lock = sLockStore.LookupEntry(itemTarget->GetProto()->LockId);
+                if (!lock)
+                    return;
+
                 for (int j = 0; j < LOCK_NUM_CASES; j++)
                 {
                     if (lock->locktype[j] == 2 && lock->minlockskill[j] && lockskill >= lock->minlockskill[j])
@@ -2925,10 +2932,10 @@ void Spell::SpellEffectOpenLock(uint32 i) // Open Lock
             else if (gameObjTarget)
             {
                 auto gameobject_info = gameObjTarget->GetInfo();
-                if (gameObjTarget->GetByte(GAMEOBJECT_BYTES_1, 0) == 0)
+                if (gameObjTarget->GetState() == 0)
                     return;
 
-                Lock* lock = dbcLock.LookupEntry(gameobject_info->parameter_0);
+                auto lock = sLockStore.LookupEntry(gameobject_info->parameter_0);
                 if (lock == 0)
                     return;
 
@@ -2937,8 +2944,8 @@ void Spell::SpellEffectOpenLock(uint32 i) // Open Lock
                     if (lock->locktype[j] == 2 && lock->minlockskill[j] && lockskill >= lock->minlockskill[j])
                     {
                         v = lock->minlockskill[j];
-                        gameObjTarget->SetUInt32Value(GAMEOBJECT_FLAGS, 0);
-                        gameObjTarget->SetByte(GAMEOBJECT_BYTES_1, 0, 1);
+                        gameObjTarget->SetFlags(0);
+                        gameObjTarget->SetState(1);
                         //Add Fill GO loot here
                         if (gameObjTarget->loot.items.size() == 0)
                         {
@@ -3585,8 +3592,8 @@ void Spell::SpellEffectSummonObject(uint32 i)
         GameObject* go = u_caster->GetMapMgr()->CreateGameObject(GO_FISHING_BOBBER);
 
         go->CreateFromProto(GO_FISHING_BOBBER, mapid, posx, posy, posz, orient);
-        go->SetUInt32Value(GAMEOBJECT_FLAGS, 0);
-        go->SetByte(GAMEOBJECT_BYTES_1, 0, 0);
+        go->SetFlags(0);
+        go->SetState(0);
         go->SetUInt64Value(OBJECT_FIELD_CREATED_BY, m_caster->GetGUID());
         u_caster->SetChannelSpellTargetGUID(go->GetGUID());
         go->Phase(PHASE_SET, u_caster->GetPhase());
@@ -3624,7 +3631,7 @@ void Spell::SpellEffectSummonObject(uint32 i)
         GameObject* go = m_caster->GetMapMgr()->CreateGameObject(entry);
 
         go->CreateFromProto(entry, mapid, posx, posy, pz, orient);
-        go->SetByte(GAMEOBJECT_BYTES_1, 0, 1);
+        go->SetState(1);
         go->SetUInt64Value(OBJECT_FIELD_CREATED_BY, m_caster->GetGUID());
         go->Phase(PHASE_SET, u_caster->GetPhase());
         go->PushToWorld(m_caster->GetMapMgr());
@@ -3632,7 +3639,7 @@ void Spell::SpellEffectSummonObject(uint32 i)
         if (entry == 17032 && p_caster)   // this is a portal
         {
             // enable it for party only
-            go->SetByte(GAMEOBJECT_BYTES_1, 0, 0);
+            go->SetState(0);
             //disable by default
             WorldPacket* pkt = go->BuildFieldUpdatePacket(GAMEOBJECT_BYTES_1, 1 << 24);
             SubGroup* pGroup = p_caster->GetGroup() ? p_caster->GetGroup()->GetSubGroup(p_caster->GetSubGroup()) : NULL;
@@ -3713,9 +3720,9 @@ void Spell::SpellEffectEnchantItem(uint32 i) // Enchant Item Permanent
         return;
     }
 
-    EnchantEntry* Enchantment = dbcEnchant.LookupEntryForced(GetProto()->EffectMiscValue[i]);
+    auto spell_item_enchant = sSpellItemEnchantmentStore.LookupEntry(GetProto()->EffectMiscValue[i]);
 
-    if (!Enchantment)
+    if (!spell_item_enchant)
     {
         LOG_ERROR("Invalid enchantment entry %u for Spell %u", GetProto()->EffectMiscValue[i], GetProto()->Id);
         return;
@@ -3726,7 +3733,7 @@ void Spell::SpellEffectEnchantItem(uint32 i) // Enchant Item Permanent
 
     //remove other perm enchantment that was enchanted by profession
     itemTarget->RemoveProfessionEnchant();
-    int32 Slot = itemTarget->AddEnchantment(Enchantment, 0, true, true, false, 0);
+    int32 Slot = itemTarget->AddEnchantment(spell_item_enchant, 0, true, true, false, 0);
     if (Slot < 0)
         return; // Apply failed
 
@@ -3758,8 +3765,8 @@ void Spell::SpellEffectEnchantItemTemporary(uint32 i)  // Enchant Item Temporary
         return;
     }
 
-    EnchantEntry* Enchantment = dbcEnchant.LookupEntryForced(EnchantmentID);
-    if (Enchantment == NULL)
+    auto spell_item_enchant = sSpellItemEnchantmentStore.LookupEntry(EnchantmentID);
+    if (spell_item_enchant == nullptr)
     {
         LOG_ERROR("Invalid enchantment entry %u for Spell %u", EnchantmentID, GetProto()->Id);
         return;
@@ -3767,13 +3774,13 @@ void Spell::SpellEffectEnchantItemTemporary(uint32 i)  // Enchant Item Temporary
 
     itemTarget->RemoveEnchantment(TEMP_ENCHANTMENT_SLOT);
 
-    int32 Slot = itemTarget->AddEnchantment(Enchantment, Duration, false, true, false, TEMP_ENCHANTMENT_SLOT);
+    int32 Slot = itemTarget->AddEnchantment(spell_item_enchant, Duration, false, true, false, TEMP_ENCHANTMENT_SLOT);
     if (Slot < 0)
         return; // Apply failed
 
-    skilllinespell* skill = objmgr.GetSpellSkill(GetProto()->Id);
-    if (skill != NULL)
-        DetermineSkillUp(skill->skilline, itemTarget->GetProto()->ItemLevel);
+    auto skill_line_ability = objmgr.GetSpellSkill(GetProto()->Id);
+    if (skill_line_ability != nullptr)
+        DetermineSkillUp(skill_line_ability->skilline, itemTarget->GetProto()->ItemLevel);
 }
 
 void Spell::SpellEffectTameCreature(uint32 i)
@@ -3927,9 +3934,11 @@ void Spell::SpellEffectOpenLockItem(uint32 i)
 void Spell::SpellEffectProficiency(uint32 i)
 {
     uint32 skill = 0;
-    skilllinespell* skillability = objmgr.GetSpellSkill(GetProto()->Id);
-    if (skillability)
-        skill = skillability->skilline;
+
+    auto skill_line_ability = objmgr.GetSpellSkill(GetProto()->Id);
+    if (skill_line_ability != nullptr)
+        skill = skill_line_ability->skilline;
+
     skilllineentry* sk = dbcSkillLine.LookupEntryForced(skill);
     if (skill)
     {
@@ -4194,11 +4203,12 @@ void Spell::SpellEffectAddFarsight(uint32 i) // Add Farsight
 
 void Spell::SpellEffectUseGlyph(uint32 i)
 {
-    if (!p_caster) return;
+    if (!p_caster)
+        return;
 
-    uint32 g_new = m_spellInfo->EffectMiscValue[i];
-    GlyphPropertyEntry* gp_new = dbcGlyphProperty.LookupEntryForced(g_new);
-    if (!gp_new)
+    uint32 glyph_new = m_spellInfo->EffectMiscValue[i];
+    auto glyph_prop_new = sGlyphPropertiesStore.LookupEntry(glyph_new);
+    if (!glyph_prop_new)
         return;
 
     // check if glyph is locked (obviously)
@@ -4208,30 +4218,32 @@ void Spell::SpellEffectUseGlyph(uint32 i)
         return;
     }
 
-    uint32 g_old = p_caster->GetGlyph(m_glyphslot);
-    if (g_old)
+    uint32 glyph_old = p_caster->GetGlyph(m_glyphslot);
+    if (glyph_old)
     {
-        if (g_old == g_new)
+        if (glyph_old == glyph_new)
+        {
             return;
+        }
         else
         {
-            GlyphPropertyEntry* gp_old = dbcGlyphProperty.LookupEntryForced(g_old);
-            if (gp_old)
-                p_caster->RemoveAura(gp_old->SpellID);
+            auto glyph_prop_old = sGlyphPropertiesStore.LookupEntry(glyph_old);
+            if (glyph_prop_old)
+                p_caster->RemoveAura(glyph_prop_old->SpellID);
         }
     }
 
-    GlyphSlotEntry* gs = dbcGlyphSlot.LookupEntryForced(p_caster->GetUInt32Value(PLAYER_FIELD_GLYPH_SLOTS_1 + m_glyphslot));
-    if (gs)
+    auto glyph_slot = sGlyphSlotStore.LookupEntry(p_caster->GetUInt32Value(PLAYER_FIELD_GLYPH_SLOTS_1 + m_glyphslot));
+    if (glyph_slot)
     {
-        if (gs->Type != gp_new->Type)
+        if (glyph_slot->Type != glyph_prop_new->Type)
         {
             SendCastResult(SPELL_FAILED_INVALID_GLYPH);
             return;
         }
-        p_caster->SetGlyph(m_glyphslot, g_new);
-        p_caster->CastSpell(p_caster, gp_new->SpellID, true);
-        p_caster->m_specs[p_caster->m_talentActiveSpec].glyphs[m_glyphslot] = static_cast<uint16>(g_new);
+        p_caster->SetGlyph(m_glyphslot, glyph_new);
+        p_caster->CastSpell(p_caster, glyph_prop_new->SpellID, true);
+        p_caster->m_specs[p_caster->m_talentActiveSpec].glyphs[m_glyphslot] = static_cast<uint16>(glyph_new);
         p_caster->smsg_TalentsInfo(false);
     }
 
@@ -4450,21 +4462,16 @@ void Spell::SpellEffectEnchantHeldItem(uint32 i)
     if (GetProto()->NameHash == SPELL_HASH_WINDFURY_WEAPON || GetProto()->NameHash == SPELL_HASH_FLAMETONGUE_WEAPON)
         Duration = 10;
 
-    EnchantEntry* Enchantment = dbcEnchant.LookupEntryForced(GetProto()->EffectMiscValue[i]);
+    auto spell_item_enchant = sSpellItemEnchantmentStore.LookupEntry(GetProto()->EffectMiscValue[i]);
 
-    if (!Enchantment)
+    if (!spell_item_enchant)
     {
         LOG_ERROR("Invalid enchantment entry %u for Spell %u", GetProto()->EffectMiscValue[i], GetProto()->Id);
         return;
     }
 
-    /* Windfury Totem removed in 3.0.2
-    if (m_spellInfo->NameHash == SPELL_HASH_WINDFURY_TOTEM_EFFECT && item->HasEnchantmentOnSlot(1) && item->GetEnchantment(1)->Enchantment != Enchantment) //dirty fix for Windfury totem not overwriting existing enchantments
-    return;
-    */
-
     item->RemoveEnchantment(1);
-    item->AddEnchantment(Enchantment, Duration, false, true, false, 1);
+    item->AddEnchantment(spell_item_enchant, Duration, false, true, false, 1);
 }
 
 void Spell::SpellEffectSelfResurrect(uint32 i)
@@ -5250,14 +5257,18 @@ void Spell::SpellEffectPlayerPull(uint32 i)
     WorldPacket data(SMSG_MONSTER_MOVE, 60);
     data << p_target->GetNewGUID();
     data << uint8(0);
-    data << p_target->GetPositionX() << p_target->GetPositionY() << p_target->GetPositionZ();
+    data << p_target->GetPositionX();
+    data << p_target->GetPositionY();
+    data << p_target->GetPositionZ();
     data << getMSTime();
     data << uint8(4);
     data << pullO;
     data << uint32(0x00001000);
     data << time;
     data << uint32(1);
-    data << pullX << pullY << pullZ;
+    data << pullX;
+    data << pullY;
+    data << pullZ;
 
     p_target->SendMessageToSet(&data, true);
 }
@@ -5542,9 +5553,9 @@ void Spell::SpellEffectEnchantItemPrismatic(uint32 i)
     if (!itemTarget || !p_caster)
         return;
 
-    EnchantEntry* Enchantment = dbcEnchant.LookupEntry(m_spellInfo->EffectMiscValue[i]);
+    auto spell_item_enchant = sSpellItemEnchantmentStore.LookupEntry(m_spellInfo->EffectMiscValue[i]);
 
-    if (!Enchantment)
+    if (!spell_item_enchant)
     {
         LOG_ERROR("Invalid enchantment entry %u for Spell %u", GetProto()->EffectMiscValue[i], GetProto()->Id);
         return;
@@ -5555,7 +5566,7 @@ void Spell::SpellEffectEnchantItemPrismatic(uint32 i)
 
     //remove other socket enchant
     itemTarget->RemoveEnchantment(6);
-    int32 Slot = itemTarget->AddEnchantment(Enchantment, 0, true, true, false, 6);
+    int32 Slot = itemTarget->AddEnchantment(spell_item_enchant, 0, true, true, false, 6);
 
     if (Slot < 6)
         return; // Apply failed

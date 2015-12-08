@@ -18,43 +18,17 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _MASTER_H
-#define _MASTER_H
+#ifndef _WORLD_MASTER_H
+#define _WORLD_MASTER_H
 
 #include "Common.h"
 #include "Config/ConfigEnv.h"
 #include "Database/DatabaseEnv.h"
 #include "MainServerDefines.h"
+#include "../shared/AscemuServerDefines.hpp"
 
-#ifndef _VERSION
-#define _VERSION "3.3.5a"
-#endif
-
-#if PLATFORM == PLATFORM_WIN32
-#define _FULLVERSION _VERSION "-SVN (Win32)"
-#else
-#define _FULLVERSION _VERSION "-SVN (Unix)"
-#endif
-
-#ifdef _DEBUG
-#define BUILDTYPE "Debug"
-#else
-#define BUILDTYPE "Release"
-#endif
-
-#define DEFAULT_LOOP_TIME 0         /// 0 milliseconds - instant
-#define DEFAULT_LOG_LEVEL 0
-#define DEFAULT_PLAYER_LIMIT 100
-#define DEFAULT_WORLDSERVER_PORT 8129
-#define DEFAULT_REALMSERVER_PORT 3724
-#define DEFAULT_HOST "0.0.0.0"
-#define DEFAULT_REGEN_RATE 0.15
-#define DEFAULT_XP_RATE 1
-#define DEFAULT_DROP_RATE 1
-#define DEFAULT_REST_XP_RATE 1
-#define DEFAULT_QUEST_XP_RATE 1
-#define DEFAULT_SAVE_RATE 300000    /// 5 mins
-
+static const char* REQUIRED_CHAR_DB_VERSION = "2015-11-06_01_event_save";
+static const char* REQUIRED_WORLD_DB_VERSION = "2015-12-08_01_creature_channel_spell";
 
 class Master : public Singleton<Master>
 {
@@ -64,6 +38,15 @@ class Master : public Singleton<Master>
         ~Master();
 
         bool Run(int argc, char** argv);
+        void PrintBanner();
+        bool LoadWorldConfiguration(char* config_file, char* optional_config_file, char* realm_config_file);
+        void OpenCheatLogFiles();
+        void StartNetworkSubsystem();
+        void StartRemoteConsole();
+        void WritePidFile();
+
+        void ShutdownThreadPools(bool listnersockcreate);
+        void ShutdownLootSystem();
         bool m_ShutdownEvent;
         uint32 m_ShutdownTimer;
 
@@ -73,7 +56,7 @@ class Master : public Singleton<Master>
 
         bool _StartDB();
         void _StopDB();
-        bool CheckDBVersion();
+        bool _CheckDBVersion();
 
         void _HookSignals();
         void _UnhookSignals();
@@ -83,4 +66,4 @@ class Master : public Singleton<Master>
 
 #define sMaster Master::getSingleton()
 
-#endif // _MASTER_H
+#endif // _WORLD_MASTER_H

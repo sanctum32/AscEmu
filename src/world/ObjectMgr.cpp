@@ -103,7 +103,7 @@ ObjectMgr::~ObjectMgr()
     }
 
     Log.Notice("ObjectMgr", "Deleting Waypoint Cache...");
-    for (HM_NAMESPACE::hash_map<uint32, WayPointMap*>::iterator i = m_waypoints.begin(); i != m_waypoints.end(); ++i)
+    for (std::unordered_map<uint32, WayPointMap*>::iterator i = m_waypoints.begin(); i != m_waypoints.end(); ++i)
     {
         for (WayPointMap::iterator i2 = i->second->begin(); i2 != i->second->end(); ++i2)
             if ((*i2))
@@ -113,7 +113,7 @@ ObjectMgr::~ObjectMgr()
     }
 
     Log.Notice("ObjectMgr", "Deleting timed emote Cache...");
-    for (HM_NAMESPACE::hash_map<uint32, TimedEmoteList*>::iterator i = m_timedemotes.begin(); i != m_timedemotes.end(); ++i)
+    for (std::unordered_map<uint32, TimedEmoteList*>::iterator i = m_timedemotes.begin(); i != m_timedemotes.end(); ++i)
     {
         for (TimedEmoteList::iterator i2 = i->second->begin(); i2 != i->second->end(); ++i2)
             if ((*i2))
@@ -145,7 +145,7 @@ ObjectMgr::~ObjectMgr()
     Log.Notice("ObjectMgr", "Deleting Charters...");
     for (int i = 0; i < NUM_CHARTER_TYPES; ++i)
     {
-        for (HM_NAMESPACE::hash_map<uint32, Charter*>::iterator itr = m_charters[i].begin(); itr != m_charters[i].end(); ++itr)
+        for (std::unordered_map<uint32, Charter*>::iterator itr = m_charters[i].begin(); itr != m_charters[i].end(); ++itr)
         {
             delete itr->second;
         }
@@ -165,7 +165,7 @@ ObjectMgr::~ObjectMgr()
         delete mod;
     }
 
-    for (HM_NAMESPACE::hash_map<uint32, InstanceReputationModifier*>::iterator itr = this->m_reputation_instance.begin(); itr != this->m_reputation_instance.end(); ++itr)
+    for (std::unordered_map<uint32, InstanceReputationModifier*>::iterator itr = this->m_reputation_instance.begin(); itr != this->m_reputation_instance.end(); ++itr)
     {
         InstanceReputationModifier* mod = itr->second;
         mod->mods.clear();
@@ -193,7 +193,7 @@ ObjectMgr::~ObjectMgr()
     }
 
     Log.Notice("ObjectMgr", "Deleting Player Information...");
-    for (HM_NAMESPACE::hash_map<uint32, PlayerInfo*>::iterator itr = m_playersinfo.begin(); itr != m_playersinfo.end(); ++itr)
+    for (std::unordered_map<uint32, PlayerInfo*>::iterator itr = m_playersinfo.begin(); itr != m_playersinfo.end(); ++itr)
     {
         itr->second->m_Group = NULL;
         free(itr->second->name);
@@ -217,7 +217,7 @@ ObjectMgr::~ObjectMgr()
     }
 
     Log.Notice("ObjectMgr", "Deleting Arena Teams...");
-    for (HM_NAMESPACE::hash_map<uint32, ArenaTeam*>::iterator itr = m_arenaTeams.begin(); itr != m_arenaTeams.end(); ++itr)
+    for (std::unordered_map<uint32, ArenaTeam*>::iterator itr = m_arenaTeams.begin(); itr != m_arenaTeams.end(); ++itr)
     {
         delete(*itr).second;
     }
@@ -299,7 +299,7 @@ Group* ObjectMgr::GetGroupById(uint32 id)
 void ObjectMgr::DeletePlayerInfo(uint32 guid)
 {
     PlayerInfo* pl;
-    HM_NAMESPACE::hash_map<uint32, PlayerInfo*>::iterator i;
+    std::unordered_map<uint32, PlayerInfo*>::iterator i;
     PlayerNameStringIndexMap::iterator i2;
     playernamelock.AcquireWriteLock();
     i = m_playersinfo.find(guid);
@@ -338,7 +338,7 @@ void ObjectMgr::DeletePlayerInfo(uint32 guid)
 
 PlayerInfo* ObjectMgr::GetPlayerInfo(uint32 guid)
 {
-    HM_NAMESPACE::hash_map<uint32, PlayerInfo*>::iterator i;
+    std::unordered_map<uint32, PlayerInfo*>::iterator i;
     PlayerInfo* rv;
     playernamelock.AcquireReadLock();
     i = m_playersinfo.find(guid);
@@ -380,21 +380,18 @@ void ObjectMgr::RenamePlayerInfo(PlayerInfo* pn, const char* oldname, const char
 
 void ObjectMgr::LoadSpellSkills()
 {
-    uint32 i;
-    //    int total = sSkillStore.GetNumRows();
-
-    for (i = 0; i < dbcSkillLineSpell.GetNumRows(); i++)
+    for (uint32 i = 0; i < sSkillLineAbilityStore.GetNumRows(); i++)
     {
-        skilllinespell* sp = dbcSkillLineSpell.LookupRowForced(i);
-        if (sp)
+        auto skill_line_ability = sSkillLineAbilityStore.LookupEntry(i);
+        if (skill_line_ability)
         {
-            mSpellSkills[sp->spell] = sp;
+            mSpellSkills[skill_line_ability->spell] = skill_line_ability;
         }
     }
     Log.Success("ObjectMgr", "%u spell skills loaded.", mSpellSkills.size());
 }
 
-skilllinespell* ObjectMgr::GetSpellSkill(uint32 id)
+DBC::Structures::SkillLineAbilityEntry const* ObjectMgr::GetSpellSkill(uint32 id)
 {
     return mSpellSkills[id];
 }
@@ -402,13 +399,13 @@ skilllinespell* ObjectMgr::GetSpellSkill(uint32 id)
 SpellEntry* ObjectMgr::GetNextSpellRank(SpellEntry* sp, uint32 level)
 {
     // Looks for next spell rank
-    if (sp == NULL)
+    if (sp == nullptr)
         return NULL;
 
-    skilllinespell* skill = GetSpellSkill(sp->Id);
-    if (skill != NULL && skill->next > 0)
+    auto skill_line_ability = GetSpellSkill(sp->Id);
+    if (skill_line_ability != nullptr && skill_line_ability->next > 0)
     {
-        SpellEntry* sp1 = dbcSpell.LookupEntry(skill->next);
+        SpellEntry* sp1 = dbcSpell.LookupEntry(skill_line_ability->next);
         if (sp1->baseLevel <= level)   // check level
             return GetNextSpellRank(sp1, level);   // recursive for higher ranks
     }
@@ -987,8 +984,8 @@ void ObjectMgr::LoadAchievementRewards()
 
         if (reward.titel_A)
         {
-            CharTitlesEntry const* titleEntry = dbcCharTitlesEntry.LookupEntryForced(reward.titel_A);
-            if (!titleEntry)
+            auto const* char_title_entry = sCharTitlesStore.LookupEntry(reward.titel_A);
+            if (!char_title_entry)
             {
                 sLog.Error("ObjectMgr", "achievement_reward %u has invalid title id (%u) in `title_A`, set to 0", entry, reward.titel_A);
                 reward.titel_A = 0;
@@ -997,8 +994,8 @@ void ObjectMgr::LoadAchievementRewards()
 
         if (reward.titel_H)
         {
-            CharTitlesEntry const* titleEntry = dbcCharTitlesEntry.LookupEntryForced(reward.titel_H);
-            if (!titleEntry)
+            auto const* char_title_entry = sCharTitlesStore.LookupEntry(reward.titel_H);
+            if (!char_title_entry)
             {
                 sLog.Error("ObjectMgr", "achievement_reward %u has invalid title id (%u) in `title_A`, set to 0", entry, reward.titel_H);
                 reward.titel_H = 0;
@@ -1479,7 +1476,7 @@ GM_Ticket* ObjectMgr::GetGMTicket(uint64 ticketGuid)
 
 void ObjectMgr::LoadVendors()
 {
-    HM_NAMESPACE::hash_map<uint32, std::vector<CreatureItem>*>::const_iterator itr;
+    std::unordered_map<uint32, std::vector<CreatureItem>*>::const_iterator itr;
     std::vector<CreatureItem> *items;
     CreatureItem itm;
 
@@ -1497,7 +1494,7 @@ void ObjectMgr::LoadVendors()
             Log.Notice("ObjectMgr", "Invalid format in vendors (%u/6) columns, loading anyway because we have enough data", result->GetFieldCount());
         }
 
-        ItemExtendedCostEntry* ec = NULL;
+        DBC::Structures::ItemExtendedCostEntry const* item_extended_cost = NULL;
         do
         {
             Field* fields = result->Fetch();
@@ -1521,13 +1518,13 @@ void ObjectMgr::LoadVendors()
             itm.incrtime = fields[4].GetUInt32();
             if (fields[5].GetUInt32() > 0)
             {
-                ec = dbcItemExtendedCost.LookupEntryForced(fields[5].GetUInt32());
-                if (ec == NULL)
+                item_extended_cost = sItemExtendedCostStore.LookupEntry(fields[5].GetUInt32());
+                if (item_extended_cost == nullptr)
                     Log.Error("LoadVendors", "Extendedcost for item %u references nonexistent EC %u", fields[1].GetUInt32(), fields[5].GetUInt32());
             }
             else
-                ec = NULL;
-            itm.extended_cost = ec;
+                item_extended_cost = NULL;
+            itm.extended_cost = item_extended_cost;
             items->push_back(itm);
         }
         while (result->NextRow());
@@ -2569,7 +2566,7 @@ void ObjectMgr::LoadCreatureTimedEmotes()
         te->msg_lang = static_cast<uint8>(fields[6].GetUInt32());
         te->expire_after = fields[7].GetUInt32();
 
-        HM_NAMESPACE::hash_map<uint32, TimedEmoteList*>::const_iterator i;
+        std::unordered_map<uint32, TimedEmoteList*>::const_iterator i;
         uint32 spawnid = fields[0].GetUInt32();
         i = m_timedemotes.find(spawnid);
         if (i == m_timedemotes.end())
@@ -2591,7 +2588,7 @@ void ObjectMgr::LoadCreatureTimedEmotes()
 
 TimedEmoteList* ObjectMgr::GetTimedEmoteList(uint32 spawnid)
 {
-    HM_NAMESPACE::hash_map<uint32, TimedEmoteList*>::const_iterator i;
+    std::unordered_map<uint32, TimedEmoteList*>::const_iterator i;
     i = m_timedemotes.find(spawnid);
     if (i != m_timedemotes.end())
     {
@@ -2623,7 +2620,7 @@ void ObjectMgr::LoadCreatureWaypoints()
         wp->forwardskinid = fields[11].GetUInt32();
         wp->backwardskinid = fields[12].GetUInt32();
 
-        HM_NAMESPACE::hash_map<uint32, WayPointMap*>::const_iterator i;
+        std::unordered_map<uint32, WayPointMap*>::const_iterator i;
         uint32 spawnid = fields[0].GetUInt32();
         i = m_waypoints.find(spawnid);
         if (i == m_waypoints.end())
@@ -2650,7 +2647,7 @@ void ObjectMgr::LoadCreatureWaypoints()
 
 WayPointMap* ObjectMgr::GetWayPointMap(uint32 spawnid)
 {
-    HM_NAMESPACE::hash_map<uint32, WayPointMap*>::const_iterator i;
+    std::unordered_map<uint32, WayPointMap*>::const_iterator i;
     i = m_waypoints.find(spawnid);
     if (i != m_waypoints.end())
     {
@@ -2802,7 +2799,7 @@ Transporter* ObjectMgr::GetTransporter(uint32 guid)
 {
     Transporter* rv;
     _TransportLock.Acquire();
-    HM_NAMESPACE::hash_map<uint32, Transporter*>::const_iterator itr = mTransports.find(guid);
+    std::unordered_map<uint32, Transporter*>::const_iterator itr = mTransports.find(guid);
     rv = (itr != mTransports.end()) ? itr->second : 0;
     _TransportLock.Release();
     return rv;
@@ -2847,7 +2844,7 @@ void ObjectMgr::LoadGuildCharters()
 Charter* ObjectMgr::GetCharter(uint32 CharterId, CharterTypes Type)
 {
     Charter* rv;
-    HM_NAMESPACE::hash_map<uint32, Charter*>::iterator itr;
+    std::unordered_map<uint32, Charter*>::iterator itr;
     m_charterLock.AcquireReadLock();
     itr = m_charters[Type].find(CharterId);
     rv = (itr == m_charters[Type].end()) ? 0 : itr->second;
@@ -2989,7 +2986,7 @@ Charter* ObjectMgr::GetCharterByItemGuid(uint64 guid)
     m_charterLock.AcquireReadLock();
     for (int i = 0; i < NUM_CHARTER_TYPES; ++i)
     {
-        HM_NAMESPACE::hash_map<uint32, Charter*>::iterator itr = m_charters[i].begin();
+        std::unordered_map<uint32, Charter*>::iterator itr = m_charters[i].begin();
         for (; itr != m_charters[i].end(); ++itr)
         {
             if (itr->second->ItemGuid == guid)
@@ -3006,7 +3003,7 @@ Charter* ObjectMgr::GetCharterByItemGuid(uint64 guid)
 Charter* ObjectMgr::GetCharterByGuid(uint64 playerguid, CharterTypes type)
 {
     m_charterLock.AcquireReadLock();
-    HM_NAMESPACE::hash_map<uint32, Charter*>::iterator itr = m_charters[type].begin();
+    std::unordered_map<uint32, Charter*>::iterator itr = m_charters[type].begin();
     for (; itr != m_charters[type].end(); ++itr)
     {
         if (playerguid == itr->second->LeaderGuid)
@@ -3032,7 +3029,7 @@ Charter* ObjectMgr::GetCharterByName(std::string & charter_name, CharterTypes Ty
 {
     Charter* rv = 0;
     m_charterLock.AcquireReadLock();
-    HM_NAMESPACE::hash_map<uint32, Charter*>::iterator itr = m_charters[Type].begin();
+    std::unordered_map<uint32, Charter*>::iterator itr = m_charters[Type].begin();
     for (; itr != m_charters[Type].end(); ++itr)
     {
         if (itr->second->GuildName == charter_name)
@@ -3210,7 +3207,7 @@ void ObjectMgr::LoadInstanceReputationModifiers()
         mod.faction[0] = fields[5].GetUInt32();
         mod.faction[1] = fields[6].GetUInt32();
 
-        HM_NAMESPACE::hash_map<uint32, InstanceReputationModifier*>::iterator itr = m_reputation_instance.find(mod.mapid);
+        std::unordered_map<uint32, InstanceReputationModifier*>::iterator itr = m_reputation_instance.find(mod.mapid);
         if (itr == m_reputation_instance.end())
         {
             InstanceReputationModifier* m = new InstanceReputationModifier;
@@ -3234,7 +3231,7 @@ bool ObjectMgr::HandleInstanceReputationModifiers(Player* pPlayer, Unit* pVictim
     if (!pVictim->IsCreature())
         return false;
 
-    HM_NAMESPACE::hash_map<uint32, InstanceReputationModifier*>::iterator itr = m_reputation_instance.find(pVictim->GetMapId());
+    std::unordered_map<uint32, InstanceReputationModifier*>::iterator itr = m_reputation_instance.find(pVictim->GetMapId());
     if (itr == m_reputation_instance.end())
         return false;
 
@@ -3346,7 +3343,7 @@ void ObjectMgr::LoadArenaTeams()
 ArenaTeam* ObjectMgr::GetArenaTeamByGuid(uint32 guid, uint32 Type)
 {
     m_arenaTeamLock.Acquire();
-    for (HM_NAMESPACE::hash_map<uint32, ArenaTeam*>::iterator itr = m_arenaTeamMap[Type].begin(); itr != m_arenaTeamMap[Type].end(); ++itr)
+    for (std::unordered_map<uint32, ArenaTeam*>::iterator itr = m_arenaTeamMap[Type].begin(); itr != m_arenaTeamMap[Type].end(); ++itr)
     {
         if (itr->second->HasMember(guid))
         {
@@ -3360,7 +3357,7 @@ ArenaTeam* ObjectMgr::GetArenaTeamByGuid(uint32 guid, uint32 Type)
 
 ArenaTeam* ObjectMgr::GetArenaTeamById(uint32 id)
 {
-    HM_NAMESPACE::hash_map<uint32, ArenaTeam*>::iterator itr;
+    std::unordered_map<uint32, ArenaTeam*>::iterator itr;
     m_arenaTeamLock.Acquire();
     itr = m_arenaTeams.find(id);
     m_arenaTeamLock.Release();
@@ -3370,7 +3367,7 @@ ArenaTeam* ObjectMgr::GetArenaTeamById(uint32 id)
 ArenaTeam* ObjectMgr::GetArenaTeamByName(std::string & name, uint32 Type)
 {
     m_arenaTeamLock.Acquire();
-    for (HM_NAMESPACE::hash_map<uint32, ArenaTeam*>::iterator itr = m_arenaTeams.begin(); itr != m_arenaTeams.end(); ++itr)
+    for (std::unordered_map<uint32, ArenaTeam*>::iterator itr = m_arenaTeams.begin(); itr != m_arenaTeams.end(); ++itr)
     {
         if (!strnicmp(itr->second->m_name.c_str(), name.c_str(), name.size()))
         {
@@ -3420,7 +3417,7 @@ void ObjectMgr::UpdateArenaTeamRankings()
     {
         std::vector<ArenaTeam*> ranking;
 
-        for (HM_NAMESPACE::hash_map<uint32, ArenaTeam*>::iterator itr = m_arenaTeamMap[i].begin(); itr != m_arenaTeamMap[i].end(); ++itr)
+        for (std::unordered_map<uint32, ArenaTeam*>::iterator itr = m_arenaTeamMap[i].begin(); itr != m_arenaTeamMap[i].end(); ++itr)
             ranking.push_back(itr->second);
 
         std::sort(ranking.begin(), ranking.end(), ArenaSorter());
@@ -3443,7 +3440,7 @@ void ObjectMgr::ResetArenaTeamRatings()
     m_arenaTeamLock.Acquire();
     for (uint32 i = 0; i < NUM_ARENA_TEAM_TYPES; ++i)
     {
-        for (HM_NAMESPACE::hash_map<uint32, ArenaTeam*>::iterator itr = m_arenaTeamMap[i].begin(); itr != m_arenaTeamMap[i].end(); ++itr)
+        for (std::unordered_map<uint32, ArenaTeam*>::iterator itr = m_arenaTeamMap[i].begin(); itr != m_arenaTeamMap[i].end(); ++itr)
         {
             ArenaTeam* team = itr->second;
             if (team)
@@ -3476,7 +3473,7 @@ void ObjectMgr::UpdateArenaTeamWeekly()
     m_arenaTeamLock.Acquire();
     for (uint32 i = 0; i < NUM_ARENA_TEAM_TYPES; ++i)
     {
-        for (HM_NAMESPACE::hash_map<uint32, ArenaTeam*>::iterator itr = m_arenaTeamMap[i].begin(); itr != m_arenaTeamMap[i].end(); ++itr)
+        for (std::unordered_map<uint32, ArenaTeam*>::iterator itr = m_arenaTeamMap[i].begin(); itr != m_arenaTeamMap[i].end(); ++itr)
         {
             ArenaTeam* team = itr->second;
             if (team)
@@ -3799,8 +3796,8 @@ AreaTrigger const* ObjectMgr::GetMapEntranceTrigger(uint32 Map) const
     {
         if (itr->second.Mapid == Map)
         {
-            AreaTriggerEntry const* atEntry = dbcAreaTrigger.LookupEntry(itr->first);
-            if (atEntry)
+            auto const* area_trigger_entry = sAreaTriggerStore.LookupEntry(itr->first);
+            if (area_trigger_entry)
                 return &itr->second;
         }
     }
@@ -3839,15 +3836,15 @@ void ObjectMgr::LoadAreaTrigger()
         at.z = fields[7].GetFloat();
         at.o = fields[8].GetFloat();
 
-        AreaTriggerEntry const* atEntry = dbcAreaTrigger.LookupEntry(Trigger_ID);
-        if (!atEntry)
+        auto const* area_trigger_entry = sAreaTriggerStore.LookupEntry(Trigger_ID);
+        if (!area_trigger_entry)
         {
             Log.Notice("AreaTrigger", "Area trigger (ID:%u) does not exist in `AreaTrigger.dbc`.", Trigger_ID);
             continue;
         }
 
-        MapEntry const* mapEntry = dbcMap.LookupEntry(at.Mapid);
-        if (!mapEntry)
+        auto const* map_entry = sMapStore.LookupEntry(at.Mapid);
+        if (!map_entry)
         {
             Log.Notice("AreaTrigger", "Area trigger (ID:%u) target map (ID: %u) does not exist in `Map.dbc`.", Trigger_ID, at.Mapid);
             continue;

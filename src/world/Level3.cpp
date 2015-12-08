@@ -1117,12 +1117,12 @@ bool ChatHandler::HandleGetTransporterTime(const char* args, WorldSession* m_ses
     Creature* crt = getSelectedCreature(m_session, false);
     if (crt == NULL)
         return false;
-
+    
     WorldPacket data(SMSG_ATTACKERSTATEUPDATE, 1000);
     data << uint32(0x00000102);
     data << crt->GetNewGUID();
     data << m_session->GetPlayer()->GetNewGUID();
-
+    
     data << uint32(6);
     data << uint8(1);
     data << uint32(1);
@@ -1241,9 +1241,9 @@ bool ChatHandler::HandleAddItemSetCommand(const char* args, WorldSession* m_sess
         return true;
     }
 
-    ItemSetEntry* entry = dbcItemSet.LookupEntryForced(setid);
-    std::list<ItemPrototype*>* l = objmgr.GetListForItemSet(setid);
-    if (!entry || !l)
+    auto item_set_entry = sItemSetStore.LookupEntry(setid);
+    std::list<ItemPrototype*>* item_set_list = objmgr.GetListForItemSet(setid);
+    if (!item_set_entry || !item_set_list)
     {
         RedSystemMessage(m_session, "Invalid item set.");
         return true;
@@ -1252,7 +1252,7 @@ bool ChatHandler::HandleAddItemSetCommand(const char* args, WorldSession* m_sess
     BlueSystemMessage(m_session, "Searching item set %u...", setid);
     uint32 start = getMSTime();
     sGMLog.writefromsession(m_session, "used add item set command, set %u, target %s", setid, chr->GetName());
-    for (std::list<ItemPrototype*>::iterator itr = l->begin(); itr != l->end(); ++itr)
+    for (std::list<ItemPrototype*>::iterator itr = item_set_list->begin(); itr != item_set_list->end(); ++itr)
     {
         Item* itm = objmgr.CreateItem((*itr)->ItemId, m_session->GetPlayer());
         if (!itm) continue;
@@ -3331,15 +3331,15 @@ bool ChatHandler::HandleLookupFactionCommand(const char* args, WorldSession* m_s
     GreenSystemMessage(m_session, "Starting search of faction `%s`...", x.c_str());
     uint32 t = getMSTime();
     uint32 count = 0;
-    for (uint32 index = 0; index < dbcFaction.GetNumRows(); ++index)
+    for (uint32 index = 0; index < sFactionStore.GetNumRows(); ++index)
     {
-        FactionDBC* faction = dbcFaction.LookupRow(index);
-        std::string y = std::string(faction->Name);
+        DBC::Structures::FactionEntry const* faction = sFactionStore.LookupEntry(index);
+        std::string y = std::string(faction->Name[0]);
         arcemu_TOLOWER(y);
         if (FindXinYString(x, y))
         {
             // Print out the name in a cool highlighted fashion
-            SendHighlightedName(m_session, "Faction", faction->Name, y, x, faction->ID);
+            SendHighlightedName(m_session, "Faction", faction->Name[0], y, x, faction->ID);
             ++count;
             if (count == 25)
             {

@@ -16,26 +16,26 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _LOGON_SERVER_HPP
-#define _LOGON_SERVER_HPP
+#ifndef _ASCEMU_SERVER_DEFINES_HPP
+#define _ASCEMU_SERVER_DEFINES_HPP
 
-enum RealmFlags
-{
-    REALM_FLAG_NONE         = 0x00,
-    REALM_FLAG_INVALID      = 0x01,
-    REALM_FLAG_OFFLINE      = 0x02,
-    REALM_FLAG_SPECIFYBUILD = 0x04,     // client will show realm version in RealmList screen in form "RealmName (major.minor.revision.build)"
-    REALM_FLAG_UNK1         = 0x08,
-    REALM_FLAG_UNK2         = 0x10,
-    REALM_FLAG_NEW_PLAYERS  = 0x20,
-    REALM_FLAG_RECOMMENDED  = 0x40,
-    REALM_FLAG_FULL         = 0x80
-};
+#include "git_version.h"
+#include <signal.h>
 
-struct AllowedIP
-{
-    unsigned int IP;
-    unsigned char Bytes;
-};
+#ifndef WIN32
+#include <sched.h>
+#include <sys/resource.h>
+#endif
 
-#endif  //_LOGON_SERVER_HPP
+#include "../shared/ascemu_getopt.h"
+
+#define WORLD_BANNER "<< AscEmu %s/%s-%s (%s) :: World Server >>"
+#define LOGON_BANNER "<< AscEmu %s/%s-%s (%s) :: Logon Server >>"
+
+#define DEF_VALUE_NOT_SET 0xDEADBEEF
+
+#ifndef _VERSION
+#define _VERSION "3.3.5a"
+#endif
+
+#endif      //_ASCEMU_SERVER_DEFINES_HPP

@@ -205,12 +205,12 @@ class MaexxnaAI : public MoonScriptBossAI
     void OnCombatStop(Unit* pTarget);
     void AIUpdate();
 
-    SpellDesc*            mWebWrapProc;
-    bool                mHasEnraged;
-    bool                mLeftWall;
-    int32                mAddsSummonTimer;
-    int32                mWebSprayTimer;
-    int32                mWebWrapTimer;
+    SpellDesc* mWebWrapProc;
+    bool mHasEnraged;
+    bool mLeftWall;
+    int32 mAddsSummonTimer;
+    int32 mWebSprayTimer;
+    int32 mWebWrapTimer;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -232,8 +232,8 @@ class NaxxramasWorshipperAI : public MoonScriptCreatureAI
     void AIUpdate();
     void Destroy();
 
-    GrandWidowFaerlinaAI*    mGrandWidow;
-    bool                    mPossessed;
+    GrandWidowFaerlinaAI* mGrandWidow;
+    bool mPossessed;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -252,8 +252,8 @@ class NaxxramasFollowerAI : public MoonScriptCreatureAI
 
     void Destroy();
 
-    GrandWidowFaerlinaAI*    mGrandWidow;
-    SpellDesc*                mCharge;
+    GrandWidowFaerlinaAI* mGrandWidow;
+    SpellDesc* mCharge;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -290,12 +290,12 @@ class GrandWidowFaerlinaAI : public MoonScriptBossAI
     void AIUpdate();
     void Destroy();
 
-    std::set< NaxxramasWorshipperAI* >    mWorshippers;
-    std::set< NaxxramasFollowerAI* >        mFollowers;
-    SpellDesc*                        mFrenzy;
-    SpellDesc*                        mPoisonVolleyBolt;
-    int32                            mFrenzyTimer;
-    int32                            mPoisonVolleyBoltTimer;
+    std::set< NaxxramasWorshipperAI* > mWorshippers;
+    std::set< NaxxramasFollowerAI* > mFollowers;
+    SpellDesc* mFrenzy;
+    SpellDesc* mPoisonVolleyBolt;
+    int32 mFrenzyTimer;
+    int32 mPoisonVolleyBoltTimer;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -316,8 +316,8 @@ class CryptGuardAI : public MoonScriptCreatureAI
     void AIUpdate();
     void Destroy();
 
-    AnubRekhanAI*    mAnubRekhanAI;
-    bool            mEnraged;
+    AnubRekhanAI* mAnubRekhanAI;
+    bool mEnraged;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -332,7 +332,7 @@ class CorpseScarabAI : public MoonScriptCreatureAI
 
     void Destroy();
 
-    AnubRekhanAI*    mAnubRekhanAI;
+    AnubRekhanAI* mAnubRekhanAI;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -366,12 +366,12 @@ class AnubRekhanAI : public MoonScriptBossAI
     void AIUpdate();
     void Destroy();
 
-    std::set< CorpseScarabAI* >    mScarabs;
-    std::set< CryptGuardAI* >    mCryptGuards;
-    std::set< uint32 >            mUsedCorpseGuids;
-    SpellDesc*                mLocustSwarm;
-    int32                    mLocustSwarmTimer;
-    int32                    mCryptSpawnTimer;
+    std::set< CorpseScarabAI* > mScarabs;
+    std::set< CryptGuardAI* > mCryptGuards;
+    std::set< uint32 > mUsedCorpseGuids;
+    SpellDesc* mLocustSwarm;
+    int32 mLocustSwarmTimer;
+    int32 mCryptSpawnTimer;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -413,7 +413,7 @@ class StoneskinGargoyleAI : public MoonScriptCreatureAI
     bool HasStoneskin();
     void AIUpdate();
 
-    SpellDesc*    mStoneskin;
+    SpellDesc* mStoneskin;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -501,17 +501,17 @@ class NothThePlaguebringerAI : public MoonScriptBossAI
     void AIUpdate();
     void Destroy();
 
-    std::set< PlaguedWarriorAI*>        mWarriors;
-    std::set< PlaguedChampionAI*>    mChampions;
-    std::set< PlaguedGuardianAI* >    mGuardians;
-    SpellDesc*                    mCriple;
-    SpellDesc*                    mBlink;
-    SpellDesc*                    mToBalconySwitch;
-    SpellDesc*                    mFromBalconySwitch;
-    int32                        mBlinkTimer;
-    int32                        mSkeletonTimer;
-    int32                        mPhaseSwitchTimer;
-    uint32                        mPhaseCounter;
+    std::set<PlaguedWarriorAI*> mWarriors;
+    std::set<PlaguedChampionAI*> mChampions;
+    std::set<PlaguedGuardianAI*> mGuardians;
+    SpellDesc* mCriple;
+    SpellDesc* mBlink;
+    SpellDesc* mToBalconySwitch;
+    SpellDesc* mFromBalconySwitch;
+    int32 mBlinkTimer;
+    int32 mSkeletonTimer;
+    int32 mPhaseSwitchTimer;
+    uint32 mPhaseCounter;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -527,7 +527,7 @@ class PlaguedWarriorAI : public MoonScriptCreatureAI
 
     void Destroy();
 
-    NothThePlaguebringerAI*    mNothAI;
+    NothThePlaguebringerAI* mNothAI;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -545,7 +545,7 @@ class PlaguedChampionAI : public MoonScriptCreatureAI
 
     void Destroy();
 
-    NothThePlaguebringerAI*    mNothAI;
+    NothThePlaguebringerAI* mNothAI;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -562,7 +562,7 @@ class PlaguedGuardianAI : public MoonScriptCreatureAI
 
     void Destroy();
 
-    NothThePlaguebringerAI*    mNothAI;
+    NothThePlaguebringerAI* mNothAI;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -621,7 +621,7 @@ class PlagueFissureGO : public GameObjectAIScript
     void SetState(uint32 pState);
     void Destroy();
     void ResetHeiganAI() { mHeiganAI = NULL; }
-    HeiganTheUncleanAI*    mHeiganAI;
+    HeiganTheUncleanAI* mHeiganAI;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -763,8 +763,8 @@ class PortalOfShadowsAI : public MoonScriptCreatureAI
     void AIUpdate();
     void Destroy();
 
-    ShadeOfNaxxramasAI*    mShadeAI;
-    int32                mSpawnTimer;
+    ShadeOfNaxxramasAI* mShadeAI;
+    int32 mSpawnTimer;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -823,8 +823,8 @@ class DeathKnightCavalierAI : public MoonScriptCreatureAI
     void AIUpdate();
     void Destroy();
 
-    DeathchargerSteedAI*    mChargerAI;
-    bool                    mIsMounted;
+    DeathchargerSteedAI* mChargerAI;
+    bool mIsMounted;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -843,8 +843,8 @@ class DeathchargerSteedAI : public MoonScriptCreatureAI
     void OnCombatStop(Unit* pTarget);
     void Destroy();
 
-    DeathKnightCavalierAI*    mDeathKnightAI;
-    SpellDesc*                mCharge;
+    DeathKnightCavalierAI* mDeathKnightAI;
+    SpellDesc* mCharge;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -976,8 +976,8 @@ class DeathKnightUnderstudyAI : public MoonScriptCreatureAI
 
     void Destroy();
 
-    InstructorRazuviousAI*    mRazuviousAI;
-    bool                    mIsControlled;
+    InstructorRazuviousAI* mRazuviousAI;
+    bool mIsControlled;
 };
 
 DeathKnightUnderstudyAI::DeathKnightUnderstudyAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
@@ -991,8 +991,8 @@ DeathKnightUnderstudyAI::DeathKnightUnderstudyAI(Creature* pCreature) : MoonScri
     blood_strike_spell->spell = dbcSpell.LookupEntry(DEATH_KNIGHT_UNDERSTUDY_BLOOD_STRIKE);
     blood_strike_spell->agent = AGENT_SPELL;
     blood_strike_spell->entryId = _unit->GetEntry();
-    blood_strike_spell->maxrange = GetMaxRange(dbcSpellRange.LookupEntry(blood_strike_spell->spell->rangeIndex));
-    blood_strike_spell->minrange = GetMinRange(dbcSpellRange.LookupEntry(blood_strike_spell->spell->rangeIndex));
+    blood_strike_spell->maxrange = GetMaxRange(sSpellRangeStore.LookupEntry(blood_strike_spell->spell->rangeIndex));
+    blood_strike_spell->minrange = GetMinRange(sSpellRangeStore.LookupEntry(blood_strike_spell->spell->rangeIndex));
     blood_strike_spell->spelltargetType = TTYPE_SINGLETARGET;
     blood_strike_spell->spellType = STYPE_DAMAGE;
     blood_strike_spell->cooldown = objmgr.GetPetSpellCooldown(blood_strike_spell->spell->Id);
@@ -1010,8 +1010,8 @@ DeathKnightUnderstudyAI::DeathKnightUnderstudyAI(Creature* pCreature) : MoonScri
     bone_barrier_spell->spell = dbcSpell.LookupEntry(DEATH_KNIGHT_UNDERSTUDY_BONE_BARRIER);
     bone_barrier_spell->agent = AGENT_SPELL;
     bone_barrier_spell->entryId = _unit->GetEntry();
-    bone_barrier_spell->maxrange = GetMaxRange(dbcSpellRange.LookupEntry(bone_barrier_spell->spell->rangeIndex));
-    bone_barrier_spell->minrange = GetMinRange(dbcSpellRange.LookupEntry(bone_barrier_spell->spell->rangeIndex));
+    bone_barrier_spell->maxrange = GetMaxRange(sSpellRangeStore.LookupEntry(bone_barrier_spell->spell->rangeIndex));
+    bone_barrier_spell->minrange = GetMinRange(sSpellRangeStore.LookupEntry(bone_barrier_spell->spell->rangeIndex));
     bone_barrier_spell->spelltargetType = TTYPE_CASTER;
     bone_barrier_spell->spellType = STYPE_BUFF;
     bone_barrier_spell->cooldown = objmgr.GetPetSpellCooldown(bone_barrier_spell->spell->Id);
@@ -1029,8 +1029,8 @@ DeathKnightUnderstudyAI::DeathKnightUnderstudyAI(Creature* pCreature) : MoonScri
     understudy_taunt_spell->spell = dbcSpell.LookupEntry(DEATH_KNIGHT_UNDERSTUDY_TAUNT);
     understudy_taunt_spell->agent = AGENT_SPELL;
     understudy_taunt_spell->entryId = _unit->GetEntry();
-    understudy_taunt_spell->maxrange = GetMaxRange(dbcSpellRange.LookupEntry(understudy_taunt_spell->spell->rangeIndex));
-    understudy_taunt_spell->minrange = GetMinRange(dbcSpellRange.LookupEntry(understudy_taunt_spell->spell->rangeIndex));
+    understudy_taunt_spell->maxrange = GetMaxRange(sSpellRangeStore.LookupEntry(understudy_taunt_spell->spell->rangeIndex));
+    understudy_taunt_spell->minrange = GetMinRange(sSpellRangeStore.LookupEntry(understudy_taunt_spell->spell->rangeIndex));
     understudy_taunt_spell->spelltargetType = TTYPE_SINGLETARGET;
     understudy_taunt_spell->spellType = STYPE_BUFF;
     understudy_taunt_spell->cooldown = objmgr.GetPetSpellCooldown(understudy_taunt_spell->spell->Id);
@@ -3126,7 +3126,7 @@ class SapphironAI : public CreatureAIScript
                             IceBlock = _unit->GetMapMgr()->GetInterface()->SpawnGameObject(ICE_BLOCK_GO, IceBlocks[Block].x, IceBlocks[Block].y, IceBlocks[Block].z, IceBlocks[Block].o, true, 0, 0);
                             if (IceBlock != NULL)
                             {
-                                IceBlock->SetUInt32Value(GAMEOBJECT_FLAGS, 1);
+                                IceBlock->SetFlags(1);
                             }
                         }
 
@@ -3150,7 +3150,7 @@ class SapphironAI : public CreatureAIScript
                             IceBlock = _unit->GetMapMgr()->GetInterface()->SpawnGameObject(ICE_BLOCK_GO, IceBlocks[Block].x, IceBlocks[Block].y, IceBlocks[Block].z, IceBlocks[Block].o, true, 0, 0);
                             if (IceBlock != NULL)
                             {
-                                IceBlock->SetUInt32Value(GAMEOBJECT_FLAGS, 1);
+                                IceBlock->SetFlags(1);
                             }
                         }
                     }
@@ -3169,7 +3169,7 @@ class SapphironAI : public CreatureAIScript
                             IceBlock = _unit->GetMapMgr()->GetInterface()->SpawnGameObject(ICE_BLOCK_GO, IceBlocks[Block].x, IceBlocks[Block].y, IceBlocks[Block].z, IceBlocks[Block].o, true, 0, 0);
                             if (IceBlock != NULL)
                             {
-                                IceBlock->SetUInt32Value(GAMEOBJECT_FLAGS, 1);
+                                IceBlock->SetFlags(1);
                             }
                         }
                     }
@@ -3693,7 +3693,7 @@ class KelthuzadAI : public CreatureAIScript
             _unit->SetChannelSpellId(29423);
         }
 
-        GameObject*  KelGate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(3635.44f, -5090.33f, 143.205f, 181228);
+        GameObject* KelGate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(3635.44f, -5090.33f, 143.205f, 181228);
 
         if (KelGate)
             KelGate->SetState(GAMEOBJECT_STATE_CLOSED);
@@ -3716,13 +3716,13 @@ class KelthuzadAI : public CreatureAIScript
 
     void OnCombatStop(Unit* mTarget)
     {
-        GameObject*  KelGate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(3635.44f, -5090.33f, 143.205f, 181228);
+        GameObject* KelGate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(3635.44f, -5090.33f, 143.205f, 181228);
         if (KelGate != NULL)
             KelGate->SetState(GAMEOBJECT_STATE_OPEN);
 
         for (uint8 i = 0; i < 4; i++)
         {
-            GameObject*  WindowGate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(Guardians[i].x, Guardians[i].y, Guardians[i].z, 200002);
+            GameObject* WindowGate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(Guardians[i].x, Guardians[i].y, Guardians[i].z, 200002);
             if (WindowGate != NULL)
                 WindowGate->SetState(GAMEOBJECT_STATE_CLOSED);
         }
@@ -3771,13 +3771,13 @@ class KelthuzadAI : public CreatureAIScript
 
     void OnDied(Unit* mKiller)
     {
-        GameObject*  KelGate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(3635.44f, -5090.33f, 143.205f, 181228);
+        GameObject* KelGate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(3635.44f, -5090.33f, 143.205f, 181228);
         if (KelGate != NULL)
             KelGate->SetState(GAMEOBJECT_STATE_OPEN);
 
         for (uint8 i = 0; i < 4; i++)
         {
-            GameObject*  WindowGate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(Guardians[i].x, Guardians[i].y, Guardians[i].z, 200002);
+            GameObject* WindowGate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(Guardians[i].x, Guardians[i].y, Guardians[i].z, 200002);
             if (WindowGate != NULL)
                 WindowGate->SetState(GAMEOBJECT_STATE_CLOSED);
         }
@@ -3832,7 +3832,7 @@ class KelthuzadAI : public CreatureAIScript
                     {
                         if (FrozenWastes[i] == false && (RandomUInt(3) == 0 || SpawnCounter > 0))
                         {
-                            for (int x = 0; x < 10; x++)
+                            for (uint8 x = 0; x < 10; x++)
                             {
                                 uint32 SpawnID = 10 * i + x;
                                 _unit->GetMapMgr()->GetInterface()->SpawnCreature(CN_SOLDIER_OF_THE_FROZEN_WASTES, SFrozenWastes[SpawnID].x, SFrozenWastes[SpawnID].y, SFrozenWastes[SpawnID].z, SFrozenWastes[SpawnID].o, true, false, 0, 0);
@@ -3844,7 +3844,7 @@ class KelthuzadAI : public CreatureAIScript
 
                         if (Abominations[i] == false && (RandomUInt(3) == 0 || SpawnCounter > 0))
                         {
-                            for (int x = 0; x < 3; x++)
+                            for (uint8 x = 0; x < 3; x++)
                             {
                                 uint32 SpawnID = 3 * i + x;
                                 _unit->GetMapMgr()->GetInterface()->SpawnCreature(CN_UNSTOPPABLE_ABOMINATION, Abomination[SpawnID].x, Abomination[SpawnID].y, Abomination[SpawnID].z, Abomination[SpawnID].o, true, false, 0, 0);
@@ -4001,7 +4001,7 @@ class KelthuzadAI : public CreatureAIScript
 
                 for (uint8 i = 0; i < 4; i++)
                 {
-                    GameObject*  WindowGate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(Guardians[i].x, Guardians[i].y, Guardians[i].z, 200002);
+                    GameObject* WindowGate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(Guardians[i].x, Guardians[i].y, Guardians[i].z, 200002);
                     if (WindowGate)
                         WindowGate->SetState(GAMEOBJECT_STATE_OPEN);
                 }

@@ -129,7 +129,7 @@ class ShadeOfTheHorsemanAI : public MoonScriptCreatureAI
                 {
                     WPCount = 29;
                     WayPoints = WaypointGoldshire;
-                    for (int i = 0; i <= WPCount; ++i)
+                    for (uint8 i = 0; i <= WPCount; ++i)
                     {
                         AddWaypoint(CreateWaypoint(i, 0, WayPoints[i].addition, WayPoints[i]));
                     }
@@ -220,7 +220,7 @@ class HeadlessHorsemanWispInvisAI : public MoonScriptCreatureAI
         ParentClass::AIUpdate();
     }
 
-    MoonScriptCreatureAI*    mHeadlessHorseman;
+    MoonScriptCreatureAI* mHeadlessHorseman;
 };
 
 
@@ -228,7 +228,7 @@ class WaterBarrel : public GameObjectAIScript
 {
     public:
 
-        WaterBarrel(GameObject*  goinstance) : GameObjectAIScript(goinstance) {}
+        WaterBarrel(GameObject* goinstance) : GameObjectAIScript(goinstance) {}
         static GameObjectAIScript* Create(GameObject* GO) { return new WaterBarrel(GO); }
 
         void OnActivate(Player* pPlayer)

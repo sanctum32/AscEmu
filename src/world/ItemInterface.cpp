@@ -38,7 +38,7 @@ ItemInterface::ItemInterface(Player* pPlayer) : m_EquipmentSets(pPlayer->GetLowG
 
 ItemInterface::~ItemInterface()
 {
-    for (int i = 0; i < MAX_INVENTORY_SLOT; i++)
+    for (uint8 i = 0; i < MAX_INVENTORY_SLOT; i++)
     {
         if (m_pItems[i] != NULL && m_pItems[i]->GetOwner() == m_pOwner)
         {
@@ -53,7 +53,7 @@ uint32 ItemInterface::m_CreateForPlayer(ByteBuffer* data)       // 100%
     ARCEMU_ASSERT(m_pOwner != NULL);
     uint32 count = 0;
 
-    for (int i = 0; i < MAX_INVENTORY_SLOT; i++)
+    for (uint8 i = 0; i < MAX_INVENTORY_SLOT; i++)
     {
         if (m_pItems[i])
         {
@@ -90,7 +90,7 @@ void ItemInterface::m_DestroyForPlayer()        // 100%
 {
     ARCEMU_ASSERT(m_pOwner != NULL);
 
-    for (int i = 0; i < MAX_INVENTORY_SLOT; i++)
+    for (uint8 i = 0; i < MAX_INVENTORY_SLOT; i++)
     {
         if (m_pItems[i])
         {
@@ -1913,15 +1913,15 @@ int8 ItemInterface::CanEquipItemInSlot2(int8 DstInvSlot, int8 slot, Item* item, 
                     if (ip->ItemLimitCategory > 0)
                     {
                         uint32 LimitId = ip->ItemLimitCategory;
-                        ItemLimitCategoryEntry* ile = dbcItemLimitCategory.LookupEntryForced(LimitId);
-                        if (ile)
+                        auto item_limit_category = sItemLimitCategoryStore.LookupEntry(LimitId);
+                        if (item_limit_category)
                         {
                             uint32 gemCount = 0;
-                            if ((ile->equippedFlag & ILFLAG_EQUIP_ONLY  && slot < EQUIPMENT_SLOT_END) || (!(ile->equippedFlag & ILFLAG_EQUIP_ONLY) && slot > EQUIPMENT_SLOT_END))
-                                gemCount = item->CountGemsWithLimitId(ile->Id);
+                            if ((item_limit_category->equippedFlag & ILFLAG_EQUIP_ONLY  && slot < EQUIPMENT_SLOT_END) || (!(item_limit_category->equippedFlag & ILFLAG_EQUIP_ONLY) && slot > EQUIPMENT_SLOT_END))
+                                gemCount = item->CountGemsWithLimitId(item_limit_category->Id);
 
-                            uint32 gCount = GetEquippedCountByItemLimit(ile->Id);
-                            if ((gCount + gemCount) > ile->maxAmount)
+                            uint32 gCount = GetEquippedCountByItemLimit(item_limit_category->Id);
+                            if ((gCount + gemCount) > item_limit_category->maxAmount)
                                 return INV_ERR_CANT_CARRY_MORE_OF_THIS;
                         }
                     }
@@ -2427,11 +2427,11 @@ int8 ItemInterface::CanReceiveItem(ItemPrototype* item, uint32 amount)
 
     if (item->ItemLimitCategory > 0)
     {
-        ItemLimitCategoryEntry* ile = dbcItemLimitCategory.LookupEntryForced(item->ItemLimitCategory);
-        if (ile && !(ile->equippedFlag & ILFLAG_EQUIP_ONLY))
+        auto item_limit_category = sItemLimitCategoryStore.LookupEntry(item->ItemLimitCategory);
+        if (item_limit_category && !(item_limit_category->equippedFlag & ILFLAG_EQUIP_ONLY))
         {
-            uint32 count = GetItemCountByLimitId(ile->Id, false);
-            if (count >= ile->maxAmount || ((count + amount) > ile->maxAmount))
+            uint32 count = GetItemCountByLimitId(item_limit_category->Id, false);
+            if (count >= item_limit_category->maxAmount || ((count + amount) > item_limit_category->maxAmount))
                 return INV_ERR_ITEM_MAX_LIMIT_CATEGORY_COUNT_EXCEEDED;
         }
     }
@@ -2449,47 +2449,47 @@ void ItemInterface::BuyItem(ItemPrototype* item, uint32 total_amount, Creature* 
         else
             m_pOwner->ModGold(-(int32)itemprice);
     }
-    ItemExtendedCostEntry* ex = pVendor->GetItemExtendedCostByItemId(item->ItemId);
-    if (ex != NULL)
+    auto item_extended_cost = pVendor->GetItemExtendedCostByItemId(item->ItemId);
+    if (item_extended_cost != nullptr)
     {
-        for (int i = 0; i < 5; i++)
+        for (uint8 i = 0; i < 5; i++)
         {
-            if (ex->item[i])
-                m_pOwner->GetItemInterface()->RemoveItemAmt(ex->item[i], total_amount * ex->count[i]);
+            if (item_extended_cost->item[i])
+                m_pOwner->GetItemInterface()->RemoveItemAmt(item_extended_cost->item[i], total_amount * item_extended_cost->count[i]);
         }
 
-        if (m_pOwner->GetHonorCurrency() >= (ex->honor * total_amount))
+        if (m_pOwner->GetHonorCurrency() >= (item_extended_cost->honor_points * total_amount))
         {
-            m_pOwner->ModHonorCurrency(-int32((ex->honor * total_amount)));
-            m_pOwner->m_honorPoints -= int32(ex->honor * total_amount);
+            m_pOwner->ModHonorCurrency(-int32((item_extended_cost->honor_points * total_amount)));
+            m_pOwner->m_honorPoints -= int32(item_extended_cost->honor_points * total_amount);
         }
-        if (m_pOwner->GetArenaCurrency() >= (ex->arena * total_amount))
+        if (m_pOwner->GetArenaCurrency() >= (item_extended_cost->arena_points * total_amount))
         {
-            m_pOwner->ModArenaCurrency(-int32(ex->arena * total_amount));
-            m_pOwner->m_arenaPoints -= int32(ex->arena * total_amount);
+            m_pOwner->ModArenaCurrency(-int32(item_extended_cost->arena_points * total_amount));
+            m_pOwner->m_arenaPoints -= int32(item_extended_cost->arena_points * total_amount);
         }
     }
 }
 
 int8 ItemInterface::CanAffordItem(ItemPrototype* item, uint32 amount, Creature* pVendor)
 {
-    ItemExtendedCostEntry* ex = pVendor->GetItemExtendedCostByItemId(item->ItemId);
-    if (ex != NULL)
+    auto item_extended_cost = pVendor->GetItemExtendedCostByItemId(item->ItemId);
+    if (item_extended_cost != nullptr)
     {
-        for (int i = 0; i < 5; i++)
+        for (uint8 i = 0; i < 5; i++)
         {
-            if (ex->item[i])
+            if (item_extended_cost->item[i])
             {
-                if (m_pOwner->GetItemInterface()->GetItemCount(ex->item[i], false) < (ex->count[i] * amount))
+                if (m_pOwner->GetItemInterface()->GetItemCount(item_extended_cost->item[i], false) < (item_extended_cost->count[i] * amount))
                     return INV_ERR_VENDOR_MISSING_TURNINS;
             }
         }
 
-        if (m_pOwner->GetHonorCurrency() < (ex->honor * amount))
+        if (m_pOwner->GetHonorCurrency() < (item_extended_cost->honor_points * amount))
             return INV_ERR_NOT_ENOUGH_HONOR_POINTS;
-        if (m_pOwner->GetArenaCurrency() < (ex->arena * amount))
+        if (m_pOwner->GetArenaCurrency() < (item_extended_cost->arena_points * amount))
             return INV_ERR_NOT_ENOUGH_ARENA_POINTS;
-        if (m_pOwner->GetMaxPersonalRating() < ex->personalrating)
+        if (m_pOwner->GetMaxPersonalRating() < item_extended_cost->personalrating)
             return INV_ERR_PERSONAL_ARENA_RATING_TOO_LOW;
     }
 
@@ -2504,7 +2504,7 @@ int8 ItemInterface::CanAffordItem(ItemPrototype* item, uint32 amount, Creature* 
 
     if (item->RequiredFaction)
     {
-        FactionDBC* factdbc = dbcFaction.LookupEntryForced(item->RequiredFaction);
+        DBC::Structures::FactionEntry const* factdbc = sFactionStore.LookupEntry(item->RequiredFaction);
         if (!factdbc || factdbc->RepListId < 0)
             return INV_ERR_OK;
 

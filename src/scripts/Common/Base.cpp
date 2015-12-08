@@ -479,7 +479,7 @@ MoonScriptCreatureAI* MoonScriptCreatureAI::SpawnCreature(uint32 pCreatureId, fl
     return CreatureScriptAI;
 }
 
-Unit*    MoonScriptCreatureAI::ForceCreatureFind(uint32 pCreatureId)
+Unit* MoonScriptCreatureAI::ForceCreatureFind(uint32 pCreatureId)
 {
     return ForceCreatureFind(pCreatureId, _unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ());
 };
@@ -541,10 +541,10 @@ SpellDesc* MoonScriptCreatureAI::AddSpell(uint32 pSpellId, TargetType pTargetTyp
     SpellEntry* Info = dbcSpell.LookupEntry(pSpellId);
 
 #ifdef USE_DBC_SPELL_INFO
-    float CastTime = (Info->CastingTimeIndex) ? GetCastTime(dbcSpellCastTime.LookupEntry(Info->CastingTimeIndex)) : pCastTime;
+    float CastTime = (Info->CastingTimeIndex) ? GetCastTime(sSpellCastTimesStore.LookupEntry(Info->CastingTimeIndex)) : pCastTime;
     int32 Cooldown = Info->RecoveryTime;
-    float MinRange = (Info->rangeIndex) ? GetMinRange(dbcSpellRange.LookupEntry(Info->rangeIndex)) : pMinRange;
-    float MaxRange = (Info->rangeIndex) ? GetMaxRange(dbcSpellRange.LookupEntry(Info->rangeIndex)) : pMaxRange;
+    float MinRange = (Info->rangeIndex) ? GetMinRange(sSpellRangeStore.LookupEntry(Info->rangeIndex)) : pMinRange;
+    float MaxRange = (Info->rangeIndex) ? GetMaxRange(sSpellRangeStore.LookupEntry(Info->rangeIndex)) : pMaxRange;
     sLog.outDebug("MoonScriptCreatureAI::AddSpell(%u) : casttime=%.1f cooldown=%d minrange=%.1f maxrange=%.1f", pSpellId, CastTime, Cooldown, MinRange, MaxRange);
 #else
     float CastTime = pCastTime;
@@ -1126,8 +1126,8 @@ void MoonScriptCreatureAI::OnDied(Unit* pKiller)
 
 void MoonScriptCreatureAI::AIUpdate()
 {
-    SpellDesc*    Spell;
-    uint32        CurrentTime = (uint32)time(NULL);
+    SpellDesc* Spell;
+    uint32 CurrentTime = (uint32)time(NULL);
 
     //Elapse timers
     for (TimerArray::iterator TimerIter = mTimers.begin(); TimerIter != mTimers.end(); ++TimerIter)
@@ -1477,10 +1477,11 @@ Unit* MoonScriptCreatureAI::GetNearestTargetInArray(UnitArray & pTargetArray)
 
 Unit* MoonScriptCreatureAI::GetSecondMostHatedTargetInArray(UnitArray & pTargetArray)
 {
-    Unit*    TargetUnit = NULL;
-    Unit*    MostHatedUnit = NULL;
-    Unit*    CurrentTarget = static_cast<Unit*>(_unit->GetAIInterface()->getNextTarget());
-    uint32    Threat = 0, HighestThreat = 0;
+    Unit* TargetUnit = NULL;
+    Unit* MostHatedUnit = NULL;
+    Unit* CurrentTarget = static_cast<Unit*>(_unit->GetAIInterface()->getNextTarget());
+    uint32 Threat = 0;
+    uint32 HighestThreat = 0;
     for (UnitArray::iterator UnitIter = pTargetArray.begin(); UnitIter != pTargetArray.end(); ++UnitIter)
     {
         TargetUnit = static_cast<Unit*>(*UnitIter);
@@ -1491,9 +1492,9 @@ Unit* MoonScriptCreatureAI::GetSecondMostHatedTargetInArray(UnitArray & pTargetA
             {
                 MostHatedUnit = TargetUnit;
                 HighestThreat = Threat;
-            };
-        };
-    };
+            }
+        }
+    }
 
     return MostHatedUnit;
 };

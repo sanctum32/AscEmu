@@ -15,11 +15,11 @@
  *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
  */
 
 #include "Opcodes/LogonRealmOpcodes.hpp"
 #include "LogonStdAfx.h"
+
 #pragma pack(push, 1)
 typedef struct
 {
@@ -67,7 +67,7 @@ void LogonCommServerSocket::OnDisconnect()
 
 void LogonCommServerSocket::OnConnect()
 {
-    if (!IsServerAllowed(GetRemoteAddress().s_addr))
+    if (!sLogonServer.IsServerAllowed(GetRemoteAddress().s_addr))
     {
         LOG_ERROR("Server connection from %s:%u DENIED, not an allowed IP.", GetRemoteIP().c_str(), GetRemotePort());
         Disconnect();
@@ -203,7 +203,13 @@ void LogonCommServerSocket::HandleRegister(WorldPacket & recvData)
 
     realm->Name = Name;
     realm->flags = 0;
-    recvData >> realm->Address >> realm->flags >> realm->Icon >> realm->TimeZone >> realm->Population >> realm->Lock >> realm->GameBuild;
+    recvData >> realm->Address;
+    recvData >> realm->flags;
+    recvData >> realm->Icon;
+    recvData >> realm->TimeZone;
+    recvData >> realm->Population;
+    recvData >> realm->Lock;
+    recvData >> realm->GameBuild;
 
     sLog.outString("TEST FLAGS %u", realm->flags);
 
@@ -364,7 +370,7 @@ void LogonCommServerSocket::HandleMappingReply(WorldPacket & recvData)
 
     sInfoCore.getRealmLock().Acquire();
 
-    HM_NAMESPACE::hash_map<uint32, uint8>::iterator itr;
+    std::unordered_map<uint32, uint8>::iterator itr;
     buf >> count;
     LOG_BASIC("Got mapping packet for realm %u, total of %u entries.", (unsigned int)realm_id, (unsigned int)count);
     for (uint32 i = 0; i < count; ++i)
@@ -392,9 +398,10 @@ void LogonCommServerSocket::HandleUpdateMapping(WorldPacket & recvData)
         return;
 
     sInfoCore.getRealmLock().Acquire();
-    recvData >> account_id >> chars_to_add;
+    recvData >> account_id;
+    recvData >> chars_to_add;
 
-    HM_NAMESPACE::hash_map<uint32, uint8>::iterator itr = realm->CharacterMap.find(account_id);
+    std::unordered_map<uint32, uint8>::iterator itr = realm->CharacterMap.find(account_id);
     if (itr != realm->CharacterMap.end())
         itr->second += chars_to_add;
     else
@@ -454,7 +461,9 @@ void LogonCommServerSocket::HandleDatabaseModify(WorldPacket & recvData)
             std::string account;
             std::string banreason;
             uint32 duration;
-            recvData >> account >> duration >> banreason;
+            recvData >> account;
+            recvData >> duration;
+            recvData >> banreason;
 
             // remember we expect this in uppercase
             arcemu_TOUPPER(account);
@@ -475,7 +484,8 @@ void LogonCommServerSocket::HandleDatabaseModify(WorldPacket & recvData)
         {
             std::string account;
             std::string gm;
-            recvData >> account >> gm;
+            recvData >> account;
+            recvData >> gm;
 
             // remember we expect this in uppercase
             arcemu_TOUPPER(account);
@@ -496,7 +506,8 @@ void LogonCommServerSocket::HandleDatabaseModify(WorldPacket & recvData)
         {
             std::string account;
             uint32 duration;
-            recvData >> account >> duration;
+            recvData >> account;
+            recvData >> duration;
 
             // remember we expect this in uppercase
             arcemu_TOUPPER(account);
@@ -518,7 +529,9 @@ void LogonCommServerSocket::HandleDatabaseModify(WorldPacket & recvData)
             std::string banreason;
             uint32 duration;
 
-            recvData >> ip >> duration >> banreason;
+            recvData >> ip;
+            recvData >> duration;
+            recvData >> banreason;
 
             if (sIPBanner.Add(ip.c_str(), duration))
                 sLogonSQL->Execute("INSERT INTO ipbans VALUES(\"%s\", %u, \"%s\")", sLogonSQL->EscapeString(ip).c_str(), duration, sLogonSQL->EscapeString(banreason).c_str());
@@ -678,7 +691,7 @@ void LogonCommServerSocket::HandleRequestCheckAccount(WorldPacket & recvData)
             recvData >> additional;
 
             const char* additional_data = additional.c_str();
-            
+
             std::string account_name_save = account_name;  // save original account_name to check
 
             // remember we expect this in uppercase
