@@ -27,6 +27,8 @@ namespace DBC
     {
         namespace
         {
+            char const achievement_format[] = "niixssssssssssssssssxssssssssssssssssxiixixssssssssssssssssxii";
+            char const achievement_criteria_format[] = "niiiiiiiissssssssssssssssxiiiii";
             char const area_group_format[] = "niiiiiii";
             char const area_table_entry_format[] = "iiinixxxxxissssssssssssssssxiiiiixxx";
             char const area_trigger_entry_format[] = "niffffffff";
@@ -38,6 +40,7 @@ namespace DBC
             char const chr_classes_format[] = "nxixssssssssssssssssxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxixii";
             char const chr_races_format[] = "niixiixixxxxixssssssssssssssssxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxi";
             char const creature_family_format[] = "nfifiiiiixssssssssssssssssxx";
+            char const creature_spell_data_format[] = "niiiiiiii";
             char const currency_types_format[] = "xnxi";
             char const durability_costs_format[] = "niiiiiiiiiiiiiiiiiiiiiiiiiiiii";
             char const durability_quality_format[] = "nf";
@@ -60,8 +63,10 @@ namespace DBC
             char const holidays_format[] = "niiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiixxsiix";
             char const item_entry_format[] = "niiiiiii";
             char const item_extended_cost_format[] = "niiiiiiiiiiiiiix";
-            char const item_set_format[] = "issssssssssssssssxiiiiiiiiiixxxxxxxiiiiiiiiiiiiiiiiii";
             char const item_limit_category_format[] = "nxxxxxxxxxxxxxxxxxii";
+            char const item_random_properties_format[] = "nxiiixxssssssssssssssssx";
+            char const item_random_suffix_format[] = "nssssssssssssssssxxiiixxiiixx";
+            char const item_set_format[] = "issssssssssssssssxiiiiiiiiiixxxxxxxiiiiiiiiiiiiiiiiii";
             char const lfg_dungeon_entry_format[] = "nssssssssssssssssxiiiiiiiiixxixixxxxxxxxxxxxxxxxx";
             char const lock_format[] = "niiiiiiiiiiiiiiiiiiiiiiiixxxxxxxx";
             char const mail_template_format[] = "nsxxxxxxxxxxxxxxxxsxxxxxxxxxxxxxxxx";
@@ -69,6 +74,8 @@ namespace DBC
             char const name_gen_format[] = "nsii";
             char const quest_xp_format[] = "niiiiiiiiii";
             char const scaling_stat_distribution_format[] = "niiiiiiiiiiiiiiiiiiiii";
+            char const scaling_stat_values_format[] = "iniiiiiiiiiiiiiiiiiiiiii";
+            char const skill_line_format[] = "nixssssssssssssssssxxxxxxxxxxxxxxxxxxixxxxxxxxxxxxxxxxxi";
             char const skill_line_ability_format[] = "niiiixxiiiiixx";
             char const stable_slot_prices_format[] = "ni";
             char const spell_cast_times_format[] = "nixx";
@@ -79,14 +86,40 @@ namespace DBC
             char const spell_range_format[] = "nffffixxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
             char const spell_rune_cost_format[] = "niiii";
             char const spell_shapeshift_form_format[] = "nxxxxxxxxxxxxxxxxxxiixiiixxiiiiiiii";
+            char const summon_properties_format[] = "niiiii";
             char const talent_format[] = "niiiiiiiixxxxixxixxxxxx";
             char const talent_tab_format[] = "nxxxxxxxxxxxxxxxxxxxiiix";
             char const taxi_nodes_format[] = "nifffssssssssssssssssxii";
             char const taxi_path_format[] = "niii";
             char const taxi_path_node_format[] = "niiifffiiii";
+            char const vehicle_format[] = "niffffiiiiiiiifffffffffffffffssssfifiixx";
+            char const vehicle_seat_format[] = "niiffffffffffiiiiiifffffffiiifffiiiiiiiffiiiiixxxxxxxxxxxx";
+            char const wmo_area_table_format[] = "niiixxxxxiixxxxxxxxxxxxxxxxx";
+            char const world_map_overlay_format[] = "nxiiiixxxxxxxxxxx";
         }
 
         #pragma pack(push, 1)
+        struct AchievementEntry
+        {
+            uint32 ID;                      // 0
+            int32 factionFlag;              // 1 -1=all, 0=horde, 1=alliance
+            int32 mapID;                    // 2 -1=none
+            //uint32 unknown1;              // 3
+            char* name[16];                 // 4-19
+            //uint32 name_flags;            // 20
+            char* description[16];          // 21-36
+            //uint32 desc_flags;            // 37
+            uint32 categoryId;              // 38
+            uint32 points;                  // 39 reward points
+            //uint32 orderInCategory;       // 40
+            uint32 flags;                   // 41
+            //uint32 unknown2;              // 42
+            char* rewardName[16];           // 43-58 title/item reward name
+            //uint32 rewardName_flags;      // 59
+            uint32 count;                   // 60
+            uint32 refAchievement;          // 61
+        };
+
         struct AreaGroupEntry
         {
             uint32 AreaGroupId;             // 0
@@ -232,6 +265,15 @@ namespace DBC
             char* name[16];                 // 10-25
             //uint32 nameflags;             // 26
             //uint32 iconFile;              // 27
+        };
+
+        struct CreatureSpellDataEntry
+        {
+            uint32 id;                      // 0
+            uint32 Spells[3];               // 1-3
+            uint32 PHSpell;                 // 4
+            uint32 Cooldowns[3];            // 5-7
+            uint32 PH;                      // 8
         };
 
         struct CurrencyTypesEntry
@@ -426,6 +468,38 @@ namespace DBC
             //uint32 unk;                   // 15
         };
 
+        struct ItemLimitCategoryEntry
+        {
+            uint32 Id;                      // 0
+            //char* name[16];               // 1-16 name langs
+            //uint32 name_flags             // 17
+            uint32 maxAmount;               // 18
+            uint32 equippedFlag;            // 19 - equipped (bool?)
+        };
+
+        struct ItemRandomPropertiesEntry
+        {
+            uint32 ID;                      // 0
+            //uint32 name1;                 // 1
+            uint32 spells[3];               // 2-4
+            //uint32 unk1;                  // 5
+            //uint32 unk2;                  // 6
+            char* name_suffix[16];          // 7-22
+            //uint32 name_suffix_flags;     // 23
+        };
+
+        struct ItemRandomSuffixEntry
+        {
+            uint32 id;                      // 0
+            char* name_suffix[16];          // 1-16
+            //uint32 name_suffix_flags;     // 17
+            //uint32 unk1;                  // 18
+            uint32 enchantments[3];         // 19-21
+            //uint32 unk2[2];               // 22-23
+            uint32 prefixes[3];             // 24-26
+            //uint32[2];                    // 27-28
+        };
+
         struct ItemSetEntry
         {
             uint32 id;                      // 1
@@ -437,15 +511,6 @@ namespace DBC
             uint32 itemscount[8];           // 43-50
             uint32 RequiredSkillID;         // 51
             uint32 RequiredSkillAmt;        // 52
-        };
-
-        struct ItemLimitCategoryEntry
-        {
-            uint32 Id;                      // 0
-            //char* name[16];               // 1-16 name langs
-            //uint32 name_flags             // 17
-            uint32 maxAmount;               // 18
-            uint32 equippedFlag;            // 19 - equipped (bool?)
         };
 
         struct LFGDungeonEntry
@@ -539,6 +604,30 @@ namespace DBC
             int32 stat[10];             // 1-10
             uint32 statmodifier[10];    // 11-20
             uint32 maxlevel;            // 21
+        };
+
+        struct ScalingStatValuesEntry
+        {
+            uint32 id;                  // 0
+            uint32 level;               // 1
+            uint32 multiplier[16];      // 2-17 ///\todo split this
+            uint32 unk1;                // 18
+            uint32 amor_mod[5];         // 19-23
+        };
+
+        struct SkillLineEntry
+        {
+            uint32 id;                  // 0
+            uint32 type;                // 1
+            //uint32 skillCostsID;      // 2
+            char* Name[16];             // 3-18
+            //uint32 NameFlags;         // 19
+            //char* Description[16];    // 20-35
+            //uint32 DescriptionFlags;  // 36
+            uint32 spell_icon;          // 37
+            //char* add_name[16];       // 38-53
+            //uint32 add_name_flags;    // 54
+            uint32 linkable;            // 55
         };
 
         struct SkillLineAbilityEntry
@@ -654,6 +743,16 @@ namespace DBC
             uint32 spells[8];           // 27-34
         };
 
+        struct SummonPropertiesEntry
+        {
+            uint32 ID;                  // 0
+            uint32 ControlType;         // 1
+            uint32 FactionID;           // 2
+            uint32 Type;                // 3
+            uint32 Slot;                // 4
+            uint32 Flags;               // 5
+        };
+
         struct TalentEntry
         {
             uint32 TalentID;            // 0
@@ -719,6 +818,167 @@ namespace DBC
             uint32 arivalEventID;       // 9
             uint32 departureEventID;    // 10
         };
+
+        #define MAX_VEHICLE_SEATS 8
+
+        struct VehicleEntry
+        {
+            uint32 ID;                                          // 0
+            uint32 flags;                                       // 1
+            float turnSpeed;                                    // 2
+            float pitchSpeed;                                   // 3
+            float pitchMin;                                     // 4
+            float pitchMax;                                     // 5
+            uint32 seatID[MAX_VEHICLE_SEATS];                   // 6-13
+            float mouseLookOffsetPitch;                         // 14
+            float cameraFadeDistScalarMin;                      // 15
+            float cameraFadeDistScalarMax;                      // 16
+            float cameraPitchOffset;                            // 17
+            float facingLimitRight;                             // 18
+            float facingLimitLeft;                              // 19
+            float msslTrgtTurnLingering;                        // 20
+            float msslTrgtPitchLingering;                       // 21
+            float msslTrgtMouseLingering;                       // 22
+            float msslTrgtEndOpacity;                           // 23
+            float msslTrgtArcSpeed;                             // 24
+            float msslTrgtArcRepeat;                            // 25
+            float msslTrgtArcWidth;                             // 26
+            float msslTrgtImpactRadius[2];                      // 27-28
+            char* msslTrgtArcTexture;                           // 29
+            char* msslTrgtImpactTexture;                        // 30
+            char* msslTrgtImpactModel[2];                       // 31-32
+            float cameraYawOffset;                              // 33
+            uint32 uiLocomotionType;                            // 34
+            float msslTrgtImpactTexRadius;                      // 35
+            uint32 uiSeatIndicatorType;                         // 36
+            uint32 powerType;                                   // 37, new in 3.1
+            //uint32 unk1;                                      // 38
+            //uint32 unk2;                                      // 39  
+        };
+
+        enum VehicleSeatFlags
+        {
+            VEHICLE_SEAT_FLAG_HIDE_PASSENGER             = 0x00000200,           // Passenger is hidden
+            VEHICLE_SEAT_FLAG_UNK11                      = 0x00000400,
+            VEHICLE_SEAT_FLAG_CAN_CONTROL                = 0x00000800,           // Lua_UnitInVehicleControlSeat
+            VEHICLE_SEAT_FLAG_CAN_ATTACK                 = 0x00004000,           // Can attack, cast spells and use items from vehicle?
+            VEHICLE_SEAT_FLAG_USABLE                     = 0x02000000,           // Lua_CanExitVehicle
+            VEHICLE_SEAT_FLAG_CAN_SWITCH                 = 0x04000000,           // Lua_CanSwitchVehicleSeats
+            VEHICLE_SEAT_FLAG_CAN_CAST                   = 0x20000000,           // Lua_UnitHasVehicleUI
+        };
+
+        enum VehicleSeatFlagsB
+        {
+            VEHICLE_SEAT_FLAG_B_NONE                     = 0x00000000,
+            VEHICLE_SEAT_FLAG_B_USABLE_FORCED            = 0x00000002, 
+            VEHICLE_SEAT_FLAG_B_USABLE_FORCED_2          = 0x00000040,
+            VEHICLE_SEAT_FLAG_B_USABLE_FORCED_3          = 0x00000100,
+        };
+
+        struct VehicleSeatEntry
+        {
+            uint32 ID;                                          // 0
+            uint32 flags;                                       // 1
+            int32 attachmentID;                                 // 2
+            float attachmentOffsetX;                            // 3
+            float attachmentOffsetY;                            // 4
+            float attachmentOffsetZ;                            // 5
+            float enterPreDelay;                                // 6
+            float enterSpeed;                                   // 7
+            float enterGravity;                                 // 8
+            float enterMinDuration;                             // 9
+            float enterMaxDuration;                             // 10
+            float enterMinArcHeight;                            // 11
+            float enterMaxArcHeight;                            // 12
+            int32 enterAnimStart;                               // 13
+            int32 enterAnimLoop;                                // 14
+            int32 rideAnimStart;                                // 15
+            int32 rideAnimLoop;                                 // 16
+            int32 rideUpperAnimStart;                           // 17
+            int32 rideUpperAnimLoop;                            // 18
+            float exitPreDelay;                                 // 19
+            float exitSpeed;                                    // 20
+            float exitGravity;                                  // 21
+            float exitMinDuration;                              // 22
+            float exitMaxDuration;                              // 23
+            float exitMinArcHeight;                             // 24
+            float exitMaxArcHeight;                             // 25
+            int32 exitAnimStart;                                // 26
+            int32 exitAnimLoop;                                 // 27
+            int32 exitAnimEnd;                                  // 28
+            float passengerYaw;                                 // 29
+            float passengerPitch;                               // 30
+            float passengerRoll;                                // 31
+            int32 passengerAttachmentID;                        // 32
+            int32 vehicleEnterAnim;                             // 33
+            int32 vehicleExitAnim;                              // 34
+            int32 vehicleRideAnimLoop;                          // 35
+            int32 vehicleEnterAnimBone;                         // 36
+            int32 vehicleExitAnimBone;                          // 37
+            int32 vehicleRideAnimLoopBone;                      // 38
+            float vehicleEnterAnimDelay;                        // 39
+            float vehicleExitAnimDelay;                         // 40
+            uint32 vehicleAbilityDisplay;                       // 41
+            uint32 enterUISoundID;                              // 42
+            uint32 exitUISoundID;                               // 43
+            int32 uiSkin;                                       // 44
+            uint32 flagsB;                                      // 45
+
+            bool IsUsable() const
+            {
+                if ((flags & VEHICLE_SEAT_FLAG_USABLE) != 0)
+                    return true;
+                else
+                    return false;
+            }
+
+            bool IsController() const
+            {
+                if ((flags & VEHICLE_SEAT_FLAG_CAN_CONTROL) != 0)
+                    return true;
+                else
+                    return false;
+            }
+
+            bool HidesPassenger() const
+            {
+                if ((flags & VEHICLE_SEAT_FLAG_HIDE_PASSENGER) != 0)
+                    return true;
+                else
+                    return false;
+            }
+        };
+
+        struct WMOAreaTableEntry
+        {
+            uint32 id;              // 0
+            int32 rootId;           // 1
+            int32 adtId;            // 2
+            int32 groupId;          // 3
+            //uint32 field4;        // 4
+            //uint32 field5;        // 5
+            //uint32 field6;        // 6
+            //uint32 field7;        // 7
+            //uint32 field8;        // 8
+            uint32 flags;           // 9
+            uint32 areaId;          // 10  ref -> AreaTableEntry
+            //char Name[16];        // 11-26
+            //uint32 nameflags;     // 27
+        };
+
+        struct WorldMapOverlayEntry
+        {
+            uint32 ID;              // 0
+            //uint32 worldMapID;    // 1
+            uint32 areaID;          // 2 - index to AreaTable
+            uint32 areaID_2;        // 3 - index to AreaTable
+            uint32 areaID_3;        // 4 - index to AreaTable
+            uint32 areaID_4;        // 5 - index to AreaTable
+            //uint32 unk1[2];       // 6-7
+            //uint32 unk2;          // 8
+            //uint32 unk3[7];       // 9-16
+        };
+
         #pragma pack(pop)
     }
 }

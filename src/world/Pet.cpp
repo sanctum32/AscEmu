@@ -200,7 +200,7 @@ bool Pet::CreateAsSummon(uint32 entry, CreatureInfo* ci, Creature* created_from_
     }
     else // Hunter pet
     {
-        if (myFamily == NULL || myFamily->name == NULL)
+        if (myFamily == nullptr)
             m_name = "Pet";
         else
             m_name.assign(myFamily->name[0]);
@@ -1027,11 +1027,14 @@ void Pet::UpdateSpellList(bool showLearnSpells)
 
     if (proto->spelldataid != 0)
     {
-        CreatureSpellDataEntry* sd = dbcCreatureSpellData.LookupEntry(proto->spelldataid);
+        auto creature_spell_data = sCreatureSpellDataStore.LookupEntry(proto->spelldataid);
 
-        for (uint32 i = 0; i < 3; i++)
+        for (uint8 i = 0; i < 3; i++)
         {
-            uint32 spellid = sd->Spells[i];
+            if (creature_spell_data == nullptr)
+                continue;
+
+            uint32 spellid = creature_spell_data->Spells[i];
 
             if (spellid != 0)
             {
@@ -1042,7 +1045,7 @@ void Pet::UpdateSpellList(bool showLearnSpells)
         }
     }
 
-    for (uint32 i = 0; i < 4; i++)
+    for (uint8 i = 0; i < 4; i++)
     {
         uint32 spellid = proto->AISpells[i];
         if (spellid != 0)

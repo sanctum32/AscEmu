@@ -24,8 +24,20 @@
 #include "DBC/DBCStores.h"
 #include <array>
 
-struct VehicleSeatEntry;
-struct VehicleEntry;
+///\todo vehicle movementflags? Why didn't we use the normal movementflags and handle vehicles like normal units/creatures?
+enum VehicleFlags
+{
+    VEHICLE_FLAG_NO_STRAFE                       = 0x00000001,           // Sets MOVEFLAG2_NO_STRAFE
+    VEHICLE_FLAG_NO_JUMPING                      = 0x00000002,           // Sets MOVEFLAG2_NO_JUMPING
+    VEHICLE_FLAG_FULLSPEEDTURNING                = 0x00000004,           // Sets MOVEFLAG2_FULLSPEEDTURNING
+    VEHICLE_FLAG_ALLOW_PITCHING                  = 0x00000010,           // Sets MOVEFLAG2_ALLOW_PITCHING
+    VEHICLE_FLAG_FULLSPEEDPITCHING               = 0x00000020,           // Sets MOVEFLAG2_FULLSPEEDPITCHING
+    VEHICLE_FLAG_CUSTOM_PITCH                    = 0x00000040,           // If set use pitchMin and pitchMax from DBC, otherwise pitchMin = -pi/2, pitchMax = pi/2
+    VEHICLE_FLAG_ADJUST_AIM_ANGLE                = 0x00000400,           // Lua_IsVehicleAimAngleAdjustable
+    VEHICLE_FLAG_ADJUST_AIM_POWER                = 0x00000800,           // Lua_IsVehicleAimPowerAdjustable
+};
+
+
 //////////////////////////////////////////////////////////////////////////////////////////
 //class VehicleSeat
 //  Implements the seat functionality for Vehicles
@@ -34,7 +46,7 @@ class VehicleSeat
 {
     public:
 
-    VehicleSeat(VehicleSeatEntry* info);
+    VehicleSeat(DBC::Structures::VehicleSeatEntry const* info);
 
 
         //////////////////////////////////////////////////////////////////////////////////////////
@@ -106,7 +118,7 @@ class VehicleSeat
         /// \return a pointer to a VehicleSeatEntry structure.
         ///
         //////////////////////////////////////////////////////////////////////////////////////////
-        VehicleSeatEntry* GetSeatInfo() const
+        DBC::Structures::VehicleSeatEntry const* GetSeatInfo() const
         {
             return seat_info;
         }
@@ -144,7 +156,7 @@ class VehicleSeat
     private:
 
         uint64 passenger;              // GUID of the passenger
-        VehicleSeatEntry *seat_info;   // Seat info structure
+        DBC::Structures::VehicleSeatEntry const* seat_info;   // Seat info structure
 };
 
 
@@ -354,7 +366,7 @@ class SERVER_DECL Vehicle
         bool HasAccessoryWithGUID(uint64 guid);
 
 
-        VehicleEntry* GetVehicleInfo() { return vehicle_info; }
+        DBC::Structures::VehicleEntry const* GetVehicleInfo() { return vehicle_info; }
         uint32 GetPassengerSeatId(uint64 guid);
 
     private:
@@ -362,7 +374,7 @@ class SERVER_DECL Vehicle
         std::vector<uint64> installed_accessories;
         uint32 creature_entry;
         Unit* owner;
-        VehicleEntry* vehicle_info;
+        DBC::Structures::VehicleEntry const* vehicle_info;
         uint32 passengercount;
         uint32 freeseats;
 };

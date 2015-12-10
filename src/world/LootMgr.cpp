@@ -107,7 +107,7 @@ void LootMgr::LoadLoot()
     is_loading = false;
 }
 
-RandomProps* LootMgr::GetRandomProperties(ItemPrototype* proto)
+DBC::Structures::ItemRandomPropertiesEntry const* LootMgr::GetRandomProperties(ItemPrototype* proto)
 {
     std::map<uint32, RandomPropertyVector>::iterator itr;
     if (proto->RandomPropId == 0)
@@ -115,10 +115,10 @@ RandomProps* LootMgr::GetRandomProperties(ItemPrototype* proto)
     itr = _randomprops.find(proto->RandomPropId);
     if (itr == _randomprops.end())
         return NULL;
-    return RandomChoiceVector<RandomProps>(itr->second);
+    return RandomChoiceVector<DBC::Structures::ItemRandomPropertiesEntry const>(itr->second);
 }
 
-ItemRandomSuffixEntry* LootMgr::GetRandomSuffix(ItemPrototype* proto)
+DBC::Structures::ItemRandomSuffixEntry const* LootMgr::GetRandomSuffix(ItemPrototype* proto)
 {
     std::map<uint32, RandomSuffixVector>::iterator itr;
     if (proto->RandomSuffixId == 0)
@@ -126,15 +126,14 @@ ItemRandomSuffixEntry* LootMgr::GetRandomSuffix(ItemPrototype* proto)
     itr = _randomsuffix.find(proto->RandomSuffixId);
     if (itr == _randomsuffix.end())
         return NULL;
-    return RandomChoiceVector<ItemRandomSuffixEntry>(itr->second);
+    return RandomChoiceVector<DBC::Structures::ItemRandomSuffixEntry const>(itr->second);
 }
 
 void LootMgr::LoadLootProp()
 {
     QueryResult* result = WorldDatabase.Query("SELECT * FROM item_randomprop_groups");
     uint32 id, eid;
-    RandomProps* rp;
-    ItemRandomSuffixEntry* rs;
+
     float ch;
     if (result)
     {
@@ -144,8 +143,8 @@ void LootMgr::LoadLootProp()
             id = result->Fetch()[0].GetUInt32();
             eid = result->Fetch()[1].GetUInt32();
             ch = result->Fetch()[2].GetFloat();
-            rp = dbcRandomProps.LookupEntryForced(eid);
-            if (rp == NULL)
+            auto item_random_properties = sItemRandomPropertiesStore.LookupEntry(eid);
+            if (item_random_properties == NULL)
             {
                 sLog.Error("LoadLootProp", "RandomProp group %u references non-existent randomprop %u.", id, eid);
                 continue;
@@ -154,12 +153,12 @@ void LootMgr::LoadLootProp()
             if (itr == _randomprops.end())
             {
                 RandomPropertyVector v;
-                v.push_back(std::make_pair(rp, ch));
+                v.push_back(std::make_pair(item_random_properties, ch));
                 _randomprops.insert(make_pair(id, v));
             }
             else
             {
-                itr->second.push_back(std::make_pair(rp, ch));
+                itr->second.push_back(std::make_pair(item_random_properties, ch));
             }
         }
         while (result->NextRow());
@@ -174,8 +173,8 @@ void LootMgr::LoadLootProp()
             id = result->Fetch()[0].GetUInt32();
             eid = result->Fetch()[1].GetUInt32();
             ch = result->Fetch()[2].GetFloat();
-            rs = dbcItemRandomSuffix.LookupEntryForced(eid);
-            if (rs == NULL)
+            auto item_random_suffix = sItemRandomSuffixStore.LookupEntry(eid);
+            if (item_random_suffix == NULL)
             {
                 sLog.Error("LoadLootProp", "RandomSuffix group %u references non-existent randomsuffix %u.", id, eid);
                 continue;
@@ -184,12 +183,12 @@ void LootMgr::LoadLootProp()
             if (itr == _randomsuffix.end())
             {
                 RandomSuffixVector v;
-                v.push_back(std::make_pair(rs, ch));
+                v.push_back(std::make_pair(item_random_suffix, ch));
                 _randomsuffix.insert(make_pair(id, v));
             }
             else
             {
-                itr->second.push_back(std::make_pair(rs, ch));
+                itr->second.push_back(std::make_pair(item_random_suffix, ch));
             }
         }
         while (result->NextRow());

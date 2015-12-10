@@ -23,6 +23,7 @@
 
 #include "EventableObject.h"
 #include "Singleton.h"
+#include "DBC/DBCStructures.hpp"
 
 #include <map>
 #include <vector>
@@ -39,8 +40,6 @@ enum LOOTTYPE
 
 struct ItemPrototype;
 class MapMgr;
-struct RandomProps;
-struct ItemRandomSuffixEntry;
 class Player;
 
 class LootRoll : public EventableObject
@@ -68,8 +67,8 @@ class LootRoll : public EventableObject
         MapMgr* _mgr;
 };
 
-typedef std::vector<std::pair<RandomProps*, float>> RandomPropertyVector;
-typedef std::vector<std::pair<ItemRandomSuffixEntry*, float>> RandomSuffixVector;
+typedef std::vector<std::pair<DBC::Structures::ItemRandomPropertiesEntry const*, float>> RandomPropertyVector;
+typedef std::vector<std::pair<DBC::Structures::ItemRandomSuffixEntry const*, float>> RandomSuffixVector;
 
 typedef struct
 {
@@ -83,8 +82,8 @@ struct __LootItem
 {
     _LootItem item;
     uint32 iItemsCount;
-    RandomProps* iRandomProperty;
-    ItemRandomSuffixEntry* iRandomSuffix;
+    DBC::Structures::ItemRandomPropertiesEntry const* iRandomProperty;
+    DBC::Structures::ItemRandomSuffixEntry const* iRandomSuffix;
     LootRoll* roll;
     bool passed;
     LooterSet has_looted;
@@ -230,8 +229,8 @@ class SERVER_DECL LootMgr : public Singleton <LootMgr>
 
         std::map<uint32, std::set<uint32>> quest_loot_go;
 
-        RandomProps* GetRandomProperties(ItemPrototype* proto);
-        ItemRandomSuffixEntry* GetRandomSuffix(ItemPrototype* proto);
+        DBC::Structures::ItemRandomPropertiesEntry const* GetRandomProperties(ItemPrototype* proto);
+        DBC::Structures::ItemRandomSuffixEntry const* GetRandomSuffix(ItemPrototype* proto);
 
         bool is_loading;
     private:

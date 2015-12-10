@@ -27,38 +27,7 @@ class Player;
 
 #pragma pack(push,1)
 
-struct WorldMapOverlay
-{
-    uint32 ID;              // 0
-    //uint32 worldMapID;    // 1
-    uint32 areaID;          // 2 - index to AreaTable
-    uint32 areaID_2;        // 3 - index to AreaTable
-    uint32 areaID_3;        // 4 - index to AreaTable
-    uint32 areaID_4;        // 5 - index to AreaTable
-// any of the four above indexes is enough to uncover the fragment
-};
-
 #ifdef ENABLE_ACHIEVEMENTS
-struct AchievementEntry
-{
-    uint32 ID;                 // 0
-    int32 factionFlag;         // 1 -1=all, 0=horde, 1=alliance
-    int32 mapID;               // 2 -1=none
-    uint32 unknown1;           // 20
-    const char* name;          // 3-18
-    uint32 name_flags;         // 19
-    const char* description;   // 21-36
-    uint32 desc_flags;         // 37
-    uint32 categoryId;         // 38
-    uint32 points;             // 39 reward points
-    uint32 orderInCategory;    // 40
-    uint32 flags;              // 41
-    uint32 unknown2;           // 42
-    const char* rewardName;    // 43-58 title/item reward name
-    uint32 rewardName_flags;   // 59
-    uint32 count;              // 60
-    uint32 refAchievement;     // 61
-};
 
 struct AchievementCategoryEntry
 {
@@ -71,9 +40,9 @@ struct AchievementCategoryEntry
 
 struct AchievementCriteriaEntry
 {
-    uint32 ID;                     // 0
-    uint32 referredAchievement;    // 1
-    uint32 requiredType;           // 2
+    uint32 ID;                      // 0
+    uint32 referredAchievement;     // 1
+    uint32 requiredType;            // 2
     union
     {
         // ACHIEVEMENT_CRITERIA_TYPE_KILL_CREATURE = 0
@@ -463,44 +432,16 @@ struct AchievementCriteriaEntry
             uint32 additionalRequirement2_value;           // 8 additional requirement 1 value
         } raw;
     };
-    const char* name;             // 9-24
-    uint32 name_flags;            // 25
-    uint32 completionFlag;        // 26
-    uint32 groupFlag;             // 27
-    uint32 unk1;                  // 28
-    uint32 timeLimit;             // 29 time limit in seconds
-    uint32 index;                 // 30
+    char* name[16];                 // 9-24
+                                    //uint32 name_flags;            // 25
+    uint32 completionFlag;          // 26
+    uint32 groupFlag;               // 27
+    uint32 unk1;                    // 28
+    uint32 timeLimit;               // 29 time limit in seconds
+    uint32 index;                   // 30
 };
+
 #endif
-
-/*struct BattlemasterListEntry
-{
-    uint32 entry;                   // 0
-    int32 maps[8];                  // 1-8 mapid
-    uint32 instance_type;           // 9 (3 - BG, 4 - arena)
-    uint32 canJoinAsGroup;          // 10 (0 or 1)
-    char* name[16];                 // 11-26 name
-    uint32 nameFlags;               // 27 string flag, unused
-    uint32 maxGroupSize;            // 28 maxGroupSize, used for checking if queue as group
-    uint32 HolidayWorldStateId;     // 29 new 3.1
-    uint32 minLevel;                // 30 Min level
-    uint32 maxLevel;                // 31 Max level
-};*/
-
-//SkillLine.dbc
-struct skilllineentry
-{
-    uint32 id;
-    uint32 type;
-    uint32 skillCostsID;
-    const char* Name;
-  //int32 NameAlt[15];
-  //uint32 NameFlags;
-  //uint32 Description;
-  //uint32 DescriptionAlt[15];
-  //uint32 DescriptionFlags;
-  //uint32 spellIconID;
-};
 
 #define MAX_SPELL_EFFECTS 3
 
@@ -892,273 +833,6 @@ struct Trainerspell
     uint32 charclass;
 };
 
-struct RandomProps
-{
-    uint32 ID;
-    //uint32 name1;
-    uint32 spells[3];
-    //uint32 unk1;
-    //uint32 unk2;
-    //uint32 name2;
-    //uint32 RankAlt1;
-    //uint32 RankAlt2;
-    //uint32 RankAlt3;
-    //uint32 RankAlt4;
-    //uint32 RankAlt5;
-    //uint32 RankAlt6;
-    //uint32 RankAlt7;
-    //uint32 RankAlt8;
-    //uint32 RankAlt9;
-    //uint32 RankAlt10;
-    //uint32 RankAlt11;
-    //uint32 RankAlt12;
-    //uint32 RankAlt13;
-    //uint32 RankAlt14;
-    //uint32 RankAlt15;
-    //uint32 RankFlags;
-};
-
-struct CreatureSpellDataEntry
-{
-    uint32 id;
-    uint32 Spells[3];
-    uint32 PHSpell;
-    uint32 Cooldowns[3];
-    uint32 PH;
-};
-
-struct ItemRandomSuffixEntry
-{
-    uint32 id;
-    uint32 enchantments[3];
-    uint32 prefixes[3];
-};
-
-struct ScalingStatValuesEntry
-{
-    uint32 id;
-    uint32 level;
-    uint32 multiplier[16];
-};
-
-struct WMOAreaTableEntry
-{
-    uint32 id;              // 0
-    int32 rootId;           // 1
-    int32 adtId;            // 2
-    int32 groupId;          // 3
-    //uint32 field4;
-    //uint32 field5;
-    //uint32 field6;
-    //uint32 field7;
-    //uint32 field8;
-    uint32 flags;           // 9
-    uint32 areaId;          // 10  ref -> AreaTableEntry
-    //char Name[16];
-    //uint32 nameflags;
-};
-
-enum SummonControlTypes
-{
-    SUMMON_CONTROL_TYPE_WILD = 0,
-    SUMMON_CONTROL_TYPE_GUARDIAN = 1,
-    SUMMON_CONTROL_TYPE_PET = 2,
-    SUMMON_CONTROL_TYPE_POSSESSED = 3,
-    SUMMON_CONTROL_TYPE_VEHICLE = 4,
-};
-
-enum SummonTypes
-{
-    SUMMON_TYPE_NONE = 0,
-    SUMMON_TYPE_PET = 1,
-    SUMMON_TYPE_GUARDIAN = 2,
-    SUMMON_TYPE_MINION = 3,
-    SUMMON_TYPE_TOTEM = 4,
-    SUMMON_TYPE_COMPANION = 5,
-    SUMMON_TYPE_RUNEBLADE = 6,
-    SUMMON_TYPE_CONSTRUCT = 7,
-    SUMMON_TYPE_OPPONENT = 8,
-    SUMMON_TYPE_VEHICLE = 9,
-    SUMMON_TYPE_MOUNT = 10,
-    SUMMON_TYPE_LIGHTWELL = 11,
-    SUMMON_TYPE_BUTLER = 12
-};
-
-struct SummonPropertiesEntry
-{
-    uint32 ID;
-    uint32 ControlType;
-    uint32 FactionID;
-    uint32 Type;
-    uint32 Slot;
-    uint32 Flags;
-};
-
-struct LFGDungeonEntry
-{
-    uint32 ID;                  // 0
-    //char* name[16];             // 1-17 Name lang
-    uint32 minlevel;            // 18
-    uint32 maxlevel;            // 19
-    uint32 reclevel;            // 20
-    uint32 recminlevel;         // 21
-    uint32 recmaxlevel;         // 22
-    int32 map;                  // 23
-    uint32 difficulty;          // 24
-    //uint32 flags;               // 25
-    uint32 type;                // 26
-    //uint32 unk2;              // 27
-    //char* unk3;               // 28
-    uint32 expansion;           // 29
-    //uint32 unk4;              // 30
-    uint32 grouptype;           // 31
-    //char* desc[16];           // 32-47 Description
-    /// Helpers
-    uint32 Entry() const { return ID + (type << 24); }
-};
-
-
-#define MAX_VEHICLE_SEATS 8
-
-enum VehicleFlags
-{
-    VEHICLE_FLAG_NO_STRAFE                       = 0x00000001,           // Sets MOVEFLAG2_NO_STRAFE
-    VEHICLE_FLAG_NO_JUMPING                      = 0x00000002,           // Sets MOVEFLAG2_NO_JUMPING
-    VEHICLE_FLAG_FULLSPEEDTURNING                = 0x00000004,           // Sets MOVEFLAG2_FULLSPEEDTURNING
-    VEHICLE_FLAG_ALLOW_PITCHING                  = 0x00000010,           // Sets MOVEFLAG2_ALLOW_PITCHING
-    VEHICLE_FLAG_FULLSPEEDPITCHING               = 0x00000020,           // Sets MOVEFLAG2_FULLSPEEDPITCHING
-    VEHICLE_FLAG_CUSTOM_PITCH                    = 0x00000040,           // If set use pitchMin and pitchMax from DBC, otherwise pitchMin = -pi/2, pitchMax = pi/2
-    VEHICLE_FLAG_ADJUST_AIM_ANGLE                = 0x00000400,           // Lua_IsVehicleAimAngleAdjustable
-    VEHICLE_FLAG_ADJUST_AIM_POWER                = 0x00000800,           // Lua_IsVehicleAimPowerAdjustable
-};
-
-struct VehicleEntry
-{
-    uint32 ID;                                          // 0
-    uint32 flags;                                       // 1
-    float turnSpeed;                                    // 2
-    float pitchSpeed;                                   // 3
-    float pitchMin;                                     // 4
-    float pitchMax;                                     // 5
-    uint32 seatID[MAX_VEHICLE_SEATS];                   // 6-13
-    float mouseLookOffsetPitch;                         // 14
-    float cameraFadeDistScalarMin;                      // 15
-    float cameraFadeDistScalarMax;                      // 16
-    float cameraPitchOffset;                            // 17
-    float facingLimitRight;                             // 18
-    float facingLimitLeft;                              // 19
-    float msslTrgtTurnLingering;                        // 20
-    float msslTrgtPitchLingering;                       // 21
-    float msslTrgtMouseLingering;                       // 22
-    float msslTrgtEndOpacity;                           // 23
-    float msslTrgtArcSpeed;                             // 24
-    float msslTrgtArcRepeat;                            // 25
-    float msslTrgtArcWidth;                             // 26
-    float msslTrgtImpactRadius[2];                      // 27-28
-    char* msslTrgtArcTexture;                           // 29
-    char* msslTrgtImpactTexture;                        // 30
-    char* msslTrgtImpactModel[2];                       // 31-32
-    float cameraYawOffset;                              // 33
-    uint32 uiLocomotionType;                            // 34
-    float msslTrgtImpactTexRadius;                      // 35
-    uint32 uiSeatIndicatorType;                         // 36
-    uint32 powerType;                                   // 37, new in 3.1
-};
-
-enum VehicleSeatFlags
-{
-    VEHICLE_SEAT_FLAG_HIDE_PASSENGER             = 0x00000200,           // Passenger is hidden
-    VEHICLE_SEAT_FLAG_UNK11                      = 0x00000400,
-    VEHICLE_SEAT_FLAG_CAN_CONTROL                = 0x00000800,           // Lua_UnitInVehicleControlSeat
-    VEHICLE_SEAT_FLAG_CAN_ATTACK                 = 0x00004000,           // Can attack, cast spells and use items from vehicle?
-    VEHICLE_SEAT_FLAG_USABLE                     = 0x02000000,           // Lua_CanExitVehicle
-    VEHICLE_SEAT_FLAG_CAN_SWITCH                 = 0x04000000,           // Lua_CanSwitchVehicleSeats
-    VEHICLE_SEAT_FLAG_CAN_CAST                   = 0x20000000,           // Lua_UnitHasVehicleUI
-};
-
-enum VehicleSeatFlagsB
-{
-    VEHICLE_SEAT_FLAG_B_NONE                     = 0x00000000,
-    VEHICLE_SEAT_FLAG_B_USABLE_FORCED            = 0x00000002, 
-    VEHICLE_SEAT_FLAG_B_USABLE_FORCED_2          = 0x00000040,
-    VEHICLE_SEAT_FLAG_B_USABLE_FORCED_3          = 0x00000100,
-};
-
-struct VehicleSeatEntry
-{
-    uint32 ID;                                          // 0
-    uint32 flags;                                       // 1
-    int32 attachmentID;                                 // 2
-    float attachmentOffsetX;                            // 3
-    float attachmentOffsetY;                            // 4
-    float attachmentOffsetZ;                            // 5
-    float enterPreDelay;                                // 6
-    float enterSpeed;                                   // 7
-    float enterGravity;                                 // 8
-    float enterMinDuration;                             // 9
-    float enterMaxDuration;                             // 10
-    float enterMinArcHeight;                            // 11
-    float enterMaxArcHeight;                            // 12
-    int32 enterAnimStart;                               // 13
-    int32 enterAnimLoop;                                // 14
-    int32 rideAnimStart;                                // 15
-    int32 rideAnimLoop;                                 // 16
-    int32 rideUpperAnimStart;                           // 17
-    int32 rideUpperAnimLoop;                            // 18
-    float exitPreDelay;                                 // 19
-    float exitSpeed;                                    // 20
-    float exitGravity;                                  // 21
-    float exitMinDuration;                              // 22
-    float exitMaxDuration;                              // 23
-    float exitMinArcHeight;                             // 24
-    float exitMaxArcHeight;                             // 25
-    int32 exitAnimStart;                                // 26
-    int32 exitAnimLoop;                                 // 27
-    int32 exitAnimEnd;                                  // 28
-    float passengerYaw;                                 // 29
-    float passengerPitch;                               // 30
-    float passengerRoll;                                // 31
-    int32 passengerAttachmentID;                        // 32
-    int32 vehicleEnterAnim;                             // 33
-    int32 vehicleExitAnim;                              // 34
-    int32 vehicleRideAnimLoop;                          // 35
-    int32 vehicleEnterAnimBone;                         // 36
-    int32 vehicleExitAnimBone;                          // 37
-    int32 vehicleRideAnimLoopBone;                      // 38
-    float vehicleEnterAnimDelay;                        // 39
-    float vehicleExitAnimDelay;                         // 40
-    uint32 vehicleAbilityDisplay;                       // 41
-    uint32 enterUISoundID;                              // 42
-    uint32 exitUISoundID;                               // 43
-    int32 uiSkin;                                       // 44
-    uint32 flagsB;                                      // 45
-
-    bool IsUsable() const
-    {
-        if ((flags & VEHICLE_SEAT_FLAG_USABLE) != 0)
-            return true;
-        else
-            return false;
-    }
-
-    bool IsController() const
-    {
-        if ((flags & VEHICLE_SEAT_FLAG_CAN_CONTROL) != 0)
-            return true;
-        else
-            return false;
-    }
-
-    bool HidesPassenger() const
-    {
-        if ((flags & VEHICLE_SEAT_FLAG_HIDE_PASSENGER) != 0)
-            return true;
-        else
-            return false;
-    }
-};
-
-
 #pragma pack(pop)
 
 inline float GetRadius(DBC::Structures::SpellRadiusEntry const* radius)
@@ -1526,16 +1200,15 @@ class SERVER_DECL DBCStorage
         }
 };
 
-extern SERVER_DECL DBCStorage<WorldMapOverlay> dbcWorldMapOverlayStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::WorldMapOverlayEntry> sWorldMapOverlayStore;
+
 #ifdef ENABLE_ACHIEVEMENTS
-extern SERVER_DECL DBCStorage<AchievementEntry> dbcAchievementStore;
-extern SERVER_DECL DBCStorage<AchievementCriteriaEntry> dbcAchievementCriteriaStore;
-extern SERVER_DECL DBCStorage<AchievementCategoryEntry> dbcAchievementCategoryStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::AchievementEntry> sAchievementStore;
+extern SERVER_DECL DBC::DBCStorage<AchievementCriteriaEntry> sAchievementCriteriaStore;
 #endif
-//extern SERVER_DECL DBCStorage<BattlemasterListEntry> dbcBattlemasterListStore;
+
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::CharTitlesEntry> sCharTitlesStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::CurrencyTypesEntry> sCurrencyTypesStore;
-
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::BarberShopStyleEntry> sBarberShopStyleStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::GemPropertiesEntry> sGemPropertiesStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::GlyphPropertiesEntry> sGlyphPropertiesStore;
@@ -1543,7 +1216,9 @@ extern SERVER_DECL DBC::DBCStorage<DBC::Structures::GlyphSlotEntry> sGlyphSlotSt
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::ItemEntry> sItemStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::ItemSetEntry> sItemSetStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::LockEntry> sLockStore;
+
 extern SERVER_DECL DBCStorage<SpellEntry> dbcSpell;
+
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::SpellDifficultyEntry> sSpellDifficultyStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::SpellDurationEntry> sSpellDurationStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::SpellRangeEntry> sSpellRangeStore;
@@ -1556,24 +1231,24 @@ extern SERVER_DECL DBC::DBCStorage<DBC::Structures::AreaTableEntry> sAreaStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::FactionTemplateEntry> sFactionTemplateStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::FactionEntry> sFactionStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::SpellItemEnchantmentEntry> sSpellItemEnchantmentStore;
-extern SERVER_DECL DBCStorage<RandomProps> dbcRandomProps;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::ItemRandomPropertiesEntry> sItemRandomPropertiesStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::SkillLineAbilityEntry> sSkillLineAbilityStore;
-extern SERVER_DECL DBCStorage<skilllineentry> dbcSkillLine;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::SkillLineEntry> sSkillLineStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::TaxiNodesEntry> sTaxiNodesStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::TaxiPathEntry> sTaxiPathStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::TaxiPathNodeEntry> sTaxiPathNodeStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::AuctionHouseEntry> sAuctionHouseStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::TalentEntry> sTalentStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::TalentTabEntry> sTalentTabStore;
-extern SERVER_DECL DBCStorage<CreatureSpellDataEntry> dbcCreatureSpellData;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::CreatureSpellDataEntry> sCreatureSpellDataStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::CreatureFamilyEntry> sCreatureFamilyStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::ChrClassesEntry> sChrClassesStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::ChrRacesEntry> sChrRacesStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::MapEntry> sMapStore;
-extern SERVER_DECL DBC::DBCStorage <DBC::Structures::HolidaysEntry> sHolidaysStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::HolidaysEntry> sHolidaysStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::SpellRuneCostEntry> sSpellRuneCostStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::ItemExtendedCostEntry> sItemExtendedCostStore;
-extern SERVER_DECL DBCStorage<ItemRandomSuffixEntry> dbcItemRandomSuffix;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::ItemRandomSuffixEntry> sItemRandomSuffixStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::GtCombatRatingsEntry> sGtCombatRatingsStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::ChatChannelsEntry> sChatChannelsStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::DurabilityCostsEntry> sDurabilityCostsStore;
@@ -1585,27 +1260,25 @@ extern SERVER_DECL DBC::DBCStorage<DBC::Structures::GtChanceToMeleeCritEntry> sG
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::GtChanceToMeleeCritBaseEntry> sGtChanceToMeleeCritBaseStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::GtChanceToSpellCritEntry> sGtChanceToSpellCritStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::GtChanceToSpellCritBaseEntry> sGtChanceToSpellCritBaseStore;
-
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::GtOCTRegenMPEntry> sGtOCTRegenMPStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::GtRegenMPPerSptEntry> sGtRegenMPPerSptStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::GtOCTRegenHPEntry> sGtOCTRegenHPStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::GtRegenHPPerSptEntry> sGtRegenHPPerSptStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::AreaTriggerEntry> sAreaTriggerStore;
-
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::ScalingStatDistributionEntry> sScalingStatDistributionStore;
-extern SERVER_DECL DBCStorage<ScalingStatValuesEntry> dbcScalingStatValues;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::ScalingStatValuesEntry> sScalingStatValuesStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::ItemLimitCategoryEntry> sItemLimitCategoryStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::QuestXP> sQuestXPStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::MailTemplateEntry> sMailTemplateStore;
-extern SERVER_DECL DBCStorage<WMOAreaTableEntry> dbcWMOAreaTable;
-extern SERVER_DECL DBCStorage<SummonPropertiesEntry> dbcSummonProperties;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::WMOAreaTableEntry> sWMOAreaTableStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::SummonPropertiesEntry> sSummonPropertiesStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::NameGenEntry> sNameGenStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::LFGDungeonEntry> sLFGDungeonStore;
-extern SERVER_DECL DBCStorage<VehicleEntry> dbcVehicle;
-extern SERVER_DECL DBCStorage<VehicleSeatEntry> dbcVehicleSeat;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::VehicleEntry> sVehicleStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::VehicleSeatEntry> sVehicleSeatStore;
 
 bool LoadDBCs();
 
-const WMOAreaTableEntry* GetWMOAreaTableEntryByTriple(int32 root_id, int32 adt_id, int32 group_id);
+DBC::Structures::WMOAreaTableEntry const* GetWMOAreaTableEntryByTriple(int32 root_id, int32 adt_id, int32 group_id);
 
 #endif // _DBC_STORES_H

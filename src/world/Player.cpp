@@ -915,12 +915,15 @@ bool Player::Create(WorldPacket& data)
 
     m_FirstLogin = true;
 
-    skilllineentry* se;
+
     for (std::list<CreateInfo_SkillStruct>::iterator ss = info->skills.begin(); ss != info->skills.end(); ++ss)
     {
-        se = dbcSkillLine.LookupEntry(ss->skillid);
-        if (se->type != SKILL_TYPE_LANGUAGE)
-            _AddSkillLine(se->id, ss->currentval, ss->maxval);
+        auto skill_line = sSkillLineStore.LookupEntry(ss->skillid);
+        if (skill_line == nullptr)
+            continue;
+
+        if (skill_line->type != SKILL_TYPE_LANGUAGE)
+            _AddSkillLine(skill_line->id, ss->currentval, ss->maxval);
     }
     _UpdateMaxSkillCounts();
     //Chances depend on stats must be in this order!
@@ -1376,7 +1379,7 @@ void Player::EventAttackStop()
 
 bool Player::HasOverlayUncovered(uint32 overlayID)
 {
-    WorldMapOverlay const* overlay = dbcWorldMapOverlayStore.LookupEntry(overlayID);
+    auto overlay = sWorldMapOverlayStore.LookupEntry(overlayID);
     if (overlay == 0)
         return false;
 
@@ -2159,26 +2162,29 @@ void Player::addSpell(uint32 spell_id)
     SpellEntry* spell = dbcSpell.LookupEntry(spell_id);
     if (skill_line_ability && !_HasSkillLine(skill_line_ability->skilline))
     {
-        skilllineentry* skill = dbcSkillLine.LookupEntry(skill_line_ability->skilline);
+        auto skill_line = sSkillLineStore.LookupEntry(skill_line_ability->skilline);
         uint32 max = 1;
-        switch (skill->type)
+        if (skill_line != nullptr)
         {
-            case SKILL_TYPE_PROFESSION:
-                max = 75 * ((spell->RankNumber) + 1);
-                ModPrimaryProfessionPoints(-1);   // we are learning a profession, so subtract a point.
-                break;
-            case SKILL_TYPE_SECONDARY:
-                max = 75 * ((spell->RankNumber) + 1);
-                break;
-            case SKILL_TYPE_WEAPON:
-                max = 5 * getLevel();
-                break;
-            case SKILL_TYPE_CLASS:
-            case SKILL_TYPE_ARMOR:
-                if (skill->id == SKILL_LOCKPICKING)
+            switch (skill_line->type)
+            {
+                case SKILL_TYPE_PROFESSION:
+                    max = 75 * ((spell->RankNumber) + 1);
+                    ModPrimaryProfessionPoints(-1);   // we are learning a profession, so subtract a point.
+                    break;
+                case SKILL_TYPE_SECONDARY:
+                    max = 75 * ((spell->RankNumber) + 1);
+                    break;
+                case SKILL_TYPE_WEAPON:
                     max = 5 * getLevel();
-                break;
-        };
+                    break;
+                case SKILL_TYPE_CLASS:
+                case SKILL_TYPE_ARMOR:
+                    if (skill_line->id == SKILL_LOCKPICKING)
+                        max = 5 * getLevel();
+                    break;
+            };
+        }
 
         _AddSkillLine(skill_line_ability->skilline, 1, max);
         _UpdateMaxSkillCounts();
@@ -4167,7 +4173,7 @@ void Player::_ApplyItemMods(Item* item, int16 slot, bool apply, bool justdrokedo
     {
         int i = 0;
         auto scaling_stat_distribution = sScalingStatDistributionStore.LookupEntry(proto->ScalingStatsEntry);
-        ScalingStatValuesEntry* ssvrow = NULL;
+        DBC::Structures::ScalingStatValuesEntry const* ssvrow = NULL;
         uint32 StatType;
         uint32 StatMod;
         uint32 plrLevel = getLevel();
@@ -4179,16 +4185,18 @@ void Player::_ApplyItemMods(Item* item, int16 slot, bool apply, bool justdrokedo
         if (plrLevel > 80)
             plrLevel = 80;
 
+        for (uint32 i = 0; i < sScalingStatValuesStore.GetNumRows(); ++i)
+        {
+            auto scaling_stat_values = sScalingStatValuesStore.LookupEntry(i);
+            if (scaling_stat_values == nullptr)
+                continue;
 
-        DBCStorage<ScalingStatValuesEntry>::iterator itr;
-
-        for (itr = dbcScalingStatValues.begin(); itr != dbcScalingStatValues.end(); ++itr)
-            if ((*itr)->level == plrLevel)
+            if (scaling_stat_values->level == plrLevel)
             {
-                ssvrow = *itr;
+                ssvrow = scaling_stat_values;
                 break;
             }
-
+        }
         /* Not going to put a check here since unless you put a random id/flag in the tables these should never return NULL */
 
         /* Calculating the stats correct for our level and applying them */
@@ -10134,8 +10142,8 @@ void Player::RemoveFromBattlegroundQueue()
 
 void Player::_AddSkillLine(uint32 SkillLine, uint32 Curr_sk, uint32 Max_sk)
 {
-    skilllineentry* CheckedSkill = dbcSkillLine.LookupEntryForced(SkillLine);
-    if (!CheckedSkill)  //skill doesn't exist, exit here
+    auto skill_line = sSkillLineStore.LookupEntry(SkillLine);
+    if (!skill_line)
         return;
 
     // force to be within limits
@@ -10160,7 +10168,7 @@ void Player::_AddSkillLine(uint32 SkillLine, uint32 Curr_sk, uint32 Max_sk)
     else
     {
         PlayerSkill inf;
-        inf.Skill = CheckedSkill;
+        inf.Skill = skill_line;
         inf.MaximumValue = Max_sk;
         inf.CurrentValue = (inf.Skill->id != SKILL_RIDING ? Curr_sk : Max_sk);
         inf.BonusValue = 0;
@@ -10475,7 +10483,7 @@ void PlayerSkill::Reset(uint32 Id)
     MaximumValue = 0;
     CurrentValue = 0;
     BonusValue = 0;
-    Skill = (Id == 0) ? NULL : dbcSkillLine.LookupEntry(Id);
+    Skill = (Id == 0) ? NULL : sSkillLineStore.LookupEntry(Id);
 }
 
 void Player::_AddLanguages(bool All)
@@ -10486,7 +10494,7 @@ void Player::_AddLanguages(bool All)
      */
 
     PlayerSkill sk;
-    skilllineentry* en;
+
     uint32 spell_id;
     static uint32 skills[] = { SKILL_LANG_COMMON, SKILL_LANG_ORCISH, SKILL_LANG_DWARVEN, SKILL_LANG_DARNASSIAN, SKILL_LANG_TAURAHE, SKILL_LANG_THALASSIAN,
         SKILL_LANG_TROLL, SKILL_LANG_GUTTERSPEAK, SKILL_LANG_DRAENEI, 0
@@ -10510,14 +10518,17 @@ void Player::_AddLanguages(bool All)
     {
         for (std::list<CreateInfo_SkillStruct>::iterator itr = info->skills.begin(); itr != info->skills.end(); ++itr)
         {
-            en = dbcSkillLine.LookupEntry(itr->skillid);
-            if (en->type == SKILL_TYPE_LANGUAGE)
+            auto skill_line = sSkillLineStore.LookupEntry(itr->skillid);
+            if (skill_line != nullptr)
             {
-                sk.Reset(itr->skillid);
-                sk.MaximumValue = sk.CurrentValue = 300;
-                m_skills.insert(std::make_pair(itr->skillid, sk));
-                if ((spell_id = ::GetSpellForLanguage(itr->skillid)) != 0)
-                    addSpell(spell_id);
+                if (skill_line->type == SKILL_TYPE_LANGUAGE)
+                {
+                    sk.Reset(itr->skillid);
+                    sk.MaximumValue = sk.CurrentValue = 300;
+                    m_skills.insert(std::make_pair(itr->skillid, sk));
+                    if ((spell_id = ::GetSpellForLanguage(itr->skillid)) != 0)
+                        addSpell(spell_id);
+                }
             }
         }
     }
@@ -11767,9 +11778,9 @@ void Player::PlaySound(uint32 sound_id)
 //really need to work on the speed of this. This will be called on a lot of events
 /*void Player::Event_Achiement_Received(uint32 achievementtype,uint32 pentry,uint32 pvalue)
 {
-for (uint32 i= 0; i<dbcAchievementCriteriaStore.GetNumRows(); i++)
+for (uint32 i= 0; i<sAchievementCriteriaStore.GetNumRows(); i++)
 {
-AchievementCriteriaEntry *criteria = dbcAchievementCriteriaStore.LookupRow(i);
+auto criteria = sAchievementCriteriaStore.LookupEntry(i);
 uint32 achientry = criteria->ID;
 //check if we need to even know about this criteria
 if (!criteria || criteria->requiredType != achievementtype)
@@ -11780,7 +11791,7 @@ if (pentry && criteria->requiredAchievementRelatedEntry != pentry)
 continue;
 
 //check if this achievement is even for us
-AchievementEntry *achi = dbcAchievementStore.LookupEntry(criteria->referredAchievement);
+auto achi = sAchievementStore.LookupEntry(criteria->referredAchievement);
 
 if (!achi
 //            || !(achi->factionFlag == -1 || (isAlliance(this) && achi->factionFlag == 1) || (!isAlliance(this) && achi->factionFlag == 0)) ||
@@ -11872,7 +11883,7 @@ std::map<uint32,AchievementVal*>::iterator itr;
 for (itr=m_achievements.begin();itr!=m_achievements.end();itr++)
 {
 //        uint32 critentry = itr->first;
-//        AchievementCriteriaEntry *criteria = dbcAchievementCriteriaStore.LookupEntry(critentry);
+//        auto criteria = sAchievementCriteriaStore.LookupEntry(critentry);
 //        if (!critentry) continue; //wtf ?
 //        if (criteria->requiredAchievementRelatedCount > itr->second)
 SendAchievmentStatus(itr->first, itr->second->cur_value, itr->second->completed_at_stamp);
@@ -11885,7 +11896,7 @@ std::map<uint32,AchievementVal*>::iterator itr;
 for (itr=m_achievements.begin();itr!=m_achievements.end();itr++)
 {
 uint32 critentry = itr->first;
-AchievementCriteriaEntry *criteria = dbcAchievementCriteriaStore.LookupEntry(critentry);
+auto criteria = sAchievementCriteriaStore.LookupEntry(critentry);
 if (!criteria)
 continue; //wtf ?
 if (criteria->requiredAchievementRelatedCount <= itr->second->cur_value)
@@ -12068,13 +12079,13 @@ void Player::UpdateKnownCurrencies(uint32 itemId, bool apply)
         if (apply)
         {
             uint64 oldval = GetUInt64Value(PLAYER_FIELD_KNOWN_CURRENCIES);
-            uint64 newval = oldval | (uint64)(((uint32)1) << (currency_type_entry->bit_index - 1));
+            uint64 newval = oldval | (1LL << (currency_type_entry->bit_index - 1));
             SetUInt64Value(PLAYER_FIELD_KNOWN_CURRENCIES, newval);
         }
         else
         {
             uint64 oldval = GetUInt64Value(PLAYER_FIELD_KNOWN_CURRENCIES);
-            uint64 newval = oldval & ~(((uint32)1) << (currency_type_entry->bit_index - 1));
+            uint64 newval = oldval & ~(1LL << (currency_type_entry->bit_index - 1));
             SetUInt64Value(PLAYER_FIELD_KNOWN_CURRENCIES, newval);
         }
     }

@@ -2358,8 +2358,8 @@ void Spell::SpellEffectSummon(uint32 i)
 {
     uint32 summonpropid = m_spellInfo->EffectMiscValueB[i];
 
-    SummonPropertiesEntry* spe = dbcSummonProperties.LookupEntry(summonpropid);
-    if (spe == NULL)
+    auto summon_properties = sSummonPropertiesStore.LookupEntry(summonpropid);
+    if (summon_properties == nullptr)
     {
         LOG_ERROR("No SummonPropertiesEntry for Spell %u (%s)", m_spellInfo->Id, m_spellInfo->Name);
         return;
@@ -2388,84 +2388,84 @@ void Spell::SpellEffectSummon(uint32 i)
         damage = 1;
 
     // Client adds these spells to the companion window, it's weird but then it happens anyways
-    if (spe->Slot == 5)
+    if (summon_properties->Slot == 5)
     {
-        SpellEffectSummonCompanion(i, spe, cp, v);
+        SpellEffectSummonCompanion(i, summon_properties, cp, v);
         return;
     }
 
-    switch (spe->ControlType)
+    switch (summon_properties->ControlType)
     {
         case SUMMON_CONTROL_TYPE_GUARDIAN:
-            if (spe->ID == 121)
+            if (summon_properties->ID == 121)
             {
-                SpellEffectSummonTotem(i, spe, cp, v);
+                SpellEffectSummonTotem(i, summon_properties, cp, v);
                 return;
             }
             break;
 
         case SUMMON_CONTROL_TYPE_PET:
-            SpellEffectSummonTemporaryPet(i, spe, cp, v);
+            SpellEffectSummonTemporaryPet(i, summon_properties, cp, v);
             return;
 
         case SUMMON_CONTROL_TYPE_POSSESSED:
-            SpellEffectSummonPossessed(i, spe, cp, v);
+            SpellEffectSummonPossessed(i, summon_properties, cp, v);
             return;
 
         case SUMMON_CONTROL_TYPE_VEHICLE:
-            SpellEffectSummonVehicle(i, spe, cp, v);
+            SpellEffectSummonVehicle(i, summon_properties, cp, v);
             return;
     }
 
-    switch (spe->Type)
+    switch (summon_properties->Type)
     {
         case SUMMON_TYPE_NONE:
         case SUMMON_TYPE_CONSTRUCT:
         case SUMMON_TYPE_OPPONENT:
 
-            if (spe->ControlType == SUMMON_CONTROL_TYPE_GUARDIAN)
-                SpellEffectSummonGuardian(i, spe, cp, v);
+            if (summon_properties->ControlType == SUMMON_CONTROL_TYPE_GUARDIAN)
+                SpellEffectSummonGuardian(i, summon_properties, cp, v);
             else
-                SpellEffectSummonWild(i, spe, cp, v);
+                SpellEffectSummonWild(i, summon_properties, cp, v);
 
             return;
 
         case SUMMON_TYPE_PET:
-            SpellEffectSummonTemporaryPet(i, spe, cp, v);
+            SpellEffectSummonTemporaryPet(i, summon_properties, cp, v);
             return;
 
         case SUMMON_TYPE_GUARDIAN:
         case SUMMON_TYPE_MINION:
         case SUMMON_TYPE_RUNEBLADE:
-            SpellEffectSummonGuardian(i, spe, cp, v);
+            SpellEffectSummonGuardian(i, summon_properties, cp, v);
             return;
 
         case SUMMON_TYPE_TOTEM:
-            SpellEffectSummonTotem(i, spe, cp, v);
+            SpellEffectSummonTotem(i, summon_properties, cp, v);
             return;
 
         case SUMMON_TYPE_COMPANION:
             // These are used as guardians in some quests
-            if (spe->Slot == 6)
-                SpellEffectSummonGuardian(i, spe, cp, v);
+            if (summon_properties->Slot == 6)
+                SpellEffectSummonGuardian(i, summon_properties, cp, v);
             else
-                SpellEffectSummonCompanion(i, spe, cp, v);
+                SpellEffectSummonCompanion(i, summon_properties, cp, v);
             return;
 
         case SUMMON_TYPE_VEHICLE:
         case SUMMON_TYPE_MOUNT:
-            SpellEffectSummonVehicle(i, spe, cp, v);
+            SpellEffectSummonVehicle(i, summon_properties, cp, v);
             return;
 
         case SUMMON_TYPE_LIGHTWELL:
-            SpellEffectSummonGuardian(i, spe, cp, v);
+            SpellEffectSummonGuardian(i, summon_properties, cp, v);
             return;
     }
 
     LOG_ERROR("Unknown summon type in summon property %u in spell %u %s", summonpropid, m_spellInfo->Id, m_spellInfo->Name);
 }
 
-void Spell::SpellEffectSummonWild(uint32 i, SummonPropertiesEntry* spe, CreatureProto* proto, LocationVector & v)
+void Spell::SpellEffectSummonWild(uint32 i, DBC::Structures::SummonPropertiesEntry const* spe, CreatureProto* proto, LocationVector & v)
 {
     if (g_caster != NULL)
         u_caster = g_caster->m_summoner;
@@ -2495,7 +2495,7 @@ void Spell::SpellEffectSummonWild(uint32 i, SummonPropertiesEntry* spe, Creature
     }
 }
 
-void Spell::SpellEffectSummonGuardian(uint32 i, SummonPropertiesEntry* spe, CreatureProto* proto, LocationVector & v)
+void Spell::SpellEffectSummonGuardian(uint32 i, DBC::Structures::SummonPropertiesEntry const* spe, CreatureProto* proto, LocationVector & v)
 {
 
     if (g_caster != NULL)
@@ -2541,7 +2541,7 @@ void Spell::SpellEffectSummonGuardian(uint32 i, SummonPropertiesEntry* spe, Crea
     }
 }
 
-void Spell::SpellEffectSummonTemporaryPet(uint32 i, SummonPropertiesEntry* spe, CreatureProto* proto, LocationVector & v)
+void Spell::SpellEffectSummonTemporaryPet(uint32 i, DBC::Structures::SummonPropertiesEntry const* spe, CreatureProto* proto, LocationVector & v)
 {
     if (p_caster == NULL)
         return;
@@ -2585,7 +2585,7 @@ void Spell::SpellEffectSummonTemporaryPet(uint32 i, SummonPropertiesEntry* spe, 
     }
 }
 
-void Spell::SpellEffectSummonTotem(uint32 i, SummonPropertiesEntry* spe, CreatureProto* proto, LocationVector & v)
+void Spell::SpellEffectSummonTotem(uint32 i, DBC::Structures::SummonPropertiesEntry const* spe, CreatureProto* proto, LocationVector & v)
 {
     if (u_caster == NULL)
         return;
@@ -2618,7 +2618,7 @@ void Spell::SpellEffectSummonTotem(uint32 i, SummonPropertiesEntry* spe, Creatur
         sEventMgr.AddEvent(static_cast< Object* >(s), &Object::Delete, EVENT_SUMMON_EXPIRE, 60 * 60 * 1000, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
 }
 
-void Spell::SpellEffectSummonPossessed(uint32 i, SummonPropertiesEntry* spe, CreatureProto* proto, LocationVector & v)
+void Spell::SpellEffectSummonPossessed(uint32 i, DBC::Structures::SummonPropertiesEntry const* spe, CreatureProto* proto, LocationVector & v)
 {
     if (p_caster == NULL)
         return;
@@ -2640,7 +2640,7 @@ void Spell::SpellEffectSummonPossessed(uint32 i, SummonPropertiesEntry* spe, Cre
     p_caster->Possess(s, 1000);
 }
 
-void Spell::SpellEffectSummonCompanion(uint32 i, SummonPropertiesEntry* spe, CreatureProto* proto, LocationVector & v)
+void Spell::SpellEffectSummonCompanion(uint32 i, DBC::Structures::SummonPropertiesEntry const* spe, CreatureProto* proto, LocationVector & v)
 {
     if (u_caster == NULL)
         return;
@@ -2675,7 +2675,7 @@ void Spell::SpellEffectSummonCompanion(uint32 i, SummonPropertiesEntry* spe, Cre
     u_caster->SetSummonedCritterGUID(summon->GetGUID());
 }
 
-void Spell::SpellEffectSummonVehicle(uint32 i, SummonPropertiesEntry *spe, CreatureProto *proto, LocationVector &v)
+void Spell::SpellEffectSummonVehicle(uint32 i, DBC::Structures::SummonPropertiesEntry const* spe, CreatureProto* proto, LocationVector& v)
 {
     if (u_caster == NULL)
         return;
@@ -3455,12 +3455,13 @@ void Spell::SpellEffectSkillStep(uint32 i) // Skill Step
     if (skill == 242)
         skill = SKILL_LOCKPICKING; // somehow for lockpicking misc is different than the skill :s
 
-    skilllineentry* sk = dbcSkillLine.LookupEntryForced(skill);
+    auto skill_line = sSkillLineStore.LookupEntry(skill);
 
-    if (!sk) return;
+    if (!skill_line)
+        return;
 
     uint32 max = 1;
-    switch (sk->type)
+    switch (skill_line->type)
     {
         case SKILL_TYPE_PROFESSION:
         case SKILL_TYPE_SECONDARY:
@@ -3488,7 +3489,7 @@ void Spell::SpellEffectSkillStep(uint32 i) // Skill Step
         /*if ((GetProto()->Attributes & 64) && playerTarget->m_TeleportState == 1)
         return;*/
 
-        if (sk->type == SKILL_TYPE_PROFESSION)
+        if (skill_line->type == SKILL_TYPE_PROFESSION)
             target->ModPrimaryProfessionPoints(-1);
 
         if (skill == SKILL_RIDING)
@@ -3939,8 +3940,8 @@ void Spell::SpellEffectProficiency(uint32 i)
     if (skill_line_ability != nullptr)
         skill = skill_line_ability->skilline;
 
-    skilllineentry* sk = dbcSkillLine.LookupEntryForced(skill);
-    if (skill)
+    auto skill_line = sSkillLineStore.LookupEntry(skill);
+    if (skill_line)
     {
         if (playerTarget)
         {
@@ -3955,7 +3956,7 @@ void Spell::SpellEffectProficiency(uint32 i)
                 /*if ((GetProto()->Attributes & 64) && playerTarget->m_TeleportState == 1)
                 return;*/
 
-                if (sk && sk->type == SKILL_TYPE_WEAPON)
+                if (skill_line->type == SKILL_TYPE_WEAPON)
                     playerTarget->_AddSkillLine(skill, 1, 5 * playerTarget->getLevel());
                 else
                     playerTarget->_AddSkillLine(skill, 1, 1);
