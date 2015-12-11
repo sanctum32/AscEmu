@@ -76,8 +76,12 @@ bool SaveAchievementProgressToDB(const CriteriaProgress* c)
         // don't save it if it's not started yet
         return false;
     }
-    auto acEntry = sAchievementCriteriaStore.LookupEntry(c->id);
-    switch (acEntry->requiredType)
+
+    auto achievement = sAchievementCriteriaStore.LookupEntry(c->id);
+    if (achievement == nullptr)
+        return false;
+
+    switch (achievement->requiredType)
     {
         // these get updated when character logs on, don't save to character progress db
         case ACHIEVEMENT_CRITERIA_TYPE_REACH_LEVEL:
@@ -1478,7 +1482,12 @@ void AchievementMgr::CompletedCriteria(AchievementCriteriaEntry const* criteria)
     {
         return;
     }
+
     auto achievement = sAchievementStore.LookupEntry(criteria->referredAchievement);
+    if (achievement == nullptr)
+    {
+        return;
+    }
 
     if (criteria->completionFlag & ACHIEVEMENT_CRITERIA_COMPLETE_FLAG_ALL || GetAchievementCompletionState(achievement) == ACHIEVEMENT_COMPLETED_COMPLETED_NOT_STORED)
     {

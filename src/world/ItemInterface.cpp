@@ -4035,7 +4035,7 @@ bool ItemInterface::SwapItems(int8 DstInvSlot, int8 DstSlot, int8 SrcInvSlot, in
             {
                 if (static_cast< Container* >(DstItem)->HasItems())
                 {
-                    if (SrcSlot < INVENTORY_SLOT_BAG_START || SrcSlot >= INVENTORY_SLOT_BAG_END || SrcSlot < BANK_SLOT_BAG_START || SrcSlot >= BANK_SLOT_BAG_END)
+                    if (!IsBagSlot(SrcSlot))
                     {
                         BuildInventoryChangeError(SrcItem, DstItem, INV_ERR_NONEMPTY_BAG_OVER_OTHER_BAG);
                         return false;
@@ -4073,14 +4073,14 @@ bool ItemInterface::SwapItems(int8 DstInvSlot, int8 DstSlot, int8 SrcInvSlot, in
 
     if (SrcItem)
     {
-        //check if it will go to equipment slot
         if (DstInvSlot == INVENTORY_SLOT_NOT_SET) //not bag
         {
+
             if (SrcItem->IsContainer())
             {
                 if (static_cast< Container* >(SrcItem)->HasItems())
                 {
-                    if (DstSlot < INVENTORY_SLOT_BAG_START || DstSlot >= INVENTORY_SLOT_BAG_END || DstSlot < BANK_SLOT_BAG_START || DstSlot >= BANK_SLOT_BAG_END)
+                    if (!IsBagSlot(DstSlot))
                     {
                         BuildInventoryChangeError(SrcItem, DstItem, INV_ERR_NONEMPTY_BAG_OVER_OTHER_BAG);
                         return false;
@@ -4349,3 +4349,5 @@ void ItemIterator::Increment() {
     m_atEnd = true;
     m_currentItem = nullptr;
 }
+
+
