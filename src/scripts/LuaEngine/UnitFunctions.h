@@ -1,5 +1,6 @@
 /*
- * ArcScripts for ArcEmu MMORPG Server
+ * AscEmu Framework based on ArcEmu MMORPG Server
+ * Copyright (C) 2014-2015 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2007 Moon++ <http://www.moonplusplus.info/>
  *
@@ -1722,11 +1723,6 @@ class LuaUnit
                                     item->DeleteMe();
                             }
                         }
-
-
-                        //if(qst->count_required_item || qst_giver->GetTypeId() == TYPEID_GAMEOBJECT)   // gameobject quests deactivate
-                        //  plr->UpdateNearbyGameObjects();
-                        //ScriptSystem->OnQuestEvent(qst, TO< Creature* >( qst_giver ), _player, QUEST_EVENT_ON_ACCEPT);
 
                         sHookInterface.OnQuestAccept(plr, qst, NULL);
 
