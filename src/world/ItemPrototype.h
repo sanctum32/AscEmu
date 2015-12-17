@@ -661,7 +661,7 @@ struct ItemPrototype
     uint32 RandomPropId;
     uint32 RandomSuffixId;
     uint32 Block;
-    uint32 ItemSet;
+    int32 ItemSet;
     uint32 MaxDurability;
     uint32 ZoneNameID;
     uint32 MapID;
@@ -704,9 +704,15 @@ struct ItemName
     uint32 slot;
 };
 
+struct ItemsLinkedItemSet
+{
+    int32 itemset;
+    uint32 itemset_bonus;
+};
+
 typedef struct
 {
-    uint32 setid;
+    int32 setid;
     uint32 itemscount;
     //Spell* spell[8];
 } ItemSet;

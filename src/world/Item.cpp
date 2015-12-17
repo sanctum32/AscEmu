@@ -1337,3 +1337,4 @@ bool Item::RepairItem(Player* pPlayer, bool guildmoney, int32* pCost)   //pCost 
     m_isDirty = true;
     return true;
 }
+
