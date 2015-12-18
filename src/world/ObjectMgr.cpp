@@ -143,7 +143,7 @@ ObjectMgr::~ObjectMgr()
     }
 
     Log.Notice("ObjectMgr", "Deleting Charters...");
-    for (int i = 0; i < NUM_CHARTER_TYPES; ++i)
+    for (uint8 i = 0; i < NUM_CHARTER_TYPES; ++i)
     {
         for (std::unordered_map<uint32, Charter*>::iterator itr = m_charters[i].begin(); itr != m_charters[i].end(); ++itr)
         {
@@ -2036,7 +2036,7 @@ void ObjectMgr::LoadTrainers()
                     ts.pCastSpell = dbcSpell.LookupEntryForced(CastSpellID);
                     if (ts.pCastSpell)
                     {
-                        for (int k = 0; k < 3; ++k)
+                        for (uint8 k = 0; k < 3; ++k)
                         {
                             if (ts.pCastSpell->Effect[k] == SPELL_EFFECT_LEARN_SPELL)
                             {
@@ -2987,7 +2987,7 @@ void Charter::SaveToDB()
 Charter* ObjectMgr::GetCharterByItemGuid(uint64 guid)
 {
     m_charterLock.AcquireReadLock();
-    for (int i = 0; i < NUM_CHARTER_TYPES; ++i)
+    for (uint8 i = 0; i < NUM_CHARTER_TYPES; ++i)
     {
         std::unordered_map<uint32, Charter*>::iterator itr = m_charters[i].begin();
         for (; itr != m_charters[i].end(); ++itr)
@@ -4061,8 +4061,9 @@ void ObjectMgr::LoadItemsetLink()
 
     QueryResult* result = WorldDatabase.Query("SELECT itemset, itemset_bonus FROM items_linked_itemsets;");
 
-    if (result != NULL)
+    if (result != nullptr)
     {
+        uint32 count = 0;
         do
         {
             Field* row = result->Fetch();
@@ -4071,13 +4072,20 @@ void ObjectMgr::LoadItemsetLink()
 
             itemset_entry = row[0].GetInt32();
             entry->itemset_bonus = row[1].GetUInt32();
-            Log.Notice("ObjectMgr", "loaded linked itemset %u for itemset %i", entry->itemset_bonus, itemset_entry);
+            //Log.Notice("ObjectMgr", "loaded linked itemset %u for itemset %i", entry->itemset_bonus, itemset_entry);
 
             mDefinedItemSets.insert(std::make_pair(itemset_entry, entry->itemset_bonus));
 
+            ++count;
 
         } while (result->NextRow());
         delete result;
+
+        Log.Success("ObjectMgr", "Loaded  %u linked itemsets...", count);
+    }
+    else
+    {
+        Log.Error("ObjectMgr", "Failed to load from items_linked_itemsets.");
     }
 }
 
