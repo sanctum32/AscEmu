@@ -71,13 +71,13 @@ struct QuestPOI
     QuestPOI() : PoiId(0), ObjectiveIndex(0), MapId(0), MapAreaId(0), FloorId(0), Unk3(0), Unk4(0) {}
 
     QuestPOI(uint32 poiId, int32 objIndex, uint32 mapId, uint32 mapAreaId, uint32 floorId, uint32 unk3, uint32 unk4) :
-        PoiId(poiId),
-        ObjectiveIndex(objIndex),
-        MapId(mapId),
-        MapAreaId(mapAreaId),
-        FloorId(floorId),
-        Unk3(unk3),
-        Unk4(unk4) {}
+    PoiId(poiId),
+    ObjectiveIndex(objIndex),
+    MapId(mapId),
+    MapAreaId(mapAreaId),
+    FloorId(floorId),
+    Unk3(unk3),
+    Unk4(unk4) {}
 };
 
 typedef std::vector<QuestPOI> QuestPOIVector;
@@ -156,7 +156,7 @@ class SERVER_DECL QuestMgr : public Singleton <QuestMgr>
 
         inline int32 QuestHasMob(Quest* qst, uint32 mob)
         {
-            for (uint32 i = 0; i < 4; ++i)
+            for (uint8 i = 0; i < 4; ++i)
                 if (qst->required_mob[i] == (int32)mob)
                     return qst->required_mobcount[i];
             return -1;
@@ -164,7 +164,7 @@ class SERVER_DECL QuestMgr : public Singleton <QuestMgr>
 
         inline int32 GetOffsetForMob(Quest* qst, uint32 mob)
         {
-            for (uint32 i = 0; i < 4; ++i)
+            for (uint8 i = 0; i < 4; ++i)
                 if (qst->required_mob[i] == (int32)mob)
                     return i;
 
@@ -173,7 +173,7 @@ class SERVER_DECL QuestMgr : public Singleton <QuestMgr>
 
         inline int32 GetOffsetForItem(Quest* qst, uint32 itm)
         {
-            for (uint32 i = 0; i < MAX_REQUIRED_QUEST_ITEM; ++i)
+            for (uint8 i = 0; i < MAX_REQUIRED_QUEST_ITEM; ++i)
                 if (qst->required_item[i] == itm)
                     return i;
 

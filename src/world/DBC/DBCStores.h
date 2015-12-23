@@ -624,7 +624,7 @@ struct SpellEntry
     //////////////////////////////////////////////////////////////////////////////////////////
     bool HasEffect(uint32 effect)
     {
-        for (uint32 i = 0; i < MAX_SPELL_EFFECTS; ++i)
+        for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
             if (Effect[i] == effect)
                 return true;
 
@@ -661,7 +661,7 @@ struct SpellEntry
     //////////////////////////////////////////////////////////////////////////////////////////
     bool AppliesAura(uint32 aura)
     {
-        for (uint32 i = 0; i < MAX_SPELL_EFFECTS; ++i)
+        for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
         {
 
             if ((Effect[i] == 6 ||        /// SPELL_EFFECT_APPLY_GROUP_AREA_AURA
@@ -690,7 +690,7 @@ struct SpellEntry
     uint32 GetAAEffectId()
     {
 
-        for (uint32 i = 0; i < MAX_SPELL_EFFECTS; i++)
+        for (uint8 i = 0; i < MAX_SPELL_EFFECTS; i++)
         {
 
             if (Effect[i] == 35 ||        /// SPELL_EFFECT_APPLY_GROUP_AREA_AURA
@@ -735,7 +735,7 @@ struct SpellEntry
 
         CustomFlags = 0;
 
-        for (uint32 i = 0; i < MAX_SPELL_EFFECTS; i++)
+        for (uint8 i = 0; i < MAX_SPELL_EFFECTS; i++)
             EffectCustomFlag[i] = 0;
 
         SpellFactoryFunc = NULL;
@@ -959,7 +959,7 @@ class SERVER_DECL DBCStorage
             if (f == NULL)
                 return false;
 
-            /* read the number of rows, and allocate our block on the heap */
+            // read the number of rows, and allocate our block on the heap
             if (fread(&header, 4, 1, f) != 1)
             {
                 fclose(f);
@@ -1016,7 +1016,7 @@ class SERVER_DECL DBCStorage
             m_heapBlock = (T*)malloc(rows * sizeof(T));
             ASSERT(m_heapBlock);
 
-            /* read the data for each row */
+            // read the data for each row
             for (i = 0; i < rows; ++i)
             {
                 memset(&m_heapBlock[i], 0, sizeof(T));
@@ -1024,7 +1024,7 @@ class SERVER_DECL DBCStorage
 
                 if (load_indexed)
                 {
-                    /* all the time the first field in the dbc is our unique entry */
+                    // all the time the first field in the dbc is our unique entry
                     if (*(uint32*)&m_heapBlock[i] > m_max)
                         m_max = *(uint32*)&m_heapBlock[i];
                 }
