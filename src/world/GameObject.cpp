@@ -54,8 +54,10 @@ GameObject::GameObject(uint64 guid)
     m_respawnCell = NULL;
     m_rotation = 0;
     m_overrides = 0;
+
     hitpoints = 0;
     maxhitpoints = 0;
+
     range = 0;
     checkrate = 0;
 }
@@ -360,47 +362,45 @@ void GameObject::InitAI()
     if (!pInfo)
         return;
 
-    if (pInfo->type == GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
-        Rebuild();
-
     // this fixes those fuckers in booty bay
-    if (pInfo->parameter_0 == 0 &&
-        pInfo->parameter_1 == 0 &&
-        pInfo->parameter_2 == 0 &&
-        pInfo->parameter_3 != 0 &&
-        pInfo->parameter_5 != 3 &&
-        pInfo->parameter_9 == 1)
-        return;
+    /*Zyres 2015-12-28 Remove this if it is not needed!
+    if (pInfo->raw.parameter_0 == 0 &&
+        pInfo->raw.parameter_1 == 0 &&
+        pInfo->raw.parameter_2 == 0 &&
+        pInfo->raw.parameter_3 != 0 &&
+        pInfo->raw.parameter_5 != 3 &&
+        pInfo->raw.parameter_9 == 1)
+        return;*/
 
     uint32 spellid = 0;
     if (pInfo->type == GAMEOBJECT_TYPE_TRAP)
     {
-        spellid = pInfo->parameter_3;
+        spellid = pInfo->raw.parameter_3;
     }
     else if (pInfo->type == GAMEOBJECT_TYPE_SPELL_FOCUS)
     {
-        // get spellid from attached gameobject if there is such - by sound2 field
-        if (pInfo->parameter_2 != 0)
+        // get spellid from attached gameobject if there is such - by parameter_2 field
+        if (pInfo->raw.parameter_2 != 0)
         {
 
-            auto gameobject_info = GameObjectNameStorage.LookupEntry(pInfo->parameter_2);
+            auto gameobject_info = GameObjectNameStorage.LookupEntry(pInfo->raw.parameter_2);
             if (gameobject_info == nullptr)
             {
-                LOG_ERROR("Gamobject %u is of spellfocus type, has attachment GO data (%u), but attachment not found in database.", pInfo->entry, pInfo->parameter_2);
+                LOG_ERROR("Gamobject %u is of spellfocus type, has attachment GO data (%u), but attachment not found in database.", pInfo->entry, pInfo->raw.parameter_2);
                 return;
             }
 
-            spellid = gameobject_info->parameter_3;
+            spellid = gameobject_info->raw.parameter_3;
         }
     }
     else if (pInfo->type == GAMEOBJECT_TYPE_RITUAL)
     {
-        m_ritualmembers = new uint32[pInfo->parameter_0];
-        memset(m_ritualmembers, 0, sizeof(uint32)*pInfo->parameter_0);
+        m_ritualmembers = new uint32[pInfo->raw.parameter_0];
+        memset(m_ritualmembers, 0, sizeof(uint32)*pInfo->raw.parameter_0);
     }
     else if (pInfo->type == GAMEOBJECT_TYPE_CHEST)
     {
-        auto pLock = sLockStore.LookupEntry(GetInfo()->parameter_0);
+        auto pLock = sLockStore.LookupEntry(GetInfo()->chest.lock_id);
         if (pLock)
         {
             for (uint8 i = 0; i < LOCK_NUM_CASES; i++)
@@ -424,6 +424,10 @@ void GameObject::InitAI()
     {
         CalcFishRemaining(true);
     }
+    else if (pInfo->type == GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
+    {
+        Rebuild();
+    }
 
     if (myScript == NULL)
         myScript = sScriptMgr.CreateAIScriptClassForGameObject(GetEntry(), this);
@@ -442,9 +446,8 @@ void GameObject::InitAI()
     {
         spell = sp;
     }
-    //ok got valid spell that will be casted on target when it comes close enough
-    //get the range for that
 
+    //ok got valid spell that will be casted on target when it comes close enough get the range for that
     float r = 0;
 
     for (uint8 i = 0; i < 3; i++)
@@ -494,7 +497,6 @@ void GameObject::DeleteFromDB()
 void GameObject::EventCloseDoor()
 {
     SetState(1);
-    //RemoveFlag(GAMEOBJECT_FLAGS, 1);
     SetFlags(GetFlags() & ~1);
 }
 
@@ -508,7 +510,6 @@ void GameObject::UseFishingNode(Player* player)
         return;
     }
 
-    /* Unused code: sAreaStore.LookupEntry(GetMapMgr()->GetAreaID(GetPositionX(),GetPositionY()))->ZoneId*/
     uint32 zone = player->GetAreaID();
     if (zone == 0)   // If the player's area ID is 0, use the zone ID instead
         zone = player->GetZoneId();
@@ -539,7 +540,7 @@ void GameObject::UseFishingNode(Player* player)
 
         school = static_cast< GameObject* >(*it);
 
-        if (!isInRange(school, (float)school->GetInfo()->parameter_1))
+        if (!isInRange(school, (float)school->GetInfo()->raw.parameter_1))
         {
             school = nullptr;
             continue;
@@ -552,9 +553,9 @@ void GameObject::UseFishingNode(Player* player)
     {
 
         if (school->GetMapMgr() != NULL)
-            lootmgr.FillGOLoot(&school->loot, school->GetInfo()->parameter_1, school->GetMapMgr()->iInstanceMode);
+            lootmgr.FillGOLoot(&school->loot, school->GetInfo()->raw.parameter_1, school->GetMapMgr()->iInstanceMode);
         else
-            lootmgr.FillGOLoot(&school->loot, school->GetInfo()->parameter_1, 0);
+            lootmgr.FillGOLoot(&school->loot, school->GetInfo()->raw.parameter_1, 0);
 
         player->SendLoot(school->GetGUID(), LOOT_FISHING, school->GetMapId());
         EndFishing(player, false);
@@ -613,9 +614,9 @@ void GameObject::FishHooked(Player* player)
     SetFlags(GO_FLAG_NEVER_DESPAWN);
 }
 
-/////////////
-/// Quests
-
+//////////////////////////////////////////////////////////////////////////////////////////
+// Quests
+//////////////////////////////////////////////////////////////////////////////////////////
 void GameObject::AddQuest(QuestRelation* Q)
 {
     m_quests->push_back(Q);
@@ -673,9 +674,9 @@ void GameObject::_LoadQuests()
     sQuestMgr.LoadGOQuests(this);
 }
 
-/**
-* Summoned Go's
-*/
+//////////////////////////////////////////////////////////////////////////////////////////
+// Summoned Go's
+//////////////////////////////////////////////////////////////////////////////////////////
 void GameObject::_Expire()
 {
     sEventMgr.RemoveEvents(this);
@@ -695,7 +696,7 @@ void GameObject::ExpireAndDelete()
 
     m_deleted = true;
 
-    //! remove any events
+    // remove any events
     sEventMgr.RemoveEvents(this);
     if (IsInWorld())
         sEventMgr.AddEvent(this, &GameObject::_Expire, EVENT_GAMEOBJECT_EXPIRE, 1, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
@@ -725,11 +726,11 @@ void GameObject::OnPushToWorld()
 
     // We have a field supposedly for this, but it's pointless to waste CPU time for this
     // unless it's longer than a minute (since usually then it's much longer)
-    if ((pInfo->type == GAMEOBJECT_TYPE_CHEST) && (pInfo->parameter_3 == 0))
+    if ((pInfo->type == GAMEOBJECT_TYPE_CHEST) && (pInfo->chest.consumable == 0))
     {
         time_t restockTime = 60 * 1000;
-        if (pInfo->parameter_2 > 60)
-            restockTime = pInfo->parameter_2 * 1000;
+        if (pInfo->chest.restock_time > 60)
+            restockTime = pInfo->chest.restock_time * 1000;
 
         EventMgr::getSingleton().AddEvent(this, &GameObject::ReStock, EVENT_GO_CHEST_RESTOCK, restockTime, 0, 0);
     }
@@ -748,7 +749,7 @@ void GameObject::OnRemoveInRangeObject(Object* pObj)
         ExpireAndDelete();
     }
 }
-//! Remove gameobject from world, using their despawn animation.
+// Remove gameobject from world, using their despawn animation.
 void GameObject::RemoveFromWorld(bool free_guid)
 {
     WorldPacket data(SMSG_GAMEOBJECT_DESPAWN_ANIM, 8);
@@ -759,7 +760,7 @@ void GameObject::RemoveFromWorld(bool free_guid)
     Object::RemoveFromWorld(free_guid);
 }
 
-//! Gameobject contains loot ex. chest
+// Gameobject contains loot ex. chest
 bool GameObject::HasLoot()
 {
     if (loot.gold > 0)
@@ -778,8 +779,8 @@ bool GameObject::HasLoot()
 
 uint32 GameObject::GetGOReqSkill()
 {
-    //! Here we check the SpellFocus table against the dbcs
-    auto lock = sLockStore.LookupEntry(GetInfo()->parameter_0);
+    // Here we check the SpellFocus table against the dbcs
+    auto lock = sLockStore.LookupEntry(GetInfo()->raw.parameter_0);
     if (!lock)
         return 0;
 
@@ -829,6 +830,9 @@ void GameObject::UpdateRotation()
     }
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////
+// Destructible GameObjects
+//////////////////////////////////////////////////////////////////////////////////////////
 void GameObject::Damage(uint32 damage, uint64 AttackerGUID, uint64 ControllerGUID, uint32 SpellID)
 {
     // If we are already destroyed there's nothing to damage!
@@ -842,7 +846,7 @@ void GameObject::Damage(uint32 damage, uint64 AttackerGUID, uint64 ControllerGUI
 
         SetFlags(GO_FLAG_DESTROYED);
         SetFlags(GetFlags() & ~GO_FLAG_DAMAGED);
-        SetDisplayId(pInfo->parameter_9);   // destroyed display id
+        SetDisplayId(pInfo->raw.parameter_9);   // destroyed display id
 
         CALL_GO_SCRIPT_EVENT(this, OnDestroyed)();
 
@@ -857,10 +861,19 @@ void GameObject::Damage(uint32 damage, uint64 AttackerGUID, uint64 ControllerGUI
             // Intact  ->  Damaged
 
             // Are we below the intact-damaged transition treshold?
-            if (hitpoints <= (maxhitpoints - pInfo->parameter_0))
+            if (hitpoints <= (maxhitpoints - pInfo->destructible_building.intact_num_hits))
             {
                 SetFlags(GO_FLAG_DAMAGED);
-                SetDisplayId(pInfo->parameter_4); // damaged display id
+                SetDisplayId(pInfo->destructible_building.damaged_display_id); // damaged display id
+            }
+        }
+        else
+        {
+            if (hitpoints == 0)
+            {
+                SetFlags(GetFlags() & ~GO_FLAG_DAMAGED);
+                SetFlags(GO_FLAG_DESTROYED);
+                SetDisplayId(pInfo->destructible_building.destroyed_display_id);
             }
         }
 
@@ -888,10 +901,13 @@ void GameObject::Rebuild()
 {
     SetFlags(GetFlags() & uint32(~(GO_FLAG_DAMAGED | GO_FLAG_DESTROYED)));
     SetDisplayId(pInfo->display_id);
-    maxhitpoints = pInfo->parameter_0 + pInfo->parameter_5;
+    maxhitpoints = pInfo->destructible_building.intact_num_hits + pInfo->destructible_building.damaged_num_hits;
     hitpoints = maxhitpoints;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////
+// Loot
+//////////////////////////////////////////////////////////////////////////////////////////
 void GameObject::ReStock()
 {
     // this hasn't been looted yet so we don't want to restock
@@ -904,5 +920,5 @@ void GameObject::ReStock()
     if (loot.HasRoll())
         return;
 
-    lootmgr.FillGOLoot(&loot, pInfo->parameter_1, m_mapMgr->iInstanceMode);
+    lootmgr.FillGOLoot(&loot, pInfo->raw.parameter_1, m_mapMgr->iInstanceMode);
 }

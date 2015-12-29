@@ -60,13 +60,7 @@ struct GOQuestGameObject
     uint32 requiredcount;
 };
 
-enum GAMEOBJECT_FLAG_BIT
-{
-    GAMEOBJECT_UNCLICKABLE  = 0x01,
-    GAMEOBJECT_CLICKABLE    = 0x20,
-};
-
-enum GAMEOBJECT_OVERRIDES
+enum GameObjectOverrides
 {
     GAMEOBJECT_INFVIS = 0x01,                   /// Makes the gameobject forever visible on the map after you saw it at least once - for various transports; actually it just doesn't erase it while you're on the same map.
     GAMEOBJECT_MAPWIDE = 0x02,                  /// When you enter its map, the gameobject gets pushed to you no matter how far it is (but only for players), especially for Deeprun and Ulduar Trams.
@@ -91,30 +85,124 @@ struct GameObjectInfo
     char* category_name;
     char* cast_bar_text;
     char* Unkstr;
-    uint32 parameter_0;
-    uint32 parameter_1;
-    uint32 parameter_2;
-    uint32 parameter_3;
-    uint32 parameter_4;
-    uint32 parameter_5;
-    uint32 parameter_6;
-    uint32 parameter_7;
-    uint32 parameter_8;
-    uint32 parameter_9;
-    uint32 parameter_10;
-    uint32 parameter_11;
-    uint32 parameter_12;
-    uint32 parameter_13;
-    uint32 parameter_14;
-    uint32 parameter_15;
-    uint32 parameter_16;
-    uint32 parameter_17;
-    uint32 parameter_18;
-    uint32 parameter_19;
-    uint32 parameter_20;
-    uint32 parameter_21;
-    uint32 parameter_22;
-    uint32 parameter_23;
+
+    // different data fields for GO-types
+    /// \todo add different structure for go types.
+    union
+    {
+        // 0 GAMEOBJECT_TYPE_DOOR
+        // 1 GAMEOBJECT_TYPE_BUTTON
+        // 2 GAMEOBJECT_TYPE_QUESTGIVER
+        // 3 GAMEOBJECT_TYPE_CHEST
+        struct
+        {
+            uint32 lock_id;                     // parameter_0 from Lock.dbc
+            uint32 loot_id;                     // parameter_1
+            uint32 restock_time;                // parameter_2
+            uint32 consumable;                  // parameter_3 bool
+            uint32 min_success_opens;           // parameter_4
+            uint32 max_success_opens;           // parameter_5
+            uint32 event_id;                    // parameter_6 lootedEvent
+            uint32 linked_trap_id;              // parameter_7
+            uint32 quest_id;                    // parameter_8 quest required for GO activation
+            uint32 level;                       // parameter_9
+            uint32 los_OK;                      // parameter_10
+            uint32 leave_loot;                  // parameter_11
+            uint32 not_in_combat;               // parameter_12
+            uint32 log_loot;                    // parameter_13
+            uint32 open_text_id;                // parameter_14
+            uint32 group_loot_rules;            // parameter_15
+            uint32 floating_tooltip;            // parameter_16
+        } chest;
+        // 4 GAMEOBJECT_TYPE_BINDER
+        // 5 GAMEOBJECT_TYPE_GENERIC
+        // 6 GAMEOBJECT_TYPE_TRAP
+        // 7 GAMEOBJECT_TYPE_CHAIR
+        // 8 GAMEOBJECT_TYPE_SPELL_FOCUS
+        // 9 GAMEOBJECT_TYPE_TEXT
+        // 10 GAMEOBJECT_TYPE_GOOBER
+        // 11 GAMEOBJECT_TYPE_TRANSPORT
+        // 12 GAMEOBJECT_TYPE_AREADAMAGE
+        // 13 GAMEOBJECT_TYPE_CAMERA
+        // 14 GAMEOBJECT_TYPE_MAP_OBJECT
+        // 15 GAMEOBJECT_TYPE_MO_TRANSPORT
+        // 16 GAMEOBJECT_TYPE_DUEL_ARBITER
+        // 17 GAMEOBJECT_TYPE_FISHINGNODE
+        // 18 GAMEOBJECT_TYPE_RITUAL
+        // 19 GAMEOBJECT_TYPE_MAILBOX
+        // 20 GAMEOBJECT_TYPE_AUCTIONHOUSE
+        // 21 GAMEOBJECT_TYPE_GUARDPOST
+        // 22 GAMEOBJECT_TYPE_SPELLCASTER
+        // 23 GAMEOBJECT_TYPE_MEETINGSTONE
+        // 24 GAMEOBJECT_TYPE_FLAGSTAND
+        // 25 GAMEOBJECT_TYPE_FISHINGHOLE
+        // 26 GAMEOBJECT_TYPE_FLAGDROP
+        // 27 GAMEOBJECT_TYPE_MINI_GAME
+        // 28 GAMEOBJECT_TYPE_LOTTERY_KIOSK
+        // 29 GAMEOBJECT_TYPE_CAPTURE_POINT
+        // 30 GAMEOBJECT_TYPE_AURA_GENERATOR
+        // 31 GAMEOBJECT_TYPE_DUNGEON_DIFFICULTY
+        // 32 GAMEOBJECT_TYPE_BARBER_CHAIR
+        // 33 GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING
+        struct
+        {
+            uint32 intact_num_hits;             // parameter_0
+            uint32 credit_proxy_creature;       // parameter_1
+            uint32 state1_name;                 // parameter_2
+            uint32 intact_event;                // parameter_3
+            uint32 damaged_display_id;          // parameter_4
+            uint32 damaged_num_hits;            // parameter_5
+            uint32 unused1;                     // parameter_6
+            uint32 unused2;                     // parameter_7
+            uint32 unused3;                     // parameter_8
+            uint32 damaged_event;               // parameter_9
+            uint32 destroyed_display_id;        // parameter_10
+            uint32 unused4;                     // parameter_11
+            uint32 unused5;                     // parameter_12
+            uint32 unused6;                     // parameter_13
+            uint32 destroyed_event;             // parameter_14
+            uint32 unused7;                     // parameter_15
+            uint32 debuilding_time_secs;        // parameter_16
+            uint32 unused8;                     // parameter_17
+            uint32 destructible_data;           // parameter_18
+            uint32 rebuilding_event;            // parameter_19
+            uint32 unused9;                     // parameter_20
+            uint32 unused10;                    // parameter_21
+            uint32 damage_event;                // parameter_22
+            uint32 unused11;                    // parameter_23
+        } destructible_building;
+        // 34 GAMEOBJECT_TYPE_GUILD_BANK
+        // 35 GAMEOBJECT_TYPE_TRAPDOOR
+
+        // raw parameters
+        struct
+        {
+            uint32 parameter_0;
+            uint32 parameter_1;
+            uint32 parameter_2;
+            uint32 parameter_3;
+            uint32 parameter_4;
+            uint32 parameter_5;
+            uint32 parameter_6;
+            uint32 parameter_7;
+            uint32 parameter_8;
+            uint32 parameter_9;
+            uint32 parameter_10;
+            uint32 parameter_11;
+            uint32 parameter_12;
+            uint32 parameter_13;
+            uint32 parameter_14;
+            uint32 parameter_15;
+            uint32 parameter_16;
+            uint32 parameter_17;
+            uint32 parameter_18;
+            uint32 parameter_19;
+            uint32 parameter_20;
+            uint32 parameter_21;
+            uint32 parameter_22;
+            uint32 parameter_23;
+        }raw;
+    };
     float size;
     uint32 QuestItems[6];
 
@@ -124,7 +212,7 @@ struct GameObjectInfo
 };
 #pragma pack(pop)
 
-enum GAMEOBJECT_BYTES
+enum GameObjectBytes
 {
     GAMEOBJECT_BYTES_STATE          = 0,
     GAMEOBJECT_BYTES_TYPE_ID        = 1,
@@ -132,7 +220,7 @@ enum GAMEOBJECT_BYTES
     GAMEOBJECT_BYTES_ANIMPROGRESS   = 3,
 };
 
-enum GAMEOBJECT_TYPES
+enum GameObjectTypes
 {
     GAMEOBJECT_TYPE_DOOR                    = 0,
     GAMEOBJECT_TYPE_BUTTON                  = 1,
@@ -178,7 +266,6 @@ class SERVER_DECL GameObject : public Object
 {
     public:
 
-        /// LUA Stuff
         GameObject(uint64 guid);
         ~GameObject();
 
@@ -238,8 +325,7 @@ class SERVER_DECL GameObject : public Object
 
         void ExpireAndDelete();
 
-
-        /// Quest data
+        // Quest data
         std::list<QuestRelation*>* m_quests;
 
         uint32* m_ritualmembers;
@@ -253,8 +339,8 @@ class SERVER_DECL GameObject : public Object
         float range;
         uint8 checkrate;
         uint16 counter;
-        int32 charges;      /// used for type==22,to limit number of usages.
-        bool invisible;     /// invisible
+        int32 charges;      // used for type==22,to limit number of usages.
+        bool invisible;     // invisible
         uint8 invisibilityFlag;
         Unit* m_summoner;
         int8 bannerslot;
@@ -264,7 +350,7 @@ class SERVER_DECL GameObject : public Object
 
         GameObjectAIScript* GetScript() { return myScript; }
 
-        void TrapSearchTarget();	/// Traps need to find targets faster :P
+        void TrapSearchTarget();	// Traps need to find targets faster :P
 
         bool HasAI() { return spell != 0; }
 
@@ -278,7 +364,7 @@ class SERVER_DECL GameObject : public Object
         void CalcMineRemaining(bool force)
         {
             if (force || !usage_remaining)
-                usage_remaining = GetInfo()->parameter_4 + RandomUInt(GetInfo()->parameter_5 - GetInfo()->parameter_4) - 1;
+                usage_remaining = GetInfo()->raw.parameter_4 + RandomUInt(GetInfo()->raw.parameter_5 - GetInfo()->raw.parameter_4) - 1;
         }
 
         bool CanFish() { return (usage_remaining > 0); }
@@ -286,7 +372,7 @@ class SERVER_DECL GameObject : public Object
         void CalcFishRemaining(bool force)
         {
             if (force || !usage_remaining)
-                usage_remaining = GetInfo()->parameter_2 + RandomUInt(GetInfo()->parameter_3 - GetInfo()->parameter_2) - 1;
+                usage_remaining = GetInfo()->raw.parameter_2 + RandomUInt(GetInfo()->raw.parameter_3 - GetInfo()->raw.parameter_2) - 1;
         }
 
         bool HasLoot();
@@ -346,64 +432,38 @@ class SERVER_DECL GameObject : public Object
         }
 
         //////////////////////////////////////////////////////////////////////////////////////////
-        /// void Damage(uint32 damage, uint64 AttackerGUID, uint64 ControllerGUID, uint32 SpellID)
         /// Damages the destructible GameObject with a spell
-        ///
         /// \param uint32 damage          -  The hit points that the GO will lose
         /// \param uint64 AttackerGUID    -  GUID of the caster of the damaging spell
         /// \param uint64 ControllerGUID  -  GUID of the controller of the caster of the damaging spell
         /// \param uint32 SpellID         -  ID of the damaging spell
-        ///
         /// \returns none
-        ///
         //////////////////////////////////////////////////////////////////////////////////////////
         void Damage(uint32 damage, uint64 AttackerGUID, uint64 ControllerGUID, uint32 SpellID);
 
-
         //////////////////////////////////////////////////////////////////////////////////////////
-        /// void Rebuild()
         /// Rebuilds the damaged/destroyed GameObject.
-        ///
-        /// \param none
-        ///
-        /// \returns none
-        ///
+        /// \param none              \returns none
         //////////////////////////////////////////////////////////////////////////////////////////
         void Rebuild();
 
-
         //////////////////////////////////////////////////////////////////////////////////////////
-        /// uint32 GetHP()
         /// Returns the current hitpoints of the GameObject
-        ///
         /// \param none
-        ///
         /// \returns the current hitpoints of the GameObject
-        ///
         //////////////////////////////////////////////////////////////////////////////////////////
         uint32 GetHP() { return hitpoints; }
 
-
         //////////////////////////////////////////////////////////////////////////////////////////
-        /// uint32 GetMaxHP()
         /// Returns the maximum hitpoints of the GameObject
-        ///
         /// \param none
-        ///
         /// \returns the maximum hitpoints of the GameObject
-        ///
         //////////////////////////////////////////////////////////////////////////////////////////
         uint32 GetMaxHP() { return maxhitpoints; }
 
-
         //////////////////////////////////////////////////////////////////////////////////////////
-        /// void Restock()
         /// Restocks the gameobject's loot
-        ///
-        /// \param none
-        ///
-        /// \returns none
-        ///
+        /// \param none             \returns none
         //////////////////////////////////////////////////////////////////////////////////////////
         void ReStock();
 
@@ -419,21 +479,15 @@ class SERVER_DECL GameObject : public Object
 
         uint64 m_rotation;
 
-
         //////////////////////////////////////////////////////////////////////////////////////////
-        /// void SendDamagePacket(uint32 damage, uint64 AttackerGUID, uint64 ControllerGUID, uint32 SpellID)
         /// Notifies the surrounding clients about the GameObject taking damage
-        ///
         /// \param uint32 damage          -  The hit points that the GO will lose
         /// \param uint64 AttackerGUID    -  GUID of the caster of the damaging spell
         /// \param uint64 ControllerGUID  -  GUID of the controller of the caster of the damaging spell
         /// \param uint32 SpellID         -  ID of the damaging spell
-        ///
         /// \returns none
-        ///
         //////////////////////////////////////////////////////////////////////////////////////////
         void SendDamagePacket(uint32 damage, uint64 AttackerGUID, uint64 ControllerGUID, uint32 SpellID);
-
 
         uint32 hitpoints;
         uint32 maxhitpoints;
