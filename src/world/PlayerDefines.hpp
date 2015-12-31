@@ -21,6 +21,8 @@
 
 #include "CommonTypes.hpp"
 
+#include <ctime>
+
 enum PlayerTeam : int
 {
     TEAM_ALLIANCE = 0,
@@ -29,11 +31,12 @@ enum PlayerTeam : int
 };
 
 
-#define PLAYER_NORMAL_RUN_SPEED 7.0f
-#define PLAYER_NORMAL_SWIM_SPEED 4.722222f
-#define PLAYER_NORMAL_FLIGHT_SPEED 7.0f
+const float playerNormalRunSpeed = 7.0f;
+const float playerNormalSwimSpeed = 4.72222f;
+const float playerNormalFlightSpeed = 7.0f;
+
 #define PLAYER_HONORLESS_TARGET_SPELL 2479
-#define MONSTER_NORMAL_RUN_SPEED 8.0f
+
 /* action button defines */
 #define PLAYER_ACTION_BUTTON_COUNT 136
 #define PLAYER_ACTION_BUTTON_SIZE PLAYER_ACTION_BUTTON_COUNT * sizeof(ActionButton)
@@ -306,8 +309,22 @@ enum PlayerFlags
     PLAYER_FLAG_IS_DEAD             = 0x00002000,
     PLAYER_FLAGS_RENAME_FIRST       = 0x00004000,
     PLAYER_FLAG_DEVELOPER           = 0x00008000,
+    PLAYER_FLAG_UNK1                = 0x00010000,
+    PLAYER_FLAG_UNK2                = 0x00020000,
     PLAYER_FLAG_PVP                 = 0x00040000,
-    PLAYER_FLAG_IS_BANNED           = 0x01000000
+    PLAYER_FLAG_UNK3                = 0x00080000,
+    PLAYER_FLAG_UNK4                = 0x00100000,
+    PLAYER_FLAG_UNK5                = 0x00200000,
+    PLAYER_FLAG_UNK6                = 0x00400000,
+    PLAYER_FLAG_UNK7                = 0x00800000,
+    PLAYER_FLAG_IS_BANNED           = 0x01000000,
+    PLAYER_FLAG_UNK8                = 0x02000000,
+    PLAYER_FLAG_UNK9                = 0x04000000,
+    PLAYER_FLAG_UNK10               = 0x08000000,
+    PLAYER_FLAG_UNK11               = 0x10000000,
+    PLAYER_FLAG_UNK12               = 0x20000000,
+    PLAYER_FLAG_UNK13               = 0x40000000,
+    PLAYER_FLAG_UNK14               = 0x80000000
 };
 
 enum CustomizeFlags
@@ -372,16 +389,17 @@ enum CooldownTypes
     NUM_COOLDOWN_TYPES,
 };
 
+///\todo are the values really ignored by client?
 enum LootType
 {
     LOOT_CORPSE                 = 1,
-    LOOT_SKINNING               = 2,
+    LOOT_SKINNING               = 2,        // 6
     LOOT_FISHING                = 3,
-    LOOT_PICKPOCKETING          = 2,        // 4 unsupported by client, sending LOOT_SKINNING instead
-    LOOT_DISENCHANTING          = 2,        // 5 unsupported by client, sending LOOT_SKINNING instead
-    LOOT_PROSPECTING            = 2,        // 6 unsupported by client, sending LOOT_SKINNING instead
-    LOOT_MILLING                = 2,
-    LOOT_INSIGNIA               = 2         // 7 unsupported by client, sending LOOT_SKINNING instead
+    LOOT_PICKPOCKETING          = 2,        // 2
+    LOOT_DISENCHANTING          = 2,        // 4    // ignored
+    LOOT_PROSPECTING            = 2,        // 7
+    LOOT_MILLING                = 2,        // 8    
+    LOOT_INSIGNIA               = 2         // 21 unsupported by client, sending LOOT_SKINNING instead
 };
 
 enum ModType
@@ -466,21 +484,28 @@ static const uint32 TalentTreesPerClass[DRUID + 1][3] =
         };
 
 
-#define RESTSTATE_RESTED 1
-#define RESTSTATE_NORMAL 2
-#define RESTSTATE_TIRED100 3
-#define RESTSTATE_TIRED50 4
-#define RESTSTATE_EXHAUSTED 5
-#define UNDERWATERSTATE_NONE 0
-#define UNDERWATERSTATE_SWIMMING 1
-#define UNDERWATERSTATE_UNDERWATER 2
-#define UNDERWATERSTATE_RECOVERING 4
-#define UNDERWATERSTATE_TAKINGDAMAGE 8
-#define UNDERWATERSTATE_FATIGUE 16
-#define UNDERWATERSTATE_LAVA 32
-#define UNDERWATERSTATE_SLIME 64
+enum RestState
+{
+    RESTSTATE_RESTED        = 1,
+    RESTSTATE_NORMAL        = 2,
+    RESTSTATE_TIRED100      = 3,
+    RESTSTATE_TIRED50       = 4,
+    RESTSTATE_EXHAUSTED     = 5
+};
 
-enum TRADE_STATUS
+enum UnderwaterState
+{
+    UNDERWATERSTATE_NONE            = 0,
+    UNDERWATERSTATE_SWIMMING        = 1,
+    UNDERWATERSTATE_UNDERWATER      = 2,
+    UNDERWATERSTATE_RECOVERING      = 4,
+    UNDERWATERSTATE_TAKINGDAMAGE    = 8,
+    UNDERWATERSTATE_FATIGUE         = 16,
+    UNDERWATERSTATE_LAVA            = 32,
+    UNDERWATERSTATE_SLIME           = 64
+};
+
+enum TradeStatus
 {
     TRADE_STATUS_PLAYER_BUSY        = 0x00,
     TRADE_STATUS_PROPOSED           = 0x01,
@@ -500,33 +525,33 @@ enum TRADE_STATUS
     TRADE_STATUS_PLAYER_IGNORED     = 0x0F,
 };
 
-enum TRADE_DATA
+enum TradeData
 {
     TRADE_GIVE        = 0x00,
     TRADE_RECEIVE     = 0x01
 };
 
-enum DUEL_STATUS
+enum DuelStatus
 {
     DUEL_STATUS_OUTOFBOUNDS,
     DUEL_STATUS_INBOUNDS
 };
 
-enum DUEL_STATE
+enum DuelState
 {
     DUEL_STATE_REQUESTED,
     DUEL_STATE_STARTED,
     DUEL_STATE_FINISHED
 };
 
-enum DUEL_WINNER
+enum DuelWinner
 {
     DUEL_WINNER_KNOCKOUT,
     DUEL_WINNER_RETREAT
 };
 
-#define PLAYER_ATTACK_TIMEOUT_INTERVAL 5000
-#define PLAYER_FORCED_RESURRECT_INTERVAL 360000         /// 1000*60*6= 6 minutes
+const time_t attackTimeoutInterval = 5000;
+const time_t forcedResurrectInterval = 360000;  // 1000*60*6= 6 minutes
 
 #define PLAYER_RATING_MODIFIER_RANGED_SKILL                     PLAYER_FIELD_COMBAT_RATING_1
 #define PLAYER_RATING_MODIFIER_DEFENCE                          PLAYER_FIELD_COMBAT_RATING_1+1
