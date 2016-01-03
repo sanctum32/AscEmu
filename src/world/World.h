@@ -743,6 +743,10 @@ class SERVER_DECL World : public Singleton<World>, public EventableObject, publi
         bool m_limitedNames;
         bool m_useAccountData;
         bool m_AdditionalFun;
+        bool m_SkipCinematics;
+        uint8 m_InstantLogout;
+        uint32 m_MinDualSpecLevel;
+        uint32 m_MinTalentResetLevel;
         std::map<WMOAreaTableTripple, DBC::Structures::WMOAreaTableEntry const*> m_WMOAreaTableTripples;
 
         // Gold Cap

@@ -113,6 +113,10 @@ World::World()
     m_lfgForNonLfg = false;
     m_useAccountData = false;
     m_AdditionalFun = false;
+    m_SkipCinematics = false;
+    m_InstantLogout = 1;
+    m_MinDualSpecLevel = 40;
+    m_MinTalentResetLevel = 10;
 
     GoldCapEnabled = true;
     GoldLimit = 214748;
@@ -1509,6 +1513,10 @@ void World::Rehash(bool load)
 
     m_AdditionalFun = Config.OptionalConfig.GetBoolDefault("Optional", "AdditionalFun", false);
     MaxProfs = (uint32)Config.OptionalConfig.GetIntDefault("Optional", "MaxProfessions", 2);
+    m_SkipCinematics = Config.OptionalConfig.GetBoolDefault("Optional", "SkipCinematic", false);
+    m_InstantLogout = Config.OptionalConfig.GetIntDefault("Optional", "InstantLogout", 1);
+    m_MinDualSpecLevel = Config.OptionalConfig.GetIntDefault("Optional", "MinDualSpecLevel", 40);
+    m_MinTalentResetLevel = Config.OptionalConfig.GetIntDefault("Optional", "MinTalentResetLevel", 10);
 
     // Max Gold Settings
     GoldCapEnabled = Config.OptionalConfig.GetBoolDefault("GoldSettings", "EnableGoldCap", true);
