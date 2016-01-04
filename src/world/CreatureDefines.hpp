@@ -165,7 +165,7 @@ struct CreatureProto
     float CombatReach;
     float BoundingRadius;
     char* aura_string;
-    uint32 boss;
+    bool isBoss;
     uint32 money;
     uint32 invisibility_type;
     float walk_speed;       /// base movement
@@ -175,12 +175,12 @@ struct CreatureProto
     uint32 AISpells[creatureMaxProtoSpells];
     uint32 AISpellsFlags;
     uint32 modImmunities;
-    uint32 isTrainingDummy;
+    bool isTrainingDummy;
     uint32 guardtype;
     uint32 summonguard;
     uint32 spelldataid;
     uint32 vehicleid;
-    uint32 rooted;
+    bool rooted;
 
     // AI Stuff
     bool m_canRangedAttack;
@@ -272,7 +272,8 @@ enum NPCFlags
     UNIT_NPC_FLAG_GUILD_BANK            = 0x00800000,
     UNIT_NPC_FLAG_SPELLCLICK            = 0x01000000,
     UNIT_NPC_FLAG_PLAYER_VEHICLE        = 0x02000000,
-    UNIT_NPC_FLAG_MAILBOX               = 0x04000000
+    UNIT_NPC_FLAG_MAILBOX               = 0x04000000,
+    UNIT_NPC_FLAG_DISABLE_REGEN         = 0x08000000
 };
 
 enum CreatureFlag1
@@ -364,12 +365,6 @@ enum ELITE
     ELITE_RARE      = 4
     // ELITE_UNKNOWN = 5
 };
-enum TIME_REMOVE_CORPSE
-{
-    TIME_CREATURE_REMOVE_CORPSE     = 180000,
-    TIME_CREATURE_REMOVE_RARECORPSE = 180000 * 3,
-    TIME_CREATURE_REMOVE_BOSSCORPSE = 180000 * 5
-};
 
 // THIS IS NOT SAME AS DEATH STATE IN Unit.h
 enum CREATURE_DEATH_STATE
@@ -390,5 +385,49 @@ struct PetSpellCooldown
     uint32 spellId;
     int32 cooldown;
 };
+
+struct CreatureProtoDifficulty
+{
+    uint32 Id;
+    uint8 difficulty_type;
+    uint32 MinLevel;
+    uint32 MaxLevel;
+    uint32 Faction;
+    uint32 MinHealth;
+    uint32 MaxHealth;
+    uint32 Mana;
+    float Scale;
+    uint32 NPCFLags;
+    uint32 AttackTime;
+    uint32 AttackType;
+    float MinDamage;
+    float MaxDamage;
+    uint32 CanRanged;
+    uint32 RangedAttackTime;
+    float RangedMinDamage;
+    float RangedMaxDamage;
+    uint32 RespawnTime;
+    uint32 Resistances[SCHOOL_COUNT];
+    float CombatReach;
+    float BoundingRadius;
+    char* aura_string;
+    bool isBoss;
+    uint32 money;
+    uint32 invisibility_type;
+    float walk_speed;       /// base movement
+    float run_speed;        /// most of the time mobs use this
+    float fly_speed;
+    uint32 extra_a9_flags;
+    uint32 AISpells[creatureMaxProtoSpells];
+    uint32 AISpellsFlags;
+    uint32 modImmunities;
+    bool isTrainingDummy;
+    uint32 guardtype;
+    uint32 summonguard;
+    uint32 spelldataid;
+    uint32 vehicleid;
+    bool isRooted;
+};
+
 
 #endif // _CREATURE_DEFINES_HPP

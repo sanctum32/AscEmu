@@ -262,12 +262,25 @@ void Creature::Update(unsigned long time_passed)
     if (m_corpseEvent)
     {
         sEventMgr.RemoveEvents(this);
-        if (this->creature_info->Rank == ELITE_WORLDBOSS)
-            sEventMgr.AddEvent(this, &Creature::OnRemoveCorpse, EVENT_CREATURE_REMOVE_CORPSE, TIME_CREATURE_REMOVE_BOSSCORPSE, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
-        else if (this->creature_info->Rank == ELITE_RAREELITE || this->creature_info->Rank == ELITE_RARE)
-            sEventMgr.AddEvent(this, &Creature::OnRemoveCorpse, EVENT_CREATURE_REMOVE_CORPSE, TIME_CREATURE_REMOVE_RARECORPSE, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
-        else
-            sEventMgr.AddEvent(this, &Creature::OnRemoveCorpse, EVENT_CREATURE_REMOVE_CORPSE, TIME_CREATURE_REMOVE_CORPSE, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+
+        switch (this->creature_info->Rank)
+        {
+            case ELITE_ELITE:
+                sEventMgr.AddEvent(this, &Creature::OnRemoveCorpse, EVENT_CREATURE_REMOVE_CORPSE, sWorld.m_DecayElite, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+                break;
+            case ELITE_RAREELITE:
+                sEventMgr.AddEvent(this, &Creature::OnRemoveCorpse, EVENT_CREATURE_REMOVE_CORPSE, sWorld.m_DecayRareElite, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+                break;
+            case ELITE_WORLDBOSS:
+                sEventMgr.AddEvent(this, &Creature::OnRemoveCorpse, EVENT_CREATURE_REMOVE_CORPSE, sWorld.m_DecayWorldboss, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+                break;
+            case ELITE_RARE:
+                sEventMgr.AddEvent(this, &Creature::OnRemoveCorpse, EVENT_CREATURE_REMOVE_CORPSE, sWorld.m_DecayRare, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+                break;
+            default:
+                sEventMgr.AddEvent(this, &Creature::OnRemoveCorpse, EVENT_CREATURE_REMOVE_CORPSE, sWorld.m_DecayNormal, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+                break;
+        }
 
         m_corpseEvent = false;
     }
@@ -299,7 +312,7 @@ void Creature::OnRemoveCorpse()
         setDeathState(DEAD);
         m_position = m_spawnLocation;
 
-        if ((GetMapMgr()->GetMapInfo() && GetMapMgr()->GetMapInfo()->type == INSTANCE_RAID && proto->boss) || m_noRespawn)
+        if ((GetMapMgr()->GetMapInfo() && GetMapMgr()->GetMapInfo()->type == INSTANCE_RAID && proto->isBoss) || m_noRespawn)
         {
             RemoveFromWorld(false, true);
         }
@@ -1677,6 +1690,7 @@ void Creature::Load(CreatureProto* proto_, float x, float y, float z, float o)
     SetFaction(proto->Faction);
     SetBoundingRadius(proto->BoundingRadius);
     SetCombatReach(proto->CombatReach);
+
     original_emotestate = 0;
 
     // set position
@@ -1866,6 +1880,8 @@ void Creature::OnPushToWorld()
         }
 
     }
+
+    GetAIInterface()->SetCreatureProtoDifficulty(proto->Id);
 
     if (mEvent != nullptr)
     {
