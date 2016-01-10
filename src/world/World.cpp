@@ -1329,7 +1329,11 @@ void World::Rehash(bool load)
     channelmgr.seperatechannels = Config.MainConfig.GetBoolDefault("Server", "SeperateChatChannels", false);
     MapPath = Config.MainConfig.GetStringDefault("Terrain", "MapPath", "maps");
     vMapPath = Config.MainConfig.GetStringDefault("Terrain", "vMapPath", "vmaps");
+    mMapPath = Config.MainConfig.GetStringDefault("Terrain", "mMapPath", "mmaps");
     UnloadMapFiles = Config.MainConfig.GetBoolDefault("Terrain", "UnloadMapFiles", true);
+    Collision = Config.MainConfig.GetBoolDefault("Terrain", "Collision", false);
+    Pathfinding = Config.MainConfig.GetBoolDefault("Terrain", "Pathfinding", false);
+
     BreathingEnabled = Config.MainConfig.GetBoolDefault("Server", "EnableBreathing", true);
     SendStatsOnJoin = Config.MainConfig.GetBoolDefault("Server", "SendStatsOnJoin", true);
     compression_threshold = Config.MainConfig.GetIntDefault("Server", "CompressionThreshold", 1000);
@@ -1372,7 +1376,7 @@ void World::Rehash(bool load)
     SetKickAFKPlayerTime(Config.MainConfig.GetIntDefault("Server", "KickAFKPlayers", 0));
     sLog.SetFileLoggingLevel(Config.MainConfig.GetIntDefault("LogLevel", "File", 0));
     gm_skip_attunement = Config.MainConfig.GetBoolDefault("Server", "SkipAttunementsForGM", true);
-    Collision = Config.MainConfig.GetBoolDefault("Server", "Collision", 0);
+
     DisableFearMovement = Config.MainConfig.GetBoolDefault("Server", "DisableFearMovement", 0);
     SocketRecvBufSize = Config.MainConfig.GetIntDefault("WorldSocket", "RecvBufSize", WORLDSOCKET_RECVBUF_SIZE);
     SocketSendBufSize = Config.MainConfig.GetIntDefault("WorldSocket", "SendBufSize", WORLDSOCKET_SENDBUF_SIZE);
@@ -1467,10 +1471,12 @@ void World::Rehash(bool load)
     interfaction_friend = Config.OptionalConfig.GetBoolDefault("Interfaction", "InterfactionFriends", false);
     interfaction_misc = Config.OptionalConfig.GetBoolDefault("Interfaction", "InterfactionMisc", false);
     crossover_chars = Config.OptionalConfig.GetBoolDefault("Interfaction", "CrossOverCharacters", false);
+
+    gamemaster_startonGMIsland = Config.OptionalConfig.GetBoolDefault("GameMaster", "StartOnGMIsland", false);
+    gamemaster_disableachievements = Config.OptionalConfig.GetBoolDefault("GameMaster", "DisableAchievements", false);
     gamemaster_listOnlyActiveGMs = Config.OptionalConfig.GetBoolDefault("GameMaster", "ListOnlyActiveGMs", false);
     gamemaster_hidePermissions = Config.OptionalConfig.GetBoolDefault("GameMaster", "HidePermissions", false);
-    gamemaster_startonGMIsland = Config.MainConfig.GetBoolDefault("GameMaster", "StartOnGMIsland", true);
-    gamemaster_disableachievements = Config.MainConfig.GetBoolDefault("GameMaster", "DisableAchievements", false);
+    gamemaster_announceKick = Config.OptionalConfig.GetBoolDefault("GameMaster", "AnnounceKick", true);
 
     m_levelCap = Config.OptionalConfig.GetIntDefault("Optional", "LevelCap", PLAYER_LEVEL_CAP);
     m_genLevelCap = Config.OptionalConfig.GetIntDefault("Optional", "GenLevelCap", PLAYER_LEVEL_CAP);

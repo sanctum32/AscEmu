@@ -3670,13 +3670,22 @@ bool AIInterface::Move(float & x, float & y, float & z, float o /*= 0*/)
     m_currentSplineFinalOrientation = o;
 
     //Add new points
-#ifdef TEST_PATHFINDING
-    if (!Flying())
+    if (sWorld.Pathfinding)
     {
-        if (!CreatePath(x, y, z))
+        //Log.Debug("AIInterface::Move", "Pathfinding is enabled");
+
+        if (!Flying())
         {
-            StopMovement(0); //old spline is probly still active on client, need to keep in sync
-            return false;
+            if (!CreatePath(x, y, z))
+            {
+                StopMovement(0); //old spline is probly still active on client, need to keep in sync
+                return false;
+            }
+        }
+        else
+        {
+            AddSpline(m_Unit->GetPositionX(), m_Unit->GetPositionY(), m_Unit->GetPositionZ());
+            AddSpline(x, y, z);
         }
     }
     else
@@ -3684,10 +3693,6 @@ bool AIInterface::Move(float & x, float & y, float & z, float o /*= 0*/)
         AddSpline(m_Unit->GetPositionX(), m_Unit->GetPositionY(), m_Unit->GetPositionZ());
         AddSpline(x, y, z);
     }
-#else
-    AddSpline(m_Unit->GetPositionX(), m_Unit->GetPositionY(), m_Unit->GetPositionZ());
-    AddSpline(x, y, z);
-#endif
 
 
     SendMoveToPacket();
@@ -3757,16 +3762,19 @@ bool AIInterface::CreatePath(float x, float y, float z, bool onlytest /*= false*
     if (nav == NULL)
         return false;
 
-    float start[3] = { m_Unit->GetPositionY(), m_Unit->GetPositionZ(), m_Unit->GetPositionX() };
-    float end[3] = { y, z, x };
-    float extents[3] = { 3, 5, 3 };
+    float start[VERTEX_SIZE] = { m_Unit->GetPositionY(), m_Unit->GetPositionZ(), m_Unit->GetPositionX() };
+    float end[VERTEX_SIZE] = { y, z, x };
+    float extents[VERTEX_SIZE] = { 3.0f, 5.0f, 3.0f };
+    float closest_point[VERTEX_SIZE] = { 0.0f, 0.0f, 0.0f };
 
     dtQueryFilter filter;
     filter.setIncludeFlags(NAV_GROUND | NAV_WATER | NAV_SLIME | NAV_MAGMA);
 
     dtPolyRef startref, endref;
-    nav->query->findNearestPoly(start, extents, &filter, &startref, NULL);
-    nav->query->findNearestPoly(end, extents, &filter, &endref, NULL);
+    if (dtStatusFailed(nav->query->findNearestPoly(start, extents, &filter, &startref, closest_point)))
+        return false;
+    if (dtStatusFailed(nav->query->findNearestPoly(end, extents, &filter, &endref, closest_point)))
+        return false;
 
 
     if (startref == 0 || endref == 0)
@@ -3892,7 +3900,7 @@ dtStatus AIInterface::findSmoothPath(const float* startPos, const float* endPos,
 
             // Handle the connection.
             float startPos[VERTEX_SIZE], endPos[VERTEX_SIZE];
-            if (dtStatusFailed(mesh->getOffMeshConnectionPolyEndPoints(prevRef, polyRef, startPos, endPos)))
+            if (!dtStatusFailed(mesh->getOffMeshConnectionPolyEndPoints(prevRef, polyRef, startPos, endPos)))
             {
                 if (nsmoothPath < maxSmoothPathSize)
                 {
@@ -4654,13 +4662,22 @@ bool AIInterface::MoveCharge(float x, float y, float z)
 
     m_runSpeed *= 3.5f;
 
-#ifdef TEST_PATHFINDING
-    if (!Flying())
+    if (sWorld.Pathfinding)
     {
-        if (!CreatePath(x, y, z))
+        //Log.Debug("AIInterface::MoveCharge", "Pathfinding is enabled");
+
+        if (!Flying())
         {
-            StopMovement(0); //old spline is probly still active on client, need to keep in sync
-            return false;
+            if (!CreatePath(x, y, z))
+            {
+                StopMovement(0); //old spline is probly still active on client, need to keep in sync
+                return false;
+            }
+        }
+        else
+        {
+            AddSpline(m_Unit->GetPositionX(), m_Unit->GetPositionY(), m_Unit->GetPositionZ());
+            AddSpline(x, y, z);
         }
     }
     else
@@ -4668,10 +4685,6 @@ bool AIInterface::MoveCharge(float x, float y, float z)
         AddSpline(m_Unit->GetPositionX(), m_Unit->GetPositionY(), m_Unit->GetPositionZ());
         AddSpline(x, y, z);
     }
-#else
-    AddSpline(m_Unit->GetPositionX(), m_Unit->GetPositionY(), m_Unit->GetPositionZ());
-    AddSpline(x, y, z);
-#endif
 
     UpdateSpeeds(); //reset run speed
 
