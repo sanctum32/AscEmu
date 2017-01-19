@@ -43,8 +43,8 @@ addons:
       name: AscEmu/AscEmu
       description: MMORPG Framework
     notification_email: autokaori@gmail.com
-    build_command_prepend: cmake ../ -DCMAKE_BUILD_TYPE=Release -DBUILD_TOOLS=0 && cov-configure --comptype gcc --compiler /usr/bin/gcc-5 && make clean
-    build_command: make -j2
+    build_command_prepend: cmake ../ -DCMAKE_BUILD_TYPE=Release -DBUILD_TOOLS=0
+    build_command: make
     branch_pattern: coverity_scan
 
 before_script:
@@ -53,9 +53,7 @@ before_script:
   - cmake --version
 
 script:
-  - if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then 
-    make -j2;
-    fi
+  - make
 
 #after_script:
 #  - cat /home/travis/build/AscEmu/AscEmu/ascemu_build/cov-int/build-log.txt
