@@ -1,121 +1,51 @@
 sudo: false
-language: c++
+language: cpp
+
+os:
+  - linux
 
 compiler:
   - gcc
-  - clang
-  
+
 git:
   depth: 1
-  submodules: false
 
 env:
   global:
     - secure: "Zk3bAxnp4OHPMMZYOSoM2chuMZXomp7BFcT54/Ag6C8RCqtpqQ+E6yHRp861xdWSVo9uZ/uGmD1pwPiIUK8Vs80+OwhFVvtor2MGXyQKX1oFYBg0mo5Z3Xzy+OPa3e0YBbe6SSqdUzDE1hIa7OrU8GWciIMobWQS7XIBbWg3TFU="
-  # Temp solution https://github.com/travis-ci/travis-ci/issues/4681
-  matrix:
-    - TRAVIS_EMPTY_JOB_WORKAROUND=true    
 
 before_install:
-  - if [ "$COMPILER" = "g++-6" ]; then export CXX="g++-6" CC="gcc-6"; fi
-  - if [ "$COMPILER" = "g++-5" ]; then export CXX="g++-5" CC="gcc-5"; fi
-  - if [ "$COMPILER" = "clang++-3.8" ]; then export CXX="clang++-3.8" CC="clang-3.8"; fi
-  - if [ "$COMPILER" = "clang++-3.7" ]; then export CXX="clang++-3.7" CC="clang-3.7"; fi
-#  - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
-#  - git submodule update --init --recursive
+  - if [[ $TRAVIS_OS_NAME == "linux" ]]; then
+    export CC=gcc-5 CXX=g++-5;
+    fi
 
 install:
   - mkdir ascemu_build
   - cd ascemu_build
   - cmake ../ -DCMAKE_BUILD_TYPE=Release -DBUILD_TOOLS=1
-    
-matrix:
-  #allow_failures:
-  #  - compiler: clang
-  include:
-    - os: linux
-      compiler: gcc
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - kalakris-cmake
-          packages:
-            - cmake
-            - zlib1g-dev
-            - libssl-dev
-            - libpcre3-dev
-            - libbz2-dev
-            - libmysqlclient-dev
-            - libmysql++-dev
-            - gcc-6
-            - g++-6
-      env: COMPILER=g++-6
-    - os: linux
-      compiler: gcc
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - kalakris-cmake
-          packages:
-            - cmake
-            - zlib1g-dev
-            - libssl-dev
-            - libpcre3-dev
-            - libbz2-dev
-            - libmysqlclient-dev
-            - libmysql++-dev
-            - gcc-5
-            - g++-5
-          coverity_scan:
-            project:
-              name: AscEmu/AscEmu
-              description: MMORPG Framework
-            notification_email: autokaori@gmail.com
-            build_command_prepend: cmake ../ -DCMAKE_BUILD_TYPE=Release -DBUILD_TOOLS=0 && cov-configure --comptype gcc --compiler /usr/bin/gcc-5 && make clean
-            build_command: make -j2
-            branch_pattern: coverity_scan
-      env: COMPILER=g++-5
-    - os: linux
-      compiler: clang
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.7
-            - kalakris-cmake
-          packages:
-            - cmake
-            - zlib1g-dev
-            - libssl-dev
-            - libpcre3-dev
-            - libbz2-dev
-            - libmysqlclient-dev
-            - libmysql++-dev
-            - clang-3.7
-      env: COMPILER=clang++-3.7
-    - os: linux
-      compiler: clang
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.8
-            - kalakris-cmake
-          packages:
-            - cmake
-            - zlib1g-dev
-            - libssl-dev
-            - libpcre3-dev
-            - libbz2-dev
-            - libmysqlclient-dev
-            - libmysql++-dev
-            - clang-3.8
-      env: COMPILER=clang++-3.8
-  exclude:
-    - env: TRAVIS_EMPTY_JOB_WORKAROUND=true
 
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - cmake
+    - zlib1g-dev
+    - libssl-dev
+    - libpcre3-dev
+    - libbz2-dev
+    - libmysqlclient-dev
+    - libmysql++-dev
+    - gcc-5
+    - g++-5
+  coverity_scan:
+    project:
+      name: AscEmu/AscEmu
+      description: MMORPG Framework
+    notification_email: autokaori@gmail.com
+    build_command_prepend: cmake ../ -DCMAKE_BUILD_TYPE=Release -DBUILD_TOOLS=0 && cov-configure --comptype gcc --compiler /usr/bin/gcc-5 && make clean
+    build_command: make -j2
+    branch_pattern: coverity_scan
 
 before_script:
   - ${CXX} --version
@@ -124,11 +54,10 @@ before_script:
 
 script:
   - if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then 
-    make CXX=$COMPILER -j2;
+    make -j2;
     fi
 
 #after_script:
 #  - cat /home/travis/build/AscEmu/AscEmu/ascemu_build/cov-int/build-log.txt
 #  - echo "===================================================================================================="
 #  - cat /home/travis/build/AscEmu/AscEmu/ascemu_build/cov-int/scm_log.txt
-
