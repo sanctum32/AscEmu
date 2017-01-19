@@ -53,7 +53,7 @@ before_script:
   - cmake --version
 
 script:
-  - make
+  - make -j2
 
 #after_script:
 #  - cat /home/travis/build/AscEmu/AscEmu/ascemu_build/cov-int/build-log.txt
