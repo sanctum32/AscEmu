@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -18,17 +18,14 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#if COMPILER == COMPILER_GNU
- // Required on gcc
 #include "StdAfx.h"
-#endif
 
 #include "ArathiBasin.h"
 
 #define BASE_RESOURCES_GAIN 10
 #define RESOURCES_WARNING_THRESHOLD 1400
 #define RESOURCES_WINVAL 1600
-#include <QuestLogEntry.hpp>
+#include <Management/QuestLogEntry.hpp>
 
 uint32 buffentries[3] = { 180380, 180362, 180146 };
 
@@ -158,7 +155,7 @@ static uint32 resourcesToGainBR = 160;
 void ArathiBasin::SpawnBuff(uint32 x)
 {
     uint32 chosen_buffid = buffentries[RandomUInt(2)];
-    auto gameobject_info = GameObjectNameStorage.LookupEntry(chosen_buffid);
+    auto gameobject_info = sMySQLStore.GetGameObjectProperties(chosen_buffid);
     if (gameobject_info == nullptr)
         return;
 
@@ -184,7 +181,7 @@ void ArathiBasin::SpawnBuff(uint32 x)
         {
             m_buffs[x]->SetNewGuid(m_mapMgr->GenerateGameobjectGuid());
             m_buffs[x]->SetEntry(chosen_buffid);
-            m_buffs[x]->SetInfo(gameobject_info);
+            m_buffs[x]->SetGameObjectProperties(gameobject_info);
         }
 
         m_buffs[x]->PushToWorld(m_mapMgr);
@@ -193,11 +190,11 @@ void ArathiBasin::SpawnBuff(uint32 x)
 
 void ArathiBasin::SpawnControlPoint(uint32 Id, uint32 Type)
 {
-    auto gameobject_info = GameObjectNameStorage.LookupEntry(ControlPointGoIds[Id][Type]);
+    auto gameobject_info = sMySQLStore.GetGameObjectProperties(ControlPointGoIds[Id][Type]);
     if (gameobject_info == nullptr)
         return;
 
-    auto gi_aura = gameobject_info->raw.parameter_3 ? GameObjectNameStorage.LookupEntry(gameobject_info->raw.parameter_3) : nullptr;
+    auto gi_aura = gameobject_info->raw.parameter_3 ? sMySQLStore.GetGameObjectProperties(gameobject_info->raw.parameter_3) : nullptr;
 
     if (m_controlPoints[Id] == nullptr)
     {
@@ -259,7 +256,7 @@ void ArathiBasin::SpawnControlPoint(uint32 Id, uint32 Type)
                 break;
         }
 
-        m_controlPoints[Id]->SetInfo(gameobject_info);
+        m_controlPoints[Id]->SetGameObjectProperties(gameobject_info);
         m_controlPoints[Id]->PushToWorld(m_mapMgr);
     }
 
@@ -293,7 +290,7 @@ void ArathiBasin::SpawnControlPoint(uint32 Id, uint32 Type)
         m_controlPointAuras[Id]->SetNewGuid(m_mapMgr->GenerateGameobjectGuid());
         m_controlPointAuras[Id]->SetEntry(gi_aura->entry);
         m_controlPointAuras[Id]->SetDisplayId(gi_aura->display_id);
-        m_controlPointAuras[Id]->SetInfo(gi_aura);
+        m_controlPointAuras[Id]->SetGameObjectProperties(gi_aura);
         m_controlPointAuras[Id]->PushToWorld(m_mapMgr);
     }
 }
@@ -629,7 +626,7 @@ void ArathiBasin::HookOnAreaTrigger(Player* plr, uint32 trigger)
         case 4021:            // Defiler's Den
             return;
         default:
-            sLog.Error("ArathiBasin", "Encountered unhandled areatrigger id %u", trigger);
+            LOG_ERROR("Encountered unhandled areatrigger id %u", trigger);
             return;
     }
 
@@ -641,14 +638,14 @@ void ArathiBasin::HookOnAreaTrigger(Player* plr, uint32 trigger)
         if (m_buffs[buffslot] && m_buffs[buffslot]->IsInWorld())
         {
             // apply the spell
-            auto spellid = m_buffs[buffslot]->GetInfo()->raw.parameter_3;
+            auto spellid = m_buffs[buffslot]->GetGameObjectProperties()->raw.parameter_3;
             m_buffs[buffslot]->RemoveFromWorld(false);
 
             // respawn it in buffrespawntime
             sEventMgr.AddEvent(this, &ArathiBasin::SpawnBuff, static_cast<uint32>(buffslot), EVENT_AB_RESPAWN_BUFF, AB_BUFF_RESPAWN_TIME, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
 
             // cast the spell on the player
-            SpellEntry* sp = dbcSpell.LookupEntryForced(spellid);
+            SpellInfo* sp = sSpellCustomizations.GetSpellInfo(spellid);
             if (sp)
             {
                 Spell* pSpell = sSpellFactoryMgr.NewSpell(plr, sp, true, nullptr);
@@ -886,7 +883,7 @@ void ArathiBasin::AssaultControlPoint(Player* pPlayer, uint32 Id)
             {
                 case AB_CONTROL_POINT_MINE:
                 {
-                    if (en && en->GetMobCount(0) < en->GetQuest()->required_mobcount[0])
+                    if (en && en->GetMobCount(0) < en->GetQuest()->required_mob_or_go_count[0])
                     {
                         en->SetMobCount(0, en->GetMobCount(0) + 1);
                         en->SendUpdateAddKill(0);
@@ -896,7 +893,7 @@ void ArathiBasin::AssaultControlPoint(Player* pPlayer, uint32 Id)
                 break;
                 case AB_CONTROL_POINT_LUMBERMILL:
                 {
-                    if (en && en->GetMobCount(1) < en->GetQuest()->required_mobcount[1])
+                    if (en && en->GetMobCount(1) < en->GetQuest()->required_mob_or_go_count[1])
                     {
                         en->SetMobCount(1, en->GetMobCount(1) + 1);
                         en->SendUpdateAddKill(1);
@@ -906,7 +903,7 @@ void ArathiBasin::AssaultControlPoint(Player* pPlayer, uint32 Id)
                 break;
                 case AB_CONTROL_POINT_BLACKSMITH:
                 {
-                    if (en && en->GetMobCount(2) < en->GetQuest()->required_mobcount[2])
+                    if (en && en->GetMobCount(2) < en->GetQuest()->required_mob_or_go_count[2])
                     {
                         en->SetMobCount(2, en->GetMobCount(2) + 1);
                         en->SendUpdateAddKill(2);
@@ -916,7 +913,7 @@ void ArathiBasin::AssaultControlPoint(Player* pPlayer, uint32 Id)
                 break;
                 case AB_CONTROL_POINT_STABLE:
                 {
-                    if (en && en->GetMobCount(3) < en->GetQuest()->required_mobcount[3])
+                    if (en && en->GetMobCount(3) < en->GetQuest()->required_mob_or_go_count[3])
                     {
                         en->SetMobCount(3, en->GetMobCount(3) + 1);
                         en->SendUpdateAddKill(3);
@@ -933,7 +930,7 @@ void ArathiBasin::AssaultControlPoint(Player* pPlayer, uint32 Id)
             {
                 case AB_CONTROL_POINT_MINE:
                 {
-                    if (en && en->GetMobCount(0) < en->GetQuest()->required_mobcount[0])
+                    if (en && en->GetMobCount(0) < en->GetQuest()->required_mob_or_go_count[0])
                     {
                         en->SetMobCount(0, en->GetMobCount(0) + 1);
                         en->SendUpdateAddKill(0);
@@ -943,7 +940,7 @@ void ArathiBasin::AssaultControlPoint(Player* pPlayer, uint32 Id)
                 break;
                 case AB_CONTROL_POINT_LUMBERMILL:
                 {
-                    if (en && en->GetMobCount(1) < en->GetQuest()->required_mobcount[1])
+                    if (en && en->GetMobCount(1) < en->GetQuest()->required_mob_or_go_count[1])
                     {
                         en->SetMobCount(1, en->GetMobCount(1) + 1);
                         en->SendUpdateAddKill(1);
@@ -953,7 +950,7 @@ void ArathiBasin::AssaultControlPoint(Player* pPlayer, uint32 Id)
                 break;
                 case AB_CONTROL_POINT_BLACKSMITH:
                 {
-                    if (en && en->GetMobCount(2) < en->GetQuest()->required_mobcount[2])
+                    if (en && en->GetMobCount(2) < en->GetQuest()->required_mob_or_go_count[2])
                     {
                         en->SetMobCount(2, en->GetMobCount(2) + 1);
                         en->SendUpdateAddKill(2);
@@ -963,7 +960,7 @@ void ArathiBasin::AssaultControlPoint(Player* pPlayer, uint32 Id)
                 break;
                 case AB_CONTROL_POINT_FARM:
                 {
-                    if (en && en->GetMobCount(3) < en->GetQuest()->required_mobcount[3])
+                    if (en && en->GetMobCount(3) < en->GetQuest()->required_mob_or_go_count[3])
                     {
                         en->SetMobCount(3, en->GetMobCount(3) + 1);
                         en->SendUpdateAddKill(3);

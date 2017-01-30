@@ -1,6 +1,6 @@
 /**
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org>
+ * Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2007-2015 Moon++ Team <http://www.moonplusplus.info/>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -35,7 +35,7 @@ class ArchmageMalin_Gossip : public Arcemu::Gossip::Script
 
         void OnSelectOption(Object* pObject, Player* plr, uint32 Id, const char* Code)
         {
-            static_cast<Creature*>(pObject)->CastSpell(plr, dbcSpell.LookupEntry(42711), true);
+            static_cast<Creature*>(pObject)->CastSpell(plr, sSpellCustomizations.GetSpellInfo(42711), true);
             Arcemu::Gossip::Menu::Complete(plr);
         }
 

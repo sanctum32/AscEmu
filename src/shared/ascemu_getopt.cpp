@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,10 @@
  *
  */
 
-#include "Common.h"
+#include "Common.hpp"
 #include "ascemu_getopt.h"
 
+#ifdef COMMANDLINE_OPT_ENABLE
 int arg_counter = 1;
 char arcemu_optarg[514];
 int arcemu_getopt_long_only(int ___argc, char* const* ___argv, const char* __shortopts, const struct arcemu_option* __longopts, int* __longind)
@@ -105,3 +106,4 @@ int arcemu_getopt_long_only(int ___argc, char* const* ___argv, const char* __sho
     return 1;
 }
 
+#endif

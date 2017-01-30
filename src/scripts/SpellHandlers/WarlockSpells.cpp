@@ -54,24 +54,24 @@ bool LifeTap(uint32 i, Spell* s)
         return false;
 
     uint32 mod;    // spirit bonus coefficient multiplied by 2
-    if(s->GetProto()->Id == 1454) mod = 2;
-    else if(s->GetProto()->Id == 1455) mod = 3;
-    else if(s->GetProto()->Id == 1456) mod = 4;
-    else if(s->GetProto()->Id == 11687) mod = 5;
+    if(s->GetSpellInfo()->Id == 1454) mod = 2;
+    else if(s->GetSpellInfo()->Id == 1455) mod = 3;
+    else if(s->GetSpellInfo()->Id == 1456) mod = 4;
+    else if(s->GetSpellInfo()->Id == 11687) mod = 5;
     else mod = 6;
 
-    uint32 damage = s->GetProto()->EffectBasePoints[i] + 1 + mod * playerTarget->GetStat(STAT_SPIRIT) / 2;
+    uint32 damage = s->GetSpellInfo()->EffectBasePoints[i] + 1 + mod * playerTarget->GetStat(STAT_SPIRIT) / 2;
 
     if(damage >= playerTarget->GetHealth())
         return false;
 
-    s->p_caster->DealDamage(playerTarget, damage, 0, 0, s->GetProto()->Id);
+    s->p_caster->DealDamage(playerTarget, damage, 0, 0, s->GetSpellInfo()->Id);
     damage = damage * (100 + playerTarget->m_lifetapbonus) / 100;    // Apply improved life tap
     if(playerTarget->GetPower(POWER_TYPE_MANA) + damage > playerTarget->GetMaxPower(POWER_TYPE_MANA))
         playerTarget->SetPower(POWER_TYPE_MANA, playerTarget->GetMaxPower(POWER_TYPE_MANA));
     else
         playerTarget->SetPower(POWER_TYPE_MANA, playerTarget->GetPower(POWER_TYPE_MANA) + damage);
-    s->SendHealManaSpellOnPlayer(s->p_caster, playerTarget, damage, POWER_TYPE_MANA, s->GetProto()->Id);
+    s->SendHealManaSpellOnPlayer(s->p_caster, playerTarget, damage, POWER_TYPE_MANA, s->GetSpellInfo()->Id);
 
     return true;
 }
@@ -239,12 +239,12 @@ bool MasterDemonologist1(uint32 i, Spell* s)
     if(casted_spell_id)
     {
         //for self
-        Spell* sp = sSpellFactoryMgr.NewSpell(s->p_caster, dbcSpell.LookupEntry(casted_spell_id), true, NULL);
+        Spell* sp = sSpellFactoryMgr.NewSpell(s->p_caster, sSpellCustomizations.GetSpellInfo(casted_spell_id), true, NULL);
         SpellCastTargets tgt(s->p_caster->GetGUID());
         sp->prepare(&tgt);
 
         //for pet
-        sp = sSpellFactoryMgr.NewSpell(unitTarget, dbcSpell.LookupEntry(casted_spell_id), true, NULL);
+        sp = sSpellFactoryMgr.NewSpell(unitTarget, sSpellCustomizations.GetSpellInfo(casted_spell_id), true, NULL);
         SpellCastTargets tgt1(unitTarget->GetGUID());
         sp->prepare(&tgt1);
     }
@@ -252,11 +252,11 @@ bool MasterDemonologist1(uint32 i, Spell* s)
     if(inc_resist_by_level_spell)
     {
         //for self
-        Spell* sp = sSpellFactoryMgr.NewSpell(s->p_caster, dbcSpell.LookupEntry(inc_resist_by_level_spell), true, NULL);
+        Spell* sp = sSpellFactoryMgr.NewSpell(s->p_caster, sSpellCustomizations.GetSpellInfo(inc_resist_by_level_spell), true, NULL);
         SpellCastTargets tgt(s->p_caster->GetGUID());
         sp->prepare(&tgt);
         //for pet
-        sp = sSpellFactoryMgr.NewSpell(unitTarget, dbcSpell.LookupEntry(inc_resist_by_level_spell), true, NULL);
+        sp = sSpellFactoryMgr.NewSpell(unitTarget, sSpellCustomizations.GetSpellInfo(inc_resist_by_level_spell), true, NULL);
         SpellCastTargets tgt1(unitTarget->GetGUID());
         sp->prepare(&tgt1);
     }
@@ -297,23 +297,23 @@ bool MasterDemonologist2(uint32 i, Spell* s)
     if(casted_spell_id)
     {
         //for self
-        Spell* sp = sSpellFactoryMgr.NewSpell(p_caster, dbcSpell.LookupEntry(casted_spell_id), true, NULL);
+        Spell* sp = sSpellFactoryMgr.NewSpell(p_caster, sSpellCustomizations.GetSpellInfo(casted_spell_id), true, NULL);
         SpellCastTargets tgt(p_caster->GetGUID());
         sp->prepare(&tgt);
         //for pet
-        sp = sSpellFactoryMgr.NewSpell(unitTarget, dbcSpell.LookupEntry(casted_spell_id), true, NULL);
+        sp = sSpellFactoryMgr.NewSpell(unitTarget, sSpellCustomizations.GetSpellInfo(casted_spell_id), true, NULL);
         SpellCastTargets tgt1(unitTarget->GetGUID());
         sp->prepare(&tgt1);
     }
     if(inc_resist_by_level_spell)
     {
         //for self
-        Spell* sp = sSpellFactoryMgr.NewSpell(p_caster, dbcSpell.LookupEntry(inc_resist_by_level_spell), true, NULL);
+        Spell* sp = sSpellFactoryMgr.NewSpell(p_caster, sSpellCustomizations.GetSpellInfo(inc_resist_by_level_spell), true, NULL);
         SpellCastTargets tgt(p_caster->GetGUID());
         sp->prepare(&tgt);
 
         //for pet
-        sp = sSpellFactoryMgr.NewSpell(unitTarget, dbcSpell.LookupEntry(inc_resist_by_level_spell), true, NULL);
+        sp = sSpellFactoryMgr.NewSpell(unitTarget, sSpellCustomizations.GetSpellInfo(inc_resist_by_level_spell), true, NULL);
         SpellCastTargets tgt1(unitTarget->GetGUID());
         sp->prepare(&tgt1);
     }
@@ -354,22 +354,22 @@ bool MasterDemonologist3(uint32 i, Spell* s)
     if(casted_spell_id)
     {
         //for self
-        Spell* sp = sSpellFactoryMgr.NewSpell(p_caster, dbcSpell.LookupEntry(casted_spell_id), true, NULL);
+        Spell* sp = sSpellFactoryMgr.NewSpell(p_caster, sSpellCustomizations.GetSpellInfo(casted_spell_id), true, NULL);
         SpellCastTargets tgt(p_caster->GetGUID());
         sp->prepare(&tgt);
         //for pet
-        sp = sSpellFactoryMgr.NewSpell(unitTarget, dbcSpell.LookupEntry(casted_spell_id), true, NULL);
+        sp = sSpellFactoryMgr.NewSpell(unitTarget, sSpellCustomizations.GetSpellInfo(casted_spell_id), true, NULL);
         SpellCastTargets tgt1(unitTarget->GetGUID());
         sp->prepare(&tgt1);
     }
     if(inc_resist_by_level_spell)
     {
         //for self
-        Spell* sp = sSpellFactoryMgr.NewSpell(p_caster, dbcSpell.LookupEntry(inc_resist_by_level_spell), true, NULL);
+        Spell* sp = sSpellFactoryMgr.NewSpell(p_caster, sSpellCustomizations.GetSpellInfo(inc_resist_by_level_spell), true, NULL);
         SpellCastTargets tgt(p_caster->GetGUID());
         sp->prepare(&tgt);
         //for pet
-        sp = sSpellFactoryMgr.NewSpell(unitTarget, dbcSpell.LookupEntry(inc_resist_by_level_spell), true, NULL);
+        sp = sSpellFactoryMgr.NewSpell(unitTarget, sSpellCustomizations.GetSpellInfo(inc_resist_by_level_spell), true, NULL);
         SpellCastTargets tgt1(unitTarget->GetGUID());
         sp->prepare(&tgt1);
     }
@@ -410,22 +410,22 @@ bool MasterDemonologist4(uint32 i, Spell* s)
     if(casted_spell_id)
     {
         //for self
-        Spell* sp = sSpellFactoryMgr.NewSpell(p_caster, dbcSpell.LookupEntry(casted_spell_id), true, NULL);
+        Spell* sp = sSpellFactoryMgr.NewSpell(p_caster, sSpellCustomizations.GetSpellInfo(casted_spell_id), true, NULL);
         SpellCastTargets tgt(p_caster->GetGUID());
         sp->prepare(&tgt);
         //for pet
-        sp = sSpellFactoryMgr.NewSpell(unitTarget, dbcSpell.LookupEntry(casted_spell_id), true, NULL);
+        sp = sSpellFactoryMgr.NewSpell(unitTarget, sSpellCustomizations.GetSpellInfo(casted_spell_id), true, NULL);
         SpellCastTargets tgt1(unitTarget->GetGUID());
         sp->prepare(&tgt1);
     }
     if(inc_resist_by_level_spell)
     {
         //for self
-        Spell* sp = sSpellFactoryMgr.NewSpell(p_caster, dbcSpell.LookupEntry(inc_resist_by_level_spell), true, NULL);
+        Spell* sp = sSpellFactoryMgr.NewSpell(p_caster, sSpellCustomizations.GetSpellInfo(inc_resist_by_level_spell), true, NULL);
         SpellCastTargets tgt(p_caster->GetGUID());
         sp->prepare(&tgt);
         //for pet
-        sp = sSpellFactoryMgr.NewSpell(unitTarget, dbcSpell.LookupEntry(inc_resist_by_level_spell), true, NULL);
+        sp = sSpellFactoryMgr.NewSpell(unitTarget, sSpellCustomizations.GetSpellInfo(inc_resist_by_level_spell), true, NULL);
         SpellCastTargets tgt1(unitTarget->GetGUID());
         sp->prepare(&tgt1);
     }
@@ -466,11 +466,11 @@ bool MasterDemonologist5(uint32 i, Spell* s)
     if(casted_spell_id)
     {
         //for self
-        Spell* sp = sSpellFactoryMgr.NewSpell(p_caster, dbcSpell.LookupEntry(casted_spell_id), true, NULL);
+        Spell* sp = sSpellFactoryMgr.NewSpell(p_caster, sSpellCustomizations.GetSpellInfo(casted_spell_id), true, NULL);
         SpellCastTargets tgt(p_caster->GetGUID());
         sp->prepare(&tgt);
         //for pet
-        sp = sSpellFactoryMgr.NewSpell(unitTarget, dbcSpell.LookupEntry(casted_spell_id), true, NULL);
+        sp = sSpellFactoryMgr.NewSpell(unitTarget, sSpellCustomizations.GetSpellInfo(casted_spell_id), true, NULL);
         SpellCastTargets tgt1(unitTarget->GetGUID());
         sp->prepare(&tgt1);
     }
@@ -478,11 +478,11 @@ bool MasterDemonologist5(uint32 i, Spell* s)
     if(inc_resist_by_level_spell)
     {
         //for self
-        Spell* sp = sSpellFactoryMgr.NewSpell(p_caster, dbcSpell.LookupEntry(inc_resist_by_level_spell), true, NULL);
+        Spell* sp = sSpellFactoryMgr.NewSpell(p_caster, sSpellCustomizations.GetSpellInfo(inc_resist_by_level_spell), true, NULL);
         SpellCastTargets tgt(p_caster->GetGUID());
         sp->prepare(&tgt);
         //for pet
-        sp = sSpellFactoryMgr.NewSpell(unitTarget, dbcSpell.LookupEntry(inc_resist_by_level_spell), true, NULL);
+        sp = sSpellFactoryMgr.NewSpell(unitTarget, sSpellCustomizations.GetSpellInfo(inc_resist_by_level_spell), true, NULL);
         SpellCastTargets tgt1(unitTarget->GetGUID());
         sp->prepare(&tgt1);
     }
@@ -492,15 +492,13 @@ bool MasterDemonologist5(uint32 i, Spell* s)
 
 bool SummonSuccubusQuest(uint32 i, Spell* s)
 {
-
-    CreatureInfo* ci = CreatureNameStorage.LookupEntry(5677);
-    CreatureProto* cp = CreatureProtoStorage.LookupEntry(5677);
-    if(!ci || !cp)
+    CreatureProperties const* cp = sMySQLStore.GetCreatureProperties(5677);
+    if (cp == nullptr)
         return false;
 
     Creature* pCreature = s->p_caster->GetMapMgr()->CreateCreature(cp->Id);
     pCreature->Load(cp, s->p_caster->GetPositionX(), s->p_caster->GetPositionY(), s->p_caster->GetPositionZ());
-    pCreature->GetAIInterface()->Init(pCreature, AITYPE_AGRO, MOVEMENTTYPE_NONE);
+    pCreature->GetAIInterface()->Init(pCreature, AITYPE_AGRO, Movement::WP_MOVEMENT_SCRIPT_NONE);
     pCreature->GetAIInterface()->taunt(s->p_caster, true);
     pCreature->PushToWorld(s->p_caster->GetMapMgr());
     pCreature->Despawn(60000, 0);
@@ -512,15 +510,13 @@ bool SummonVoidWalkerQuest(uint32 i, Spell* s)
 {
     Player* p_caster = s->p_caster;
 
-    CreatureInfo* ci = CreatureNameStorage.LookupEntry(5676);
-    CreatureProto* cp = CreatureProtoStorage.LookupEntry(5676);
-
-    if(!ci || !cp)
+    CreatureProperties const* cp = sMySQLStore.GetCreatureProperties(5676);
+    if (cp == nullptr)
         return false;
 
     Creature* pCreature = p_caster->GetMapMgr()->CreateCreature(cp->Id);
     pCreature->Load(cp, p_caster->GetPositionX(), p_caster->GetPositionY(), p_caster->GetPositionZ());
-    pCreature->GetAIInterface()->Init(pCreature, AITYPE_AGRO, MOVEMENTTYPE_NONE);
+    pCreature->GetAIInterface()->Init(pCreature, AITYPE_AGRO, Movement::WP_MOVEMENT_SCRIPT_NONE);
     pCreature->GetAIInterface()->taunt(p_caster, true);
     pCreature->PushToWorld(p_caster->GetMapMgr());
     pCreature->Despawn(60000, 0);
@@ -532,14 +528,13 @@ bool SummonFelHunterQuest(uint32 i, Spell* s)
 {
     Player* p_caster = s->p_caster;
 
-    CreatureInfo* ci = CreatureNameStorage.LookupEntry(6268);
-    CreatureProto* cp = CreatureProtoStorage.LookupEntry(6268);
-    if(!ci || !cp)
+    CreatureProperties const* cp = sMySQLStore.GetCreatureProperties(6268);
+    if (cp == nullptr)
         return false;
 
     Creature* pCreature = p_caster->GetMapMgr()->CreateCreature(cp->Id);
     pCreature->Load(cp, p_caster->GetPositionX(), p_caster->GetPositionY(), p_caster->GetPositionZ());
-    pCreature->GetAIInterface()->Init(pCreature, AITYPE_AGRO, MOVEMENTTYPE_NONE);
+    pCreature->GetAIInterface()->Init(pCreature, AITYPE_AGRO, Movement::WP_MOVEMENT_SCRIPT_NONE);
     pCreature->GetAIInterface()->taunt(p_caster, true);
     pCreature->PushToWorld(p_caster->GetMapMgr());
     pCreature->Despawn(60000, 0);
@@ -630,7 +625,7 @@ bool SoulStoneResurrection(uint32 i, Aura* a, bool apply)
         return true;
 
     Player* p_target = static_cast<Player*>(u_target);
-    uint32 soulstone = a->GetSpellProto()->EffectMiscValue[ 0 ];
+    uint32 soulstone = a->GetSpellInfo()->EffectMiscValue[ 0 ];
 
     if(apply)
     {
@@ -656,7 +651,7 @@ bool DemonicCircleSummon(uint32 i, Aura* a, bool apply)
     {
 
         GameObject* circle = m_target->GetMapMgr()->GetGameObject(a->GetTarget()->m_ObjectSlots[ 0 ]);
-        SpellEntry* sp = dbcSpell.LookupEntryForced(48020);
+        SpellInfo* sp = sSpellCustomizations.GetSpellInfo(48020);
 
         if(circle != NULL && sp != NULL && m_target->CalcDistance(circle) <= GetMaxRange(sSpellRangeStore.LookupEntry(sp->rangeIndex)))
         {

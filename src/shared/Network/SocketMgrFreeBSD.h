@@ -48,7 +48,7 @@ class SocketMgr : public Singleton<SocketMgr>
             kq = kqueue();
             if(kq == -1)
             {
-                sLog.outError("Could not create a kqueue fd.");
+                LogError("Could not create a kqueue fd.");
                 exit(-1);
             }
 
@@ -81,6 +81,8 @@ class SocketMgr : public Singleton<SocketMgr>
 
         /// closes all sockets
         void CloseAll();
+
+        uint32 GetSocketCount() { return socket_count.GetVal(); }
 
         /// spawns worker threads
         void SpawnWorkerThreads();

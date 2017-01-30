@@ -48,7 +48,7 @@ void AHumbleTask(Player* pPlayer, Object* pObject)
 void Yorus_Barleybrew(Player* pPlayer, Object* pObject)
 {
     (static_cast<Creature*>(pObject))->Emote(EMOTE_ONESHOT_POINT);
-    pPlayer->CastSpell(pPlayer, dbcSpell.LookupEntry(8554), true);
+    pPlayer->CastSpell(pPlayer, sSpellCustomizations.GetSpellInfo(8554), true);
 }
 
 void Menara_Voidrender(Player* pPlayer, Object* pObject)
@@ -96,12 +96,12 @@ void ZuluhedtheWhacked(Player* pPlayer, Object* pObject)
 }
 //=================================================================================================
 
-void OnQuestAccept(Player* pPlayer, Quest* pQuest, Object* pObject)
+void OnQuestAccept(Player* pPlayer, QuestProperties* pQuest, Object* pObject)
 {
     if(pPlayer == NULL || pQuest == NULL || pObject == NULL || !pObject->IsInWorld() || !pPlayer->IsInWorld() || !pObject->IsCreature())
         return;
 
-    switch(pQuest->id)
+    switch (pQuest->id)
     {
         case 790:
             Hanazua_III(pPlayer, pObject);
@@ -187,12 +187,12 @@ void MaybellComplete(Player* pPlayer, Object* pObject)
 
 //========================================================================================
 
-void OnQuestFinished(Player* pPlayer, Quest* pQuest, Object* pObject)
+void OnQuestFinished(Player* pPlayer, QuestProperties* pQuest, Object* pObject)
 {
     if(pPlayer == NULL || pQuest == NULL || pObject == NULL || !pObject->IsCreature())
         return;
 
-    switch(pQuest->id)
+    switch (pQuest->id)
     {
         case 790:
             Hanazua_II(pPlayer, pObject);
@@ -233,12 +233,12 @@ void ZuluhedtheWhackedCancel(Player* pPlayer)
 
 //========================================================================================
 
-void OnQuestCancelled(Player* pPlayer, Quest* pQuest)
+void OnQuestCancelled(Player* pPlayer, QuestProperties* pQuest)
 {
     if(pPlayer == NULL || pQuest == NULL)
         return;
 
-    switch(pQuest->id)
+    switch (pQuest->id)
     {
         case 10872:
             ZuluhedtheWhackedCancel(pPlayer);

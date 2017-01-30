@@ -1,6 +1,6 @@
 /**
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org>
+ * Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2007-2015 Moon++ Team <http://www.moonplusplus.info/>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -73,7 +73,7 @@ class ZephyrGossipScript : public Arcemu::Gossip::Script
         {
             if (plr->GetStanding(989) >= 21000)
                 //plr->SafeTeleport( 1, 0, -8170.441406f, -4751.321777f, 33.457771f, 5.136f);
-                static_cast<Creature*>(pObject)->CastSpell(plr, dbcSpell.LookupEntry(37778), true);
+                static_cast<Creature*>(pObject)->CastSpell(plr, sSpellCustomizations.GetSpellInfo(37778), true);
             else
                 plr->BroadcastMessage(plr->GetSession()->LocalizedWorldSrv(Worldstring::SHATT_ZEPH_KOT)); // Dunno what the correct text is ^^
             Arcemu::Gossip::Menu::Complete(plr);

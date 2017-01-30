@@ -345,8 +345,8 @@ class Volkhan : public MoonScriptCreatureAI
         m_cVolkhanWP.z = 56.675297f;
         m_cVolkhanWP.o = 2.235341f;
 
-        SetMoveType(Move_DontMoveWP);
-        AddWaypoint(CreateWaypoint(1, 0, Flag_Run, m_cVolkhanWP));
+        SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
+        AddWaypoint(CreateWaypoint(1, 0, Movement::WP_MOVE_TYPE_RUN, m_cVolkhanWP));
         mStompTimer = INVALIDATE_TIMER;
         mPhase = 0;
         m_bStomp = false;
@@ -463,7 +463,7 @@ class Volkhan : public MoonScriptCreatureAI
     }
 
     SpellDesc* mStomp;
-    Location m_cVolkhanWP;
+    Movement::Location m_cVolkhanWP;
     bool m_bStomp;
     int32 mStompTimer;
     int32 mPhase;

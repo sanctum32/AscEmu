@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2008-2015 Sun++ Team <http://www.sunplusplus.info/>
  *
@@ -143,11 +143,11 @@ class ChaoticRiftAI : public MoonScriptBossAI
         ChaoticRiftAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
         {
             _unit->GetAIInterface()->SetAllowedToEnterCombat(false);
-            auto spell_mana_wrath = dbcSpell.LookupEntryForced(SUMMON_MANA_WRAITH);
+            auto spell_mana_wrath = sSpellCustomizations.GetSpellInfo(SUMMON_MANA_WRAITH);
             if (spell_mana_wrath != nullptr)
                 AddSpell(SUMMON_MANA_WRAITH, Target_Self, 30, 0, spell_mana_wrath->RecoveryTime);
 
-            auto spell_energy_burst = dbcSpell.LookupEntryForced(CHAOTIC_ENERGY_BURST);
+            auto spell_energy_burst = sSpellCustomizations.GetSpellInfo(CHAOTIC_ENERGY_BURST);
             if (spell_energy_burst != nullptr)
                 AddSpell(CHAOTIC_ENERGY_BURST, Target_RandomPlayer, 30, 0, spell_energy_burst->RecoveryTime);
         };
@@ -195,7 +195,7 @@ class CraziedManaWrathAI : public MoonScriptBossAI
 
 //////////////////////////////////////////////////////////////////////////////////////////
 /// Grand Magus Telestra
-static Location FormSpawns[] =
+static Movement::Location FormSpawns[] =
 {
     { 494.726990f, 89.128799f, -15.941300f, 6.021390f },
     { 495.006012f, 89.328102f, -16.124609f, 0.027486f },
@@ -512,11 +512,11 @@ class CrystalSpikeAI : public MoonScriptBossAI
         {
             if (IsHeroic())
             {
-                _unit->CastSpell(_unit, dbcSpell.LookupEntry(SPELL_CRYSTAL_SPIKE_H), true);
+                _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(SPELL_CRYSTAL_SPIKE_H), true);
             }
             else
             {
-                _unit->CastSpell(_unit, dbcSpell.LookupEntry(SPELL_CRYSTAL_SPIKE), true);
+                _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(SPELL_CRYSTAL_SPIKE), true);
             };
         };
     };

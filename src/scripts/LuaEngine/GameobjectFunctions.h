@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org>
+ * Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2007 Moon++ <http://www.moonplusplus.info/>
  *
@@ -30,9 +30,9 @@ class LuaGameObject
 
         static int GossipCreateMenu(lua_State* L, GameObject* ptr)
         {
-            int text_id = luaL_checkinteger(L, 1);
+            int text_id = static_cast<int>(luaL_checkinteger(L, 1));
             Player* target = CHECK_PLAYER(L, 2);
-            int autosend = luaL_checkinteger(L, 3);
+            int autosend = static_cast<int>(luaL_checkinteger(L, 3));
             if (!target || !ptr)
                 return 0;
 
@@ -49,12 +49,12 @@ class LuaGameObject
 
         static int GossipMenuAddItem(lua_State * L, GameObject * ptr)
         {
-            int icon = luaL_checkinteger(L, 1);
+            int icon = static_cast<int>(luaL_checkinteger(L, 1));
             const char * menu_text = luaL_checkstring(L, 2);
-            int IntId = luaL_checkinteger(L, 3);
+            int IntId = static_cast<int>(luaL_checkinteger(L, 3));
             bool coded = (luaL_checkinteger(L, 4)) ? true : false;
             const char * boxmessage = luaL_optstring(L, 5, "");
-            uint32 boxmoney = luaL_optinteger(L, 6, 0);
+            uint32 boxmoney = static_cast<uint32>(luaL_optinteger(L, 6, 0));
 
             if (Menu == NULL)
             {
@@ -105,9 +105,9 @@ class LuaGameObject
             Player* plr = CHECK_PLAYER(L, 1);
             float x = CHECK_FLOAT(L, 2);
             float y = CHECK_FLOAT(L, 3);
-            int icon = luaL_checkinteger(L, 4);
-            int flags = luaL_checkinteger(L, 5);
-            int data = luaL_checkinteger(L, 6);
+            int icon = static_cast<int>(luaL_checkinteger(L, 4));
+            int flags = static_cast<int>(luaL_checkinteger(L, 5));
+            int data = static_cast<int>(luaL_checkinteger(L, 6));
             const char* name = luaL_checkstring(L, 7);
             if (!plr)
                 return 0;
@@ -120,9 +120,9 @@ class LuaGameObject
         {
             TEST_GO()
 
-            uint32 text_id = luaL_checkinteger(L, 1);
+            uint32 text_id = static_cast<uint32>(luaL_checkinteger(L, 1));
             Player *player = CHECK_PLAYER(L, 2);
-            uint32 itemid = luaL_checkinteger(L, 3);
+            uint32 itemid = static_cast<uint32>(luaL_checkinteger(L, 3));
             uint8 itemicon = CHECK_UINT8(L, 4);
             const char *itemtext = luaL_checkstring(L, 5);
             uint32 requiredmoney = CHECK_ULONG(L, 6);
@@ -189,9 +189,9 @@ class LuaGameObject
         static int GetName(lua_State* L, GameObject* ptr)
         {
             TEST_GO()
-            if (!ptr->GetInfo())
+            if (!ptr->GetGameObjectProperties())
                 return 0;
-            lua_pushstring(L, ptr->GetInfo()->name);
+            lua_pushstring(L, ptr->GetGameObjectProperties()->name.c_str());
             return 1;
         }
 
@@ -280,7 +280,7 @@ class LuaGameObject
         static int PlaySoundToSet(lua_State* L, GameObject* ptr)
         {
             if (!ptr) return 0;
-            int soundid = luaL_checkinteger(L, 1);
+            int soundid = static_cast<int>(luaL_checkinteger(L, 1));
             ptr->PlaySoundToSet(soundid);
             return 0;
         }
@@ -295,27 +295,25 @@ class LuaGameObject
             float o = CHECK_FLOAT(L, 5);
             uint32 faction = CHECK_ULONG(L, 6);
             uint32 duration = CHECK_ULONG(L, 7);
-            uint32 equip1 = luaL_optinteger(L, 8, 1);
-            uint32 equip2 = luaL_optinteger(L, 9, 1);
-            uint32 equip3 = luaL_optinteger(L, 10, 1);
-            uint32 phase = luaL_optinteger(L, 11, ptr->m_phase);
-            bool save = luaL_optinteger(L, 12, 0) ? true : false;
+            uint32 equip1 = static_cast<uint32>(luaL_optinteger(L, 8, 1));
+            uint32 equip2 = static_cast<uint32>(luaL_optinteger(L, 9, 1));
+            uint32 equip3 = static_cast<uint32>(luaL_optinteger(L, 10, 1));
+            uint32 phase = static_cast<uint32>(luaL_optinteger(L, 11, ptr->m_phase));
+            bool save = (luaL_optinteger(L, 12, 0) ? true : false);
 
             if (!entry)
             {
                 lua_pushnil(L);
                 return 1;
             }
-            CreatureProto* p = CreatureProtoStorage.LookupEntry(entry);
-            CreatureInfo* i = CreatureNameStorage.LookupEntry(entry);
-
-            if (p == NULL || i == NULL)
+            CreatureProperties const* p = sMySQLStore.GetCreatureProperties(entry);
+            if (p == nullptr)
             {
                 lua_pushnil(L);
                 return 1;
             }
             Creature* pCreature = ptr->GetMapMgr()->CreateCreature(entry);
-            if (pCreature == NULL)
+            if (pCreature == nullptr)
             {
                 lua_pushnil(L);
                 return 1;
@@ -347,7 +345,7 @@ class LuaGameObject
             float o = CHECK_FLOAT(L, 5);
             uint32 duration = CHECK_ULONG(L, 6);
             float scale = (float)(luaL_optinteger(L, 7, 100) / 100.0f);
-            uint32 phase = luaL_optinteger(L, 8, ptr->m_phase);
+            uint32 phase = static_cast<uint32>(luaL_optinteger(L, 8, ptr->m_phase));
             bool save = luaL_optinteger(L, 9, 0) ? true : false;
             if (!entry_id)
                 return 0;
@@ -426,7 +424,7 @@ class LuaGameObject
         static int GetInRangePlayersCount(lua_State* L, GameObject* ptr)
         {
             TEST_GO()
-            lua_pushnumber(L, ptr->GetInRangePlayersCount());
+            lua_pushnumber(L, static_cast<lua_Number>(ptr->GetInRangePlayersCount()));
             return 1;
         }
 
@@ -473,7 +471,7 @@ class LuaGameObject
             TEST_GO_RET();
             uint32 count = 0;
             lua_newtable(L);
-            for (std::set<Object*>::iterator itr = ptr->GetInRangePlayerSetBegin(); itr != ptr->GetInRangePlayerSetEnd(); itr++)
+            for (std::set<Object*>::iterator itr = ptr->GetInRangePlayerSetBegin(); itr != ptr->GetInRangePlayerSetEnd(); ++itr)
             {
                 if ((*itr)->IsUnit())
                 {
@@ -491,7 +489,7 @@ class LuaGameObject
             TEST_GO_RET();
             uint32 count = 0;
             lua_newtable(L);
-            for (std::set<Object*>::iterator itr = ptr->GetInRangeSetBegin(); itr != ptr->GetInRangeSetEnd(); itr++)
+            for (std::set<Object*>::iterator itr = ptr->GetInRangeSetBegin(); itr != ptr->GetInRangeSetEnd(); ++itr)
             {
                 if ((*itr)->IsGameObject())
                 {
@@ -509,7 +507,7 @@ class LuaGameObject
             TEST_GO();
             uint32 count = 0;
             lua_newtable(L);
-            for (std::set<Object*>::iterator itr = ptr->GetInRangeSetBegin(); itr != ptr->GetInRangeSetEnd(); itr++)
+            for (std::set<Object*>::iterator itr = ptr->GetInRangeSetBegin(); itr != ptr->GetInRangeSetEnd(); ++itr)
             {
                 if ((*itr)->IsUnit())
                 {
@@ -556,7 +554,7 @@ class LuaGameObject
 
         static int GetUInt32Value(lua_State* L, GameObject* ptr)
         {
-            int field = luaL_checkinteger(L, 1);
+            int field = static_cast<int>(luaL_checkinteger(L, 1));
             if (ptr && field > 0)
                 lua_pushinteger(L, ptr->GetUInt32Value(field));
             else
@@ -566,7 +564,7 @@ class LuaGameObject
 
         static int GetUInt64Value(lua_State* L, GameObject* ptr)
         {
-            int field = luaL_checkinteger(L, 1);
+            int field = static_cast<int>(luaL_checkinteger(L, 1));
             if (ptr && field)
                 PUSH_GUID(L, ptr->GetUInt64Value(field));
             else
@@ -576,8 +574,8 @@ class LuaGameObject
 
         static int SetUInt32Value(lua_State* L, GameObject* ptr)
         {
-            int field = luaL_checkinteger(L, 1);
-            int value = luaL_checkinteger(L, 2);
+            int field = static_cast<int>(luaL_checkinteger(L, 1));
+            int value = static_cast<int>(luaL_checkinteger(L, 2));
             if (ptr && field)
                 ptr->SetUInt32Value(field, value);
             return 0;
@@ -585,7 +583,7 @@ class LuaGameObject
 
         static int SetUInt64Value(lua_State* L, GameObject* ptr)
         {
-            int field = luaL_checkinteger(L, 1);
+            int field = static_cast<int>(luaL_checkinteger(L, 1));
             uint64 guid = CHECK_GUID(L, 1);
             if (ptr && field)
                 ptr->SetUInt64Value(field, guid);
@@ -594,7 +592,7 @@ class LuaGameObject
 
         static int SetFloatValue(lua_State* L, GameObject* ptr)
         {
-            int field = luaL_checkinteger(L, 1);
+            int field = static_cast<int>(luaL_checkinteger(L, 1));
             float value = CHECK_FLOAT(L, 2);
             if (ptr)
                 ptr->SetFloatValue(field, value);
@@ -603,8 +601,8 @@ class LuaGameObject
 
         static int RemoveFlag(lua_State* L, GameObject* ptr)
         {
-            int field = luaL_checkinteger(L, 1);
-            int value = luaL_checkinteger(L, 2);
+            int field = static_cast<int>(luaL_checkinteger(L, 1));
+            int value = static_cast<int>(luaL_checkinteger(L, 2));
             if (ptr)
                 ptr->RemoveFlag(field, value);
             return 0;
@@ -612,8 +610,8 @@ class LuaGameObject
 
         static int SetFlag(lua_State* L, GameObject* ptr)
         {
-            int field = luaL_checkinteger(L, 1);
-            int value = luaL_checkinteger(L, 2);
+            int field = static_cast<int>(luaL_checkinteger(L, 1));
+            int value = static_cast<int>(luaL_checkinteger(L, 2));
             if (ptr)
                 ptr->SetFlag(field, value);
             return 0;
@@ -636,7 +634,7 @@ class LuaGameObject
 
         static int GetFloatValue(lua_State* L, GameObject* ptr)
         {
-            int field = luaL_checkinteger(L, 1);
+            int field = static_cast<int>(luaL_checkinteger(L, 1));
             if (ptr && field)
                 lua_pushnumber(L, ptr->GetFloatValue(field));
             else
@@ -646,8 +644,8 @@ class LuaGameObject
 
         static int ModUInt32Value(lua_State* L, GameObject* ptr)
         {
-            int field = luaL_checkinteger(L, 1);
-            int value = luaL_checkinteger(L, 2);
+            int field = static_cast<int>(luaL_checkinteger(L, 1));
+            int value = static_cast<int>(luaL_checkinteger(L, 2));
             if (ptr && field)
                 ptr->ModSignedInt32Value(field, value);
             return 0;
@@ -659,7 +657,7 @@ class LuaGameObject
             uint32 sp = CHECK_ULONG(L, 1);
             if (sp)
             {
-                Spell* tSpell = sSpellFactoryMgr.NewSpell(ptr, dbcSpell.LookupEntry(sp), true, NULL);
+                Spell* tSpell = sSpellFactoryMgr.NewSpell(ptr, sSpellCustomizations.GetSpellInfo(sp), true, NULL);
                 SpellCastTargets tar(ptr->GetGUID());
                 tSpell->prepare(&tar);
             }
@@ -672,7 +670,7 @@ class LuaGameObject
             Object* target = CHECK_OBJECT(L, 2);
             if (sp && target != NULL)
             {
-                Spell* tSpell = sSpellFactoryMgr.NewSpell(ptr, dbcSpell.LookupEntry(sp), true, NULL);
+                Spell* tSpell = sSpellFactoryMgr.NewSpell(ptr, sSpellCustomizations.GetSpellInfo(sp), true, NULL);
                 SpellCastTargets spCastTargets(target->GetGUID());
                 tSpell->prepare(&spCastTargets);
             }
@@ -871,8 +869,8 @@ class LuaGameObject
         static int DespawnObject(lua_State* L, GameObject* ptr)
         {
             TEST_GO()
-                int delay = luaL_checkinteger(L, 1);
-            int respawntime = luaL_checkinteger(L, 2);
+            int delay = static_cast<int>(luaL_checkinteger(L, 1));
+            int respawntime = static_cast<int>(luaL_checkinteger(L, 2));
             if (!delay)
                 delay = 1; //Delay 0 might cause bugs
             ptr->Despawn(delay, respawntime);
@@ -889,9 +887,9 @@ class LuaGameObject
                 return 0;
             GameObject_Lootable* lt = static_cast<GameObject_Lootable*>(ptr);
 
-            uint32 itemid = luaL_checkinteger(L, 1);
-            uint32 mincount = luaL_checkinteger(L, 2);
-            uint32 maxcount = luaL_checkinteger(L, 3);
+            uint32 itemid = static_cast<uint32>(luaL_checkinteger(L, 1));
+            uint32 mincount = static_cast<uint32>(luaL_checkinteger(L, 2));
+            uint32 maxcount = static_cast<uint32>(luaL_checkinteger(L, 3));
             bool perm = ((luaL_optinteger(L, 4, 0) == 1) ? true : false);
             if (perm)
             {
@@ -907,7 +905,7 @@ class LuaGameObject
 
         static int GetInstanceOwner(lua_State* L, GameObject* ptr)
         {
-            MapInfo* pMapinfo = WorldMapInfoStorage.LookupEntry(ptr->GetMapId());
+            MapInfo const* pMapinfo = sMySQLStore.GetWorldMapInfo(ptr->GetMapId());
             if (pMapinfo)  //this block = IsInInstace()
             {
                 if (pMapinfo->type != INSTANCE_NULL)
@@ -930,7 +928,7 @@ class LuaGameObject
                 uint32 group_id = pInstance->m_creatorGroup;
                 if (group_id == 0)
                 {
-                    Log.Error("LuA:GetInstanceOwner", "Instance is not not owned by a group or a guid!");
+                    LOG_ERROR("Instance is not not owned by a group or a guid!");
                     return 0;
                 }
 
@@ -953,7 +951,7 @@ class LuaGameObject
 
         static int GetDungeonDifficulty(lua_State* L, GameObject* ptr)
         {
-            MapInfo* pMapinfo = WorldMapInfoStorage.LookupEntry(ptr->GetMapId());
+            MapInfo const* pMapinfo = sMySQLStore.GetWorldMapInfo(ptr->GetMapId());
             if (pMapinfo)  //this block = IsInInstace()
             {
                 if (pMapinfo->type != INSTANCE_NULL)
@@ -973,8 +971,8 @@ class LuaGameObject
 
         static int SetDungeonDifficulty(lua_State* L, GameObject* ptr)
         {
-            uint8 difficulty = luaL_checkinteger(L, 1);
-            MapInfo* pMapinfo = WorldMapInfoStorage.LookupEntry(ptr->GetMapId());
+            uint8 difficulty = static_cast<uint8>(luaL_checkinteger(L, 1));
+            MapInfo const* pMapinfo = sMySQLStore.GetWorldMapInfo(ptr->GetMapId());
             if (pMapinfo)  //this block = IsInInstace()
             {
                 if (pMapinfo->type != INSTANCE_NULL)
@@ -995,8 +993,8 @@ class LuaGameObject
         static int HasFlag(lua_State* L, GameObject* ptr)
         {
             TEST_GO_RET();
-            uint32 index = luaL_checkinteger(L, 1);
-            uint32 flag = luaL_checkinteger(L, 2);
+            uint32 index = static_cast<uint32>(luaL_checkinteger(L, 1));
+            uint32 flag = static_cast<uint32>(luaL_checkinteger(L, 2));
             lua_pushboolean(L, ptr->HasFlag(index, flag) ? 1 : 0);
             return 1;
         }
@@ -1004,7 +1002,7 @@ class LuaGameObject
         static int IsInPhase(lua_State* L, GameObject* ptr)
         {
             TEST_GO_RET();
-            uint32 phase = luaL_checkinteger(L, 1);
+            uint32 phase = static_cast<uint32>(luaL_checkinteger(L, 1));
             lua_pushboolean(L, ((ptr->m_phase & phase) != 0) ? 1 : 0);
             return 1;
         }
@@ -1069,17 +1067,17 @@ class LuaGameObject
         static int GetByte(lua_State* L, GameObject* ptr)
         {
             TEST_GO()
-            uint32 index = luaL_checkinteger(L, 1);
-            uint32 index2 = luaL_checkinteger(L, 2);
+            uint32 index = static_cast<uint32>(luaL_checkinteger(L, 1));
+            uint32 index2 = static_cast<uint32>(luaL_checkinteger(L, 2));
             uint8 value = ptr->GetByte(index, index2);
             RET_INT(value);
         }
         static int SetByte(lua_State* L, GameObject* ptr)
         {
             TEST_GO_RET();
-            int index = luaL_checkinteger(L, 1);
-            int index2 = luaL_checkinteger(L, 2);
-            uint8 value = luaL_checkinteger(L, 3);
+            int index = static_cast<int>(luaL_checkinteger(L, 1));
+            int index2 = static_cast<int>(luaL_checkinteger(L, 2));
+            uint8 value = static_cast<uint8>(luaL_checkinteger(L, 3));
             ptr->SetByte(index, index2, value);
             RET_BOOL(true)
         }
@@ -1090,7 +1088,7 @@ class LuaGameObject
             Object* target = CHECK_OBJECT(L, 2);
             if (sp && target != NULL)
             {
-                Spell* tSpell = sSpellFactoryMgr.NewSpell(ptr, dbcSpell.LookupEntry(sp), false, NULL);
+                Spell* tSpell = sSpellFactoryMgr.NewSpell(ptr, sSpellCustomizations.GetSpellInfo(sp), false, NULL);
                 SpellCastTargets sct(target->GetGUID());
                 tSpell->prepare(&sct);
             }
@@ -1102,7 +1100,7 @@ class LuaGameObject
             uint32 sp = CHECK_ULONG(L, 1);
             if (sp)
             {
-                Spell* tSpell = sSpellFactoryMgr.NewSpell(ptr, dbcSpell.LookupEntry(sp), false, NULL);
+                Spell* tSpell = sSpellFactoryMgr.NewSpell(ptr, sSpellCustomizations.GetSpellInfo(sp), false, NULL);
                 SpellCastTargets sct(ptr->GetGUID());
                 tSpell->prepare(&sct);
             }
@@ -1158,9 +1156,11 @@ class LuaGameObject
         {
             TEST_GO();
             const char* typeName = luaL_typename(L, 1);
-            int delay = luaL_checkinteger(L, 2);
-            int repeats = luaL_checkinteger(L, 3);
-            if (!delay) return 0;
+            int delay = static_cast<int>(luaL_checkinteger(L, 2));
+            int repeats = static_cast<int>(luaL_checkinteger(L, 3));
+            if (!delay)
+                return 0;
+
             lua_settop(L, 1);
             int functionRef = 0;
             if (!strcmp(typeName, "function"))
@@ -1205,7 +1205,7 @@ class LuaGameObject
         static int SetScale(lua_State* L, GameObject* ptr)
         {
             TEST_GO();
-            float scale = luaL_checknumber(L, 1);
+            float scale = static_cast<float>(luaL_checknumber(L, 1));
             if (scale > 0)
                 ptr->SetScale(scale);
             return 0;
@@ -1243,16 +1243,16 @@ class LuaGameObject
         {
             TEST_GO();
 
-            if (ptr->GetInfo()->type != GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
+            if (ptr->GetGameObjectProperties()->type != GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
                 return 0;
 
             if (lua_gettop(L) != 3)
                 return 0;
 
             GameObject_Destructible* dt = static_cast<GameObject_Destructible*>(ptr);
-            uint32 damage = luaL_checkinteger(L, 1);
+            uint32 damage = static_cast<uint32>(luaL_checkinteger(L, 1));
             uint64 guid = CHECK_GUID(L, 2);
-            uint32 spellid = luaL_checkinteger(L, 3);
+            uint32 spellid = static_cast<uint32>(luaL_checkinteger(L, 3));
 
             dt->Damage(damage, guid, guid, spellid);
 
@@ -1263,7 +1263,7 @@ class LuaGameObject
         {
             TEST_GO();
 
-            if (ptr->GetInfo()->type != GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
+            if (ptr->GetGameObjectProperties()->type != GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
                 return 0;
 
             GameObject_Destructible* dt = static_cast<GameObject_Destructible*>(ptr);
@@ -1276,7 +1276,7 @@ class LuaGameObject
         {
             TEST_GO();
 
-            if (ptr->GetInfo()->type != GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
+            if (ptr->GetGameObjectProperties()->type != GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
                 return 0;
 
             GameObject_Destructible* dt = static_cast<GameObject_Destructible*>(ptr);
@@ -1290,7 +1290,7 @@ class LuaGameObject
         {
             TEST_GO();
 
-            if (ptr->GetInfo()->type != GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
+            if (ptr->GetGameObjectProperties()->type != GAMEOBJECT_TYPE_DESTRUCTIBLE_BUILDING)
                 return 0;
 
             GameObject_Destructible* dt = static_cast<GameObject_Destructible*>(ptr);
@@ -1307,7 +1307,7 @@ class LuaGameObject
             if (lua_gettop(L) != 1)
                 return 0;
 
-            uint32 field = luaL_checkinteger(L, 1);
+            uint32 field = static_cast<uint32>(luaL_checkinteger(L, 1));
 
             auto a = ptr->GetMapMgr()->GetArea(ptr->GetPositionX(), ptr->GetPositionY(), ptr->GetPositionZ());
             if (a == NULL)
@@ -1337,8 +1337,8 @@ class LuaGameObject
             if (lua_gettop(L) != 2)
                 return 0;
 
-            uint32 field = luaL_checkinteger(L, 1);
-            uint32 value = luaL_checkinteger(L, 2);
+            uint32 field = static_cast<uint32>(luaL_checkinteger(L, 1));
+            uint32 value = static_cast<uint32>(luaL_checkinteger(L, 2));
 
             auto a = ptr->GetMapMgr()->GetArea(ptr->GetPositionX(), ptr->GetPositionY(), ptr->GetPositionZ());
             if (a == NULL)

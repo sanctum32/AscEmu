@@ -74,24 +74,6 @@ enum BehaviorType
     Behavior_CallForHelp
 };
 
-enum MoveType
-{
-    Move_None,
-    Move_RandomWP,
-    Move_CircleWP,
-    Move_WantedWP,
-    Move_DontMoveWP,
-    Move_Quest,
-    Move_ForwardThenStop
-};
-
-enum MoveFlag
-{
-    Flag_Walk = 0,
-    Flag_Run = 256,
-    Flag_Fly = 768
-};
-
 struct EmoteDesc
 {
     EmoteDesc(const char* pText, TextType pType, uint32 pSoundId)
@@ -104,14 +86,6 @@ struct EmoteDesc
     std::string mText;
     TextType mType;
     uint32 mSoundId;
-};
-
-struct Location
-{
-    float x;
-    float y;
-    float z;
-    float o;
 };
 
 struct LocationExtra
@@ -283,7 +257,7 @@ class SpellDesc
 {
     public:
 
-        SpellDesc(SpellEntry* pInfo, SpellFunc pFnc, TargetType pTargetType, float pChance, float pCastTime, int32 pCooldown, float pMinRange, float pMaxRange, 
+        SpellDesc(SpellInfo* pInfo, SpellFunc pFnc, TargetType pTargetType, float pChance, float pCastTime, int32 pCooldown, float pMinRange, float pMaxRange, 
                   bool pStrictRange, const char* pText, TextType pTextType, uint32 pSoundId, const char* pAnnouncement);
 
         virtual ~SpellDesc();
@@ -293,7 +267,7 @@ class SpellDesc
         void TriggerCooldown(uint32 pCurrentTime = 0);
         void AddAnnouncement(const char* pText);
 
-        SpellEntry* mInfo;              //Spell Entry information (generally you either want a SpellEntry OR a SpellFunc, not both)
+        SpellInfo* mInfo;              //Spell Entry information (generally you either want a SpellEntry OR a SpellFunc, not both)
         SpellFunc mSpellFunc;           //Spell Function to be executed (generally you either want a SpellEntry OR a SpellFunc, not both)
         TargetType mTargetType;         //Target type (see class above)
 
@@ -430,14 +404,13 @@ class MoonScriptCreatureAI : public CreatureAIScript
         uint32 GetEventCount() { return mEventCount; }
 
         //Waypoints
-        WayPoint* CreateWaypoint(int pId, uint32 pWaittime, uint32 pMoveFlag, Location pCoords);
-        WayPoint* CreateWaypoint(int pId, uint32 pWaittime, uint32 pMoveFlag, LocationExtra pCoords);
-        void AddWaypoint(WayPoint* pWayPoint);
+        Movement::WayPoint* CreateWaypoint(int pId, uint32 pWaittime, uint32 pMoveFlag, Movement::Location pCoords);
+        Movement::WayPoint* CreateWaypoint(int pId, uint32 pWaittime, Movement::LocationWithFlag wp_info);
+        void AddWaypoint(Movement::WayPoint* pWayPoint);
         void ForceWaypointMove(uint32 pWaypointId);
         void SetWaypointToMove(uint32 pWaypointId);
         void StopWaypointMovement();
-        void SetMoveType(MoveType pMoveType);
-        MoveType GetMoveType();
+        void SetWaypointMoveType(Movement::WaypointMovementScript wp_move_script_type);
         uint32 GetCurrentWaypoint();
         size_t GetWaypointCount();
         bool HasWaypoints();
@@ -470,7 +443,7 @@ class MoonScriptCreatureAI : public CreatureAIScript
 
         bool IsSpellScheduled(SpellDesc* pSpell);
         bool CastSpellInternal(SpellDesc* pSpell, uint32 pCurrentTime = 0);
-        void CastSpellOnTarget(Unit* pTarget, TargetType pType, SpellEntry* pEntry, bool pInstant);
+        void CastSpellOnTarget(Unit* pTarget, TargetType pType, SpellInfo* pEntry, bool pInstant);
         int32 CalcSpellAttackTime(SpellDesc* pSpell);
         void CancelAllSpells();
 

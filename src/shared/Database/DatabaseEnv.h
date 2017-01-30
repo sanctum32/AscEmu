@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org>
+ * Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,9 +21,9 @@
 #define _DATABASE_ENV_H
 
 //! Other libs we depend on.
-#include "Common.h"
+#include "Common.hpp"
 #include "Singleton.h"
-#include "Log.h"
+#include "Log.hpp"
 #include "CThreads.h"
 
 //! Our own includes.

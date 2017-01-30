@@ -14,26 +14,25 @@
 /* Implementation Selection */
 #ifdef WIN32        // Easy
 #define CONFIG_USE_IOCP
-//#define CONFIG_USE_SELECT
 #else
 
 // unix defines
 #define SOCKET int
 #define SD_BOTH SHUT_RDWR
 
-#if UNIX_FLAVOUR == UNIX_FLAVOUR_LINUX
+#if __linux__
 
 // select: epoll
 #include <sys/epoll.h>
 #define CONFIG_USE_EPOLL
 
-#elif UNIX_FLAVOUR == UNIX_FLAVOUR_BSD
+#elif BSD
 
 // select: kqueue
 #include <sys/event.h>
 #define CONFIG_USE_KQUEUE
 
-#elif UNIX_FLAVOUR == UNIX_FLAVOUR_OSX
+#elif __APPLE__
 // select: kqueue
 #include <sys/event.h>
 #define CONFIG_USE_KQUEUE
@@ -82,7 +81,7 @@ class OverlappedStruct
         {
             long val = InterlockedCompareExchange(&m_inUse, 1, 0);
             if(val != 0)
-                sLog.outError("!!!! Network: Detected double use of read/write event! Previous event was %u.", m_event);
+                LogError("!!!! Network: Detected double use of read/write event! Previous event was %u.", m_event);
         }
 
         void Unmark()

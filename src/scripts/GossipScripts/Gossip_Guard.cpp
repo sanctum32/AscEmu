@@ -1,6 +1,6 @@
 /**
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org>
+ * Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2007-2015 Moon++ Team <http://www.moonplusplus.info/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -18,7 +18,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../world/Gossip.h"
+#include "Management/Gossip/Gossip.h"
 #include "Setup.h"
 
 

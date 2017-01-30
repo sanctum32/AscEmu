@@ -1,20 +1,6 @@
 /*
- * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org>
- * Copyright (C) 2007-2008 Sun++ Team <http://www.sunplusplus.info/>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ This file is released under the MIT license. See README-MIT for more information.
  */
 
 #include "Setup.h"
@@ -22,21 +8,21 @@
 
 //////////////////////////////////////////////////////////////////////////////////////////
 ///\details <b>Darkmoon Faire (Elwynn Forest)</b>\n
-// event_names entry: 4 \n
-// event_names holiday: 374 \n
+// event_properties entry: 4 \n
+// event_properties holiday: 374 \n
 ///\todo Check all Darkmoon Faire events
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
 ///\details <b>Darkmoon Faire (Mulgore)</b>\n
-// event_names entry: 5 \n
-// event_names holiday: 375 \n
+// event_properties entry: 5 \n
+// event_properties holiday: 375 \n
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
 ///\details <b>Darkmoon Faire (Terokkar Forest)</b>\n
-// event_names entry: 3 \n
-// event_names holiday: 376 \n
+// event_properties entry: 3 \n
+// event_properties holiday: 376 \n
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -112,6 +98,15 @@ Drop Mine - 39685, 25024
 Nitrous Boost - 27746
 
 
+#define CANNON 24933            //39692, 34154
+#define MORTAR 25003            //33861 -- Triggers Explosion, 39695 --- Summons Mortar
+#define NITROUS 27746           //Needs Scripting
+#define FLAMETHROWER 39693      //25027
+#define MACHINEGUN 25026
+#define DROPMINE 25024
+#define SHIELD 27759
+
+static uint32 TonkSpecials[4] = { FLAMETHROWER, MACHINEGUN, DROPMINE, SHIELD };
 
 /// Tonk Control Consoles
 class TonkControlConsole : public GameObjectAIScript
@@ -681,7 +676,7 @@ class Sayge_Gossip : public GossipScript
                     // Cast the fortune into the player's inventory - Not working?
                     pCreature->CastSpell(plr, 23765, true);
                     // TEMP fix for spell not adding item to  player's inventory.
-                    auto proto = ItemPrototypeStorage.LookupEntry(19422);
+                    auto proto = sMySQLStore.GetItemProperties(19422);
                     if (proto == nullptr)
                         return;
 
@@ -700,7 +695,7 @@ class Sayge_Gossip : public GossipScript
                         auto result = plr->GetItemInterface()->SafeAddItem(item, slotresult.ContainerSlot, slotresult.Slot);
                         if (!result)
                         {
-                            Log.Error("Event_Darkmoon_Faire", "Error while adding item %u to player %s", item->GetEntry(), plr->GetNameString());
+                            LOG_ERROR("Error while adding item %u to player %s", item->GetEntry(), plr->GetNameString());
                             item->DeleteMe();
                             return;
                         }
@@ -827,8 +822,7 @@ class SilasDarkmoon_Gossip : public GossipScript
             objmgr.CreateGossipMenuForPlayer(&Menu, pObject->GetGUID(), 60013, plr);                    /// \todo find right text
             Menu->AddItem(GOSSIP_ICON_CHAT, plr->GetSession()->LocalizedGossipOption(GI_DF_ASK_PROFIT), 1);    // Silas, why is most everything at the fair free? How do you make a profit?
 
-            if (Menu != nullptr)
-                Menu->SendTo(plr);
+            Menu->SendTo(plr);
 
         }
 

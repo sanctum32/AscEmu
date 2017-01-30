@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,11 +21,11 @@
 #include "git_version.h"
 
 #include "CrashHandler.h"
-#include "Log.h"
+#include "Log.hpp"
 
 void OutputCrashLogLine(const char* format, ...)
 {
-    std::string s = FormatOutputString("logs", "CrashLog", false);
+    std::string s = AELog::GetFormattedFileName("logs", "CrashLog", false);
     FILE* m_file = fopen(s.c_str(), "a");
     if(!m_file) return;
 
@@ -62,7 +62,7 @@ void StartCrashHandler()
     // just piss us off. :P
 
     // Check for a debugger.
-#ifndef X64
+#if !(defined(__x86_64__) || defined(__x86_64) || defined(__amd64__) || defined(_WIN64))
     DWORD code;
 
     __asm
@@ -184,7 +184,7 @@ void echo(const char* format, ...)
     va_list ap;
     va_start(ap, format);
     vprintf(format, ap);
-    std::string s = FormatOutputString("logs", "CrashLog", false);
+    std::string s = AELog::GetFormattedFileName("logs", "CrashLog", false);
     FILE* m_file = fopen(s.c_str(), "a");
     if(!m_file)
     {
@@ -258,11 +258,11 @@ void CStackWalker::OnCallstackEntry(CallstackEntryType eType, CallstackEntry & e
 
 void CStackWalker::OnOutput(LPCSTR szText)
 {
-    std::string s = FormatOutputString("logs", "CrashLog", false);
+    std::string s = AELog::GetFormattedFileName("logs", "CrashLog", false);
     FILE* m_file = fopen(s.c_str(), "a");
     if(!m_file) return;
 
-    sLog.outError("   %s", szText);
+    LogError("   %s", szText);
     fprintf(m_file, "   %s", szText);
     fclose(m_file);
 }
@@ -328,11 +328,11 @@ int __cdecl HandleCrash(PEXCEPTION_POINTERS pExceptPtrs)
                            FILE_ATTRIBUTE_NORMAL | FILE_FLAG_WRITE_THROUGH, 0);
     }
 
-    sLog.outError("Server has crashed. Creating crash dump file %s", filename);
+    LogError("Server has crashed. Creating crash dump file %s", filename);
 
     if(hDump == INVALID_HANDLE_VALUE)
     {
-        sLog.outError("Could not open crash dump file.");
+        LogError("Could not open crash dump file.");
     }
     else
     {
@@ -351,7 +351,7 @@ int __cdecl HandleCrash(PEXCEPTION_POINTERS pExceptPtrs)
     SetPriorityClass(GetCurrentProcess(), BELOW_NORMAL_PRIORITY_CLASS);
     OnCrash(!ON_CRASH_BREAK_DEBUGGER);
 
-    sLog.Close();
+    AscLog.~AscEmuLog();
     return EXCEPTION_CONTINUE_SEARCH;
 }
 #endif

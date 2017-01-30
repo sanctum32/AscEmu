@@ -36,7 +36,7 @@ TargetType::~TargetType()
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //Class SpellDesc
-SpellDesc::SpellDesc(SpellEntry* pInfo, SpellFunc pFnc, TargetType pTargetType, float pChance, float pCastTime, int32 pCooldown, float pMinRange, float pMaxRange, 
+SpellDesc::SpellDesc(SpellInfo* pInfo, SpellFunc pFnc, TargetType pTargetType, float pChance, float pCastTime, int32 pCooldown, float pMinRange, float pMaxRange, 
                      bool pStrictRange, const char* pText, TextType pTextType, uint32 pSoundId, const char* pAnnouncement)
 {
     mInfo = pInfo;
@@ -219,7 +219,7 @@ void MoonScriptCreatureAI::SetBehavior(BehaviorType pBehavior)
             _unit->GetAIInterface()->setCurrentAgent(AGENT_CALLFORHELP);
             break;
         default:
-            sLog.outDebug("ArcScript: MoonScriptCreatureAI::SetBehavior() : Invalid behavior type!");
+            LogDebugFlag(LF_SCRIPT_MGR, "MoonScriptCreatureAI::SetBehavior() : Invalid behavior type!");
             break;
     }
 }
@@ -241,7 +241,7 @@ BehaviorType MoonScriptCreatureAI::GetBehavior()
         case AGENT_CALLFORHELP:
             return Behavior_CallForHelp;
         default:
-            sLog.outDebug("ArcScript: MoonScriptCreatureAI::SetBehavior() : Invalid behavior type!");
+            LogDebugFlag(LF_SCRIPT_MGR, "MoonScriptCreatureAI::SetBehavior() : Invalid behavior type!");
             return Behavior_Default;
     }
 }
@@ -538,14 +538,14 @@ SpellDesc* MoonScriptCreatureAI::AddSpell(uint32 pSpellId, TargetType pTargetTyp
     SpellDesc* NewSpell = NULL;
 
     //Find spell info from spell id
-    SpellEntry* Info = dbcSpell.LookupEntry(pSpellId);
+    SpellInfo* Info = sSpellCustomizations.GetSpellInfo(pSpellId);
 
 #ifdef USE_DBC_SPELL_INFO
     float CastTime = (Info->CastingTimeIndex) ? GetCastTime(sSpellCastTimesStore.LookupEntry(Info->CastingTimeIndex)) : pCastTime;
     int32 Cooldown = Info->RecoveryTime;
     float MinRange = (Info->rangeIndex) ? GetMinRange(sSpellRangeStore.LookupEntry(Info->rangeIndex)) : pMinRange;
     float MaxRange = (Info->rangeIndex) ? GetMaxRange(sSpellRangeStore.LookupEntry(Info->rangeIndex)) : pMaxRange;
-    sLog.outDebug("MoonScriptCreatureAI::AddSpell(%u) : casttime=%.1f cooldown=%d minrange=%.1f maxrange=%.1f", pSpellId, CastTime, Cooldown, MinRange, MaxRange);
+    LogDebugFlag(LF_SCRIPT_MGR, "MoonScriptCreatureAI::AddSpell(%u) : casttime=%.1f cooldown=%d minrange=%.1f maxrange=%.1f", pSpellId, CastTime, Cooldown, MinRange, MaxRange);
 #else
     float CastTime = pCastTime;
     int32 Cooldown = pCooldown;
@@ -611,7 +611,7 @@ bool MoonScriptCreatureAI::IsCasting()
 
 void MoonScriptCreatureAI::ApplyAura(uint32 pSpellId)
 {
-    _unit->CastSpell(_unit, dbcSpell.LookupEntry(pSpellId), true);
+    _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(pSpellId), true);
 }
 
 void MoonScriptCreatureAI::RemoveAura(uint32 pSpellId)
@@ -671,7 +671,7 @@ EmoteDesc* MoonScriptCreatureAI::AddEmote(EventType pEventType, const char* pTex
                 mOnTauntEmotes.push_back(NewEmote);
                 break;
             default:
-                sLog.outDebug("MoonScriptCreatureAI::AddEmote() : Invalid event type!");
+                LogDebugFlag(LF_SCRIPT_MGR, "MoonScriptCreatureAI::AddEmote() : Invalid event type!");
                 break;
         }
     }
@@ -695,7 +695,7 @@ void MoonScriptCreatureAI::RemoveEmote(EventType pEventType, EmoteDesc* pEmote)
             DeleteItem(mOnTauntEmotes, pEmote);
             break;
         default:
-            sLog.outDebug("MoonScriptCreatureAI::RemoveEmote() : Invalid event type!");
+            LogDebugFlag(LF_SCRIPT_MGR, "MoonScriptCreatureAI::RemoveEmote() : Invalid event type!");
             break;
     }
 }
@@ -717,7 +717,7 @@ void MoonScriptCreatureAI::RemoveAllEmotes(EventType pEventType)
             DeleteArray(mOnTauntEmotes);
             break;
         default:
-            sLog.outDebug("MoonScriptCreatureAI::RemoveAllEmotes() : Invalid event type!");
+            LogDebugFlag(LF_SCRIPT_MGR, "MoonScriptCreatureAI::RemoveAllEmotes() : Invalid event type!");
             break;
     }
 }
@@ -743,7 +743,7 @@ void MoonScriptCreatureAI::Emote(const char* pText, TextType pType, uint32 pSoun
                 _unit->SendChatMessage(CHAT_MSG_MONSTER_EMOTE, LANG_UNIVERSAL, pText);
                 break;
             default:
-                sLog.outDebug("MoonScriptCreatureAI::Emote() : Invalid text type!");
+                LogDebugFlag(LF_SCRIPT_MGR, "MoonScriptCreatureAI::Emote() : Invalid text type!");
                 break;
         }
     }
@@ -891,9 +891,9 @@ uint32 MoonScriptCreatureAI::GetAIUpdateFreq()
     return mAIUpdateFrequency;
 }
 
-WayPoint* MoonScriptCreatureAI::CreateWaypoint(int pId, uint32 pWaittime, uint32 pMoveFlag, Location pCoords)
+Movement::WayPoint* MoonScriptCreatureAI::CreateWaypoint(int pId, uint32 pWaittime, uint32 pMoveFlag, Movement::Location pCoords)
 {
-    WayPoint* wp = _unit->CreateWaypointStruct();
+    Movement::WayPoint* wp = _unit->CreateWaypointStruct();
     wp->id = pId;
     wp->x = pCoords.x;
     wp->y = pCoords.y;
@@ -910,16 +910,16 @@ WayPoint* MoonScriptCreatureAI::CreateWaypoint(int pId, uint32 pWaittime, uint32
     return wp;
 }
 
-WayPoint* MoonScriptCreatureAI::CreateWaypoint(int pId, uint32 pWaittime, uint32 pMoveFlag, LocationExtra pCoords)
+Movement::WayPoint* MoonScriptCreatureAI::CreateWaypoint(int pId, uint32 pWaittime, Movement::LocationWithFlag wp_info)
 {
-    WayPoint* wp = _unit->CreateWaypointStruct();
+    Movement::WayPoint* wp = _unit->CreateWaypointStruct();
     wp->id = pId;
-    wp->x = pCoords.x;
-    wp->y = pCoords.y;
-    wp->z = pCoords.z;
-    wp->o = pCoords.o;
+    wp->x = wp_info.wp_location.x;
+    wp->y = wp_info.wp_location.y;
+    wp->z = wp_info.wp_location.z;
+    wp->o = wp_info.wp_location.o;
     wp->waittime = pWaittime;
-    wp->flags = pMoveFlag;
+    wp->flags = wp_info.wp_flag;
     wp->forwardemoteoneshot = false;
     wp->forwardemoteid = 0;
     wp->backwardemoteoneshot = false;
@@ -929,7 +929,7 @@ WayPoint* MoonScriptCreatureAI::CreateWaypoint(int pId, uint32 pWaittime, uint32
     return wp;
 }
 
-void MoonScriptCreatureAI::AddWaypoint(WayPoint* pWayPoint)
+void MoonScriptCreatureAI::AddWaypoint(Movement::WayPoint* pWayPoint)
 {
     _unit->GetAIInterface()->addWayPoint(pWayPoint);
 }
@@ -943,7 +943,7 @@ void MoonScriptCreatureAI::ForceWaypointMove(uint32 pWaypointId)
 
     StopMovement();
     _unit->GetAIInterface()->SetAIState(STATE_SCRIPTMOVE);
-    SetMoveType(Move_WantedWP);
+    SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
     SetWaypointToMove(pWaypointId);
 }
 
@@ -956,63 +956,14 @@ void MoonScriptCreatureAI::StopWaypointMovement()
 {
     SetBehavior(Behavior_Default);
     _unit->GetAIInterface()->SetAIState(STATE_SCRIPTIDLE);
-    SetMoveType(Move_DontMoveWP);
+    SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
     SetWaypointToMove(0);
 }
 
-void MoonScriptCreatureAI::SetMoveType(MoveType pMoveType)
+void MoonScriptCreatureAI::SetWaypointMoveType(Movement::WaypointMovementScript wp_move_script_type)
 {
-    switch (pMoveType)
-    {
-        case Move_None:
-            _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_NONE);
-            break;
-        case Move_RandomWP:
-            _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_RANDOMWP);
-            break;
-        case Move_CircleWP:
-            _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_CIRCLEWP);
-            break;
-        case Move_WantedWP:
-            _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
-            break;
-        case Move_DontMoveWP:
-            _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_DONTMOVEWP);
-            break;
-        case Move_Quest:
-            _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_QUEST);
-            break;
-        case Move_ForwardThenStop:
-            _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_FORWARDTHENSTOP);
-            break;
-        default:
-            sLog.outDebug("ArcScript: MoonScriptCreatureAI::SetMoveType() : Invalid move type!");
-            break;
-    }
-}
+    _unit->GetAIInterface()->SetWaypointScriptType(wp_move_script_type);
 
-MoveType MoonScriptCreatureAI::GetMoveType()
-{
-    switch (_unit->GetAIInterface()->getMoveType())
-    {
-        case MOVEMENTTYPE_NONE:
-            return Move_None;
-        case MOVEMENTTYPE_RANDOMWP:
-            return Move_RandomWP;
-        case MOVEMENTTYPE_CIRCLEWP:
-            return Move_CircleWP;
-        case MOVEMENTTYPE_WANTEDWP:
-            return Move_WantedWP;
-        case MOVEMENTTYPE_DONTMOVEWP:
-            return Move_DontMoveWP;
-        case MOVEMENTTYPE_QUEST:
-            return Move_Quest;
-        case MOVEMENTTYPE_FORWARDTHENSTOP:
-            return Move_ForwardThenStop;
-        default:
-            sLog.outDebug("ArcScript: MoonScriptCreatureAI::GetMoveType() : Invalid move type!");
-            return Move_None;
-    }
 }
 
 uint32 MoonScriptCreatureAI::GetCurrentWaypoint()
@@ -1238,7 +1189,7 @@ bool MoonScriptCreatureAI::CastSpellInternal(SpellDesc* pSpell, uint32 pCurrentT
             else if
                 (pSpell->mSpellFunc) pSpell->mSpellFunc(pSpell, this, Target, pSpell->mTargetType);
             else
-                sLog.outDebug("ArcScript: MoonScriptCreatureAI::CastSpellInternal() : Invalid spell!");
+                LogDebugFlag(LF_SCRIPT_MGR, "MoonScriptCreatureAI::CastSpellInternal() : Invalid spell!");
 
             //Store cast time for cooldown
             pSpell->mLastCastTime = CurrentTime;
@@ -1257,7 +1208,7 @@ bool MoonScriptCreatureAI::CastSpellInternal(SpellDesc* pSpell, uint32 pCurrentT
     return true;            //No targets possible? Consider spell casted nonetheless
 }
 
-void MoonScriptCreatureAI::CastSpellOnTarget(Unit* pTarget, TargetType pType, SpellEntry* pEntry, bool pInstant)
+void MoonScriptCreatureAI::CastSpellOnTarget(Unit* pTarget, TargetType pType, SpellInfo* pEntry, bool pInstant)
 {
     switch (pType.mTargetGenerator)
     {
@@ -1281,7 +1232,7 @@ void MoonScriptCreatureAI::CastSpellOnTarget(Unit* pTarget, TargetType pType, Sp
             break;
 
         default:
-            sLog.outDebug("ArcScript: MoonScriptCreatureAI::CastSpellOnTarget() : Invalid target type!");
+            LogDebugFlag(LF_SCRIPT_MGR, "MoonScriptCreatureAI::CastSpellOnTarget() : Invalid target type!");
             break;
     };
 };
@@ -1341,7 +1292,7 @@ Unit* MoonScriptCreatureAI::GetTargetForSpell(SpellDesc* pSpell)
         case TargetGen_RandomUnitDestination:
             return GetBestUnitTarget(pSpell->mTargetType.mTargetFilter, pSpell->mMinRange, pSpell->mMaxRange);
         default:
-            sLog.outDebug("ArcScript: MoonScriptCreatureAI::GetTargetForSpell() : Invalid target type!");
+            LogDebugFlag(LF_SCRIPT_MGR, "MoonScriptCreatureAI::GetTargetForSpell() : Invalid target type!");
             return NULL;
     };
 };
@@ -1457,7 +1408,7 @@ bool MoonScriptCreatureAI::IsValidUnitTarget(Object* pObject, TargetFilter pFilt
     //Skip dead (if required), feign death or invisible targets
     if (pFilter & TargetFilter_Corpse)
     {
-        if (UnitTarget->isAlive() || !UnitTarget->IsCreature() || static_cast<Creature*>(UnitTarget)->GetCreatureInfo()->Rank == ELITE_WORLDBOSS)
+        if (UnitTarget->isAlive() || !UnitTarget->IsCreature() || static_cast<Creature*>(UnitTarget)->GetCreatureProperties()->Rank == ELITE_WORLDBOSS)
             return false;
     }
     else if (!UnitTarget->isAlive())

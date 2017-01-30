@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org>
+ * Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2007 Moon++ <http://www.moonplusplus.info/>
  *
@@ -20,22 +20,17 @@
 
 #include "StdAfx.h"
 
-#ifdef HAVE_DARWIN
+#ifdef __APPLE__
 #undef check
 #endif
 
 #include "LUAEngine.h"
-#include <ScriptSetup.h>
+#include <Server/Script/ScriptSetup.h>
 
-#ifdef WIN32
-#pragma warning(disable:4129)
-#pragma warning(disable:4244)
-#endif
-
-#if PLATFORM != PLATFORM_WIN32
+#ifndef _WIN32
 #include <dirent.h>
 #endif
-#include <QuestLogEntry.hpp>
+#include <Management/QuestLogEntry.hpp>
 
 ScriptMgr* m_scriptMgr = NULL;
 LuaEngine g_luaMgr;
@@ -100,7 +95,7 @@ void report(lua_State* L)
 void LuaEngine::ScriptLoadDir(char* Dirname, LUALoadScripts* pak)
 {
 #ifdef WIN32
-    Log.Notice("LuaEngine", "Scanning Directory %s", Dirname);
+    LogNotice("LuaEngine : Scanning Directory %s", Dirname);
     HANDLE hFile;
     WIN32_FIND_DATA FindData;
     memset(&FindData, 0, sizeof(FindData));
@@ -168,7 +163,7 @@ void LuaEngine::ScriptLoadDir(char* Dirname, LUALoadScripts* pak)
 
     struct stat attributes;
     bool err;
-    Log.Notice("LuaEngine", "Scanning Directory %s", Dirname);
+    LogNotice("LuaEngine : Scanning Directory %s", Dirname);
     while (filecount--)
     {
         char dottedrelpath[200];
@@ -176,7 +171,7 @@ void LuaEngine::ScriptLoadDir(char* Dirname, LUALoadScripts* pak)
         if (stat(dottedrelpath, &attributes) == -1)
         {
             err = true;
-            Log.Error("LuaEngine", "Error opening %s: %s", dottedrelpath, strerror(errno));
+            LOG_ERROR("Error opening %s: %s", dottedrelpath, strerror(errno));
         }
         else
         {
@@ -202,44 +197,46 @@ void LuaEngine::ScriptLoadDir(char* Dirname, LUALoadScripts* pak)
 #endif
 }
 
+#define MAX_FILENAME_LENGTH 200
 void LuaEngine::LoadScripts()
 {
     LUALoadScripts rtn;
-    Log.Notice("LuaEngine", "Scanning Script-Directories...");
+    LogNotice("LuaEngine : Scanning Script-Directories...");
     ScriptLoadDir((char*)"scripts", &rtn);
 
     unsigned int cnt_uncomp = 0;
 
     luaL_openlibs(lu);
     RegisterCoreFunctions();
-    Log.Notice("LuaEngine", "Loading Scripts...");
+    LogNotice("LuaEngine : Loading Scripts...");
 
-    char filename[200];
+    char filename[MAX_FILENAME_LENGTH];
 
     for (std::set<std::string>::iterator itr = rtn.luaFiles.begin(); itr != rtn.luaFiles.end(); ++itr)
     {
-        strcpy(filename, itr->c_str());
+        strncpy(filename, itr->c_str(), MAX_FILENAME_LENGTH);
+        filename[MAX_FILENAME_LENGTH - 1] = '\0';
         int errorCode = luaL_loadfile(lu, filename);
         if (errorCode)
         {
-            Log.Error("LuaEngine", "loading %s failed.(could not load). Error code %i", itr->c_str(), errorCode);
+            LOG_ERROR("loading %s failed.(could not load). Error code %i", itr->c_str(), errorCode);
             report(lu);
         }
         else
         {
             if (errorCode = lua_pcall(lu, 0, 0, 0))
             {
-                Log.Error("LuaEngine", "%s failed.(could not run). Error code %i", itr->c_str(), errorCode);
+                LOG_ERROR("%s failed.(could not run). Error code %i", itr->c_str(), errorCode);
                 report(lu);
             }
             else
             {
-                Log.Debug("LuaEngine", "loaded %s.", itr->c_str());
+                LogDebug("LuaEngine : loaded %s.", itr->c_str());
             }
         }
         cnt_uncomp++;
     }
-    Log.Notice("LuaEngine", "Loaded %u Lua scripts.", cnt_uncomp);
+    LogNotice("LuaEngine : Loaded %u Lua scripts.", cnt_uncomp);
 }
 
 
@@ -481,7 +478,7 @@ void LuaEngine::HyperCallFunction(const char* FuncName, int ref)  //hyper as in 
     lua_rawgeti(lu, LUA_REGISTRYINDEX, ref);
     lua_State* M = lua_tothread(lu, -1);  //repeats, args
     int thread = lua_gettop(lu);
-    int repeats = luaL_checkinteger(M, 1); //repeats, args
+    int repeats = static_cast<int>(luaL_checkinteger(M, 1)); //repeats, args
     int nargs = lua_gettop(M) - 1;
     if (nargs != 0) //if we HAVE args...
     {
@@ -525,8 +522,8 @@ This version only accepts actual Lua functions and no arguments. See LCF_Extra:C
 static int CreateLuaEvent(lua_State* L)
 {
     GET_LOCK
-        int delay = luaL_checkinteger(L, 2);
-    int repeats = luaL_checkinteger(L, 3);
+    int delay = static_cast<int>(luaL_checkinteger(L, 2));
+    int repeats = static_cast<int>(luaL_checkinteger(L, 3));
     if (!strcmp(luaL_typename(L, 1), "function") || delay > 0)
     {
         lua_settop(L, 1);
@@ -571,8 +568,8 @@ void LuaEngine::DestroyAllLuaEvents()
 static int ModifyLuaEventInterval(lua_State* L)
 {
     GET_LOCK
-        int ref = luaL_checkinteger(L, 1);
-    int newinterval = luaL_checkinteger(L, 2);
+    int ref = static_cast<int>(luaL_checkinteger(L, 1));
+    int newinterval = static_cast<int>(luaL_checkinteger(L, 2));
     ref += LUA_EVENTS_END;
     //Easy interval modification.
     sEventMgr.ModifyEventTime(World::getSingletonPtr(), ref, newinterval);
@@ -583,7 +580,7 @@ static int DestroyLuaEvent(lua_State* L)
 {
     //Simply remove the reference, CallFunctionByReference will find the reference has been freed and skip any processing.
     GET_LOCK
-        int ref = luaL_checkinteger(L, 1);
+    int ref = static_cast<int>(luaL_checkinteger(L, 1));
     luaL_unref(L, LUA_REGISTRYINDEX, ref);
     sLuaMgr.getFunctionRefs().erase(ref);
     sEventMgr.RemoveEvents(World::getSingletonPtr(), ref + LUA_EVENTS_END);
@@ -703,7 +700,7 @@ static int RegisterServerHook(lua_State* L)
     uint16 functionRef = 0;
     //Maximum passed in arguments, consider rest as garbage
     lua_settop(L, 2);
-    uint32 ev = luaL_checkinteger(L, 1);
+    uint32 ev = static_cast<uint32>(luaL_checkinteger(L, 1));
     const char* typeName = luaL_typename(L, 2);
     if (!ev || typeName == nullptr)
     {
@@ -731,7 +728,7 @@ static int RegisterServerHook(lua_State* L)
 static int RegisterDummySpell(lua_State* L)
 {
     uint16 functionRef = 0;
-    uint32 entry = luaL_checkinteger(L, 1);
+    uint32 entry = static_cast<uint32>(luaL_checkinteger(L, 1));
     const char* typeName = luaL_typename(L, 2);
     lua_settop(L, 2);
 
@@ -766,8 +763,8 @@ static int RegisterUnitEvent(lua_State* L)
 {
     lua_settop(L, 3);
     uint16 functionRef = 0;
-    int entry = luaL_checkinteger(L, 1);
-    int ev = luaL_checkinteger(L, 2);
+    int entry = static_cast<int>(luaL_checkinteger(L, 1));
+    int ev = static_cast<int>(luaL_checkinteger(L, 2));
     const char* typeName = luaL_typename(L, 3);
 
     if (!entry || !ev || typeName == nullptr)
@@ -796,8 +793,8 @@ static int RegisterInstanceEvent(lua_State* L)
 {
     lua_settop(L, 3);
     uint16 functionRef = 0;
-    int map = luaL_checkinteger(L, 1);
-    int ev = luaL_checkinteger(L, 2);
+    int map = static_cast<int>(luaL_checkinteger(L, 1));
+    int ev = static_cast<int>(luaL_checkinteger(L, 2));
     const char* typeName = luaL_typename(L, 3);
 
     if (!map || !ev || typeName == nullptr)
@@ -826,8 +823,8 @@ static int RegisterQuestEvent(lua_State* L)
 {
     lua_settop(L, 3);
     uint16 functionRef = 0;
-    int entry = luaL_checkinteger(L, 1);
-    int ev = luaL_checkinteger(L, 2);
+    int entry = static_cast<int>(luaL_checkinteger(L, 1));
+    int ev = static_cast<int>(luaL_checkinteger(L, 2));
     const char* typeName = luaL_typename(L, 3);
 
     if (!entry || !ev || typeName == nullptr)
@@ -856,8 +853,8 @@ static int RegisterGameObjectEvent(lua_State* L)
 {
     lua_settop(L, 3);
     uint16 functionRef = 0;
-    int entry = luaL_checkinteger(L, 1);
-    int ev = luaL_checkinteger(L, 2);
+    int entry = static_cast<int>(luaL_checkinteger(L, 1));
+    int ev = static_cast<int>(luaL_checkinteger(L, 2));
     const char* typeName = luaL_typename(L, 3);
 
     if (!entry || !ev || typeName == nullptr)
@@ -886,8 +883,8 @@ static int RegisterUnitGossipEvent(lua_State* L)
 {
     lua_settop(L, 3);
     uint16 functionRef = 0;
-    int entry = luaL_checkinteger(L, 1);
-    int ev = luaL_checkinteger(L, 2);
+    int entry = static_cast<int>(luaL_checkinteger(L, 1));
+    int ev = static_cast<int>(luaL_checkinteger(L, 2));
     const char* typeName = luaL_typename(L, 3);
 
     if (!entry || !ev || typeName == nullptr)
@@ -915,8 +912,8 @@ static int RegisterItemGossipEvent(lua_State* L)
 {
     lua_settop(L, 3);
     uint16 functionRef = 0;
-    int entry = luaL_checkinteger(L, 1);
-    int ev = luaL_checkinteger(L, 2);
+    int entry = static_cast<int>(luaL_checkinteger(L, 1));
+    int ev = static_cast<int>(luaL_checkinteger(L, 2));
     const char* typeName = luaL_typename(L, 3);
 
     if (!entry || !ev || typeName == nullptr)
@@ -944,8 +941,8 @@ static int RegisterGOGossipEvent(lua_State* L)
 {
     lua_settop(L, 3);
     uint16 functionRef = 0;
-    int entry = luaL_checkinteger(L, 1);
-    int ev = luaL_checkinteger(L, 2);
+    int entry = static_cast<int>(luaL_checkinteger(L, 1));
+    int ev = static_cast<int>(luaL_checkinteger(L, 2));
     const char* typeName = luaL_typename(L, 3);
 
     if (!entry || !ev || typeName == nullptr)
@@ -977,7 +974,7 @@ static int SuspendLuaThread(lua_State* L)
     {
         return luaL_error(L, "LuaEngineMgr", "SuspendLuaThread expected Lua coroutine, got nullptr. \n");
     }
-    int waitime = luaL_checkinteger(L, 2);
+    int waitime = static_cast<int>(luaL_checkinteger(L, 2));
     if (waitime <= 0)
     {
         return luaL_error(L, "LuaEngineMgr", "SuspendLuaThread expected timer > 0 instead got (%d) \n", waitime);
@@ -1001,8 +998,8 @@ static int SuspendLuaThread(lua_State* L)
 static int RegisterTimedEvent(lua_State* L)  //in this case, L == lu
 {
     const char* funcName = strdup(luaL_checkstring(L, 1));
-    int delay = luaL_checkinteger(L, 2);
-    int repeats = luaL_checkinteger(L, 3);
+    int delay = static_cast<int>(luaL_checkinteger(L, 2));
+    int repeats = static_cast<int>(luaL_checkinteger(L, 3));
     if (!delay || repeats < 0 || !funcName)
     {
         lua_pushnumber(L, LUA_REFNIL);
@@ -1026,6 +1023,7 @@ static int RegisterTimedEvent(lua_State* L)  //in this case, L == lu
     sLuaEventMgr.event_AddEvent(te);
     lua_settop(L, 0);
     lua_pushnumber(L, ref);
+    delete ek;
     return 1;
 }
 
@@ -1182,7 +1180,7 @@ void LuaHookOnEnterCombat(Player* pPlayer, Unit* pTarget)
     RELEASE_LOCK
 }
 
-bool LuaHookOnCastSpell(Player* pPlayer, SpellEntry* pSpell, Spell* spell)
+bool LuaHookOnCastSpell(Player* pPlayer, SpellInfo* pSpell, Spell* spell)
 {
     GET_LOCK
     bool result = true;
@@ -1254,7 +1252,7 @@ void LuaHookOnLogout(Player* pPlayer)
     RELEASE_LOCK
 }
 
-void LuaHookOnQuestAccept(Player* pPlayer, Quest* pQuest, Object* pQuestGiver)
+void LuaHookOnQuestAccept(Player* pPlayer, QuestProperties* pQuest, Object* pQuestGiver)
 {
     GET_LOCK
     for (std::vector<uint16>::iterator itr = EventAsToFuncName[SERVER_HOOK_EVENT_ON_QUEST_ACCEPT].begin(); itr != EventAsToFuncName[SERVER_HOOK_EVENT_ON_QUEST_ACCEPT].end(); ++itr)
@@ -1386,7 +1384,7 @@ void LuaHookOnCharacterCreate(Player* pPlayer)
     RELEASE_LOCK
 }
 
-void LuaHookOnQuestCancelled(Player* pPlayer, Quest* pQuest)
+void LuaHookOnQuestCancelled(Player* pPlayer, QuestProperties* pQuest)
 {
     GET_LOCK
     for (std::vector<uint16>::iterator itr = EventAsToFuncName[SERVER_HOOK_EVENT_ON_QUEST_CANCELLED].begin(); itr != EventAsToFuncName[SERVER_HOOK_EVENT_ON_QUEST_CANCELLED].end(); ++itr)
@@ -1400,7 +1398,7 @@ void LuaHookOnQuestCancelled(Player* pPlayer, Quest* pQuest)
     RELEASE_LOCK
 }
 
-void LuaHookOnQuestFinished(Player* pPlayer, Quest* pQuest, Object* pQuestGiver)
+void LuaHookOnQuestFinished(Player* pPlayer, QuestProperties* pQuest, Object* pQuestGiver)
 {
     GET_LOCK
     for (std::vector<uint16>::iterator itr = EventAsToFuncName[SERVER_HOOK_EVENT_ON_QUEST_FINISHED].begin(); itr != EventAsToFuncName[SERVER_HOOK_EVENT_ON_QUEST_FINISHED].end(); ++itr)
@@ -1599,7 +1597,7 @@ bool LuaHookOnResurrect(Player* pPlayer)
 bool LuaOnDummySpell(uint32 effectIndex, Spell* pSpell)
 {
     GET_LOCK
-    sLuaMgr.BeginCall(m_luaDummySpells[pSpell->GetProto()->Id]);
+    sLuaMgr.BeginCall(m_luaDummySpells[pSpell->GetSpellInfo()->Id]);
     sLuaMgr.PUSH_UINT(effectIndex);
     sLuaMgr.PushSpell(pSpell);
     sLuaMgr.ExecuteCall(2);
@@ -1859,7 +1857,7 @@ class LuaCreature : public CreatureAIScript
 
             RELEASE_LOCK
         }
-        void OnLootTaken(Player* pPlayer, ItemPrototype* pItemPrototype)
+        void OnLootTaken(Player* pPlayer, ItemProperties const* pItemPrototype)
         {
             CHECK_BINDING_ACQUIRELOCK
 
@@ -2051,7 +2049,7 @@ class LuaGameObjectScript : public GameObjectAIScript
             sLuaMgr.ExecuteCall(1);
             RELEASE_LOCK
         }
-        void OnLootTaken(Player* pLooter, ItemPrototype* pItemInfo)
+        void OnLootTaken(Player* pLooter, ItemProperties const* pItemInfo)
         {
 
             CHECK_BINDING_ACQUIRELOCK
@@ -2437,7 +2435,7 @@ class LuaInstance : public InstanceScript
 {
     public:
 
-        LuaInstance(MapMgr* pMapMgr) : InstanceScript(pMapMgr), m_instanceId(pMapMgr->GetInstanceID()) {}
+        LuaInstance(MapMgr* pMapMgr) : InstanceScript(pMapMgr), m_instanceId(pMapMgr->GetInstanceID()), m_binding(nullptr) {}
         ~LuaInstance() {}
 
         // Player
@@ -2586,7 +2584,7 @@ GameObjectAIScript* CreateLuaGameObjectScript(GameObject* src)
     LuaGameObjectScript* script = nullptr;
     if (src != nullptr)
     {
-        uint32 id = src->GetInfo()->entry;
+        uint32 id = src->GetGameObjectProperties()->entry;
         LuaObjectBinding* pBinding = nullptr;
         pBinding = sLuaMgr.getGameObjectBinding(id);
         if (pBinding != nullptr)
@@ -2753,7 +2751,7 @@ Arcemu::Gossip::Script* CreateLuaGOGossipScript(uint32 id)
 
 void LuaEngine::Startup()
 {
-    Log.Notice("LuaEngineMgr", "Ascemu Lua Engine ( ALE ) %s: Loaded", ARCH);
+    LogNotice("LuaEngineMgr : Ascemu Lua Engine ( ALE ) %s: Loaded", ARCH);
     //Create a new global state that will server as the lua universe.
     lu = luaL_newstate();
 
@@ -3155,7 +3153,7 @@ void LuaEngine::Unload()
 }
 void LuaEngine::Restart()
 {
-    Log.Notice("LuaEngineMgr", "Restarting Engine.");
+    LogNotice("LuaEngineMgr : Restarting Engine.");
     GET_LOCK
     getcoLock().Acquire();
     Unload();
@@ -3388,7 +3386,7 @@ void LuaEngine::Restart()
     }
     temp.clear();
 
-    Log.Notice("LuaEngineMgr", "Done restarting engine.");
+    LogNotice("LuaEngineMgr : Done restarting engine.");
 }
 
 void LuaEngine::ResumeLuaThread(int ref)

@@ -16,7 +16,7 @@
  */
 
 #include "Setup.h"
-#include <QuestLogEntry.hpp>
+#include <Management/QuestLogEntry.hpp>
 
 /*
     How to add a new item spell to the dummy spell handler:
@@ -58,13 +58,13 @@ bool NoggenFoggerElixr(uint32 i, Spell* pSpell)
     switch (chance)
     {
         case 0:
-            pSpell->p_caster->CastSpell(pSpell->p_caster, dbcSpell.LookupEntry(16591), true);
+            pSpell->p_caster->CastSpell(pSpell->p_caster, sSpellCustomizations.GetSpellInfo(16591), true);
             break;
         case 1:
-            pSpell->p_caster->CastSpell(pSpell->p_caster, dbcSpell.LookupEntry(16593), true);
+            pSpell->p_caster->CastSpell(pSpell->p_caster, sSpellCustomizations.GetSpellInfo(16593), true);
             break;
         case 2:
-            pSpell->p_caster->CastSpell(pSpell->p_caster, dbcSpell.LookupEntry(16595), true);
+            pSpell->p_caster->CastSpell(pSpell->p_caster, sSpellCustomizations.GetSpellInfo(16595), true);
             break;
     }
     return true;
@@ -77,7 +77,7 @@ bool HallowsEndCandy(uint32 i, Spell* pSpell)
 
     int newspell = 24924 + RandomUInt(3);
 
-    SpellEntry* spInfo = dbcSpell.LookupEntryForced(newspell);
+    SpellInfo* spInfo = sSpellCustomizations.GetSpellInfo(newspell);
     if (!spInfo) return true;
 
     pSpell->p_caster->CastSpell(pSpell->p_caster, spInfo, true);
@@ -91,7 +91,7 @@ bool DeviateFish(uint32 i, Spell* pSpell)
 
     int newspell = 8064 + RandomUInt(4);
 
-    SpellEntry* spInfo = dbcSpell.LookupEntryForced(newspell);
+    SpellInfo* spInfo = sSpellCustomizations.GetSpellInfo(newspell);
     if (!spInfo) return true;
 
     pSpell->p_caster->CastSpell(pSpell->p_caster, spInfo, true);
@@ -120,7 +120,7 @@ bool CookedDeviateFish(uint32 i, Spell* pSpell)
 
     if (newspell)
     {
-        SpellEntry* spInfo = dbcSpell.LookupEntryForced(newspell);
+        SpellInfo* spInfo = sSpellCustomizations.GetSpellInfo(newspell);
         if (!spInfo) return true;
 
         pSpell->p_caster->CastSpell(pSpell->p_caster, spInfo, true);
@@ -157,7 +157,7 @@ bool NetOMatic(uint32 i, Spell* pSpell)
     if (!pSpell->p_caster || !target)
         return true;
 
-    SpellEntry* spInfo = dbcSpell.LookupEntryForced(13099);
+    SpellInfo* spInfo = sSpellCustomizations.GetSpellInfo(13099);
     if (!spInfo)
         return true;
 
@@ -218,7 +218,7 @@ bool ForemansBlackjack(uint32 i, Spell* pSpell)
     c_target->Emote(EMOTE_STATE_WORK_CHOPWOOD);
 
     // Add timed event to return lazy peon to Zzz after 5-10 minutes (spell 17743)
-    SpellEntry* pSpellEntry = dbcSpell.LookupEntry(17743);
+    SpellInfo* pSpellEntry = sSpellCustomizations.GetSpellInfo(17743);
     sEventMgr.AddEvent(target, &Unit::EventCastSpell, target, pSpellEntry, EVENT_UNK, 300000 + RandomUInt(300000), 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
 
     return true;
@@ -246,9 +246,9 @@ bool NighInvulnBelt(uint32 i, Spell* pSpell)
     int chance = RandomUInt(99) + 1;
 
     if (chance > 10)    // Buff - Nigh-Invulnerability - 30456
-        pSpell->p_caster->CastSpell(pSpell->p_caster, dbcSpell.LookupEntry(30456), true);
+        pSpell->p_caster->CastSpell(pSpell->p_caster, sSpellCustomizations.GetSpellInfo(30456), true);
     else                // Malfunction - Complete Vulnerability - 30457
-        pSpell->p_caster->CastSpell(pSpell->p_caster, dbcSpell.LookupEntry(30457), true);
+        pSpell->p_caster->CastSpell(pSpell->p_caster, sSpellCustomizations.GetSpellInfo(30457), true);
 
     return true;
 }
@@ -260,9 +260,10 @@ bool ReindeerTransformation(uint32 i, Spell* pSpell)
 
     if (pSpell->p_caster->GetMount() != 0)
     {
+        /*Zyres: This is not correct!
         if (pSpell->p_caster->m_setflycheat)
             pSpell->p_caster->SetMount(22724);
-        else
+        else*/
             pSpell->p_caster->SetMount(15902);
     }
     return true;
@@ -305,7 +306,7 @@ bool ScryingCrystal(uint32 i, Spell* pSpell)
         pSpell->p_caster->GetPositionY(), pSpell->p_caster->GetPositionZ(), 300078) && en)
     {
 
-        if (en->GetMobCount(0) < en->GetQuest()->required_mobcount[0])
+        if (en->GetMobCount(0) < en->GetQuest()->required_mob_or_go_count[0])
         {
             en->SetMobCount(0, 1);
             en->SendUpdateAddKill(0);
@@ -316,7 +317,7 @@ bool ScryingCrystal(uint32 i, Spell* pSpell)
     else if (pSpell->p_caster->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(pSpell->p_caster->GetPositionX(),
         pSpell->p_caster->GetPositionY(), pSpell->p_caster->GetPositionZ(), 300142) && en)
     {
-        if (en->GetMobCount(1) < en->GetQuest()->required_mobcount[1])
+        if (en->GetMobCount(1) < en->GetQuest()->required_mob_or_go_count[1])
         {
             en->SetMobCount(1, 1);
             en->SendUpdateAddKill(1);
@@ -586,7 +587,7 @@ bool ExtractGas(uint32 i, Spell* s)
         item = 22578; //-water
 
     s->p_caster->GetItemInterface()->AddItemById(item, count, 0);
-    creature->Despawn(3500, creature->GetProto()->RespawnTime);
+    creature->Despawn(3500, creature->GetCreatureProperties()->RespawnTime);
 
     return true;
 }
@@ -759,7 +760,7 @@ bool ChampioningTabards(uint32 i, Aura* a, bool apply)
     if (p_caster == NULL)
         return true;
 
-    uint32 Faction = a->GetSpellProto()->EffectMiscValue[0];
+    uint32 Faction = a->GetSpellInfo()->EffectMiscValue[0];
 
     if (apply)
         p_caster->SetChampioningFaction(Faction);
@@ -853,8 +854,8 @@ bool DrinkDummyAura(uint32 i, Aura* a, bool apply)
     if (!apply)
         return true;
 
-    float famount = 2.2f * (static_cast<float>(a->GetSpellProto()->EffectBasePoints[1]) / 5.0f);
-    int32 amount = static_cast<int32>(Arcemu::round(famount));
+    float famount = 2.2f * (static_cast<float>(a->GetSpellInfo()->EffectBasePoints[1]) / 5.0f);
+    int32 amount = static_cast<int32>(std::round(famount));
 
     a->EventPeriodicDrink(amount);
 
@@ -894,11 +895,23 @@ bool X53Mount(uint32 i, Aura *a, bool apply)
     return true;
 }
 
+bool SchoolsOfArcaneMagicMastery(uint32 i, Spell* s)
+{
+    if (auto player = s->GetPlayerTarget())
+    {
+        auto spell = player->GetAreaID() == 4637 ? 59316 : 59314;
+        player->CastSpell(player, spell, true);
+    }
+
+    return true;
+}
+
 // ADD NEW FUNCTIONS ABOVE THIS LINE
 // *****************************************************************************
 
 void SetupItemSpells_1(ScriptMgr* mgr)
 {
+    mgr->register_dummy_spell(59317, &SchoolsOfArcaneMagicMastery); // The Schools of Arcane Magic - Mastery
     mgr->register_dummy_spell(29403, &BreathOfFire);            // Fiery Festival Brew
     mgr->register_dummy_spell(23453, &GnomishTransporter);      // Gnomish Transporter
     mgr->register_dummy_spell(16589, &NoggenFoggerElixr);       // Noggenfogger

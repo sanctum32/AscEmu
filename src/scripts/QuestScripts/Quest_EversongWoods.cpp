@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org>
+ * Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2009-2012 ArcEmu Team <http://www.arcemu.org>
  * Copyright (C) 2007-2008 Moon++ Team <http://moonplusplus.info>
  *
@@ -81,7 +81,7 @@ void ProspectorAnvilwardGossip::GossipSelectOption(Object* pObject, Player* Plr,
         {
             pCreature->SendChatMessage(CHAT_MSG_MONSTER_SAY, LANG_UNIVERSAL, ANVILWARD_SAY_1);
             Plr->Gossip_Complete();
-            pCreature->GetAIInterface()->setMoveType(MOVEMENTTYPE_FORWARDTHENSTOP);
+            pCreature->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_QUEST);
             //Every Gossip NPC has a "StopMovement(30000)" by default.... lets overwrite it.
             pCreature->GetAIInterface()->StopMovement(10);
         }break;
@@ -94,7 +94,7 @@ public:
     ADD_CREATURE_FACTORY_FUNCTION(ProspectorAnvilward);
     ProspectorAnvilward(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        pCreature->GetAIInterface()->setMoveType(MOVEMENTTYPE_DONTMOVEWP);
+        pCreature->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
     }
 
     void OnReachWP(uint32 iWaypointId, bool bForwards)
@@ -105,12 +105,13 @@ public:
             _unit->GetAIInterface()->SetAllowedToEnterCombat(true);
             _unit->Despawn(10 * 60 * 1000, 1000); //if failed allow other players to do quest from beggining
             _unit->SendChatMessage(CHAT_MSG_MONSTER_YELL, LANG_UNIVERSAL, ANVILWARD_SAY_2);
-            _unit->GetAIInterface()->setMoveType(Flag_Run);
+            //Zyres: This did not exist!
+            //_unit->GetAIInterface()->setMoveType(Movement::WP_MOVE_TYPE_RUN);
             _unit->GetAIInterface()->getNextTarget();
         }
         if (iWaypointId == 10)
         {
-            _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_DONTMOVEWP);
+            _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
         }
     }
 };

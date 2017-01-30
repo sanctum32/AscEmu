@@ -815,12 +815,10 @@ class MalganisAI : public CreatureAIScript
                         if (entry == 31126 || entry == 31127 || entry == 28167 || entry == 28169)
                         {
                             citizen = _unit->GetMapMgr()->CreatureStorage[i];
-                            CreatureProto* cp = CreatureProtoStorage.LookupEntry(27737);//risen zombie
-                            CreatureInfo* ci = CreatureNameStorage.LookupEntry(27737);
-                            Creature* c = NULL;
-                            if (cp && ci)
+                            CreatureProperties const* cp = sMySQLStore.GetCreatureProperties(27737);//risen zombie
+                            if (cp)
                             {
-                                c = _unit->GetMapMgr()->CreateCreature(27737);
+                                Creature* c = _unit->GetMapMgr()->CreateCreature(27737);
                                 if (c)
                                 {
                                     //position is guessed
@@ -973,7 +971,7 @@ class Quest_Dispelling_Illusions : public QuestScript
 };
 
 
-static Location walk[] =
+static Movement::Location walk[] =
 {
     { 0, 0, 0, 0 },
     { 1811.2177f, 1276.5729f, 141.9048f, 0.098f },
@@ -989,9 +987,9 @@ class UtherAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(UtherAI);
         UtherAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(1, 0, Flag_Run));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(2, 0, Flag_Run));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(3, 90000, Flag_Run));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(1, 0, Movement::WP_MOVE_TYPE_RUN));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(2, 0, Movement::WP_MOVE_TYPE_RUN));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(3, 90000, Movement::WP_MOVE_TYPE_RUN));
             check = true;
         }
 
@@ -1048,9 +1046,9 @@ class UtherAI : public CreatureAIScript
             }
         }
 
-        inline WayPoint* CreateWaypoint(int id, uint32 waittime, uint32 flags)
+        inline Movement::WayPoint* CreateWaypoint(int id, uint32 waittime, uint32 flags)
         {
-            WayPoint* wp = _unit->CreateWaypointStruct();
+            Movement::WayPoint* wp = _unit->CreateWaypointStruct();
             wp->id = id;
             wp->x = walk[id].x;
             wp->y = walk[id].y;
@@ -1072,7 +1070,7 @@ class UtherAI : public CreatureAIScript
         bool check;
 };
 
-static Location ArthasWalk[] =
+static Movement::Location ArthasWalk[] =
 {
     { 0, 0, 0, 0 },
     { 1908.9722f, 1312.8898f, 149.9889f, 0.6858f },
@@ -1093,17 +1091,17 @@ class ArthasAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(ArthasAI);
         ArthasAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(1, 10500, Flag_Run));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(2, 0, Flag_Run));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(3, 0, Flag_Run));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(4, 0, Flag_Run));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(5, 0, Flag_Run));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(6, 0, Flag_Run));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(7, 0, Flag_Run));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(1, 10500, Movement::WP_MOVE_TYPE_RUN));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(2, 0, Movement::WP_MOVE_TYPE_RUN));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(3, 0, Movement::WP_MOVE_TYPE_RUN));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(4, 0, Movement::WP_MOVE_TYPE_RUN));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(5, 0, Movement::WP_MOVE_TYPE_RUN));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(6, 0, Movement::WP_MOVE_TYPE_RUN));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(7, 0, Movement::WP_MOVE_TYPE_RUN));
 
             _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
             _unit->GetAIInterface()->SetAIState(STATE_SCRIPTIDLE);
-            _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_DONTMOVEWP);
+            _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
             phase = 0;
         }
 
@@ -1114,13 +1112,13 @@ class ArthasAI : public CreatureAIScript
                 case 1:
                 {
                     _unit->SendScriptTextChatMessage(SAY_ARTHAS_10);
-                    _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                    _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                     _unit->GetAIInterface()->setWaypointToMove(2);
                 }
                 break;
                 case 7:
                 {
-                    _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_DONTMOVEWP);
+                    _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
                     _unit->GetAIInterface()->SetAIState(STATE_SCRIPTIDLE);
                     _unit->GetAIInterface()->m_canMove = false;
                     _unit->SetUInt32Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
@@ -1137,7 +1135,7 @@ class ArthasAI : public CreatureAIScript
                 {
                     if (i > 1 && i < 7)
                     {
-                        _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                        _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                         _unit->GetAIInterface()->setWaypointToMove(i + 1);
                     }
                 }
@@ -1153,7 +1151,7 @@ class ArthasAI : public CreatureAIScript
                 {
                     _unit->GetAIInterface()->StopMovement(0);
                     _unit->GetAIInterface()->SetAIState(STATE_SCRIPTMOVE);
-                    _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                    _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                     _unit->GetAIInterface()->setWaypointToMove(1);
                 }
                 break;
@@ -1181,10 +1179,9 @@ class ArthasAI : public CreatureAIScript
                 {
                     //we need that tricky animation here
                     //spawn Mal'Ganis
-                    CreatureProto* cp = CreatureProtoStorage.LookupEntry(26533);
-                    CreatureInfo* ci = CreatureNameStorage.LookupEntry(26533);
-                    Creature* c = NULL;
-                    if (cp && ci)
+                    CreatureProperties const* cp = sMySQLStore.GetCreatureProperties(26533);
+                    Creature* c = nullptr;
+                    if (cp)
                     {
                         c = _unit->GetMapMgr()->CreateCreature(26533);
                         if (c)
@@ -1219,9 +1216,9 @@ class ArthasAI : public CreatureAIScript
             }
         }
 
-        inline WayPoint* CreateWaypoint(int id, uint32 waittime, uint32 flags)
+        inline Movement::WayPoint* CreateWaypoint(int id, uint32 waittime, uint32 flags)
         {
-            WayPoint* wp = _unit->CreateWaypointStruct();
+            Movement::WayPoint* wp = _unit->CreateWaypointStruct();
             wp->id = id;
             wp->x = ArthasWalk[id].x;
             wp->y = ArthasWalk[id].y;

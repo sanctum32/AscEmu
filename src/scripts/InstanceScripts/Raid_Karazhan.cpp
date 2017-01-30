@@ -338,21 +338,21 @@ class BigBadWolfAI : public CreatureAIScript
             for (uint8 i = 0; i < nrspells; i++)
                 m_spellcheck[i] = false;
 
-            spells[0].info = dbcSpell.LookupEntry(TERRIFYING_HOWL);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(TERRIFYING_HOWL);
             spells[0].targettype = TARGET_VARIOUS;
             spells[0].instant = true;
             spells[0].perctrigger = 50.0f;
             spells[0].cooldown = 30;
             spells[0].attackstoptimer = 1000;
 
-            spells[1].info = dbcSpell.LookupEntry(WIDE_SWIPE);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(WIDE_SWIPE);
             spells[1].targettype = TARGET_ATTACKING;
             spells[1].perctrigger = 50.0f;
             spells[1].instant = true;
             spells[1].cooldown = 20;
             spells[1].attackstoptimer = 1000;
 
-            spells[2].info = dbcSpell.LookupEntry(REDRIDINGHOOD_DEBUFF);
+            spells[2].info = sSpellCustomizations.GetSpellInfo(REDRIDINGHOOD_DEBUFF);
             spells[2].targettype = TARGET_RANDOM_SINGLE;
             spells[2].perctrigger = 50.0f;
             spells[2].instant = true;
@@ -363,7 +363,7 @@ class BigBadWolfAI : public CreatureAIScript
             spells[2].soundid = 9278;
             spells[2].speech = "Run away little girl, run away!";
 
-            spells[3].info = dbcSpell.LookupEntry(PBS_TAUNT);
+            spells[3].info = sSpellCustomizations.GetSpellInfo(PBS_TAUNT);
             spells[3].targettype = TARGET_RANDOM_SINGLE;
             spells[3].perctrigger = 0.0f;
             spells[3].instant = true;
@@ -476,7 +476,7 @@ class BigBadWolfAI : public CreatureAIScript
                                     if (!TargetTable.size())
                                         return;
 
-                                    auto random_index = RandomUInt(0, TargetTable.size() - 1);
+                                    auto random_index = RandomUInt(0, uint32(TargetTable.size() - 1));
                                     auto random_target = TargetTable[random_index];
 
                                     if (!RTarget)
@@ -541,21 +541,21 @@ class THEBIGBADWOLFAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(TERRIFYING_HOWL);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(TERRIFYING_HOWL);
             spells[0].targettype = TARGET_VARIOUS;
             spells[0].instant = true;
             spells[0].cooldown = 10;
             spells[0].perctrigger = 0.0f;
             spells[0].attackstoptimer = 1000;
 
-            spells[1].info = dbcSpell.LookupEntry(MORPH_LITTLE_RED_RIDING_HOOD);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(MORPH_LITTLE_RED_RIDING_HOOD);
             spells[1].targettype = TARGET_ATTACKING;
             spells[1].instant = true;
             spells[1].cooldown = 30;
             spells[1].perctrigger = 0.0f;
             spells[1].attackstoptimer = 1000;
 
-            spells[2].info = dbcSpell.LookupEntry(DEBUFF_LITTLE_RED_RIDING_HOOD);
+            spells[2].info = sSpellCustomizations.GetSpellInfo(DEBUFF_LITTLE_RED_RIDING_HOOD);
             spells[2].targettype = TARGET_ATTACKING;
             spells[2].instant = true;
             spells[2].cooldown = 30;
@@ -734,7 +734,7 @@ class BarnesGS : public GossipScript
                         pCreature->CastSpell(pCreature, 32616, false);
                         pCreature->GetAIInterface()->StopMovement(0);
                         pCreature->GetAIInterface()->SetAIState(STATE_SCRIPTMOVE);
-                        pCreature->GetAIInterface()->setMoveType(11);
+                        pCreature->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_FORWARDTHENSTOP);
                         pCreature->GetAIInterface()->setWaypointToMove(0);
                         pCreature->SetUInt32Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_NONE);
                         pCreature->PlaySoundToSet(9357);
@@ -780,7 +780,7 @@ class GrandMother : public GossipScript
 
 };
 
-static Location Barnes[] =
+static Movement::Location Barnes[] =
 {
     { },
     { -10873.91f, -1780.177f, 90.50f, 3.3f },
@@ -801,7 +801,7 @@ class BarnesAI : public CreatureAIScript
             _unit->GetAIInterface()->addWayPoint(CreateWaypoint(3, 0, 0));
             _unit->GetAIInterface()->addWayPoint(CreateWaypoint(4, 0, 0));
 
-            _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_DONTMOVEWP);
+            _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
             _unit->GetAIInterface()->SetAllowedToEnterCombat(false);
             _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
             _unit->GetAIInterface()->SetAIState(STATE_IDLE);
@@ -1078,9 +1078,9 @@ class BarnesAI : public CreatureAIScript
 
         }
 
-        inline WayPoint* CreateWaypoint(int id, uint32 waittime, uint32 flags)
+        inline Movement::WayPoint* CreateWaypoint(int id, uint32 waittime, uint32 flags)
         {
-            WayPoint* wp = _unit->CreateWaypointStruct();
+            Movement::WayPoint* wp = _unit->CreateWaypointStruct();
             wp->id = id;
             wp->x = Barnes[id].x;
             wp->y = Barnes[id].y;
@@ -1141,21 +1141,21 @@ class CuratorAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(HATEFUL_BOLT);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(HATEFUL_BOLT);
             spells[0].instant = true;
             spells[0].cooldown = 12;
 
-            spells[1].info = dbcSpell.LookupEntry(BERSERK);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(BERSERK);
             spells[1].instant = true;
             spells[1].cooldown = 720;
             spells[1].attackstoptimer = 1000;
 
-            spells[2].info = dbcSpell.LookupEntry(EVOCATION);
+            spells[2].info = sSpellCustomizations.GetSpellInfo(EVOCATION);
             spells[2].instant = false;
             spells[2].cooldown = 0;
             spells[2].attackstoptimer = 19000;
 
-            spells[3].info = dbcSpell.LookupEntry(C_ENRAGE);
+            spells[3].info = sSpellCustomizations.GetSpellInfo(C_ENRAGE);
             spells[3].instant = true;
             spells[3].cooldown = 0;
             spells[3].attackstoptimer = 1000;
@@ -1271,7 +1271,7 @@ class CuratorAI : public CreatureAIScript
             if (!Target_List.size())
                 return;
 
-            auto random_index = RandomUInt(0, Target_List.size() - 1);
+            auto random_index = RandomUInt(0, uint32(Target_List.size() - 1));
             Unit* random_target = Target_List[random_index];
 
             if (random_target == nullptr)
@@ -1409,35 +1409,35 @@ class ShadeofAranAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(FROSTBOLT);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(FROSTBOLT);
             spells[0].targettype = TARGET_RANDOM_SINGLE;
             spells[0].instant = false;
             spells[0].cooldown = 5;
             spells[0].casttime = 5;
             spells[0].attackstoptimer = 2000;
 
-            spells[1].info = dbcSpell.LookupEntry(FIREBALL);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(FIREBALL);
             spells[1].targettype = TARGET_RANDOM_SINGLE;
             spells[1].instant = false;
             spells[1].cooldown = 5;
             spells[1].casttime = 5;
             spells[1].attackstoptimer = 2000;
 
-            spells[2].info = dbcSpell.LookupEntry(ARCMISSLE);
+            spells[2].info = sSpellCustomizations.GetSpellInfo(ARCMISSLE);
             spells[2].targettype = TARGET_RANDOM_SINGLE;
             spells[2].instant = false;
             spells[2].cooldown = 10;
             spells[2].casttime = 10;
             spells[2].attackstoptimer = 6000;
 
-            spells[3].info = dbcSpell.LookupEntry(CHAINSOFICE);
+            spells[3].info = sSpellCustomizations.GetSpellInfo(CHAINSOFICE);
             spells[3].targettype = TARGET_RANDOM_SINGLE;
             spells[3].instant = true;
             spells[3].cooldown = RandomUInt(5) + 14;
             spells[3].casttime = RandomUInt(5) + 14;
             spells[3].attackstoptimer = 1000;
 
-            spells[4].info = dbcSpell.LookupEntry(DRAGONSBREATH);
+            spells[4].info = sSpellCustomizations.GetSpellInfo(DRAGONSBREATH);
             spells[4].targettype = TARGET_RANDOM_SINGLE;
             spells[4].instant = true;
             spells[4].cooldown = RandomUInt(5) + 16;
@@ -1445,26 +1445,26 @@ class ShadeofAranAI : public CreatureAIScript
             spells[4].attackstoptimer = 1000;
             spells[4].maxdist2cast = 15;
 
-            spells[5].info = dbcSpell.LookupEntry(AOE_COUNTERSPELL);
+            spells[5].info = sSpellCustomizations.GetSpellInfo(AOE_COUNTERSPELL);
             spells[5].targettype = TARGET_SELF;
             spells[5].instant = true;
             spells[5].cooldown = 13;
             spells[5].casttime = 13;
             spells[5].attackstoptimer = 1000;
 
-            info_flame_wreath = dbcSpell.LookupEntry(FLAME_WREATH);
-            info_blink_center = dbcSpell.LookupEntry(BLINK_CENTER);
-            info_massslow = dbcSpell.LookupEntry(MASSSLOW);
-            info_magnetic_pull = dbcSpell.LookupEntry(MAGNETIC_PULL);
-            info_aexplosion = dbcSpell.LookupEntry(AEXPLOSION);
-            info_blizzard = dbcSpell.LookupEntry(BLIZZARD);
-            info_summon_elemental_1 = dbcSpell.LookupEntry(SUMMON_ELEMENTAL_1);
-            info_summon_elemental_2 = dbcSpell.LookupEntry(SUMMON_ELEMENTAL_2);
-            info_summon_elemental_3 = dbcSpell.LookupEntry(SUMMON_ELEMENTAL_3);
-            info_mass_polymorph = dbcSpell.LookupEntry(MASS_POLYMORPH);
-            info_conjure = dbcSpell.LookupEntry(CONJURE);
-            info_drink = dbcSpell.LookupEntry(DRINK);
-            info_pyroblast = dbcSpell.LookupEntry(AOE_PYROBLAST);
+            info_flame_wreath = sSpellCustomizations.GetSpellInfo(FLAME_WREATH);
+            info_blink_center = sSpellCustomizations.GetSpellInfo(BLINK_CENTER);
+            info_massslow = sSpellCustomizations.GetSpellInfo(MASSSLOW);
+            info_magnetic_pull = sSpellCustomizations.GetSpellInfo(MAGNETIC_PULL);
+            info_aexplosion = sSpellCustomizations.GetSpellInfo(AEXPLOSION);
+            info_blizzard = sSpellCustomizations.GetSpellInfo(BLIZZARD);
+            info_summon_elemental_1 = sSpellCustomizations.GetSpellInfo(SUMMON_ELEMENTAL_1);
+            info_summon_elemental_2 = sSpellCustomizations.GetSpellInfo(SUMMON_ELEMENTAL_2);
+            info_summon_elemental_3 = sSpellCustomizations.GetSpellInfo(SUMMON_ELEMENTAL_3);
+            info_mass_polymorph = sSpellCustomizations.GetSpellInfo(MASS_POLYMORPH);
+            info_conjure = sSpellCustomizations.GetSpellInfo(CONJURE);
+            info_drink = sSpellCustomizations.GetSpellInfo(DRINK);
+            info_pyroblast = sSpellCustomizations.GetSpellInfo(AOE_PYROBLAST);
 
             drinking = false;
             enraged = false;
@@ -1642,7 +1642,7 @@ class ShadeofAranAI : public CreatureAIScript
                     {
                         _unit->setAttackTimer(3000, false);
                         _unit->CastSpell(_unit, info_conjure, false);
-                        _unit->SetStandState(1);
+                        _unit->SetStandState(STANDSTATE_SIT);
                         _unit->setEmoteState(EMOTE_ONESHOT_EAT);
                     }
                     else
@@ -1656,8 +1656,8 @@ class ShadeofAranAI : public CreatureAIScript
                 m_time_pyroblast--;
                 if (!m_time_pyroblast)
                 {
-                    _unit->SetStandState(0);
-                    _unit->setEmoteState(0);
+                    _unit->SetStandState(STANDSTATE_STAND);
+                    _unit->setEmoteState(EMOTE_ONESHOT_NONE);
                     _unit->CastSpell(_unit, info_pyroblast, false);
                     drinking = false;
                 }
@@ -1729,7 +1729,7 @@ class ShadeofAranAI : public CreatureAIScript
             }
 
             while(Targets.size() > 3)
-                Targets.erase(Targets.begin() + RandomUInt(Targets.size()));
+                Targets.erase(Targets.begin() + RandomUInt(static_cast<uint32>(Targets.size())));
 
             uint32 i = 0;
             for (std::vector<Player*>::iterator itr = Targets.begin(); itr != Targets.end(); ++itr)
@@ -1899,7 +1899,7 @@ class ShadeofAranAI : public CreatureAIScript
                 if (!TargetTable.size())
                     return;
 
-                auto random_index = RandomUInt(0, TargetTable.size() - 1);
+                auto random_index = RandomUInt(0, uint32(TargetTable.size() - 1));
                 auto random_target = TargetTable[random_index];
 
                 if (random_target == nullptr)
@@ -1935,19 +1935,19 @@ class ShadeofAranAI : public CreatureAIScript
         uint32 m_time_conjure;
         uint32 FlameWreathTimer;
         uint64 FlameWreathTarget[3];
-        SpellEntry* info_flame_wreath;
-        SpellEntry* info_aexplosion;
-        SpellEntry* info_blizzard;
-        SpellEntry* info_magnetic_pull;
-        SpellEntry* info_blink_center;
-        SpellEntry* info_massslow;
-        SpellEntry* info_mass_polymorph;
-        SpellEntry* info_conjure;
-        SpellEntry* info_drink;
-        SpellEntry* info_pyroblast;
-        SpellEntry* info_summon_elemental_1;
-        SpellEntry* info_summon_elemental_2;
-        SpellEntry* info_summon_elemental_3;
+        SpellInfo* info_flame_wreath;
+        SpellInfo* info_aexplosion;
+        SpellInfo* info_blizzard;
+        SpellInfo* info_magnetic_pull;
+        SpellInfo* info_blink_center;
+        SpellInfo* info_massslow;
+        SpellInfo* info_mass_polymorph;
+        SpellInfo* info_conjure;
+        SpellInfo* info_drink;
+        SpellInfo* info_pyroblast;
+        SpellInfo* info_summon_elemental_1;
+        SpellInfo* info_summon_elemental_2;
+        SpellInfo* info_summon_elemental_3;
 };
 
 class WaterEleAI : public CreatureAIScript
@@ -2079,21 +2079,21 @@ class IllhoofAI : public CreatureAIScript
             for (uint8 i = 0; i < nrspells; i++)
                 m_spellcheck[i] = false;
 
-            spells[0].info = dbcSpell.LookupEntry(SHADOW_BOLT);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SHADOW_BOLT);
             spells[0].targettype = TARGET_ATTACKING;
             spells[0].instant = true;
             spells[0].cooldown = 5;
             spells[0].perctrigger = 50.0f;
             spells[0].attackstoptimer = 1000;
 
-            spells[1].info = dbcSpell.LookupEntry(I_ENRAGE);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(I_ENRAGE);
             spells[1].targettype = TARGET_SELF;
             spells[1].instant = true;
             spells[1].cooldown = 600;
             spells[1].perctrigger = 0.0f;
             spells[1].attackstoptimer = 1000;
             /*
-                    spells[2].info = dbcSpell.LookupEntry(S_DEMONCHAINS);
+                    spells[2].info = sSpellCustomizations.GetSpellInfo(S_DEMONCHAINS);
                     spells[2].targettype = TARGET_VARIOUS;
                     spells[2].instant = true;
                     spells[2].cooldown = 45;
@@ -2188,7 +2188,7 @@ class IllhoofAI : public CreatureAIScript
                 else if (ReSummon && t > ReKilrek)
                 {
                     ReSummon = false;
-                    _unit->CastSpell(_unit, dbcSpell.LookupEntry(S_KILREK), true);
+                    _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(S_KILREK), true);
                     _unit->RemoveAura(BROKEN_PACT);
                 }
             }
@@ -2238,13 +2238,13 @@ class IllhoofAI : public CreatureAIScript
             if (!TargetTable.size())
                 return;
 
-            auto random_index = RandomUInt(0, TargetTable.size() - 1);
+            auto random_index = RandomUInt(0, uint32(TargetTable.size() - 1));
             auto random_target = TargetTable[random_index];
 
             if (random_target == nullptr)
                 return;
 
-            _unit->CastSpell(random_target, dbcSpell.LookupEntry(SACRIFICE), false);
+            _unit->CastSpell(random_target, sSpellCustomizations.GetSpellInfo(SACRIFICE), false);
 
             TargetTable.clear();
 
@@ -2322,14 +2322,14 @@ class KilrekAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(AMPLIFY_FLAMES);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(AMPLIFY_FLAMES);
             spells[0].targettype = TARGET_RANDOM_SINGLE;
             spells[0].instant = true;
             spells[0].cooldown = 5;
             spells[0].perctrigger = 50.0f;
             spells[0].attackstoptimer = 1000;
 
-            spells[1].info = dbcSpell.LookupEntry(BROKEN_PACT);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(BROKEN_PACT);
             spells[1].targettype = TARGET_ATTACKING;
             spells[1].instant = true;
         }
@@ -2434,7 +2434,7 @@ class KilrekAI : public CreatureAIScript
                 if (!TargetTable.size())
                     return;
 
-                auto random_index = RandomUInt(0, TargetTable.size() - 1);
+                auto random_index = RandomUInt(0, uint32(TargetTable.size() - 1));
                 auto random_target = TargetTable[random_index];
 
                 if (random_target == nullptr)
@@ -2474,7 +2474,7 @@ class FiendishImpAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(FIREBALL_IMP);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(FIREBALL_IMP);
             spells[0].targettype = TARGET_ATTACKING;
             spells[0].instant = false;
             spells[0].cooldown = 0;
@@ -2593,7 +2593,7 @@ class FiendishImpAI : public CreatureAIScript
             Unit* pUnit;
             float dist;
 
-            for (std::set<Object*>::iterator itr = _unit->GetInRangeOppFactsSetBegin(); itr != _unit->GetInRangeOppFactsSetEnd(); itr++)
+            for (std::set<Object*>::iterator itr = _unit->GetInRangeOppFactsSetBegin(); itr != _unit->GetInRangeOppFactsSetEnd(); ++itr)
             {
                 if (!(*itr)->IsUnit())
                     continue;
@@ -2632,7 +2632,7 @@ class DemonChains : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(DemonChains);
         DemonChains(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            _unit->CastSpell(_unit, dbcSpell.LookupEntry(CHAINS_VISUAL), true);
+            _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(CHAINS_VISUAL), true);
             _unit->Root();
             _unit->DisableAI();
         }
@@ -2730,35 +2730,35 @@ class MalchezaarAI : public MoonScriptCreatureAI
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(SW_PAIN);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SW_PAIN);
             spells[0].targettype = TARGET_ATTACKING;
             spells[0].instant = true;
             spells[0].cooldown = 15;
             spells[0].perctrigger = 50.0f;
             spells[0].attackstoptimer = 1000;
 
-            spells[1].info = dbcSpell.LookupEntry(ENFEEBLE);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(ENFEEBLE);
             spells[1].targettype = TARGET_VARIOUS;
             spells[1].instant = true;
             spells[1].cooldown = 25;
             spells[1].perctrigger = 0.0f;
             spells[1].attackstoptimer = 1000;
 
-            spells[2].info = dbcSpell.LookupEntry(INF_RAIN);
+            spells[2].info = sSpellCustomizations.GetSpellInfo(INF_RAIN);
             spells[2].targettype = TARGET_DESTINATION;
             spells[2].instant = true;
             spells[2].cooldown = 43;
             spells[2].perctrigger = 0.0f;
             spells[2].attackstoptimer = 1000;
 
-            spells[3].info = dbcSpell.LookupEntry(SUNDER_ARMOR);
+            spells[3].info = sSpellCustomizations.GetSpellInfo(SUNDER_ARMOR);
             spells[3].targettype = TARGET_ATTACKING;
             spells[3].instant = true;
             spells[3].cooldown = 15;
             spells[3].perctrigger = 0.0f;
             spells[3].attackstoptimer = 1000;
 
-            spells[4].info = dbcSpell.LookupEntry(AMPLIFY_DMG);
+            spells[4].info = sSpellCustomizations.GetSpellInfo(AMPLIFY_DMG);
             spells[4].targettype = TARGET_RANDOM_SINGLE;
             spells[4].instant = true;
             spells[4].cooldown = 20;
@@ -2766,26 +2766,26 @@ class MalchezaarAI : public MoonScriptCreatureAI
             spells[4].attackstoptimer = 1000;
             spells[4].mindist2cast = 0.0f;
 
-            spells[5].info = dbcSpell.LookupEntry(SHADOWNOVA);
+            spells[5].info = sSpellCustomizations.GetSpellInfo(SHADOWNOVA);
             spells[5].targettype = TARGET_VARIOUS;
             spells[5].instant = false;
             spells[5].cooldown = 4;
             spells[5].perctrigger = 0.0f;
             spells[5].attackstoptimer = 2000;
 
-            spells[6].info = dbcSpell.LookupEntry(THRASH_AURA);
+            spells[6].info = sSpellCustomizations.GetSpellInfo(THRASH_AURA);
             spells[6].targettype = TARGET_SELF;
             spells[6].instant = true;
             spells[6].cooldown = 1;
             spells[6].perctrigger = 0.0f;
             spells[6].attackstoptimer = 1000;
 
-            spells[7].info = dbcSpell.LookupEntry(WIELD_AXES);
+            spells[7].info = sSpellCustomizations.GetSpellInfo(WIELD_AXES);
             spells[7].targettype = TARGET_SELF;
             spells[7].instant = true;
             spells[7].attackstoptimer = 1000;
 
-            spells[8].info = dbcSpell.LookupEntry(SUMMON_AXES);
+            spells[8].info = sSpellCustomizations.GetSpellInfo(SUMMON_AXES);
             spells[8].targettype = TARGET_SELF;
             spells[8].instant = true;
             spells[8].attackstoptimer = 1000;
@@ -2845,8 +2845,8 @@ class MalchezaarAI : public MoonScriptCreatureAI
             // Off hand weapon
             _unit->SetEquippedItem(OFFHAND, 0);
 
-            CreatureProto* cp = CreatureProtoStorage.LookupEntry(CN_MALCHEZAAR);
-            if (!cp)
+            CreatureProperties const* cp = sMySQLStore.GetCreatureProperties(CN_MALCHEZAAR);
+            if (cp == nullptr)
                 return;
 
             _unit->SetMinDamage(cp->MinDamage);
@@ -2985,8 +2985,8 @@ class MalchezaarAI : public MoonScriptCreatureAI
                 //Off Hand
                 _unit->SetEquippedItem(OFFHAND, AXE_ITEM_MODEL);
 
-                CreatureProto* cp = CreatureProtoStorage.LookupEntry(CN_MALCHEZAAR);
-                if (!cp)
+                CreatureProperties const* cp = sMySQLStore.GetCreatureProperties(CN_MALCHEZAAR);
+                if (cp == nullptr)
                     return;
 
                 _unit->SetMinDamage(1.5f * cp->MinDamage);
@@ -3029,8 +3029,8 @@ class MalchezaarAI : public MoonScriptCreatureAI
                 //Off Hand
                 _unit->SetEquippedItem(OFFHAND, 0);
 
-                CreatureProto* cp = CreatureProtoStorage.LookupEntry(CN_MALCHEZAAR);
-                if (!cp)
+                CreatureProperties const* cp = sMySQLStore.GetCreatureProperties(CN_MALCHEZAAR);
+                if (cp == nullptr)
                     return;
 
                 _unit->SetMinDamage(cp->MinDamage);
@@ -3085,7 +3085,7 @@ class MalchezaarAI : public MoonScriptCreatureAI
             }
 
             while(Targets.size() > 5)
-                Targets.erase(Targets.begin() + RandomUInt(Targets.size()));
+                Targets.erase(Targets.begin() + RandomUInt(static_cast<uint32>(Targets.size())));
 
             int i = 0;
             for (std::vector<Player*>::iterator E_Itr = Targets.begin(); E_Itr != Targets.end(); ++E_Itr)
@@ -3181,7 +3181,7 @@ class MalchezaarAI : public MoonScriptCreatureAI
                 if (!TargetTable.size())
                     return;
 
-                auto random_index = RandomUInt(0, TargetTable.size() - 1);
+                auto random_index = RandomUInt(0, uint32(TargetTable.size() - 1));
                 auto random_target = TargetTable[random_index];
 
                 if (random_target == nullptr)
@@ -3227,13 +3227,13 @@ class NetherInfernalAI : public MoonScriptBossAI
             _unit->m_noRespawn = true;
             RegisterAIUpdateEvent(6000);
             Despawn(175000, 0);
-            _unit->CastSpell(_unit, dbcSpell.LookupEntry(HELLFIRE), true);
+            _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(HELLFIRE), true);
             ParentClass::OnLoad();
         };
 
         void AIUpdate()
         {
-            _unit->CastSpell(_unit, dbcSpell.LookupEntry(HELLFIRE), true);
+            _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(HELLFIRE), true);
             ParentClass::AIUpdate();
         };
 
@@ -3248,9 +3248,9 @@ class InfernalDummyAI : public CreatureAIScript
             _unit->GetAIInterface()->addWayPoint(CreateWaypoint(1, 0, 768));
         }
 
-        inline WayPoint* CreateWaypoint(int id, uint32 waittime, uint32 flags)
+        inline Movement::WayPoint* CreateWaypoint(int id, uint32 waittime, uint32 flags)
         {
-            WayPoint* wp = _unit->CreateWaypointStruct();
+            Movement::WayPoint* wp = _unit->CreateWaypointStruct();
             wp->id = id;
             wp->x = -10938.56f;
             wp->y = -2041.26f;
@@ -3279,7 +3279,7 @@ class MAxesAI : public CreatureAIScript
         {
             _unit->SetUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_2);
 
-            spells[0].info = dbcSpell.LookupEntry(DEMONIC_FRENZY);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(DEMONIC_FRENZY);
             spells[0].targettype = TARGET_SELF;
             spells[0].instant = true;
             spells[0].cooldown = 1;
@@ -3307,7 +3307,7 @@ class MAxesAI : public CreatureAIScript
             if (!TargetTable.size())
                 return;
 
-            auto random_index = RandomUInt(0, TargetTable.size() - 1);
+            auto random_index = RandomUInt(0, uint32(TargetTable.size() - 1));
             auto random_target = TargetTable[random_index];
 
             if (random_target == nullptr)
@@ -3366,21 +3366,21 @@ class NetherspiteAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(NETHERBREATH);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(NETHERBREATH);
             spells[0].targettype = TARGET_ATTACKING;
             spells[0].instant = false;
             spells[0].cooldown = RandomUInt(5) + 30;
             spells[0].perctrigger = 50.0f;
             spells[0].attackstoptimer = 1000;
 
-            spells[1].info = dbcSpell.LookupEntry(N_BERSERK);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(N_BERSERK);
             spells[1].targettype = TARGET_SELF;
             spells[1].instant = true;
             spells[1].cooldown = 540;
             spells[1].perctrigger = 0.0f;
             spells[1].attackstoptimer = 1000;
 
-            spells[2].info = dbcSpell.LookupEntry(NETHERBURN);
+            spells[2].info = sSpellCustomizations.GetSpellInfo(NETHERBURN);
             spells[2].targettype = TARGET_SELF;
             spells[2].instant = true;
 
@@ -3447,7 +3447,7 @@ class NetherspiteAI : public CreatureAIScript
                 if (!TargetTable.size())
                     return;
 
-                auto random_index = RandomUInt(0, TargetTable.size() - 1);
+                auto random_index = RandomUInt(0, uint32(TargetTable.size() - 1));
                 auto random_target = TargetTable[random_index];
 
                 if (random_target == nullptr)
@@ -3529,7 +3529,7 @@ class VoidZoneAI : public CreatureAIScript
 
             RegisterAIUpdateEvent(2000);
 
-            spells[0].info = dbcSpell.LookupEntry(CONSUMPTION);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(CONSUMPTION);
             spells[0].instant = true;
             spells[0].cooldown = 2;
             spells[0].casttime = (uint32)time(NULL) + spells[0].cooldown;
@@ -3578,7 +3578,7 @@ class VoidZoneAI : public CreatureAIScript
 #define FIREBALL_BARRAGE 30282
 #define SUMMON_BONE_SKELETONS 30170
 
-static Location coords[] =
+static Movement::Location coords[] =
 {
     { 0, 0, 0, 0 },
     { -11173.719727f, -1863.993164f, 130.390396f, 5.343079f }, // casting point
@@ -3603,46 +3603,46 @@ class NightbaneAI : public CreatureAIScript
             }
 
             //ground phase spells
-            spells[0].info =  dbcSpell.LookupEntry(BELLOWING_ROAR);
+            spells[0].info =  sSpellCustomizations.GetSpellInfo(BELLOWING_ROAR);
             spells[0].targettype = TARGET_VARIOUS;
             spells[0].instant = false;
             spells[0].cooldown = 30; //confirmed
             spells[0].perctrigger = 0.0f;
             spells[0].attackstoptimer = 1500;
 
-            spells[1].info = dbcSpell.LookupEntry(CHARRED_EARTH);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(CHARRED_EARTH);
             spells[1].targettype = TARGET_RANDOM_SINGLE;
             spells[1].instant = false;
             spells[1].cooldown = 15;
             spells[1].perctrigger = 0.0f;
             spells[1].attackstoptimer = 1000;
 
-            spells[2].info = dbcSpell.LookupEntry(CLEAVE);
+            spells[2].info = sSpellCustomizations.GetSpellInfo(CLEAVE);
             spells[2].targettype = TARGET_ATTACKING;
             spells[2].instant = false;
             spells[2].cooldown = 7;
             spells[2].perctrigger = 0.0f;
             spells[2].attackstoptimer = 1000;
 
-            spells[3].info = dbcSpell.LookupEntry(DISTRACTING_ASH);
+            spells[3].info = sSpellCustomizations.GetSpellInfo(DISTRACTING_ASH);
             spells[3].targettype = TARGET_RANDOM_SINGLE;
             spells[3].instant = false;
             spells[3].cooldown = 60;
             spells[3].perctrigger = 0.0f;
             spells[3].attackstoptimer = 1000;
 
-            spells[4].info = dbcSpell.LookupEntry(SMOLDERING_BREATH);
+            spells[4].info = sSpellCustomizations.GetSpellInfo(SMOLDERING_BREATH);
             spells[4].targettype = TARGET_ATTACKING;
             spells[4].instant = false;
             spells[4].cooldown = 20;
             spells[4].perctrigger = 0.0f;
             spells[4].attackstoptimer = 1000;
 
-            _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_DONTMOVEWP);
+            _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
 
             for (uint8 i = 1; i < 5; i++)
             {
-                _unit->GetAIInterface()->addWayPoint(CreateWaypoint(i, 0, Flag_Fly));
+                _unit->GetAIInterface()->addWayPoint(CreateWaypoint(i, 0, Movement::WP_MOVE_TYPE_FLY));
             }
 
             m_phase = 0;
@@ -3664,7 +3664,7 @@ class NightbaneAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_DONTMOVEWP);
+            _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
             _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
             _unit->GetAIInterface()->SetAIState(STATE_IDLE);
             _unit->GetAIInterface()->SetAllowedToEnterCombat(true);
@@ -3719,7 +3719,7 @@ class NightbaneAI : public CreatureAIScript
                 default:
                     {
                         //move to the next waypoint
-                        _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                        _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                         _unit->GetAIInterface()->setWaypointToMove(iWaypointId + 1);
                     }
                     break;
@@ -3741,7 +3741,7 @@ class NightbaneAI : public CreatureAIScript
                 _unit->GetAIInterface()->SetAllowedToEnterCombat(false);
                 _unit->GetAIInterface()->StopMovement(0);
                 _unit->GetAIInterface()->SetAIState(STATE_SCRIPTMOVE);
-                _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                 _unit->GetAIInterface()->setWaypointToMove(2);
                 m_phase++;
                 return;
@@ -3758,7 +3758,7 @@ class NightbaneAI : public CreatureAIScript
                 //Casts Rain of Bones on one random player/pet
                 //CastSpellOnRandomTarget(5, 0, 40);
                 //summon 3 skeletons
-                //_unit->CastSpellAoF(target->GetPositionX(),target->GetPositionY(),target->GetPositionZ(), dbcSpell.LookupEntry(SUMMON_BONE_SKELETONS), true);
+                //_unit->CastSpellAoF(target->GetPositionX(),target->GetPositionY(),target->GetPositionZ(), sSpellCustomizations.GetSpellInfo(SUMMON_BONE_SKELETONS), true);
                 return;
             }
 
@@ -3766,7 +3766,7 @@ class NightbaneAI : public CreatureAIScript
             if (_unit->GetAIInterface()->getNextTarget() != NULL)
             {
                 target = _unit->GetAIInterface()->getNextTarget();
-                _unit->CastSpell(target, dbcSpell.LookupEntry(SMOKING_BLAST), true);
+                _unit->CastSpell(target, sSpellCustomizations.GetSpellInfo(SMOKING_BLAST), true);
             }
 
             target = NULL;
@@ -3779,7 +3779,7 @@ class NightbaneAI : public CreatureAIScript
 
                     if (_unit->GetDistance2dSq(target) > 2025) //45 yards
                     {
-                        _unit->CastSpellAoF(target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), dbcSpell.LookupEntry(FIREBALL_BARRAGE), true);
+                        _unit->CastSpellAoF(target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), sSpellCustomizations.GetSpellInfo(FIREBALL_BARRAGE), true);
                         break; //stop
                     }
                 }
@@ -3802,7 +3802,7 @@ class NightbaneAI : public CreatureAIScript
                 _unit->GetAIInterface()->SetAllowedToEnterCombat(false);
                 _unit->GetAIInterface()->StopMovement(0);
                 _unit->GetAIInterface()->SetAIState(STATE_SCRIPTMOVE);
-                _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                 _unit->GetAIInterface()->setWaypointToMove(1);
                 Fly();
                 m_FlyPhaseTimer = 17;
@@ -3823,7 +3823,7 @@ class NightbaneAI : public CreatureAIScript
 
                         //cone behind the boss
                         if (target->isAlive() && target->isInBack(_unit))
-                            _unit->CastSpell(target, dbcSpell.LookupEntry(TAIL_SWEEP), true);
+                            _unit->CastSpell(target, sSpellCustomizations.GetSpellInfo(TAIL_SWEEP), true);
                     }
                 }
                 mTailSweepTimer = 25;
@@ -3833,9 +3833,9 @@ class NightbaneAI : public CreatureAIScript
             SpellCast(val);
         }
 
-        inline WayPoint* CreateWaypoint(int id, uint32 waittime, uint32 flags)
+        inline Movement::WayPoint* CreateWaypoint(int id, uint32 waittime, uint32 flags)
         {
-            WayPoint* wp = _unit->CreateWaypointStruct();
+            Movement::WayPoint* wp = _unit->CreateWaypointStruct();
             wp->id = id;
             wp->x = coords[id].x;
             wp->y = coords[id].y;
@@ -3951,7 +3951,7 @@ class NightbaneAI : public CreatureAIScript
                 if (!TargetTable.size())
                     return;
 
-                auto random_index = RandomUInt(0, TargetTable.size() - 1);
+                auto random_index = RandomUInt(0, uint32(TargetTable.size() - 1));
                 auto random_target = TargetTable[random_index];
 
                 if (random_target == nullptr)
@@ -4004,14 +4004,14 @@ class DorotheeAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(SP_AOE_FEAR);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SP_AOE_FEAR);
             spells[0].targettype = TARGET_ATTACKING;
             spells[0].instant = true;
             spells[0].cooldown = 30;  //correct cooldown?
             spells[0].perctrigger = 0.0f;
             spells[0].attackstoptimer = 1000;
 
-            spells[1].info = dbcSpell.LookupEntry(SP_WATER_BOLT);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(SP_WATER_BOLT);
             spells[1].targettype = TARGET_RANDOM_SINGLE;
             spells[1].instant = false;
             spells[1].perctrigger = 100.0f;
@@ -4141,7 +4141,7 @@ class DorotheeAI : public CreatureAIScript
                 if (!TargetTable.size())
                     return;
 
-                auto random_index = RandomUInt(0, TargetTable.size() - 1);
+                auto random_index = RandomUInt(0, uint32(TargetTable.size() - 1));
                 auto random_target = TargetTable[random_index];
 
                 if (random_target == nullptr)
@@ -4233,7 +4233,7 @@ class TitoAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(SP_ANNOYING_YIPPING);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SP_ANNOYING_YIPPING);
             spells[0].targettype = TARGET_ATTACKING;
             spells[0].instant = true;
             spells[0].perctrigger = 15.0f;
@@ -4348,13 +4348,13 @@ class StrawmanAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(SP_BURNING_STRAW);//  NEEDS TO BE SO IT ONLY AFFECTS HIM WHEN HE IS HIT BY FIRE DMG!
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SP_BURNING_STRAW);//  NEEDS TO BE SO IT ONLY AFFECTS HIM WHEN HE IS HIT BY FIRE DMG!
             spells[0].targettype = TARGET_SELF;
             spells[0].instant = true;
             spells[0].perctrigger = 0.0f;
             spells[0].attackstoptimer = 1000;
 
-            spells[1].info = dbcSpell.LookupEntry(SP_BRAIN_BASH);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(SP_BRAIN_BASH);
             spells[1].targettype = TARGET_RANDOM_SINGLE;
             spells[1].instant = true;
             spells[1].cooldown = 8; //not sure about this
@@ -4490,13 +4490,13 @@ class TinheadAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(SP_CLEAVE);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SP_CLEAVE);
             spells[0].targettype = TARGET_ATTACKING;
             spells[0].instant = true;
             spells[0].perctrigger = 0.0f;
             spells[0].attackstoptimer = 1000;
 
-            spells[1].info = dbcSpell.LookupEntry(SP_RUST);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(SP_RUST);
             spells[1].targettype = TARGET_SELF;
             spells[1].instant = true;
             spells[1].cooldown = 60;
@@ -4669,13 +4669,13 @@ class CroneAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(SP_SUMMON_CYCLONE);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SP_SUMMON_CYCLONE);
             spells[0].targettype = TARGET_DESTINATION;
             spells[0].instant = true;
             spells[0].perctrigger = 5.0f;
             spells[0].attackstoptimer = 1000;
 
-            spells[1].info = dbcSpell.LookupEntry(SP_CHAIN_LIGHTNING);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(SP_CHAIN_LIGHTNING);
             spells[1].targettype = TARGET_ATTACKING;
             spells[1].instant = true;
             spells[1].perctrigger = 10.0f;
@@ -4817,7 +4817,7 @@ class CycloneOZ : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(CycloneOZ);
         CycloneOZ(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            _unit->CastSpell(_unit, dbcSpell.LookupEntry(CYCLONE_VISUAL), true);
+            _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(CYCLONE_VISUAL), true);
             _unit->SetUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_2);
             _unit->GetAIInterface()->disable_melee = true;
             _unit->GetAIInterface()->m_canMove = false;
@@ -4841,7 +4841,7 @@ class CycloneOZ : public CreatureAIScript
 
         void AIUpdate()
         {
-            _unit->CastSpell(_unit, dbcSpell.LookupEntry(CYCLONE_KNOCK), true);
+            _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(CYCLONE_KNOCK), true);
         }
 };
 
@@ -4871,28 +4871,28 @@ class RomuloAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(SP_BACKWARD_LUNGE);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SP_BACKWARD_LUNGE);
             spells[0].targettype = TARGET_ATTACKING;
             spells[0].instant = false;
             spells[0].cooldown = 12;
             spells[0].perctrigger = 20.0f;
             spells[0].attackstoptimer = 1000;
 
-            spells[1].info = dbcSpell.LookupEntry(SP_DEADLY_SWATHE);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(SP_DEADLY_SWATHE);
             spells[1].targettype = TARGET_ATTACKING;
             spells[1].instant = false;
             spells[1].cooldown = 0;
             spells[1].perctrigger = 20.0f;
             spells[1].attackstoptimer = 1000;
 
-            spells[2].info = dbcSpell.LookupEntry(SP_POISONED_THRUST);
+            spells[2].info = sSpellCustomizations.GetSpellInfo(SP_POISONED_THRUST);
             spells[2].targettype = TARGET_ATTACKING;
             spells[2].instant = false;
             spells[2].cooldown = 0;
             spells[2].perctrigger = 20.0f;
             spells[2].attackstoptimer = 1000;
 
-            spells[3].info = dbcSpell.LookupEntry(SP_DARING);
+            spells[3].info = sSpellCustomizations.GetSpellInfo(SP_DARING);
             spells[3].targettype = TARGET_SELF;
             spells[3].instant = false;
             spells[3].cooldown = 0;
@@ -5057,28 +5057,28 @@ class JulianneAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(SP_ETERNAL_AFFECTION);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SP_ETERNAL_AFFECTION);
             spells[0].targettype = TARGET_SELF;
             spells[0].instant = false;
             spells[0].cooldown = 12;
             spells[0].perctrigger = 5.0f;
             spells[0].attackstoptimer = 1000;
 
-            spells[1].info = dbcSpell.LookupEntry(SP_POWERFUL_ATTRACTION);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(SP_POWERFUL_ATTRACTION);
             spells[1].targettype = TARGET_ATTACKING;
             spells[1].instant = false;
             spells[1].cooldown = 0;
             spells[1].perctrigger = 5.0f;
             spells[1].attackstoptimer = 1000;
 
-            spells[2].info = dbcSpell.LookupEntry(SP_BINDING_PASSION);
+            spells[2].info = sSpellCustomizations.GetSpellInfo(SP_BINDING_PASSION);
             spells[2].targettype = TARGET_ATTACKING;
             spells[2].instant = false;
             spells[2].cooldown = 0;
             spells[2].perctrigger = 5.0f;
             spells[2].attackstoptimer = 1000;
 
-            spells[3].info = dbcSpell.LookupEntry(SP_DEVOTION);
+            spells[3].info = sSpellCustomizations.GetSpellInfo(SP_DEVOTION);
             spells[3].targettype = TARGET_SELF;
             spells[3].instant = false;
             spells[3].cooldown = 0;

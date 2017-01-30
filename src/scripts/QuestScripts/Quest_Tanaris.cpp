@@ -67,7 +67,7 @@ class SpiritScreeches : public GossipScript
                 case 1:
                     {
                         QuestLogEntry* en = plr->GetQuestLogForEntry(3520);
-                        if(en && en->GetMobCount(0) < en->GetQuest()->required_mobcount[0])
+                        if(en && en->GetMobCount(0) < en->GetQuest()->required_mob_or_go_count[0])
                         {
                             en->SetMobCount(0, en->GetMobCount(0) + 1);
                             en->SendUpdateAddKill(0);
@@ -126,7 +126,7 @@ class StewardOfTime : public GossipScript
             switch(IntId)
             {
                 case 1:
-                    creat->CastSpell(plr, dbcSpell.LookupEntry(34891), true);
+                    creat->CastSpell(plr, sSpellCustomizations.GetSpellInfo(34891), true);
                     break;
             }
         }

@@ -140,7 +140,7 @@ class ZerekethAI : public MoonScriptBossAI
                 {
                     creature = static_cast<Creature*>(obj);
 
-                    if (creature->GetCreatureInfo()->Id == 21101 && creature->isAlive())
+                    if (creature->GetCreatureProperties()->Id == 21101 && creature->isAlive())
                     {
                         creature->Despawn(0, 0);
                     }
@@ -170,7 +170,7 @@ class ZerekethAI : public MoonScriptBossAI
 
             std::vector<Player*> TargetTable;
             std::set< Object* >::iterator Itr = _unit->GetInRangePlayerSetBegin();
-            for (; Itr != _unit->GetInRangePlayerSetEnd(); Itr++)
+            for (; Itr != _unit->GetInRangePlayerSetEnd(); ++Itr)
             {
                 Player* RandomTarget = NULL;
                 if (!(*Itr)->IsPlayer())
@@ -183,7 +183,7 @@ class ZerekethAI : public MoonScriptBossAI
             if (!TargetTable.size())
                 return;
 
-            auto random_index = RandomUInt(0, TargetTable.size() - 1);
+            auto random_index = RandomUInt(0, uint32(TargetTable.size() - 1));
             auto random_target = TargetTable[random_index];
 
             if (random_target == nullptr)
@@ -717,7 +717,7 @@ class WardenMellicharAI : public MoonScriptBossAI
             SetCanMove(true);
             SetAllowMelee(true);
             SetAllowSpell(true);
-            _unit->SetEmoteState(8); // to be replaced for the standstate
+            _unit->SetStandState(STANDSTATE_KNEEL);
 
             if (shield)
                 shield->SetState(GO_STATE_OPEN);

@@ -27,7 +27,7 @@
 #include "Setup.h"
 #include "Instance_OldHillsbradFoothills.h"
 
-static Location Fires[] =
+static Movement::Location Fires[] =
 {
     { 2160.68f, 235.382f, 53.8946f, 3.55550f },
     { 2162.26f, 237.439f, 56.7303f, 5.97846f },
@@ -52,7 +52,7 @@ static Location Fires[] =
     { 2070.20f, 75.6493f, 61.9173f, 2.12293f }
 };
 
-static Location ThrallWP1[] = // pre 2nd boss
+static Movement::Location ThrallWP1[] = // pre 2nd boss
 {
     { 0, 0, 0, 0 },
     { 2230.29f, 115.049f, 82.2946f, 4.22934f },
@@ -279,9 +279,9 @@ class ThrallAI : public MoonScriptCreatureAI // this will be replaced with escor
     MOONSCRIPT_FACTORY_FUNCTION(ThrallAI, MoonScriptCreatureAI);
     ThrallAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
-        SetMoveType(Move_DontMoveWP);
+        SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
         for (uint8 i = 1; i < MAX_THRALLWP1; ++i)
-            AddWaypoint(CreateWaypoint(i, 0, Flag_Walk, ThrallWP1[i]));
+            AddWaypoint(CreateWaypoint(i, 0, Movement::WP_MOVE_TYPE_WALK, ThrallWP1[i]));
 
         m_currentWp = 0;
     }
@@ -293,7 +293,7 @@ class ThrallAI : public MoonScriptCreatureAI // this will be replaced with escor
             pGO->SetState(pGO->GetState() == 1 ? 0 : 1);
 
         _unit->SetUInt32Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_NONE);
-        SetMoveType(Move_ForwardThenStop);
+        SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_FORWARDTHENSTOP);
     }
 
     void OnCombatStop(Unit* pTarget)

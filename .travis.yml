@@ -1,50 +1,51 @@
+sudo: false
 language: cpp
-sudo: required
-dist: trusty
 
-# only run travis on the master branch
-branches:
-only:
-  - master
-  - coverity_scan
+os:
+  - linux
 
-# clang is default compiler for pull requests and default branches (except coverity scan)
 compiler:
-  - clang
+  - gcc
 
 git:
   depth: 1
 
 env:
   global:
-  # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
-  #   via the "travis encrypt" command using the project repo's public key
-  - secure: "Zk3bAxnp4OHPMMZYOSoM2chuMZXomp7BFcT54/Ag6C8RCqtpqQ+E6yHRp861xdWSVo9uZ/uGmD1pwPiIUK8Vs80+OwhFVvtor2MGXyQKX1oFYBg0mo5Z3Xzy+OPa3e0YBbe6SSqdUzDE1hIa7OrU8GWciIMobWQS7XIBbWg3TFU="
+    - secure: "Zk3bAxnp4OHPMMZYOSoM2chuMZXomp7BFcT54/Ag6C8RCqtpqQ+E6yHRp861xdWSVo9uZ/uGmD1pwPiIUK8Vs80+OwhFVvtor2MGXyQKX1oFYBg0mo5Z3Xzy+OPa3e0YBbe6SSqdUzDE1hIa7OrU8GWciIMobWQS7XIBbWg3TFU="
 
 before_install:
-  - sudo apt-get update -qq
-  - sudo apt-get -qq install zlib1g-dev libssl-dev libpcre3-dev libbz2-dev libmysqlclient-dev libmysql++-dev
-  # use GNU gcc compiler for coverity tests
-  - if [ "${COVERITY_SCAN_BRANCH}" == 1 ];
-    then sudo sudo apt-get -qq install g++ gcc;
-    export CXX=g++;
-    export CC=gcc;
+  - if [[ $TRAVIS_OS_NAME == "linux" ]]; then
+    export CC=gcc-5 CXX=g++-5;
     fi
 
+install:
+  - mkdir ascemu_build
+  - cd ascemu_build
+  - cmake ../ -DCMAKE_BUILD_TYPE=Release -DBUILD_TOOLS=1
+
 addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - cmake
+    - zlib1g-dev
+    - libssl-dev
+    - libpcre3-dev
+    - libbz2-dev
+    - libmysqlclient-dev
+    - libmysql++-dev
+    - gcc-5
+    - g++-5
   coverity_scan:
     project:
-      name: "AscEmu/AscEmu"
-      description: "3.3.5 World of Warcraft game server"
+      name: AscEmu/AscEmu
+      description: MMORPG Framework
     notification_email: autokaori@gmail.com
-    build_command_prepend: "make clean"
-    build_command:   "make -j 2" # use limited workers to avoid running out of memory
+    build_command_prepend: cmake ../ -DCMAKE_BUILD_TYPE=Release -DBUILD_TOOLS=0 && cov-configure --comptype gcc --compiler gcc-5 --template
+    build_command: make -j2
     branch_pattern: coverity_scan
-
-install:
-  - mkdir bin
-  - cd bin
-  - cmake ../
 
 before_script:
   - ${CXX} --version
@@ -52,9 +53,9 @@ before_script:
   - cmake --version
 
 script:
-  - if [ "${COVERITY_SCAN_BRANCH}" != 1 ];
-    then cd ..;
-    cd bin;
-    make -j 2; 
-    fi
+  - make -j2
 
+#after_script:
+#  - cat /home/travis/build/AscEmu/AscEmu/ascemu_build/cov-int/build-log.txt
+#  - echo "===================================================================================================="
+#  - cat /home/travis/build/AscEmu/AscEmu/ascemu_build/cov-int/scm_log.txt

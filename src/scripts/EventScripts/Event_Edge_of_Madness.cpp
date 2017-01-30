@@ -1,35 +1,22 @@
 /*
- * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ This file is released under the MIT license. See README-MIT for more information.
  */
 
 #include "Setup.h"
 
 //////////////////////////////////////////////////////////////////////////////////////////
 ///\details <b>Edge of Madness, Gri'lek</b>\n
-/// event_names entry: 27 \n
-/// event_names holiday: 0 \n
+/// event_properties entry: 27 \n
+/// event_properties holiday: 0 \n
 /// npc_id: 15082 \n
 /// What the hell... https://www.youtube.com/watch?v=-kQMJ2M30PA \n
 ///\todo Monsterscript for Grilek
 
 //////////////////////////////////////////////////////////////////////////////////////////
 ///\details <b>Edge of Madness, Hazza'rah</b>\n
-/// event_names entry: 28 \n
-/// event_names holiday: 0 \n
+/// event_properties entry: 28 \n
+/// event_properties holiday: 0 \n
 ///
 /// Hazza'rah entry: 15083 \n
 /// Skill "Archaeology (794) 255 required to summon the boss! \n
@@ -50,8 +37,8 @@
 
 //////////////////////////////////////////////////////////////////////////////////////////
 ///\details <b>Edge of Madness, Renataki</b>\n
-/// event_names entry: 29 \n
-/// event_names holiday: 0 \n
+/// event_properties entry: 29 \n
+/// event_properties holiday: 0 \n
 /// npc_id: 15084 \n
 ///\todo Monsterscript for Rentaki
 
@@ -61,8 +48,8 @@
 
 //////////////////////////////////////////////////////////////////////////////////////////
 ///\details <b>Edge of Madness, Wushoolay</b>\n
-/// event_names entry: 30 \n
-/// event_names holiday: 0 \n
+/// event_properties entry: 30 \n
+/// event_properties holiday: 0 \n
 /// npc_id: 15085 \n
 /// First you must find four Artifacts to interact with them (Archeologie) with an Gossip MenuItem \n
 /// #define GOSSIP_MENU_ITEM "Examine the object." 

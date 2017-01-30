@@ -62,7 +62,7 @@ class Prisoner12 : public GossipScript
                 case 1:
                 {
                     QuestLogEntry* en = plr->GetQuestLogForEntry(9164);
-                    if (en && en->GetMobCount(0) < en->GetQuest()->required_mobcount[0])
+                    if (en && en->GetMobCount(0) < en->GetQuest()->required_mob_or_go_count[0])
                     {
                         en->SetMobCount(0, en->GetMobCount(0) + 1);
                         en->SendUpdateAddKill(0);
@@ -70,7 +70,7 @@ class Prisoner12 : public GossipScript
 
                         Prisoner12->Despawn(5000, 6 * 60 * 1000);
                         Prisoner12->SetStandState(STANDSTATE_STAND);
-                        Prisoner12->SetEmoteState(7);
+                        Prisoner12->SetEmoteState(EMOTE_ONESHOT_EAT);
                         return;
                     }
                     break;
@@ -120,7 +120,7 @@ class Prisoner22 : public GossipScript
                 case 1:
                 {
                     QuestLogEntry* en = plr->GetQuestLogForEntry(9164);
-                    if (en && en->GetMobCount(1) < en->GetQuest()->required_mobcount[1])
+                    if (en && en->GetMobCount(1) < en->GetQuest()->required_mob_or_go_count[1])
                     {
                         en->SetMobCount(1, en->GetMobCount(1) + 1);
                         en->SendUpdateAddKill(1);
@@ -128,7 +128,7 @@ class Prisoner22 : public GossipScript
 
                         Prisoner22->Despawn(5000, 6 * 60 * 1000);
                         Prisoner22->SetStandState(STANDSTATE_STAND);
-                        Prisoner22->SetEmoteState(7);
+                        Prisoner22->SetEmoteState(EMOTE_ONESHOT_EAT);
                         return;
                     }
                     break;
@@ -177,7 +177,7 @@ class Prisoner32 : public GossipScript
                 case 1:
                 {
                     QuestLogEntry* en = plr->GetQuestLogForEntry(9164);
-                    if (en && en->GetMobCount(2) < en->GetQuest()->required_mobcount[2])
+                    if (en && en->GetMobCount(2) < en->GetQuest()->required_mob_or_go_count[2])
                     {
                         en->SetMobCount(2, en->GetMobCount(2) + 1);
                         en->SendUpdateAddKill(2);
@@ -185,7 +185,7 @@ class Prisoner32 : public GossipScript
 
                         Prisoner32->Despawn(5000, 6 * 60 * 1000);
                         Prisoner32->SetStandState(STANDSTATE_STAND);
-                        Prisoner32->SetEmoteState(7);
+                        Prisoner32->SetEmoteState(EMOTE_ONESHOT_EAT);
                         return;
                     }
                     break;

@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org>
+ * Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -118,7 +118,7 @@ class MirrorImageAI : public CreatureAIScript
 
                     AI_Spell sp1;
                     sp1.entryId = 59638;
-                    sp1.spell = dbcSpell.LookupEntryForced(sp1.entryId);
+                    sp1.spell = sSpellCustomizations.GetSpellInfo(sp1.entryId);
                     if (!sp1.spell)
                         return;
 
@@ -138,7 +138,7 @@ class MirrorImageAI : public CreatureAIScript
 
                     AI_Spell sp2;
                     sp2.entryId = 59637;
-                    sp2.spell = dbcSpell.LookupEntryForced(sp2.entryId);
+                    sp2.spell = sSpellCustomizations.GetSpellInfo(sp2.entryId);
                     if (!sp2.spell)
                         return;
 
@@ -174,7 +174,7 @@ class DancingRuneWeaponAI : public CreatureAIScript
 
         void OnLoad()
         {
-            _unit->SetDisplayId(_unit->GetCreatureInfo()->Female_DisplayID);
+            _unit->SetDisplayId(_unit->GetCreatureProperties()->Female_DisplayID);
             _unit->SetBaseAttackTime(MELEE, 2000);
 
             if (_unit->IsSummon())
@@ -191,22 +191,22 @@ class DancingRuneWeaponAI : public CreatureAIScript
                     {
                         for (uint8 s = 0; s < 5; s++)
                         {
-                            if (item->GetProto()->Spells[s].Id == 0)
+                            if (item->GetItemProperties()->Spells[s].Id == 0)
                                 continue;
 
-                            if (item->GetProto()->Spells[s].Trigger == CHANCE_ON_HIT)
-                                procSpell[s] = item->GetProto()->Spells[s].Id;
+                            if (item->GetItemProperties()->Spells[s].Trigger == CHANCE_ON_HIT)
+                                procSpell[s] = item->GetItemProperties()->Spells[s].Id;
                         }
 
                         s->SetEquippedItem(MELEE, item->GetEntry());
-                        s->SetBaseAttackTime(MELEE, item->GetProto()->Delay);
+                        s->SetBaseAttackTime(MELEE, item->GetItemProperties()->Delay);
                     }
 
                     pOwner->SetPower(POWER_TYPE_RUNIC_POWER, 0);
                 }
 
-                s->SetMinDamage(owner->GetDamageDoneMod(SCHOOL_NORMAL));
-                s->SetMaxDamage(owner->GetDamageDoneMod(SCHOOL_NORMAL));
+                s->SetMinDamage(float(owner->GetDamageDoneMod(SCHOOL_NORMAL)));
+                s->SetMaxDamage(float(owner->GetDamageDoneMod(SCHOOL_NORMAL)));
             }
         }
 
@@ -266,7 +266,7 @@ class DancingRuneWeaponAI : public CreatureAIScript
                 if (dpsCycle > 11)
                     dpsCycle = 0;
 
-                SpellEntry* MyNextSpell = dbcSpell.LookupEntryForced(dpsSpell);
+                SpellInfo* MyNextSpell = sSpellCustomizations.GetSpellInfo(dpsSpell);
                 if (MyNextSpell != NULL)
                     _unit->CastSpell(curtarget, MyNextSpell, true);
 
@@ -279,7 +279,7 @@ class DancingRuneWeaponAI : public CreatureAIScript
             {
                 if (procSpell[p] != 0)
                 {
-                    SpellEntry* mProc = dbcSpell.LookupEntryForced(procSpell[p]);
+                    SpellInfo* mProc = sSpellCustomizations.GetSpellInfo(procSpell[p]);
                     if (!mProc)
                         return;
                     int x = RandomUInt(99);
@@ -289,7 +289,7 @@ class DancingRuneWeaponAI : public CreatureAIScript
 
                     if ((uint32)x <= proc)
                     {
-                        Unit* Vic = mProc->self_cast_only ? _unit : mTarget;
+                        Unit* Vic = mProc->custom_self_cast_only ? _unit : mTarget;
                         _unit->CastSpell(Vic, mProc, true);
                     }
                 }

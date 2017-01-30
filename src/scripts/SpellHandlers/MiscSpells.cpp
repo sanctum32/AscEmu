@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org>
+ * Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -19,7 +19,7 @@
  */
 
 #include "Setup.h"
-#include <QuestLogEntry.hpp>
+#include <Management/QuestLogEntry.hpp>
 
 bool FrostWarding(uint32 i, Spell* s)
 {
@@ -28,14 +28,14 @@ bool FrostWarding(uint32 i, Spell* s)
     if (!unitTarget)
         return false;
 
-    uint32 spellId = s->GetProto()->Id;
+    uint32 spellId = s->GetSpellInfo()->Id;
 
     unitTarget->RemoveReflect(spellId, true);
 
     ReflectSpellSchool* rss = new ReflectSpellSchool;
 
-    rss->chance = s->GetProto()->procChance;
-    rss->spellId = s->GetProto()->Id;
+    rss->chance = s->GetSpellInfo()->procChance;
+    rss->spellId = s->GetSpellInfo()->Id;
     rss->require_aura_hash = SPELL_HASH_FROST_WARD;
     rss->school = SCHOOL_FROST;
     rss->infront = false;
@@ -53,12 +53,12 @@ bool MoltenShields(uint32 i, Spell* s)
     if (!unitTarget)
         return false;
 
-    unitTarget->RemoveReflect(s->GetProto()->Id, true);
+    unitTarget->RemoveReflect(s->GetSpellInfo()->Id, true);
 
     ReflectSpellSchool* rss = new ReflectSpellSchool;
 
-    rss->chance = s->GetProto()->EffectBasePoints[0];
-    rss->spellId = s->GetProto()->Id;
+    rss->chance = s->GetSpellInfo()->EffectBasePoints[0];
+    rss->spellId = s->GetSpellInfo()->Id;
     rss->require_aura_hash = SPELL_HASH_FIRE_WARD;
     rss->school = SCHOOL_FIRE;
     rss->infront = false;
@@ -84,7 +84,7 @@ bool Cannibalize(uint32 i, Spell* s)
         {
             if (static_cast< Creature* >((*itr))->getDeathState() == CORPSE)
             {
-                CreatureInfo* cn = static_cast< Creature* >((*itr))->GetCreatureInfo();
+                CreatureProperties const* cn = static_cast< Creature* >((*itr))->GetCreatureProperties();
                 if (cn->Type == UNIT_TYPE_HUMANOID || cn->Type == UNIT_TYPE_UNDEAD)
                 {
                     if (s->p_caster->GetDistance2dSq((*itr)) < rad)
@@ -141,7 +141,7 @@ bool GiftOfLife(uint32 i, Spell* s)
 
     SpellCastTargets tgt;
     tgt.m_unitTarget = playerTarget->GetGUID();
-    SpellEntry* inf = dbcSpell.LookupEntry(23782);
+    SpellInfo* inf = sSpellCustomizations.GetSpellInfo(23782);
     Spell* spe = sSpellFactoryMgr.NewSpell(s->u_caster, inf, true, NULL);
     spe->prepare(&tgt);
 
@@ -181,7 +181,7 @@ bool NorthRendInscriptionResearch(uint32 i, Spell* s)
     if (Rand(chance))
     {
         // Type 0 = Major, 1 = Minor
-        uint32 glyphType = (s->GetProto()->Id == 61177) ? 0 : 1;
+        uint32 glyphType = (s->GetSpellInfo()->Id == 61177) ? 0 : 1;
 
         std::vector<uint32> discoverableGlyphs;
 
@@ -194,13 +194,13 @@ bool NorthRendInscriptionResearch(uint32 i, Spell* s)
 
             if (skill_line_ability->skilline == SKILL_INSCRIPTION && skill_line_ability->next == 0)
             {
-                SpellEntry* se1 = dbcSpell.LookupEntryForced(skill_line_ability->spell);
+                SpellInfo* se1 = sSpellCustomizations.GetSpellInfo(skill_line_ability->spell);
                 if (se1 && se1->Effect[0] == SPELL_EFFECT_CREATE_ITEM)
                 {
-                    ItemPrototype* itm = ItemPrototypeStorage.LookupEntry(se1->EffectItemType[0]);
+                    ItemProperties const* itm = sMySQLStore.GetItemProperties(se1->EffectItemType[0]);
                     if (itm && (itm->Spells[0].Id != 0))
                     {
-                        SpellEntry* se2 = dbcSpell.LookupEntryForced(itm->Spells[0].Id);
+                        SpellInfo* se2 = sSpellCustomizations.GetSpellInfo(itm->Spells[0].Id);
                         if (se2 && se2->Effect[0] == SPELL_EFFECT_USE_GLYPH)
                         {
                             auto glyph_properties = sGlyphPropertiesStore.LookupEntry(se2->EffectMiscValue[0]);
@@ -222,7 +222,7 @@ bool NorthRendInscriptionResearch(uint32 i, Spell* s)
 
         if (discoverableGlyphs.size() > 0)
         {
-            uint32 newGlyph = discoverableGlyphs.at(RandomUInt(discoverableGlyphs.size() - 1));
+            uint32 newGlyph = discoverableGlyphs.at(RandomUInt(static_cast<uint32>(discoverableGlyphs.size() - 1)));
             s->p_caster->addSpell(newGlyph);
         }
     }
@@ -242,7 +242,7 @@ bool DeadlyThrowInterrupt(uint32 i, Aura* a, bool apply)
 
     if (m_target->GetCurrentSpell())
     {
-        school = m_target->GetCurrentSpell()->GetProto()->School;
+        school = m_target->GetCurrentSpell()->GetSpellInfo()->School;
     }
 
     m_target->InterruptSpell();
@@ -370,7 +370,7 @@ bool Dummy_Solarian_WrathOfTheAstromancer(uint32 pEffectIndex, Spell* pSpell)
     if (!Target)
         return true;
 
-    SpellEntry* SpellInfo = dbcSpell.LookupEntry(42787);
+    SpellInfo* SpellInfo = sSpellCustomizations.GetSpellInfo(42787);
     if (!SpellInfo)
         return true;
 
@@ -388,7 +388,7 @@ bool PreparationForBattle(uint32 i, Spell* pSpell)
     QuestLogEntry* pQuest = pPlayer->GetQuestLogForEntry(12842);
     if (pQuest != NULL)
     {
-        if (pQuest->GetMobCount(0) < pQuest->GetQuest()->required_mobcount[0])
+        if (pQuest->GetMobCount(0) < pQuest->GetQuest()->required_mob_or_go_count[0])
         {
             pQuest->SetMobCount(0, pQuest->GetMobCount(0) + 1);
             pQuest->SendUpdateAddKill(0);
@@ -468,17 +468,17 @@ bool ListeningToMusicParent(uint32 i, Spell* s)
 ////////////////////////////////////////////////////////////////
 bool TeleportToCoordinates(uint32 i, Spell* s)
 {
-    if (s->p_caster == NULL)
+    if (s->p_caster == nullptr)
         return true;
 
-    TeleportCoords* TC = ::TeleportCoordStorage.LookupEntry(s->GetProto()->Id);
-    if (TC == NULL)
+    TeleportCoords const* teleport_coord = sMySQLStore.GetTeleportCoord(s->GetSpellInfo()->Id);
+    if (teleport_coord == nullptr)
     {
-        sLog.outError("Spell %u ( %s ) has a TeleportToCoordinates scripted effect, but has no coordinates to teleport to. ", s->GetProto()->Id, s->GetProto()->Name);
+        LogError("Spell %u ( %s ) has a TeleportToCoordinates scripted effect, but has no coordinates to teleport to. ", s->GetSpellInfo()->Id, s->GetSpellInfo()->Name.c_str());
         return true;
     }
 
-    s->HandleTeleport(TC->x, TC->y, TC->z, TC->mapId, s->p_caster);
+    s->HandleTeleport(teleport_coord->x, teleport_coord->y, teleport_coord->z, teleport_coord->mapId, s->p_caster);
     return true;
 }
 
@@ -602,6 +602,29 @@ bool SOTATeleporter(uint32 i, Spell* s)
     return true;
 }
 
+// 51892 - Eye of Acherus Visual
+bool EyeOfAcherusVisual(uint32 i, Spell* spell)
+{
+    Player* player = spell->GetPlayerTarget();
+    if (player == nullptr)
+        return true;
+
+    if (player->HasAura(51892))
+        player->RemoveAllAuraById(51892);
+    return true;
+}
+
+// 52694 - Recall Eye of Acherus
+bool RecallEyeOfAcherus(uint32 i, Spell* spell)
+{
+    Player* player = spell->GetPlayerTarget();
+    if (player == nullptr)
+        return true;
+
+    player->RemoveAllAuraById(51852);
+    return true;
+}
+
 bool GeneralDummyAura(uint32 i, Aura* pAura, bool apply)
 {
     // This handler is being used to apply visual effect.
@@ -616,6 +639,9 @@ bool GeneralDummyEffect(uint32 i, Spell* pSpell)
 
 void SetupMiscSpellhandlers(ScriptMgr* mgr)
 {
+    mgr->register_dummy_spell(51892, &EyeOfAcherusVisual);
+    mgr->register_script_effect(52694, &RecallEyeOfAcherus);
+
     mgr->register_dummy_spell(54640, &SOTATeleporter);
 
     mgr->register_dummy_spell(66550, &IOCTeleporterOut);

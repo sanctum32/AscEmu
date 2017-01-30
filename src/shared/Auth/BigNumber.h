@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org>
+ * Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -42,8 +42,7 @@ class BigNumber
 
         void SetRand(int numbits);
 
-        BigNumber operator=(const BigNumber & bn);
-//      BigNumber operator=(Sha1Hash &hash);
+        BigNumber& operator=(const BigNumber & bn);
 
         BigNumber operator+=(const BigNumber & bn);
         BigNumber operator+(const BigNumber & bn)

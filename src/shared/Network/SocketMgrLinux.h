@@ -50,7 +50,7 @@ class SocketMgr : public Singleton<SocketMgr>
             epoll_fd = epoll_create(SOCKET_HOLDER_SIZE);
             if(epoll_fd == -1)
             {
-                sLog.outError("Could not create epoll fd (/dev/epoll).");
+                LogError("Could not create epoll fd (/dev/epoll).");
                 exit(-1);
             }
 
@@ -79,6 +79,8 @@ class SocketMgr : public Singleton<SocketMgr>
 
         /// closes all sockets
         void CloseAll();
+
+        uint32 GetSocketCount() { return socket_count.GetVal(); }
 
         /// spawns worker threads
         void SpawnWorkerThreads();

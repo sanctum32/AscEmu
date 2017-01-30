@@ -1,354 +1,112 @@
 # Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org>
 
 # set up our project name
-project(world)
+project(world CXX)
 
-set(sources
-    Commands/AccountCommands.cpp
-    Commands/TicketCommands.cpp
-    DBC/DBCStores.cpp
-    DBC/DBCLoader.cpp
-    DBC/DBCRecord.cpp
-    DBC/DBCSQL.cpp
-    AchievementMgr.cpp 
-    CollideInterface.cpp 
-	VoiceChatHandler.cpp 
-	DayWatcherThread.cpp 
-	CommonScheduleThread.cpp 
-	ArenaTeam.cpp 
-	DatabaseCleaner.cpp 
-	ObjectStorage.cpp  
-	AddonMgr.cpp 
-	AIInterface.cpp 
-	AIEvents.cpp
-	AreaTrigger.cpp 
-	Arenas.cpp 
-	AuctionHouse.cpp 
-	AuctionMgr.cpp 
-	Battleground.cpp
-	BattlegroundCommands.cpp 
-	BattlegroundHandler.cpp 
-	BattlegroundMgr.cpp 
-    CalendarHandler.cpp
-    CalendarMgr.cpp
-	Channel.cpp 
-	ChannelHandler.cpp 
-	CharacterHandler.cpp 
-	Chat.cpp 
-	ChatHandler.cpp
-    CObjectFactory.cpp
-	CombatHandler.cpp 
-	Container.cpp 
-	Corpse.cpp 
-	Creature.cpp 
-	Entities/Summons/Summon.cpp
-	Entities/Summons/CompanionSummon.cpp
-	Entities/Summons/GuardianSummon.cpp
-	Entities/Summons/PossessedSummon.cpp
-	Entities/Summons/TotemSummon.cpp
-	Entities/Summons/WildSummon.cpp
-	debugcmds.cpp 
-	DuelHandler.cpp 
-	DynamicObject.cpp 
-	EquipmentSetMgr.cpp
-	EventableObject.cpp 
-	EventMgr.cpp 
-	Faction.cpp
-    GameEvent.cpp
-    GameEventMgr.cpp
-    GameEventMgrCommands.cpp
-	GameObject.cpp 
-	GMTicket.cpp 
-	GMTicketCommands.cpp
-	CRitual.cpp
-	Gossip.cpp
-	Group.cpp 
-	GroupHandler.cpp 
-	Guild.cpp 
-	GuildHandler.cpp 
-	HonorHandler.cpp 
-	InstanceCommands.cpp 
-	Item.cpp 
-	ItemHandler.cpp 
-	ItemInterface.cpp 
-	Level0.cpp 
-	Level1.cpp 
-	Level2.cpp 
-	Level3.cpp 
-    Lfg.cpp
-    LfgGroupData.cpp
-    LfgPlayerData.cpp
-	LfgHandler.cpp 
-	LfgMgr.cpp 
-	LootMgr.cpp 
-	LocalizationMgr.cpp 
-	LogonCommClient.cpp 
-	LogonCommHandler.cpp 
-	MailHandler.cpp
-    MailMgr.cpp   
-    MapManagement/AreaManagement/AreaStorage.cpp
-	MapCell.cpp 
-	Map.cpp 
-	MapScriptInterface.cpp 
-	MapMgr.cpp 
-	MiscHandler.cpp 
-	MovementHandler.cpp 
-	NPCHandler.cpp 
-	Object.cpp 
-	ObjectMgr.cpp 
-	Opcodes.cpp 
-	Pet.cpp 
-	PetHandler.cpp 
-	Player.cpp
-	PlayerCache.cpp
-	PlayerPacketWrapper.cpp
-	QueryHandler.cpp 
-	Quest.cpp 
-	QuestHandler.cpp 
-    QuestLogEntry.cpp
-	QuestMgr.cpp 
-	QuestCommands.cpp 
-	RaidHandler.cpp 
-	RecallCommands.cpp 
-	ReputationHandler.cpp 
-	ScriptMgr.cpp 
-	SocialHandler.cpp 
-	SpeedDetector.cpp 
-	SpellAuras.cpp 
-	SpellTarget.cpp 
-	Spell.cpp 
-	StdAfx.cpp
-	SummonHandler.cpp
-	SpellEffects.cpp 
-	SpellHandler.cpp 
-	HackFixes.cpp 
-	Stats.cpp 
-	TaxiHandler.cpp 
-	TaxiMgr.cpp 
-	TerrainMgr.cpp 
-	TradeHandler.cpp 
-	TransporterHandler.cpp 
-	Unit.cpp 
-	Vehicle.cpp 
-	VehicleHandler.cpp
-	WayPoints.cpp 
-	WeatherMgr.cpp 
-	World.cpp 
-	WorldCreator.cpp 
-	WorldSession.cpp 
-	WorldSocket.cpp 
-	WorldStatesHandler.cpp
-	WorldRunnable.cpp 
-	WordFilter.cpp 
-	Main.cpp 
-	Master.cpp 
-	CConsole.cpp 
-	ConsoleCommands.cpp 
-	ConsoleListener.cpp 
-	WUtil.cpp 
-	SpellProc.cpp
-	SpellProc_DeathKnight.cpp
-	SpellProc_Druid.cpp
-	SpellProc_Hunter.cpp
-	SpellProc_Items.cpp
-	SpellProc_Mage.cpp
-	SpellProc_Paladin.cpp
-	SpellProc_Priest.cpp
-	SpellProc_Rogue.cpp
-	SpellProc_Shaman.cpp
-	SpellProc_Warlock.cpp
-	SpellProc_Warrior.cpp
-	SpellMgr.cpp
-	Spell_DeathKnight.cpp
-	Spell_Druid.cpp
-	Spell_Hunter.cpp
-	Spell_Mage.cpp
-	Spell_Paladin.cpp
-	Spell_Priest.cpp
-	Spell_Rogue.cpp
-	Spell_Shaman.cpp
-	Spell_Warlock.cpp
-	Spell_Warrior.cpp
-	DeathKnight.cpp
-	Druid.cpp
-	Hunter.cpp
-	Mage.cpp
-	Paladin.cpp
-	Priest.cpp
-	Rogue.cpp
-	Shaman.cpp
-	Warlock.cpp
-	Warrior.cpp
+include(GameClassic/CMakeLists.txt)
+include(GameBC/CMakeLists.txt)
+include(GameLK/CMakeLists.txt)
+include(GameCata/CMakeLists.txt)
+
+include(Chat/CMakeLists.txt)
+include(Chat/Commands/CMakeLists.txt)
+include(Management/CMakeLists.txt)
+include(Management/Battleground/CMakeLists.txt)
+include(Management/Gossip/CMakeLists.txt)
+include(Management/LFG/CMakeLists.txt)
+include(Map/CMakeLists.txt)
+include(Map/Area/CMakeLists.txt)
+include(Movement/CMakeLists.txt)
+include(Movement/Spline/CMakeLists.txt)
+include(Objects/CMakeLists.txt)
+include(Server/CMakeLists.txt)
+include(Server/Console/CMakeLists.txt)
+include(Server/LogonCommClient/CMakeLists.txt)
+include(Server/Packets/CMakeLists.txt)
+include(Server/Packets/Handlers/CMakeLists.txt)
+include(Server/Packets/Movement/CMakeLists.txt)
+include(Server/Script/CMakeLists.txt)
+include(Server/Warden/CMakeLists.txt)
+include(Spell/CMakeLists.txt)
+include(Spell/Customization/CMakeLists.txt)
+include(Storage/CMakeLists.txt)
+include(Storage/DBC/CMakeLists.txt)
+include(Units/CMakeLists.txt)
+include(Units/Creatures/CMakeLists.txt)
+include(Units/Players/CMakeLists.txt)
+include(Units/Summons/CMakeLists.txt)
+
+set(SRC_WORLD_PROJECT
+   ${CMAKE_CURRENT_SOURCE_DIR}/StdAfx.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/StdAfx.h
 )
 
 if(WIN32)
-    set(sources ${sources} resources.rc)
+   set(SRC_WORLD_PROJECT ${SRC_WORLD_PROJECT} ${CMAKE_CURRENT_SOURCE_DIR}/resources.rc)
 endif()
 
-set(headers
-	AchievementMgr.h
-	AddonMgr.h
-	AIInterface.h
-	AIEvents.h
-	AreaTrigger.h
-	Arenas.h
-	ArenaTeam.h
-	AuctionHouse.h
-	AuctionMgr.h
-	BaseConsole.h
-	Battleground.h
-	BattlegroundMgr.h
-    CalendarMgr.h
-	CConsole.h
-	CellHandler.h
-    CellHandlerDefines.hpp
-	Channel.h
-	ChannelMgr.h
-	Chat.h
-    CObjectFactory.h
-	CollideInterface.h
-	CommonScheduleThread.h
-	Entities/Summons/CompanionSummon.h
-    Entities/Summons/SummonDefines.hpp
-	ConsoleCommands.h
-	Container.h
-	Corpse.h
-	Creature.h
-    CreatureDefines.hpp
-	DatabaseCleaner.h
-	DayWatcherThread.h
-    DBC/DBCGlobals.hpp
-    DBC/DBCLoader.hpp
-    DBC/DBCRecord.hpp
-    DBC/DBCSQL.hpp
-    DBC/DBCStorage.hpp
-	DBC/DBCStores.h
-    DBC/DBCStructures.hpp
-	DeathKnight.h
-	Definitions.h
-	Druid.h
-	DynamicObject.h
-	EquipmentSetMgr.h
-	EventableObject.h
-	EventMgr.h
-	Faction.h
-    GameEvent.h
-    GameEventMgr.h
-	GameObject.h
-	CRitual.h
-    Gossip/GossipDefines.hpp
-	Gossip.h
-	Group.h
-	Entities/Summons/GuardianSummon.h
-	Guild.h
-	HonorHandler.h
-	Hunter.h
-	Item.h
-	ItemInterface.h
-	ItemPrototype.h
-	IUpdatable.h
-    Lfg.h
-    LfgGroupData.h
-    LfgPlayerData.h
-	LfgMgr.h
-	LocalizationMgr.h
-	LogonCommClient.h
-	LogonCommHandler.h
-	LootMgr.h
-	Mage.h
-	MailMgr.h
-	MainServerDefines.h
-    MapManagement/MapManagementGlobals.hpp
-    MapManagement/AreaManagement/AreaStorage.hpp
-    MapManagement/AreaManagement/AreaManagementGlobals.hpp
-	Map.h
-	MapCell.h
-	MapMgr.h
-    MapMgrDefines.hpp
-	MapScriptInterface.h
-	Master.h
-	MiscHandler.h
-	NPCHandler.h
-	Object.h
-	ObjectMgr.h
-	ObjectStorage.h
-	Opcodes.h
-	Paladin.h
-	Pet.h
-	Player.h
-    PlayerDefines.hpp
-	PlayerCache.h
-	Entities/Summons/PossessedSummon.h
-	Priest.h
-	Quest.h
-    QuestDefines.hpp
-    QuestLogEntry.hpp
-	QuestMgr.h
-    RecastIncludes.hpp
-	Rogue.h
-	ScriptMgr.h
-	ScriptSetup.h
-	Shaman.h
-	Skill.h
-	SkillNameMgr.h
-	SpeedDetector.h
-	Spell.h
-	SpellAuras.h
-	SpellFailure.h
-	SpellMgr.h
-	SpellNameHashes.h
-	SpellProc.h
-	SpellTarget.h
-	Stats.h
-	StdAfx.h
-	Entities/Summons/Summon.h
-	SummonHandler.h
-	TaxiMgr.h
-	TerrainMgr.h
-	Entities/Summons/TotemSummon.h
-	TransporterHandler.h
-	Unit.h
-    UnitDefines.hpp
-	UpdateFields.h
-	UpdateMask.h
-	Vehicle.h
-	Warlock.h
-	Warrior.h
-	WeatherMgr.h
-	Entities/Summons/WildSummon.h
-	WordFilter.h
-	World.h
-	WorldCreator.h
-    WorldCreatorDefines.hpp
-	WorldRunnable.h
-	WorldSession.h
-	WorldSocket.h
-	WorldStatesHandler.h
-	WorldStates.h
-    WorldStrings.h
-	WUtil.h
+source_group(world FILES ${SRC_WORLD_PROJECT})
+
+set(sources
+   ${SRC_GAMECLASSIC_FILES}
+   ${SRC_GAMEBC_FILES}
+   ${SRC_GAMELK_FILES}
+   ${SRC_GAMECATA_FILES}
+
+   ${SRC_CHAT_FILES}
+   ${SRC_COMMAND_FILES}
+   ${SRC_MANAGEMENT_FILES}
+   ${SRC_MANAGEMENT_BATTLEGROUND_FILES}
+   ${SRC_MANAGEMENT_GOSSIP_FILES}
+   ${SRC_MANAGEMENT_LFG_FILES}
+   ${SRC_MAP_FILES}
+   ${SRC_MAP_AREA_FILES}
+   ${SRC_MOVEMENT_FILES}
+   ${SRC_MOVEMENT_SPLINE_FILES}
+   ${SRC_OBJECTS_FILES}
+   ${SRC_PACKET_FILES}
+   ${SRC_PACKET_HANDLER_FILES}
+   ${SRC_PACKET_MOVEMENT_FILES}
+   ${SRC_SERVER_FILES}
+   ${SRC_SERVER_CONSOLE_FILES}
+   ${SRC_SERVER_SCRIPT_FILES}
+   ${SRC_SERVER_WARDEN_FILES}
+   ${SRC_LOGON_COMMUNICATION_CLIENT_FILES}
+   ${SRC_SPELL_FILES}
+   ${SRC_SPELL_CUSTOM_FILES}
+   ${SRC_STORAGE_FILES}
+   ${SRC_STORAGE_DBC_FILES}
+   ${SRC_UNITS_FILES}
+   ${SRC_UNITS_CREATURES_FILES}
+   ${SRC_UNITS_PLAYERS_FILES}
+   ${SRC_UNITS_SUMMONS_FILES}
+   ${SRC_WORLD_PROJECT}
 )
 
 include_directories(
    ${OPENSSL_INCLUDE_DIR}
    ${PCRE_INCLUDE_DIR}
    ${CMAKE_SOURCE_DIR}/dep/recastnavigation/Detour/Include
-   ${CMAKE_SOURCE_DIR}/dep/vmaplib/include
+   ${CMAKE_SOURCE_DIR}/dep/recastnavigation/Recast/Include
+   ${CMAKE_SOURCE_DIR}/src/collision
+   ${CMAKE_SOURCE_DIR}/src/collision/Management
+   ${CMAKE_SOURCE_DIR}/src/collision/Maps
+   ${CMAKE_SOURCE_DIR}/src/collision/Models
    ${CMAKE_SOURCE_DIR}/dep/g3dlite/include
    ${CMAKE_SOURCE_DIR}/src/shared
-   ${ZLIB_INCLUDE_DIRS}
    ${CMAKE_CURRENT_SOURCE_DIR}
+   ${ZLIB_INCLUDE_DIRS}
 )
 
-add_executable(${PROJECT_NAME} ${sources} ${headers})
+add_executable(${PROJECT_NAME} ${sources})
 
-if(MSVC)
-    include(PCHSupport)
-	ADD_NATIVE_PRECOMPILED_HEADER(${PROJECT_NAME} StdAfx.h StdAfx.cpp)
+if(USE_PCH AND PCHSupport_FOUND)
+    ADD_NATIVE_PRECOMPILED_HEADER(${PROJECT_NAME} StdAfx.h ${CMAKE_CURRENT_SOURCE_DIR}/StdAfx.cpp)
 endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES ENABLE_EXPORTS TRUE)
+add_dependencies(${PROJECT_NAME} shared g3dlite collision Detour Recast)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/WorldConf.h.in ${CMAKE_CURRENT_SOURCE_DIR}/WorldConf.h)
 
-add_dependencies( ${PROJECT_NAME} shared g3dlite vmaplib Detour Recast)
-target_link_libraries( ${PROJECT_NAME} shared g3dlite vmaplib Detour Recast ${PCRE_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} shared g3dlite collision Detour Recast ${PCRE_LIBRARIES})
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION .)

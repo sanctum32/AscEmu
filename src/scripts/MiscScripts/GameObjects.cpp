@@ -52,7 +52,7 @@ class AndorhalTower1 : public GameObjectAIScript
                     return;
             }
 
-            if(qle->GetMobCount(0) < qle->GetQuest()->required_mobcount[0])
+            if(qle->GetMobCount(0) < qle->GetQuest()->required_mob_or_go_count[0])
             {
                 qle->SetMobCount(0, qle->GetMobCount(0) + 1);
                 qle->SendUpdateAddKill(0);
@@ -80,7 +80,7 @@ class AndorhalTower2 : public GameObjectAIScript
                     return;
             }
 
-            if(qle->GetMobCount(1) < qle->GetQuest()->required_mobcount[1])
+            if(qle->GetMobCount(1) < qle->GetQuest()->required_mob_or_go_count[1])
             {
                 qle->SetMobCount(1, qle->GetMobCount(1) + 1);
                 qle->SendUpdateAddKill(1);
@@ -108,7 +108,7 @@ class AndorhalTower3 : public GameObjectAIScript
                     return;
             }
 
-            if(qle->GetMobCount(2) < qle->GetQuest()->required_mobcount[2])
+            if(qle->GetMobCount(2) < qle->GetQuest()->required_mob_or_go_count[2])
             {
                 qle->SetMobCount(2, qle->GetMobCount(2) + 1);
                 qle->SendUpdateAddKill(2);
@@ -135,7 +135,7 @@ class AndorhalTower4 : public GameObjectAIScript
                     return;
             }
 
-            if(qle->GetMobCount(3) < qle->GetQuest()->required_mobcount[3])
+            if(qle->GetMobCount(3) < qle->GetQuest()->required_mob_or_go_count[3])
             {
                 qle->SetMobCount(3, qle->GetMobCount(3) + 1);
                 qle->SendUpdateAddKill(3);
@@ -175,7 +175,7 @@ class Blacksmithing_Plans_Use : public GameObjectAIScript
         Blacksmithing_Plans_Use(GameObject* goinstance) : GameObjectAIScript(goinstance) {}
         static GameObjectAIScript* Create(GameObject* GO) { return new Blacksmithing_Plans_Use(GO); }
 
-        void OnLootTaken(Player* pLooter, ItemPrototype* pItemInfo)
+        void OnLootTaken(Player* pLooter, ItemProperties const* pItemInfo)
         {
             float SSX = pLooter->GetPositionX();
             float SSY = pLooter->GetPositionY();
@@ -183,7 +183,7 @@ class Blacksmithing_Plans_Use : public GameObjectAIScript
             float SSO = pLooter->GetOrientation();
 
             Creature* NewCreature = pLooter->GetMapMgr()->GetInterface()->SpawnCreature(11120, SSX, SSY, SSZ, SSO, true, false, 0, 0);
-            if(NewCreature != NULL)
+            if (NewCreature != nullptr)
                 NewCreature->Despawn(600000, 0);
         }
 };
@@ -496,7 +496,7 @@ class DustySpellbooks : public GameObjectAIScript
         DustySpellbooks(GameObject* goinstance) : GameObjectAIScript(goinstance) {}
         static GameObjectAIScript* Create(GameObject* GO) { return new DustySpellbooks(GO); }
 
-        void OnLootTaken(Player* pLooter, ItemPrototype* pItemInfo)
+        void OnLootTaken(Player* pLooter, ItemProperties const* pItemInfo)
         {
             QuestLogEntry* en = pLooter->GetQuestLogForEntry(422);
             if(!en)
@@ -508,7 +508,7 @@ class DustySpellbooks : public GameObjectAIScript
             float SSO = pLooter->GetOrientation();
 
             Creature* NewCreature = pLooter->GetMapMgr()->GetInterface()->SpawnCreature(1770, SSX, SSY, SSZ, SSO, true, false, 0, 0);
-            if(NewCreature != NULL)
+            if (NewCreature != nullptr)
                 NewCreature->SendChatMessage(CHAT_MSG_MONSTER_YELL, LANG_UNIVERSAL, "The Sons of Arugal will rise against all who challenge the power of the Moonrage!");
         }
 };
@@ -600,7 +600,7 @@ class MysteriousEgg : public GameObjectAIScript
             if(qle == NULL)
                 return;
 
-            if(qle->GetMobCount(0) < qle->GetQuest()->required_mobcount[0])
+            if(qle->GetMobCount(0) < qle->GetQuest()->required_mob_or_go_count[0])
             {
                 qle->SetMobCount(0, qle->GetMobCount(0) + 1);
                 qle->SendUpdateAddKill(0);
@@ -786,7 +786,7 @@ class LegionPortals : public GameObjectAIScript
             if(qle == NULL)
                 return;
 
-            if(qle->GetMobCount(0) < qle->GetQuest()->required_mobcount[0])
+            if(qle->GetMobCount(0) < qle->GetQuest()->required_mob_or_go_count[0])
             {
                 qle->SetMobCount(0, qle->GetMobCount(0) + 1);
                 qle->SendUpdateAddKill(0);
@@ -810,7 +810,7 @@ class ProphecyofAkida : public GameObjectAIScript
             if(qle == NULL)
                 return;
 
-            if(qle->GetMobCount(0) < qle->GetQuest()->required_mobcount[0])
+            if(qle->GetMobCount(0) < qle->GetQuest()->required_mob_or_go_count[0])
             {
                 qle->SetMobCount(0, qle->GetMobCount(0) + 1);
                 qle->SendUpdateAddKill(0);
@@ -927,7 +927,7 @@ class TheFinalCode : public GameObjectAIScript
             if(qle == NULL)
                 return;
 
-            if(qle->GetMobCount(1) < qle->GetQuest()->required_mobcount[1])
+            if(qle->GetMobCount(1) < qle->GetQuest()->required_mob_or_go_count[1])
             {
                 qle->SetMobCount(1, qle->GetMobCount(1) + 1);
                 qle->SendUpdateAddKill(1);
@@ -1018,7 +1018,7 @@ class HealingTheLake : public GameObjectAIScript
         void OnActivate(Player* pPlayer)
         {
             QuestLogEntry* pQuest = pPlayer->GetQuestLogForEntry(181433);
-            if(pQuest && pQuest->GetMobCount(0) < pQuest->GetQuest()->required_mobcount[0])
+            if(pQuest && pQuest->GetMobCount(0) < pQuest->GetQuest()->required_mob_or_go_count[0])
             {
                 pQuest->SetMobCount(0, 1);
                 pQuest->SendUpdateAddKill(0);
@@ -1146,20 +1146,6 @@ class SacredFireofLife : public GameObjectAIScript
         }
 };
 
-///\todo Take Control over the Eye of Acherus. Update trigger/target from player to the eye
-class EyeofAcherusControl : public GameObjectAIScript
-{
-    public:
-        EyeofAcherusControl(GameObject* goinstance) : GameObjectAIScript(goinstance) {}
-        static GameObjectAIScript* Create(GameObject* GO) { return new EyeofAcherusControl(GO); }
-
-        void OnActivate(Player* pPlayer)
-        {
-            if (!pPlayer->HasQuest(12641))
-                return;
-            pPlayer->CastSpell(pPlayer, 51888, true);
-        }
-};
 
 void SetupGoHandlers(ScriptMgr* mgr)
 {
@@ -1210,6 +1196,4 @@ void SetupGoHandlers(ScriptMgr* mgr)
     mgr->register_gameobject_script(310033, &AndorhalTower4::Create);
 
     mgr->register_gameobject_script(184588, &TyraliusPrison::Create);
-    // Eye of Acherus Quest "death comes from high.."
-    mgr->register_gameobject_script(191609, &EyeofAcherusControl::Create);
 }

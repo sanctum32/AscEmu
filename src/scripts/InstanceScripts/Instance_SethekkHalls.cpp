@@ -99,7 +99,7 @@ class AvianDarkhawkAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(SP_AVIAN_DARKHAWK_CHARGE);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SP_AVIAN_DARKHAWK_CHARGE);
             spells[0].targettype = TARGET_ATTACKING;
             spells[0].instant = true;
             spells[0].perctrigger = 5.0f;
@@ -195,7 +195,7 @@ class AvianRipperAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(SP_AVIAN_RIPPER_FLESH_RIP);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SP_AVIAN_RIPPER_FLESH_RIP);
             spells[0].targettype = TARGET_ATTACKING;
             spells[0].instant = true;
             spells[0].perctrigger = 15.0f;
@@ -288,19 +288,19 @@ class AvianWarhawkAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(SP_AVIAN_WARHAWK_CLEAVE);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SP_AVIAN_WARHAWK_CLEAVE);
             spells[0].targettype = TARGET_VARIOUS;
             spells[0].instant = true;
             spells[0].perctrigger = 12.0f;
             spells[0].attackstoptimer = 1000;
 
-            spells[1].info = dbcSpell.LookupEntry(SP_AVIAN_WARHAWK_CHARGE);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(SP_AVIAN_WARHAWK_CHARGE);
             spells[1].targettype = TARGET_ATTACKING;
             spells[1].instant = true;
             spells[1].perctrigger = 5.0f;
             spells[1].attackstoptimer = 1000;
 
-            spells[2].info = dbcSpell.LookupEntry(SP_AVIAN_WARHAWK_BITE);
+            spells[2].info = sSpellCustomizations.GetSpellInfo(SP_AVIAN_WARHAWK_BITE);
             spells[2].targettype = TARGET_ATTACKING; // check targeting!
             spells[2].instant = true;
             spells[2].perctrigger = 12.0f;
@@ -396,19 +396,19 @@ class CobaltSerpentAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(SP_COBALT_SERPENT_WING_BUFFET);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SP_COBALT_SERPENT_WING_BUFFET);
             spells[0].targettype = TARGET_VARIOUS;
             spells[0].instant = false;
             spells[0].perctrigger = 7.0f;
             spells[0].attackstoptimer = 1000;
 
-            spells[1].info = dbcSpell.LookupEntry(SP_COBALT_SERPENT_FROSTBOLT);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(SP_COBALT_SERPENT_FROSTBOLT);
             spells[1].targettype = TARGET_ATTACKING;
             spells[1].instant = false;
             spells[1].perctrigger = 15.0f;
             spells[1].attackstoptimer = 1000;
 
-            spells[2].info = dbcSpell.LookupEntry(SP_COBALT_SERPENT_CHAIN_LIGHTNING);
+            spells[2].info = sSpellCustomizations.GetSpellInfo(SP_COBALT_SERPENT_CHAIN_LIGHTNING);
             spells[2].targettype = TARGET_ATTACKING;
             spells[2].instant = false;
             spells[2].perctrigger = 9.0f;
@@ -501,13 +501,13 @@ class TimeLostControllerAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(SP_TL_CONTROLLER_SHIRNK);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SP_TL_CONTROLLER_SHIRNK);
             spells[0].targettype = TARGET_ATTACKING;
             spells[0].instant = true;
             spells[0].perctrigger = 10.0f;
             spells[0].attackstoptimer = 1000;
             /*
-                    spells[1].info = dbcSpell.LookupEntry(CONTROL_TOTEM);
+                    spells[1].info = sSpellCustomizations.GetSpellInfo(CONTROL_TOTEM);
                     spells[1].targettype = TARGET_;
                     spells[1].instant = false;
                     spells[1].perctrigger = 0.0f;
@@ -600,13 +600,13 @@ class TimeLostScryerAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(SP_TL_SCRYER_FLASH_HEAL);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SP_TL_SCRYER_FLASH_HEAL);
             spells[0].targettype = TARGET_SELF;
             spells[0].instant = true;
             spells[0].perctrigger = 5.0f;
             spells[0].attackstoptimer = 1000;
 
-            spells[1].info = dbcSpell.LookupEntry(SP_TL_SCRYER_ARCANE_MISSILES);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(SP_TL_SCRYER_ARCANE_MISSILES);
             spells[1].targettype = TARGET_ATTACKING;
             spells[1].instant = false;
             spells[1].perctrigger = 12.0f;
@@ -700,7 +700,7 @@ class TimeLostShadowmageAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(SP_TL_CURSE_OF_THE_DARK_TALON);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SP_TL_CURSE_OF_THE_DARK_TALON);
             spells[0].targettype = TARGET_ATTACKING;
             spells[0].instant = false;
             spells[0].perctrigger = 10.0f;
@@ -793,13 +793,13 @@ class SethekkGuardAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(SP_SETHEKK_GUARD_THUNDERCLAP);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SP_SETHEKK_GUARD_THUNDERCLAP);
             spells[0].targettype = TARGET_VARIOUS;
             spells[0].instant = true;
             spells[0].perctrigger = 12.0f;
             spells[0].attackstoptimer = 1000;
 
-            spells[1].info = dbcSpell.LookupEntry(SP_SETHEKK_GUARD_SUNDER_ARMOR);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(SP_SETHEKK_GUARD_SUNDER_ARMOR);
             spells[1].targettype = TARGET_ATTACKING;
             spells[1].instant = true;
             spells[1].perctrigger = 8.0f;
@@ -892,7 +892,7 @@ class SethekkInitiateAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(SP_SETHEKK_INIT_MAGIC_REFLECTION);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SP_SETHEKK_INIT_MAGIC_REFLECTION);
             spells[0].targettype = TARGET_SELF;
             spells[0].instant = true;
             spells[0].perctrigger = 10.0f;
@@ -985,13 +985,13 @@ class SethekkOracleAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(SP_SETHEKK_ORACLE_FAERIE_FIRE);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SP_SETHEKK_ORACLE_FAERIE_FIRE);
             spells[0].targettype = TARGET_ATTACKING;
             spells[0].instant = true;
             spells[0].perctrigger = 8.0f;
             spells[0].attackstoptimer = 1000;
 
-            spells[1].info = dbcSpell.LookupEntry(SP_SETHEKK_ORACLE_ARCANE_LIGHTNING);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(SP_SETHEKK_ORACLE_ARCANE_LIGHTNING);
             spells[1].targettype = TARGET_ATTACKING;
             spells[1].instant = false;
             spells[1].perctrigger = 15.0f;
@@ -1084,13 +1084,13 @@ class SethekkProphetAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(SP_SETHEKK_PROPHET_FEAR);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SP_SETHEKK_PROPHET_FEAR);
             spells[0].targettype = TARGET_ATTACKING;
             spells[0].instant = true;
             spells[0].perctrigger = 8.0f;
             spells[0].attackstoptimer = 1000;
             /*
-                    spells[1].info = dbcSpell.LookupEntry();
+                    spells[1].info = sSpellCustomizations.GetSpellInfo();
                     spells[1].targettype = TARGET_;
                     spells[1].instant = true;
                     spells[1].perctrigger = 0.0f;
@@ -1183,13 +1183,13 @@ class SethekkRavenguardAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(SP_SETHEKK_RAVENG_BLOODTHIRST);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SP_SETHEKK_RAVENG_BLOODTHIRST);
             spells[0].targettype = TARGET_ATTACKING;    //?
             spells[0].instant = true;
             spells[0].perctrigger = 10.0f;
             spells[0].attackstoptimer = 1000;
 
-            spells[1].info = dbcSpell.LookupEntry(SP_SETHEKK_RAVENG_HOWLING_SCREECH);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(SP_SETHEKK_RAVENG_HOWLING_SCREECH);
             spells[1].targettype = TARGET_VARIOUS;
             spells[1].instant = true;
             spells[1].perctrigger = 8.0f;
@@ -1282,7 +1282,7 @@ class SethekkShamanAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(SP_SETHEKK_SHAMAN_SUM_DARK_VORTEX);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SP_SETHEKK_SHAMAN_SUM_DARK_VORTEX);
             spells[0].targettype = TARGET_SELF;
             spells[0].instant = true;
             spells[0].perctrigger = 8.0f;
@@ -1375,13 +1375,13 @@ class SethekkTalonLordAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(SP_SETHEKK_TALON_OF_JUSTICE);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SP_SETHEKK_TALON_OF_JUSTICE);
             spells[0].targettype = TARGET_ATTACKING;
             spells[0].instant = true;
             spells[0].perctrigger = 10.0f;
             spells[0].attackstoptimer = 1000;
 
-            spells[1].info = dbcSpell.LookupEntry(SP_SETHEKK_TALON_AVENGERS_SHIELD);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(SP_SETHEKK_TALON_AVENGERS_SHIELD);
             spells[1].targettype = TARGET_ATTACKING;
             spells[1].instant = true;
             spells[1].perctrigger = 7.0f;
@@ -1459,12 +1459,12 @@ class SethekkTalonLordAI : public CreatureAIScript
 
 ////////////////////////////////////////////////////
 // Lakka AI
-static LocationExtra LakkaWaypoint[] =
+static Movement::LocationWithFlag LakkaWaypoint[] =
 {
     {},
-    { -157.200f, 159.922f, 0.010f, 0.104f, Flag_Walk },
-    { -128.318f, 172.483f, 0.009f, 0.222f, Flag_Walk },
-    { -73.749f, 173.171f, 0.009f, 6.234f, Flag_Walk },
+    { -157.200f, 159.922f, 0.010f, 0.104f, Movement::WP_MOVE_TYPE_WALK },
+    { -128.318f, 172.483f, 0.009f, 0.222f, Movement::WP_MOVE_TYPE_WALK },
+    { -73.749f, 173.171f, 0.009f, 6.234f, Movement::WP_MOVE_TYPE_WALK },
 };
 
 class LakkaAI : public MoonScriptCreatureAI
@@ -1474,12 +1474,12 @@ class LakkaAI : public MoonScriptCreatureAI
         ADD_CREATURE_FACTORY_FUNCTION(LakkaAI);
         LakkaAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
-            SetMoveType(Move_DontMoveWP);
+            SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
 
             //WPs
             for (uint8 i = 1; i < 4; ++i)
             {
-                AddWaypoint(CreateWaypoint(i, 0, LakkaWaypoint[i].addition, LakkaWaypoint[i]));
+                AddWaypoint(CreateWaypoint(i, 0, LakkaWaypoint[i]));
             }
         }
 
@@ -1489,7 +1489,7 @@ class LakkaAI : public MoonScriptCreatureAI
             {
                 case 1:
                 {
-                    SetMoveType(Move_WantedWP);
+                    SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                     SetWaypointToMove(2);
                     Player* pPlayer = NULL;
                     QuestLogEntry* pQuest = NULL;
@@ -1519,7 +1519,7 @@ class LakkaAI : public MoonScriptCreatureAI
                 break;
                 default:
                 {
-                    SetMoveType(Move_WantedWP);
+                    SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                     SetWaypointToMove(1);
                 }
             }
@@ -1547,63 +1547,63 @@ class DarkweaverSythAI : public CreatureAIScript
 
             }
             // Not sure in any way about target types
-            spells[0].info = dbcSpell.LookupEntry(SP_DARKW_SYNTH_FROST_SHOCK);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SP_DARKW_SYNTH_FROST_SHOCK);
             spells[0].targettype = TARGET_ATTACKING;
             spells[0].instant = true;
             spells[0].perctrigger = 8.0f;
             spells[0].attackstoptimer = 2000;
             spells[0].cooldown = 15;
 
-            spells[1].info = dbcSpell.LookupEntry(SP_DARKW_SYNTH_FLAME_SHOCK);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(SP_DARKW_SYNTH_FLAME_SHOCK);
             spells[1].targettype = TARGET_ATTACKING;
             spells[1].instant = true;
             spells[1].perctrigger = 8.0f;
             spells[1].attackstoptimer = 2000;
             spells[1].cooldown = 15;
 
-            spells[2].info = dbcSpell.LookupEntry(SP_DARKW_SYNTH_SHADOW_SHOCK);
+            spells[2].info = sSpellCustomizations.GetSpellInfo(SP_DARKW_SYNTH_SHADOW_SHOCK);
             spells[2].targettype = TARGET_ATTACKING;
             spells[2].instant = true;
             spells[2].perctrigger = 8.0f;
             spells[2].attackstoptimer = 2000;
             spells[2].cooldown = 15;
 
-            spells[3].info = dbcSpell.LookupEntry(SP_DARKW_SYNTH_ARCANE_SHOCK);
+            spells[3].info = sSpellCustomizations.GetSpellInfo(SP_DARKW_SYNTH_ARCANE_SHOCK);
             spells[3].targettype = TARGET_ATTACKING;
             spells[3].instant = true;
             spells[3].perctrigger = 8.0f;
             spells[3].attackstoptimer = 2000;
             spells[3].cooldown = 15;
 
-            spells[4].info = dbcSpell.LookupEntry(SP_DARKW_SYNTH_CHAIN_LIGHTNING);
+            spells[4].info = sSpellCustomizations.GetSpellInfo(SP_DARKW_SYNTH_CHAIN_LIGHTNING);
             spells[4].targettype = TARGET_ATTACKING;
             spells[4].instant = true;
             spells[4].perctrigger = 10.0f;
             spells[4].attackstoptimer = 1000;
             spells[4].cooldown = 15;
 
-            spells[5].info = dbcSpell.LookupEntry(SP_DARKW_SYNTH_SUM_FIRE_ELEMENTAL);
+            spells[5].info = sSpellCustomizations.GetSpellInfo(SP_DARKW_SYNTH_SUM_FIRE_ELEMENTAL);
             spells[5].targettype = TARGET_SELF;
             spells[5].instant = true;
             spells[5].perctrigger = 0.0f;
             spells[5].attackstoptimer = 1000;
             spells[5].cooldown = 10;
 
-            spells[6].info = dbcSpell.LookupEntry(SP_DARKW_SYNTH_SUM_FROST_ELEMENTAL);
+            spells[6].info = sSpellCustomizations.GetSpellInfo(SP_DARKW_SYNTH_SUM_FROST_ELEMENTAL);
             spells[6].targettype = TARGET_SELF;
             spells[6].instant = true;
             spells[6].perctrigger = 0.0f;
             spells[6].attackstoptimer = 1000;
             spells[6].cooldown = -1;
 
-            spells[7].info = dbcSpell.LookupEntry(SP_DARKW_SYNTH_SUM_ARCANE_ELEMENTAL);
+            spells[7].info = sSpellCustomizations.GetSpellInfo(SP_DARKW_SYNTH_SUM_ARCANE_ELEMENTAL);
             spells[7].targettype = TARGET_SELF;
             spells[7].instant = true;
             spells[7].perctrigger = 0.0f;
             spells[7].attackstoptimer = 1000;
             spells[7].cooldown = -1;
 
-            spells[8].info = dbcSpell.LookupEntry(SP_DARKW_SYNTH_SUM_SHADOW_ELEMENTAL);
+            spells[8].info = sSpellCustomizations.GetSpellInfo(SP_DARKW_SYNTH_SUM_SHADOW_ELEMENTAL);
             spells[8].targettype = TARGET_SELF;
             spells[8].instant = true;
             spells[8].perctrigger = 0.0f;
@@ -1679,7 +1679,7 @@ class DarkweaverSythAI : public CreatureAIScript
             {
                 MoonScriptCreatureAI* pLakkaAI = static_cast< MoonScriptCreatureAI* >(mLakka->GetScript());
                 mLakka->GetAIInterface()->SetAIState(STATE_SCRIPTMOVE);
-                pLakkaAI->SetMoveType(Move_WantedWP);
+                pLakkaAI->SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                 pLakkaAI->SetWaypointToMove(1);
                 pLakkaAI->SetBehavior(Behavior_Default);
             }
@@ -1788,21 +1788,21 @@ class TalonKingIkissAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(SP_TALRON_K_IKISS_ARCANE_VOLLEY);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SP_TALRON_K_IKISS_ARCANE_VOLLEY);
             spells[0].targettype = TARGET_VARIOUS;
             spells[0].instant = false;
             spells[0].perctrigger = 12.0f;
             spells[0].attackstoptimer = 1000;
             spells[0].cooldown = 10;
 
-            spells[1].info = dbcSpell.LookupEntry(SP_TALRON_K_IKISS_BLINK);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(SP_TALRON_K_IKISS_BLINK);
             spells[1].targettype = TARGET_SELF;
             spells[1].instant = true;
             spells[1].perctrigger = 7.0f;
             spells[1].attackstoptimer = 1000;
             spells[1].cooldown = 25;
 
-            spells[2].info = dbcSpell.LookupEntry(SP_TALRON_K_IKISS_POLYMORPH);
+            spells[2].info = sSpellCustomizations.GetSpellInfo(SP_TALRON_K_IKISS_POLYMORPH);
             spells[2].targettype = TARGET_RANDOM_SINGLE;
             spells[2].instant = false;
             spells[2].perctrigger = 9.0f;
@@ -1811,7 +1811,7 @@ class TalonKingIkissAI : public CreatureAIScript
             spells[2].mindist2cast = 0.0f;
             spells[2].maxdist2cast = 40.0f;
 
-            spells[3].info = dbcSpell.LookupEntry(SP_TALRON_K_IKISS_ARCANE_EXPLOSION);
+            spells[3].info = sSpellCustomizations.GetSpellInfo(SP_TALRON_K_IKISS_ARCANE_EXPLOSION);
             spells[3].targettype = TARGET_VARIOUS;
             spells[3].instant = false;
             spells[3].perctrigger = 0.0f;
@@ -1995,7 +1995,7 @@ class TalonKingIkissAI : public CreatureAIScript
                 if (!TargetTable.size())
                     return;
 
-                auto random_index = RandomUInt(0, TargetTable.size() - 1);
+                auto random_index = RandomUInt(0, uint32(TargetTable.size() - 1));
                 auto random_target = TargetTable[random_index];
 
                 if (random_target == nullptr)
@@ -2038,7 +2038,7 @@ class TalonKingIkissAI : public CreatureAIScript
                 return;
             }
 
-            auto random_index = RandomUInt(0, TargetTable.size() - 1);
+            auto random_index = RandomUInt(0, uint32(TargetTable.size() - 1));
             auto random_target = TargetTable[random_index];
 
             if (random_target == nullptr)
@@ -2078,31 +2078,31 @@ class ANZUAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(SP_ANZU_SPELL_BOMB);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SP_ANZU_SPELL_BOMB);
             spells[0].targettype = TARGET_ATTACKING;
             spells[0].instant = true;
             spells[0].perctrigger = 10.0f;
             spells[0].attackstoptimer = 1000;
 
-            spells[1].info = dbcSpell.LookupEntry(SP_ANZU_CYCLONE_OF_FEATHERS);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(SP_ANZU_CYCLONE_OF_FEATHERS);
             spells[1].targettype = TARGET_ATTACKING;
             spells[1].instant = false;
             spells[1].perctrigger = 10.0f;
             spells[1].attackstoptimer = 1000;
 
-            spells[2].info = dbcSpell.LookupEntry(SP_ANZU_PARALYZING_SCREECH);
+            spells[2].info = sSpellCustomizations.GetSpellInfo(SP_ANZU_PARALYZING_SCREECH);
             spells[2].targettype = TARGET_VARIOUS;
             spells[2].instant = false;
             spells[2].perctrigger = 10.0f;
             spells[2].attackstoptimer = 1000;
 
-            spells[3].info = dbcSpell.LookupEntry(SP_ANZU_BANISH);
+            spells[3].info = sSpellCustomizations.GetSpellInfo(SP_ANZU_BANISH);
             spells[3].targettype = TARGET_SELF;
             spells[3].instant = true;
             spells[3].perctrigger = 0.0f;
             spells[3].attackstoptimer = 1000;
 
-            spells[4].info = dbcSpell.LookupEntry(SP_ANZU_SUMMON_RAVEN_GOD);
+            spells[4].info = sSpellCustomizations.GetSpellInfo(SP_ANZU_SUMMON_RAVEN_GOD);
             spells[4].targettype = TARGET_SELF;
             spells[4].instant = true;
             spells[4].perctrigger = 0.0f;
@@ -2252,7 +2252,7 @@ class ANZUAI : public CreatureAIScript
             Unit* pUnit;
             float dist;
 
-            for (std::set<Object*>::iterator itr = _unit->GetInRangeOppFactsSetBegin(); itr != _unit->GetInRangeOppFactsSetEnd(); itr++)
+            for (std::set<Object*>::iterator itr = _unit->GetInRangeOppFactsSetBegin(); itr != _unit->GetInRangeOppFactsSetEnd(); ++itr)
             {
                 if (!(*itr)->IsUnit())
                     continue;

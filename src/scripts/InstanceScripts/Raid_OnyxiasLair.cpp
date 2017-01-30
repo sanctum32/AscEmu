@@ -38,23 +38,23 @@ class OnyxiaAI : public CreatureAIScript
             m_whelpCooldown = 7;
             m_aoeFearCooldown = 30;
             m_fCastCount = 5;
-            _unit->GetAIInterface()->setMoveType(4);
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(1, 2000, Flag_Run));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(2, 0, Flag_Fly));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(3, 0, Flag_Fly));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(4, 0, Flag_Fly));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(5, 0, Flag_Fly));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(6, 0, Flag_Fly));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(7, 0, Flag_Fly));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(8, 0, Flag_Fly));
+            _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(1, 2000, Movement::WP_MOVE_TYPE_RUN));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(2, 0, Movement::WP_MOVE_TYPE_FLY));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(3, 0, Movement::WP_MOVE_TYPE_FLY));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(4, 0, Movement::WP_MOVE_TYPE_FLY));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(5, 0, Movement::WP_MOVE_TYPE_FLY));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(6, 0, Movement::WP_MOVE_TYPE_FLY));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(7, 0, Movement::WP_MOVE_TYPE_FLY));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(8, 0, Movement::WP_MOVE_TYPE_FLY));
 
-            infoFear = dbcSpell.LookupEntry(AOE_FEAR);
-            infoCleave = dbcSpell.LookupEntry(CLEAVE);
-            infoFBreath = dbcSpell.LookupEntry(FLAME_BREATH);
-            infoKAway = dbcSpell.LookupEntry(KNOCK_AWAY);
-            infoSFireball = dbcSpell.LookupEntry(SCRIPTABLE_FIREBALL);
-            infoWBuffet = dbcSpell.LookupEntry(WING_BUFFET);
-            infoDeepBreath = dbcSpell.LookupEntry(DEEP_BREATH);
+            infoFear = sSpellCustomizations.GetSpellInfo(AOE_FEAR);
+            infoCleave = sSpellCustomizations.GetSpellInfo(CLEAVE);
+            infoFBreath = sSpellCustomizations.GetSpellInfo(FLAME_BREATH);
+            infoKAway = sSpellCustomizations.GetSpellInfo(KNOCK_AWAY);
+            infoSFireball = sSpellCustomizations.GetSpellInfo(SCRIPTABLE_FIREBALL);
+            infoWBuffet = sSpellCustomizations.GetSpellInfo(WING_BUFFET);
+            infoDeepBreath = sSpellCustomizations.GetSpellInfo(DEEP_BREATH);
 
             if (!infoFear || !infoCleave || !infoFBreath
                     || !infoKAway || !infoSFireball || !infoWBuffet || !infoDeepBreath)
@@ -74,8 +74,8 @@ class OnyxiaAI : public CreatureAIScript
             m_phase = 1;
             m_eFlamesCooldown = 1;
             m_whelpCooldown = 7;
-            _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_DONTMOVEWP);
-            _unit->SetStandState(0);
+            _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
+            _unit->SetStandState(STANDSTATE_STAND);
             _unit->SendScriptTextChatMessage(1725);     //How fortuitous, usually I must leave my lair to feed!
             if (m_useSpell)
                 RegisterAIUpdateEvent(_unit->GetBaseAttackTime(MELEE));
@@ -88,7 +88,7 @@ class OnyxiaAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setMoveType(0);
+            _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
             _unit->GetAIInterface()->setWaypointToMove(0);
             _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
             _unit->GetAIInterface()->SetAIState(STATE_IDLE);
@@ -122,14 +122,14 @@ class OnyxiaAI : public CreatureAIScript
             {
                 case 1:
                     {
-                        _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                        _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                         _unit->GetAIInterface()->setWaypointToMove(2);
                         Fly();
                     }
                     break;
                 case 2:
                     {
-                        _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                        _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                         _unit->GetAIInterface()->setWaypointToMove(3);
                     }
                     break;
@@ -140,7 +140,7 @@ class OnyxiaAI : public CreatureAIScript
                         _unit->GetAIInterface()->setCurrentAgent(AGENT_SPELL);
                         //_unit->m_pacified--;
                         _unit->GetAIInterface()->SetAIState(STATE_SCRIPTIDLE);
-                        _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_DONTMOVEWP);
+                        _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
                         _unit->GetAIInterface()->setWaypointToMove(0);
                         WorldPacket data(SMSG_MOVE_SET_HOVER, 13);
                         data << _unit->GetNewGUID();
@@ -154,7 +154,7 @@ class OnyxiaAI : public CreatureAIScript
                         _unit->GetAIInterface()->SetAllowedToEnterCombat(true);
                         _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
                         _unit->GetAIInterface()->SetAIState(STATE_SCRIPTIDLE);
-                        _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_DONTMOVEWP);
+                        _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
                         _unit->GetAIInterface()->setWaypointToMove(0);
                         /*_unit->m_pacified--;
                         if (_unit->m_pacified > 0)
@@ -171,7 +171,7 @@ class OnyxiaAI : public CreatureAIScript
                         _unit->GetAIInterface()->m_canMove = false;
                         _unit->GetAIInterface()->SetAllowedToEnterCombat(true);
                         _unit->GetAIInterface()->SetAIState(STATE_SCRIPTIDLE);
-                        _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_DONTMOVEWP);
+                        _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
                         _unit->GetAIInterface()->setWaypointToMove(0);
                         WorldPacket data(SMSG_MOVE_SET_HOVER, 13);
                         data << _unit->GetNewGUID();
@@ -222,7 +222,7 @@ class OnyxiaAI : public CreatureAIScript
                 //_unit->m_pacified++;
                 _unit->GetAIInterface()->StopMovement(0);
                 _unit->GetAIInterface()->SetAIState(STATE_SCRIPTMOVE);
-                _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                 _unit->GetAIInterface()->setWaypointToMove(1);
 
                 return;
@@ -244,12 +244,12 @@ class OnyxiaAI : public CreatureAIScript
                 //_unit->m_pacified++;
                 _unit->GetAIInterface()->StopMovement(0);
                 _unit->GetAIInterface()->SetAIState(STATE_SCRIPTMOVE);
-                _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                 _unit->GetAIInterface()->setWaypointToMove(8);
 
                 return;
             }
-            if (_unit->GetAIInterface()->getMoveType() == MOVEMENTTYPE_WANTEDWP)
+            if (_unit->GetAIInterface()->GetWaypointScriptType() == Movement::WP_MOVEMENT_SCRIPT_WANTEDWP)
                 return;
             m_eFlamesCooldown--;
             if (!m_eFlamesCooldown && _unit->GetAIInterface()->getNextTarget())//_unit->getAttackTarget())
@@ -271,7 +271,7 @@ class OnyxiaAI : public CreatureAIScript
                     _unit->GetAIInterface()->SetAllowedToEnterCombat(false);
                     //_unit->m_pacified++;
                     _unit->GetAIInterface()->SetAIState(STATE_SCRIPTMOVE);
-                    _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                    _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                     _unit->GetAIInterface()->setWaypointToMove(m_currentWP);
                     m_fCastCount = 5;
                 }
@@ -285,7 +285,7 @@ class OnyxiaAI : public CreatureAIScript
                     _unit->GetAIInterface()->SetAllowedToEnterCombat(false);
                     //_unit->m_pacified++;
                     _unit->GetAIInterface()->SetAIState(STATE_SCRIPTMOVE);
-                    _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                    _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                     _unit->GetAIInterface()->setWaypointToMove(m_currentWP);
                     m_fCastCount = 5;
                 }
@@ -367,12 +367,12 @@ class OnyxiaAI : public CreatureAIScript
             }
         }
 
-        inline WayPoint* CreateWaypoint(int id, uint32 waittime, uint32 flags)
+        inline Movement::WayPoint* CreateWaypoint(int id, uint32 waittime, uint32 flags)
         {
             //WayPoint* wp = new WayPoint;
             //WayPoint * wp = _unit->GetMapMgr()->GetInterface()->CreateWaypoint();
             //WayPoint * wp = sStructFactory.CreateWaypoint();
-            WayPoint* wp = _unit->CreateWaypointStruct();
+            Movement::WayPoint* wp = _unit->CreateWaypointStruct();
             wp->id = id;
             wp->x = coords[id].x;
             wp->y = coords[id].y;
@@ -483,7 +483,7 @@ class OnyxiaAI : public CreatureAIScript
         uint32 m_aoeFearCooldown;
         uint32 m_fCastCount;
         uint32 m_currentWP;
-        SpellEntry* infoFear, *infoWBuffet, *infoCleave, *infoFBreath, *infoKAway, *infoSFireball, *infoDeepBreath;
+        SpellInfo* infoFear, *infoWBuffet, *infoCleave, *infoFBreath, *infoKAway, *infoSFireball, *infoDeepBreath;
 };
 
 void SetupOnyxiasLair(ScriptMgr* mgr)

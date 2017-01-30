@@ -54,7 +54,7 @@ class BlackTempleScript : public MoonInstanceScript
 
         void OnCreatureDeath(Creature* pVictim, Unit* pKiller)
         {
-            if (pVictim->GetCreatureInfo()->Rank != ELITE_WORLDBOSS)
+            if (pVictim->GetCreatureProperties()->Rank != ELITE_WORLDBOSS)
                 return;
 
             EncounterMap::iterator Iter = mEncounters.find(pVictim->GetEntry());
@@ -121,7 +121,7 @@ class MutantWarHoundAI : public MoonScriptCreatureAI
         {
             ParentClass::OnDied(pKiller);
 
-            Aura* pAura = sSpellFactoryMgr.NewAura(dbcSpell.LookupEntry(MUTANT_WAR_HOUND_CLOUD_OF_DISEASE), (uint32)20000, _unit, _unit);
+            Aura* pAura = sSpellFactoryMgr.NewAura(sSpellCustomizations.GetSpellInfo(MUTANT_WAR_HOUND_CLOUD_OF_DISEASE), (uint32)20000, _unit, _unit);
             _unit->AddAura(pAura);
         }
 };
@@ -1504,14 +1504,14 @@ class NajentusAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(CRASHING_WAVE);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(CRASHING_WAVE);
             spells[0].targettype = TARGET_VARIOUS;
             spells[0].instant = false;
             spells[0].perctrigger = 10.0f;
             spells[0].attackstoptimer = 1000;
             spells[0].cooldown = 15;
 
-            spells[1].info = dbcSpell.LookupEntry(NEEDLE_SPINE);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(NEEDLE_SPINE);
             spells[1].targettype = TARGET_RANDOM_SINGLE;
             spells[1].instant = false;
             spells[1].perctrigger = 10.0f;
@@ -1520,14 +1520,14 @@ class NajentusAI : public CreatureAIScript
             spells[1].mindist2cast = 0.0f;
             spells[1].maxdist2cast = 60.0f;
 
-            spells[2].info = dbcSpell.LookupEntry(TIDAL_SHIELD);
+            spells[2].info = sSpellCustomizations.GetSpellInfo(TIDAL_SHIELD);
             spells[2].targettype = TARGET_SELF;
             spells[2].instant = false;
             spells[2].perctrigger = 0.0f;
             spells[2].attackstoptimer = 2000;
             spells[2].cooldown = 105;
 
-            spells[3].info = dbcSpell.LookupEntry(IMPALING_SPINE);
+            spells[3].info = sSpellCustomizations.GetSpellInfo(IMPALING_SPINE);
             spells[3].targettype = TARGET_RANDOM_SINGLE;
             spells[3].instant = false;
             spells[3].perctrigger = 0.0f;
@@ -1688,7 +1688,7 @@ class NajentusAI : public CreatureAIScript
                 if (!TargetTable.size())
                     return;
 
-                auto random_index = RandomUInt(0, TargetTable.size() - 1);
+                auto random_index = RandomUInt(0, uint32(TargetTable.size() - 1));
                 auto random_target = TargetTable[random_index];
 
                 if (random_target == nullptr)
@@ -1737,10 +1737,10 @@ class SupremusAI : public CreatureAIScript
         {
             m_MoltenFlame = m_HurtfulStrike = m_MoltenPunch = m_VolcanicGazer = true;
 
-            infoMoltenFlame = dbcSpell.LookupEntry(MOLTEN_FLAME);
-            infoHurtfulStrike = dbcSpell.LookupEntry(HURTFUL_STRIKE);
-            infoMoltenPunch =  dbcSpell.LookupEntry(MOLTEN_PUNCH);
-            infoVolcanicGazer =  dbcSpell.LookupEntry(VOLCANIC_GAZER);
+            infoMoltenFlame = sSpellCustomizations.GetSpellInfo(MOLTEN_FLAME);
+            infoHurtfulStrike = sSpellCustomizations.GetSpellInfo(HURTFUL_STRIKE);
+            infoMoltenPunch =  sSpellCustomizations.GetSpellInfo(MOLTEN_PUNCH);
+            infoVolcanicGazer =  sSpellCustomizations.GetSpellInfo(VOLCANIC_GAZER);
 
             timer = 0;
             m_phase = 0;
@@ -1896,7 +1896,7 @@ class SupremusAI : public CreatureAIScript
         uint32 timer;
         uint32 m_phase;
         bool m_MoltenFlame, m_HurtfulStrike, m_MoltenPunch, m_VolcanicGazer;
-        SpellEntry* infoMoltenFlame, *infoHurtfulStrike, *infoMoltenPunch, *infoVolcanicGazer;
+        SpellInfo* infoMoltenFlame, *infoHurtfulStrike, *infoMoltenPunch, *infoVolcanicGazer;
 };
 
 //------------------------------------
@@ -1954,14 +1954,14 @@ class GurtoggAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(ARCING_SMASH);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(ARCING_SMASH);
             spells[0].targettype = TARGET_ATTACKING;
             spells[0].instant = true;
             spells[0].perctrigger = 0.0f;
             spells[0].attackstoptimer = 1000;
             spells[0].cooldown = 10;
 
-            spells[1].info = dbcSpell.LookupEntry(FEL_ACID_BREATH);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(FEL_ACID_BREATH);
             spells[1].targettype = TARGET_ATTACKING;
             spells[1].instant = true;
             spells[1].perctrigger = 10.0f;
@@ -1969,7 +1969,7 @@ class GurtoggAI : public CreatureAIScript
             spells[1].cooldown = 15;
 
             // Phase 1
-            spells[2].info = dbcSpell.LookupEntry(BLOODBOIL);
+            spells[2].info = sSpellCustomizations.GetSpellInfo(BLOODBOIL);
             spells[2].targettype = TARGET_VARIOUS;
             spells[2].instant = true;
             spells[2].perctrigger = 0.0f;
@@ -1977,21 +1977,21 @@ class GurtoggAI : public CreatureAIScript
             spells[2].cooldown = 10;
 
             // Not sure about this one system of casting
-            spells[3].info = dbcSpell.LookupEntry(ACIDIC_WOUND);
+            spells[3].info = sSpellCustomizations.GetSpellInfo(ACIDIC_WOUND);
             spells[3].targettype = TARGET_ATTACKING;
             spells[3].instant = true;
             spells[3].perctrigger = 10.0f;
             spells[3].attackstoptimer = 2000;
             spells[3].cooldown = 15;
 
-            spells[4].info = dbcSpell.LookupEntry(DISORIENT);
+            spells[4].info = sSpellCustomizations.GetSpellInfo(DISORIENT);
             spells[4].targettype = TARGET_ATTACKING;
             spells[4].instant = true;
             spells[4].perctrigger = 7.0f;
             spells[4].attackstoptimer = 2000;
             spells[4].cooldown = 10;
 
-            spells[5].info = dbcSpell.LookupEntry(KNOCKBACK);
+            spells[5].info = sSpellCustomizations.GetSpellInfo(KNOCKBACK);
             spells[5].targettype = TARGET_ATTACKING;
             spells[5].instant = true;
             spells[5].perctrigger = 0.0f;
@@ -1999,14 +1999,14 @@ class GurtoggAI : public CreatureAIScript
             spells[5].cooldown = 15;
 
             // Phase 2
-            spells[6].info = dbcSpell.LookupEntry(ACID_GEYSER);
+            spells[6].info = sSpellCustomizations.GetSpellInfo(ACID_GEYSER);
             spells[6].targettype = TARGET_DESTINATION;
             spells[6].instant = true;
             spells[6].perctrigger = 0.0f;
             spells[6].attackstoptimer = 2000;
             spells[6].cooldown = 10;
 
-            spells[7].info = dbcSpell.LookupEntry(FEL_RAGE1);
+            spells[7].info = sSpellCustomizations.GetSpellInfo(FEL_RAGE1);
             spells[7].targettype = TARGET_RANDOM_SINGLE;
             spells[7].instant = true;
             spells[7].perctrigger = 0.0f;
@@ -2015,7 +2015,7 @@ class GurtoggAI : public CreatureAIScript
             spells[7].mindist2cast = 0.0f;
             spells[7].maxdist2cast = 60.0f;
 
-            spells[8].info = dbcSpell.LookupEntry(FEL_RAGE2);
+            spells[8].info = sSpellCustomizations.GetSpellInfo(FEL_RAGE2);
             spells[8].targettype = TARGET_RANDOM_SINGLE;
             spells[8].instant = true;
             spells[8].perctrigger = 0.0f;
@@ -2201,7 +2201,7 @@ class GurtoggAI : public CreatureAIScript
                     if (!TargetTable.size())
                         return;
 
-                    auto random_index = RandomUInt(0, TargetTable.size() - 1);
+                    auto random_index = RandomUInt(0, uint32(TargetTable.size() - 1));
                     auto random_target = TargetTable[random_index];
 
                     if (random_target == nullptr)
@@ -2321,7 +2321,7 @@ class GurtoggAI : public CreatureAIScript
                 if (!TargetTable.size())
                     return;
 
-                auto random_index = RandomUInt(0, TargetTable.size() - 1);
+                auto random_index = RandomUInt(0, uint32(TargetTable.size() - 1));
                 auto random_target = TargetTable[random_index];
 
                 if (random_target == nullptr)
@@ -2687,7 +2687,7 @@ class ReliquaryOfSoulsAI : public MoonScriptCreatureAI
                                 if ((*itr)->IsCreature())
                                 {
                                     creature = static_cast<Creature*>((*itr));
-                                    if (creature->GetCreatureInfo()->Id == CN_ENSLAVED_SOUL && !creature->isAlive())
+                                    if (creature->GetCreatureProperties()->Id == CN_ENSLAVED_SOUL && !creature->isAlive())
                                         DeadSoulCount++;
                                 }
                             }
@@ -2743,14 +2743,14 @@ class ShahrazAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(SABER_LASH);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SABER_LASH);
             spells[0].targettype = TARGET_ATTACKING;
             spells[0].instant = true;
             spells[0].perctrigger = 8.0f;
             spells[0].attackstoptimer = 1000;
             spells[0].cooldown = 15;
 
-            spells[1].info = dbcSpell.LookupEntry(FATAL_ATTRACTION);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(FATAL_ATTRACTION);
             spells[1].targettype = TARGET_RANDOM_SINGLE;
             spells[1].instant = true;
             spells[1].perctrigger = 10.0f;
@@ -2759,7 +2759,7 @@ class ShahrazAI : public CreatureAIScript
             spells[1].mindist2cast = 10.0f;
             spells[1].maxdist2cast = 60.0f;
 
-            spells[2].info = dbcSpell.LookupEntry(SINFUL_BEAM);
+            spells[2].info = sSpellCustomizations.GetSpellInfo(SINFUL_BEAM);
             spells[2].targettype = TARGET_RANDOM_SINGLE;
             spells[2].instant = true;
             spells[2].perctrigger = 0.0f;
@@ -2768,7 +2768,7 @@ class ShahrazAI : public CreatureAIScript
             spells[2].mindist2cast = 0.0f;
             spells[2].maxdist2cast = 80.0f;
 
-            spells[3].info = dbcSpell.LookupEntry(WICKED_BEAM);
+            spells[3].info = sSpellCustomizations.GetSpellInfo(WICKED_BEAM);
             spells[3].targettype = TARGET_RANDOM_SINGLE;
             spells[3].instant = true;
             spells[3].perctrigger = 0.0f;
@@ -2777,7 +2777,7 @@ class ShahrazAI : public CreatureAIScript
             spells[3].mindist2cast = 0.0f;
             spells[3].maxdist2cast = 80.0f;
 
-            spells[4].info = dbcSpell.LookupEntry(VILE_BEAM);
+            spells[4].info = sSpellCustomizations.GetSpellInfo(VILE_BEAM);
             spells[4].targettype = TARGET_RANDOM_SINGLE;
             spells[4].instant = true;
             spells[4].perctrigger = 0.0f;
@@ -2786,7 +2786,7 @@ class ShahrazAI : public CreatureAIScript
             spells[4].mindist2cast = 0.0f;
             spells[4].maxdist2cast = 80.0f;
 
-            spells[5].info = dbcSpell.LookupEntry(SINISTER_BEAM);
+            spells[5].info = sSpellCustomizations.GetSpellInfo(SINISTER_BEAM);
             spells[5].targettype = TARGET_RANDOM_SINGLE;
             spells[5].instant = true;
             spells[5].perctrigger = 0.0f;
@@ -2903,7 +2903,7 @@ class ShahrazAI : public CreatureAIScript
                 }
 
                 //_unit->CastSpell(_unit, SpellId, true);
-                Aura* aura = sSpellFactoryMgr.NewAura(dbcSpell.LookupEntry(SpellId), (uint32)15000, _unit, _unit);
+                Aura* aura = sSpellFactoryMgr.NewAura(sSpellCustomizations.GetSpellInfo(SpellId), (uint32)15000, _unit, _unit);
                 _unit->AddAura(aura);
 
                 AuraChange = t + 15;
@@ -3002,7 +3002,7 @@ class ShahrazAI : public CreatureAIScript
                 if (!TargetTable.size())
                     return;
 
-                auto random_index = RandomUInt(0, TargetTable.size() - 1);
+                auto random_index = RandomUInt(0, uint32(TargetTable.size() - 1));
                 auto random_target = TargetTable[random_index];
 
                 if (random_target == nullptr)
@@ -3245,21 +3245,21 @@ class TeronGorefiendAI : public CreatureAIScript
 
             }
 
-            spells[0].info = dbcSpell.LookupEntry(DOOM_BLOSSOM); //summon visual effect
+            spells[0].info = sSpellCustomizations.GetSpellInfo(DOOM_BLOSSOM); //summon visual effect
             spells[0].targettype = TARGET_SELF;
             spells[0].instant = true;
             spells[0].perctrigger = 8.0f;
             spells[0].attackstoptimer = 1000;
             spells[0].cooldown = 25;
 
-            spells[1].info = dbcSpell.LookupEntry(CRUSHING_SHADOWS);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(CRUSHING_SHADOWS);
             spells[1].targettype = TARGET_VARIOUS;
             spells[1].instant = false;
             spells[1].perctrigger = 10.0f;
             spells[1].attackstoptimer = 1000;
             spells[1].cooldown = 20;
 
-            spells[2].info = dbcSpell.LookupEntry(INCINERATE);
+            spells[2].info = sSpellCustomizations.GetSpellInfo(INCINERATE);
             spells[2].targettype = TARGET_RANDOM_SINGLE;
             spells[2].instant = true;
             spells[2].perctrigger = 0.0f;
@@ -3268,7 +3268,7 @@ class TeronGorefiendAI : public CreatureAIScript
             spells[2].mindist2cast = 0.0f;
             spells[2].maxdist2cast = 45.0f;
 
-            spells[3].info = dbcSpell.LookupEntry(SHADOW_OF_DEATH);
+            spells[3].info = sSpellCustomizations.GetSpellInfo(SHADOW_OF_DEATH);
             spells[3].targettype = TARGET_RANDOM_SINGLE;
             spells[3].instant = false;
             spells[3].perctrigger = 0.0f;
@@ -3422,7 +3422,7 @@ class TeronGorefiendAI : public CreatureAIScript
                 if (!TargetTable.size())
                     return;
 
-                auto random_index = RandomUInt(0, TargetTable.size() - 1);
+                auto random_index = RandomUInt(0, uint32(TargetTable.size() - 1));
                 auto random_target = TargetTable[random_index];
 
                 if (random_target == nullptr)
@@ -3469,7 +3469,7 @@ class ShadeofakamaAI : public CreatureAIScript
                 m_spellcheck[i] = false;
 
             }
-            spells[0].info = dbcSpell.LookupEntry(SINFUL_BEAM0);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SINFUL_BEAM0);
             spells[0].targettype = TARGET_VARIOUS;
             spells[0].instant = false;
             spells[0].perctrigger = 0.0f;
@@ -3770,7 +3770,7 @@ static Transformation Descend[] =
 
 // Paths
 // Eye Beam stuff
-static Location EyeBeamPaths[] =
+static Movement::Location EyeBeamPaths[] =
 {
     { 642.240601f, 297.297180f, 354.423401f },
     { 641.197449f, 314.330963f, 354.300262f },
@@ -3783,7 +3783,7 @@ static Location EyeBeamPaths[] =
 };
 
 // Akama stuff
-static Location ToIllidan[] =
+static Movement::Location ToIllidan[] =
 {
     {  },
     { 660.248596f, 330.695679f, 271.688110f, 1.243284f },
@@ -3809,7 +3809,7 @@ static Location ToIllidan[] =
 };
 
 // Illidan stuff
-static Location ForIllidan[] =
+static Movement::Location ForIllidan[] =
 {
     {  },
     { 709.783203f, 305.073883f, 362.988770f, 1.546307f },    // Middle pos
@@ -3818,7 +3818,7 @@ static Location ForIllidan[] =
     { 680.798157f, 305.648743f, 353.192200f, 3.196716f }    // Land
 };
 
-static Location UnitPos[] =
+static Movement::Location UnitPos[] =
 {
     { 676.717346f, 322.445251f, 354.153320f, 5.732623f },    // Blade 1
     { 677.368286f, 285.374725f, 354.242157f, 5.645614f }    // Blade 2
@@ -4332,13 +4332,13 @@ class AkamaAI : public MoonScriptBossAI
             AddEmote(Event_OnTargetDied, "One step closer!", Text_Yell, 11382);
             AddEmote(Event_OnDied, "Fight on friends! Kill him and end the curse on my people!", Text_Yell, 11391);
 
-            SetMoveType(Move_DontMoveWP);
+            SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
             SetCanEnterCombat(false);
             SetPhase(1);
 
             for (uint8 i = 1; i < AKAMA_WAYPOINT_SIZE; ++i)
             {
-                AddWaypoint(CreateWaypoint(i, 0, Flag_Run, ToIllidan[i]));
+                AddWaypoint(CreateWaypoint(i, 0, Movement::WP_MOVE_TYPE_RUN, ToIllidan[i]));
             }
 
             _unit->SetUInt32Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
@@ -4477,7 +4477,7 @@ class AkamaAI : public MoonScriptBossAI
                     pGate->SetState(GO_STATE_OPEN);
                     if (pDoorTrigger != NULL)
                     {
-                        pDoorTrigger->CastSpell(pDoorTrigger, dbcSpell.LookupEntry(GATE_FAILURE), true);
+                        pDoorTrigger->CastSpell(pDoorTrigger, sSpellCustomizations.GetSpellInfo(GATE_FAILURE), true);
                     }
                     break;
                 case 12:
@@ -4606,7 +4606,7 @@ class AkamaAI : public MoonScriptBossAI
                     SetCanMove(true);
                     SetCanEnterCombat(true);
                     SetBehavior(Behavior_Default);
-                    SetMoveType(Move_DontMoveWP);
+                    SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
                     SetWaypointToMove(0);
                     RemoveAIUpdateEvent();
                     _unit->GetAIInterface()->SetAIState(STATE_IDLE);
@@ -4726,13 +4726,13 @@ class AkamaAI : public MoonScriptBossAI
                         break;
                     case 3:
                         Emote("I will deal with these mongrels! Strike now, friends! Strike at the Betrayer!", Text_Yell, 11390);
-                        _unit->SetEmoteState(0);
+                        _unit->SetEmoteState(EMOTE_ONESHOT_NONE);
                         break;
                     case 4:
                         _unit->SetEmoteState(EMOTE_ONESHOT_READY1H);
                         break;
                     case 5:
-                        _unit->SetEmoteState(0);
+                        _unit->SetEmoteState(EMOTE_ONESHOT_NONE);
                         break;
                     case 6:
                         SetWieldWeapon(false);
@@ -4746,7 +4746,7 @@ class AkamaAI : public MoonScriptBossAI
                         SetCanMove(true);
                         ForceWaypointMove(18);
                         RemoveAIUpdateEvent();
-                        //_unit->SetEmoteState(0);
+                        //_unit->SetEmoteState(EMOTE_ONESHOT_NONE);
 
                         mScenePart = 0;
                         return;
@@ -4823,7 +4823,7 @@ class AkamaAI : public MoonScriptBossAI
                     break;
                 default:
                     {
-                        _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                        _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                         _unit->GetAIInterface()->setWaypointToMove(iWaypointId + 1);
                     }
             }
@@ -4908,7 +4908,7 @@ class MaievAI : public MoonScriptBossAI
             _unit->SetHealth(1000000);
             _unit->GetAIInterface()->SetAllowedToEnterCombat(false);
 
-            SetMoveType(Move_DontMoveWP);
+            SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
             SetPhase(1);
 
             mYellTimer = mScenePart = mTrapTimer = 0;
@@ -5127,7 +5127,7 @@ class MaievAI : public MoonScriptBossAI
                         break;
                     case 3:
                         mIllidanAI->Emote("You have won... Maiev. But the huntress... is nothing without the hunt. You... are nothing... without me.", Text_Yell, 11478);
-                        _unit->SetEmoteState(0);
+                        _unit->SetEmoteState(EMOTE_ONESHOT_NONE);
                         SetWieldWeapon(false);
                         break;
                     case 4:
@@ -5143,7 +5143,7 @@ class MaievAI : public MoonScriptBossAI
                                 pLeftGate->SetState(GO_STATE_OPEN);
                             }
 
-                            mIllidanAI->GetUnit()->SetEmoteState(0);
+                            mIllidanAI->GetUnit()->SetEmoteState(EMOTE_ONESHOT_NONE);
                             mIllidanAI->GetUnit()->SetHealth(0);
                             mIllidanAI->GetUnit()->setDeathState(JUST_DIED);
                         }
@@ -5177,13 +5177,13 @@ class MaievAI : public MoonScriptBossAI
                                 X -= cosf(IllidanO);
                                 Y -= sinf(IllidanO);
 
-                                Location pCoords;
+                                Movement::Location pCoords;
                                 pCoords.x = IllidanX - X;
                                 pCoords.y = IllidanY - Y;
                                 pCoords.z = IllidanZ;
                                 pCoords.o = 0.0f;
 
-                                pAkamaAI->AddWaypoint(CreateWaypoint(20, 0, Flag_Run, pCoords));
+                                pAkamaAI->AddWaypoint(CreateWaypoint(20, 0, Movement::WP_MOVE_TYPE_RUN, pCoords));
                                 pAkamaAI->ForceWaypointMove(20);
                             }
                         }
@@ -5329,16 +5329,16 @@ class IllidanStormrageAI : public MoonScriptBossAI
             SetWieldWeapon(false);
             SetCanMove(false);
             SetFlyMode(false);
-            SetMoveType(Move_DontMoveWP);
+            SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
             SetPhase(1);
 
             for (uint8 i = 1; i < ILLIDAN_WAYPOINT_SIZE; ++i)
             {
-                AddWaypoint(CreateWaypoint(i, 0, Flag_Fly, ForIllidan[i]));
+                AddWaypoint(CreateWaypoint(i, 0, Movement::WP_MOVE_TYPE_FLY, ForIllidan[i]));
             }
 
             _unit->SetBaseAttackTime(RANGED, 1800);
-            _unit->SetEmoteState(0);
+            _unit->SetEmoteState(EMOTE_ONESHOT_NONE);
             _unit->SetDualWield(true);
 
             mFoA1 = mFoA2 = NULL;
@@ -5385,8 +5385,8 @@ class IllidanStormrageAI : public MoonScriptBossAI
         void OnCombatStop(Unit* pTarget)
         {
             // General
-            _unit->SetEmoteState(0);
-            SetMoveType(Move_DontMoveWP);
+            _unit->SetEmoteState(EMOTE_ONESHOT_NONE);
+            SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
             SetTargetToChannel(NULL, 0);
             SetCanEnterCombat(true);
             SetWieldWeapon(true);
@@ -5622,7 +5622,7 @@ class IllidanStormrageAI : public MoonScriptBossAI
                 SetAllowMelee(false);
                 SetFlyMode(true);
 
-                _unit->SetEmoteState(0);
+                _unit->SetEmoteState(EMOTE_ONESHOT_NONE);
                 _unit->Emote(EMOTE_ONESHOT_LIFTOFF);
 
                 mFireWallTimer = 30000;
@@ -5659,7 +5659,7 @@ class IllidanStormrageAI : public MoonScriptBossAI
                     case 1:
                         for (uint8 i = 0; i < 2; ++i)
                         {
-                            _unit->CastSpellAoF(UnitPos[i].x, UnitPos[i].y, UnitPos[i].z, dbcSpell.LookupEntry(ILLIDAN_THROW_GLAIVE1), false);
+                            _unit->CastSpellAoF(UnitPos[i].x, UnitPos[i].y, UnitPos[i].z, sSpellCustomizations.GetSpellInfo(ILLIDAN_THROW_GLAIVE1), false);
                         }
                         SetWieldWeapon(false);
                         break;
@@ -5797,7 +5797,7 @@ class IllidanStormrageAI : public MoonScriptBossAI
                     mFoA2 = NULL;
                 }
             }
-            if (GetMoveType() != Move_WantedWP && !IsCasting())
+            if (_unit->GetAIInterface()->GetWaypointScriptType() != Movement::WP_MOVEMENT_SCRIPT_WANTEDWP && !IsCasting())
             {
                 if (_unit->GetChannelSpellId() == 0)
                 {
@@ -6181,7 +6181,7 @@ class IllidanStormrageAI : public MoonScriptBossAI
                 SetAllowMelee(false);
                 SetCanMove(false);
 
-                _unit->SetEmoteState(0);
+                _unit->SetEmoteState(EMOTE_ONESHOT_NONE);
 
                 mTimeLeft = MaievTimers[0];
                 mScenePart = 1;
@@ -6198,7 +6198,7 @@ class IllidanStormrageAI : public MoonScriptBossAI
                     SetBehavior(Behavior_Spell);
                     SetAIUpdateFreq(250);
 
-                    _unit->SetEmoteState(0);
+                    _unit->SetEmoteState(EMOTE_ONESHOT_NONE);
 
                     mMiscEventPart = 1;
                     mTimeLeft = Ascend[0].mTimer;
@@ -6255,7 +6255,7 @@ class IllidanStormrageAI : public MoonScriptBossAI
                 SetBehavior(Behavior_Spell);
                 SetAIUpdateFreq(250);
 
-                _unit->SetEmoteState(0);
+                _unit->SetEmoteState(EMOTE_ONESHOT_NONE);
 
                 mMiscEventPart = 1;
                 mTimeLeft = Descend[0].mTimer;
@@ -6339,7 +6339,7 @@ class IllidanStormrageAI : public MoonScriptBossAI
                     SetBehavior(Behavior_Spell);
                     SetAIUpdateFreq(250);
 
-                    _unit->SetEmoteState(0);
+                    _unit->SetEmoteState(EMOTE_ONESHOT_NONE);
 
                     mMiscEventPart = 1;
                     mTimeLeft = Ascend[0].mTimer;
@@ -6618,7 +6618,7 @@ class CageTrapTriggerAI : public MoonScriptCreatureAI
                         pAI->StopMovement();
                         pAI->SetBehavior(Behavior_Spell);
 
-                        pIllidan->SetEmoteState(0);
+                        pIllidan->SetEmoteState(EMOTE_ONESHOT_NONE);
 
                         pAI->SetAIUpdateFreq(250);
                         pAI->mMiscEventPart = 1;

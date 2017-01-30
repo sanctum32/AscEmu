@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,31 +18,23 @@
  *
  */
 
-#include "../Common.h"
+#include "../Common.hpp"
 
 namespace Arcemu
 {
     namespace Threading
     {
-
         float AtomicFloat::SetVal(float NewValue)
         {
-            unsigned long iv = 0;
-            float ret = 0.0f;
-
-            iv = *(reinterpret_cast< unsigned long* >(&NewValue));
-            ret = *(reinterpret_cast< float* >(Value.SetVal(iv)));
+            unsigned long iv = *(reinterpret_cast< unsigned long* >(&NewValue));
+            float ret = *(reinterpret_cast< float* >(Value.SetVal(iv)));
 
             return ret;
         }
 
-
         float AtomicFloat::GetVal()
         {
-            float val = 0.0f;
-
-            val = *(reinterpret_cast< float* >(Value.GetVal()));
-
+            float val = *(reinterpret_cast< float* >(Value.GetVal()));
             return val;
         }
     }

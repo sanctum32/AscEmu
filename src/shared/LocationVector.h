@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org>
+ * Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -106,7 +106,7 @@ class SERVER_DECL LocationVector
             float dx = dest.x - x;
             float dy = dest.y - y;
             if(dy != 0.0f)
-                return atan2(dy, dx);
+                return static_cast<float>(atan2(dy, dx));
             else
                 return 0.0f;
         }
@@ -116,7 +116,7 @@ class SERVER_DECL LocationVector
             float dx = x - src.x;
             float dy = y - src.y;
             if(dy != 0.0f)
-                return atan2(dy, dx);
+                return static_cast<float>(atan2(dy, dx));
             else
                 return 0.0f;
         }

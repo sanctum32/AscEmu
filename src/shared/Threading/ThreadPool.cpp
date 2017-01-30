@@ -18,7 +18,8 @@
  */
 
 #include "ThreadPool.h"
-#include "../Log.h"
+#include "../Log.hpp"
+#include "Util.hpp"
 
 #ifdef WIN32
 
@@ -75,11 +76,11 @@ bool CThreadPool::ThreadExit(Thread* t)
 
     if(itr != m_freeThreads.end())
     {
-        sLog.outError("Thread %u duplicated with thread %u", (*itr)->ControlInterface.GetId(), t->ControlInterface.GetId());
+        LogError("Thread %u duplicated with thread %u", (*itr)->ControlInterface.GetId(), t->ControlInterface.GetId());
     }
     m_freeThreads.insert(t);
 
-    Log.Debug("ThreadPool", "Thread %u entered the free pool.", t->ControlInterface.GetId());
+    LOG_DEBUG("Thread %u entered the free pool.", t->ControlInterface.GetId());
     _mutex.Release();
     return true;
 }
@@ -102,7 +103,7 @@ void CThreadPool::ExecuteTask(ThreadBase* ExecutionTarget)
 
         // resume the thread, and it should start working.
         t->ControlInterface.Resume();
-        Log.Debug("ThreadPool", "Thread %u left the thread pool.", t->ControlInterface.GetId());
+        LOG_DEBUG("Thread %u left the thread pool.", t->ControlInterface.GetId());
     }
     else
     {
@@ -113,9 +114,9 @@ void CThreadPool::ExecuteTask(ThreadBase* ExecutionTarget)
 
     // add the thread to the active set
 #ifdef WIN32
-    Log.Debug("ThreadPool", "Thread %u is now executing task at 0x%p.", t->ControlInterface.GetId(), ExecutionTarget);
+    LOG_DEBUG("Thread %u is now executing task at 0x%p.", t->ControlInterface.GetId(), ExecutionTarget);
 #else
-    Log.Debug("ThreadPool", "Thread %u is now executing task at %p.", t->ControlInterface.GetId(), ExecutionTarget);
+    LOG_DEBUG("Thread %u is now executing task at %p.", t->ControlInterface.GetId(), ExecutionTarget);
 #endif
     m_activeThreads.insert(t);
     _mutex.Release();
@@ -129,18 +130,18 @@ void CThreadPool::Startup()
     for(i = 0; i < tcount; ++i)
         StartThread(NULL);
 
-    Log.Debug("ThreadPool", "Startup, launched %u threads.", tcount);
+    LOG_DEBUG("launched %u threads.", tcount);
 }
 
 void CThreadPool::ShowStats()
 {
     _mutex.Acquire();
-    Log.Debug("ThreadPool", "============ ThreadPool Status =============");
-    Log.Debug("ThreadPool", "Active Threads: %u", m_activeThreads.size());
-    Log.Debug("ThreadPool", "Suspended Threads: %u", m_freeThreads.size());
-    Log.Debug("ThreadPool", "Requested-To-Freed Ratio: %.3f%% (%u/%u)", float(float(_threadsRequestedSinceLastCheck + 1) / float(_threadsExitedSinceLastCheck + 1) * 100.0f), _threadsRequestedSinceLastCheck, _threadsExitedSinceLastCheck);
-    Log.Debug("ThreadPool", "Eaten Count: %d (negative is bad!)", _threadsEaten);
-    Log.Debug("ThreadPool", "============================================");
+    LOG_DEBUG("============ ThreadPool Status =============");
+    LOG_DEBUG("Active Threads: %u", m_activeThreads.size());
+    LOG_DEBUG("Suspended Threads: %u", m_freeThreads.size());
+    LOG_DEBUG("Requested-To-Freed Ratio: %.3f%% (%u/%u)", float(float(_threadsRequestedSinceLastCheck + 1) / float(_threadsExitedSinceLastCheck + 1) * 100.0f), _threadsRequestedSinceLastCheck, _threadsExitedSinceLastCheck);
+    LOG_DEBUG("Eaten Count: %d (negative is bad!)", _threadsEaten);
+    LOG_DEBUG("============================================");
     _mutex.Release();
 }
 
@@ -159,7 +160,7 @@ void CThreadPool::IntegrityCheck()
         for(uint32 i = 0; i < new_threads; ++i)
             StartThread(NULL);
 
-        Log.Debug("ThreadPool", "IntegrityCheck: (gobbled < 0) Spawning %u threads.", new_threads);
+        LOG_DEBUG("(gobbled < 0) Spawning %u threads.", new_threads);
     }
     else if(gobbled < THREAD_RESERVE)
     {
@@ -169,7 +170,7 @@ void CThreadPool::IntegrityCheck()
         for(uint32 i = 0; i < new_threads; ++i)
             StartThread(NULL);
 
-        Log.Debug("ThreadPool", "IntegrityCheck: (gobbled <= 5) Spawning %u threads.", new_threads);
+        LOG_DEBUG("(gobbled <= 5) Spawning %u threads.", new_threads);
     }
     else if(gobbled > THREAD_RESERVE)
     {
@@ -178,12 +179,12 @@ void CThreadPool::IntegrityCheck()
         uint32 kill_count = (gobbled - THREAD_RESERVE);
         KillFreeThreads(kill_count);
         _threadsEaten -= kill_count;
-        Log.Debug("ThreadPool", "IntegrityCheck: (gobbled > 5) Killing %u threads.", kill_count);
+        LOG_DEBUG("(gobbled > 5) Killing %u threads.", kill_count);
     }
     else
     {
         // perfect! we have the ideal number of free threads.
-        Log.Debug("ThreadPool", "IntegrityCheck: Perfect!");
+        LOG_DEBUG("Perfect!");
     }
 
     _threadsExitedSinceLastCheck = 0;
@@ -195,7 +196,7 @@ void CThreadPool::IntegrityCheck()
 
 void CThreadPool::KillFreeThreads(uint32 count)
 {
-    Log.Debug("ThreadPool", "Killing %u excess threads.", count);
+    LOG_DEBUG("Killing %u excess threads.", count);
     _mutex.Acquire();
     Thread* t;
     ThreadSet::iterator itr;
@@ -215,7 +216,7 @@ void CThreadPool::Shutdown()
 {
     _mutex.Acquire();
     size_t tcount = m_activeThreads.size() + m_freeThreads.size();        // exit all
-    Log.Debug("ThreadPool", "Shutting down %u threads.", tcount);
+    LOG_DEBUG("Shutting down %u threads.", tcount);
     KillFreeThreads((uint32)m_freeThreads.size());
     _threadsToExit += (uint32)m_activeThreads.size();
 
@@ -248,7 +249,7 @@ void CThreadPool::Shutdown()
                     t->ControlInterface.Resume();
                 }
             }
-            Log.Debug("ThreadPool", "%u active and %u free threads remaining...", m_activeThreads.size(), m_freeThreads.size());
+            LOG_DEBUG("%u active and %u free threads remaining...", m_activeThreads.size(), m_freeThreads.size());
             _mutex.Release();
             Arcemu::Sleep(1000);
             continue;
@@ -269,7 +270,7 @@ static unsigned long WINAPI thread_proc(void* param)
     uint32 tid = t->ControlInterface.GetId();
     bool ht = (t->ExecutionTarget != NULL);
     t->SetupMutex.Release();
-    Log.Debug("ThreadPool", "Thread %u started.", t->ControlInterface.GetId());
+    LOG_DEBUG("Thread %u started.", t->ControlInterface.GetId());
 
     for(;;)
     {
@@ -283,13 +284,13 @@ static unsigned long WINAPI thread_proc(void* param)
 
         if(!ThreadPool.ThreadExit(t))
         {
-            Log.Debug("ThreadPool", "Thread %u exiting.", tid);
+            LOG_DEBUG("Thread %u exiting.", tid);
             break;
         }
         else
         {
             if(ht)
-                Log.Debug("ThreadPool", "Thread %u waiting for a new task.", tid);
+                LOG_DEBUG("Thread %u waiting for a new task.", tid);
             // enter "suspended" state. when we return, the threadpool will either tell us to fuk off, or to execute a new task.
             t->ControlInterface.Suspend();
             // after resuming, this is where we will end up. start the loop again, check for tasks, then go back to the threadpool.
@@ -322,7 +323,7 @@ static void* thread_proc(void* param)
 {
     Thread* t = (Thread*)param;
     t->SetupMutex.Acquire();
-    Log.Debug("ThreadPool", "Thread %u started.", t->ControlInterface.GetId());
+    LOG_DEBUG("Thread %u started.", t->ControlInterface.GetId());
     t->SetupMutex.Release();
 
     for(;;)
@@ -367,3 +368,73 @@ Thread* CThreadPool::StartThread(ThreadBase* ExecutionTarget)
 }
 
 #endif
+
+void SetThreadName(const char* format, ...)
+{
+    // This isn't supported on nix?
+    va_list ap;
+    va_start(ap, format);
+
+#ifdef WIN32
+
+    char thread_name[200];
+    vsnprintf(thread_name, 200, format, ap);
+
+    THREADNAME_INFO info;
+    info.dwType = 0x1000;
+    info.dwThreadID = GetCurrentThreadId();
+    info.dwFlags = 0;
+    info.szName = thread_name;
+
+    __try
+    {
+#ifdef _WIN64
+        RaiseException(0x406D1388, 0, sizeof(info) / sizeof(DWORD), (ULONG_PTR*)&info);
+#else
+        RaiseException(0x406D1388, 0, sizeof(info) / sizeof(DWORD), (DWORD*)&info);
+#endif
+    } __except (EXCEPTION_CONTINUE_EXECUTION)
+    {
+
+    }
+
+#endif
+
+    va_end(ap);
+}
+
+namespace Arcemu
+{
+    void Sleep(unsigned long timems)
+    {
+#ifdef WIN32
+        ::Sleep(timems);
+#else
+        timespec tv;
+
+        tv.tv_sec = timems / 1000;
+        tv.tv_nsec = (timems % 1000) * 1000 * 1000;
+
+        nanosleep(&tv, NULL);
+#endif
+
+    }
+}
+
+volatile long Sync_Add(volatile long* value)
+{
+#ifdef WIN32
+    return InterlockedIncrement(value);
+#else
+    return __sync_add_and_fetch(value, 1);
+#endif
+}
+
+volatile long Sync_Sub(volatile long* value)
+{
+#ifdef WIN32
+    return InterlockedDecrement(value);
+#else
+    return __sync_sub_and_fetch(value, 1);
+#endif
+}

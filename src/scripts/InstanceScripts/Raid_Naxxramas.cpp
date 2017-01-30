@@ -425,7 +425,7 @@ void NaxxramasWorshipperAI::OnDied(Unit* pKiller)
             // Should be applied on Grand Widow, but is on the enemies - to script ?
             //ApplyAura(NAXXRAMAS_WORSHIPPER_WIDOW_EMBRACE);
             // I don't like the way we apply it
-            Aura* WidowEmbrace = sSpellFactoryMgr.NewAura(dbcSpell.LookupEntry(NAXXRAMAS_WORSHIPPER_WIDOW_EMBRACE), 30000, _unit, mGrandWidow->GetUnit());
+            Aura* WidowEmbrace = sSpellFactoryMgr.NewAura(sSpellCustomizations.GetSpellInfo(NAXXRAMAS_WORSHIPPER_WIDOW_EMBRACE), 30000, _unit, mGrandWidow->GetUnit());
             _unit->AddAura(WidowEmbrace);
 
             // Not sure about new Frenzy Timer
@@ -456,7 +456,7 @@ void NaxxramasWorshipperAI::AIUpdate()
             NewSpell->entryId = _unit->GetEntry();
             NewSpell->minrange = 0;
             NewSpell->maxrange = 15;
-            NewSpell->spell = dbcSpell.LookupEntry(NAXXRAMAS_WORSHIPPER_WIDOW_EMBRACE);
+            NewSpell->spell = sSpellCustomizations.GetSpellInfo(NAXXRAMAS_WORSHIPPER_WIDOW_EMBRACE);
             NewSpell->spelltargetType = TTYPE_SOURCE;
             NewSpell->cooldown = NewSpell->cooldowntime = 0;
             NewSpell->autocast_type = 0;
@@ -961,7 +961,7 @@ void SpellFunc_AnubRekhanCorpseScarabsPlayer(SpellDesc* pThis, MoonScriptCreatur
     AnubRekhanAI* AnubRekhan = (pCreatureAI != NULL) ? static_cast< AnubRekhanAI* >(pCreatureAI) : NULL;
     if (AnubRekhan != NULL)
     {
-        std::vector<std::pair< Player* , Location > > PlayerCorpses;
+        std::vector<std::pair< Player* , Movement::Location > > PlayerCorpses;
         Player* PlayerPtr = NULL;
         LocationVector spawnLocation;
         for (std::set< Object* >::iterator Iter = AnubRekhan->GetUnit()->GetInRangePlayerSetBegin(); Iter != AnubRekhan->GetUnit()->GetInRangePlayerSetEnd(); ++Iter)
@@ -998,7 +998,7 @@ void SpellFunc_AnubRekhanCorpseScarabsPlayer(SpellDesc* pThis, MoonScriptCreatur
             if (AnubRekhan->GetUnit()->CalcDistance(spawnLocation) > 60.0f)
                 continue;
 
-            Location ObjectCoords;
+            Movement::Location ObjectCoords;
             ObjectCoords.x = spawnLocation.x;
             ObjectCoords.y = spawnLocation.y;
             ObjectCoords.z = spawnLocation.z;
@@ -1008,7 +1008,7 @@ void SpellFunc_AnubRekhanCorpseScarabsPlayer(SpellDesc* pThis, MoonScriptCreatur
 
         if (PlayerCorpses.size() > 0)
         {
-            uint32 Id = RandomUInt(PlayerCorpses.size() - 1);
+            uint32 Id = RandomUInt(static_cast<uint32>(PlayerCorpses.size() - 1));
             PlayerPtr = PlayerCorpses[Id].first;
             AnubRekhan->mUsedCorpseGuids.insert(static_cast<uint32>(PlayerPtr->GetGUID()));
 
@@ -1055,7 +1055,7 @@ void SpellFunc_AnubRekhanCorpseScarabsCryptGuard(SpellDesc* pThis, MoonScriptCre
 
         if (CryptCorpses.size() > 0)
         {
-            uint32 Id = RandomUInt(CryptCorpses.size() - 1);
+            uint32 Id = RandomUInt(static_cast<uint32>(CryptCorpses.size() - 1));
             CreaturePtr = CryptCorpses[Id];
 
             float X, Y, Z, O;
@@ -1144,7 +1144,7 @@ void StoneskinGargoyleAI::AIUpdate()
     if (IsCasting() || HasAura)
         return;
     else if (_unit->GetEmoteState() == EMOTE_STATE_SUBMERGED)
-        _unit->SetEmoteState(0);
+        _unit->SetEmoteState(EMOTE_ONESHOT_NONE);
 
     if (!IsCasting() && GetHealthPercent() <= 30)
     {
@@ -1765,7 +1765,7 @@ void HeiganTheUncleanAI::OnCombatStart(Unit* pTarget)
 
                 Fissure = static_cast< GameObject* >(*Iter);
 
-                if (Fissure->GetInfo() == NULL)
+                if (Fissure->GetGameObjectProperties() == nullptr)
                     continue;
 
                 if (Fissure->GetUInt32Value(GAMEOBJECT_DISPLAYID) != 6785 && Fissure->GetUInt32Value(GAMEOBJECT_DISPLAYID) != 1287)
@@ -1884,7 +1884,7 @@ void PlagueFissureGO::DoErrupt()
     data << (uint32)0;
 
     //send packet to inrange players
-    for (std::set<Object*>::iterator plrIter = _gameobject->GetInRangePlayerSetBegin(); plrIter != _gameobject->GetInRangePlayerSetEnd(); plrIter++)
+    for (std::set<Object*>::iterator plrIter = _gameobject->GetInRangePlayerSetBegin(); plrIter != _gameobject->GetInRangePlayerSetEnd(); ++plrIter)
     {
         static_cast<Player*>(*plrIter)->SendPacket(&data);
     };

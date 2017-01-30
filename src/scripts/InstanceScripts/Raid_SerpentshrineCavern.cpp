@@ -23,11 +23,6 @@
 #include "Setup.h"
 #include "Raid_SerpentshrineCavern.h"
 
-
-#ifdef WIN32
-#pragma warning(disable:4146)      //warning C4146: unary minus operator applied to unsigned type, result still unsigned
-#endif
-
 #define SP_SCALDING_WATER 37284 //This "dot" is supposed to tick whenever you get in the water, it doesnt tick anymore after u kill lurker.
 
 //------------------------------------
@@ -63,14 +58,14 @@ class HydrossTheUnstableAI : public CreatureAIScript
         {
             nrspells = 2;
 
-            spells[0].info = dbcSpell.LookupEntry(WATER_TOMB);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(WATER_TOMB);
             spells[0].targettype = TARGET_RANDOM_SINGLE;
             spells[0].instant = true;
             spells[0].cooldown = 7;
             spells[0].attackstoptimer = 1000;
             m_spellcheck[0] = false;
 
-            spells[1].info = dbcSpell.LookupEntry(VILE_SLUDGE);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(VILE_SLUDGE);
             spells[1].targettype = TARGET_RANDOM_SINGLE;
             spells[1].instant = true;
             spells[1].cooldown = 15;
@@ -78,7 +73,7 @@ class HydrossTheUnstableAI : public CreatureAIScript
             m_spellcheck[1] = false;
 
             //frost attack type
-            _unit->GetProto()->AttackType = 4;
+            const_cast<CreatureProperties*>(_unit->GetCreatureProperties())->AttackType = 4;
             //frost immunity
             _unit->SchoolImmunityList[SCHOOL_FROST] = 1;
 
@@ -179,27 +174,27 @@ class HydrossTheUnstableAI : public CreatureAIScript
                         switch (MarkCount)
                         {
                             case 0:
-                                _unit->CastSpell(_unit, dbcSpell.LookupEntry(MARK_OF_HYDROSS1), true);
+                                _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(MARK_OF_HYDROSS1), true);
                                 break;
 
                             case 1:
-                                _unit->CastSpell(_unit, dbcSpell.LookupEntry(MARK_OF_HYDROSS2), true);
+                                _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(MARK_OF_HYDROSS2), true);
                                 break;
 
                             case 2:
-                                _unit->CastSpell(_unit, dbcSpell.LookupEntry(MARK_OF_HYDROSS3), true);
+                                _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(MARK_OF_HYDROSS3), true);
                                 break;
 
                             case 3:
-                                _unit->CastSpell(_unit, dbcSpell.LookupEntry(MARK_OF_HYDROSS4), true);
+                                _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(MARK_OF_HYDROSS4), true);
                                 break;
 
                             case 4:
-                                _unit->CastSpell(_unit, dbcSpell.LookupEntry(MARK_OF_HYDROSS5), true);
+                                _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(MARK_OF_HYDROSS5), true);
                                 break;
 
                             case 5:
-                                _unit->CastSpell(_unit, dbcSpell.LookupEntry(MARK_OF_HYDROSS6), true);
+                                _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(MARK_OF_HYDROSS6), true);
                                 break;
                         }
 
@@ -223,7 +218,7 @@ class HydrossTheUnstableAI : public CreatureAIScript
                     _unit->SetDisplayId(5498);
                     _unit->SendScriptTextChatMessage(4754);     // Aaghh, the poison...
                     _unit->PlaySoundToSet(11297);
-                    _unit->GetProto()->AttackType = 3;
+                    const_cast<CreatureProperties*>(_unit->GetCreatureProperties())->AttackType = 3;
                     _unit->SchoolImmunityList[SCHOOL_FROST] = 0;
                     _unit->SchoolImmunityList[SCHOOL_NATURE] = 1;
 
@@ -263,27 +258,27 @@ class HydrossTheUnstableAI : public CreatureAIScript
                         switch (MarkCount)
                         {
                             case 0:
-                                _unit->CastSpell(_unit, dbcSpell.LookupEntry(MARK_OF_CORRUPTION1), true);
+                                _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(MARK_OF_CORRUPTION1), true);
                                 break;
 
                             case 1:
-                                _unit->CastSpell(_unit, dbcSpell.LookupEntry(MARK_OF_CORRUPTION2), true);
+                                _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(MARK_OF_CORRUPTION2), true);
                                 break;
 
                             case 2:
-                                _unit->CastSpell(_unit, dbcSpell.LookupEntry(MARK_OF_CORRUPTION3), true);
+                                _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(MARK_OF_CORRUPTION3), true);
                                 break;
 
                             case 3:
-                                _unit->CastSpell(_unit, dbcSpell.LookupEntry(MARK_OF_CORRUPTION4), true);
+                                _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(MARK_OF_CORRUPTION4), true);
                                 break;
 
                             case 4:
-                                _unit->CastSpell(_unit, dbcSpell.LookupEntry(MARK_OF_CORRUPTION5), true);
+                                _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(MARK_OF_CORRUPTION5), true);
                                 break;
 
                             case 5:
-                                _unit->CastSpell(_unit, dbcSpell.LookupEntry(MARK_OF_CORRUPTION6), true);
+                                _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(MARK_OF_CORRUPTION6), true);
                                 break;
                         }
 
@@ -307,7 +302,7 @@ class HydrossTheUnstableAI : public CreatureAIScript
                     _unit->SetDisplayId(20162);
                     _unit->SendScriptTextChatMessage(4750);     // Better, much better.
                     _unit->PlaySoundToSet(11290);
-                    _unit->GetProto()->AttackType = 4;
+                    const_cast<CreatureProperties*>(_unit->GetCreatureProperties())->AttackType = 4;
                     _unit->SchoolImmunityList[SCHOOL_FROST] = 1;
                     _unit->SchoolImmunityList[SCHOOL_NATURE] = 0;
 
@@ -342,7 +337,7 @@ class HydrossTheUnstableAI : public CreatureAIScript
                 EnrageTimer--;
                 if (!EnrageTimer)
                 {
-                    _unit->CastSpell(_unit, dbcSpell.LookupEntry(HYDROSS_ENRAGE), true);
+                    _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(HYDROSS_ENRAGE), true);
                     Enraged = true;
                 }
             }
@@ -417,7 +412,7 @@ class HydrossTheUnstableAI : public CreatureAIScript
             if (!TargetTable.size())
                 return;
 
-            auto random_index = RandomUInt(0, TargetTable.size() - 1);
+            auto random_index = RandomUInt(0, uint32(TargetTable.size() - 1));
             auto random_target = TargetTable[random_index];
 
             if (random_target == nullptr)
@@ -478,7 +473,7 @@ class LurkerAI : public CreatureAIScript
 
             // Create basic info for spells here, and play with it later , fill always the info, targettype and if is instant or not!
 
-            spells[0].info = dbcSpell.LookupEntry(WHIRL);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(WHIRL);
             spells[0].targettype = TARGET_ATTACKING;
             spells[0].instant = true;
             spells[0].cooldown = 30;
@@ -486,21 +481,21 @@ class LurkerAI : public CreatureAIScript
             spells[0].attackstoptimer = 1000; // 1sec
             m_spellcheck[0] = true;
 
-            spells[1].info = dbcSpell.LookupEntry(GEYSER);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(GEYSER);
             spells[1].targettype = TARGET_VARIOUS;
             spells[1].instant = true;
             spells[1].cooldown = 10;
             spells[1].perctrigger = 10.0f;
             spells[1].attackstoptimer = 2000; // 2sec
 
-            spells[2].info = dbcSpell.LookupEntry(SPOUT);
+            spells[2].info = sSpellCustomizations.GetSpellInfo(SPOUT);
             spells[2].targettype = TARGET_ATTACKING;
             spells[2].instant = false;
             spells[2].cooldown = 60;
             spells[2].perctrigger = 5.0f;
             spells[2].attackstoptimer = 2000; // 2sec
 
-            spells[3].info = dbcSpell.LookupEntry(SUBMERGE);
+            spells[3].info = sSpellCustomizations.GetSpellInfo(SUBMERGE);
             spells[3].targettype = TARGET_SELF;
             spells[3].instant = true;
             spells[3].cooldown = 120;
@@ -610,15 +605,15 @@ class LeotherasAI : public CreatureAIScript
             //Insidious Whisper (inner demons)
             //"We all have our demons..."
             ////Debuff that summons an Inner Demon from up to five raid members. Each Inner Demon can be attacked only by the person it spawned from. If you do not kill your Inner Demon before Leotheras gets back into humanoid form you will become Mind Controlled for 10 minutes and can't get out of it unless killed. Inner Demons take increased damage from arcane, nature, and holy spells.
-            spells[0].info = dbcSpell.LookupEntry(INSIDIOUS_WHISPER);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(INSIDIOUS_WHISPER);
             spells[0].targettype = TARGET_VARIOUS;
             spells[0].instant = true;
             spells[0].perctrigger = 2.0f;
             spells[0].attackstoptimer = 2000;
             m_spellcheck[0] = false;
 
-            info_chaos_blast = dbcSpell.LookupEntry(CHAOS_BLAST_ANIMATION);
-            info_whirlwind = dbcSpell.LookupEntry(WHIRLWINDLEO);
+            info_chaos_blast = sSpellCustomizations.GetSpellInfo(CHAOS_BLAST_ANIMATION);
+            info_whirlwind = sSpellCustomizations.GetSpellInfo(WHIRLWINDLEO);
 
             _unit->SetUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_9);
             _unit->GetAIInterface()->SetAllowedToEnterCombat(false);
@@ -648,7 +643,7 @@ class LeotherasAI : public CreatureAIScript
                 {
                     creature = static_cast<Creature*>((*itr));
 
-                    if (creature->GetCreatureInfo()->Id == CN_GREYHEART_SPELLBINDER && creature->isAlive())
+                    if (creature->GetCreatureProperties()->Id == CN_GREYHEART_SPELLBINDER && creature->isAlive())
                         LeotherasEventGreyheartToKill[_unit->GetInstanceID()]++;
                 }
             }
@@ -856,7 +851,7 @@ class LeotherasAI : public CreatureAIScript
                     EnrageTimer--;
                     if (!EnrageTimer)
                     {
-                        _unit->CastSpell(_unit, dbcSpell.LookupEntry(LEO_ENRAGE), true);
+                        _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(LEO_ENRAGE), true);
                         Enraged = true;
                     }
                 }
@@ -952,8 +947,8 @@ class LeotherasAI : public CreatureAIScript
         bool mInWhirlwind;
         bool IsMorphing;
         uint32 Phase;
-        SpellEntry* info_whirlwind;
-        SpellEntry* info_chaos_blast;
+        SpellInfo* info_whirlwind;
+        SpellInfo* info_chaos_blast;
         uint32 FinalPhaseSubphase;
         uint32 FinalPhaseTimer;
 };
@@ -969,7 +964,7 @@ class GreyheartSpellbinderAI : public CreatureAIScript
         {
             nrspells = 1;
 
-            spells[0].info = dbcSpell.LookupEntry(MIND_BLAST);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(MIND_BLAST);
             spells[0].targettype = TARGET_RANDOM_SINGLE;
             spells[0].instant = true;
             spells[0].perctrigger = 50.0f;
@@ -1107,7 +1102,7 @@ class GreyheartSpellbinderAI : public CreatureAIScript
             if (!TargetTable.size())
                 return;
 
-            auto random_index = RandomUInt(0, TargetTable.size() - 1);
+            auto random_index = RandomUInt(0, uint32(TargetTable.size() - 1));
             auto random_target = TargetTable[random_index];
 
             if (random_target == nullptr)
@@ -1137,7 +1132,7 @@ class ShadowofLeotherasAI : public CreatureAIScript
 
         ShadowofLeotherasAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            info_chaos_blast = dbcSpell.LookupEntry(CHAOS_BLAST_ANIMATION);
+            info_chaos_blast = sSpellCustomizations.GetSpellInfo(CHAOS_BLAST_ANIMATION);
 
             _unit->SetUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_9);
             _unit->GetAIInterface()->SetAllowedToEnterCombat(false);
@@ -1182,7 +1177,7 @@ class ShadowofLeotherasAI : public CreatureAIScript
         }
 
     protected:
-        SpellEntry* info_chaos_blast;
+        SpellInfo* info_chaos_blast;
 };
 
 
@@ -1201,7 +1196,7 @@ class KarathressAI : public CreatureAIScript
 
         KarathressAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            info_cataclysmic_bolt = dbcSpell.LookupEntry(CATACLYSMIC_BOLT);
+            info_cataclysmic_bolt = sSpellCustomizations.GetSpellInfo(CATACLYSMIC_BOLT);
             AdvisorsLeft = 3;
             BlessingOfTidesCounter = 0;
 
@@ -1267,7 +1262,7 @@ class KarathressAI : public CreatureAIScript
                 if (!TargetTable.size())
                     return;
 
-                auto random_index = RandomUInt(0, TargetTable.size() - 1);
+                auto random_index = RandomUInt(0, uint32(TargetTable.size() - 1));
                 auto random_target = TargetTable[random_index];
 
                 if (random_target == nullptr)
@@ -1284,7 +1279,7 @@ class KarathressAI : public CreatureAIScript
                 if (BlessingOfTidesCounter < AdvisorsLeft)
                 {
                     _unit->SendScriptTextChatMessage(4741);     // Your overconfidence will be your undoing! Guards, lend me your strength!
-                    _unit->CastSpell(_unit, dbcSpell.LookupEntry(BLESSING_OF_THE_TIDES), true);
+                    _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(BLESSING_OF_THE_TIDES), true);
                     BlessingOfTidesCounter++;
                 }
             }
@@ -1295,7 +1290,7 @@ class KarathressAI : public CreatureAIScript
                 EnrageTimer--;
                 if (!EnrageTimer)
                 {
-                    _unit->CastSpell(_unit, dbcSpell.LookupEntry(KARATHRESS_ENRAGE), true);
+                    _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(KARATHRESS_ENRAGE), true);
                     Enraged = true;
                 }
             }
@@ -1304,7 +1299,7 @@ class KarathressAI : public CreatureAIScript
         uint32 AdvisorsLeft;
 
     private:
-        SpellEntry* info_cataclysmic_bolt;
+        SpellInfo* info_cataclysmic_bolt;
         uint32 CataclysmicBoltTimer;
         uint32 EnrageTimer;
         uint32 BlessingOfTidesCounter;
@@ -1343,7 +1338,7 @@ class FathomGuardSharkissAI : public MoonScriptCreatureAI
             Creature* FLK = _unit->GetMapMgr()->GetInterface()->GetCreatureNearestCoords(_unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), CN_FATHOM_LORD_KARATHRESS);
             if (FLK)
             {
-                FLK->CastSpell(FLK, dbcSpell.LookupEntry(38455), true); //Power of Sharkkis
+                FLK->CastSpell(FLK, sSpellCustomizations.GetSpellInfo(38455), true); //Power of Sharkkis
                 FLK->SendScriptTextChatMessage(4743);     // I am more powerful than ever!
                 if (static_cast< KarathressAI* >(FLK->GetScript())->AdvisorsLeft > 0)
                     static_cast< KarathressAI* >(FLK->GetScript())->AdvisorsLeft--;
@@ -1410,7 +1405,7 @@ class FathomGuardTidalvessAI : public MoonScriptCreatureAI
             Creature* FLK = _unit->GetMapMgr()->GetInterface()->GetCreatureNearestCoords(_unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), CN_FATHOM_LORD_KARATHRESS);
             if (FLK)
             {
-                FLK->CastSpell(FLK, dbcSpell.LookupEntry(38452), true); //Power of Tidalvess
+                FLK->CastSpell(FLK, sSpellCustomizations.GetSpellInfo(38452), true); //Power of Tidalvess
                 FLK->SendScriptTextChatMessage(4742);     // Go on, kill them! I'll be the better for it!
                 if (static_cast< KarathressAI* >(FLK->GetScript())->AdvisorsLeft > 0)
                     static_cast< KarathressAI* >(FLK->GetScript())->AdvisorsLeft--;
@@ -1467,7 +1462,7 @@ class FathomGuardCaribdisAI : public MoonScriptCreatureAI
             Creature* FLK = _unit->GetMapMgr()->GetInterface()->GetCreatureNearestCoords(_unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), CN_FATHOM_LORD_KARATHRESS);
             if (FLK)
             {
-                FLK->CastSpell(FLK, dbcSpell.LookupEntry(38451), true); //Power of Caribdis
+                FLK->CastSpell(FLK, sSpellCustomizations.GetSpellInfo(38451), true); //Power of Caribdis
                 FLK->SendScriptTextChatMessage(4744);     // More knowledge, more power!
                 if (static_cast< KarathressAI* >(FLK->GetScript())->AdvisorsLeft > 0)
                     static_cast< KarathressAI* >(FLK->GetScript())->AdvisorsLeft--;
@@ -1497,18 +1492,18 @@ class MorogrimAI : public CreatureAIScript
 
         MorogrimAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            spells[0].info = dbcSpell.LookupEntry(TIDAL_WAVE);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(TIDAL_WAVE);
             spells[0].instant = true;
 
-            spells[1].info = dbcSpell.LookupEntry(EARTHQUAKE);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(EARTHQUAKE);
             spells[1].instant = true;
             spells[1].cooldown = 40;
 
-            spells[2].info = dbcSpell.LookupEntry(WATERY_GRAVE);
+            spells[2].info = sSpellCustomizations.GetSpellInfo(WATERY_GRAVE);
             spells[2].instant = true;
             spells[2].cooldown = 30;
 
-            spells[3].info = dbcSpell.LookupEntry(SUMMON_WATER_GLOBULE);
+            spells[3].info = sSpellCustomizations.GetSpellInfo(SUMMON_WATER_GLOBULE);
             spells[3].instant = true;
             spells[3].cooldown = 30;
         }
@@ -1667,7 +1662,7 @@ class TidewalkerLurkerAI : public CreatureAIScript
             Unit* pUnit;
             float dist;
 
-            for (std::set<Object*>::iterator itr = _unit->GetInRangeOppFactsSetBegin(); itr != _unit->GetInRangeOppFactsSetEnd(); itr++)
+            for (std::set<Object*>::iterator itr = _unit->GetInRangeOppFactsSetBegin(); itr != _unit->GetInRangeOppFactsSetEnd(); ++itr)
             {
                 if (!(*itr)->IsUnit())
                     continue;
@@ -1734,7 +1729,7 @@ class EnchantedElementalAI : public CreatureAIScript
             if (Vashj)
             {
                 _unit->GetAIInterface()->SetAIState(STATE_SCRIPTMOVE);
-                _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                 _unit->GetAIInterface()->setWaypointToMove(1);
             }
         }
@@ -1744,7 +1739,7 @@ class EnchantedElementalAI : public CreatureAIScript
             switch (iWaypointId)
             {
                 case 1:
-                    _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                    _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                     _unit->GetAIInterface()->setWaypointToMove(2);
                     break;
 
@@ -1777,7 +1772,7 @@ class VashjAI : public CreatureAIScript
         {
             nrspells = 3;
 
-            spells[0].info = dbcSpell.LookupEntry(SHOCK_BLAST);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SHOCK_BLAST);
             spells[0].targettype = TARGET_ATTACKING;
             spells[0].instant = true;
             spells[0].cooldown = 5;
@@ -1785,7 +1780,7 @@ class VashjAI : public CreatureAIScript
             spells[0].attackstoptimer = 2000;
             m_spellcheck[0] = false;
 
-            spells[1].info = dbcSpell.LookupEntry(STATIC_CHARGE);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(STATIC_CHARGE);
             spells[1].targettype = TARGET_RANDOM_SINGLE;
             spells[1].instant = true;
             spells[1].cooldown = 5;
@@ -1793,7 +1788,7 @@ class VashjAI : public CreatureAIScript
             spells[1].attackstoptimer = 1000;
             m_spellcheck[1] = false;
 
-            spells[2].info = dbcSpell.LookupEntry(ENTANGLE);
+            spells[2].info = sSpellCustomizations.GetSpellInfo(ENTANGLE);
             spells[2].targettype = TARGET_RANDOM_DESTINATION;
             spells[2].instant = true;
             spells[2].cooldown = 15;
@@ -1801,22 +1796,22 @@ class VashjAI : public CreatureAIScript
             spells[2].attackstoptimer = 1000;
             m_spellcheck[2] = false;
 
-            spells[3].info = dbcSpell.LookupEntry(FORKED_LIGHTNING);
+            spells[3].info = sSpellCustomizations.GetSpellInfo(FORKED_LIGHTNING);
             spells[3].targettype = TARGET_RANDOM_SINGLE;
             spells[3].perctrigger = 0.0f;
             spells[3].instant = false;
 
-            info_multishot = dbcSpell.LookupEntry(MULTI_SHOT);
-            info_shot = dbcSpell.LookupEntry(SHOOT);
+            info_multishot = sSpellCustomizations.GetSpellInfo(MULTI_SHOT);
+            info_shot = sSpellCustomizations.GetSpellInfo(SHOOT);
 
-            WayPoint* wp = _unit->CreateWaypointStruct();
+            Movement::WayPoint* wp = _unit->CreateWaypointStruct();
             wp->id = 1;
             wp->x = 29.798161f;
             wp->y = -923.358276f;
             wp->z = 42.900517f;
             wp->o = 0.0f;
             wp->waittime = 0;
-            wp->flags = Flag_Run;
+            wp->flags = Movement::WP_MOVE_TYPE_RUN;
             wp->forwardemoteoneshot = false;
             wp->forwardemoteid = 0;
             wp->backwardemoteoneshot = false;
@@ -1825,7 +1820,7 @@ class VashjAI : public CreatureAIScript
             wp->backwardskinid = 0;
 
             _unit->GetAIInterface()->addWayPoint(wp);
-            _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_DONTMOVEWP);
+            _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
 
             _unit->SetUInt64Value(UNIT_FIELD_FLAGS, 0);
 
@@ -1884,11 +1879,11 @@ class VashjAI : public CreatureAIScript
                 {
                     creature = static_cast<Creature*>((*itr));
 
-                    if ((creature->GetCreatureInfo()->Id == CN_ENCHANTED_ELEMENTAL ||
-                            creature->GetCreatureInfo()->Id == CN_TAINTED_ELEMENTAL ||
-                            creature->GetCreatureInfo()->Id == CN_COILFANG_STRIDER ||
-                            creature->GetCreatureInfo()->Id == CN_COILFANG_ELITE ||
-                            creature->GetCreatureInfo()->Id == CN_SHIELD_GENERATOR_CHANNEL)
+                    if ((creature->GetCreatureProperties()->Id == CN_ENCHANTED_ELEMENTAL ||
+                            creature->GetCreatureProperties()->Id == CN_TAINTED_ELEMENTAL ||
+                            creature->GetCreatureProperties()->Id == CN_COILFANG_STRIDER ||
+                            creature->GetCreatureProperties()->Id == CN_COILFANG_ELITE ||
+                            creature->GetCreatureProperties()->Id == CN_SHIELD_GENERATOR_CHANNEL)
                             && creature->isAlive())
                         creature->Despawn(500, 0);
                 }
@@ -1946,11 +1941,11 @@ class VashjAI : public CreatureAIScript
                     _unit->GetAIInterface()->SetAllowedToEnterCombat(false);
                     _unit->GetAIInterface()->StopMovement(0);
                     _unit->GetAIInterface()->SetAIState(STATE_SCRIPTMOVE);
-                    _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                    _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                     _unit->GetAIInterface()->setWaypointToMove(1);
                     _unit->SendScriptTextChatMessage(4764);     // The time is now! Leave none standing!
                     _unit->SetUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_9);
-                    _unit->CastSpell(_unit, dbcSpell.LookupEntry(VASHJ_SHIELD), true);
+                    _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(VASHJ_SHIELD), true);
                     _unit->GetAIInterface()->setOutOfCombatRange(3000);
                     Phase = 2;
                 }
@@ -1997,14 +1992,14 @@ class VashjAI : public CreatureAIScript
                 elemental = _unit->GetMapMgr()->GetInterface()->SpawnCreature(CN_ENCHANTED_ELEMENTAL, ElementalSpawnPoints[pos].x, ElementalSpawnPoints[pos].y, ElementalSpawnPoints[pos].z, ElementalSpawnPoints[pos].o, true, false, 0, 0);
                 if (elemental)
                 {
-                    WayPoint* wp = _unit->CreateWaypointStruct();
+                    Movement::WayPoint* wp = _unit->CreateWaypointStruct();
                     wp->id = 1;
                     wp->x = ElementalSpawnPoints2[pos].x;
                     wp->y = ElementalSpawnPoints2[pos].y;
                     wp->z = ElementalSpawnPoints2[pos].z;
                     wp->o = ElementalSpawnPoints2[pos].o;
                     wp->waittime = 0;
-                    wp->flags = Flag_Walk;
+                    wp->flags = Movement::WP_MOVE_TYPE_WALK;
                     wp->forwardemoteoneshot = false;
                     wp->forwardemoteid = 0;
                     wp->backwardemoteoneshot = false;
@@ -2020,7 +2015,7 @@ class VashjAI : public CreatureAIScript
                     wp->z = 42.900517f;
                     wp->o = 0.0f;
                     wp->waittime = 0;
-                    wp->flags = Flag_Walk;
+                    wp->flags = Movement::WP_MOVE_TYPE_WALK;
                     wp->forwardemoteoneshot = false;
                     wp->forwardemoteid = 0;
                     wp->backwardemoteoneshot = false;
@@ -2096,7 +2091,7 @@ class VashjAI : public CreatureAIScript
                     {
                         creature = static_cast<Creature*>((*itr));
 
-                        if (creature->GetCreatureInfo()->Id == CN_ENCHANTED_ELEMENTAL && creature->isAlive())
+                        if (creature->GetCreatureProperties()->Id == CN_ENCHANTED_ELEMENTAL && creature->isAlive())
                             creature->Despawn(0, 0);
                     }
                 }
@@ -2227,7 +2222,7 @@ class VashjAI : public CreatureAIScript
             if (!TargetTable.size())
                 return;
 
-            auto random_index = RandomUInt(0, TargetTable.size() - 1);
+            auto random_index = RandomUInt(0, uint32(TargetTable.size() - 1));
             auto random_target = TargetTable[random_index];
 
             if (random_target == nullptr)
@@ -2256,8 +2251,8 @@ class VashjAI : public CreatureAIScript
         uint32 CoilfangEliteTimer;
         uint32 SporebatTimer;
         uint32 ForkedLightningTimer;
-        SpellEntry* info_multishot;
-        SpellEntry* info_shot;
+        SpellInfo* info_multishot;
+        SpellInfo* info_shot;
 };
 
 class TaintedElementalAI : public CreatureAIScript
@@ -2270,7 +2265,7 @@ class TaintedElementalAI : public CreatureAIScript
             spell_poison_spit = new AI_Spell();
             spell_poison_spit->agent = AGENT_SPELL;
             spell_poison_spit->procChance = 0;
-            spell_poison_spit->spell = dbcSpell.LookupEntry(POISON_SPIT);
+            spell_poison_spit->spell = sSpellCustomizations.GetSpellInfo(POISON_SPIT);
             spell_poison_spit->spellType = STYPE_DAMAGE;
             spell_poison_spit->spelltargetType = TTYPE_SINGLETARGET;
             spell_poison_spit->cooldown = 2000;
@@ -2348,7 +2343,7 @@ class TaintedCoreGO : public GameObjectAIScript
             Vashj = pPlayer->GetMapMgr()->GetInterface()->GetCreatureNearestCoords(29.798161f, -923.358276f, 42.900517f, CN_LADY_VASHJ);
             if (Vashj != NULL && static_cast< VashjAI* >(Vashj->GetScript())->Phase == 2)
             {
-                Vashj->ModHealth(-((Vashj->GetUInt32Value(UNIT_FIELD_MAXHEALTH) / 100) * 5));
+                Vashj->ModHealth(static_cast<int32>((Vashj->GetUInt32Value(UNIT_FIELD_MAXHEALTH) / 100) * 5));
                 Creature* channel = NULL;
                 channel = pPlayer->GetMapMgr()->GetInterface()->GetCreatureNearestCoords(pPlayer->GetPositionX(), pPlayer->GetPositionY(), pPlayer->GetPositionZ(), CN_SHIELD_GENERATOR_CHANNEL);
                 if (channel != NULL && channel->IsInWorld())
@@ -2370,18 +2365,18 @@ class ToxicSporeBatAI : public CreatureAIScript
         {
             // Waypoints
             m_entry = pCreature->GetEntry();
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(0, 0, Flag_Fly));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(1, 0, Flag_Fly));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(2, 0, Flag_Fly));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(3, 0, Flag_Fly));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(4, 0, Flag_Fly));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(5, 0, Flag_Fly));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(6, 0, Flag_Fly));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(7, 0, Flag_Fly));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(8, 0, Flag_Fly));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(9, 0, Flag_Fly));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(10, 0, Flag_Fly));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(11, 0, Flag_Fly));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(0, 0, Movement::WP_MOVE_TYPE_FLY));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(1, 0, Movement::WP_MOVE_TYPE_FLY));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(2, 0, Movement::WP_MOVE_TYPE_FLY));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(3, 0, Movement::WP_MOVE_TYPE_FLY));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(4, 0, Movement::WP_MOVE_TYPE_FLY));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(5, 0, Movement::WP_MOVE_TYPE_FLY));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(6, 0, Movement::WP_MOVE_TYPE_FLY));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(7, 0, Movement::WP_MOVE_TYPE_FLY));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(8, 0, Movement::WP_MOVE_TYPE_FLY));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(9, 0, Movement::WP_MOVE_TYPE_FLY));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(10, 0, Movement::WP_MOVE_TYPE_FLY));
+            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(11, 0, Movement::WP_MOVE_TYPE_FLY));
 
             // Spells
 
@@ -2391,7 +2386,7 @@ class ToxicSporeBatAI : public CreatureAIScript
                 m_spellcheck[i] = false;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(TOXIC_SPORES);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(TOXIC_SPORES);
             spells[0].targettype = TARGET_VARIOUS;
             spells[0].instant = true;
             spells[0].cooldown = -1;
@@ -2408,7 +2403,7 @@ class ToxicSporeBatAI : public CreatureAIScript
             _unit->GetAIInterface()->SetFly();
             _unit->GetAIInterface()->StopMovement(0);
             _unit->GetAIInterface()->SetAIState(STATE_SCRIPTMOVE);
-            _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+            _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
             _unit->GetAIInterface()->setWaypointToMove(1);
             RegisterAIUpdateEvent(_unit->GetBaseAttackTime(MELEE));
 
@@ -2422,7 +2417,7 @@ class ToxicSporeBatAI : public CreatureAIScript
             //_unit->SendChatMessage(CHAT_MSG_MONSTER_YELL, LANG_UNIVERSAL, "Phase 1 Test!");
             _unit->PlaySoundToSet(11243);
             _unit->GetAIInterface()->SetAIState(STATE_SCRIPTIDLE);
-            _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_DONTMOVEWP);
+            _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
             CastTime();
             Phase = 1;
             FlameQuills = false;
@@ -2433,12 +2428,12 @@ class ToxicSporeBatAI : public CreatureAIScript
             switch (FlyWay)
             {
                 case 0:    // Clock like
-                    _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                    _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                     _unit->GetAIInterface()->setWaypointToMove(6);
                     break;
 
                 case 1:    // hmm... other?
-                    _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                    _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                     _unit->GetAIInterface()->setWaypointToMove(9);
                     break;
             }
@@ -2461,7 +2456,7 @@ class ToxicSporeBatAI : public CreatureAIScript
             CastTime();
             _unit->GetAIInterface()->StopMovement(0);
             _unit->GetAIInterface()->SetAIState(STATE_SCRIPTMOVE);
-            _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+            _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
             _unit->GetAIInterface()->setWaypointToMove(1);
             //_unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
             //_unit->GetAIInterface()->SetAIState(STATE_IDLE);
@@ -2490,12 +2485,12 @@ class ToxicSporeBatAI : public CreatureAIScript
                     switch (FlyWay)
                     {
                         case 0:    // Clock like
-                            _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                            _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                             _unit->GetAIInterface()->setWaypointToMove(6);
                             break;
 
                         case 1:    // hmm... other?
-                            _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                            _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                             _unit->GetAIInterface()->setWaypointToMove(9);
                             break;
                     }
@@ -2551,7 +2546,7 @@ class ToxicSporeBatAI : public CreatureAIScript
 
             if (!PositionChange)
             {
-                _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                 _unit->GetAIInterface()->setWaypointToMove(NextWP);
                 PositionChange = RandomUInt(15, 23);    // added 4 sec fit time + time needed to move to next pos.
             }
@@ -2562,7 +2557,7 @@ class ToxicSporeBatAI : public CreatureAIScript
 
                 if (val > 0 && val < 5)    // Flame Quills wp here!
                 {
-                    _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                    _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                     _unit->GetAIInterface()->setWaypointToMove(10);
                 }
             }
@@ -2625,7 +2620,7 @@ class ToxicSporeBatAI : public CreatureAIScript
         {
             if (Phase == 1)
             {
-                _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                 _unit->GetAIInterface()->setWaypointToMove(6);
                 _unit->SendChatMessage(CHAT_MSG_MONSTER_YELL, LANG_UNIVERSAL, "Phase 1 Test!");
                 _unit->PlaySoundToSet(11243);
@@ -2634,34 +2629,34 @@ class ToxicSporeBatAI : public CreatureAIScript
             switch (iWaypointId)
             {
                 case 1:    // First fly point
-                    _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                    _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                     _unit->GetAIInterface()->setWaypointToMove(2);
                     break;
 
                 case 2:
-                    _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                    _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                     _unit->GetAIInterface()->setWaypointToMove(3);
                     break;
 
                 case 3:
-                    _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                    _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                     _unit->GetAIInterface()->setWaypointToMove(4);
                     break;
 
                 case 4:
-                    _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                    _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                     _unit->GetAIInterface()->setWaypointToMove(5);
                     break;
 
                 case 5:
-                    _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_WANTEDWP);
+                    _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                     _unit->GetAIInterface()->setWaypointToMove(1);    // Last fly point (flyback to point 1 - reset)
                     break;
 
                 case 6:
                     {
                         _unit->GetAIInterface()->SetAIState(STATE_SCRIPTIDLE);
-                        _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_DONTMOVEWP);
+                        _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
                         _unit->GetAIInterface()->m_canMove = false;
                         switch (FlyWay)
                         {
@@ -2679,7 +2674,7 @@ class ToxicSporeBatAI : public CreatureAIScript
                 case 7:
                     {
                         _unit->GetAIInterface()->SetAIState(STATE_SCRIPTIDLE);
-                        _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_DONTMOVEWP);
+                        _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
                         _unit->GetAIInterface()->m_canMove = false;
                         switch (FlyWay)
                         {
@@ -2698,7 +2693,7 @@ class ToxicSporeBatAI : public CreatureAIScript
                     {
                         _unit->GetAIInterface()->m_canMove = false;
                         _unit->GetAIInterface()->SetAIState(STATE_SCRIPTIDLE);
-                        _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_DONTMOVEWP);
+                        _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
                         switch (FlyWay)
                         {
                             case 0:
@@ -2716,7 +2711,7 @@ class ToxicSporeBatAI : public CreatureAIScript
                     {
                         _unit->GetAIInterface()->m_canMove = false;
                         _unit->GetAIInterface()->SetAIState(STATE_SCRIPTIDLE);
-                        _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_DONTMOVEWP);
+                        _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
                         switch (FlyWay)
                         {
                             case 0:
@@ -2733,7 +2728,7 @@ class ToxicSporeBatAI : public CreatureAIScript
                 case 10:
                     {
                         _unit->GetAIInterface()->SetAIState(STATE_SCRIPTIDLE);
-                        _unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_DONTMOVEWP);
+                        _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
                         if (Phase == 1)
                         {
                             FlameQuills = true;
@@ -2750,9 +2745,9 @@ class ToxicSporeBatAI : public CreatureAIScript
             }
         }
 
-        inline WayPoint* CreateWaypoint(int id, uint32 waittime, uint32 flags)
+        inline Movement::WayPoint* CreateWaypoint(int id, uint32 waittime, uint32 flags)
         {
-            WayPoint* wp = _unit->CreateWaypointStruct();
+            Movement::WayPoint* wp = _unit->CreateWaypointStruct();
             wp->id = id;
             wp->x = fly[id].x;
             wp->y = fly[id].y;
@@ -2887,7 +2882,7 @@ class UnderbogColossusAI : public MoonScriptCreatureAI
             {
                 case 0:
                     //cast toxic pool
-                    _unit->CastSpell(_unit, dbcSpell.LookupEntry(TOXIC_POOL), true);
+                    _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(TOXIC_POOL), true);
                     break;
                 case 1:
                     //spawn two colossus lurkers
@@ -2997,7 +2992,7 @@ class SerpentshrineCavern : public MoonInstanceScript
 
         void OnGameObjectActivate(GameObject* pGameObject, Player* pPlayer)
         {
-            if (pGameObject->GetInfo()->entry != 184568)
+            if (pGameObject->GetGameObjectProperties()->entry != 184568)
                 return;
 
             GameObject* pBridgePart = NULL;

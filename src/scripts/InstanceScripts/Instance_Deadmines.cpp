@@ -24,14 +24,14 @@
 #include "Instance_Deadmines.h"
 
 
-static Location Doors[] =
+static Movement::Location Doors[] =
 {
     { -168.514f, -579.861f, 19.3159f, 0 },    //Gilnid doors
     { -290.294f, -536.96f, 49.4353f, 0 }        //Sneed doors
 };
 
 //it will useful for cannon event
-static Location Guards[] =
+static Movement::Location Guards[] =
 {
     { -89.7001f, -691.332f, 8.24514f, 0 }, //Guard
     { -102.521f, -697.942f, 8.84454f, 0 }, //Guard
@@ -57,9 +57,15 @@ class DeadminesInstanceScript : public MoonInstanceScript
         {
             switch (pGameObject->GetEntry())
             {
-                case GO_FACTORY_DOOR:    mFactoryDoor_GUID = pGameObject->GetGUID(); break;
-                case GO_FACTORY_DOOR_LEVER:    mDoorLever_GUID = pGameObject->GetGUID(); break;
-                case GO_IRONCLAD_DOOR:    mIronCladDoor_GUID = pGameObject->GetGUID(); break;
+                case GO_FACTORY_DOOR:
+                    mFactoryDoor_GUID = static_cast<uint32>(pGameObject->GetGUID());
+                    break;
+                case GO_FACTORY_DOOR_LEVER:
+                    mDoorLever_GUID = static_cast<uint32>(pGameObject->GetGUID());
+                    break;
+                case GO_IRONCLAD_DOOR:
+                    mIronCladDoor_GUID = static_cast<uint32>(pGameObject->GetGUID());
+                    break;
             }
         }
 

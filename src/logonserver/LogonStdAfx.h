@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,13 +26,13 @@
 #include <sstream>
 #include <string>
 
-#include "Common.h"
+#include "Common.hpp"
 #include <Network/Network.h>
 
-#include "../shared/Log.h"
-#include "../shared/Util.h"
+#include "../shared/Log.hpp"
+#include "../shared/Util.hpp"
 #include "../shared/ByteBuffer.h"
-#include "../shared/Config/ConfigEnv.h"
+#include "../shared/Config/Config.h"
 //#include <zlib.h>
 
 #include "../shared/Database/DatabaseEnv.h"
@@ -41,16 +41,17 @@
 #include "../shared/Auth/Sha1.h"
 #include "../shared/Auth/WowCrypt.h"
 
-#include "../world/Opcodes.h"
-#include "AccountCache.h"
-#include "PeriodicFunctionCall_Thread.h"
-#include "../logonserver/AutoPatcher.h"
-#include "../logonserver/AuthSocket.h"
-#include "../logonserver/AuthStructs.h"
-#include "../logonserver/LogonCommServer.h"
-#include "../logonserver/LogonConsole.h"
-#include "../shared/WorldPacket.h"
-#include "Master.hpp"
+#include "../world/Server/Packets/Opcodes.h"
+#include "LogonConf.h"
+#include "Auth/AccountCache.h"
+#include "Server/PeriodicFunctionCall_Thread.h"
+#include "Auth/AutoPatcher.h"
+#include "Auth/AuthSocket.h"
+#include "Auth/AuthStructs.h"
+#include "LogonCommServer/LogonCommServer.h"
+#include "Console/LogonConsole.h"
+#include "WorldPacket.h"
+#include "Server/Master.hpp"
 
 // database decl
 extern Database* sLogonSQL;

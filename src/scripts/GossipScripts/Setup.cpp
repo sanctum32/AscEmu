@@ -1,6 +1,6 @@
 /**
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org>
+ * Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2007-2015 Moon++ Team <http://www.moonplusplus.info/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -20,7 +20,7 @@
 
 #include "Setup.h"
 #define SKIP_ALLOCATOR_SHARING 1
-#include <ScriptSetup.h>
+#include <Server/Script/ScriptSetup.h>
 
 extern "C" SCRIPT_DECL uint32 _exp_get_script_type()
 {

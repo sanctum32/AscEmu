@@ -1,617 +1,352 @@
 /*
- * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org/>
- * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
- */
+Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+This file is released under the MIT license. See README-MIT for more information.
+*/
 
-#include "Config/ConfigEnv.h"
-#include "Log.h"
-#include <cstdarg>
-#include <string>
+#include "Log.hpp"
+#include "Util.hpp"
 
-std::string FormatOutputString(const char* Prefix, const char* Description, bool useTimeStamp)
+#include <iostream>
+
+namespace AELog
 {
-
-    char p[MAX_PATH];
-    p[0] = 0;
-    time_t t = time(NULL);
-    tm* a = gmtime(&t);
-    strcat(p, Prefix);
-    strcat(p, "/");
-    strcat(p, Description);
-    if(useTimeStamp)
+    std::string GetFormattedFileName(std::string path_prefix, std::string file_prefix, bool use_date_time)
     {
-        char ftime[100];
-        snprintf(ftime, 100, "-%-4d-%02d-%02d %02d-%02d-%02d", a->tm_year + 1900, a->tm_mon + 1, a->tm_mday, a->tm_hour, a->tm_min, a->tm_sec);
-        strcat(p, ftime);
-    }
+        std::string full_name;
 
-    strcat(p, ".log");
-    return std::string(p);
-}
+        std::string basic_path_name = path_prefix + "/" + file_prefix;
 
-createFileSingleton(oLog);
-initialiseSingleton(WorldLog);
-
-SERVER_DECL time_t UNIXTIME;
-SERVER_DECL tm g_localTime;
-
-void oLog::SetColor(int color)
-{
-#if PLATFORM != PLATFORM_WIN32
-    static const char* colorstrings[TBLUE+1] = {
-   "",
-    "\033[22;31m",
-    "\033[22;32m",
-    "\033[01;33m",
-    //"\033[22;37m",
-    "\033[0m",
-    "\033[01;37m",
-    "\033[1;34m",
-  };
-    fputs(colorstrings[color], stdout);
-#else
-    SetConsoleTextAttribute(stdout_handle, (WORD)color);
-#endif
-}
-
-void oLog::outFile(FILE* file, char* msg, const char* source)
-{
-    char time_buffer[TIME_FORMAT_LENGTH];
-    Time(time_buffer);
-
-    if(source != NULL)
-    {
-        fprintf(file, "%s %s: %s\n", time_buffer, source, msg);
-        //printf("%s %s: %s\n", time_buffer, source, msg);
-    }
-    else
-    {
-        fprintf(file, "%s %s\n", time_buffer, msg);
-        //printf("%s %s\n", time_buffer, msg);
-    }
-}
-
-/// Prints text to file without showing it to the user. Used for the startup banner.
-void oLog::outFileSilent(FILE* file, char* msg, const char* source)
-{
-    char time_buffer[TIME_FORMAT_LENGTH];
-    Time(time_buffer);
-
-    if(source != NULL)
-    {
-        fprintf(file, "%s %s: %s\n", time_buffer, source, msg);
-        // Don't use printf to prevent text from being shown in the console output.
-    }
-    else
-    {
-        fprintf(file, "%s %s\n", time_buffer, msg);
-        // Don't use printf to prevent text from being shown in the console output.
-    }
-}
-
-void oLog::Time(char* buffer)
-{
-    time_t now;
-    struct tm* timeinfo = NULL;
-
-    time(&now);
-    timeinfo = localtime(&now);
-
-    if(timeinfo != NULL)
-    {
-        strftime(buffer, TIME_FORMAT_LENGTH, TIME_FORMAT, timeinfo);
-    }
-    else
-    {
-        buffer[0] = '\0';
-    }
-}
-
-void oLog::outString(const char* str, ...)
-{
-    if(m_normalFile == NULL)
-        return;
-
-    char buf[32768];
-    va_list ap;
-
-    va_start(ap, str);
-    vsnprintf(buf, 32768, str, ap);
-    va_end(ap);
-    SetColor(TNORMAL);
-    printf("%s\n", buf);
-    outFile(m_normalFile, buf);
-}
-
-void oLog::outError(const char* err, ...)
-{
-    if(m_errorFile == NULL)
-        return;
-
-    char buf[32768];
-    va_list ap;
-
-    va_start(ap, err);
-    vsnprintf(buf, 32768, err, ap);
-    va_end(ap);
-    SetColor(TRED);
-    printf("%s\n", buf);
-    SetColor(TNORMAL);
-    outFile(m_errorFile, buf);
-}
-
-/// Writes into the error log without giving console output. Used for the startup banner.
-void oLog::outErrorSilent(const char* err, ...)
-{
-    if(m_errorFile == NULL)
-        return;
-
-    char buf[32768];
-    va_list ap;
-
-    va_start(ap, err);
-    vsnprintf(buf, 32768, err, ap);
-    va_end(ap);
-
-    outFileSilent(m_errorFile, buf); // This uses a function that won't give console output.
-}
-
-void oLog::outBasic(const char* str, ...)
-{
-    if(m_normalFile == NULL)
-        return;
-
-    char buf[32768];
-    va_list ap;
-
-    va_start(ap, str);
-    vsnprintf(buf, 32768, str, ap);
-    va_end(ap);
-    SetColor(TBLUE);
-    printf("%s\n", buf);
-    SetColor(TNORMAL);
-    outFile(m_normalFile, buf);
-}
-
-void oLog::outDetail(const char* str, ...)
-{
-    if(m_fileLogLevel < 1 || m_normalFile == NULL)
-        return;
-
-    char buf[32768];
-    va_list ap;
-
-    va_start(ap, str);
-    vsnprintf(buf, 32768, str, ap);
-    va_end(ap);
-    SetColor(TWHITE);
-    printf("%s\n", buf);
-    SetColor(TNORMAL);
-    outFile(m_normalFile, buf);
-}
-
-void oLog::outDebug(const char* str, ...)
-{
-    if(m_fileLogLevel < 2 || m_errorFile == NULL)
-        return;
-
-    char buf[32768];
-    va_list ap;
-
-    va_start(ap, str);
-    vsnprintf(buf, 32768, str, ap);
-    va_end(ap);
-    SetColor(TYELLOW);
-    printf("%s\n", buf);
-    SetColor(TNORMAL);
-    outFile(m_errorFile, buf);
-}
-
-void oLog::logBasic(const char* file, int line, const char* fncname, const char* msg, ...)
-{
-    if(m_normalFile == NULL)
-        return;
-
-    char buf[ 32768 ];
-    char message[ 32768 ];
-
-    snprintf(message, 32768, "[BSC] %s %s", fncname, msg);
-    //snprintf(message, 32768, "[BSC] %s:%d %s %s", file, line, fncname, msg);
-    va_list ap;
-
-    va_start(ap, msg);
-    vsnprintf(buf, 32768, message, ap);
-    va_end(ap);
-    SetColor(TWHITE);
-    printf("%s\n", buf);
-    SetColor(TNORMAL);
-    outFile(m_normalFile, buf);
-}
-
-void oLog::logDetail(const char* file, int line, const char* fncname, const char* msg, ...)
-{
-    if((m_fileLogLevel < 1) || (m_normalFile == NULL))
-        return;
-
-    char buf[ 32768 ];
-    char message[ 32768 ];
-
-    snprintf(message, 32768, "[DTL] %s %s", fncname, msg);
-    //snprintf(message, 32768, "[DTL] %s:%d %s %s", file, line, fncname, msg);
-    va_list ap;
-
-    va_start(ap, msg);
-    vsnprintf(buf, 32768, message, ap);
-    va_end(ap);
-    SetColor(TWHITE);
-    printf("%s\n", buf);
-    SetColor(TNORMAL);
-    outFile(m_normalFile, buf);
-}
-
-void oLog::logError(const char* file, int line, const char* fncname, const char* msg, ...)
-{
-    if(m_errorFile == NULL)
-        return;
-
-    char buf[ 32768 ];
-    char message[ 32768 ];
-
-    snprintf(message, 32768, "[ERR] %s %s", fncname, msg);
-    //snprintf(message, 32768, "[ERR] %s:%d %s %s", file, line, fncname, msg);
-    va_list ap;
-
-    va_start(ap, msg);
-    vsnprintf(buf, 32768, message, ap);
-    va_end(ap);
-    SetColor(TRED);
-    printf("%s\n", buf);
-    SetColor(TNORMAL);
-    outFile(m_errorFile, buf);
-}
-
-void oLog::logDebug(const char* file, int line, const char* fncname, const char* msg, ...)
-{
-    if((m_fileLogLevel < 2) || (m_errorFile == NULL))
-        return;
-
-    char buf[ 32768 ];
-    char message[ 32768 ];
-
-    snprintf(message, 32768, "[DBG] %s %s", fncname, msg);
-    //snprintf(message, 32768, "[DBG] %s:%d %s %s", file, line, fncname, msg);
-    va_list ap;
-
-    va_start(ap, msg);
-    vsnprintf(buf, 32768, message, ap);
-    va_end(ap);
-
-    outFile(m_errorFile, buf);
-}
-
-//old NGLog.h methods
-void oLog::Notice(const char* source, const char* format, ...)
-{
-    if(m_fileLogLevel < 1 || m_normalFile == NULL)
-        return;
-
-    char buf[32768];
-    va_list ap;
-
-    va_start(ap, format);
-    vsnprintf(buf, 32768, format, ap);
-    va_end(ap);
-    SetColor(TGREEN);
-    printf("%s: %s\n", source, buf);
-    SetColor(TNORMAL);
-    outFile(m_normalFile, buf, source);
-}
-
-void oLog::Warning(const char* source, const char* format, ...)
-{
-    if(m_fileLogLevel < 1 || m_normalFile == NULL)
-        return;
-
-    char buf[32768];
-    va_list ap;
-
-    va_start(ap, format);
-    vsnprintf(buf, 32768, format, ap);
-    va_end(ap);
-    SetColor(TWHITE);
-    printf("%s: %s\n", source, buf);
-    SetColor(TNORMAL);
-    outFile(m_normalFile, buf, source);
-}
-
-void oLog::Success(const char* source, const char* format, ...)
-{
-    if(m_normalFile == NULL)
-        return;
-
-    char buf[32768];
-    va_list ap;
-
-    va_start(ap, format);
-    vsnprintf(buf, 32768, format, ap);
-    va_end(ap);
-    SetColor(TNORMAL);
-    printf("%s: %s\n", source, buf);
-    outFile(m_normalFile, buf, source);
-}
-
-void oLog::Error(const char* source, const char* format, ...)
-{
-    if(m_errorFile == NULL)
-        return;
-
-    char buf[32768];
-    va_list ap;
-
-    va_start(ap, format);
-    vsnprintf(buf, 32768, format, ap);
-    va_end(ap);
-    SetColor(TRED);
-    printf("%s: %s\n", source, buf);
-    SetColor(TNORMAL);
-    outFile(m_errorFile, buf, source);
-}
-
-void oLog::Debug(const char* source, const char* format, ...)
-{
-    if(m_fileLogLevel < 2 || m_errorFile == NULL)
-        return;
-
-    char buf[32768];
-    va_list ap;
-
-    va_start(ap, format);
-    vsnprintf(buf, 32768, format, ap);
-    va_end(ap);
-    SetColor(TYELLOW);
-    printf("%s: %s\n", source, buf);
-    SetColor(TNORMAL);
-    outFile(m_errorFile, buf, source);
-}
-
-void oLog::Map(const char* source, const char* format, ...)
-{
-    if (m_fileLogLevel < 3 || m_normalFile == NULL)
-        return;
-
-    char buf[32768];
-    va_list ap;
-
-    va_start(ap, format);
-    vsnprintf(buf, 32768, format, ap);
-    va_end(ap);
-    SetColor(TNORMAL);
-    printf("%s: %s\n", source, buf);
-    //outFile(m_normalFile, buf, source);
-}
-
-void oLog::LargeErrorMessage(const char* source, ...)
-{
-    std::vector<char*> lines;
-    char* pointer;
-    va_list ap;
-    va_start(ap, source);
-
-    pointer = const_cast<char*>(source);
-    lines.push_back(pointer);
-
-    size_t i, j, k;
-    pointer = va_arg(ap, char*);
-    while(pointer != NULL)
-    {
-        lines.push_back(pointer);
-        pointer = va_arg(ap, char*);
-    }
-
-    va_end(ap);
-
-    outError("*********************************************************************");
-    outError("*                        MAJOR ERROR/WARNING                        *");
-    outError("*                        ===================                        *");
-
-    for(std::vector<char*>::iterator itr = lines.begin(); itr != lines.end(); ++itr)
-    {
-        std::stringstream sstext;
-        i = strlen(*itr);
-        j = (i <= 65) ? 65 - i : 0;
-        sstext << "* " << *itr;
-        for(k = 0; k < j; ++k)
+        if (use_date_time)
         {
-            sstext << " ";
+            std::string current_date_time = Util::GetCurrentDateTimeString();
+            //replace time seperator with valid character for file name
+            std::replace(current_date_time.begin(), current_date_time.end(), ':', '-');
+
+            full_name = basic_path_name + "-" + current_date_time + ".log";
+        }
+        else
+        {
+            full_name = basic_path_name + ".log";
         }
 
-        sstext << " *";
-        outError(sstext.str().c_str());
+        return full_name;
     }
 
-    outError("*********************************************************************");
+#ifndef _WIN32
+    const char* GetColorForDebugFlag(LogFlags log_flags)
+    {
+        switch (log_flags)
+        {
+            case LF_MAP:
+            case LF_MAP_CELL:
+            case LF_VMAP:
+            case LF_MMAP:
+                return CONSOLE_COLOR_BLUE;
+            case LF_OPCODE:
+                return CONSOLE_COLOR_WHITE;
+            case LF_SPELL:
+            case LF_AURA:
+            case LF_SPELL_EFF:
+            case LF_AURA_EFF:
+                return CONSOLE_COLOR_PURPLE;
+            case LF_SCRIPT_MGR:
+            case LF_DB_TABLES:
+                return CONSOLE_COLOR_YELLOW;
+            default:
+                return CONSOLE_COLOR_YELLOW;
+}
+}
+#else
+    int GetColorForDebugFlag(LogFlags log_flags)
+    {
+        switch (log_flags)
+        {
+            case LF_MAP:
+            case LF_MAP_CELL:
+            case LF_VMAP:
+            case LF_MMAP:
+                return CONSOLE_COLOR_BLUE;
+            case LF_OPCODE:
+                return CONSOLE_COLOR_WHITE;
+            case LF_SPELL:
+            case LF_AURA:
+            case LF_SPELL_EFF:
+            case LF_AURA_EFF:
+                return CONSOLE_COLOR_PURPLE;
+            case LF_SCRIPT_MGR:
+            case LF_DB_TABLES:
+                return CONSOLE_COLOR_YELLOW;
+            default:
+                return CONSOLE_COLOR_YELLOW;
+        }
+    }
+#endif
 }
 
-void oLog::Init(int32 fileLogLevel, LogType logType)
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// AscEmuLog functions
+createFileSingleton(AscEmuLog);
+
+void AscEmuLog::InitalizeLogFiles(std::string file_prefix)
 {
-#if PLATFORM == PLATFORM_WIN32
-    stdout_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+#ifdef _WIN32
+    handle_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
 #endif
 
-    SetFileLoggingLevel(fileLogLevel);
+    std::string normal_filename = file_prefix + "-normal.log";
+    std::string error_filename = file_prefix + "-error.log";
 
-    const char* logNormalFilename = NULL, *logErrorFilename = NULL;
-    switch(logType)
-    {
-        case LOGON_LOG:
-            {
-                logNormalFilename = "logon-normal.log";
-                logErrorFilename = "logon-error.log";
-                break;
-            }
-        case WORLD_LOG:
-            {
-                logNormalFilename = "world-normal.log";
-                logErrorFilename = "world-error.log";
-                break;
-            }
-    }
+    std::string current_date_time = Util::GetCurrentDateTimeString();
 
-    m_normalFile = fopen(logNormalFilename, "a");
-    if(m_normalFile == NULL)
-        fprintf(stderr, "%s: Error opening '%s': %s\n", __FUNCTION__, logNormalFilename, strerror(errno));
+    normal_log_file = fopen(normal_filename.c_str(), "a");
+    if (normal_log_file == nullptr)
+        std::cerr << __FUNCTION__ << " : Error opening file " << normal_filename << std::endl;
     else
-    {
-        tm* aTm = localtime(&UNIXTIME);
-        outBasic("=============[%-4d-%02d-%02d]========[%02d:%02d:%02d]=============", aTm->tm_year + 1900, aTm->tm_mon + 1, aTm->tm_mday, aTm->tm_hour, aTm->tm_min, aTm->tm_sec);
-    }
+        ConsoleLogDefault(false, "=================[%s]=================", current_date_time.c_str());
 
-    m_errorFile = fopen(logErrorFilename, "a");
-    if(m_errorFile == NULL)
-        fprintf(stderr, "%s: Error opening '%s': %s\n", __FUNCTION__, logErrorFilename, strerror(errno));
+    error_log_file = fopen(error_filename.c_str(), "a");
+    if (error_log_file == nullptr)
+        std::cerr << __FUNCTION__ << " : Error opening file " << normal_filename << std::endl;
     else
-    {
-        tm* aTm = localtime(&UNIXTIME);
-        // We don't echo time and date again because outBasic above just echoed them.
-        outErrorSilent("=============[%-4d-%02d-%02d]========[%02d:%02d:%02d]=============", aTm->tm_year + 1900, aTm->tm_mon + 1, aTm->tm_mday, aTm->tm_hour, aTm->tm_min, aTm->tm_sec);
-    }
+        ConsoleLogError(true, "=================[%s]=================", current_date_time.c_str());
 }
 
-void oLog::Close()
+void AscEmuLog::WriteFile(FILE* file, char* msg, const char* source)
 {
-    if(m_normalFile != NULL)
-    {
-        fflush(m_normalFile);
-        fclose(m_normalFile);
-        m_normalFile = NULL;
-    }
-
-    if(m_errorFile != NULL)
-    {
-        fflush(m_errorFile);
-        fclose(m_errorFile);
-        m_errorFile = NULL;
-    }
+    std::string current_time = "[" + Util::GetCurrentTimeString() + "] ";
+    if (source != NULL)
+        fprintf(file, "%s %s: %s\n", current_time.c_str(), source, msg);
+    else
+        fprintf(file, "%s %s\n", current_time.c_str(), msg);
 }
 
-void oLog::SetFileLoggingLevel(int32 level)
+#ifndef _WIN32
+void AscEmuLog::SetConsoleColor(const char* color)
 {
-    //log level -1 is no more allowed
-    if(level >= 0)
-        m_fileLogLevel = level;
+    fputs(color, stdout);
 }
 
-void SessionLogWriter::write(const char* format, ...)
+#else
+void AscEmuLog::SetConsoleColor(int color)
 {
-    if(!m_file)
+    SetConsoleTextAttribute(handle_stdout, (WORD)color);
+}
+#endif
+
+void AscEmuLog::SetFileLoggingLevel(uint32_t level)
+{
+    aelog_file_log_level = level;
+}
+
+void AscEmuLog::SetDebugFlags(uint32_t flags)
+{
+    aelog_debug_flags = flags;
+}
+
+// Log types
+void AscEmuLog::ConsoleLogDefault(bool file_only, const char* format, ...)
+{
+    if (normal_log_file == nullptr)
         return;
 
-    char out[32768];
+    char message_buffer[32768];
     va_list ap;
 
     va_start(ap, format);
-    time_t t = time(NULL);
-    tm* aTm = localtime(&t);
-    sprintf(out, "[%-4d-%02d-%02d %02d:%02d:%02d] ", aTm->tm_year + 1900, aTm->tm_mon + 1, aTm->tm_mday, aTm->tm_hour, aTm->tm_min, aTm->tm_sec);
-    size_t l = strlen(out);
-    vsnprintf(&out[l], 32768 - l, format, ap);
-    fprintf(m_file, "%s\n", out);
+    vsnprintf(message_buffer, 32768, format, ap);
     va_end(ap);
+
+    if (!file_only)
+        std::cout << message_buffer << std::endl;
+
+    WriteFile(normal_log_file, message_buffer);
 }
 
-WorldLog::WorldLog()
+void AscEmuLog::ConsoleLogDefaultFunction(bool file_only, const char* function, const char* format, ...)
 {
-    bEnabled = false;
-    m_file = NULL;
-
-    if(Config.MainConfig.GetBoolDefault("LogLevel", "World", false))
-    {
-        Log.Notice("WorldLog", "Enabling packetlog output to \"world.log\"");
-        Enable();
-    }
-    else
-    {
-        Disable();
-    }
-}
-
-void WorldLog::Enable()
-{
-    if(bEnabled)
+    if (normal_log_file == nullptr)
         return;
 
-    bEnabled = true;
-    if(m_file != NULL)
+    char function_message[32768];
+    snprintf(function_message, 32768, "[BASIC] %s %s", function, format);
+
+    char message_buffer[32768];
+    va_list ap;
+
+    va_start(ap, format);
+    vsnprintf(message_buffer, 32768, function_message, ap);
+    va_end(ap);
+
+    if (!file_only)
     {
-        Disable();
-        bEnabled = true;
+        SetConsoleColor(CONSOLE_COLOR_WHITE);
+        std::cout << message_buffer << std::endl;
+        SetConsoleColor(CONSOLE_COLOR_NORMAL);
     }
-    m_file = fopen("world.log", "a");
+
+    WriteFile(normal_log_file, message_buffer);
 }
 
-void WorldLog::Disable()
+void AscEmuLog::ConsoleLogError(bool file_only, const char* format, ...)
 {
-    if(!bEnabled)
+    if (error_log_file == nullptr)
         return;
 
-    bEnabled = false;
-    if(!m_file)
+    char message_buffer[32768];
+    va_list ap;
+
+    va_start(ap, format);
+    vsnprintf(message_buffer, 32768, format, ap);
+    va_end(ap);
+
+    if (!file_only)
+    {
+        SetConsoleColor(CONSOLE_COLOR_RED);
+        std::cerr << message_buffer << std::endl;
+        SetConsoleColor(CONSOLE_COLOR_NORMAL);
+    }
+
+    WriteFile(error_log_file, message_buffer);
+}
+
+void AscEmuLog::ConsoleLogErrorFunction(bool file_only, const char* function, const char* format, ...)
+{
+    if (error_log_file == nullptr)
         return;
 
-    fflush(m_file);
-    fclose(m_file);
-    m_file = NULL;
-}
+    char function_message[32768];
+    snprintf(function_message, 32768, "[ERROR] %s %s", function, format);
 
-WorldLog::~WorldLog()
-{
-    if(m_file)
+    char message_buffer[32768];
+    va_list ap;
+
+    va_start(ap, format);
+    vsnprintf(message_buffer, 32768, function_message, ap);
+    va_end(ap);
+
+    if (!file_only)
     {
-        fclose(m_file);
-        m_file = NULL;
+        SetConsoleColor(CONSOLE_COLOR_RED);
+        std::cout << message_buffer << std::endl;
+        SetConsoleColor(CONSOLE_COLOR_NORMAL);
     }
+
+    WriteFile(error_log_file, message_buffer);
 }
 
-void SessionLogWriter::Open()
+void AscEmuLog::ConsoleLogDetail(bool file_only, const char* format, ...)
 {
-    m_file = fopen(m_filename, "a");
+    if (aelog_file_log_level < LL_DETAIL || normal_log_file == nullptr)
+        return;
+
+    char message_buffer[32768];
+    va_list ap;
+
+    va_start(ap, format);
+    vsnprintf(message_buffer, 32768, format, ap);
+    va_end(ap);
+
+    if (!file_only)
+        std::cout << message_buffer << std::endl;
+
+    WriteFile(normal_log_file, message_buffer);
 }
 
-void SessionLogWriter::Close()
+void AscEmuLog::ConsoleLogDetailFunction(bool file_only, const char* function, const char* format, ...)
 {
-    if(!m_file) return;
-    fflush(m_file);
-    fclose(m_file);
-    m_file = NULL;
+    if (aelog_file_log_level < LL_DETAIL || normal_log_file == nullptr)
+        return;
+
+    char function_message[32768];
+    snprintf(function_message, 32768, "[DETAIL] %s %s", function, format);
+
+    char message_buffer[32768];
+    va_list ap;
+
+    va_start(ap, format);
+    vsnprintf(message_buffer, 32768, function_message, ap);
+    va_end(ap);
+
+    if (!file_only)
+    {
+        SetConsoleColor(CONSOLE_COLOR_CYAN);
+        std::cout << message_buffer << std::endl;
+        SetConsoleColor(CONSOLE_COLOR_NORMAL);
+    }
+
+    WriteFile(normal_log_file, message_buffer);
 }
 
-SessionLogWriter::SessionLogWriter(const char* filename, bool open)
+void AscEmuLog::ConsoleLogDebugFlag(bool file_only, LogFlags log_flags, const char* format, ...)
 {
-    m_filename = strdup(filename);
-    m_file = NULL;
-    if(open)
-        Open();
+    if (aelog_file_log_level < LL_DEBUG || error_log_file == nullptr)
+        return;
+
+    if (!(aelog_debug_flags & log_flags))
+        return;
+
+    char message_buffer[32768];
+    va_list ap;
+
+    va_start(ap, format);
+    vsnprintf(message_buffer, 32768, format, ap);
+    va_end(ap);
+
+    if (!file_only)
+    {
+        SetConsoleColor(AELog::GetColorForDebugFlag(log_flags));
+        std::cout << message_buffer << std::endl;
+        SetConsoleColor(CONSOLE_COLOR_NORMAL);
+    }
+
+    WriteFile(error_log_file, message_buffer);
 }
 
-SessionLogWriter::~SessionLogWriter()
+void AscEmuLog::ConsoleLogDebugFlagFunction(bool file_only, LogFlags log_flags, const char* function, const char* format, ...)
 {
-    if(m_file)
-        Close();
+    if (aelog_file_log_level < LL_DEBUG || error_log_file == nullptr)
+        return;
 
-    free(m_filename);
+    char function_message[32768];
+    snprintf(function_message, 32768, "[DEBUG] %s %s", function, format);
+
+    char message_buffer[32768];
+    va_list ap;
+
+    va_start(ap, format);
+    vsnprintf(message_buffer, 32768, function_message, ap);
+    va_end(ap);
+
+    if (!file_only)
+    {
+        SetConsoleColor(AELog::GetColorForDebugFlag(log_flags));
+        std::cout << message_buffer << std::endl;
+        SetConsoleColor(CONSOLE_COLOR_NORMAL);
+    }
+
+    WriteFile(normal_log_file, message_buffer);
+}
+
+
+void AscEmuLog::ConsoleLogMajorError(std::string line1, std::string line2, std::string line3, std::string line4)
+{
+    std::stringstream sstream;
+    sstream << "*********************************************************************" << std::endl;
+    sstream << "*                        MAJOR ERROR/WARNING                         " << std::endl;
+    sstream << "*                        *******************                         " << std::endl;
+    sstream << "* " << line1 << std::endl;
+    if (!line2.empty())
+        sstream << "* " << line2 << std::endl;
+    if (!line3.empty())
+        sstream << "* " << line3 << std::endl;
+    if (!line4.empty())
+        sstream << "* " << line4 << std::endl;
+    sstream << "*********************************************************************" << std::endl;
+
+    SetConsoleColor(CONSOLE_COLOR_RED);
+    std::cout << sstream.str() << std::endl;
+    SetConsoleColor(CONSOLE_COLOR_NORMAL);
+
+    WriteFile(error_log_file, strdup(sstream.str().c_str()));
 }

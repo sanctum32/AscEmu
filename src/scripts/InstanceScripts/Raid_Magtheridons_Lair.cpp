@@ -31,7 +31,7 @@
 #define ACTIVE_CUBES_TO_BANISH    5        // 5 cubes
 
 // Channelers Coords is list of spawn points of all 5 channelers casting spell on Magtheridon
-static Location Channelers[] =
+static Movement::Location Channelers[] =
 {
     { -55.638000f,   1.869050f, 0.630946f },
     { -31.861300f, -35.919399f, 0.630945f },
@@ -41,7 +41,7 @@ static Location Channelers[] =
 };
 
 // Columns coords used for Cave In spell to give "collapse" effect
-static Location Columns[] =
+static Movement::Location Columns[] =
 {
     {  17.7522f,  34.5464f,  0.144816f },
     {  19.0966f, -29.2772f,  0.133036f },
@@ -52,7 +52,7 @@ static Location Columns[] =
 };
 
 // Cave In Target Triggers coords
-static Location CaveInPos[] =
+static Movement::Location CaveInPos[] =
 {
     { -37.183399f, -19.491400f,  0.312451f },
     { -11.374900f, -29.121401f,  0.312463f },
@@ -63,7 +63,7 @@ static Location CaveInPos[] =
 };
 
 // Cube Triggers coords
-static Location CubeTriggers[] =
+static Movement::Location CubeTriggers[] =
 {
     { -54.277199f,   2.343740f, 2.404560f },
     { -31.471001f, -34.155998f, 2.335100f },
@@ -151,11 +151,9 @@ class MagtheridonTriggerAI : public CreatureAIScript
                 // We clear old "list"
                 ChannelersTable.clear();
                 // In order to recreate channeler "list" we need ot look for them in hardcoded spawn positions
-                Unit* Channeler;
                 for (uint8 i = 0; i < 5; i++)
                 {
-                    Channeler = NULL;
-                    Channeler = _unit->GetMapMgr()->GetInterface()->GetCreatureNearestCoords(Channelers[i].x, Channelers[i].y, Channelers[i].z, 17256);
+                    Unit* Channeler = _unit->GetMapMgr()->GetInterface()->GetCreatureNearestCoords(Channelers[i].x, Channelers[i].y, Channelers[i].z, 17256);
                     if (!Channeler)
                         continue;
                     // If Channeler was found we push him at the end of our "list"
@@ -213,7 +211,7 @@ class MagtheridonTriggerAI : public CreatureAIScript
                             if (BuffedChanneler && BuffedChanneler != Channeler && BuffedChanneler->isAlive())
                             {
                                 // We apply Soul Transfer Aura to channeler who should be buffed
-                                Aura* aura = sSpellFactoryMgr.NewAura(dbcSpell.LookupEntry(SOUL_TRANSFER), (uint32) - 1, BuffedChanneler, BuffedChanneler);
+                                Aura* aura = sSpellFactoryMgr.NewAura(sSpellCustomizations.GetSpellInfo(SOUL_TRANSFER), (uint32) - 1, BuffedChanneler, BuffedChanneler);
                                 BuffedChanneler->AddAura(aura);
                             }
                         }
@@ -469,7 +467,7 @@ class ManticronCubeGO : public GameObjectAIScript
                 return;
 
             // We set player to channel spell "on Cube"
-            pPlayer->CastSpell(pPlayer, dbcSpell.LookupEntry(SHADOW_GRASP2), false);
+            pPlayer->CastSpell(pPlayer, sSpellCustomizations.GetSpellInfo(SHADOW_GRASP2), false);
 
             // We trigger channeling spell on Magtheridon for Cube Trigger
             CubeTrigger->SetChannelSpellTargetGUID(Magtheridon->GetGUID());
@@ -570,7 +568,7 @@ class ManticronCubeGO : public GameObjectAIScript
             // If we have all req. Cubes active we may banish Magtheridon
             if (Counter >= ACTIVE_CUBES_TO_BANISH && Magtheridon && Magtheridon->isAlive())
             {
-                Magtheridon->CastSpell(Magtheridon, dbcSpell.LookupEntry(BANISH), true);
+                Magtheridon->CastSpell(Magtheridon, sSpellCustomizations.GetSpellInfo(BANISH), true);
                 Magtheridon->GetAIInterface()->StopMovement(3000);
                 Magtheridon->setAttackTimer(3000, false);
 
@@ -578,7 +576,7 @@ class ManticronCubeGO : public GameObjectAIScript
                     Magtheridon->GetCurrentSpell()->cancel();
 
                 // We add channeling player aura that does not allow that go to be used again in 1.3 min
-                Aura* aura = sSpellFactoryMgr.NewAura(dbcSpell.LookupEntry(MIND_EXHAUSTION), (uint32)78000, Magtheridon, Channeler);
+                Aura* aura = sSpellFactoryMgr.NewAura(sSpellCustomizations.GetSpellInfo(MIND_EXHAUSTION), (uint32)78000, Magtheridon, Channeler);
                 Channeler->AddAura(aura);
 
                 MagYell = true;
@@ -648,14 +646,14 @@ class HellfireWarderAI : public CreatureAIScript
                 spells[i].casttime = 0;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(HW_SHADOW_BOLT_VOLLEY);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(HW_SHADOW_BOLT_VOLLEY);
             spells[0].targettype = TARGET_VARIOUS;
             spells[0].instant = false;
             spells[0].perctrigger = 15.0f;
             spells[0].attackstoptimer = 1000;
             spells[0].cooldown = 5;
 
-            spells[1].info = dbcSpell.LookupEntry(SHADOW_WORD_PAIN);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(SHADOW_WORD_PAIN);
             spells[1].targettype = TARGET_RANDOM_SINGLE;
             spells[1].instant = true;
             spells[1].perctrigger = 6.0f;
@@ -666,7 +664,7 @@ class HellfireWarderAI : public CreatureAIScript
             spells[1].maxhp2cast = 100;
             spells[1].cooldown = 7;
 
-            spells[2].info = dbcSpell.LookupEntry(UNSTABLE_AFFLICTION);
+            spells[2].info = sSpellCustomizations.GetSpellInfo(UNSTABLE_AFFLICTION);
             spells[2].targettype = TARGET_RANDOM_SINGLE;
             spells[2].instant = true;
             spells[2].perctrigger = 6.0f;
@@ -677,7 +675,7 @@ class HellfireWarderAI : public CreatureAIScript
             spells[2].maxhp2cast = 100;
             spells[2].cooldown = 7;
 
-            spells[3].info = dbcSpell.LookupEntry(DEATH_COIL);
+            spells[3].info = sSpellCustomizations.GetSpellInfo(DEATH_COIL);
             spells[3].targettype = TARGET_RANDOM_SINGLE;
             spells[3].instant = true;
             spells[3].perctrigger = 5.0f;
@@ -688,7 +686,7 @@ class HellfireWarderAI : public CreatureAIScript
             spells[3].maxhp2cast = 100;
             spells[3].cooldown = 8;
 
-            spells[4].info = dbcSpell.LookupEntry(RAIN_OF_FIRE);
+            spells[4].info = sSpellCustomizations.GetSpellInfo(RAIN_OF_FIRE);
             spells[4].targettype = TARGET_RANDOM_DESTINATION;
             spells[4].instant = true;
             spells[4].perctrigger = 5.0f;
@@ -699,7 +697,7 @@ class HellfireWarderAI : public CreatureAIScript
             spells[4].maxhp2cast = 100;
             spells[4].cooldown = 6;
 
-            spells[5].info = dbcSpell.LookupEntry(HW_FEAR);
+            spells[5].info = sSpellCustomizations.GetSpellInfo(HW_FEAR);
             spells[5].targettype = TARGET_RANDOM_SINGLE;
             spells[5].instant = false;
             spells[5].perctrigger = 4.0f;
@@ -710,7 +708,7 @@ class HellfireWarderAI : public CreatureAIScript
             spells[5].maxhp2cast = 100;
             spells[5].cooldown = 10;
 
-            spells[6].info = dbcSpell.LookupEntry(SHADOW_BURST);
+            spells[6].info = sSpellCustomizations.GetSpellInfo(SHADOW_BURST);
             spells[6].targettype = TARGET_VARIOUS;
             spells[6].instant = false;                            // not sure but works ;)
             spells[6].perctrigger = 4.0f;
@@ -819,7 +817,7 @@ class HellfireWarderAI : public CreatureAIScript
                 if (!TargetTable.size())
                     return;
 
-                auto random_index = RandomUInt(0, TargetTable.size() - 1);
+                auto random_index = RandomUInt(0, uint32(TargetTable.size() - 1));
                 auto random_target = TargetTable[random_index];
 
                 if (random_target == nullptr)
@@ -869,14 +867,14 @@ class HellfireChannelerAI : public CreatureAIScript
                 spells[i].casttime = 0;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(SHADOW_BOLT_VOLLEY);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(SHADOW_BOLT_VOLLEY);
             spells[0].targettype = TARGET_VARIOUS;
             spells[0].instant = false;
             spells[0].perctrigger = 10.0f;
             spells[0].attackstoptimer = 1000;
             spells[0].cooldown = 5;
 
-            spells[1].info = dbcSpell.LookupEntry(FEAR);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(FEAR);
             spells[1].targettype = TARGET_RANDOM_SINGLE;
             spells[1].instant = false;
             spells[1].perctrigger = 7.0f;
@@ -887,7 +885,7 @@ class HellfireChannelerAI : public CreatureAIScript
             spells[1].maxhp2cast = 100;
             spells[1].cooldown = 10;
 
-            spells[2].info = dbcSpell.LookupEntry(DARK_MENDING);
+            spells[2].info = sSpellCustomizations.GetSpellInfo(DARK_MENDING);
             spells[2].targettype = TARGET_RANDOM_FRIEND;
             spells[2].instant = false;
             spells[2].perctrigger = 8.0f;
@@ -898,7 +896,7 @@ class HellfireChannelerAI : public CreatureAIScript
             spells[2].maxhp2cast = 70;
             spells[2].cooldown = 8;
 
-            spells[3].info = dbcSpell.LookupEntry(BURNING_ABYSSAL);
+            spells[3].info = sSpellCustomizations.GetSpellInfo(BURNING_ABYSSAL);
             spells[3].targettype = TARGET_RANDOM_SINGLE;
             spells[3].instant = true;
             spells[3].perctrigger = 6.0f;
@@ -909,7 +907,7 @@ class HellfireChannelerAI : public CreatureAIScript
             spells[3].maxhp2cast = 100;
             spells[3].cooldown = 30;
 
-            spells[4].info = dbcSpell.LookupEntry(SOUL_TRANSFER);
+            spells[4].info = sSpellCustomizations.GetSpellInfo(SOUL_TRANSFER);
             spells[4].targettype = TARGET_VARIOUS;
             spells[4].instant = true;
 
@@ -943,7 +941,7 @@ class HellfireChannelerAI : public CreatureAIScript
                     _unit->SetChannelSpellTargetGUID(Magtheridon->GetGUID());
                     _unit->SetChannelSpellId(SHADOW_GRASP);
 
-                    Magtheridon->CastSpell(Magtheridon, dbcSpell.LookupEntry(BANISH), true);
+                    Magtheridon->CastSpell(Magtheridon, sSpellCustomizations.GetSpellInfo(BANISH), true);
                 }
             }
         }
@@ -1047,7 +1045,7 @@ class HellfireChannelerAI : public CreatureAIScript
                 if (!TargetTable.size())
                     return;
 
-                auto random_index = RandomUInt(0, TargetTable.size() - 1);
+                auto random_index = RandomUInt(0, uint32(TargetTable.size() - 1));
                 auto random_target = TargetTable[random_index];
 
                 if (random_target == nullptr)
@@ -1095,7 +1093,7 @@ class BurningAbyssalAI : public CreatureAIScript
                 spells[i].casttime = 0;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(FIRE_BLAST);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(FIRE_BLAST);
             spells[0].targettype = TARGET_RANDOM_SINGLE;
             spells[0].instant = true;
             spells[0].perctrigger = 8.0f;
@@ -1211,7 +1209,7 @@ class BurningAbyssalAI : public CreatureAIScript
                 if (!TargetTable.size())
                     return;
 
-                auto random_index = RandomUInt(0, TargetTable.size() - 1);
+                auto random_index = RandomUInt(0, uint32(TargetTable.size() - 1));
                 auto random_target = TargetTable[random_index];
 
                 if (random_target == nullptr)
@@ -1268,14 +1266,14 @@ class MagtheridonAI : public CreatureAIScript
                 spells[i].casttime = 0;
             }
 
-            spells[0].info = dbcSpell.LookupEntry(CLEAVE);
+            spells[0].info = sSpellCustomizations.GetSpellInfo(CLEAVE);
             spells[0].targettype = TARGET_ATTACKING;
             spells[0].instant = true;
             spells[0].perctrigger = 6.0f;
             spells[0].attackstoptimer = 1000;
             spells[0].cooldown = 15;
 
-            spells[1].info = dbcSpell.LookupEntry(CONFLAGRATION);
+            spells[1].info = sSpellCustomizations.GetSpellInfo(CONFLAGRATION);
             spells[1].targettype = TARGET_RANDOM_SINGLE;
             spells[1].instant = true;
             spells[1].perctrigger = 7.0f;
@@ -1286,31 +1284,31 @@ class MagtheridonAI : public CreatureAIScript
             spells[1].maxhp2cast = 100;
             spells[1].cooldown = 35;
 
-            spells[2].info = dbcSpell.LookupEntry(QUAKE1);
+            spells[2].info = sSpellCustomizations.GetSpellInfo(QUAKE1);
             spells[2].targettype = TARGET_VARIOUS;
             spells[2].instant = true;
 
-            spells[3].info = dbcSpell.LookupEntry(QUAKE2);
+            spells[3].info = sSpellCustomizations.GetSpellInfo(QUAKE2);
             spells[3].targettype = TARGET_VARIOUS;
             spells[3].instant = true;
 
-            spells[4].info = dbcSpell.LookupEntry(BLAST_NOVA);
+            spells[4].info = sSpellCustomizations.GetSpellInfo(BLAST_NOVA);
             spells[4].targettype = TARGET_VARIOUS;
             spells[4].instant = false;
 
-            spells[5].info = dbcSpell.LookupEntry(CAVE_IN);
+            spells[5].info = sSpellCustomizations.GetSpellInfo(CAVE_IN);
             spells[5].instant = true;
 
-            spells[6].info = dbcSpell.LookupEntry(ENRAGE);
+            spells[6].info = sSpellCustomizations.GetSpellInfo(ENRAGE);
             spells[6].targettype = TARGET_SELF;
             spells[6].instant = true;
 
             _unit->SetUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_9);
 
-            Aura* aura = sSpellFactoryMgr.NewAura(dbcSpell.LookupEntry(BANISHMENT), (uint32) - 1, _unit, _unit);
+            Aura* aura = sSpellFactoryMgr.NewAura(sSpellCustomizations.GetSpellInfo(BANISHMENT), (uint32) - 1, _unit, _unit);
             _unit->AddAura(aura);
 
-            _unit->CastSpell(_unit, dbcSpell.LookupEntry(BANISH), true);
+            _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(BANISH), true);
             _unit->GetAIInterface()->SetAllowedToEnterCombat(false);
             _unit->SetUInt32Value(UNIT_FIELD_BYTES_2, 1);
 
@@ -1424,7 +1422,7 @@ class MagtheridonAI : public CreatureAIScript
                 _unit->GetAIInterface()->StopMovement(3000);
                 _unit->setAttackTimer(3000, false);
 
-                _unit->CastSpell(_unit, dbcSpell.LookupEntry(BLAST_NOVA), false);
+                _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(BLAST_NOVA), false);
 
                 timer_blastNova = 0;
                 timer_quake = 0;
@@ -1433,7 +1431,7 @@ class MagtheridonAI : public CreatureAIScript
 
             if (timer_enrage > 667 && _unit->GetCurrentSpell() == NULL && !aura)
             {
-                _unit->CastSpell(_unit, dbcSpell.LookupEntry(ENRAGE), true);
+                _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(ENRAGE), true);
 
                 timer_enrage = 0;
             }
@@ -1482,7 +1480,7 @@ class MagtheridonAI : public CreatureAIScript
                 _unit->GetAIInterface()->StopMovement(3000);
                 _unit->setAttackTimer(3000, false);
 
-                _unit->CastSpell(_unit, dbcSpell.LookupEntry(BLAST_NOVA), false);
+                _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(BLAST_NOVA), false);
 
                 timer_blastNova = 0;
                 timer_quake = 0;
@@ -1499,7 +1497,7 @@ class MagtheridonAI : public CreatureAIScript
                     _unit->GetAIInterface()->StopMovement(2000);
                     _unit->setAttackTimer(2000, false);
 
-                    _unit->CastSpell(_unit, dbcSpell.LookupEntry(CAMERA_SHAKE), true);
+                    _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(CAMERA_SHAKE), true);
                     return;
                 }
 
@@ -1535,7 +1533,7 @@ class MagtheridonAI : public CreatureAIScript
 
             if (timer_enrage > 667 && _unit->GetCurrentSpell() == NULL && !aura)
             {
-                _unit->CastSpell(_unit, dbcSpell.LookupEntry(ENRAGE), true);
+                _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(ENRAGE), true);
 
                 timer_enrage = 0;
                 //return;
@@ -1623,7 +1621,7 @@ class MagtheridonAI : public CreatureAIScript
                 if (!TargetTable.size())
                     return;
 
-                auto random_index = RandomUInt(0, TargetTable.size() - 1);
+                auto random_index = RandomUInt(0, uint32(TargetTable.size() - 1));
                 auto random_target = TargetTable[random_index];
 
                 if (random_target == nullptr)

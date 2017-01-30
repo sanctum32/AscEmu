@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -106,7 +106,11 @@ namespace Arcemu
 
     unsigned long long SysInfo::GetTickCount()
     {
+#ifndef _WIN64
         return ::GetTickCount();
+#else
+        return ::GetTickCount64();
+#endif
     }
 
 #endif

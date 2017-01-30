@@ -18,35 +18,37 @@
 
 #include "Setup.h"
 #define SKIP_ALLOCATOR_SHARING 1
-#include <ScriptSetup.h>
+#include <Server/Script/ScriptSetup.h>
+
 
 extern "C" SCRIPT_DECL uint32 _exp_get_script_type()
 {
     return SCRIPT_TYPE_MISC;
 }
 
+
 extern "C" SCRIPT_DECL void _exp_script_register(ScriptMgr* mgr)
 {
-//    ###        Classes Quests    ###
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Classes Quests
     SetupDruid(mgr);
     SetupMage(mgr);
     SetupPaladin(mgr);
     SetupWarrior(mgr);
     SetupDeathKnight(mgr);
 
-//    ###        Proffessions Quests    ###
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Proffessions Quests
     SetupFirstAid(mgr);
 
-//    ###        Zones Quests    ###
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Zones Quests
     SetupArathiHighlands(mgr);
-    SetupAzshara(mgr);
     SetupAzuremystIsle(mgr);
     SetupBladeEdgeMountains(mgr);
     SetupBlastedLands(mgr);
     SetupBloodmystIsle(mgr);
     SetupBurningSteppes(mgr);
-    //SetupDarkshore(mgr);
-    SetupDeathKnight(mgr);
     SetupDesolace(mgr);
     SetupDragonblight(mgr);
     SetupDuskwood(mgr);
@@ -80,12 +82,13 @@ extern "C" SCRIPT_DECL void _exp_script_register(ScriptMgr* mgr)
     SetupUnGoro(mgr);
     SetupWestfall(mgr);
     SetupWetlands(mgr);
-    SetupWinterspring(mgr);
     SetupZangarmarsh(mgr);
     SetupBarrens(mgr);
     SetupBoreanTundra(mgr);
     SetupSholazarBasin(mgr);
-//    ###        Misc        ###
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Misc
     SetupQuestGossip(mgr);
     SetupQuestHooks(mgr);
     SetupUnsorted(mgr);
@@ -98,4 +101,4 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserv
     return TRUE;
 }
 
-#endif
+#endif  //Win32

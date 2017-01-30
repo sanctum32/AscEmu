@@ -26,13 +26,10 @@
 // Uncomment if you want debug texts
 // #define ENABLE_DEBUG_TEXT
 
-#ifdef WIN32
-#pragma warning(disable:4267) // warning C4267: '=' : conversion from 'size_t' to 'uint32', possible loss of data
-#endif
 
 #define CREATE_GAMEOBJECT_SCRIPT(cl) &cl::Create
 #define CREATE_CREATURESCRIPT(cl) &cl::Create
-#include <QuestLogEntry.hpp>
+#include <Management/QuestLogEntry.hpp>
 
 class SCRIPT_DECL EasyFunctions
 {
@@ -66,7 +63,7 @@ class SCRIPT_DECL EasyFunctions
             ARCEMU_ASSERT(pCreature != NULL);
 
             if (!pCreature->m_custom_waypoint_map)
-                pCreature->m_custom_waypoint_map = new WayPointMap;
+                pCreature->m_custom_waypoint_map = new Movement::WayPointMap;
 
             if (!modelid)
                 modelid = pCreature->GetUInt32Value(UNIT_FIELD_DISPLAYID);
@@ -91,7 +88,7 @@ class SCRIPT_DECL EasyFunctions
             if (creat->m_custom_waypoint_map == NULL)
                 return;
 
-            WayPointMap::iterator i = creat->m_custom_waypoint_map->begin();
+            Movement::WayPointMap::iterator i = creat->m_custom_waypoint_map->begin();
 
             for (; i != creat->m_custom_waypoint_map->end(); ++i)
             {
@@ -108,9 +105,8 @@ class SCRIPT_DECL EasyFunctions
             ARCEMU_ASSERT(pThis != NULL);
             ARCEMU_ASSERT(pThis->IsInWorld());
 
-            CreatureProto* p = CreatureProtoStorage.LookupEntry(entry);
-
-            if (p == NULL)
+            CreatureProperties const* p = sMySQLStore.GetCreatureProperties(entry);
+            if (p == nullptr)
                 return NULL;
 
             Creature* pCreature = pThis->GetMapMgr()->CreateCreature(entry);
@@ -141,8 +137,8 @@ class SCRIPT_DECL EasyFunctions
             if (pThis == NULL)
                 return NULL;
 
-            CreatureProto* p = CreatureProtoStorage.LookupEntry(entry);
-            if (p == NULL)
+            CreatureProperties const* p = sMySQLStore.GetCreatureProperties(entry);
+            if (p == nullptr)
                 return NULL;
 
             Creature* pCreature = pThis->GetMapMgr()->CreateCreature(entry);
@@ -175,7 +171,7 @@ class SCRIPT_DECL EasyFunctions
             if (plr == NULL)
                 return NULL;
 
-            auto gameobject_info = GameObjectNameStorage.LookupEntry(entry_id);
+            auto gameobject_info = sMySQLStore.GetGameObjectProperties(entry_id);
             if (gameobject_info == nullptr)
                 return nullptr;
 
@@ -209,7 +205,7 @@ class SCRIPT_DECL EasyFunctions
 
             if (creat->m_custom_waypoint_map == NULL)
             {
-                creat->m_custom_waypoint_map = new WayPointMap;
+                creat->m_custom_waypoint_map = new Movement::WayPointMap;
             }
             else
             {
@@ -226,8 +222,8 @@ class SCRIPT_DECL EasyFunctions
             Item* ItemStack = pPlayer->GetItemInterface()->FindItemLessMax(pEntry, pCount, false);
             if (ItemStack == NULL)
             {
-                ItemPrototype* ItemProto = ItemPrototypeStorage.LookupEntry(pEntry);
-                if (ItemProto == NULL)
+                ItemProperties const* ItemProto = sMySQLStore.GetItemProperties(pEntry);
+                if (ItemProto == nullptr)
                     return false;
 
                 SlotResult Result = pPlayer->GetItemInterface()->FindFreeInventorySlot(ItemProto);
@@ -275,7 +271,7 @@ class SCRIPT_DECL EasyFunctions
 
         void EventCastSpell(Unit* caster, Unit* target, uint32 spellid, uint32 time)
         {
-            sEventMgr.AddEvent(static_cast<Unit*>(caster), &Unit::EventCastSpell, static_cast<Unit*>(target), dbcSpell.LookupEntry(spellid), EVENT_UNK, time, 0, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+            sEventMgr.AddEvent(static_cast<Unit*>(caster), &Unit::EventCastSpell, static_cast<Unit*>(target), sSpellCustomizations.GetSpellInfo(spellid), EVENT_UNK, time, 0, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
         }
 
         void EventPlaySound(Creature* creat, uint32 id, uint32 time)
@@ -321,7 +317,7 @@ class SCRIPT_DECL EasyFunctions
             if (!pQuest)
                 return;
 
-            if (pQuest->GetMobCount(i) < pQuest->GetQuest()->required_mobcount[i])
+            if (pQuest->GetMobCount(i) < pQuest->GetQuest()->required_mob_or_go_count[i])
             {
                 pQuest->SetMobCount(i, pQuest->GetMobCount(i) + 1);
                 pQuest->SendUpdateAddKill(i);
@@ -339,7 +335,7 @@ class SCRIPT_DECL EasyFunctions
             if (!pQuest)
                 return;
 
-            if (pQuest->GetMobCount(i) < pQuest->GetQuest()->required_mobcount[i])
+            if (pQuest->GetMobCount(i) < pQuest->GetQuest()->required_mob_or_go_count[i])
             {
                 pQuest->SetMobCount(i, pQuest->GetMobCount(i) + 1);
                 pQuest->SendUpdateAddKill(i);

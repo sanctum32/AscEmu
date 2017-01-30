@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org>
+ * Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -67,7 +67,7 @@ enum CreatureSpells
 {
 };
 
-static LocationExtra ElementalSpawnPoints[] =
+static Movement::Location ElementalSpawnPoints[] =
 {
     { 8.3f, -835.3f, 21.9f, 5 },
     { 53.4f, -835.3f, 21.9f, 4.5f },
@@ -79,7 +79,7 @@ static LocationExtra ElementalSpawnPoints[] =
     { -58.9f, -901.6f, 21.5f, 6.0f }
 };
 
-static LocationExtra ElementalSpawnPoints2[] =
+static Movement::Location ElementalSpawnPoints2[] =
 {
     { 16.305f, -867.82f, 41.09f, 0 },
     { 43.853f, -868.338f, 41.097f, 0 },
@@ -91,7 +91,7 @@ static LocationExtra ElementalSpawnPoints2[] =
     { -25.37f, -910.266f, 41.09f, 0 }
 };
 
-static LocationExtra CoilfangEliteSpawnPoints[] =
+static Movement::Location CoilfangEliteSpawnPoints[] =
 {
     { 14.837f, -949.106f, 41.53f, 0 },
     { 14.857f, -897.68f, 41.536f, 0 },
@@ -107,7 +107,7 @@ static float ShieldGeneratorCoords[4][3] =
     { 49.687f, -944.406f, 42.7324f }
 };
 
-static Location fly[] =
+static Movement::Location fly[] =
 {
     { 29.769f, -866.190f, 43 },
     { 1.135f, -874.345f, 43 },

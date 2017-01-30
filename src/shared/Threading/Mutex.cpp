@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,7 @@
  *
  */
 
-#include "../Common.h"
+#include "../Common.hpp"
 #include "Mutex.h"
 
 #ifdef WIN32
@@ -30,7 +30,7 @@ Mutex::~Mutex() { DeleteCriticalSection(&cs); }
 #else
 
 /* this is done slightly differently on bsd-variants */
-#if defined(__FreeBSD__) ||  defined(__APPLE_CC__) || defined(__OpenBSD__)
+#if defined(__FreeBSD__) ||  defined(__APPLE__) || defined(__OpenBSD__)
 #define recursive_mutex_flag PTHREAD_MUTEX_RECURSIVE
 #else
 #define recursive_mutex_flag PTHREAD_MUTEX_RECURSIVE_NP

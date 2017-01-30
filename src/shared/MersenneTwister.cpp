@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -20,7 +20,9 @@
  */
 
 #include "MersenneTwister.h"
-#include "Util.h"
+#include "Util.hpp"
+#include "Timer.h"
+#include <stdexcept>
 
 #define NUMBER_OF_GENERATORS 5
 Mutex* m_locks[NUMBER_OF_GENERATORS];
@@ -297,9 +299,11 @@ int CRandomMersenne::IRandom(int min, int max)
     if (max == min)
         return max;
 
+    // Zyres: CID 104914 Uncought exception
     // max < min, so throw an exception instead of assuming intention
-    if(max < min)
-        throw std::domain_error("max < min when calling CRandomMersenne::IRandom");
+    //if (max < min)
+        //throw std::domain_error("max < min when calling CRandomMersenne::IRandom");
+    ASSERT(max > min);
 
     // Multiply interval with random and truncate
     int r = int((max - min + 1) * Random()) + min;

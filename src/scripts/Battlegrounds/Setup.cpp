@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -22,7 +22,7 @@
 
 #define SKIP_ALLOCATOR_SHARING 1
 
-#include <ScriptSetup.h>
+#include <Server/Script/ScriptSetup.h>
 
 #include "AlteracValley.h"
 #include "ArathiBasin.h"

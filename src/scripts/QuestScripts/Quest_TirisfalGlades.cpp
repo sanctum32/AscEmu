@@ -65,7 +65,7 @@ class CalvinMontague : public CreatureAIScript
             _unit->RemoveNegativeAuras();
             _unit->SetFaction(68);
             _unit->SetStandState(STANDSTATE_SIT);
-            _unit->CastSpell(_unit, dbcSpell.LookupEntry(433), true);
+            _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(433), true);
             sEventMgr.AddEvent(static_cast<Unit*>(_unit), &Unit::SetStandState, (uint8)STANDSTATE_STAND, EVENT_CREATURE_UPDATE, 18000, 0, 1);
             _unit->GetAIInterface()->WipeTargetList();
             _unit->GetAIInterface()->WipeHateList();
@@ -97,7 +97,7 @@ class ARoguesDeal  : public QuestScript
         }
 };
 
-class FieldsofGrief : public QuestScript
+/*class FieldsofGrief : public QuestScript
 {
     public:
 
@@ -114,23 +114,23 @@ class FieldsofGrief : public QuestScript
 
             Zealot->SendChatMessage(CHAT_MSG_MONSTER_SAY, LANG_UNIVERSAL, "I. . . I. . .don't. . .feel. . .right. . .");
             sEAS.EventCastSpell(Zealot, Zealot, 3287, 3000);
-            Zealot->GetAIInterface()->setMoveType(11);
+            Zealot->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_QUEST);
             Zealot->GetAIInterface()->StopMovement(3000);
 
 
             sEAS.CreateCustomWaypointMap(Zealot);
 
-            sEAS.WaypointCreate(Zealot, 2289.649658f, 237.001389f, 27.089531f, 1.323f, 0, 256, 0);
-            sEAS.WaypointCreate(Zealot, 2291.700928f, 235.561844f, 27.089531f, 1.323f, 0, 256, 0);
-            sEAS.WaypointCreate(Zealot, 2292.835693f, 240.636948f, 27.089531f, 1.323f, 0, 256, 0);
-            sEAS.WaypointCreate(Zealot, 2288.737305f, 240.503952f, 27.088022f, 1.323f, 0, 256, 0);
-            sEAS.WaypointCreate(Zealot, 2287.812744f, 236.320938f, 27.088022f, 1.323f, 0, 256, 0);
-            sEAS.WaypointCreate(Zealot, 2292.643033f, 240.513489f, 27.088022f, 1.323f, 0, 256, 0);
-            sEAS.WaypointCreate(Zealot, 2289.628418f, 239.908279f, 27.088022f, 1.323f, 0, 256, 0);
+            sEAS.WaypointCreate(Zealot, 2289.649658f, 237.001389f, 27.089531f, 1.323f, 0, Movement::WP_MOVE_TYPE_RUN, 0);
+            sEAS.WaypointCreate(Zealot, 2291.700928f, 235.561844f, 27.089531f, 1.323f, 0, Movement::WP_MOVE_TYPE_RUN, 0);
+            sEAS.WaypointCreate(Zealot, 2292.835693f, 240.636948f, 27.089531f, 1.323f, 0, Movement::WP_MOVE_TYPE_RUN, 0);
+            sEAS.WaypointCreate(Zealot, 2288.737305f, 240.503952f, 27.088022f, 1.323f, 0, Movement::WP_MOVE_TYPE_RUN, 0);
+            sEAS.WaypointCreate(Zealot, 2287.812744f, 236.320938f, 27.088022f, 1.323f, 0, Movement::WP_MOVE_TYPE_RUN, 0);
+            sEAS.WaypointCreate(Zealot, 2292.643033f, 240.513489f, 27.088022f, 1.323f, 0, Movement::WP_MOVE_TYPE_RUN, 0);
+            sEAS.WaypointCreate(Zealot, 2289.628418f, 239.908279f, 27.088022f, 1.323f, 0, Movement::WP_MOVE_TYPE_RUN, 0);
 
             sEAS.EnableWaypoints(Zealot);
         }
-};
+};*/
 
 class Zealot : public CreatureAIScript
 {
@@ -149,7 +149,7 @@ class Zealot : public CreatureAIScript
 
             if(iWaypointId == 7)
             {
-                _unit->CastSpell(_unit, dbcSpell.LookupEntry(5), true);
+                _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(5), true);
             }
         }
 };

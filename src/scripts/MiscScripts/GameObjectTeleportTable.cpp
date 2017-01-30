@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2007 Moon++ <http://www.moonplusplus.info/>
  *
@@ -22,7 +22,7 @@
  ///\brief This script will add support for an SQL table called gameobject_teleports.
  /// This table can be used to teleport players when they use a game object such
  /// as a door or portal. Any object used in this table should exist in the
- /// gameobject_names table, and be of type 10. Custom portal can use the generic
+ /// gameobject_properties table, and be of type 10. Custom portal can use the generic
  /// display id of 6831. Portals also have the Sound2 field set to '1'.
 //////////////////////////////////////////////////////////////////////////////////////////
 
@@ -101,7 +101,7 @@ void InitializeGameObjectTeleportTable(ScriptMgr* mgr)
         // Check if the SQL table is setup correctly
         if (result->GetFieldCount() < 9)
         {
-            sLog.outError("Error: Custom portals disabled, invalid 'gameobject_teleports' table.");
+            LogError("Error: Custom portals disabled, invalid 'gameobject_teleports' table.");
             delete result;
             return;
         }

@@ -21,10 +21,10 @@
 
 #include "Setup.h"
 
-typedef std::pair< uint64, Creature* > QuestDefinition;
-typedef std::vector< QuestDefinition > QuestCreature;
+typedef std::pair<uint64, Creature*> QuestDefinition;
+typedef std::vector<QuestDefinition> QuestCreature;
 
-class TotemofCoo : public QuestScript
+/*class TotemofCoo : public QuestScript
 {
     public:
 
@@ -35,7 +35,7 @@ class TotemofCoo : public QuestScript
                 return;
 
             pAkida->m_escorter = pPlayer;
-            pAkida->GetAIInterface()->setMoveType(RUN);
+            pAkida->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_QUEST);
             pAkida->GetAIInterface()->StopMovement(1000);
             pAkida->GetAIInterface()->SetAllowedToEnterCombat(false);
             pAkida->SendChatMessage(CHAT_MSG_MONSTER_SAY, LANG_UNIVERSAL, "Follow me I shall result you on a place!");
@@ -43,14 +43,14 @@ class TotemofCoo : public QuestScript
             pAkida->CastSpell(pAkida, 25035, true);   // Apparition Effect
 
             sEAS.CreateCustomWaypointMap(pAkida);
-            sEAS.WaypointCreate(pAkida, -4174.025879f, -12512.800781f, 44.361458f, 2.827430f, 0, 256, 16995);
-            sEAS.WaypointCreate(pAkida, -4078.135986f, -12535.500977f, 43.066765f, 5.949394f, 0, 256, 16995);
-            sEAS.WaypointCreate(pAkida, -4040.495361f, -12565.537109f, 43.698250f, 5.592041f, 0, 256, 16995);
-            sEAS.WaypointCreate(pAkida, -4009.526367f, -12598.929688f, 53.168480f, 5.434962f, 0, 256, 16995);
-            sEAS.WaypointCreate(pAkida, -3981.581543f, -12635.541602f, 63.896046f, 5.332861f, 0, 256, 16995);
-            sEAS.WaypointCreate(pAkida, -3953.170410f, -12680.391602f, 75.433006f, 5.218981f, 0, 256, 16995);
-            sEAS.WaypointCreate(pAkida, -3924.324951f, -12741.846680f, 95.187035f, 5.124734f, 0, 256, 16995);
-            sEAS.WaypointCreate(pAkida, -3920.791260f, -12746.218750f, 96.887978f, 3.271200f, 0, 256, 16995);
+            sEAS.WaypointCreate(pAkida, -4174.025879f, -12512.800781f, 44.361458f, 2.827430f, 0, Movement::WP_MOVE_TYPE_RUN, 16995);
+            sEAS.WaypointCreate(pAkida, -4078.135986f, -12535.500977f, 43.066765f, 5.949394f, 0, Movement::WP_MOVE_TYPE_RUN, 16995);
+            sEAS.WaypointCreate(pAkida, -4040.495361f, -12565.537109f, 43.698250f, 5.592041f, 0, Movement::WP_MOVE_TYPE_RUN, 16995);
+            sEAS.WaypointCreate(pAkida, -4009.526367f, -12598.929688f, 53.168480f, 5.434962f, 0, Movement::WP_MOVE_TYPE_RUN, 16995);
+            sEAS.WaypointCreate(pAkida, -3981.581543f, -12635.541602f, 63.896046f, 5.332861f, 0, Movement::WP_MOVE_TYPE_RUN, 16995);
+            sEAS.WaypointCreate(pAkida, -3953.170410f, -12680.391602f, 75.433006f, 5.218981f, 0, Movement::WP_MOVE_TYPE_RUN, 16995);
+            sEAS.WaypointCreate(pAkida, -3924.324951f, -12741.846680f, 95.187035f, 5.124734f, 0, Movement::WP_MOVE_TYPE_RUN, 16995);
+            sEAS.WaypointCreate(pAkida, -3920.791260f, -12746.218750f, 96.887978f, 3.271200f, 0, Movement::WP_MOVE_TYPE_RUN, 16995);
             sEAS.EnableWaypoints(pAkida);
             mAkidas.push_back(std::make_pair(pPlayer->GetGUID(), pAkida));
         }
@@ -112,14 +112,14 @@ class TotemofTikti : public QuestScript
             Coo->CastSpell(Coo, 25035, true);  // Apparition Effect
 
             Coo->m_escorter = mTarget;
-            Coo->GetAIInterface()->setMoveType(11);
+            Coo->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_QUEST);
             Coo->GetAIInterface()->StopMovement(3000);
             Coo->SendChatMessage(CHAT_MSG_MONSTER_SAY, LANG_UNIVERSAL, "Follow me!");
             Coo->SetUInt32Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_NONE);
 
             sEAS.CreateCustomWaypointMap(Coo);
-            sEAS.WaypointCreate(Coo, -3926.076660f, -12755.158203f, 99.080429f, 5.031188f, 0, 256, 16993);
-            sEAS.WaypointCreate(Coo, -3924.019043f, -12763.895508f, 101.547874f, 5.212689f, 0, 256, 16993);
+            sEAS.WaypointCreate(Coo, -3926.076660f, -12755.158203f, 99.080429f, 5.031188f, 0, Movement::WP_MOVE_TYPE_RUN, 16993);
+            sEAS.WaypointCreate(Coo, -3924.019043f, -12763.895508f, 101.547874f, 5.212689f, 0, Movement::WP_MOVE_TYPE_RUN, 16993);
             sEAS.EnableWaypoints(Coo);
 
 
@@ -130,12 +130,12 @@ class TotemofTikti : public QuestScript
             Coo->SendChatMessage(CHAT_MSG_MONSTER_SAY, LANG_UNIVERSAL, msg.c_str(), 6000);
 
             if (mTarget->CalcDistance(Coo, mTarget) <= 10)
-                sEventMgr.AddEvent(static_cast<Unit*>(Coo), &Unit::EventCastSpell, Plr, dbcSpell.LookupEntry(30424), EVENT_CREATURE_UPDATE, 8750, 0, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+                sEventMgr.AddEvent(static_cast<Unit*>(Coo), &Unit::EventCastSpell, Plr, sSpellCustomizations.GetSpellInfo(30424), EVENT_CREATURE_UPDATE, 8750, 0, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
 
             std::string msg2 = "Coo xip fly... Jump ilos river. Find Tikti.";
             Coo->SendChatMessage(CHAT_MSG_MONSTER_SAY, LANG_UNIVERSAL, msg2.c_str(), 9000);
 
-            sEventMgr.AddEvent(static_cast<Unit*>(Coo), &Unit::EventCastSpell, Totem, dbcSpell.LookupEntry(30473), EVENT_CREATURE_UPDATE, 12750, 0, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+            sEventMgr.AddEvent(static_cast<Unit*>(Coo), &Unit::EventCastSpell, Totem, sSpellCustomizations.GetSpellInfo(30473), EVENT_CREATURE_UPDATE, 12750, 0, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
             Coo->Despawn(15200, 0);
         }
 
@@ -160,14 +160,14 @@ class TotemofYor : public QuestScript
             mTarget->CastSpell(Tikti, 25035, true);  // Apparition Effect
 
             Tikti->m_escorter = mTarget;
-            Tikti->GetAIInterface()->setMoveType(WALK);
+            Tikti->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_QUEST);
             Tikti->GetAIInterface()->StopMovement(3000);
             Tikti->SendChatMessage(CHAT_MSG_MONSTER_SAY, LANG_UNIVERSAL, "Follow me!");
             Tikti->SetUInt32Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_NONE);
 
             sEAS.CreateCustomWaypointMap(Tikti);
-            sEAS.WaypointCreate(Tikti, -3881.700928f, -13111.898438f, 5.814010f, 1.855801f, 0, 256, 16999);
-            sEAS.WaypointCreate(Tikti, -3886.341553f, -13098.914063f, 3.964841f, 1.855801f, 0, 256, 16999);
+            sEAS.WaypointCreate(Tikti, -3881.700928f, -13111.898438f, 5.814010f, 1.855801f, 0, Movement::WP_MOVE_TYPE_RUN, 16999);
+            sEAS.WaypointCreate(Tikti, -3886.341553f, -13098.914063f, 3.964841f, 1.855801f, 0, Movement::WP_MOVE_TYPE_RUN, 16999);
             sEAS.EnableWaypoints(Tikti);
 
             Unit* Totem = static_cast<Unit*>(Tikti);
@@ -177,12 +177,12 @@ class TotemofYor : public QuestScript
             Tikti->SendChatMessage(CHAT_MSG_MONSTER_SAY, LANG_UNIVERSAL, msg.c_str(), 15000);
 
             if (mTarget->CalcDistance(Tikti, mTarget) <= 10)
-                sEventMgr.AddEvent(static_cast<Unit*>(Tikti), &Unit::EventCastSpell, Plr, dbcSpell.LookupEntry(30430), EVENT_CREATURE_UPDATE, 18000, 0, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+                sEventMgr.AddEvent(static_cast<Unit*>(Tikti), &Unit::EventCastSpell, Plr, sSpellCustomizations.GetSpellInfo(30430), EVENT_CREATURE_UPDATE, 18000, 0, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
 
             std::string msg2 = "[Furbolg] Go... Search yitix'kil bottom river. South!";
             Tikti->SendChatMessage(CHAT_MSG_MONSTER_SAY, LANG_UNIVERSAL, msg2.c_str(), 20000);
 
-            sEventMgr.AddEvent(static_cast<Unit*>(Tikti), &Unit::EventCastSpell, Totem, dbcSpell.LookupEntry(30431), EVENT_GMSCRIPT_EVENT, 20000, 0, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+            sEventMgr.AddEvent(static_cast<Unit*>(Tikti), &Unit::EventCastSpell, Totem, sSpellCustomizations.GetSpellInfo(30431), EVENT_GMSCRIPT_EVENT, 20000, 0, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
 
             Tikti->Despawn(24000, 0);
         }
@@ -215,9 +215,9 @@ class TotemofVark : public QuestScript
             Yor->SendChatMessage(CHAT_MSG_MONSTER_SAY, LANG_UNIVERSAL, msg);
 
             sEAS.CreateCustomWaypointMap(Yor);
-            sEAS.WaypointCreate(Yor, -4650.081055f, -13016.692383f, 1.776296f, 2.021601f, 0, 256, 16393);
-            sEAS.WaypointCreate(Yor, -3886.341553f, -13098.914063f, 3.964841f, 1.855801f, 1000, 256, 16393);
-            sEAS.WaypointCreate(Yor, -4677.421387f, -12983.874023f, 0.833827f, 2.335760f, 0, 256, 16393);   // Should look player
+            sEAS.WaypointCreate(Yor, -4650.081055f, -13016.692383f, 1.776296f, 2.021601f, 0, Movement::WP_MOVE_TYPE_RUN, 16393);
+            sEAS.WaypointCreate(Yor, -3886.341553f, -13098.914063f, 3.964841f, 1.855801f, 1000, Movement::WP_MOVE_TYPE_RUN, 16393);
+            sEAS.WaypointCreate(Yor, -4677.421387f, -12983.874023f, 0.833827f, 2.335760f, 0, Movement::WP_MOVE_TYPE_RUN, 16393);   // Should look player
             sEAS.EnableWaypoints(Yor);
 
             //We have to set up these pointers first to resolve ambiguity in the event manager template
@@ -225,24 +225,24 @@ class TotemofVark : public QuestScript
             Unit* Plr = static_cast<Unit*>(mTarget);
 
             // Change to Stillpine form
-            sEventMgr.AddEvent(Totem, &Unit::EventCastSpell, Totem, dbcSpell.LookupEntry(30446), EVENT_CREATURE_UPDATE, 15500, 0, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+            sEventMgr.AddEvent(Totem, &Unit::EventCastSpell, Totem, sSpellCustomizations.GetSpellInfo(30446), EVENT_CREATURE_UPDATE, 15500, 0, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
             std::string msg2 = "[Furbolg] We go now, together. We will seek Vark.";
             Yor->SendChatMessage(CHAT_MSG_MONSTER_SAY, LANG_UNIVERSAL, msg2.c_str(), 26500);
 
             // Change to nightsaber form
-            sEventMgr.AddEvent(Totem, &Unit::EventCastSpell, Totem, dbcSpell.LookupEntry(30448), EVENT_CREATURE_UPDATE, 30000, 0, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+            sEventMgr.AddEvent(Totem, &Unit::EventCastSpell, Totem, sSpellCustomizations.GetSpellInfo(30448), EVENT_CREATURE_UPDATE, 30000, 0, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
             std::string msg3 = "[Furbolg] Follow me to Vark.";
             Yor->SendChatMessage(CHAT_MSG_MONSTER_SAY, LANG_UNIVERSAL, msg3.c_str(), 31000);
 
             if (mTarget->CalcDistance(Totem, Plr) <= 10)
-                sEventMgr.AddEvent(Totem, &Unit::EventCastSpell, Plr, dbcSpell.LookupEntry(30448), EVENT_CREATURE_UPDATE, 31000, 0, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+                sEventMgr.AddEvent(Totem, &Unit::EventCastSpell, Plr, sSpellCustomizations.GetSpellInfo(30448), EVENT_CREATURE_UPDATE, 31000, 0, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
         }
 
     // NEED TO MAKE THE PATH TO THE TOTEM OF VARK
     private:
 
         Creature* Yor;
-};
+};*/
 
 // Chieftain Oomooroo
 class ChieftainOomoorooQAI : public CreatureAIScript
@@ -257,7 +257,7 @@ class ChieftainOomoorooQAI : public CreatureAIScript
             if (mKiller->IsPlayer())
             {
                 QuestLogEntry* pQuest = static_cast<Player*>(mKiller)->GetQuestLogForEntry(9573);
-                if (pQuest != nullptr && pQuest->GetMobCount(1) < pQuest->GetQuest()->required_mobcount[1])
+                if (pQuest != nullptr && pQuest->GetMobCount(1) < pQuest->GetQuest()->required_mob_or_go_count[1])
                 {
                     pQuest->SetMobCount(1, pQuest->GetMobCount(1) + 1);
                     pQuest->SendUpdateAddKill(1);

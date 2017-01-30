@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org>
+ * Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -104,7 +104,7 @@ enum IceCrownCitadelCNid
    CNID_END
 };
 
-static Location Doors[] =
+static Movement::Location Doors[] =
 {
     { -407.35f, 2147.88f, 42.85f, 0 },       //IceWall1
     { -412.97f, 2285.24f, 42.01f, 0 },       //IceWall2

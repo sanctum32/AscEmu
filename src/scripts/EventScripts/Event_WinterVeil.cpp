@@ -1,27 +1,14 @@
-/**
-* AscEmu Framework based on ArcEmu MMORPG Server
-* Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
+/*
+ Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ This file is released under the MIT license. See README-MIT for more information.
+ */
 
 #include "Setup.h"
 
 //////////////////////////////////////////////////////////////////////////////////////////
 ///\details <b>Winter Veil</b>\n
-/// event_names entry: 2 \n
-/// event_names holiday: 141 \n
+/// event_properties entry: 2 \n
+/// event_properties holiday: 141 \n
 ///\todo Check Winter Veil \n
 
 class PX238WinterWondervolt : public GameObjectAIScript
@@ -61,7 +48,7 @@ void WinterReveler(Player* pPlayer, Unit* pUnit)
         {
             case 0:
             {
-                ItemPrototype* proto = ItemPrototypeStorage.LookupEntry(21212);
+                ItemProperties const* proto = sMySQLStore.GetItemProperties(21212);
                 if (!proto)
                     return;
 
@@ -71,7 +58,7 @@ void WinterReveler(Player* pPlayer, Unit* pUnit)
             break;
             case 1:
             {
-                ItemPrototype* proto = ItemPrototypeStorage.LookupEntry(21519);
+                ItemProperties const* proto = sMySQLStore.GetItemProperties(21519);
                 if (!proto)
                     return;
 
@@ -81,7 +68,7 @@ void WinterReveler(Player* pPlayer, Unit* pUnit)
             break;
             case 2:
             {
-                ItemPrototype* proto = ItemPrototypeStorage.LookupEntry(34191);
+                ItemProperties const* proto = sMySQLStore.GetItemProperties(34191);
                 if (!proto)
                     return;
 
@@ -107,7 +94,7 @@ void WinterReveler(Player* pPlayer, Unit* pUnit)
             auto item_add_result = pPlayer->GetItemInterface()->SafeAddItem(item, slotresult.ContainerSlot, slotresult.Slot);
             if (!item_add_result)
             {
-                Log.Error("Event_WinterVeil", "Error while adding item %u to player %s", item->GetEntry(), pPlayer->GetNameString());
+                LOG_ERROR("Error while adding item %u to player %s", item->GetEntry(), pPlayer->GetNameString());
                 item->DeleteMe();
             }
             else
@@ -133,8 +120,8 @@ void WinterVeilEmote(Player* pPlayer, uint32 Emote, Unit* pUnit)
 
 //////////////////////////////////////////////////////////////////////////////////////////
 ///\details <b>Winter Veil: Gifts</b>\n
-/// event_names entry: 52 \n
-/// event_names holiday: NA \n
+/// event_properties entry: 52 \n
+/// event_properties holiday: NA \n
 ///\todo Check if gifts need a extra script \n
 
 void SetupWinterVeil(ScriptMgr* mgr)

@@ -71,6 +71,11 @@ Creature* MoonInstanceScript::FindClosestCreatureOnMap(uint32 pEntry, float pX, 
     return NearestCreature;
 };
 
+Creature* MoonInstanceScript::SpawnCreature(uint32 pEntry, Movement::Location pLocation)
+{
+    return MoonInstanceScript::SpawnCreature(pEntry, pLocation.x, pLocation.y, pLocation.z, pLocation.o);
+}
+
 Creature* MoonInstanceScript::SpawnCreature(uint32 pEntry, float pX, float pY, float pZ, float pO)
 {
     Creature* NewCreature = mInstance->GetInterface()->SpawnCreature(pEntry, pX, pY, pZ, pO, true, true, 0, 0);
@@ -88,7 +93,13 @@ Creature* MoonInstanceScript::SpawnCreature(uint32 pEntry, float pX, float pY, f
 
 Creature* MoonInstanceScript::PushCreature(uint32 pEntry, float pX, float pY, float pZ, float pO, uint32 pFaction)
 {
-    CreatureProto* cp = CreatureProtoStorage.LookupEntry(pEntry);
+    CreatureProperties const* cp = sMySQLStore.GetCreatureProperties(pEntry);
+    if (cp == nullptr)
+    {
+        LOG_ERROR("PushCreature: tried to push a invalid creature with entry %u!", pEntry);
+        return nullptr;
+    }
+
     Creature* c = mInstance->CreateCreature(pEntry);
 
     Arcemu::Util::ArcemuAssert(c != NULL);
@@ -102,7 +113,7 @@ Creature* MoonInstanceScript::PushCreature(uint32 pEntry, float pX, float pY, fl
     return c;
 }
 
-CreatureSet MoonInstanceScript::FindCreaturesOnMap(uint32 pEntry)
+CreatureSet MoonInstanceScript::FindCreaturesOnMap(std::vector<uint32> pEntries)
 {
     Creature* CurrentCreature = NULL;
     CreatureSet ReturnSet;
@@ -111,13 +122,21 @@ CreatureSet MoonInstanceScript::FindCreaturesOnMap(uint32 pEntry)
         CurrentCreature = (*CreatureIter);
         if (CurrentCreature != NULL)
         {
-            if (CurrentCreature->GetEntry() == pEntry)
-                ReturnSet.insert(CurrentCreature);
-        };
-    };
+            for (auto entry : pEntries)
+            {
+                if (CurrentCreature->GetEntry() == entry)
+                    ReturnSet.insert(CurrentCreature);
+            }
+        }
+    }
 
     return ReturnSet;
-};
+}
+
+CreatureSet MoonInstanceScript::FindCreaturesOnMap(uint32 pEntry)
+{
+    return MoonInstanceScript::FindCreaturesOnMap(std::vector<uint32> { pEntry });
+}
 
 GameObject* MoonInstanceScript::FindClosestGameObjectOnMap(uint32 pEntry, float pX, float pY, float pZ)
 {
@@ -466,7 +485,7 @@ void MoonInstanceScript::OnGameObjectPushToWorld(GameObject* pGameObject)
         pGameObject->SetState((*Iter).second);
 };
 
-GameObject* MoonInstanceScript::GetObjectForOpenLock(Player* pCaster, Spell* pSpell, SpellEntry* pSpellEntry)
+GameObject* MoonInstanceScript::GetObjectForOpenLock(Player* pCaster, Spell* pSpell, SpellInfo* pSpellEntry)
 {
     return NULL;
 };

@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,7 +18,10 @@
  *
  */
 
-#include "ConfigEnv.h"
+#include "Common.hpp"
+#include "Config.h"
+#include "Log.hpp"
+
 ConfigMgr Config;
 
 //#define _CONFIG_DEBUG
@@ -93,12 +96,12 @@ void apply_setting(std::string & str, ConfigSetting & setting)
     if (str.length() > 1)
     {
         // this might be a yes/no?
-        if (str.size() >= 3 && !strnicmp("yes", str.c_str(), 3))
+        if (str.compare("yes") == 0)
         {
             setting.AsBool = true;
             setting.AsInt = 1;
         }
-        else if (str.size() >= 2 && !strnicmp("no", str.c_str(), 2))
+        else if (str.compare("no") == 0)
         {
             setting.AsBool = false;
             setting.AsInt = 0;
@@ -143,7 +146,7 @@ bool ConfigFile::SetSource(const char* file, bool ignorecase)
 
         if (!f)
         {
-            sLog.outError("Could not open %s.", file);
+            LogError("Could not open %s.", file);
             return false;
         }
 
@@ -151,7 +154,10 @@ bool ConfigFile::SetSource(const char* file, bool ignorecase)
         fseek(f, 0, SEEK_END);
 
         if (ftell(f) <= 0)
+        {
+            fclose(f);
             return false;
+        }
         else
             length = ftell(f);
 
@@ -161,7 +167,7 @@ bool ConfigFile::SetSource(const char* file, bool ignorecase)
         // read the file
         if (fread(buf, length, 1, f) != 1)
         {
-            sLog.outError("Could not read %s.", file);
+            LogError("Could not read %s.", file);
             // delete buf and close the file before returning
             delete[] buf;
             fclose(f);
@@ -260,7 +266,7 @@ bool ConfigFile::SetSource(const char* file, bool ignorecase)
                         // append the setting to the config block
                         if (current_block == "" || current_variable == "")
                         {
-                            sLog.outError("Quote without variable.");
+                            LogError("Quote without variable.");
                             return false;
                         }
 
@@ -270,7 +276,7 @@ bool ConfigFile::SetSource(const char* file, bool ignorecase)
                         // the setting is done, append it to the current block
                         current_block_map[ahash(current_variable)] = current_setting_struct;
 #ifdef _CONFIG_DEBUG
-                        sLog.outDebug("Block: '%s', Setting: '%s', Value: '%s'", current_block.c_str(), current_variable.c_str(), current_setting_struct.AsString.c_str());
+                        LogDebug("Block: '%s', Setting: '%s', Value: '%s'", current_block.c_str(), current_variable.c_str(), current_setting_struct.AsString.c_str());
 #endif
                         // no longer doing this setting, or in a quote
                         current_setting = "";
@@ -322,7 +328,7 @@ bool ConfigFile::SetSource(const char* file, bool ignorecase)
                             current_block_map[ahash(current_variable)] = current_setting_struct;
 
 #ifdef _CONFIG_DEBUG
-                            sLog.outDebug("Block: '%s', Setting: '%s', Value: '%s'", current_block.c_str(), current_variable.c_str(), current_setting_struct.AsString.c_str());
+                            LogDebug("Block: '%s', Setting: '%s', Value: '%s'", current_block.c_str(), current_variable.c_str(), current_setting_struct.AsString.c_str());
 #endif
                             // no longer doing this setting, or in a quote
                             current_setting = "";
@@ -383,7 +389,7 @@ bool ConfigFile::SetSource(const char* file, bool ignorecase)
                         }
                         else
                         {
-                            sLog.outError("Block without name.");
+                            LogError("Block without name.");
                             return false;
                         }
 
@@ -396,26 +402,26 @@ bool ConfigFile::SetSource(const char* file, bool ignorecase)
         }
         catch (...)
         {
-            sLog.outError("Exception in config parsing.");
+            LogError("Exception in config parsing.");
             return false;
         }
 
         // handle any errors
         if (in_block)
         {
-            sLog.outError("Unterminated block.");
+            LogError("Unterminated block.");
             return false;
         }
 
         if (in_multiline_comment)
         {
-            sLog.outError("Unterminated comment.");
+            LogError("Unterminated comment.");
             return false;
         }
 
         if (in_multiline_quote)
         {
-            sLog.outError("Unterminated quote.");
+            LogError("Unterminated quote.");
             return false;
         }
 

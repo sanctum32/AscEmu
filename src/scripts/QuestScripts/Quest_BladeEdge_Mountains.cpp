@@ -71,7 +71,7 @@ class BladespireQAI : public CreatureAIScript
             if (mKiller->IsPlayer())
             {
                 QuestLogEntry* en = (static_cast<Player*>(mKiller))->GetQuestLogForEntry(10503);
-                if (en && en->GetMobCount(0) < en->GetQuest()->required_mobcount[0])
+                if (en && en->GetMobCount(0) < en->GetQuest()->required_mob_or_go_count[0])
                 {
                     uint32 newcount = en->GetMobCount(0) + 1;
                     en->SetMobCount(0, newcount);
@@ -173,7 +173,7 @@ class FunnyDragon : public CreatureAIScript
             _unit->GetAIInterface()->SetAllowedToEnterCombat(false);
             _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
             _unit->GetAIInterface()->disable_melee = true;
-            _unit->SetEmoteState(0);
+            _unit->SetEmoteState(EMOTE_ONESHOT_NONE);
             _unit->GetAIInterface()->m_canMove = false;
             i = 1;
         }
@@ -263,7 +263,7 @@ class BloodmaulQAI : public CreatureAIScript
                 }
             }
 
-            if (pQuest->GetMobCount(0) < pQuest->GetQuest()->required_mobcount[0])
+            if (pQuest->GetMobCount(0) < pQuest->GetQuest()->required_mob_or_go_count[0])
             {
                 uint32 NewCount = pQuest->GetMobCount(0) + 1;
                 pQuest->SetMobCount(0, NewCount);
@@ -332,13 +332,13 @@ class Stasis_Chamber_Alpha : public GameObjectAIScript
 
 //////////////////////////////////////////////////////////////////////////
 /////// Bladespire Brute/Shaman/Cook
-#define CN_BLADESPIRE_OGRE_1                19995
-#define CN_BLADESPIRE_OGRE_2                19998
-#define CN_BLADESPIRE_OGRE_3                20756
+#define CN_BLADESPIRE_OGRE_1 19995
+#define CN_BLADESPIRE_OGRE_2 19998
+#define CN_BLADESPIRE_OGRE_3 20756
 
 //////////////////////////////////////////////////////////////////////////
 /////// Bloodmaul Brutebane Stout Trigger
-#define CN_BLOODMAUL_BRUTEBANE_STOUT_TRIGGER    21241
+#define CN_BLOODMAUL_BRUTEBANE_STOUT_TRIGGER 21241
 
 class BrutebaneStoutTriggerAI : public MoonScriptCreatureAI
 {
@@ -378,7 +378,7 @@ class BrutebaneStoutTriggerAI : public MoonScriptCreatureAI
             if (GetRange(Ogre) <= 5)
             {
                 Ogre->SetDisplayWeaponIds(28562, 0);
-                Ogre->GetUnit()->SetEmoteState(92);
+                Ogre->GetUnit()->SetEmoteState(EMOTE_ONESHOT_EAT_NOSHEATHE);
                 Ogre->GetUnit()->SetFaction(35);
                 Ogre->GetUnit()->SetStandState(STANDSTATE_SIT);
 
@@ -392,7 +392,7 @@ class BrutebaneStoutTriggerAI : public MoonScriptCreatureAI
                     return;
 
                 QuestLogEntry* qle = plr->GetQuestLogForEntry(10512);
-                if (qle != nullptr && qle->GetMobCount(0) < qle->GetQuest()->required_mobcount[0])
+                if (qle != nullptr && qle->GetMobCount(0) < qle->GetQuest()->required_mob_or_go_count[0])
                 {
                     qle->SetMobCount(0, qle->GetMobCount(0) + 1);
                     qle->SendUpdateAddKill(0);

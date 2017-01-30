@@ -20,6 +20,7 @@
 #ifndef _INSTANCE_BASE_H
 #define _INSTANCE_BASE_H
 
+#include "StdAfx.h"
 
 #define INVALIDATE_TIMER -1
 #define DEFAULT_UPDATE_FREQUENCY 1000       //milliseconds
@@ -35,7 +36,8 @@ enum EncounterState
     State_InProgress    = 1,
     State_Finished      = 2,
     State_Performed     = 3,
-    State_PreProgress   = 4         // for example: violet hold
+    State_PreProgress   = 4,        // for example: violet hold
+    State_InvalidState  = 0xff
 };
 
 enum InstanceType
@@ -128,10 +130,12 @@ class MoonInstanceScript : public InstanceScript
         Creature* GetCreatureBySqlId(uint32 pSqlId);
         Creature* GetCreatureByGuid(uint32 pGuid);
         Creature* FindClosestCreatureOnMap(uint32 pEntry, float pX, float pY, float pZ);
+        Creature* SpawnCreature(uint32 pEntry, Movement::Location pLocation);
         Creature* SpawnCreature(uint32 pEntry, float pX, float pY, float pZ, float pO);
         Creature* SpawnCreature(uint32 pEntry, float pX, float pY, float pZ, float pO, uint32 pFactionId);
         Creature* PushCreature(uint32 pEntry, float pX, float pY, float pZ, float pO, uint32 pFaction = 0);
         CreatureSet FindCreaturesOnMap(uint32 pEntry);
+        CreatureSet FindCreaturesOnMap(std::vector<uint32> pEntries);
 
         // GameObject
         GameObject* GetGameObjectBySqlId(uint32 pSqlId);
@@ -188,7 +192,7 @@ class MoonInstanceScript : public InstanceScript
         virtual void OnGameObjectPushToWorld(GameObject* pGameObject);
 
         // Reimplemented events
-        virtual GameObject* GetObjectForOpenLock(Player* pCaster, Spell* pSpell, SpellEntry* pSpellEntry);
+        virtual GameObject* GetObjectForOpenLock(Player* pCaster, Spell* pSpell, SpellInfo* pSpellEntry);
         virtual void SetLockOptions(uint32 pEntryId, GameObject* pGameObject);
         virtual uint32 GetRespawnTimeForCreature(uint32 pEntryId, Creature* pCreature);
 

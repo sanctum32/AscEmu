@@ -1,19 +1,6 @@
 /*
- * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ This file is released under the MIT license. See README-MIT for more information.
  */
 
 #include "Setup.h"
@@ -32,38 +19,38 @@ class BlackCat : public MoonScriptCreatureAI
 };
 
 /// HEADLESS HORSEMAN ENCOUNTER
-static LocationExtra WaypointGoldshire[] =
+static Movement::LocationWithFlag WaypointGoldshire[] =
 {
-    { -9502.733398f, 31.395960f, 60.433193f, 1.217366f, Flag_Fly }, // 0
-    { -9493.925781f, 55.272415f, 60.433193f, 0.781469f, Flag_Fly },
-    { -9483.589844f, 63.685684f, 60.433193f, 6.224273f, Flag_Fly },
-    { -9463.258789f, 62.515587f, 60.433193f, 6.204639f, Flag_Fly },
-    { -9457.368164f, 48.343132f, 66.931587f, 4.641701f, Flag_Fly },
-    { -9458.772461f, 27.414370f, 77.199722f, 4.001603f, Flag_Fly },
-    { -9473.457031f, 29.496262f, 77.199722f, 1.394081f, Flag_Fly },
-    { -9471.234275f, 44.239151f, 75.393852f, 1.241714f, Flag_Fly },
-    { -9459.474609f, 81.118446f, 71.725540f, 1.720021f, Flag_Fly },
-    { -9467.220703f, 88.311104f, 71.786453f, 2.572178f, Flag_Fly }, // 9
-    { -9486.188477f, 83.939690f, 82.718826f, 3.569634f, Flag_Fly }, // 10 Starting round (3 rounds left)
-    { -9506.228516f, 36.876194f, 89.180916f, 6.167746f, Flag_Fly },
-    { -9437.569396f, 34.403599f, 75.426025f, 1.270783f, Flag_Fly },
-    { -9448.488281f, 85.930862f, 75.290497f, 2.909909f, Flag_Fly },
-    { -9477.427734f, 86.952667f, 70.950249f, 3.318317f, Flag_Fly }, // 14
-    { -9486.188477f, 83.939690f, 82.718826f, 3.569634f, Flag_Fly }, // 15 Next round (2 rounds left)
-    { -9506.228516f, 36.876194f, 89.180916f, 6.167746f, Flag_Fly },
-    { -9437.569396f, 34.403599f, 75.426025f, 1.270783f, Flag_Fly },
-    { -9448.488281f, 85.930862f, 75.290497f, 2.909909f, Flag_Fly },
-    { -9477.427734f, 86.952667f, 70.950249f, 3.318317f, Flag_Fly }, // 19
-    { -9486.188477f, 83.939690f, 82.718826f, 3.569634f, Flag_Fly }, // 20 Next round (1 rounds left)
-    { -9506.228516f, 36.876194f, 89.180916f, 6.167746f, Flag_Fly },
-    { -9437.569396f, 34.403599f, 75.426025f, 1.270783f, Flag_Fly },
-    { -9448.488281f, 85.930862f, 75.290497f, 2.909909f, Flag_Fly },
-    { -9477.427734f, 86.952667f, 70.950249f, 3.318317f, Flag_Fly }, // 24
-    { -9486.188477f, 83.939690f, 82.718826f, 3.569634f, Flag_Fly }, // 25 Next round (0 rounds left)
-    { -9506.228516f, 36.876194f, 89.180916f, 6.167746f, Flag_Fly },
-    { -9437.569396f, 34.403599f, 75.426025f, 1.270783f, Flag_Fly },
-    { -9448.488281f, 85.930862f, 75.290497f, 2.909909f, Flag_Fly },
-    { -9477.427734f, 86.952667f, 70.950249f, 3.318317f, Flag_Fly }  // 29
+    { -9502.733398f, 31.395960f, 60.433193f, 1.217366f, Movement::WP_MOVE_TYPE_FLY }, // 0
+    { -9493.925781f, 55.272415f, 60.433193f, 0.781469f, Movement::WP_MOVE_TYPE_FLY },
+    { -9483.589844f, 63.685684f, 60.433193f, 6.224273f, Movement::WP_MOVE_TYPE_FLY },
+    { -9463.258789f, 62.515587f, 60.433193f, 6.204639f, Movement::WP_MOVE_TYPE_FLY },
+    { -9457.368164f, 48.343132f, 66.931587f, 4.641701f, Movement::WP_MOVE_TYPE_FLY },
+    { -9458.772461f, 27.414370f, 77.199722f, 4.001603f, Movement::WP_MOVE_TYPE_FLY },
+    { -9473.457031f, 29.496262f, 77.199722f, 1.394081f, Movement::WP_MOVE_TYPE_FLY },
+    { -9471.234275f, 44.239151f, 75.393852f, 1.241714f, Movement::WP_MOVE_TYPE_FLY },
+    { -9459.474609f, 81.118446f, 71.725540f, 1.720021f, Movement::WP_MOVE_TYPE_FLY },
+    { -9467.220703f, 88.311104f, 71.786453f, 2.572178f, Movement::WP_MOVE_TYPE_FLY }, // 9
+    { -9486.188477f, 83.939690f, 82.718826f, 3.569634f, Movement::WP_MOVE_TYPE_FLY }, // 10 Starting round (3 rounds left)
+    { -9506.228516f, 36.876194f, 89.180916f, 6.167746f, Movement::WP_MOVE_TYPE_FLY },
+    { -9437.569396f, 34.403599f, 75.426025f, 1.270783f, Movement::WP_MOVE_TYPE_FLY },
+    { -9448.488281f, 85.930862f, 75.290497f, 2.909909f, Movement::WP_MOVE_TYPE_FLY },
+    { -9477.427734f, 86.952667f, 70.950249f, 3.318317f, Movement::WP_MOVE_TYPE_FLY }, // 14
+    { -9486.188477f, 83.939690f, 82.718826f, 3.569634f, Movement::WP_MOVE_TYPE_FLY }, // 15 Next round (2 rounds left)
+    { -9506.228516f, 36.876194f, 89.180916f, 6.167746f, Movement::WP_MOVE_TYPE_FLY },
+    { -9437.569396f, 34.403599f, 75.426025f, 1.270783f, Movement::WP_MOVE_TYPE_FLY },
+    { -9448.488281f, 85.930862f, 75.290497f, 2.909909f, Movement::WP_MOVE_TYPE_FLY },
+    { -9477.427734f, 86.952667f, 70.950249f, 3.318317f, Movement::WP_MOVE_TYPE_FLY }, // 19
+    { -9486.188477f, 83.939690f, 82.718826f, 3.569634f, Movement::WP_MOVE_TYPE_FLY }, // 20 Next round (1 rounds left)
+    { -9506.228516f, 36.876194f, 89.180916f, 6.167746f, Movement::WP_MOVE_TYPE_FLY },
+    { -9437.569396f, 34.403599f, 75.426025f, 1.270783f, Movement::WP_MOVE_TYPE_FLY },
+    { -9448.488281f, 85.930862f, 75.290497f, 2.909909f, Movement::WP_MOVE_TYPE_FLY },
+    { -9477.427734f, 86.952667f, 70.950249f, 3.318317f, Movement::WP_MOVE_TYPE_FLY }, // 24
+    { -9486.188477f, 83.939690f, 82.718826f, 3.569634f, Movement::WP_MOVE_TYPE_FLY }, // 25 Next round (0 rounds left)
+    { -9506.228516f, 36.876194f, 89.180916f, 6.167746f, Movement::WP_MOVE_TYPE_FLY },
+    { -9437.569396f, 34.403599f, 75.426025f, 1.270783f, Movement::WP_MOVE_TYPE_FLY },
+    { -9448.488281f, 85.930862f, 75.290497f, 2.909909f, Movement::WP_MOVE_TYPE_FLY },
+    { -9477.427734f, 86.952667f, 70.950249f, 3.318317f, Movement::WP_MOVE_TYPE_FLY }  // 29
 };
 
 /// Headless HorsemanAI
@@ -131,7 +118,7 @@ class ShadeOfTheHorsemanAI : public MoonScriptCreatureAI
                     WayPoints = WaypointGoldshire;
                     for (uint8 i = 0; i <= WPCount; ++i)
                     {
-                        AddWaypoint(CreateWaypoint(i, 0, WayPoints[i].addition, WayPoints[i]));
+                        AddWaypoint(CreateWaypoint(i, 0, WayPoints[i]));
                     }
                 } break;
                 default:
@@ -187,7 +174,7 @@ class ShadeOfTheHorsemanAI : public MoonScriptCreatureAI
     }
 
     int8 WPCount;
-    LocationExtra* WayPoints;
+    Movement::LocationWithFlag* WayPoints;
     SpellDesc* mSummon;
 };
 
@@ -234,7 +221,7 @@ class WaterBarrel : public GameObjectAIScript
         void OnActivate(Player* pPlayer)
         {
             SlotResult slotresult;
-            ItemPrototype* proto = ItemPrototypeStorage.LookupEntry(32971);
+            ItemProperties const* proto = sMySQLStore.GetItemProperties(32971);
             if (!proto)
                 return;
 
@@ -256,7 +243,7 @@ class WaterBarrel : public GameObjectAIScript
                     auto result = pPlayer->GetItemInterface()->SafeAddItem(itm, slotresult.ContainerSlot, slotresult.Slot);
                     if (!result)
                     {
-                        Log.Error("Event_Hallows_End", "Error while adding item %u to player %s", itm->GetEntry(), pPlayer->GetNameString());
+                        LOG_ERROR("Error while adding item %u to player %s", itm->GetEntry(), pPlayer->GetNameString());
                         itm->DeleteMe();
                     }
                 }

@@ -1,15 +1,14 @@
 # Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org>
 
 # set up our project name
-project(shared)
+project(shared CXX)
 
 set(sources
     CThreads.cpp
     CrashHandler.cpp
-    Log.cpp
+    Log.Legacy.cpp
     MersenneTwister.cpp
     printStackTrace.cpp
-    Util.cpp
     crc32.cpp
     MapFile.cpp
     MapFileEntry.cpp
@@ -33,54 +32,54 @@ set(sources
     Auth/WowCrypt.cpp
     Config/Config.cpp
     Database/Database.cpp
-	Database/Field.cpp
     Database/MySQLDatabase.cpp
     Database/CreateInterface.cpp
     Network/CircularBuffer.cpp
     Network/Socket.cpp
+    
+    Log.cpp
+    Util.cpp
 )
 
 set(headers
+	Array.h
 	ascemu_getopt.h
     AscemuServerDefines.hpp
-	Array.h
 	AuthCodes.h
 	ByteBuffer.h
 	CallBack.h
 	CircularQueue.h
-	Common.h
-    CommonTypes.hpp
-    CommonHelpers.hpp
+	Common.Legacy.h
     CommonDefines.hpp
+    CommonHelpers.hpp
+    CommonTypes.hpp
 	CrashHandler.h
 	crc32.h
 	CRefcounter.h
 	CThreads.h
-	Database/DatabaseEnv.h
-	DynLib.hpp
+    DynLib.hpp
 	Errors.h
 	FastQueue.h
 	FindFiles.hpp
 	FindFilesResult.hpp
 	LocationVector.h
-	Log.h
+	Log.Legacy.h
 	MapFile.h
 	MapFileEntry.h
 	MersenneTwister.h
 	PerformanceCounter.hpp
 	PreallocatedQueue.h
 	printStackTrace.h
+	Database/DatabaseEnv.h
 	RC4Engine.h
 	Singleton.h
-	StackBuffer.h
-	StackWalker.h
-	StackTrace.h
-	Storage.h
 	SysInfo.hpp
+	StackBuffer.h
+	StackTrace.h
+	StackWalker.h
 	TextFile.h
+	Timer.h
 	TLSObject.h
-	Tokenizer.h
-	Util.h
 	WorldPacket.h
 	WoWGuid.h
 	Auth/BigNumber.h
@@ -88,11 +87,11 @@ set(headers
 	Auth/Sha1.h
 	Auth/WowCrypt.h
 	Config/Config.h
-	Config/ConfigEnv.h
 	Database/Database.h
-	Database/DataStore.h
 	Database/Field.h
 	Database/MySQLDatabase.h
+    Exceptions/Exceptions.hpp
+    Exceptions/PlayerExceptions.hpp
 	Network/CircularBuffer.h
 	Network/ListenSocketFreeBSD.h
 	Network/ListenSocketLinux.h
@@ -118,6 +117,11 @@ set(headers
 	Threading/Threading.h
 	Threading/ThreadPool.h
 	Threading/ThreadStarter.h
+	
+	Common.hpp
+	Log.hpp
+	LogDefines.hpp
+	Util.hpp
 )
 
 if(WIN32)
@@ -136,7 +140,7 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME} STATIC ${sources} ${headers})
-target_link_libraries(${PROJECT_NAME} ${ZLIB_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}  ${MYSQL_LIBRARIES} ${OPENSSL_LIBRARIES} ${EXTRA_LIBS})
+target_link_libraries(${PROJECT_NAME} ${ZLIB_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${MYSQL_LIBRARIES} ${OPENSSL_LIBRARIES} ${EXTRA_LIBS})
 
 unset(sources)
 unset(headers)

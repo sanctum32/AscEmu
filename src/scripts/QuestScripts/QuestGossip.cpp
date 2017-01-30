@@ -45,7 +45,7 @@ class Lady_Jaina : public GossipScript
                     break;
                 case 1: // Give Item
                 {
-                    plr->CastSpell(plr, dbcSpell.LookupEntry(23122), true);
+                    plr->CastSpell(plr, sSpellCustomizations.GetSpellInfo(23122), true);
                     plr->Gossip_Complete();
                     break;
                 }
@@ -81,7 +81,7 @@ class Cairne : public GossipScript
                 {
                     objmgr.CreateGossipMenuForPlayer(&Menu, pObject->GetGUID(), 7014, plr);
                     Menu->SendTo(plr);
-                    plr->CastSpell(plr, dbcSpell.LookupEntry(23123), true);
+                    plr->CastSpell(plr, sSpellCustomizations.GetSpellInfo(23123), true);
                     break;
                 }
                 break;
@@ -98,11 +98,11 @@ class TeleportQ_Gossip : public GossipScript
 
         void GossipHello(Object* pObject, Player* plr)
         {
-            uint32 Text = objmgr.GetGossipTextForNpc(static_cast<Creature*>(pObject)->GetEntry());
+            uint32 Text = sMySQLStore.GetGossipTextIdForNpc(static_cast<Creature*>(pObject)->GetEntry());
 
             // check if there is a entry in the db
-            if (NpcTextStorage.LookupEntry(Text) == NULL)
-                return;
+            if (sMySQLStore.GetNpcText(Text) == nullptr)
+                Text = DefaultGossipTextId;
 
             Arcemu::Gossip::Menu menu(pObject->GetGUID(), Text, plr->GetSession()->language);
             sQuestMgr.FillQuestMenu(static_cast<Creature*>(pObject), plr, menu);
