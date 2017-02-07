@@ -21,6 +21,8 @@
 #ifndef _MAP_CELL_H
 #define _MAP_CELL_H
 
+#include "Map/Map.h"
+class Object;
 class Map;
 
 #define MAP_CELL_DEFAULT_UNLOAD_TIME 300

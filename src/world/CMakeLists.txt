@@ -1,12 +1,9 @@
-# Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org>
+# Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
 
 # set up our project name
 project(world CXX)
 
-include(GameClassic/CMakeLists.txt)
-include(GameBC/CMakeLists.txt)
-include(GameLK/CMakeLists.txt)
-include(GameCata/CMakeLists.txt)
+include(Game${ASCEMU_VERSION}/CMakeLists.txt)
 
 include(Chat/CMakeLists.txt)
 include(Chat/Commands/CMakeLists.txt)

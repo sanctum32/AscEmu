@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org>
+# Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
 
 set(PATH_PREFIX Movement/Spline)
 
@@ -8,6 +8,7 @@ set(SRC_MOVEMENT_SPLINE_FILES
    ${PATH_PREFIX}/MovementSplineDefines.hpp
    ${PATH_PREFIX}/SplineFlags.cpp
    ${PATH_PREFIX}/SplineFlags.hpp
+   ${PATH_PREFIX}/MonsterMoveFaceType.h
 )
 
 source_group(Movement\\Spline FILES ${SRC_MOVEMENT_SPLINE_FILES})

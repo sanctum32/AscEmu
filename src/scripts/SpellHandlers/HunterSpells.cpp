@@ -18,6 +18,9 @@
  */
 
 #include "Setup.h"
+#include "Spell/SpellNameHashes.h"
+#include "Spell/SpellAuras.h"
+#include "Server/Script/ScriptMgr.h"
 
 bool Refocus(uint32 i, Spell* pSpell)
 {

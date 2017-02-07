@@ -20,6 +20,10 @@
  */
 
 #include "StdAfx.h"
+#include "Server/Console/BaseConsole.h"
+#include "Server/Console/CConsole.h"
+#include "Log.hpp"
+
 LocalConsole g_localConsole;
 
 #ifndef WIN32

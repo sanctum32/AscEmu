@@ -21,6 +21,14 @@
 #ifndef _THREADING_STARTER_H
 #define _THREADING_STARTER_H
 
+#include "CommonTypes.hpp"
+#ifdef WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#else
+#include <pthread.h>
+#endif
+
 class SERVER_DECL ThreadBase
 {
     public:

@@ -20,7 +20,9 @@
  */
 
 #include "StdAfx.h"
-
+#include "Management/TaxiMgr.h"
+#include "Storage/MySQLDataStore.hpp"
+#include "Map/MapMgr.h"
 
 void WorldSession::HandleTaxiNodeStatusQueryOpcode(WorldPacket& recv_data)
 {

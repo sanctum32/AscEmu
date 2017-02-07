@@ -18,6 +18,11 @@
  */
 
 #include "Setup.h"
+#include "Units/Stats.h"
+#include "Storage/MySQLDataStore.hpp"
+#include "Map/MapMgr.h"
+#include "Spell/SpellMgr.h"
+#include "Spell/SpellAuras.h"
 
 //////////////////////////////////////////////////////////////
 //bool SoulLinkParent( uint32 i, Spell *s )

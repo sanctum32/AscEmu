@@ -22,6 +22,16 @@
 #include "StdAfx.h"
 #include "Creature.h"
 #include "Units/Unit.h"
+#include "Objects/DynamicObject.h"
+#include "Server/Packets/Handlers/HonorHandler.h"
+#include "Spell/SpellNameHashes.h"
+#include "Units/Stats.h"
+#include "Management/Battleground/Battleground.h"
+#include "Storage/MySQLDataStore.hpp"
+#include "Server/MainServerDefines.h"
+#include "Map/MapMgr.h"
+#include "Spell/SpellMgr.h"
+#include "Spell/SpellAuras.h"
 
 #define WATER_ELEMENTAL         510
 #define WATER_ELEMENTAL_NEW     37994
@@ -334,7 +344,7 @@ void Pet::Update(unsigned long time_passed)
         if (m_HappinessTimer == 0)
         {
             int32 burn = 1042;          //Based on WoWWiki pet looses 50 happiness over 6 min => 1042 every 7.5 s
-            if (CombatStatus.IsInCombat())
+            if (isInCombat())
                 burn >>= 1;             //in combat reduce burn by half (guessed)
             ModPower(POWER_TYPE_HAPPINESS, -burn);
             m_HappinessTimer = PET_HAPPINESS_UPDATE_TIMER;  // reset timer
@@ -1834,7 +1844,7 @@ void Pet::DealDamage(Unit* pVictim, uint32 damage, uint32 targetEvent, uint32 un
         return;
 
     if (pVictim != this)
-        CombatStatus.OnDamageDealt(pVictim);
+        onDamageDealt(pVictim);
 
     pVictim->SetStandState(STANDSTATE_STAND);
 
@@ -1899,11 +1909,8 @@ void Pet::DealDamage(Unit* pVictim, uint32 damage, uint32 targetEvent, uint32 un
 
             if (m_Owner->getLevel() >= (pVictim->getLevel() - 8) && (GetGUID() != pVictim->GetGUID()))
             {
-
-#ifdef ENABLE_ACHIEVEMENTS
                 m_Owner->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL_AT_AREA, m_Owner->GetAreaID(), 1, 0);
                 m_Owner->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_EARN_HONORABLE_KILL, 1, 0, 0);
-#endif
                 HonorHandler::OnPlayerKilled(m_Owner, playerVictim);
                 setAurastateFlag = true;
 
@@ -1925,11 +1932,7 @@ void Pet::DealDamage(Unit* pVictim, uint32 damage, uint32 targetEvent, uint32 un
             if (pVictim->IsCreature())
             {
                 m_Owner->Reputation_OnKilledUnit(pVictim, false);
-
-#ifdef ENABLE_ACHIEVEMENTS
                 m_Owner->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_KILLING_BLOW, GetMapId(), 0, 0);
-#endif
-
             }
         }
 
@@ -2019,7 +2022,6 @@ void Pet::DealDamage(Unit* pVictim, uint32 damage, uint32 targetEvent, uint32 un
 
                             //////////////////////////////////////////////////////////////////////////////////////////
                             //Kill creature/creature type Achievements
-#ifdef ENABLE_ACHIEVEMENTS
                             if (player_tagger->InGroup())
                             {
                                 auto player_group = player_tagger->GetGroup();
@@ -2033,21 +2035,17 @@ void Pet::DealDamage(Unit* pVictim, uint32 damage, uint32 targetEvent, uint32 un
                                 player_tagger->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_KILL_CREATURE, pVictim->GetEntry(), 1, 0);
                                 player_tagger->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_KILL_CREATURE_TYPE, GetHighGUID(), GetLowGUID(), 0);
                             }
-#endif
                         }
                     }
                 }
             }
         }
 
-#ifdef ENABLE_ACHIEVEMENTS
         if (pVictim->isCritter())
         {
             m_Owner->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_KILL_CREATURE, pVictim->GetEntry(), 1, 0);
             m_Owner->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_KILL_CREATURE_TYPE, GetHighGUID(), GetLowGUID(), 0);
         }
-#endif
-
     }
     else
     {
@@ -2142,7 +2140,7 @@ void Pet::Die(Unit* pAttacker, uint32 damage, uint32 spellid)
     SetHealth(0);
 
     // Wipe our attacker set on death
-    CombatStatus.Vanished();
+    clearAllCombatTargets();
 
     CALL_SCRIPT_EVENT(pAttacker, OnTargetDied)(this);
     pAttacker->smsg_AttackStop(this);

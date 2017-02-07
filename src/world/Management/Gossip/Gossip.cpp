@@ -19,7 +19,9 @@
  */
 
 #include "StdAfx.h"
-
+#include "Storage/MySQLDataStore.hpp"
+#include "Management/Item.h"
+#include "Management/LocalizationMgr.h"
 
 using namespace Arcemu;
 
@@ -225,10 +227,12 @@ void Gossip::Menu::SendQuickMenu(uint64 guid, size_t textid, Player* Plr, size_t
     packet << extra;
     packet << uint32(requiredmoney);
     packet << itemtexts;
+
     if (moneytext != NULL)
         packet << moneytexts;
     else
         packet << uint8(0);
+
     packet << uint32(0);
     Plr->GetSession()->SendPacket(&packet);
 }

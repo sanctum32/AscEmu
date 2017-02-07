@@ -20,8 +20,18 @@
  */
 
 #include "StdAfx.h"
+
+#include "WorldConf.h"
+#include "Management/GameEvent.h"
+#include "Management/Gossip/GossipMenu.hpp"
+#include "Management/Item.h"
+#include "Storage/MySQLDataStore.hpp"
 #include <git_version.h>
+
+#include <fstream>
 #include <mutex>
+#include "Map/MapMgr.h"
+#include "Spell/SpellAuras.h"
 
 
 initialiseSingleton(ScriptMgr);

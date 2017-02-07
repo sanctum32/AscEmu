@@ -20,7 +20,15 @@
  */
 
 #include "StdAfx.h"
-
+#include "Management/Item.h"
+#include "Management/AuctionHouse.h"
+#include "Management/AuctionMgr.h"
+#include "Management/ItemInterface.h"
+#include "Storage/MySQLDataStore.hpp"
+#include "Management/LocalizationMgr.h"
+#include "Server/MainServerDefines.h"
+#include "Map/MapMgr.h"
+#include "Spell/SpellAuras.h"
 
 trainertype trainer_types[TRAINER_TYPE_MAX] =
 {
@@ -222,8 +230,8 @@ void WorldSession::HandleTrainerBuySpellOpcode(WorldPacket & recvPacket)
     else
     {
         //Showing the learning spellvisuals
-        _player->SendPlaySpellVisual(pCreature->GetGUID(), 0x5B3);
-        _player->SendPlaySpellVisual(_player->GetGUID(), 0x16A);
+        _player->PlaySpellVisual(pCreature->GetGUID(), 1459);
+        _player->PlaySpellVisual(_player->GetGUID(), 362);
 
         // add the spell itself
         _player->addSpell(pSpell->pLearnSpell->Id);

@@ -20,6 +20,8 @@
  */
 
 #include "StdAfx.h"
+#include "Management/Container.h"
+#include "Storage/MySQLDataStore.hpp"
 
 Container::Container(uint32 high, uint32 low) : Item()
 {
@@ -173,9 +175,7 @@ bool Container::AddItem(int16 slot, Item* item)
         uint32 count = item->BuildCreateUpdateBlockForPlayer(&buf, m_owner);
         m_owner->PushCreationData(&buf, count);
     }
-#ifdef ENABLE_ACHIEVEMENTS
     m_owner->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_OWN_ITEM, item->GetItemProperties()->ItemId, item->GetStackCount(), 0);
-#endif
     return true;
 }
 
@@ -321,9 +321,7 @@ bool Container::AddItemToFreeSlot(Item* pItem, uint32* r_slot)
             }
             if (r_slot)
                 *r_slot = slot;
-#ifdef ENABLE_ACHIEVEMENTS
             m_owner->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_OWN_ITEM, pItem->GetItemProperties()->ItemId, pItem->GetStackCount(), 0);
-#endif
             return true;
         }
     }

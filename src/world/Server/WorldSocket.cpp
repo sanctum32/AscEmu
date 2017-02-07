@@ -23,7 +23,12 @@
 
 #include "StdAfx.h"
 #include "AuthCodes.h"
-
+#include "Management/AddonMgr.h"
+#include "Server/LogonCommClient/LogonCommHandler.h"
+#include "Management/LocalizationMgr.h"
+#include "Server/MainServerDefines.h"
+#include "Auth/Sha1.h"
+#include "World.h"
 
 #pragma pack(push, 1)
 struct ClientPktHeader

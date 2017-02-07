@@ -17,9 +17,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
-#ifndef _PLAYER_H
-#define _PLAYER_H
+#pragma once
 
 #include "Units/Players/PlayerDefines.hpp"
 #include "Server/Packets/Handlers/PlayerCache.h"
@@ -29,15 +27,14 @@
 #include "Management/MailMgr.h"
 #include "Management/ItemPrototype.h"
 #include "Management/AchievementMgr.h"
-#include "Units//Unit.h"
+#include "Units/Unit.h"
 #include "Storage/DBC/DBCStructures.hpp"
+#include "Units/Creatures/AIInterface.h" //?? what?
 
 
 class QuestLogEntry;
 struct BGScore;
-#ifdef ENABLE_ACHIEVEMENTS
 class AchievementMgr;
-#endif
 class Channel;
 class Creature;
 class Battleground;
@@ -64,6 +61,8 @@ struct CharClassEntry;
 struct VendorRestrictionEntry;
 struct Trainer;
 class Aura;
+
+struct OnHitSpell;
 
 #pragma pack(push,1)
 struct ActionButton
@@ -253,10 +252,7 @@ struct classScriptOverride
     bool percent;
 };
 
-#ifdef ENABLE_ACHIEVEMENTS
 class AchievementMgr;
-#endif
-
 class Spell;
 class Item;
 class Container;
@@ -350,7 +346,6 @@ class SERVER_DECL Player : public Unit
 {
     friend class WorldSession;
     friend class Pet;
-    friend class SkillIterator;
 
     public:
         
@@ -358,8 +353,7 @@ class SERVER_DECL Player : public Unit
 
         Player(uint32 guid);
         ~Player();
-
-        PlayerCache* m_cache;
+    PlayerCache* m_cache;
 
         virtual bool IsMage() { return false; }
         virtual bool IsDeathKnight() { return false; }
@@ -1714,7 +1708,7 @@ class SERVER_DECL Player : public Unit
         void SendItemPushResult(bool created, bool recieved, bool sendtoset, bool newitem,  uint8 destbagslot, uint32 destslot, uint32 count, uint32 entry, uint32 suffix, uint32 randomprop, uint32 stack);
         void SendSetProficiency(uint8 ItemClass, uint32 Proficiency);
         void SendLoginVerifyWorld(uint32 MapId, float X, float Y, float Z, float O);
-        void SendPlaySpellVisual(uint64 guid, uint32 visualid);
+
         void SendNewDrunkState(uint32 state, uint32 itemid);
 
         /////////////////////////////////////////////////////////////////////////////////////////
@@ -1887,6 +1881,7 @@ class SERVER_DECL Player : public Unit
         uint32 m_tradeSequence;
         bool m_changingMaps;
 
+        void PlaySoundToPlayer(uint64_t from_guid, uint32_t sound_id);
         void PlaySound(uint32 sound_id);
 
         void SendGuildMOTD();
@@ -1962,10 +1957,8 @@ class SERVER_DECL Player : public Unit
         void ToggleXpGain();
         bool CanGainXp();
 
-#ifdef ENABLE_ACHIEVEMENTS
         AchievementMgr & GetAchievementMgr() { return m_achievementMgr; }
         AchievementMgr m_achievementMgr;
-#endif
 
         /////////////////////////////////////////////////////////////////////////////////////////
         // Talent Specs
@@ -2011,59 +2004,3 @@ class SERVER_DECL Player : public Unit
         float go_last_x_rotation;
         float go_last_y_rotation;
 };
-
-class SkillIterator
-{
-    SkillMap::iterator m_itr;
-    SkillMap::iterator m_endItr;
-    bool m_searchInProgress;
-    Player* m_target;
-
-    public:
-
-        SkillIterator(Player* target) : m_searchInProgress(false), m_target(target) {}
-        ~SkillIterator() { if (m_searchInProgress) { EndSearch(); } }
-
-        void BeginSearch()
-        {
-            ///\todo iteminterface doesn't use mutexes, maybe it should :P
-            ARCEMU_ASSERT(!m_searchInProgress);
-            m_itr = m_target->m_skills.begin();
-            m_endItr = m_target->m_skills.end();
-            m_searchInProgress = true;
-        }
-
-        void EndSearch()
-        {
-            // nothing here either
-            ARCEMU_ASSERT(m_searchInProgress);
-            m_searchInProgress = false;
-        }
-
-        PlayerSkill* operator*() const
-        {
-            return &m_itr->second;
-        }
-
-        PlayerSkill* operator->() const
-        {
-            return &m_itr->second;
-        }
-
-        void Increment()
-        {
-            if (!m_searchInProgress)
-                BeginSearch();
-
-            if (m_itr == m_endItr)
-                return;
-
-            ++m_itr;
-        }
-
-        PlayerSkill* Grab() { return &m_itr->second; }
-        bool End() { return (m_itr == m_endItr) ? true : false; }
-
-};
-
-#endif // _PLAYER_H

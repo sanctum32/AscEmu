@@ -21,6 +21,24 @@
 #ifndef UNITFUNCTIONS_H
 #define UNITFUNCTIONS_H
 
+#include "Units/Unit.h"
+#include "Spell/Customization/SpellCustomizations.hpp"
+#include "Units/Summons/SummonHandler.h"
+#include "Units/Creatures/Vehicle.h"
+#include "Units/Creatures/Creature.h"
+#include "Units/Summons/Summon.h"
+#include "Management/Item.h"
+#include "Management/Container.h"
+#include "Map/MapMgr.h"
+#include "Units/Stats.h"
+#include "Management/ChannelMgr.h"
+#include "Management/Channel.h"
+#include "Storage/MySQLDataStore.hpp"
+#include "Server/MainServerDefines.h"
+#include "Management/Group.h"
+#include "Objects/Faction.h"
+#include "Spell/SpellAuras.h"
+
 class LuaUnit
 {
     public:
@@ -264,12 +282,6 @@ class LuaUnit
             case TYPEID_PLAYER:
                 p_target = static_cast<Player*>(ptr);
                 p_target->Phase(PHASE_SET, newphase);
-                if (p_target->GetSession())
-                {
-                    WorldPacket data(SMSG_SET_PHASE_SHIFT, 4);
-                    data << newphase;
-                    p_target->GetSession()->SendPacket(&data);
-                }
                 break;
 
             default:
@@ -306,12 +318,6 @@ class LuaUnit
             case TYPEID_PLAYER:
                 p_target = static_cast<Player*>(ptr);
                 p_target->Phase(PHASE_ADD, newphase);
-                if (p_target->GetSession())
-                {
-                    WorldPacket data(SMSG_SET_PHASE_SHIFT, 4);
-                    data << p_target->m_phase;
-                    p_target->GetSession()->SendPacket(&data);
-                }
                 break;
 
             default:
@@ -348,12 +354,6 @@ class LuaUnit
             case TYPEID_PLAYER:
                 p_target = static_cast<Player*>(ptr);
                 p_target->Phase(PHASE_DEL, newphase);
-                if (p_target->GetSession())
-                {
-                    WorldPacket data(SMSG_SET_PHASE_SHIFT, 4);
-                    data << p_target->m_phase;
-                    p_target->GetSession()->SendPacket(&data);
-                }
                 break;
 
             default:
@@ -404,7 +404,7 @@ class LuaUnit
     {
         TEST_UNIT()
             // If Pointer isn't in combat skip everything
-            if (!ptr->CombatStatus.IsInCombat())
+            if (!ptr->isInCombat())
                 return 0;
 
         Unit* pTarget = ptr->GetAIInterface()->getNextTarget();
@@ -757,7 +757,7 @@ class LuaUnit
     {
         if (ptr == NULL || !ptr->IsInWorld())
             RET_NIL()
-            if (ptr->CombatStatus.IsInCombat())
+            if (ptr->isInCombat())
                 lua_pushboolean(L, 1);
             else
                 lua_pushboolean(L, 0);
@@ -830,9 +830,6 @@ class LuaUnit
         int waittime = static_cast<int>(luaL_checkinteger(L, 5));
         int flags = static_cast<int>(luaL_checkinteger(L, 6));
         int modelid = static_cast<int>(luaL_checkinteger(L, 7));
-
-        if (ptr == nullptr)
-            return 0;
 
         Creature* pCreature = static_cast<Creature*>(ptr);
         if (!pCreature->m_custom_waypoint_map)
@@ -1197,11 +1194,7 @@ class LuaUnit
         TEST_PLAYER();
         uint32 soundid = static_cast<uint32>(luaL_checkinteger(L, 1));
         Player* plr = static_cast<Player*>(ptr);
-        WorldPacket data;
-        data.Initialize(SMSG_PLAY_OBJECT_SOUND);
-        data << uint32(soundid);
-        data << plr->GetGUID();
-        plr->GetSession()->SendPacket(&data);
+        plr->PlaySoundToPlayer(plr->GetGUID(), soundid);
         return 0;
     }
 
@@ -1508,13 +1501,13 @@ class LuaUnit
     {
         //should use now instead of GetTarget
         TEST_PLAYER()
-            if (!ptr->CombatStatus.IsInCombat())
+            if (!ptr->isInCombat())
             {
                 lua_pushinteger(L, 0);
                 return 1;
             }
             else
-                PUSH_UNIT(L, ptr->GetMapMgr()->GetUnit(static_cast<Player*>(ptr)->CombatStatus.GetPrimaryAttackTarget()));
+                PUSH_UNIT(L, ptr->GetMapMgr()->GetUnit(static_cast<Player*>(ptr)->getPrimaryAttackTarget()));
         return 1;
     }
 
@@ -2006,10 +1999,7 @@ class LuaUnit
         if (ptr == nullptr)
             return 0;
 
-        WorldPacket data(SMSG_MOVE_SET_HOVER, 13);
-        data << ptr->GetNewGUID();
-        data << uint32(0);
-        ptr->SendMessageToSet(&data, true);
+        ptr->SetHover(true);
         ptr->GetAIInterface()->disable_melee = true;
         ptr->GetAIInterface()->SetFly();
         ptr->Emote(EMOTE_ONESHOT_LIFTOFF);
@@ -2021,10 +2011,7 @@ class LuaUnit
         if (ptr == nullptr)
             return 0;
 
-        WorldPacket data(SMSG_MOVE_UNSET_HOVER, 13);
-        data << ptr->GetNewGUID();
-        data << uint32(0);
-        ptr->SendMessageToSet(&data, true);
+        ptr->SetHover(false);
         ptr->GetAIInterface()->StopFlying();
         ptr->GetAIInterface()->disable_melee = false;
         ptr->Emote(EMOTE_ONESHOT_LAND);
@@ -3828,10 +3815,7 @@ class LuaUnit
         uint32 spell = static_cast<uint32>(luaL_checkinteger(L, 2));
         if (ptr && guid && spell)
         {
-            WorldPacket data(SMSG_PLAY_SPELL_VISUAL, 12);
-            data << guid;
-            data << uint32(spell);
-            ptr->SendMessageToSet(&data, ptr->IsPlayer());
+            ptr->PlaySpellVisual(guid, spell);
         }
         return 1;
     }
@@ -4834,22 +4818,14 @@ class LuaUnit
     static int EnableFlight(lua_State* L, Unit* ptr)
     {
         TEST_PLAYER()
-            bool Switch = CHECK_BOOL(L, 1);
-        if (Switch)
+        bool enable_fly = CHECK_BOOL(L, 1);
+        if (enable_fly)
         {
-            WorldPacket fly(SMSG_MOVE_SET_CAN_FLY, 13);
             ptr->EnableFlight();
-            fly << ptr->GetNewGUID();
-            fly << uint32(2);
-            ptr->SendMessageToSet(&fly, true);
         }
         else
         {
-            WorldPacket fly(SMSG_MOVE_UNSET_CAN_FLY, 13);
             ptr->DisableFlight();
-            fly << ptr->GetNewGUID();
-            fly << uint32(5);
-            ptr->SendMessageToSet(&fly, true);
         }
         return 0;
     }
@@ -5615,8 +5591,6 @@ class LuaUnit
         return 1;
     }
 
-#ifdef ENABLE_ACHIEVEMENTS
-
     static int AddAchievement(lua_State* L, Unit* ptr)
     {
         TEST_PLAYER()
@@ -5644,8 +5618,6 @@ class LuaUnit
         lua_pushboolean(L, static_cast<Player*>(ptr)->GetAchievementMgr().HasCompleted(achievementID) ? 1 : 0);
         return 1;
     }
-
-#endif
 
     static int GetAreaId(lua_State* L, Unit* ptr)
     {

@@ -23,6 +23,12 @@
 #ifndef _EASYFUNC_H
 #define _EASYFUNC_H
 
+#include "Units/Creatures/AIInterface.h"
+#include "Management/Item.h"
+#include "Map/MapMgr.h"
+#include "Management/ItemInterface.h"
+#include "Storage/MySQLDataStore.hpp"
+
 // Uncomment if you want debug texts
 // #define ENABLE_DEBUG_TEXT
 
@@ -30,6 +36,7 @@
 #define CREATE_GAMEOBJECT_SCRIPT(cl) &cl::Create
 #define CREATE_CREATURESCRIPT(cl) &cl::Create
 #include <Management/QuestLogEntry.hpp>
+#include "Map/MapScriptInterface.h"
 
 class SCRIPT_DECL EasyFunctions
 {

@@ -18,10 +18,14 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "StdAfx.h"
 #include "EyeOfTheStorm.h"
-
+#include "Server/Packets/Handlers/HonorHandler.h"
+#include "Storage/MySQLDataStore.hpp"
+#include "Management/WorldStates.h"
+#include "Server/MainServerDefines.h"
+#include "Map/MapMgr.h"
+#include "Spell/SpellMgr.h"
 
 static float EOTSBuffCoordinates[4][4] =
 {

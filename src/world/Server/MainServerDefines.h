@@ -17,9 +17,9 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+#pragma once
 
-#ifndef _MAINSERVER_DEFINES_H
-#define _MAINSERVER_DEFINES_H
+#include "CommonTypes.hpp"
 
 class Database;
 
@@ -29,4 +29,14 @@ SERVER_DECL extern Database* Database_World;
 #define WorldDatabase (*Database_World)
 #define CharacterDatabase (*Database_Character)
 
-#endif // _MAINSERVER_DEFINES_H
+
+class SessionLogWriter;
+
+extern SERVER_DECL SessionLogWriter* Anticheat_Log;
+extern SERVER_DECL SessionLogWriter* GMCommand_Log;
+extern SERVER_DECL SessionLogWriter* Player_Log;
+
+#define sCheatLog (*Anticheat_Log)
+#define sGMLog (*GMCommand_Log)
+#define sPlrLog (*Player_Log)
+

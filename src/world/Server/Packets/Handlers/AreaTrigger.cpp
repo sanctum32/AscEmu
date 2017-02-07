@@ -19,6 +19,13 @@
  */
 
 #include "StdAfx.h"
+#include "Management/ItemInterface.h"
+#include "Management/Battleground/Battleground.h"
+#include "Storage/MySQLDataStore.hpp"
+#include "Map/MapMgrDefines.hpp"
+#include "Map/MapMgr.h"
+#include "Map/WorldCreatorDefines.hpp"
+#include "Storage/WorldStrings.h"
 
 void WorldSession::HandleAreaTriggerOpcode(WorldPacket& recv_data)
 {
@@ -180,7 +187,7 @@ void WorldSession::_HandleAreaTriggerOpcode(uint32 id)
                             MapInfo const* pMi = sMySQLStore.GetWorldMapInfo(pAreaTrigger->Mapid);
                             ItemProperties const* pItem = sMySQLStore.GetItemProperties(pMi->required_item);
                             if (pItem)
-                                snprintf(msg, 200, GetPlayer()->GetSession()->LocalizedWorldSrv(35), pItem->Name.c_str());
+                                snprintf(msg, 200, GetPlayer()->GetSession()->LocalizedWorldSrv(ServerString::SS_MUST_HAVE_ITEM), pItem->Name.c_str());
                             else
                                 snprintf(msg, 200, "%s", GetPlayer()->GetSession()->LocalizedWorldSrv(36));
 
@@ -192,7 +199,7 @@ void WorldSession::_HandleAreaTriggerOpcode(uint32 id)
                             MapInfo const* pMi = sMySQLStore.GetWorldMapInfo(pAreaTrigger->Mapid);
                             QuestProperties const* pQuest = sMySQLStore.GetQuestProperties(pMi->required_quest_A);
                             if (pQuest)
-                                snprintf(msg, 200, GetPlayer()->GetSession()->LocalizedWorldSrv(35), pQuest->title.c_str());
+                                snprintf(msg, 200, GetPlayer()->GetSession()->LocalizedWorldSrv(ServerString::SS_MUST_HAVE_QUEST), pQuest->title.c_str());
                             else
                                 snprintf(msg, 200, "%s", GetPlayer()->GetSession()->LocalizedWorldSrv(36));
 
@@ -204,7 +211,7 @@ void WorldSession::_HandleAreaTriggerOpcode(uint32 id)
                             MapInfo const* pMi = sMySQLStore.GetWorldMapInfo(pAreaTrigger->Mapid);
                             QuestProperties const* pQuest = sMySQLStore.GetQuestProperties(pMi->required_quest_H);
                             if (pQuest)
-                                snprintf(msg, 200, GetPlayer()->GetSession()->LocalizedWorldSrv(35), pQuest->title.c_str());
+                                snprintf(msg, 200, GetPlayer()->GetSession()->LocalizedWorldSrv(ServerString::SS_MUST_HAVE_QUEST), pQuest->title.c_str());
                             else
                                 snprintf(msg, 200, "%s", GetPlayer()->GetSession()->LocalizedWorldSrv(36));
 
@@ -216,9 +223,9 @@ void WorldSession::_HandleAreaTriggerOpcode(uint32 id)
                             MapInfo const* pMi = sMySQLStore.GetWorldMapInfo(pAreaTrigger->Mapid);
                             ItemProperties const* pItem = sMySQLStore.GetItemProperties(pMi->heroic_key_1);
                             if (pItem)
-                                snprintf(msg, 200, "You must have the item, `%s` to pass through here.", pItem->Name.c_str());
+                                snprintf(msg, 200, GetPlayer()->GetSession()->LocalizedWorldSrv(ServerString::SS_MUST_HAVE_ITEM), pItem->Name.c_str());
                             else
-                                snprintf(msg, 200, "You must have the item, UNKNOWN to pass through here.");
+                                snprintf(msg, 200, "%s", GetPlayer()->GetSession()->LocalizedWorldSrv(36));
 
                             data << msg;
                         }

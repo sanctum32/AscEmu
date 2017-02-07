@@ -21,11 +21,17 @@
 #include "StdAfx.h"
 
 #include "ArathiBasin.h"
+#include "Server/Packets/Handlers/HonorHandler.h"
+#include "Storage/MySQLDataStore.hpp"
+#include "Management/QuestLogEntry.hpp"
+#include "Management/WorldStates.h"
+#include "Server/MainServerDefines.h"
+#include "Map/MapMgr.h"
+#include "Spell/SpellMgr.h"
 
 #define BASE_RESOURCES_GAIN 10
 #define RESOURCES_WARNING_THRESHOLD 1400
 #define RESOURCES_WINVAL 1600
-#include <Management/QuestLogEntry.hpp>
 
 uint32 buffentries[3] = { 180380, 180362, 180146 };
 

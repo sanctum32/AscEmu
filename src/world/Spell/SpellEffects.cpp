@@ -22,6 +22,24 @@
 #include "StdAfx.h"
 #include "Management/QuestLogEntry.hpp"
 #include "MMapFactory.h"
+#include "Units/Creatures/Creature.h"
+#include "Units/Summons/Summon.h"
+#include "Objects/DynamicObject.h"
+#include "Server/Packets/Handlers/HonorHandler.h"
+#include "Management/Item.h"
+#include "Management/Container.h"
+#include "Spell/SpellNameHashes.h"
+#include "Management/TaxiMgr.h"
+#include "Management/ItemInterface.h"
+#include "Units/Stats.h"
+#include "Management/Battleground/Battleground.h"
+#include "Storage/MySQLDataStore.hpp"
+#include "Units/Players/PlayerClasses.hpp"
+#include "Server/MainServerDefines.h"
+#include "Map/MapMgr.h"
+#include "Objects/Faction.h"
+#include "SpellMgr.h"
+#include "SpellAuras.h"
 
 pSpellEffect SpellEffectsHandler[TOTAL_SPELL_EFFECTS] =
 {
@@ -5650,7 +5668,7 @@ void Spell::SpellEffectActivateSpec(uint32 i)
     if (p_caster == NULL)
         return;
 
-    if (p_caster->CombatStatus.IsInCombat())
+    if (p_caster->isInCombat())
     {
         SendCastResult(SPELL_FAILED_AFFECTING_COMBAT);
         return;

@@ -20,12 +20,15 @@
  */
 
 #include "StdAfx.h"
+#include "WorldRunnable.h"
 #include <CrashHandler.h>
+#include "World.h"
 
 #define WORLD_UPDATE_DELAY 50
 
 WorldRunnable::WorldRunnable() : CThread()
-{}
+{
+}
 
 bool WorldRunnable::run()
 {
@@ -34,7 +37,6 @@ bool WorldRunnable::run()
     uint32 LastSessionsUpdate = getMSTime();
 
     THREAD_TRY_EXECUTION
-
         while (GetThreadState() != THREADSTATE_TERMINATE)
         {
             // Provision for pausing this thread.
@@ -95,6 +97,6 @@ bool WorldRunnable::run()
                 Arcemu::Sleep(WORLD_UPDATE_DELAY - diff);
         }
 
-    THREAD_HANDLE_CRASH
-        return true;
+        THREAD_HANDLE_CRASH
+    return true;
 }

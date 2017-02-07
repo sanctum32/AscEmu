@@ -18,11 +18,19 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "StdAfx.h"
 #include "FastQueue.h"
 #include "Threading/Mutex.h"
 #include "WorldPacket.h"
-#include "StdAfx.h"
-#include <Exceptions/PlayerExceptions.hpp>
+#include "Management/Item.h"
+#include "Exceptions/PlayerExceptions.hpp"
+#include "Management/ItemInterface.h"
+#include "Management/Battleground/Battleground.h"
+#include "Server/LogonCommClient/LogonCommHandler.h"
+#include "Storage/MySQLDataStore.hpp"
+#include "Management/LocalizationMgr.h"
+#include "Server/MainServerDefines.h"
+#include "Map/MapMgr.h"
 
 OpcodeHandler WorldPacketHandlers[NUM_MSG_TYPES];
 

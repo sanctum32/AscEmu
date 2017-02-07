@@ -19,7 +19,9 @@
 
 #include "StdAfx.h"
 #include "IsleOfConquest.h"
-
+#include "Storage/MySQLDataStore.hpp"
+#include "Management/WorldStates.h"
+#include "Map/MapMgr.h"
 
 #define IOC_NUM_REINFORCEMENTS 300
 #define IOC_POINTS_ON_KILL 1

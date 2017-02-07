@@ -20,6 +20,11 @@
  */
 
 #include "StdAfx.h"
+#include "Management/ArenaTeam.h"
+#include "Server/MainServerDefines.h"
+#include "Config/Config.h"
+#include "Objects/ObjectMgr.h"
+#include "DayWatcherThread.h"
 
 #define THREAD_LOOP_INTERVAL 120 // seconds
 

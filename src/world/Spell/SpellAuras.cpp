@@ -20,6 +20,18 @@
  */
 
 #include "StdAfx.h"
+#include "Units/Creatures/Creature.h"
+#include "Units/Summons/Summon.h"
+#include "Management/Item.h"
+#include "Spell/SpellNameHashes.h"
+#include "Management/ItemInterface.h"
+#include "Units/Stats.h"
+#include "Management/Battleground/Battleground.h"
+#include "Storage/MySQLDataStore.hpp"
+#include "Units/Players/PlayerClasses.hpp"
+#include "Map/MapMgr.h"
+#include "Objects/Faction.h"
+#include "SpellAuras.h"
 
 pSpellAura SpellAuraHandler[TOTAL_SPELL_AURAS] =
 {
@@ -880,12 +892,12 @@ void Aura::Remove()
     {
         if (caster != m_target)
         {
-            caster->CombatStatus.RemoveAttackTarget(m_target);
-            m_target->CombatStatus.RemoveAttacker(caster, caster->GetGUID());
+            caster->removeAttackTarget(m_target);
+            m_target->removeAttacker(caster);
         }
     }
     else
-        m_target->CombatStatus.RemoveAttacker(NULL, m_casterGuid);
+        m_target->removeAttacker(m_casterGuid);
 
     /**********************Cooldown**************************
     * this is only needed for some spells
@@ -2338,7 +2350,7 @@ void Aura::EventPeriodicHeal(uint32 amount)
             if (!(*itr)->IsCreature())
                 continue;
             tmp_creature = static_cast<Creature*>(*itr);
-            if (!tmp_creature->CombatStatus.IsInCombat() || (tmp_creature->GetAIInterface()->getThreatByPtr(u_caster) == 0 && tmp_creature->GetAIInterface()->getThreatByPtr(m_target) == 0))
+            if (!tmp_creature->isInCombat() || (tmp_creature->GetAIInterface()->getThreatByPtr(u_caster) == 0 && tmp_creature->GetAIInterface()->getThreatByPtr(m_target) == 0))
                 continue;
 
             if (!(u_caster->GetPhase() & tmp_creature->GetPhase()))   //Can't see, no threat
@@ -2358,7 +2370,9 @@ void Aura::EventPeriodicHeal(uint32 amount)
         }
 
         if (m_target->IsInWorld() && u_caster->IsInWorld())
-            u_caster->CombatStatus.WeHealed(m_target);
+        {
+            u_caster->addHealTarget(m_target);
+        }
     }
 }
 
@@ -6000,24 +6014,16 @@ void Aura::SpellAuraHover(bool apply)
 {
     SetPositive();
 
-    WorldPacket data;
-
     if (apply)
     {
-        data.Initialize(SMSG_MOVE_SET_HOVER);
+        m_target->SetHover(true);
         m_target->SetFloatValue(UNIT_FIELD_HOVERHEIGHT, (float(mod->m_amount) / 2));
     }
     else
     {
-        data.Initialize(SMSG_MOVE_UNSET_HOVER);
+        m_target->SetHover(false);
         m_target->SetFloatValue(UNIT_FIELD_HOVERHEIGHT, 0.0f);
     }
-
-    data << WoWGuid(m_target->GetNewGUID());
-    data << uint32(0);
-
-    m_target->SendMessageToSet(&data, true);
-
 }
 
 void Aura::SpellAuraAddPctMod(bool apply)
@@ -8132,14 +8138,10 @@ void Aura::SpellAuraSpellHealingStatPCT(bool apply)
 void Aura::SpellAuraAllowFlight(bool apply)
 {
     // allow fly
-    WorldPacket data;
     if (apply)
-        data.Initialize(SMSG_MOVE_SET_CAN_FLY);
+        m_target->EnableFlight();
     else
-        data.Initialize(SMSG_MOVE_UNSET_CAN_FLY);
-    //data.append(m_target->m_PackGUID);
-    data << uint32(0);                                      // unk
-    m_target->SendMessageToSet(&data, true);
+        m_target->DisableFlight();
 }
 
 void Aura::SpellAuraFinishingMovesCannotBeDodged(bool apply)
@@ -8725,15 +8727,18 @@ void Aura::SpellAuraPhase(bool apply)
     }
 
     if (apply)
-        m_target->Phase(PHASE_SET, m_spellInfo->EffectMiscValue[mod->i]);
-    else
-        m_target->Phase(PHASE_RESET);
-
-    if (m_target->IsPlayer())
     {
-        WorldPacket data(SMSG_SET_PHASE_SHIFT, 4);
-        data << uint32(m_target->m_phase);
-        static_cast< Player* >(m_target)->GetSession()->SendPacket(&data);
+        if (m_target->IsPlayer())
+            static_cast<Player*>(m_target)->Phase(PHASE_SET, m_spellInfo->EffectMiscValue[mod->i]);
+        else
+            m_target->Phase(PHASE_SET, m_spellInfo->EffectMiscValue[mod->i]);
+    }
+    else
+    {
+        if (m_target->IsPlayer())
+            static_cast<Player*>(m_target)->Phase(PHASE_RESET);
+        else
+            m_target->Phase(PHASE_RESET);
     }
 }
 

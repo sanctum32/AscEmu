@@ -20,7 +20,7 @@
 #ifndef _INSTANCE_BASE_H
 #define _INSTANCE_BASE_H
 
-#include "StdAfx.h"
+#include "Map/WorldCreatorDefines.hpp"
 
 #define INVALIDATE_TIMER -1
 #define DEFAULT_UPDATE_FREQUENCY 1000       //milliseconds
@@ -156,6 +156,7 @@ class MoonInstanceScript : public InstanceScript
         size_t GetPlayerCount();
         Player* GetPlayerByGuid(uint32 pGuid);
         bool IsCombatInProgress();
+        PlayerTeam GetInstanceTeam() { return mInstanceTeam; }
 
         // Timers - reimplementation from MoonScriptCreatureAI
         int32 AddTimer(int32 pDurationMillisec);
@@ -217,6 +218,8 @@ class MoonInstanceScript : public InstanceScript
         TimerArray mTimers;
         int32 mTimerIdCounter;
         bool mSpawnsCreated;
+        bool mInstanceTeamSet;
+        PlayerTeam mInstanceTeam;
 };
 
 #endif      // _INSTANCE_BASE_H

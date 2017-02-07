@@ -8,7 +8,12 @@ This file is released under the MIT license. See README-MIT for more information
 
 #include "Chat/ChatDefines.hpp"
 #include "Chat/CommandTableStorage.hpp"
+#include "Management/ItemPrototype.h"
 #include "Management/SkillNameMgr.h"
+#include "Units/Creatures/Creature.h"
+#include "Units/Players/Player.h"
+#include "Units/Unit.h"
+#include "WorldPacket.h"
 
 class WorldSession;
 class Player;
@@ -74,11 +79,9 @@ class SERVER_DECL ChatHandler : public Singleton<ChatHandler>
         bool HandleAccountUnmuteCommand(const char* args, WorldSession* m_session);
 
         // Achievement
-#ifdef ENABLE_ACHIEVEMENTS
         bool HandleAchievementCompleteCommand(const char* args, WorldSession* m_session);
         bool HandleAchievementCriteriaCommand(const char* args, WorldSession* m_session);
         bool HandleAchievementResetCommand(const char* args, WorldSession* m_session);
-#endif
 
         // Admin commands
         bool HandleAdminCastAllCommand(const char* args, WorldSession* m_session);
@@ -294,9 +297,7 @@ class SERVER_DECL ChatHandler : public Singleton<ChatHandler>
         bool HandleGetInstanceInfoCommand(const char* args, WorldSession* m_session);
 
         // Lookups
-#ifdef ENABLE_ACHIEVEMENTS
         bool HandleLookupAchievementCommand(const char* args, WorldSession* m_session);
-#endif
         bool HandleLookupCreatureCommand(const char* args, WorldSession* m_session);
         bool HandleLookupFactionCommand(const char* args, WorldSession* m_session);
         bool HandleLookupItemCommand(const char* args, WorldSession* m_session);

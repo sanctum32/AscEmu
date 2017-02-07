@@ -4,6 +4,12 @@ This file is released under the MIT license. See README-MIT for more information
 */
 
 #include "StdAfx.h"
+#include "Management/Item.h"
+#include "Units/Creatures/Creature.h"
+#include "Units/Summons/Summon.h"
+#include "Storage/MySQLDataStore.hpp"
+#include "Server/MainServerDefines.h"
+#include "Map/MapMgr.h"
 
 //.npc addagent
 bool ChatHandler::HandleNpcAddAgentCommand(const char* args, WorldSession* m_session)
@@ -317,7 +323,7 @@ bool ChatHandler::HandleNpcInfoCommand(const char* /*args*/, WorldSession* m_ses
     if (creature_target->m_faction)
         SystemMessage(m_session, "Combat Support: 0x%.3X", creature_target->m_faction->FriendlyMask);
 
-    if (creature_target->CombatStatus.IsInCombat())
+    if (creature_target->isInCombat())
         SystemMessage(m_session, "Is in combat!");
     else
         SystemMessage(m_session, "Not in combat!");
@@ -661,7 +667,7 @@ bool ChatHandler::HandleNpcSpawnCommand(const char* args, WorldSession* m_sessio
     }
 
     auto creature_spawn = new CreatureSpawn;
-    uint8 gender = creature_properties->GenerateModelId(&creature_spawn->displayid);
+    uint8 gender = creature_properties->GetGenderAndCreateRandomDisplayID(&creature_spawn->displayid);
     creature_spawn->entry = entry;
     creature_spawn->form = 0;
     creature_spawn->id = objmgr.GenerateCreatureSpawnID();

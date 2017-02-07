@@ -21,6 +21,9 @@
 
 #include "StdAfx.h"
 #include <iostream>
+#include "WUtil.h"
+#include "Log.hpp"
+#include "Objects/Object.h"
 
 
 uint32 Arcemu::Util::GUID_HIPART(uint64 GUID)
@@ -45,7 +48,7 @@ void Arcemu::Util::ArcemuAssert(bool condition)
         AscLog.~AscEmuLog();
 
         // bogus null function call to make sure we stop and make a core dump / crash dump
-        ((void(*)())0)();
+        static_cast<void(*)()>(nullptr)();
     }
 }
 

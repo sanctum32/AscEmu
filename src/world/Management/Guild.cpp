@@ -20,6 +20,10 @@
  */
 
 #include "StdAfx.h"
+#include "Management/Item.h"
+#include "Management/ItemInterface.h"
+#include "Server/MainServerDefines.h"
+#include "../../scripts/Common/Base.h"
 
 Guild::Guild()
 {

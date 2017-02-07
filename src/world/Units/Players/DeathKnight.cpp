@@ -20,6 +20,8 @@
  */
 
 #include "StdAfx.h"
+#include "Units/Players/PlayerClasses.hpp"
+#include "Server/WorldSession.h"
 
 void DeathKnight::SendRuneUpdate(uint8 slot)
 {

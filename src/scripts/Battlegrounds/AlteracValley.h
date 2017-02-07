@@ -21,7 +21,7 @@
 #ifndef _ALTERAC_VALLERY_H
 #define _ALTERAC_VALLERY_H
 
-#include "StdAfx.h"
+#include "Management/Battleground/Battleground.h"
 
  // GENERAL AV DEFINES
 #define AV_NUM_REINFORCEMENTS               600     // Amount of reinforcements we start off with

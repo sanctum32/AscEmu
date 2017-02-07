@@ -18,6 +18,8 @@
 
 #include "Setup.h"
 #include "../Common/EasyFunctions.h"
+#include "Storage/MySQLDataStore.hpp"
+#include "Spell/SpellAuras.h"
 
 bool CleansingVial(uint32 i, Spell* pSpell)
 {
@@ -1593,7 +1595,7 @@ bool CenarionMoondust(uint32 i, Spell* pSpell) // Body And Heart (Alliance)
     sEAS.EnableWaypoints(lunaclaw);
 
     // Make sure that creature will attack player
-    if (!lunaclaw->CombatStatus.IsInCombat())
+    if (!lunaclaw->isInCombat())
     {
         lunaclaw->GetAIInterface()->setNextTarget(p_caster);
     }
@@ -1639,7 +1641,7 @@ bool CenarionLunardust(uint32 i, Spell* pSpell)  // Body And Heart (Horde)
     sEAS.EnableWaypoints(lunaclaw);
 
     // Make sure that creature will attack player
-    if (!lunaclaw->CombatStatus.IsInCombat())
+    if (!lunaclaw->isInCombat())
     {
         lunaclaw->GetAIInterface()->setNextTarget(p_caster);
     }

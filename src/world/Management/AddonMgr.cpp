@@ -20,6 +20,9 @@
  */
 
 #include "StdAfx.h"
+#include "AddonMgr.h"
+#include "Server/LogonCommClient/LogonCommHandler.h"
+#include "Server/MainServerDefines.h"
 
 initialiseSingleton(AddonMgr);
 

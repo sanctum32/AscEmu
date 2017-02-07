@@ -15,9 +15,9 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+#pragma once
 
-#ifndef _LFGPLAYERDATA_H
-#define _LFGPLAYERDATA_H
+#include "Management/LFG/LFGGroupData.h"
 
 /// Stores all lfg data needed about the player.
 class LfgPlayerData
@@ -32,7 +32,7 @@ class LfgPlayerData
         void ClearState();
         void SetLockedDungeons(const LfgLockMap& lock);
         // Queue
-        void SetRoles(uint8 roles);
+        void SetRoles(uint8_t roles);
         void SetComment(const std::string& comment);
         void SetSelectedDungeons(const LfgDungeonSet& dungeons);
         void ClearSelectedDungeons();
@@ -41,7 +41,7 @@ class LfgPlayerData
         LfgState GetState() const;
         const LfgLockMap& GetLockedDungeons() const;
         // Queue
-        uint8 GetRoles() const;
+        uint8_t GetRoles() const;
         const std::string& GetComment() const;
         const LfgDungeonSet& GetSelectedDungeons() const;
 
@@ -53,9 +53,7 @@ class LfgPlayerData
         // Player
         LfgLockMap m_LockedDungeons;                       ///< Dungeons player can't do and reason
         // Queue
-        uint8 m_Roles;                                     ///< Roles the player selected when joined LFG
+        uint8_t m_Roles;                                     ///< Roles the player selected when joined LFG
         std::string m_Comment;                             ///< Player comment used when joined LFG
         LfgDungeonSet m_SelectedDungeons;                  ///< Selected Dungeons when joined LFG
 };
-
-#endif      //_LFGPLAYERDATA_H

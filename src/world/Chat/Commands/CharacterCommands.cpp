@@ -5,6 +5,18 @@ This file is released under the MIT license. See README-MIT for more information
 
 #include "StdAfx.h"
 
+#include "Server/Packets/Handlers/HonorHandler.h"
+#include "Management/Item.h"
+#include "Management/Container.h"
+#include "Management/ItemInterface.h"
+#include "Storage/MySQLDataStore.hpp"
+#include "Server/MainServerDefines.h"
+#include "Map/MapMgr.h"
+#include "Spell/SpellAuras.h"
+#include "Map/WorldCreator.h"
+#include "Chat/ChatHandler.hpp"
+#include "Objects/ObjectMgr.h"
+
 //.character clearcooldowns
 bool ChatHandler::HandleCharClearCooldownsCommand(const char* /*args*/, WorldSession* m_session)
 {
@@ -1211,9 +1223,7 @@ bool ChatHandler::HandleCharSetAllExploredCommand(const char* /*args*/, WorldSes
         player_target->SetFlag(PLAYER_EXPLORED_ZONES_1 + i, 0xFFFFFFFF);
     }
 
-#ifdef ENABLE_ACHIEVEMENTS
     player_target->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_EXPLORE_AREA); // update
-#endif
     return true;
 }
 
@@ -1417,6 +1427,8 @@ bool ChatHandler::HandleCharSetNameCommand(const char* args, WorldSession* m_ses
     }
 
     std::string new_name = new_name_cmd;
+    Util::CapitalizeString(new_name);
+
     PlayerInfo* pi = objmgr.GetPlayerInfoByName(current_name);
     if (pi == nullptr)
     {
@@ -1447,9 +1459,9 @@ bool ChatHandler::HandleCharSetNameCommand(const char* args, WorldSession* m_ses
         CharacterDatabase.Execute("UPDATE characters SET name = '%s' WHERE guid = %u", CharacterDatabase.EscapeString(new_name).c_str(), (uint32)pi->guid);
     }
 
-    GreenSystemMessage(m_session, "Changed name of '%s' to '%s'.", current_name, new_name_cmd);
-    sGMLog.writefromsession(m_session, "renamed character %s (GUID: %u) to %s", current_name, pi->guid, new_name_cmd);
-    sPlrLog.writefromsession(m_session, "GM renamed character %s (GUID: %u) to %s", current_name, pi->guid, new_name_cmd);
+    GreenSystemMessage(m_session, "Changed name of '%s' to '%s'.", current_name, new_name.c_str());
+    sGMLog.writefromsession(m_session, "renamed character %s (GUID: %u) to %s", current_name, pi->guid, new_name.c_str());
+    sPlrLog.writefromsession(m_session, "GM renamed character %s (GUID: %u) to %s", current_name, pi->guid, new_name.c_str());
     return true;
 }
 
@@ -1468,13 +1480,6 @@ bool ChatHandler::HandleCharSetPhaseCommand(const char* args, WorldSession* m_se
         return true;
 
     player_target->Phase(PHASE_SET, phase);
-
-    if (player_target->GetSession())
-    {
-        WorldPacket data(SMSG_SET_PHASE_SHIFT, 4);
-        data << phase;
-        player_target->GetSession()->SendPacket(&data);
-    }
 
     if (player_target != m_session->GetPlayer())
     {

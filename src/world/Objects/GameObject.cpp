@@ -20,7 +20,13 @@
  */
 
 #include "StdAfx.h"
+#include "Management/GameEvent.h"
+#include "Storage/MySQLDataStore.hpp"
+#include "Server/MainServerDefines.h"
 #include <G3D/Quat.h>
+#include "Map/MapCell.h"
+#include "Map/MapMgr.h"
+#include "Faction.h"
 
 GameObject::GameObject(uint64 guid)
 {
@@ -465,6 +471,15 @@ void GameObject::CastSpell(uint64 TargetGUID, uint32 SpellID)
     }
 
     CastSpell(TargetGUID, sp);
+}
+
+//MIT
+void GameObject::SetCustomAnim(uint32_t anim)
+{
+    WorldPacket data(SMSG_GAMEOBJECT_CUSTOM_ANIM, 12);
+    data << uint64_t(GetGUID());
+    data << uint32_t(anim);
+    SendMessageToSet(&data, false, false);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -965,11 +980,7 @@ void GameObject_FishingNode::EndFishing(bool abort)
 
 void GameObject_FishingNode::EventFishHooked()
 {
-    WorldPacket data(SMSG_GAMEOBJECT_CUSTOM_ANIM, 12);
-    data << uint64(GetGUID());
-    data << uint32(0);          // value < 4
-    SendMessageToSet(&data, false, false);
-
+    SetCustomAnim();
     FishHooked = true;
 }
 

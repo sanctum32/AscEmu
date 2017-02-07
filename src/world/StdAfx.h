@@ -19,22 +19,25 @@
  *
  */
 
-#ifndef __STDAFX_H
-#define __STDAFX_H
+#pragma once
 
 #include "WorldConf.h"
 
-#include "CommonDefines.hpp"  // shared
-
-#include "Server/Definitions.h"
-
+#ifdef USE_PCH_INCLUDES
 #include <vector>
 #include <fstream>
 #include <array>
+#include <set>
+#include <map>
 
+
+#include "Server/Definitions.h"
 #include "Map/RecastIncludes.hpp"
 
-// Shared headers
+//////////////////////////////////////////////////////////////////////////////////////////
+// Shared headers/defines
+
+#include "CommonDefines.hpp"    // QuestLogEntry.h, Object.h
 #include "Common.hpp"
 #include "MersenneTwister.h"
 #include "WorldPacket.h"
@@ -44,35 +47,25 @@
 #include "Config/Config.h"
 #include "crc32.h"
 #include "LocationVector.h"
-
-extern SERVER_DECL SessionLogWriter* Anticheat_Log;
-extern SERVER_DECL SessionLogWriter* GMCommand_Log;
-extern SERVER_DECL SessionLogWriter* Player_Log;
-
-#define sCheatLog (*Anticheat_Log)
-#define sGMLog (*GMCommand_Log)
-#define sPlrLog (*Player_Log)
-
-//#include <zlib.h>
-
-#include "Database/DatabaseEnv.h"   // shared
-#include "Storage/DBC/DBCStores.h"
-
-#include "Network/Network.h"    // shared
-
-// Shared headers
+#include "Database/DatabaseEnv.h"
+#include "Network/Network.h"
 #include "Auth/MD5.h"
 #include "Auth/BigNumber.h"
-#include "Auth/Sha1.h"
+#include "Auth/Sha1.h"          // Mutex.h, Guard.h errors
 #include "Auth/WowCrypt.h"
 #include "FastQueue.h"
 #include "CircularQueue.h"
 #include "Threading/RWLock.h"
 #include "TLSObject.h"
+#include "AuthCodes.h"
+#include "CallBack.h"
 
 #ifdef WIN32
-#include "printStackTrace.h"
+    #include "printStackTrace.h"
 #endif
+//////////////////////////////////////////////////////////////////////////////////////////
+
+#include "Storage/DBC/DBCStores.h"
 
 //Movement
 #include "Movement/UnitMovementManager.hpp"
@@ -90,8 +83,7 @@ extern SERVER_DECL SessionLogWriter* Player_Log;
 #include "Server/UpdateFields.h"
 #include "Server/UpdateMask.h"
 #include "Server/Packets/Opcodes.h"
-#include "AuthCodes.h"
-#include "CallBack.h"   // shared
+
 #include "Management/WordFilter.h"
 #include "Server/EventMgr.h"
 #include "Server/EventableObject.h"
@@ -106,10 +98,7 @@ extern SERVER_DECL SessionLogWriter* Player_Log;
 #include "Units/Unit.h"
 #include "Management/Gossip/Gossip.h"
 #include "Management/Gossip/GossipMenu.hpp"
-
-#ifdef ENABLE_ACHIEVEMENTS
 #include "Management/AchievementMgr.h"
-#endif
 
 //VMAP
 #include "Models/ModelInstance.h"
@@ -119,7 +108,6 @@ extern SERVER_DECL SessionLogWriter* Player_Log;
 #include "VMapFactory.h"
 #include "VMapManager2.h"
 #include "VMapDefinitions.h"
-
 
 #include "Management/GameEventMgr.h"
 #include "Management/GameEvent.h"
@@ -205,14 +193,13 @@ extern SERVER_DECL SessionLogWriter* Player_Log;
 #include "Storage/DayWatcherThread.h"
 #include "Server/CommonScheduleThread.h"
 #include "Management/LocalizationMgr.h"
+
 #include "Server/Master.h"
+
 #include "Server/Console/BaseConsole.h"
 #include "Server/Console/CConsole.h"
 #include "Server/Warden/SpeedDetector.h"
 #include "Management/WorldStates.h"
-
 #include "Units/Players/PlayerClasses.hpp"
-
 #include "Map/MapManagementGlobals.hpp"
-
-#endif  // __STDAFX_H
+#endif

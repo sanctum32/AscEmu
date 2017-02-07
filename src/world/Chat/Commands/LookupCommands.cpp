@@ -4,9 +4,10 @@ This file is released under the MIT license. See README-MIT for more information
 */
 
 #include "StdAfx.h"
+#include "Storage/MySQLDataStore.hpp"
+#include "Management/LocalizationMgr.h"
 
 //.lookup achievement
-#ifdef ENABLE_ACHIEVEMENTS
 //////////////////////////////////////////////////////////////////////////////////////////
 //Handles .lookup achievement
 //\brief GM achievement lookup command usage:
@@ -238,7 +239,6 @@ bool ChatHandler::HandleLookupAchievementCommand(const char* args, WorldSession*
     BlueSystemMessage(m_session, "Search completed in %u ms.", getMSTime() - t);
     return true;
 }
-#endif
 
 //.lookup creature
 bool ChatHandler::HandleLookupCreatureCommand(const char* args, WorldSession* m_session)

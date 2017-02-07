@@ -4,6 +4,10 @@ This file is released under the MIT license. See README-MIT for more information
 */
 
 #include "StdAfx.h"
+#include "Server/MainServerDefines.h"
+#include "ChatCommand.hpp"
+#include "CommandTableStorage.hpp"
+#include "ChatHandler.hpp"
 
 initialiseSingleton(CommandTableStorage);
 
@@ -756,9 +760,7 @@ void CommandTableStorage::Init()
 
     static ChatCommand lookupCommandTable[] =
     {
-#ifdef ENABLE_ACHIEVEMENTS
         { "achievement",    'l', &ChatHandler::HandleLookupAchievementCommand,  "Looks up achievement string x.",                                   nullptr, 0, 0, 0 },
-#endif
         { "creature",       'l', &ChatHandler::HandleLookupCreatureCommand,     "Looks up item string x.",                                          nullptr, 0, 0, 0 },
         { "faction",        'l', &ChatHandler::HandleLookupFactionCommand,      "Looks up faction string x.",                                       nullptr, 0, 0, 0 },
         { "item",           'l', &ChatHandler::HandleLookupItemCommand,         "Looks up item string x.",                                          nullptr, 0, 0, 0 },
@@ -829,11 +831,9 @@ void CommandTableStorage::Init()
 
     static ChatCommand achievementCommandTable[] =
     {
-#ifdef ENABLE_ACHIEVEMENTS
         { "complete",       'm', &ChatHandler::HandleAchievementCompleteCommand,    "Completes the specified achievement.",                         nullptr, 0, 0, 0 },
         { "criteria",       'm', &ChatHandler::HandleAchievementCriteriaCommand,    "Completes the specified achievement criteria.",                nullptr, 0, 0, 0 },
         { "reset",          'm', &ChatHandler::HandleAchievementResetCommand,       "Resets achievement data from the target.",                     nullptr, 0, 0, 0 },
-#endif
         { nullptr,          '0', nullptr,                                           "",                                                             nullptr, 0, 0, 0 }
     };
     dupe_command_table(achievementCommandTable, _achievementCommandTable);

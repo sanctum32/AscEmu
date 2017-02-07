@@ -20,6 +20,15 @@
  */
 
 #include "StdAfx.h"
+#include "Server/MainServerDefines.h"
+#include "Management/Channel.h"
+#include "Management/ChannelMgr.h"
+#include "Config/Config.h"
+#include "Server/WorldSession.h"
+#include "Server/World.h"
+#include "Chat/ChatDefines.hpp"
+#include "WorldPacket.h"
+#include "Units/Players/Player.h"
 
 Mutex m_confSettingLock;
 std::vector<std::string> m_bannedChannels;

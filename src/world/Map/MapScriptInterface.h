@@ -22,9 +22,14 @@
 #ifndef _MAP_SCRIPT_INTERFACE_H
 #define _MAP_SCRIPT_INTERFACE_H
 
+#include "Objects/ObjectDefines.h"
+#include "Objects/Object.h"
+
+#include "Map/MapCell.h"
+#include "Movement/UnitMovementManager.hpp"
+#include "Map/MapMgr.h"
 
 class GameObject;
-class Object;
 class Creature;
 class Unit;
 class Player;
@@ -37,7 +42,6 @@ class Player;
 class SERVER_DECL MapScriptInterface
 {
     public:
-
         MapScriptInterface(MapMgr & mgr);
         ~MapScriptInterface();
 

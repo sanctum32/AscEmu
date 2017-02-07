@@ -19,6 +19,15 @@
  */
 
 #include "StdAfx.h"
+#include "Management/Battleground/Battleground.h"
+#include "Management/Battleground/BattlegroundMgr.h"
+#include "Management/Arenas.h"
+#include "Management/ArenaTeam.h"
+#include "Server/MainServerDefines.h"
+#include "Map/MapMgr.h"
+#include "Map/WorldCreator.h"
+#include "Chat/ChatHandler.hpp"
+#include "Objects/ObjectMgr.h"
 
 initialiseSingleton(CBattlegroundManager);
 

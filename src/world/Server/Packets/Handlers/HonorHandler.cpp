@@ -20,6 +20,15 @@
  */
 
 #include "StdAfx.h"
+#include "Config/Config.h"
+#include "Server/Packets/Handlers/HonorHandler.h"
+#include "Management/Item.h"
+#include "Management/ItemInterface.h"
+#include "Management/Battleground/Battleground.h"
+#include "Server/MainServerDefines.h"
+#include "Server/WorldSession.h"
+#include "Server/World.h"
+#include "Objects/ObjectMgr.h"
 
 void WorldSession::HandleSetVisibleRankOpcode(WorldPacket& recv_data)
 {
@@ -146,7 +155,7 @@ void HonorHandler::OnPlayerKilled(Player* pPlayer, Player* pVictim)
 
                 bool added = false;
                 Player* plr = static_cast<Player*>(*itr);
-                if (pVictim->CombatStatus.m_attackers.find(plr->GetGUID()) != pVictim->CombatStatus.m_attackers.end())
+                if (pVictim->hasAttacker(plr->GetGUID()))
                 {
                     added = true;
                     contributors.insert(plr);

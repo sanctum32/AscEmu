@@ -20,6 +20,11 @@
  */
 
 #include "StdAfx.h"
+#include "Management/WordFilter.h"
+#include "Server/MainServerDefines.h"
+#include "Log.hpp"
+#include "Database/Database.h"
+
 extern "C" {
 #include <pcre.h>
 };

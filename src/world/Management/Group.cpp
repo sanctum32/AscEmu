@@ -19,6 +19,12 @@
  */
 
 #include "StdAfx.h"
+#include "Management/LFG/LFGMgr.h"
+#include "Server/MainServerDefines.h"
+#include "Map/MapMgr.h"
+#include "Spell/SpellAuras.h"
+#include "Map/WorldCreator.h"
+#include "Objects/ObjectMgr.h"
 
 Group::Group(bool Assign)
 {
@@ -1354,8 +1360,6 @@ Player* Group::GetRandomPlayerInRangeButSkip(Player* plr, float range, Player* p
     return new_plr;
 }
 
-#ifdef ENABLE_ACHIEVEMENTS
-
 void Group::UpdateAchievementCriteriaForInrange(Object* o, AchievementCriteriaTypes type, int32 miscvalue1, int32 miscvalue2, uint32 time)
 {
     Lock();
@@ -1379,8 +1383,6 @@ void Group::UpdateAchievementCriteriaForInrange(Object* o, AchievementCriteriaTy
 
     Unlock();
 }
-
-#endif
 
 void Group::Teleport(WorldSession* m_session)
 {

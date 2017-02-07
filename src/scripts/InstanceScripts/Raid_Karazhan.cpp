@@ -21,7 +21,8 @@
 
 // \todo move most defines to enum, text to db (use SendScriptTextChatMessage(ID))
 #include "Setup.h"
-
+#include "Management/Gossip/GossipMenu.hpp"
+#include "Objects/Faction.h"
 
 // Partially by Plexor (I used a spell before, but changed to his method)
 class Berthold : public GossipScript
@@ -3856,10 +3857,7 @@ class NightbaneAI : public CreatureAIScript
         {
             _unit->Emote(EMOTE_ONESHOT_LIFTOFF);
 
-            WorldPacket data(SMSG_MOVE_SET_HOVER, 13);
-            data << _unit->GetNewGUID();
-            data << uint32(0);
-            _unit->SendMessageToSet(&data, false);
+            _unit->SetHover(true);
 
             _unit->GetAIInterface()->SetFly();
         }
@@ -3868,10 +3866,7 @@ class NightbaneAI : public CreatureAIScript
         {
             _unit->Emote(EMOTE_ONESHOT_LAND);
 
-            WorldPacket data(SMSG_MOVE_UNSET_HOVER, 13);
-            data << _unit->GetNewGUID();
-            data << uint32(0);
-            _unit->SendMessageToSet(&data, false);
+            _unit->SetHover(false);
 
             _unit->GetAIInterface()->StopFlying();
         }

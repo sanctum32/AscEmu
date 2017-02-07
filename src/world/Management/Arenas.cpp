@@ -19,6 +19,14 @@
  */
 
 #include "StdAfx.h"
+#include "Management/ItemInterface.h"
+#include "Management/Arenas.h"
+#include "Management/ArenaTeam.h"
+#include "Management/WorldStates.h"
+#include "Map/MapMgr.h"
+#include "Spell/SpellAuras.h"
+#include "Objects/GameObject.h"
+#include "Objects/ObjectMgr.h"
 
 #define ARENA_PREPARATION 32727
 

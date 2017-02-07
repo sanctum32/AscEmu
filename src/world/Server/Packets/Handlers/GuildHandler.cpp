@@ -20,6 +20,14 @@
  */
 
 #include "StdAfx.h"
+#include "Management/Item.h"
+#include "Storage/WorldStrings.h"
+#include "Management/ItemInterface.h"
+#include "Management/ArenaTeam.h"
+#include "Storage/MySQLDataStore.hpp"
+#include "Server/MainServerDefines.h"
+#include "Config/Config.h"
+#include "Map/MapMgr.h"
 
 void WorldSession::HandleGuildQuery(WorldPacket& recv_data)
 {
@@ -369,7 +377,7 @@ void WorldSession::HandleGuildRank(WorldPacket& recv_data)
     GuildRank* pRank;
 
     recv_data >> rankId;
-    pRank = _player->m_playerInfo->guild->GetGuildRank(rankId);
+    pRank = _player->GetGuild()->GetGuildRank(rankId);
     if (pRank == NULL)
         return;
 
@@ -401,7 +409,7 @@ void WorldSession::HandleGuildRank(WorldPacket& recv_data)
         recv_data >> pRank->iTabPermissions[i].iStacksPerDay;
     }
 
-    uint32 guildID = _player->m_playerInfo->guild->GetGuildId();
+    uint32 guildID = _player->GetGuildId();
     uint32 rankID = pRank->iId;
 
     CharacterDatabase.Execute("DELETE FROM guild_ranks WHERE guildid = %u AND rankid = %u;", guildID, rankID);
@@ -416,7 +424,8 @@ void WorldSession::HandleGuildRank(WorldPacket& recv_data)
                               pRank->iTabPermissions[4].iFlags, pRank->iTabPermissions[4].iStacksPerDay,
                               pRank->iTabPermissions[5].iFlags, pRank->iTabPermissions[5].iStacksPerDay);
 
-    _player->m_playerInfo->guild->SendGuildRoster(this);
+    _player->GetGuild()->SendGuildQuery(nullptr);
+    _player->GetGuild()->SendGuildRoster(this);
 }
 
 void WorldSession::HandleGuildAddRank(WorldPacket& recv_data)
@@ -763,11 +772,7 @@ void WorldSession::HandleCharterBuy(WorldPacket& recv_data)
         }
         else
         {
-            // Meh...
-            WorldPacket data(SMSG_PLAY_OBJECT_SOUND, 12);
-            data << uint32(0x000019C2);
-            data << creature_guid;
-            SendPacket(&data);
+            _player->PlaySoundToPlayer(creature_guid, 6594);
 
             // Create the item and charter
             Item* i = objmgr.CreateItem(ITEM_ENTRY_GUILD_CHARTER, _player);
@@ -1064,7 +1069,7 @@ void WorldSession::HandleCharterTurnInCharter(WorldPacket& recv_data)
 
         if (_player->m_arenaTeams[pCharter->CharterType - 1] != NULL)
         {
-            sChatHandler.SystemMessage(this, LocalizedWorldSrv(Worldstring::SS_ALREADY_ARENA_TEAM));
+            sChatHandler.SystemMessage(this, LocalizedWorldSrv(ServerString::SS_ALREADY_ARENA_TEAM));
             return;
         }
 

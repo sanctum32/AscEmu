@@ -20,6 +20,10 @@
  */
 
 #include "StdAfx.h"
+#include "Storage/DatabaseCleaner.h"
+#include "Server/MainServerDefines.h"
+#include "Units/Creatures/Corpse.h"
+#include "Log.hpp"
 
 initialiseSingleton(DatabaseCleaner);
 
@@ -27,19 +31,7 @@ void DatabaseCleaner::Run()
 {
     LogNotice("DatabaseCleaner : Stage 1 of 3: Cleaning characters...");
     CleanCharacters();
-
-    LogNotice("DatabaseCleaner : Stage 2 of 3: Cleaning world...");
-    CleanWorld();
-
-    LogNotice("DatabaseCleaner : Stage 3 of 3: Optimizing databases...");
-    Optimize();
 }
-
-void DatabaseCleaner::CleanWorld()
-{}
-
-void DatabaseCleaner::Optimize()
-{}
 
 void DatabaseCleaner::CleanCharacters()
 {

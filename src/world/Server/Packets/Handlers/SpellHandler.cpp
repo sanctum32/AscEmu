@@ -20,6 +20,14 @@
  */
 
 #include "StdAfx.h"
+#include "Management/Item.h"
+#include "Spell/SpellNameHashes.h"
+#include "Management/ItemInterface.h"
+#include "Management/Battleground/Battleground.h"
+#include "Storage/MySQLDataStore.hpp"
+#include "Server/MainServerDefines.h"
+#include "Map/MapMgr.h"
+#include "Spell/SpellAuras.h"
 
 void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
 {
@@ -138,7 +146,7 @@ void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
 
     if (spellInfo->AuraInterruptFlags & AURA_INTERRUPT_ON_STAND_UP && !_player->IsSitting())
     {
-        if (p_User->CombatStatus.IsInCombat() || p_User->IsMounted())
+        if (p_User->isInCombat() || p_User->IsMounted())
         {
             _player->GetItemInterface()->BuildInventoryChangeError(tmpItem, NULL, INV_ERR_CANT_DO_IN_COMBAT);
             return;
@@ -240,10 +248,7 @@ void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
     //GetPlayer()->setCurrentSpell(spell);
     spell->prepare(&targets);
 
-#ifdef ENABLE_ACHIEVEMENTS
     _player->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_USE_ITEM, itemProto->ItemId, 0, 0);
-#endif
-
 }
 
 void WorldSession::HandleSpellClick(WorldPacket& recvPacket)

@@ -7,6 +7,11 @@ This file is released under the MIT license. See README-MIT for more information
 #define MYSQL_DATA_LOADS_HPP
 
 #include "Singleton.h"
+#include "Server/Packets/Handlers/MiscHandler.h"
+#include "Server/Packets/Handlers/NPCHandler.h"
+#include "Server/Packets/Handlers/AreaTrigger.h"
+#include "../../scripts/Battlegrounds/IsleOfConquest.h"
+#include "Objects/ObjectMgr.h"
 
 extern SERVER_DECL std::set<std::string> CreatureSpawnsTables;
 extern SERVER_DECL std::set<std::string> GameObjectSpawnsTables;

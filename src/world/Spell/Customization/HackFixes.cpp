@@ -20,6 +20,12 @@
  */
 
 #include "StdAfx.h"
+#include "crc32.h"
+#include "Spell/SpellNameHashes.h"
+#include "Units/Players/PlayerClasses.hpp"
+#include "Server/MainServerDefines.h"
+#include "Spell/SpellAuras.h"
+#include "Server/World.h"
 
 void CreateDummySpell(uint32 id)
 {
@@ -415,10 +421,12 @@ void Set_missing_spellLevel(SpellInfo* sp)
 
             if (teachspell)
             {
-                SpellInfo* spellInfo;
-                spellInfo = CheckAndReturnSpellEntry(teachspell);
-                spellInfo->spellLevel = new_level;
-                sp->spellLevel = new_level;
+                SpellInfo* spellInfo = CheckAndReturnSpellEntry(teachspell);
+                if (spellInfo != nullptr)
+                {
+                    spellInfo->spellLevel = new_level;
+                    sp->spellLevel = new_level;
+                }
             }
         }
     }

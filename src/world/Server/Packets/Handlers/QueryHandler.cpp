@@ -20,7 +20,9 @@
  */
 
 #include "StdAfx.h"
-
+#include "Storage/MySQLDataStore.hpp"
+#include "Management/LocalizationMgr.h"
+#include "Map/WorldCreatorDefines.hpp"
 
 //////////////////////////////////////////////////////////////////////////////////////////
 /// This function handles CMSG_NAME_QUERY:
@@ -393,7 +395,5 @@ void WorldSession::HandleAchievmentQueryOpcode(WorldPacket& recv_data)
     {
         return;
     }
-#ifdef ENABLE_ACHIEVEMENTS
     pTarget->GetAchievementMgr().SendAllAchievementData(GetPlayer());
-#endif
 }

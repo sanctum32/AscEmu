@@ -21,7 +21,8 @@
 #ifndef _CIRCLE_OF_BLOOD_H
 #define _CIRCLE_OF_BLOOD_H
 
-#include "StdAfx.h"
+#include "Management/Arenas.h"
+#include "Management/Battleground/Battleground.h"
 
 class CircleOfBlood : public Arena
 {

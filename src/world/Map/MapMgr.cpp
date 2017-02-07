@@ -22,13 +22,26 @@
 #include "StdAfx.h"
 
 #include "TLSObject.h"
+#include "Objects/DynamicObject.h"
 #include "CellHandler.h"
 #include "CThreads.h"
 #include "Management/WorldStatesHandler.h"
+#include "Management/Item.h"
 #include "CrashHandler.h"
 #include "Units/Summons/Summon.h"
+#include "Units/Summons/GuardianSummon.h"
+#include "Units/Summons/WildSummon.h"
+#include "Units/Summons/TotemSummon.h"
+#include "Units/Summons/PossessedSummon.h"
+#include "Units/Summons/CompanionSummon.h"
 #include "Units/Unit.h"
+#include "VMapFactory.h"
 #include "MMapFactory.h"
+#include "Storage/MySQLDataStore.hpp"
+#include "MapMgr.h"
+#include "MapScriptInterface.h"
+#include "WorldCreatorDefines.hpp"
+#include "WorldCreator.h"
 
 
 Arcemu::Utility::TLSObject<MapMgr*> t_currentMapContext;

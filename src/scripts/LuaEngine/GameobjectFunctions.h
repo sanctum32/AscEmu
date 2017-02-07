@@ -21,8 +21,13 @@
 #ifndef GOFUNCTIONS_H
 #define GOFUNCTIONS_H
 
-#include "StdAfx.h"
 #include "LUAEngine.h"
+#include "Map/MapMgr.h"
+#include "Storage/MySQLDataStore.hpp"
+#include "Server/MainServerDefines.h"
+#include "Management/Group.h"
+#include "Map/MapScriptInterface.h"
+#include "Spell/SpellMgr.h"
 
 class LuaGameObject
 {
@@ -1112,10 +1117,7 @@ class LuaGameObject
             uint32 aindex = CHECK_ULONG(L, 1);
             if (aindex < 2 && ptr != NULL)
             {
-                WorldPacket data(SMSG_GAMEOBJECT_CUSTOM_ANIM, 12);
-                data << ptr->GetGUID();
-                data << aindex;
-                ptr->SendMessageToSet(&data, false);
+                ptr->SetCustomAnim(aindex);
                 RET_BOOL(true)
             }
             RET_BOOL(false)

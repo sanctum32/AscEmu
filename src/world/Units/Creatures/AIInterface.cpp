@@ -19,8 +19,18 @@
  */
 
 #include "StdAfx.h"
+#include "VMapFactory.h"
 #include "MMapManager.h"
 #include "MMapFactory.h"
+#include "Units/Stats.h"
+#include "Server/Packets/Movement/CreatureMovement.hpp"
+#include "Storage/MySQLDataStore.hpp"
+#include "Server/MainServerDefines.h"
+#include "Map/MapMgr.h"
+#include "Objects/Faction.h"
+#include "Spell/SpellMgr.h"
+#include "Map/WorldCreatorDefines.hpp"
+#include "Map/WorldCreator.h"
 
 #ifndef UNIX
 #include <cmath>
@@ -184,6 +194,16 @@ void AIInterface::Init(Unit* un, AIType at, Movement::WaypointMovementScript mt,
     m_walkSpeed = m_Unit->m_walkSpeed * 0.001f; //move distance per ms time
     m_runSpeed = m_Unit->m_runSpeed * 0.001f; //move/ms
     m_flySpeed = m_Unit->m_flySpeed * 0.001f;
+}
+
+Unit* AIInterface::GetUnit() const
+{
+    return m_Unit;
+}
+
+Unit* AIInterface::GetPetOwner() const
+{
+    return m_PetOwner;
 }
 
 void AIInterface::HandleEvent(uint32 event, Unit* pUnit, uint32 misc1)
@@ -396,7 +416,7 @@ void AIInterface::_UpdateTargets()
         {
             i2 = i++;
             if ((*i2) == NULL || (*i2)->event_GetCurrentInstanceId() != m_Unit->event_GetCurrentInstanceId() ||
-                !(*i2)->isAlive() || m_Unit->GetDistanceSq((*i2)) >= 2500.0f || !(*i2)->CombatStatus.IsInCombat() || !((*i2)->m_phase & m_Unit->m_phase))
+                !(*i2)->isAlive() || m_Unit->GetDistanceSq((*i2)) >= 2500.0f || !(*i2)->isInCombat() || !((*i2)->m_phase & m_Unit->m_phase))
             {
                 m_assistTargets.erase(i2);
             }
@@ -1858,6 +1878,64 @@ void AIInterface::UpdateSpeeds()
     m_flySpeed = m_Unit->m_flySpeed * 0.001f;
 }
 
+bool AIInterface::Flying() const
+{
+    return m_Unit->m_movementManager.IsFlying();
+}
+
+void AIInterface::SetFly() const
+{
+    m_Unit->m_movementManager.m_spline.GetSplineFlags()->m_splineFlagsRaw.flying = true;
+}
+
+void AIInterface::SetSprint()
+{
+    if (Flying()) return;
+    m_Unit->m_movementManager.m_spline.GetSplineFlags()->m_splineFlagsRaw.walkmode = true;
+    SetWalkMode(WALKMODE_SPRINT);
+    UpdateSpeeds();
+}
+
+void AIInterface::SetRun()
+{
+    if (Flying()) return;
+    m_Unit->m_movementManager.m_spline.GetSplineFlags()->m_splineFlagsRaw.walkmode = true;
+    SetWalkMode(WALKMODE_RUN);
+    UpdateSpeeds();
+}
+
+void AIInterface::SetWalk()
+{
+    if (Flying()) return;
+    m_Unit->m_movementManager.m_spline.GetSplineFlags()->m_splineFlagsRaw.walkmode = true;
+    SetWalkMode(WALKMODE_WALK);
+    UpdateSpeeds();
+}
+
+void AIInterface::SetWalkMode(uint32 mode)
+{
+    m_walkMode = mode;
+}
+
+bool AIInterface::HasWalkMode(uint32 mode) const
+{
+    return m_walkMode == mode;
+}
+
+uint32 AIInterface::GetWalkMode() const
+{
+    return m_walkMode;
+}
+
+void AIInterface::StopFlying()
+{
+    if (Flying())
+    {
+        m_Unit->m_movementManager.m_spline.GetSplineFlags()->m_splineFlagsRaw.flying = false;
+        SetWalk();
+    }
+}
+
 void AIInterface::UpdateMove()
 {
     m_creatureState = MOVING;
@@ -3094,7 +3172,7 @@ void AIInterface::WipeTargetList()
     LockAITargets(true);
     m_aiTargets.clear();
     LockAITargets(false);
-    m_Unit->CombatStatus.Vanished();
+    m_Unit->clearAllCombatTargets();
 }
 
 bool AIInterface::taunt(Unit* caster, bool apply)
@@ -3220,8 +3298,8 @@ void AIInterface::CheckTarget(Unit* target)
     TargetMap::iterator it2 = m_aiTargets.find(target->GetGUID());
     if (it2 != m_aiTargets.end() || target == getNextTarget())
     {
-        target->CombatStatus.RemoveAttacker(m_Unit, m_Unit->GetGUID());
-        m_Unit->CombatStatus.RemoveAttackTarget(target);
+        target->removeAttacker(m_Unit);
+        m_Unit->removeAttackTarget(target);
 
         if (it2 != m_aiTargets.end())
         {
@@ -3564,6 +3642,11 @@ void AIInterface::UpdateMovementSpline()
         else
             UpdateMovementSpline();
     }
+}
+
+bool AIInterface::MoveDone() const
+{
+    return m_Unit->m_movementManager.m_spline.IsSplineMoveDone();
 }
 
 bool AIInterface::Move(float & x, float & y, float & z, float o /*= 0*/)
@@ -4100,7 +4183,7 @@ void AIInterface::EventLeaveCombat(Unit* pUnit, uint32 misc1)
     m_hasCalledForHelp = false;
     m_nextSpell = NULL;
     resetNextTarget();
-    m_Unit->CombatStatus.Vanished();
+    m_Unit->clearAllCombatTargets();
 
     if (m_AIType == AITYPE_PET)
     {
@@ -4181,7 +4264,7 @@ void AIInterface::EventDamageTaken(Unit* pUnit, uint32 misc1)
     {
         m_aiTargets.insert(TargetMap::value_type(pUnit->GetGUID(), misc1));
     }
-    pUnit->CombatStatus.OnDamageDealt(m_Unit);
+    pUnit->onDamageDealt(m_Unit);
 }
 
 void AIInterface::EventFollowOwner(Unit* pUnit, uint32 misc1)
@@ -4482,7 +4565,7 @@ void AIInterface::EventForceRedirected(Unit* pUnit, uint32 misc1)
         SetReturnPosition();
 }
 
-void AIInterface::MoveJump(float x, float y, float z, float o /*= 0*/, bool hugearc)
+void AIInterface::MoveJump(float x, float y, float z, float o /*= 0*/, float speedZ /*= 5.0f */, bool hugearc)
 {
     m_splinePriority = SPLINE_PRIORITY_REDIRECTION;
 
@@ -4493,9 +4576,9 @@ void AIInterface::MoveJump(float x, float y, float z, float o /*= 0*/, bool huge
 
     m_Unit->m_movementManager.m_spline.m_splineTrajectoryTime = 0;
     if (hugearc)
-        m_Unit->m_movementManager.m_spline.m_splineTrajectoryVertical = 250;   // weeee
+        m_Unit->m_movementManager.m_spline.m_splineTrajectoryVertical = 250; 
 	else
-        m_Unit->m_movementManager.m_spline.m_splineTrajectoryVertical = 5;
+        m_Unit->m_movementManager.m_spline.m_splineTrajectoryVertical = speedZ;
 
     SetRun();
     m_runSpeed *= 3;
@@ -4509,35 +4592,6 @@ void AIInterface::MoveJump(float x, float y, float z, float o /*= 0*/, bool huge
 
     //fix run speed
     UpdateSpeeds();
-}
-
-void AIInterface::MoveJumpExt(float x, float y, float z, float o, float speedZ, bool hugearc)
-{
-	m_splinePriority = SPLINE_PRIORITY_REDIRECTION;
-
-	//Clear current spline
-    m_Unit->m_movementManager.m_spline.ClearSpline();
-    m_Unit->m_movementManager.ForceUpdate();
-    m_Unit->m_movementManager.m_spline.SetFacing(o);
-
-    m_Unit->m_movementManager.m_spline.m_splineTrajectoryTime = 0;
-	if(hugearc)
-        m_Unit->m_movementManager.m_spline.m_splineTrajectoryVertical = 250;   // weeee
-	else
-        m_Unit->m_movementManager.m_spline.m_splineTrajectoryVertical = speedZ;
-
-	SetRun();
-	m_runSpeed *= 3;
-
-	AddSpline(m_Unit->GetPositionX(), m_Unit->GetPositionY(), m_Unit->GetPositionZ());
-	AddSpline(x, y, z);
-
-    m_Unit->m_movementManager.m_spline.GetSplineFlags()->m_splineFlagsRaw.trajectory = true;
-
-	SendMoveToPacket();
-
-	//fix run speed
-	UpdateSpeeds();
 }
 
 void AIInterface::SetReturnPosition()

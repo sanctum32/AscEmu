@@ -20,6 +20,8 @@
  */
 
 #include "Setup.h"
+#include "Management/Gossip/GossipMenu.hpp"
+#include "Spell/SpellAuras.h"
 
 // -----------------------------------------------------------------------------
 // Quest 12532 - Flown the Coop!

@@ -24,7 +24,19 @@
 #include "Management/QuestLogEntry.hpp"
 #include "Server/EventableObject.h"
 #include "Server/IUpdatable.h"
+#include "VMapFactory.h"
 #include "MMapFactory.h"
+#include "TLSObject.h"
+#include "Spell/SpellNameHashes.h"
+#include "Management/ItemInterface.h"
+#include "Server/WorldSocket.h"
+#include "Storage/MySQLDataStore.hpp"
+#include "Map/MapMgrDefines.hpp"
+#include "Map/Area/AreaStorage.hpp"
+#include "Map/MapMgr.h"
+#include "Faction.h"
+#include "Spell/SpellAuras.h"
+#include "Map/WorldCreator.h"
 
 Object::Object() : m_position(0, 0, 0, 0), m_spawnLocation(0, 0, 0, 0)
 {

@@ -23,7 +23,10 @@
 
 #include "Map/RecastIncludes.hpp"
 #include "Server/IUpdatable.h"
+#include "Units/Creatures/AIEvents.h"
+#include "Units/Unit.h"
 #include "Units/Creatures/CreatureDefines.hpp"
+#include "Movement/UnitMovementManager.hpp"
 
 #include <G3D/Vector3.h>
 
@@ -213,8 +216,8 @@ class SERVER_DECL AIInterface : public IUpdatable
         // Misc
         void Init(Unit* un, AIType at, Movement::WaypointMovementScript mt);
         void Init(Unit* un, AIType at, Movement::WaypointMovementScript mt, Unit* owner);   /// used for pets
-        Unit* GetUnit() { return m_Unit; }
-        Unit* GetPetOwner() { return m_PetOwner; }
+    Unit* GetUnit() const;
+    Unit* GetPetOwner() const;
         void DismissPet();
         void SetUnitToFollow(Unit* un);
         void SetUnitToFollow(uint64 guid) { m_UnitToFollow = guid; };
@@ -314,17 +317,17 @@ class SERVER_DECL AIInterface : public IUpdatable
         void UpdateSpeeds();
 
         //Move flag updating
-        bool Flying() { return m_Unit->m_movementManager.IsFlying(); }
-        void SetFly() { m_Unit->m_movementManager.m_spline.GetSplineFlags()->m_splineFlagsRaw.flying = true; }
-        void SetSprint() { if (Flying()) return; m_Unit->m_movementManager.m_spline.GetSplineFlags()->m_splineFlagsRaw.walkmode = true; SetWalkMode(WALKMODE_SPRINT); UpdateSpeeds(); }
-        void SetRun() { if (Flying()) return; m_Unit->m_movementManager.m_spline.GetSplineFlags()->m_splineFlagsRaw.walkmode = true; SetWalkMode(WALKMODE_RUN); UpdateSpeeds(); }
-        void SetWalk() { if (Flying()) return; m_Unit->m_movementManager.m_spline.GetSplineFlags()->m_splineFlagsRaw.walkmode = true; SetWalkMode(WALKMODE_WALK); UpdateSpeeds(); }
+    bool Flying() const;
+    void SetFly() const;
+    void SetSprint();
+    void SetRun();
+    void SetWalk();
 
-        void SetWalkMode(uint32 mode) { m_walkMode = mode; }
-        bool HasWalkMode(uint32 mode) { return m_walkMode == mode; }
-        uint32 GetWalkMode() { return m_walkMode; }
+    void SetWalkMode(uint32 mode);
+    bool HasWalkMode(uint32 mode) const;
+    uint32 GetWalkMode() const;
 
-        void StopFlying() { if (Flying()) { m_Unit->m_movementManager.m_spline.GetSplineFlags()->m_splineFlagsRaw.flying = false; SetWalk(); } }
+    void StopFlying();
 
         //Movement::Spline::MoveSpline m_spline;
         uint32 m_walkMode;
@@ -572,11 +575,10 @@ class SERVER_DECL AIInterface : public IUpdatable
         void WipeCurrentTarget();
 
         void UpdateMovementSpline();
-        bool MoveDone() { return m_Unit->m_movementManager.m_spline.IsSplineMoveDone(); }
+    bool MoveDone() const;
         bool CanCreatePath(float x, float y, float z) { return CreatePath(x, y, z, true); }
         void MoveKnockback(float x, float y, float z, float horizontal, float vertical);
-        void MoveJump(float x, float y, float z, float o = 0, bool hugearc = false);
-        void MoveJumpExt(float x, float y, float z, float o, float speedZ, bool hugearc);
+        void MoveJump(float x, float y, float z, float o = 0, float speedZ = 5.0f, bool hugearc = false);
         void MoveTeleport(float x, float y, float z, float o = 0);
         void MoveFalling(float x, float y, float z, float o = 0);
         bool MoveCharge(float x, float y, float z);

@@ -19,6 +19,8 @@
  */
 
 #include "../../StdAfx.h"
+#include "Units/Summons/GuardianSummon.h"
+#include "../../../scripts/Battlegrounds/EyeOfTheStorm.h"
 
 GuardianSummon::GuardianSummon(uint64 GUID) : Summon(GUID)
 {}

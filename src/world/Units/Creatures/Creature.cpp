@@ -20,9 +20,20 @@
  */
 
 #include "StdAfx.h"
+#include "Objects/DynamicObject.h"
+#include "Management/AuctionMgr.h"
 #include "Management/QuestMgr.h"
 #include "Management/Quest.h"
-
+#include "Management/GameEvent.h"
+#include "Management/Skill.h"
+#include "Management/Battleground/Battleground.h"
+#include "Units/Stats.h"
+#include "Storage/MySQLDataStore.hpp"
+#include "Server/MainServerDefines.h"
+#include "Map/MapCell.h"
+#include "Map/MapMgr.h"
+#include "Map/WorldCreatorDefines.hpp"
+#include "Map/WorldCreator.h"
 
 Creature::Creature(uint64 guid)
 {
@@ -1538,7 +1549,7 @@ void Creature::Load(CreatureProperties const* properties_, float x, float y, flo
     SetPower(POWER_TYPE_MANA, creature_properties->Mana);
 
     uint32 model = 0;
-    uint8 gender = creature_properties->GenerateModelId(&model);
+    uint8 gender = creature_properties->GetGenderAndCreateRandomDisplayID(&model);
     setGender(gender);
 
     SetDisplayId(model);
@@ -2289,7 +2300,7 @@ void Creature::DealDamage(Unit* pVictim, uint32 damage, uint32 targetEvent, uint
         return;
 
     if (pVictim != this)
-        CombatStatus.OnDamageDealt(pVictim);
+        onDamageDealt(pVictim);
 
     pVictim->SetStandState(STANDSTATE_STAND);
 
@@ -2436,7 +2447,7 @@ void Creature::Die(Unit* pAttacker, uint32 damage, uint32 spellid)
     SetHealth(0);
 
     // Wipe our attacker set on death
-    CombatStatus.Vanished();
+    clearAllCombatTargets();
 
     RemoveAllNonPersistentAuras();
 

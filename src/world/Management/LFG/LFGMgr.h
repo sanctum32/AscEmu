@@ -19,9 +19,11 @@
 #ifndef _LFGMGR_H
 #define _LFGMGR_H
 
-#include "StdAfx.h"
 #include "LFG.h"
-
+#include "Server/Definitions.h"
+#include <list>
+#include "../../shared/Singleton.h"
+#include "Server/EventableObject.h"
 
 #define MAX_DUNGEONS 294+1          // check max entry's +1 on lfgdungeons.dbc
 #define MAX_LFG_QUEUE_ID 3
@@ -31,6 +33,7 @@ class LfgGroupData;
 class LfgPlayerData;
 class Group;
 class Player;
+class Field;
 
 enum LFGenum
 {

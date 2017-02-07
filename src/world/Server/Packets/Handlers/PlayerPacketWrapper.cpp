@@ -18,6 +18,10 @@
  */
 
 #include "StdAfx.h"
+#include "Management/Item.h"
+#include "Management/ItemInterface.h"
+#include "Storage/MySQLDataStore.hpp"
+#include "Map/MapMgr.h"
 
 void Player::SendTalentResetConfirm()
 {
@@ -212,15 +216,6 @@ void Player::SendLoginVerifyWorld(uint32 MapId, float X, float Y, float Z, float
     data << float(O);
 
     m_session->SendPacket(&data);
-}
-
-void Player::SendPlaySpellVisual(uint64 guid, uint32 visualid)
-{
-    WorldPacket data(SMSG_PLAY_SPELL_VISUAL, 12);
-    data << uint64(guid);
-    data << uint32(visualid);
-
-    SendMessageToSet(&data, true, false);
 }
 
 void Player::SendDungeonDifficulty()

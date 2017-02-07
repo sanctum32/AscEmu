@@ -20,6 +20,14 @@
  */
 
 #include "StdAfx.h"
+#include "Management/Gossip/GossipMenu.hpp"
+#include "Management/Item.h"
+#include "Management/Container.h"
+#include "Management/ItemInterface.h"
+#include "Storage/MySQLDataStore.hpp"
+#include "Management/LocalizationMgr.h"
+#include "Server/MainServerDefines.h"
+#include "Map/MapMgr.h"
 
 bool VerifyBagSlots(int8 ContainerSlot, int8 Slot)
 {
@@ -223,7 +231,7 @@ void WorldSession::HandleSwapInvItemOpcode(WorldPacket& recv_data)
     bool skip_combat = false;
     if (srcslot < EQUIPMENT_SLOT_END || dstslot < EQUIPMENT_SLOT_END)        // We're doing an equip swap.
     {
-        if (_player->CombatStatus.IsInCombat())
+        if (_player->isInCombat())
         {
             if (srcslot < EQUIPMENT_SLOT_MAINHAND || dstslot < EQUIPMENT_SLOT_MAINHAND)    // These can't be swapped
             {
@@ -322,7 +330,6 @@ void WorldSession::HandleSwapInvItemOpcode(WorldPacket& recv_data)
         return;
     }
 
-#ifdef ENABLE_ACHIEVEMENTS
     if (dstitem && srcslot < INVENTORY_SLOT_BAG_END)
     {
         _player->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_EQUIP_ITEM, dstitem->GetItemProperties()->ItemId, 0, 0);
@@ -351,7 +358,6 @@ void WorldSession::HandleSwapInvItemOpcode(WorldPacket& recv_data)
                 _player->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_EQUIP_EPIC_ITEM, dstslot, srcitem->GetItemProperties()->Quality, 0);
         }
     }
-#endif
     _player->GetItemInterface()->SwapItemSlots(srcslot, dstslot);
 }
 
@@ -608,7 +614,6 @@ void WorldSession::HandleAutoEquipItemOpcode(WorldPacket& recv_data)
     {
         if (eitem->GetItemProperties()->Bonding == ITEM_BIND_ON_EQUIP)
             eitem->SoulBind();
-#ifdef ENABLE_ACHIEVEMENTS
         _player->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_EQUIP_ITEM, eitem->GetItemProperties()->ItemId, 0, 0);
         // Achievement ID:556 description Equip an epic item in every slot with a minimum item level of 213.
         // "213" value not found in achievement or criteria entries, have to hard-code it here? :(
@@ -617,7 +622,6 @@ void WorldSession::HandleAutoEquipItemOpcode(WorldPacket& recv_data)
         if ((eitem->GetItemProperties()->Quality == ITEM_QUALITY_RARE_BLUE && eitem->GetItemProperties()->ItemLevel >= 187) ||
             (eitem->GetItemProperties()->Quality == ITEM_QUALITY_EPIC_PURPLE && eitem->GetItemProperties()->ItemLevel >= 213))
             _player->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_EQUIP_EPIC_ITEM, Slot, eitem->GetItemProperties()->Quality, 0);
-#endif
     }
     //Recalculate Expertise (for Weapon specs)
     _player->CalcExpertise();
@@ -1780,9 +1784,7 @@ void WorldSession::HandleBuyBankSlotOpcode(WorldPacket& recvPacket)
     {
         _player->SetUInt32Value(PLAYER_BYTES_2, (bytes & 0xff00ffff) | ((slots + 1) << 16));
         _player->ModGold(-price);
-#ifdef ENABLE_ACHIEVEMENTS
         _player->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_BUY_BANK_SLOT, 1, 0, 0);
-#endif
     }
     else
     {

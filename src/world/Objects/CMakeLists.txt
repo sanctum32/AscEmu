@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2016 AscEmu Team <http://www.ascemu.org>
+# Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
 
 set(PATH_PREFIX Objects)
 
@@ -15,6 +15,9 @@ set(SRC_OBJECTS_FILES
    ${PATH_PREFIX}/Object.h
    ${PATH_PREFIX}/ObjectMgr.cpp
    ${PATH_PREFIX}/ObjectMgr.h
+   
+   # MIT
+   ${PATH_PREFIX}/ObjectDefines.h
 )
 
 source_group(Objects FILES ${SRC_OBJECTS_FILES})

@@ -21,7 +21,8 @@
 #ifndef _DALARAN_SEWERS_H
 #define _DALARAN_SEWERS_H
 
-#include "StdAfx.h"
+#include "Management/Arenas.h"
+#include "Management/Battleground/Battleground.h"
 
 class DalaranSewers : public Arena
 {

@@ -19,6 +19,8 @@
 
 #include "Setup.h"
 #include "Raid_IceCrownCitadel.h"
+#include "Management/Gossip/GossipMenu.hpp"
+#include "Objects/Faction.h"
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //ICC zone: 4812

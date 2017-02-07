@@ -24,13 +24,22 @@
 #undef check
 #endif
 
+#include "../../world/Objects/GameObject.h"
+#include "../../world/Management/Guild.h"
+#include "../../world/Spell/Spell.h"
+#include "../../world/Units/Creatures/Creature.h"
 #include "LUAEngine.h"
-#include <Server/Script/ScriptSetup.h>
+#include "Map/MapMgr.h"
+#include "Server/Script/ScriptSetup.h"
 
 #ifndef _WIN32
 #include <dirent.h>
 #endif
-#include <Management/QuestLogEntry.hpp>
+#include "Management/QuestLogEntry.hpp"
+#include "Management/Item.h"
+#include "Management/ArenaTeam.h"
+#include "Map/WorldCreatorDefines.hpp"
+#include "Map/WorldCreator.h"
 
 ScriptMgr* m_scriptMgr = NULL;
 LuaEngine g_luaMgr;

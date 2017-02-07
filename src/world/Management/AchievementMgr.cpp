@@ -19,8 +19,13 @@
  */
 
 #include "StdAfx.h"
-
-#ifdef ENABLE_ACHIEVEMENTS
+#include "Management/Item.h"
+#include "Units/Stats.h"
+#include "Server/WorldSocket.h"
+#include "Storage/MySQLDataStore.hpp"
+#include "Server/MainServerDefines.h"
+#include "Map/MapMgr.h"
+#include "Objects/Faction.h"
 
 //////////////////////////////////////////////////////////////////////////////////////////
 /// Takes achievementlink c-string
@@ -2106,5 +2111,3 @@ bool AchievementMgr::HasCompleted(uint32 achievementID)
 {
     return (m_completedAchievements.find(achievementID) != m_completedAchievements.end());
 }
-
-#endif

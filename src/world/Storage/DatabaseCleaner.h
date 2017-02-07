@@ -20,6 +20,7 @@
 
 #ifndef _DATABASECLEANER_H
 #define _DATABASECLEANER_H
+#include "Singleton.h"
 
 class DatabaseCleaner : public Singleton<DatabaseCleaner>
 {
@@ -30,8 +31,6 @@ class DatabaseCleaner : public Singleton<DatabaseCleaner>
     protected:
 
         void CleanCharacters();
-        void CleanWorld();
-        void Optimize();
 };
 
 #endif // _DATABASECLEANER_H

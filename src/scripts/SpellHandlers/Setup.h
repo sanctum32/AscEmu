@@ -15,10 +15,9 @@
  *
  */
 
-#include "StdAfx.h"
+#pragma once
 
-#ifndef SPELL_SCRIPTS_SETUP_H
-#define SPELL_SCRIPTS_SETUP_H
+class ScriptMgr;
 
 // Class spell handlers
 void SetupShamanSpells(ScriptMgr* mgr);
@@ -40,5 +39,3 @@ void SetupMiscSpellhandlers(ScriptMgr* mgr);
 
 //Instance spells (mainly scripted targets)
 void SetupRaidBlackTempleSpells(ScriptMgr* mgr);
-
-#endif

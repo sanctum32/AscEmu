@@ -4,8 +4,8 @@ This file is released under the MIT license. See README-MIT for more information
 */
 
 #include "StdAfx.h"
-
-#ifdef ENABLE_ACHIEVEMENTS
+#include "Server/MainServerDefines.h"
+#include "Chat/ChatHandler.hpp"
 
 //.achieve complete
 bool ChatHandler::HandleAchievementCompleteCommand(const char* args, WorldSession* m_session)
@@ -123,5 +123,3 @@ bool ChatHandler::HandleAchievementResetCommand(const char* args, WorldSession* 
 
     return true;
 }
-
-#endif

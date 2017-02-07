@@ -21,8 +21,33 @@
 
 #include "StdAfx.h"
 #include "Management/QuestLogEntry.hpp"
+#include "Management/Gossip/GossipMenu.hpp"
+#include "Management/Item.h"
+#include "Management/Container.h"
 #include "Server/Packets/Opcodes.h"
-
+#include "Objects/DynamicObject.h"
+#include "AuthCodes.h"
+#include "VMapFactory.h"
+#include "Server/Packets/Handlers/HonorHandler.h"
+#include "Storage/WorldStrings.h"
+#include "Spell/SpellNameHashes.h"
+#include "Management/TaxiMgr.h"
+#include "Management/WeatherMgr.h"
+#include "Management/ItemInterface.h"
+#include "Units/Stats.h"
+#include "Management/Channel.h"
+#include "Management/ChannelMgr.h"
+#include "Management/Battleground/Battleground.h"
+#include "Management/ArenaTeam.h"
+#include "Server/LogonCommClient/LogonCommHandler.h"
+#include "Storage/MySQLDataStore.hpp"
+#include "Server/Warden/SpeedDetector.h"
+#include "Server/MainServerDefines.h"
+#include "Config/Config.h"
+#include "Map/MapMgr.h"
+#include "Objects/Faction.h"
+#include "Spell/SpellAuras.h"
+#include "Map/WorldCreator.h"
 
 UpdateMask Player::m_visibleUpdateMask;
 
@@ -222,10 +247,8 @@ Player::Player(uint32 guid)
     m_session(NULL),
     m_GroupInviter(0),
     m_SummonedObject(NULL),
-    myCorpseLocation()
-#ifdef ENABLE_ACHIEVEMENTS
-    , m_achievementMgr(this)
-#endif
+    myCorpseLocation(),
+    m_achievementMgr(this)
 {
     m_cache = new PlayerCache;
     m_cache->SetUInt32Value(CACHE_PLAYER_LOWGUID, guid);
@@ -750,7 +773,7 @@ bool Player::Create(WorldPacket& data)
     data >> m_name;
 
     // correct capitalization
-    CapitalizeString(m_name);
+    Util::CapitalizeString(m_name);
 
     data >> race;
     data >> class_;
@@ -1500,9 +1523,7 @@ void Player::_EventExploration()
         uint32 explore_xp = at->area_level * 10;
         explore_xp *= float2int32(sWorld.getRate(RATE_EXPLOREXP));
 
-#ifdef ENABLE_ACHIEVEMENTS
         GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_EXPLORE_AREA);
-#endif
         uint32 maxlevel = GetMaxLevel();
 
         if (getLevel() < maxlevel && explore_xp > 0)
@@ -1641,10 +1662,7 @@ void Player::GiveXP(uint32 xp, const uint64 & guid, bool allowbonus)
                 summon->UpdateSpellList();
             }
         }
-        //Event_Achiement_Received(ACHIEVEMENT_CRITERIA_TYPE_REACH_LEVEL,0,level);
-#ifdef ENABLE_ACHIEVEMENTS
         GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_REACH_LEVEL);
-#endif
 
         //VLack: 3.1.3, as a final step, send the player's talents, this will set the talent points right too...
         smsg_TalentsInfo(false);
@@ -2150,7 +2168,7 @@ void Player::addSpell(uint32 spell_id)
         _AddSkillLine(skill_line_ability->skilline, 1, max);
         _UpdateMaxSkillCounts();
     }
-#ifdef ENABLE_ACHIEVEMENTS
+
     m_achievementMgr.UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_LEARN_SPELL, spell_id, 1, 0);
     if (spell->MechanicsType == MECHANIC_MOUNTED) // Mounts
     {
@@ -2166,7 +2184,6 @@ void Player::addSpell(uint32 spell_id)
             m_achievementMgr.UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_NUMBER_OF_MOUNTS, 778, 0, 0);
         }
     }
-#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -2654,9 +2671,7 @@ void Player::SaveToDB(bool bNewCharacter /* =false */)
         _SavePetSpells(buf);
     }
     m_nextSave = getMSTime() + sWorld.getIntRate(INTRATE_SAVE);
-#ifdef ENABLE_ACHIEVEMENTS
     m_achievementMgr.SaveToDB(buf);
-#endif
 
     if (buf)
         CharacterDatabase.AddQueryBuffer(buf);
@@ -2878,9 +2893,7 @@ void Player::LoadFromDBProc(QueryResultVector & results)
     }
 
     // load achievements before anything else otherwise skills would complete achievements already in the DB, leading to duplicate achievements and criterias(like achievement=126).
-#ifdef ENABLE_ACHIEVEMENTS
     m_achievementMgr.LoadFromDB(results[16].result, results[17].result);
-#endif
 
     CalculateBaseStats();
 
@@ -3472,9 +3485,7 @@ void Player::LoadFromDBProc(QueryResultVector & results)
 
     // update achievements before adding player to World, otherwise we'll get a nice race condition.
     //move CheckAllAchievementCriteria() after FullLogin(this) and i'll cut your b***s.
-#ifdef ENABLE_ACHIEVEMENTS
     m_achievementMgr.CheckAllAchievementCriteria();
-#endif
 
     m_session->FullLogin(this);
     m_session->m_loggingInPlayer = NULL;
@@ -3738,9 +3749,7 @@ void Player::AddToWorld(MapMgr* pMapMgr)
 void Player::OnPrePushToWorld()
 {
     SendInitialLogonPackets();
-#ifdef ENABLE_ACHIEVEMENTS
     m_achievementMgr.SendAllAchievementData(this);
-#endif
 }
 
 void Player::OnPushToWorld()
@@ -8202,7 +8211,7 @@ void Player::EndDuel(uint8 WinCondition)
     std::list<Pet*> summons = GetSummons();
     for (std::list<Pet*>::iterator itr = summons.begin(); itr != summons.end(); ++itr)
     {
-        (*itr)->CombatStatus.Vanished();
+        (*itr)->clearAllCombatTargets();
         (*itr)->GetAIInterface()->SetUnitToFollow(this);
         (*itr)->GetAIInterface()->HandleEvent(EVENT_FOLLOWOWNER, *itr, 0);
         (*itr)->GetAIInterface()->WipeTargetList();
@@ -8211,7 +8220,7 @@ void Player::EndDuel(uint8 WinCondition)
     std::list<Pet*> duelingWithSummons = DuelingWith->GetSummons();
     for (std::list<Pet*>::iterator itr = duelingWithSummons.begin(); itr != duelingWithSummons.end(); ++itr)
     {
-        (*itr)->CombatStatus.Vanished();
+        (*itr)->clearAllCombatTargets();
         (*itr)->GetAIInterface()->SetUnitToFollow(this);
         (*itr)->GetAIInterface()->HandleEvent(EVENT_FOLLOWOWNER, *itr, 0);
         (*itr)->GetAIInterface()->WipeTargetList();
@@ -8285,7 +8294,7 @@ void Player::EventTeleportTaxi(uint32 mapid, float x, float y, float z)
     {
         WorldPacket msg(CMSG_SERVER_BROADCAST, 50);
         msg << uint32(3);
-        msg << GetSession()->LocalizedWorldSrv(Worldstring::SS_MUST_HAVE_BC);
+        msg << GetSession()->LocalizedWorldSrv(ServerString::SS_MUST_HAVE_BC);
         msg << uint8(0);
         m_session->SendPacket(&msg);
 
@@ -8338,9 +8347,7 @@ void Player::ApplyLevelInfo(LevelInfo* Info, uint32 Level)
     //UpdateChances();
     UpdateGlyphs();
     m_playerInfo->lastLevel = Level;
-#ifdef ENABLE_ACHIEVEMENTS
     GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_REACH_LEVEL);
-#endif
     //VLack: 3.1.3, as a final step, send the player's talents, this will set the talent points right too...
     smsg_TalentsInfo(false);
 
@@ -8447,14 +8454,14 @@ bool Player::SafeTeleport(uint32 MapID, uint32 InstanceID, const LocationVector 
     if (mi && mi->flags & WMI_INSTANCE_XPACK_01 && !m_session->HasFlag(ACCOUNT_FLAG_XPACK_01) && !m_session->HasFlag(ACCOUNT_FLAG_XPACK_02))
     {
         WorldPacket msg(SMSG_MOTD, 50); // Need to be replaced with correct one !
-        msg << uint32(3) << GetSession()->LocalizedWorldSrv(Worldstring::SS_MUST_HAVE_BC) << uint8(0);
+        msg << uint32(3) << GetSession()->LocalizedWorldSrv(ServerString::SS_MUST_HAVE_BC) << uint8(0);
         m_session->SendPacket(&msg);
         return false;
     }
     if (mi && mi->flags & WMI_INSTANCE_XPACK_02 && !m_session->HasFlag(ACCOUNT_FLAG_XPACK_02))
     {
         WorldPacket msg(SMSG_MOTD, 50); // Need to be replaced with correct one !
-        msg << uint32(3) << GetSession()->LocalizedWorldSrv(Worldstring::SS_MUST_HAVE_WOTLK) << uint8(0);
+        msg << uint32(3) << GetSession()->LocalizedWorldSrv(ServerString::SS_MUST_HAVE_WOTLK) << uint8(0);
         m_session->SendPacket(&msg);
         return false;
     }
@@ -9062,8 +9069,8 @@ void Player::CompleteLoading()
     if (IsBanned())
     {
         Kick(10000);
-        BroadcastMessage(GetSession()->LocalizedWorldSrv(Worldstring::SS_NOT_ALLOWED_TO_PLAY));
-        BroadcastMessage(GetSession()->LocalizedWorldSrv(Worldstring::SS_BANNED_FOR_TIME), GetBanReason().c_str());
+        BroadcastMessage(GetSession()->LocalizedWorldSrv(ServerString::SS_NOT_ALLOWED_TO_PLAY));
+        BroadcastMessage(GetSession()->LocalizedWorldSrv(ServerString::SS_BANNED_FOR_TIME), GetBanReason().c_str());
     }
 
     if (m_playerInfo->m_Group)
@@ -9080,7 +9087,7 @@ void Player::CompleteLoading()
     }
 
     sInstanceMgr.BuildSavedInstancesForPlayer(this);
-    CombatStatus.UpdateFlag();
+    updateCombatStatus();
     // add glyphs
     for (uint8 j = 0; j < GLYPHS_COUNT; ++j)
     {
@@ -9115,14 +9122,14 @@ void Player::OnWorldPortAck()
         if (pMapinfo->HasFlag(WMI_INSTANCE_WELCOME) && GetMapMgr())
         {
             std::string welcome_msg;
-            welcome_msg = std::string(GetSession()->LocalizedWorldSrv(Worldstring::SS_INSTANCE_WELCOME)) + " ";
+            welcome_msg = std::string(GetSession()->LocalizedWorldSrv(ServerString::SS_INSTANCE_WELCOME)) + " ";
             welcome_msg += std::string(GetSession()->LocalizedMapName(pMapinfo->mapid));
             welcome_msg += ". ";
             if (pMapinfo->type != INSTANCE_NONRAID && !(pMapinfo->type == INSTANCE_MULTIMODE && iInstanceType >= MODE_HEROIC) && m_mapMgr->pInstance)
             {
                 /*welcome_msg += "This instance is scheduled to reset on ";
                 welcome_msg += asctime(localtime(&m_mapMgr->pInstance->m_expiration));*/
-                welcome_msg += std::string(GetSession()->LocalizedWorldSrv(Worldstring::SS_INSTANCE_RESET_INF)) + " ";
+                welcome_msg += std::string(GetSession()->LocalizedWorldSrv(ServerString::SS_INSTANCE_RESET_INF)) + " ";
                 welcome_msg += Util::GetDateTimeStringFromTimeStamp((uint32)m_mapMgr->pInstance->m_expiration);
             }
             sChatHandler.SystemMessage(m_session, welcome_msg.c_str());
@@ -9957,7 +9964,7 @@ void Player::RemoveFromBattlegroundQueue()
         return;
 
     m_pendingBattleground->RemovePendingPlayer(this);
-    sChatHandler.SystemMessage(m_session, GetSession()->LocalizedWorldSrv(Worldstring::SS_BG_REMOVE_QUEUE_INF));
+    sChatHandler.SystemMessage(m_session, GetSession()->LocalizedWorldSrv(ServerString::SS_BG_REMOVE_QUEUE_INF));
 }
 
 void Player::_AddSkillLine(uint32 SkillLine, uint32 Curr_sk, uint32 Max_sk)
@@ -10013,10 +10020,8 @@ void Player::_AddSkillLine(uint32 SkillLine, uint32 Curr_sk, uint32 Max_sk)
 
     // Displaying bug fix
     _UpdateSkillFields();
-#ifdef ENABLE_ACHIEVEMENTS
     m_achievementMgr.UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_LEARN_SKILL_LEVEL, SkillLine, Max_sk / 75, 0);
     m_achievementMgr.UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_REACH_SKILL_LEVEL, SkillLine, Curr_sk, 0);
-#endif
 }
 
 void Player::_UpdateSkillFields()
@@ -10036,16 +10041,12 @@ void Player::_UpdateSkillFields()
         if (itr->second.Skill->type == SKILL_TYPE_PROFESSION)
         {
             SetUInt32Value(f++, itr->first | 0x10000);
-#ifdef ENABLE_ACHIEVEMENTS
             m_achievementMgr.UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_REACH_SKILL_LEVEL, itr->second.Skill->id, itr->second.CurrentValue, 0);
-#endif
         }
         else
         {
             SetUInt32Value(f++, itr->first);
-#ifdef ENABLE_ACHIEVEMENTS
             m_achievementMgr.UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_LEARN_SKILL_LEVEL, itr->second.Skill->id, itr->second.MaximumValue / 75, 0);
-#endif
         }
 
         SetUInt32Value(f++, (itr->second.MaximumValue << 16) | itr->second.CurrentValue);
@@ -10076,10 +10077,8 @@ void Player::_AdvanceSkillLine(uint32 SkillLine, uint32 Count /* = 1 */)
         _AddSkillLine(SkillLine, Count, getLevel() * 5);
         _UpdateMaxSkillCounts();
         sHookInterface.OnAdvanceSkillLine(this, SkillLine, Count);
-#ifdef ENABLE_ACHIEVEMENTS
         m_achievementMgr.UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_LEARN_SKILL_LEVEL, SkillLine, _GetSkillLineMax(SkillLine), 0);
         m_achievementMgr.UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_REACH_SKILL_LEVEL, SkillLine, Count, 0);
-#endif
     }
     else
     {
@@ -10091,10 +10090,8 @@ void Player::_AdvanceSkillLine(uint32 SkillLine, uint32 Count /* = 1 */)
             _UpdateSkillFields();
             sHookInterface.OnAdvanceSkillLine(this, SkillLine, curr_sk);
         }
-#ifdef ENABLE_ACHIEVEMENTS
         m_achievementMgr.UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_LEARN_SKILL_LEVEL, SkillLine, itr->second.MaximumValue / 75, 0);
         m_achievementMgr.UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_REACH_SKILL_LEVEL, SkillLine, itr->second.CurrentValue, 0);
-#endif
     }
     _LearnSkillSpells(SkillLine, curr_sk);
 }
@@ -10401,9 +10398,7 @@ void Player::_ModifySkillMaximum(uint32 SkillLine, uint32 NewMax)
 
         itr->second.MaximumValue = NewMax;
         _UpdateSkillFields();
-#ifdef ENABLE_ACHIEVEMENTS
         m_achievementMgr.UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_LEARN_SKILL_LEVEL, SkillLine, NewMax / 75, 0);
-#endif
     }
 }
 
@@ -10641,7 +10636,7 @@ void Player::RemoveShapeShiftSpell(uint32 id)
 // COOLDOWNS
 void Player::UpdatePotionCooldown()
 {
-    if (m_lastPotionId == 0 || CombatStatus.IsInCombat())
+    if (m_lastPotionId == 0 || isInCombat())
         return;
 
     ItemProperties const* proto = sMySQLStore.GetItemProperties(m_lastPotionId);
@@ -11422,6 +11417,14 @@ void Player::RemoveTempEnchantsOnArena()
     }
 }
 
+void Player::PlaySoundToPlayer(uint64_t from_guid,  uint32_t sound_id)
+{
+    WorldPacket data(SMSG_PLAY_OBJECT_SOUND, 12);
+    data << uint32_t(sound_id);
+    data << uint64_t(from_guid);
+    SendMessageToSet(&data, true);
+}
+
 void Player::PlaySound(uint32 sound_id)
 {
     WorldPacket data(SMSG_PLAY_SOUND, 4);
@@ -11636,7 +11639,7 @@ void Player::SetPvPFlag()
         (*itr)->SetPvPFlag();
     }
 
-    if (CombatStatus.IsInCombat())
+    if (isInCombat())
         SetFlag(PLAYER_FLAGS, 0x100);
 
 }
@@ -12183,7 +12186,7 @@ void Player::DealDamage(Unit* pVictim, uint32 damage, uint32 targetEvent, uint32
         if (!GetSession()->HasPermissions() && sWorld.m_limits.enable != 0)
             damage = CheckDamageLimits(damage, spellId);
 
-        CombatStatus.OnDamageDealt(pVictim);
+        onDamageDealt(pVictim);
 
         if (pVictim->IsPvPFlagged())
         {
@@ -12196,7 +12199,7 @@ void Player::DealDamage(Unit* pVictim, uint32 damage, uint32 targetEvent, uint32
 
     pVictim->SetStandState(STANDSTATE_STAND);
 
-    if (CombatStatus.IsInCombat())
+    if (isInCombat())
         sHookInterface.OnEnterCombat(this, this);
 
     ///////////////////////////////////////////////////// Hackatlon ///////////////////////////////////////////////////////////
@@ -12265,14 +12268,10 @@ void Player::DealDamage(Unit* pVictim, uint32 damage, uint32 targetEvent, uint32
 
             if (getLevel() >= (pVictim->getLevel() - 8) && (GetGUID() != pVictim->GetGUID()))
             {
-
-#ifdef ENABLE_ACHIEVEMENTS
                 GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_HONORABLE_KILL_AT_AREA, GetAreaID(), 1, 0);
                 GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_EARN_HONORABLE_KILL, 1, 0, 0);
-#endif
                 HonorHandler::OnPlayerKilled(this, playerVictim);
                 setAurastateFlag = true;
-
             }
 
             if (setAurastateFlag)
@@ -12292,9 +12291,7 @@ void Player::DealDamage(Unit* pVictim, uint32 damage, uint32 targetEvent, uint32
             {
                 Reputation_OnKilledUnit(pVictim, false);
 
-#ifdef ENABLE_ACHIEVEMENTS
                 GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_KILLING_BLOW, GetMapId(), 0, 0);
-#endif
 
                 if (pVictim->getLevel() >= (getLevel() - 8) && (GetGUID() != pVictim->GetGUID()))
                 {
@@ -12396,7 +12393,6 @@ void Player::DealDamage(Unit* pVictim, uint32 damage, uint32 targetEvent, uint32
                     {
                         sQuestMgr.OnPlayerKill(player_tagger, static_cast<Creature*>(pVictim), true);
                         ///////////////////////////////////////////////// Kill creature/creature type Achievements /////////////////////////////////////////////////////////////////////
-#ifdef ENABLE_ACHIEVEMENTS
                         if (player_tagger->InGroup())
                         {
                             auto player_group = player_tagger->GetGroup();
@@ -12410,23 +12406,16 @@ void Player::DealDamage(Unit* pVictim, uint32 damage, uint32 targetEvent, uint32
                             player_tagger->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_KILL_CREATURE, pVictim->GetEntry(), 1, 0);
                             player_tagger->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_KILL_CREATURE_TYPE, GetHighGUID(), GetLowGUID(), 0);
                         }
-#endif
                     }
                 }
             }
         }
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#ifdef ENABLE_ACHIEVEMENTS
 
         if (pVictim->isCritter())
         {
             GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_KILL_CREATURE, pVictim->GetEntry(), 1, 0);
             GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_KILL_CREATURE_TYPE, GetHighGUID(), GetLowGUID(), 0);
         }
-
-#endif
-
     }
     else
     {
@@ -12455,7 +12444,7 @@ void Player::TakeDamage(Unit* pAttacker, uint32 damage, uint32 spellid, bool no_
         }
     }
 
-    if (CombatStatus.IsInCombat())
+    if (isInCombat())
         sHookInterface.OnEnterCombat(this, pAttacker);
 
 
@@ -12516,7 +12505,6 @@ void Player::Die(Unit* pAttacker, uint32 damage, uint32 spellid)
         GetVehicleComponent()->EjectAllPassengers();
     }
 
-#ifdef ENABLE_ACHIEVEMENTS
     // A Player has died
     if (IsPlayer())
     {
@@ -12533,7 +12521,6 @@ void Player::Die(Unit* pAttacker, uint32 damage, uint32 spellid)
             GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_KILLED_BY_CREATURE, 1, 0, 0);
         }
     }
-#endif
 
     //general hook for die
     if (!sHookInterface.OnPreUnitDie(pAttacker, this))
@@ -12624,7 +12611,7 @@ void Player::Die(Unit* pAttacker, uint32 damage, uint32 spellid)
     }
 
     // Wipe our attacker set on death
-    CombatStatus.Vanished();
+    clearAllCombatTargets();
 
     CALL_SCRIPT_EVENT(pAttacker, OnTargetDied)(this);
     pAttacker->smsg_AttackStop(this);
@@ -12699,6 +12686,12 @@ void Player::RemoveIfVisible(uint64 obj)
 void Player::Phase(uint8 command, uint32 newphase)
 {
     Unit::Phase(command, newphase);
+    if (GetSession())
+    {
+        WorldPacket data(SMSG_SET_PHASE_SHIFT, 4);
+        data << newphase;
+        GetSession()->SendPacket(&data);
+    }
 
     std::list<Pet*> summons = GetSummons();
     for (std::list<Pet*>::iterator itr = summons.begin(); itr != summons.end(); ++itr)

@@ -18,6 +18,8 @@
  */
 
 #include "Setup.h"
+#include "Management/Gossip/GossipMenu.hpp"
+#include "Management/TaxiMgr.h"
 
 /*--------------------------------------------------------------------------------------------------------*/
 // Crisis at the Sunwell
