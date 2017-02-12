@@ -594,7 +594,7 @@ void AIInterface::_UpdateCombat(uint32 p_time)
                     {
                         MovementInfo* mi = static_cast<Player*>(getNextTarget())->GetSession()->GetMovementInfo();
 
-                        if (mi->flags & MOVEFLAG_AIR_SWIMMING)
+                        if (mi->flags & MOVEFLAG_FLYING)
                             HandleEvent(EVENT_LEAVECOMBAT, m_Unit, 0);
                     }
                 }
@@ -666,7 +666,7 @@ void AIInterface::_UpdateCombat(uint32 p_time)
                 if (getNextTarget()->IsPlayer())
                 {
                     float dist = m_Unit->GetDistanceSq(getNextTarget());
-                    if (static_cast< Player* >(getNextTarget())->m_currentMovement == MOVE_ROOT || dist >= 64.0f)
+                    if (static_cast< Player* >(getNextTarget())->HasUnitMovementFlag(MOVEFLAG_ROOTED) || dist >= 64.0f)
                     {
                         agent = AGENT_RANGED;
                     }
@@ -1070,7 +1070,7 @@ void AIInterface::AttackReaction(Unit* pUnit, uint32 damage_dealt, uint32 spellI
                     {
                         MovementInfo* mi = static_cast< Player* >(pUnit)->GetSession()->GetMovementInfo();
 
-                        if (mi != NULL && !(mi->flags & MOVEFLAG_FALLING) && !(mi->flags & MOVEFLAG_SWIMMING) && !(mi->flags & MOVEFLAG_LEVITATE))
+                        if (mi != NULL && !(mi->flags & MOVEFLAG_FALLING) && !(mi->flags & MOVEFLAG_SWIMMING) && !(mi->flags & MOVEFLAG_HOVER))
                             return;
                     }
                 }

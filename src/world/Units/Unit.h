@@ -163,6 +163,9 @@ class SERVER_DECL Unit : public Object
     void setCombatFlag(bool enabled);
 
 public:
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Combat
     bool isInCombat() const;
     bool isAttacking(Unit* target) const;
 
@@ -188,7 +191,25 @@ public:
 
     uint64_t getPrimaryAttackTarget() const;
 
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Movement
+    void SetMoveWaterWalk();
+    void SetMoveLandWalk();
+    void SetMoveFeatherFall();
+    void SetMoveNormalFall();
+    void SetMoveHover(bool set_hover);
+    void SetMoveCanFly(bool set_fly);
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Spells
     void PlaySpellVisual(uint64_t guid, uint32_t spell_id);
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Aura
+    Aura* GetAuraWithId(uint32_t spell_id);
+    Aura* GetAuraWithIdForGuid(uint32_t spell_id, uint64_t target_guid);
+    Aura* GetAuraWithAuraEffect(uint32_t aura_effect);
+
 
     // Do not alter anything below this line
     // -------------------------------------
@@ -387,10 +408,8 @@ public:
     // Find auras
     Aura* FindAuraByNameHash(uint32 namehash);
     Aura* FindAuraByNameHash(uint32 namehash, uint64 guid);
-    Aura* FindAura(uint32 spellId);
     Aura* FindAura(uint32* spellId);
-    Aura* FindAura(uint32 spellId, uint64 guid);
-    Aura* FindAuraWithAuraEffect(uint32 effect, uint32* x);
+
     bool SetAurDuration(uint32 spellId, Unit* caster, uint32 duration);
     bool SetAurDuration(uint32 spellId, uint32 duration);
     void DropAurasOnDeath();
@@ -775,10 +794,6 @@ public:
     virtual void SetSpeeds(uint8 type, float speed) {}
     void UpdateSpeed();
 
-    void EnableFlight();
-    void DisableFlight();
-    void SetHover(bool set_hover);
-
     // Escort Quests
     void MoveToWaypoint(uint32 wp_id);
 
@@ -834,12 +849,6 @@ public:
             return false;
     }
 
-    void SetWaterWalk();
-    void SetLandWalk();
-
-    void SetFeatherFall();
-    void SetNormalFall();
-
     virtual bool isTrainingDummy() { return false; }
 
     void SetFacing(float newo);     //only working if creature is idle
@@ -876,7 +885,7 @@ public:
 
     //solo target auras
     uint32 polySpell;
-    uint32 m_special_state;         //flags for special states (stunned,rooted etc)
+    uint32 m_special_state;         //flags for special states (stunned etc)
 
     struct
     {

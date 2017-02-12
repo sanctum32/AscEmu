@@ -1009,7 +1009,7 @@ class SERVER_DECL Player : public Unit
         void SetMovement(uint8 pType, uint32 flag);
         void SetSpeeds(uint8 type, float speed);
         float GetPlayerSpeed() { return m_runSpeed; }
-        uint8 m_currentMovement;
+
         bool m_isMoving;            /// moving + strafing + jumping
         bool moving;
         bool strafing;
@@ -1716,8 +1716,6 @@ class SERVER_DECL Player : public Unit
         /////////////////////////////////////////////////////////////////////////////////////////
 
         Mailbox m_mailBox;
-        bool m_waterwalk;
-        bool m_setwaterwalk;
         uint64 m_areaSpiritHealer_guid;
         bool m_finishingmovesdodge;
 

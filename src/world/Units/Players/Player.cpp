@@ -124,7 +124,6 @@ Player::Player(uint32 guid)
     m_currentLoot(0),
     bShouldHaveLootableOnCorpse(false),
     offhand_dmg_mod(0.5),
-    m_currentMovement(MOVE_UNROOT),
     m_isMoving(false),
     moving(false),
     strafing(false),
@@ -454,8 +453,6 @@ Player::Player(uint32 guid)
     hearth_of_wild_pct = 0;
     raidgrouponlysent = false;
     loot.gold = 0;
-    m_waterwalk = false;
-    m_setwaterwalk = false;
     m_areaSpiritHealer_guid = 0;
     m_CurrentTaxiPath = NULL;
 
@@ -3774,10 +3771,7 @@ void Player::OnPushToWorld()
     delayedPackets.add(data);
 
     // set fly if cheat is active
-    if (FlyCheat)
-        EnableFlight();
-    else
-        DisableFlight();
+    SetMoveCanFly(FlyCheat);
 
     // Update PVP Situation
     LoginPvPSetup();
@@ -4334,25 +4328,21 @@ void Player::SetMovement(uint8 pType, uint32 flag)
         case MOVE_ROOT:
         {
             Root();
-            m_currentMovement = MOVE_ROOT;
         }
         break;
         case MOVE_UNROOT:
         {
             Unroot();
-            m_currentMovement = MOVE_UNROOT;
         }
         break;
         case MOVE_WATER_WALK:
         {
-            m_setwaterwalk = true;
-            SetWaterWalk();
+            SetMoveWaterWalk();
         }
         break;
         case MOVE_LAND_WALK:
         {
-            m_setwaterwalk = false;
-            SetLandWalk();
+            SetMoveLandWalk();
         }
         break;
         default:

@@ -2,7 +2,12 @@
 
 #include "Unit.h"
 #include "Server/Packets/Opcodes.h"
+#include "Server/WorldSession.h"
 #include "Players/Player.h"
+#include "Spell/SpellAuras.h"
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Combat
 
 void Unit::setCombatFlag(bool enabled)
 {
@@ -152,6 +157,102 @@ uint64_t Unit::getPrimaryAttackTarget() const
     return m_combatStatus.getPrimaryAttackTarget();
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////
+// Movement
+
+void Unit::SetMoveWaterWalk()
+{
+    AddUnitMovementFlag(MOVEFLAG_WATER_WALK);
+
+    WorldPacket data(SMSG_MOVE_WATER_WALK, 12);
+    data << GetNewGUID();
+    data << uint32(0);
+    SendMessageToSet(&data, true);
+}
+
+void Unit::SetMoveLandWalk()
+{
+    RemoveUnitMovementFlag(MOVEFLAG_WATER_WALK);
+
+    WorldPacket data(SMSG_MOVE_LAND_WALK, 12);
+    data << GetNewGUID();
+    data << uint32(0);
+    SendMessageToSet(&data, true);
+}
+
+void Unit::SetMoveFeatherFall()
+{
+    AddUnitMovementFlag(MOVEFLAG_FEATHER_FALL);
+
+    WorldPacket data(SMSG_MOVE_FEATHER_FALL, 12);
+    data << GetNewGUID();
+    data << uint32(0);
+    SendMessageToSet(&data, true);
+}
+
+void Unit::SetMoveNormalFall()
+{
+    RemoveUnitMovementFlag(MOVEFLAG_FEATHER_FALL);
+
+    WorldPacket data(SMSG_MOVE_NORMAL_FALL, 12);
+    data << GetNewGUID();
+    data << uint32(0);
+    SendMessageToSet(&data, true);
+}
+
+void Unit::SetMoveHover(bool set_hover)
+{
+    if (set_hover)
+    {
+        AddUnitMovementFlag(MOVEFLAG_HOVER);
+
+        WorldPacket data(SMSG_MOVE_SET_HOVER, 13);
+        data << GetNewGUID();
+        data << uint32(0);
+        SendMessageToSet(&data, false);
+    }
+    else
+    {
+        RemoveUnitMovementFlag(MOVEFLAG_HOVER);
+
+        WorldPacket data(SMSG_MOVE_UNSET_HOVER, 13);
+        data << GetNewGUID();
+        data << uint32(0);
+        SendMessageToSet(&data, false);
+    }
+}
+
+void Unit::SetMoveCanFly(bool set_fly)
+{
+    if (set_fly)
+    {
+        AddUnitMovementFlag(MOVEFLAG_CAN_FLY);
+
+        // Remove falling flag if set
+        RemoveUnitMovementFlag(MOVEFLAG_FALLING);
+
+        WorldPacket data(SMSG_MOVE_SET_CAN_FLY, 13);
+        data << GetNewGUID();
+        data << uint32(0);
+        SendMessageToSet(&data, true);
+    }
+    else
+    {
+        // Remove all fly related moveflags
+        RemoveUnitMovementFlag(MOVEFLAG_CAN_FLY);
+        RemoveUnitMovementFlag(MOVEFLAG_DESCENDING);
+        RemoveUnitMovementFlag(MOVEFLAG_ASCENDING);
+
+        WorldPacket data(SMSG_MOVE_UNSET_CAN_FLY, 13);
+        data << GetNewGUID();
+        data << uint32(0);
+        SendMessageToSet(&data, true);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Spells
+
 void Unit::PlaySpellVisual(uint64_t guid, uint32_t spell_id)
 {
     WorldPacket data(SMSG_PLAY_SPELL_VISUAL, 12);
@@ -164,20 +265,47 @@ void Unit::PlaySpellVisual(uint64_t guid, uint32_t spell_id)
         SendMessageToSet(&data, false);
 }
 
-void Unit::SetHover(bool set_hover)
+//////////////////////////////////////////////////////////////////////////////////////////
+// Aura
+
+Aura* Unit::GetAuraWithId(uint32_t spell_id)
 {
-    if (set_hover)
+    for (uint32_t i = MAX_TOTAL_AURAS_START; i < MAX_TOTAL_AURAS_END; ++i)
     {
-        WorldPacket data(SMSG_MOVE_SET_HOVER, 13);
-        data << GetNewGUID();
-        data << uint32(0);
-        SendMessageToSet(&data, false);
+        Aura* aura = m_auras[i];
+        if (aura != nullptr)
+        {
+            if (aura->GetSpellId() == spell_id)
+                return aura;
+        }
     }
-    else
+
+    return nullptr;
+}
+
+Aura* Unit::GetAuraWithIdForGuid(uint32_t spell_id, uint64_t target_guid)
+{
+    for (uint32_t i = MAX_TOTAL_AURAS_START; i < MAX_TOTAL_AURAS_END; ++i)
     {
-        WorldPacket data(SMSG_MOVE_UNSET_HOVER, 13);
-        data << GetNewGUID();
-        data << uint32(0);
-        SendMessageToSet(&data, false);
+        Aura* aura = m_auras[i];
+        if (aura != nullptr)
+        {
+            if (GetAuraWithId(spell_id) && aura->m_casterGuid == target_guid)
+                return aura;
+        }
     }
+
+    return nullptr;
+}
+
+Aura* Unit::GetAuraWithAuraEffect(uint32_t aura_effect)
+{
+    for (uint32_t i = MAX_TOTAL_AURAS_START; i < MAX_TOTAL_AURAS_END; ++i)
+    {
+        Aura* aura = m_auras[i];
+        if (aura != nullptr && aura->GetSpellInfo()->HasEffectApplyAuraName(aura_effect))
+            return aura;
+    }
+
+    return nullptr;
 }

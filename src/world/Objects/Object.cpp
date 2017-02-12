@@ -332,7 +332,7 @@ void Object::_BuildMovementUpdate(ByteBuffer* data, uint16 flags, Player* target
         if (IsCreature())
         {
             if (static_cast< Unit* >(this)->HasAuraWithName(SPELL_AURA_ENABLE_FLIGHT))
-                flags2 |= (MOVEFLAG_NO_COLLISION | MOVEFLAG_AIR_SWIMMING);
+                flags2 |= (MOVEFLAG_NO_COLLISION | MOVEFLAG_FLYING);
         }
 
     }
@@ -430,7 +430,7 @@ void Object::_BuildMovementUpdate(ByteBuffer* data, uint16 flags, Player* target
             *data << uint8(GetTransSeat());
         }
 
-        if ((flags2 & (MOVEFLAG_SWIMMING | MOVEFLAG_AIR_SWIMMING)) || (moveflags2 & MOVEFLAG2_ALLOW_PITCHING))   // 0x2000000+0x0200000 flying/swimming, || sflags & SMOVE_FLAG_ENABLE_PITCH
+        if ((flags2 & (MOVEFLAG_SWIMMING | MOVEFLAG_FLYING)) || (moveflags2 & MOVEFLAG2_ALLOW_PITCHING))   // 0x2000000+0x0200000 flying/swimming, || sflags & SMOVE_FLAG_ENABLE_PITCH
         {
             if (pThis && moveinfo)
                 *data << moveinfo->pitch;
@@ -1975,7 +1975,7 @@ void Object::SendAttackerStateUpdate(Object* Caster, Object* Target, dealdamage*
         data << uint32(0);              // unknown
     }
 
-    if (HitStatus & HITSTATUS_UNK)
+    if (HitStatus & HITSTATUS_UNK_00)
     {
         data << uint32(0);
         data << float(0);

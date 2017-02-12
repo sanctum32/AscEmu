@@ -1999,7 +1999,7 @@ class LuaUnit
         if (ptr == nullptr)
             return 0;
 
-        ptr->SetHover(true);
+        ptr->SetMoveHover(true);
         ptr->GetAIInterface()->disable_melee = true;
         ptr->GetAIInterface()->SetFly();
         ptr->Emote(EMOTE_ONESHOT_LIFTOFF);
@@ -2011,7 +2011,7 @@ class LuaUnit
         if (ptr == nullptr)
             return 0;
 
-        ptr->SetHover(false);
+        ptr->SetMoveHover(false);
         ptr->GetAIInterface()->StopFlying();
         ptr->GetAIInterface()->disable_melee = false;
         ptr->Emote(EMOTE_ONESHOT_LAND);
@@ -4819,14 +4819,7 @@ class LuaUnit
     {
         TEST_PLAYER()
         bool enable_fly = CHECK_BOOL(L, 1);
-        if (enable_fly)
-        {
-            ptr->EnableFlight();
-        }
-        else
-        {
-            ptr->DisableFlight();
-        }
+        ptr->SetMoveCanFly(enable_fly);
         return 0;
     }
 
@@ -6008,7 +6001,7 @@ class LuaUnit
     {
         TEST_UNITPLAYER();
         uint32 id = CHECK_ULONG(L, 1);
-        PUSH_AURA(L, ptr->FindAura(id));
+        PUSH_AURA(L, ptr->GetAuraWithId(id));
         return 1;
     }
 

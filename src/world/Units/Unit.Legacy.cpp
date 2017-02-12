@@ -131,7 +131,7 @@ Unit::Unit() : m_combatStatus(this), m_movementManager()
     m_ignoreArmorPct = 0;
     m_fearmodifiers = 0;
     m_state = 0;
-    m_special_state = 0;
+    m_special_state = UNIT_STATE_NORMAL;
     m_deathState = ALIVE;
     m_meleespell = 0;
     m_addDmgOnce = 0;
@@ -5014,7 +5014,7 @@ void Unit::RemoveAllAurasByRequiredShapeShift(uint32 mask)
 bool Unit::SetAurDuration(uint32 spellId, Unit* caster, uint32 duration)
 {
     LOG_DEBUG("setAurDuration2");
-    Aura* aur = FindAura(spellId, caster->GetGUID());
+    Aura* aur = GetAuraWithIdForGuid(spellId, caster->GetGUID());
     if (!aur)
         return false;
     aur->SetDuration(duration);
@@ -5025,7 +5025,7 @@ bool Unit::SetAurDuration(uint32 spellId, Unit* caster, uint32 duration)
 
 bool Unit::SetAurDuration(uint32 spellId, uint32 duration)
 {
-    Aura* aur = FindAura(spellId);
+    Aura* aur = GetAuraWithId(spellId);
 
     if (!aur)
         return false;
@@ -5057,15 +5057,6 @@ Aura* Unit::FindAuraByNameHash(uint32 namehash)
     return NULL;
 }
 
-Aura* Unit::FindAura(uint32 spellId)
-{
-    for (uint32 x = MAX_TOTAL_AURAS_START; x < MAX_TOTAL_AURAS_END; x++)
-        if (m_auras[x])
-            if (m_auras[x]->GetSpellId() == spellId)
-                return m_auras[x];
-    return NULL;
-}
-
 Aura* Unit::FindAura(uint32* spellId)
 {
     Aura* aura;
@@ -5084,31 +5075,6 @@ Aura* Unit::FindAura(uint32* spellId)
             if (aura->GetSpellId() == spellId[j])
                 return aura;
         }
-    }
-
-    return NULL;
-}
-
-Aura* Unit::FindAura(uint32 spellId, uint64 guid)
-{
-    for (uint32 x = MAX_TOTAL_AURAS_START; x < MAX_TOTAL_AURAS_END; x++)
-        if (m_auras[x])
-            if (m_auras[x]->GetSpellId() == spellId && m_auras[x]->m_casterGuid == guid)
-                return m_auras[x];
-    return NULL;
-}
-
-Aura* Unit::FindAuraWithAuraEffect(uint32 effect, uint32* x)
-{
-    Aura* aura;
-    for (; *x < MAX_TOTAL_AURAS_END; (*x)++)
-    {
-        aura = m_auras[*x];
-        if (aura != NULL &&
-            ((aura->GetSpellInfo()->Effect[0] == SPELL_EFFECT_APPLY_AURA && aura->GetSpellInfo()->EffectApplyAuraName[0] == effect) ||
-            (aura->GetSpellInfo()->Effect[1] == SPELL_EFFECT_APPLY_AURA && aura->GetSpellInfo()->EffectApplyAuraName[1] == effect) ||
-            (aura->GetSpellInfo()->Effect[2] == SPELL_EFFECT_APPLY_AURA && aura->GetSpellInfo()->EffectApplyAuraName[2] == effect)))
-            return aura;
     }
 
     return NULL;
@@ -5778,7 +5744,7 @@ void Unit::CastSpellAoF(float x, float y, float z, SpellInfo* Sp, bool triggered
 
 void Unit::Root()
 {
-    m_special_state |= UNIT_STATE_ROOT;
+    AddUnitMovementFlag(MOVEFLAG_ROOTED);
 
     if (!IsPlayer())
     {
@@ -5796,7 +5762,7 @@ void Unit::Root()
 
 void Unit::Unroot()
 {
-    m_special_state &= ~UNIT_STATE_ROOT;
+    RemoveUnitMovementFlag(MOVEFLAG_ROOTED);
 
     if (!IsPlayer())
         m_aiInterface->m_canMove = true;
@@ -5807,38 +5773,6 @@ void Unit::Unroot()
     data << GetNewGUID();
     data << uint32(5);
     SendMessageToSet(&data, true, false);
-}
-
-void Unit::SetWaterWalk()
-{
-    WorldPacket data(SMSG_MOVE_WATER_WALK, 12);
-    data << GetNewGUID();
-    data << uint32(0);
-    SendMessageToSet(&data, true);
-}
-
-void Unit::SetLandWalk()
-{
-    WorldPacket data(SMSG_MOVE_LAND_WALK, 12);
-    data << GetNewGUID();
-    data << uint32(0);
-    SendMessageToSet(&data, true);
-}
-
-void Unit::SetFeatherFall()
-{
-    WorldPacket data(SMSG_MOVE_FEATHER_FALL, 12);
-    data << GetNewGUID();
-    data << uint32(0);
-    SendMessageToSet(&data, true);
-}
-
-void Unit::SetNormalFall()
-{
-    WorldPacket data(SMSG_MOVE_NORMAL_FALL, 12);
-    data << GetNewGUID();
-    data << uint32(0);
-    SendMessageToSet(&data, true);
 }
 
 void Unit::RemoveAurasByBuffType(uint32 buff_type, const uint64 & guid, uint32 skip)
@@ -6326,47 +6260,6 @@ void Unit::RemoveAurasOfSchool(uint32 School, bool Positive, bool Immune)
             && (!Immune && m_auras[x]->GetSpellInfo()->Attributes & ATTRIBUTES_IGNORE_INVULNERABILITY)
             )
             m_auras[x]->Remove();
-}
-
-//\todo Set unit movement flag! Set spline packet if not player.
-void Unit::EnableFlight()
-{
-    z_axisposition = 0.0f;
-
-    if (!IsPlayer() || static_cast<Player*>(this)->m_changingMaps)
-    {
-        WorldPacket data(SMSG_MOVE_SET_CAN_FLY, 13);
-        data << GetNewGUID();
-        data << uint32(2);
-        SendMessageToSet(&data, true);
-    }
-    else
-    {
-        WorldPacket data(SMSG_MOVE_SET_CAN_FLY, 13);
-        data << GetNewGUID();
-        data << uint32(2);
-        SendMessageToSet(&data, true);
-    }
-}
-
-void Unit::DisableFlight()
-{
-    z_axisposition = 0.0f;
-
-    if (!IsPlayer() || static_cast<Player*>(this)->m_changingMaps)
-    {
-        WorldPacket data(SMSG_MOVE_UNSET_CAN_FLY, 13);
-        data << GetNewGUID();
-        data << uint32(5);
-        SendMessageToSet(&data, true);
-    }
-    else
-    {
-        WorldPacket data(SMSG_MOVE_UNSET_CAN_FLY, 13);
-        data << GetNewGUID();
-        data << uint32(5);
-        SendMessageToSet(&data, true);
-    }
 }
 
 bool Unit::IsDazed()
@@ -8070,7 +7963,7 @@ void Unit::BuildMovementPacket(ByteBuffer* data)
     }
 
     // 0x02200000
-    if ((GetUnitMovementFlags() & (MOVEFLAG_SWIMMING | MOVEFLAG_AIR_SWIMMING))
+    if ((GetUnitMovementFlags() & (MOVEFLAG_SWIMMING | MOVEFLAG_FLYING))
         || (GetExtraUnitMovementFlags() & MOVEFLAG2_ALLOW_PITCHING))
         *data << (float)GetMovementInfo()->pitch;
 
@@ -8123,7 +8016,7 @@ void Unit::BuildMovementPacket(ByteBuffer* data, float x, float y, float z, floa
     }
 
     // 0x02200000
-    if ((GetUnitMovementFlags() & (MOVEFLAG_SWIMMING | MOVEFLAG_AIR_SWIMMING))
+    if ((GetUnitMovementFlags() & (MOVEFLAG_SWIMMING | MOVEFLAG_FLYING))
         || (GetExtraUnitMovementFlags() & MOVEFLAG2_ALLOW_PITCHING))
         *data << (float)GetMovementInfo()->pitch;
 

@@ -2711,7 +2711,7 @@ void Aura::SpellAuraModStealth(bool apply)
         //Overkill must proc only if we aren't already stealthed, also refreshing duration.
         if (!m_target->IsStealth() && m_target->HasAura(58426))
         {
-            Aura *buff = m_target->FindAura(58427);
+            Aura *buff = m_target->GetAuraWithId(58427);
             if (buff)
             {
                 m_target->SetAurDuration(58427, -1);
@@ -5983,11 +5983,11 @@ void Aura::SpellAuraWaterWalk(bool apply)
         if (apply)
         {
             SetPositive();
-            p_target->SetWaterWalk();
+            p_target->SetMoveWaterWalk();
         }
         else
         {
-            p_target->SetLandWalk();
+            p_target->SetMoveLandWalk();
         }
     }
 }
@@ -6000,12 +6000,12 @@ void Aura::SpellAuraFeatherFall(bool apply)
     if (apply)
     {
         SetPositive();
-        p_target->SetFeatherFall();
+        p_target->SetMoveFeatherFall();
         p_target->m_noFallDamage = true;
     }
     else
     {
-        p_target->SetNormalFall();
+        p_target->SetMoveNormalFall();
         p_target->m_noFallDamage = false;
     }
 }
@@ -6016,12 +6016,12 @@ void Aura::SpellAuraHover(bool apply)
 
     if (apply)
     {
-        m_target->SetHover(true);
+        m_target->SetMoveHover(true);
         m_target->SetFloatValue(UNIT_FIELD_HOVERHEIGHT, (float(mod->m_amount) / 2));
     }
     else
     {
-        m_target->SetHover(false);
+        m_target->SetMoveHover(false);
         m_target->SetFloatValue(UNIT_FIELD_HOVERHEIGHT, 0.0f);
     }
 }
@@ -7981,7 +7981,7 @@ void Aura::SpellAuraEnableFlight(bool apply)
 {
     if (apply)
     {
-        m_target->EnableFlight();
+        m_target->SetMoveCanFly(true);
         m_target->m_flyspeedModifier += mod->m_amount;
         m_target->UpdateSpeed();
         if (m_target->IsPlayer())
@@ -7991,7 +7991,7 @@ void Aura::SpellAuraEnableFlight(bool apply)
     }
     else
     {
-        m_target->DisableFlight();
+        m_target->SetMoveCanFly(false);
         m_target->m_flyspeedModifier -= mod->m_amount;
         m_target->UpdateSpeed();
         if (m_target->IsPlayer())
@@ -8006,7 +8006,7 @@ void Aura::SpellAuraEnableFlightWithUnmountedSpeed(bool apply)
     // Used in flight form (only so far)
     if (apply)
     {
-        m_target->EnableFlight();
+        m_target->SetMoveCanFly(true);
         m_target->m_flyspeedModifier += mod->m_amount;
         m_target->UpdateSpeed();
         if (m_target->IsPlayer())
@@ -8016,7 +8016,7 @@ void Aura::SpellAuraEnableFlightWithUnmountedSpeed(bool apply)
     }
     else
     {
-        m_target->DisableFlight();
+        m_target->SetMoveCanFly(false);
         m_target->m_flyspeedModifier -= mod->m_amount;
         m_target->UpdateSpeed();
         if (m_target->IsPlayer())
@@ -8137,11 +8137,7 @@ void Aura::SpellAuraSpellHealingStatPCT(bool apply)
 
 void Aura::SpellAuraAllowFlight(bool apply)
 {
-    // allow fly
-    if (apply)
-        m_target->EnableFlight();
-    else
-        m_target->DisableFlight();
+    m_target->SetMoveCanFly(apply);
 }
 
 void Aura::SpellAuraFinishingMovesCannotBeDodged(bool apply)
@@ -8764,59 +8760,45 @@ void Aura::Refresh()
     m_target->SendAuraUpdate(m_auraSlot, false);
 }
 
+//MIT
 bool Aura::DotCanCrit()
 {
     Unit* caster = this->GetUnitCaster();
-    if (caster == NULL)
+    if (caster == nullptr)
         return false;
 
-    SpellInfo* sp = this->GetSpellInfo();
-    uint32 index = MAX_TOTAL_AURAS_START;
-    Aura* aura;
-    bool found = false;
+    SpellInfo* spell_info = this->GetSpellInfo();
+    if (spell_info == nullptr)
+        return false;
 
-    for (;;)
-    {
-        aura = caster->FindAuraWithAuraEffect(SPELL_AURA_ALLOW_DOT_TO_CRIT, &index);
-
-        if (aura == NULL)
-            break;
-
-        SpellInfo* aura_sp = aura->GetSpellInfo();
-
-        uint8 i = 0;
-        if (aura_sp->EffectApplyAuraName[1] == SPELL_AURA_ALLOW_DOT_TO_CRIT)
-            i = 1;
-        else if (aura_sp->EffectApplyAuraName[2] == SPELL_AURA_ALLOW_DOT_TO_CRIT)
-            i = 2;
-
-        if (aura_sp->SpellFamilyName == sp->SpellFamilyName &&
-            (aura_sp->EffectSpellClassMask[i][0] & sp->SpellGroupType[0] ||
-            aura_sp->EffectSpellClassMask[i][1] & sp->SpellGroupType[1] ||
-            aura_sp->EffectSpellClassMask[i][2] & sp->SpellGroupType[2]))
-        {
-            found = true;
-            break;
-        }
-
-        index++;
-    }
-
-    if (found)
-        return true;
-
+    // Can be critical
     if (caster->IsPlayer())
     {
-        switch (caster->getClass())
+        if (caster->getClass() == ROGUE)
         {
-            case ROGUE:
-
-                // Rupture can be critical in patch 3.3.3
-                if (sp->custom_NameHash == SPELL_HASH_RUPTURE)
-                    return true;
-
-                break;
+            if (spell_info->custom_NameHash == SPELL_HASH_RUPTURE)
+                return true;
         }
+    }
+
+    Aura* aura = caster->GetAuraWithAuraEffect(SPELL_AURA_ALLOW_DOT_TO_CRIT);
+    if (aura == nullptr)
+        return false;
+
+    SpellInfo* aura_spell_info = aura->GetSpellInfo();
+
+    uint8 i = 0;
+    if (aura_spell_info->EffectApplyAuraName[1] == SPELL_AURA_ALLOW_DOT_TO_CRIT)
+        i = 1;
+    else if (aura_spell_info->EffectApplyAuraName[2] == SPELL_AURA_ALLOW_DOT_TO_CRIT)
+        i = 2;
+
+    if (aura_spell_info->SpellFamilyName == spell_info->SpellFamilyName &&
+        (aura_spell_info->EffectSpellClassMask[i][0] & spell_info->SpellGroupType[0] ||
+         aura_spell_info->EffectSpellClassMask[i][1] & spell_info->SpellGroupType[1] ||
+         aura_spell_info->EffectSpellClassMask[i][2] & spell_info->SpellGroupType[2]))
+    {
+        return true;
     }
 
     return false;
