@@ -11,6 +11,7 @@ git:
   depth: 1
 
 env:
+  ASC_VERSION=WotLK
   global:
     - secure: "Zk3bAxnp4OHPMMZYOSoM2chuMZXomp7BFcT54/Ag6C8RCqtpqQ+E6yHRp861xdWSVo9uZ/uGmD1pwPiIUK8Vs80+OwhFVvtor2MGXyQKX1oFYBg0mo5Z3Xzy+OPa3e0YBbe6SSqdUzDE1hIa7OrU8GWciIMobWQS7XIBbWg3TFU="
 
@@ -43,7 +44,7 @@ addons:
       name: AscEmu/AscEmu
       description: MMORPG Framework
     notification_email: autokaori@gmail.com
-    build_command_prepend: cmake ../ -DCMAKE_BUILD_TYPE=Release -DBUILD_TOOLS=0 && cov-configure --comptype gcc --compiler gcc-5 --template
+    build_command_prepend: cmake ../ -DCMAKE_BUILD_TYPE=Release -DBUILD_TOOLS=0 -DASCEMU_VERSION=${ASC_VERSION} && cov-configure --comptype gcc --compiler gcc-5 --template
     build_command: make -j2
     branch_pattern: coverity_scan
 
