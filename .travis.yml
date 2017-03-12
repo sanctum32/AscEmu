@@ -11,13 +11,12 @@ git:
   depth: 1
 
 env:
-  ASC_VERSION=WotLK
   global:
     - secure: "Zk3bAxnp4OHPMMZYOSoM2chuMZXomp7BFcT54/Ag6C8RCqtpqQ+E6yHRp861xdWSVo9uZ/uGmD1pwPiIUK8Vs80+OwhFVvtor2MGXyQKX1oFYBg0mo5Z3Xzy+OPa3e0YBbe6SSqdUzDE1hIa7OrU8GWciIMobWQS7XIBbWg3TFU="
 
 before_install:
   - if [[ $TRAVIS_OS_NAME == "linux" ]]; then
-    export CC=gcc-5 CXX=g++-5;
+    export CC=gcc-5 CXX=g++-5 ASC_VERSION=WotLK;
     fi
 
 install:
