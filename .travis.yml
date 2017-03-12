@@ -15,12 +15,12 @@ env:
     - secure: "Zk3bAxnp4OHPMMZYOSoM2chuMZXomp7BFcT54/Ag6C8RCqtpqQ+E6yHRp861xdWSVo9uZ/uGmD1pwPiIUK8Vs80+OwhFVvtor2MGXyQKX1oFYBg0mo5Z3Xzy+OPa3e0YBbe6SSqdUzDE1hIa7OrU8GWciIMobWQS7XIBbWg3TFU="
 
 before_install:
-  - if [ "$COMPILER" = "g++-6" ]; then export CXX="g++-6" CC="gcc-6"; fi
+  - if [ "$COMPILER" = "g++-5" ]; then export CXX="g++-5" CC="gcc-5"; fi
 
 install:
   - mkdir ascemu_build
   - cd ascemu_build
-  - cmake ../ -DCMAKE_BUILD_TYPE=Release -DBUILD_TOOLS=1 -DASCEMU_VERSION=WotLK
+  - cmake ../ -DCMAKE_BUILD_TYPE=Release -DBUILD_TOOLS=1 -DASCEMU_VERSION="WotLK"
 
 addons:
   apt:
@@ -34,8 +34,8 @@ addons:
     - libbz2-dev
     - libmysqlclient-dev
     - libmysql++-dev
-    - gcc-6
-    - g++-6
+    - gcc-5
+    - g++-5
   coverity_scan:
     project:
       name: AscEmu/AscEmu
