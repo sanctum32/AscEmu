@@ -23,7 +23,7 @@
 
 
 #include <Threading/Mutex.h>
-#include "Server/Packets/Opcodes.h"
+#include "Server/Packets/Opcode.h"
 #include "Management/Quest.h"
 #include "FastQueue.h"
 #include "Units/Unit.h"
@@ -88,7 +88,7 @@ enum MovementFlags
     // Byte 2 (Resets on Situation Change)
     MOVEFLAG_WALK                       = 0x00000100,   //verified
     MOVEFLAG_TRANSPORT                  = 0x00000200,
-    MOVEFLAG_NO_COLLISION               = 0x00000400,
+    MOVEFLAG_DISABLEGRAVITY             = 0x00000400,   // Zyres: disable gravity
     MOVEFLAG_ROOTED                     = 0x00000800,   //verified
     MOVEFLAG_REDIRECTED                 = 0x00001000,   //Unconfirmed, should be MOVEFLAG_JUMPING
     MOVEFLAG_FALLING                    = 0x00002000,   //verified
@@ -296,7 +296,9 @@ class SERVER_DECL WorldSession
         void SendSellItem(uint64 vendorguid, uint64 itemid, uint8 error);
         void SendNotification(const char* message, ...);
         void SendAuctionPlaceBidResultPacket(uint32 itemId, uint32 error);
+#if VERSION_STRING > TBC
         void SendRefundInfo(uint64 GUID);
+#endif
         void SendNotInArenaTeamPacket(uint8 type);
 
         void SetInstance(uint32 Instance) { instanceId = Instance; }
@@ -309,8 +311,14 @@ class SERVER_DECL WorldSession
         const char* LocalizedMapName(uint32 id);
         const char* LocalizedBroadCast(uint32 id);
 
-        uint32 GetClientBuild() { return client_build; }
-        void SetClientBuild(uint32 build) { client_build = build; }
+#if VERSION_STRING != Cata
+        uint32_t GetClientBuild() { return client_build; }
+        void SetClientBuild(uint32_t build) { client_build = build; }
+#else
+        uint16_t GetClientBuild() { return client_build; }
+        void SetClientBuild(uint16_t build) { client_build = build; }
+#endif
+
         bool bDeleted;
         uint32 GetInstance() { return instanceId; }
         Mutex deleteMutex;
@@ -332,6 +340,7 @@ class SERVER_DECL WorldSession
         void HandlePlayerLoginOpcode(WorldPacket& recvPacket);
         void HandleRealmSplitOpcode(WorldPacket& recvPacket);
         void HandleTimeSyncResp(WorldPacket& recv_data);
+        void HandleDeclinedPlayerNameOpcode(WorldPacket& recv_data); // declined names (Cyrillic client)
 
         /// Authentification and misc opcodes (MiscHandler.cpp):
         void HandlePingOpcode(WorldPacket& recvPacket);
@@ -368,7 +377,9 @@ class SERVER_DECL WorldSession
         void HandleTogglePVPOpcode(WorldPacket& recvPacket);
         void HandleAmmoSetOpcode(WorldPacket& recvPacket);
         void HandleGameObjectUse(WorldPacket& recvPacket);
+#if VERSION_STRING > TBC
         void HandleBarberShopResult(WorldPacket& recvPacket);
+#endif
         //void HandleJoinChannelOpcode(WorldPacket& recvPacket);
         //void HandleLeaveChannelOpcode(WorldPacket& recvPacket);
         void HandlePlayedTimeOpcode(WorldPacket& recv_data);
@@ -376,7 +387,7 @@ class SERVER_DECL WorldSession
         void HandleCompleteCinematic(WorldPacket& recv_data);
         void HandleNextCinematic(WorldPacket& recv_data);
         void HandleInspectOpcode(WorldPacket& recv_data);
-        void HandleGameobjReportUseOpCode(WorldPacket& recv_data);  // CMSG_GAMEOBJ_REPORT_USE
+        void HandleGameobjReportUseOpCode(WorldPacket& recv_data); // CMSG_GAMEOBJ_REPORT_USE
 
         /// Gm Ticket System in GMTicket.cpp:
         void HandleGMTicketCreateOpcode(WorldPacket& recvPacket);
@@ -432,6 +443,7 @@ class SERVER_DECL WorldSession
 
         //LFG
         void HandleLfgSetCommentOpcode(WorldPacket& recv_data);
+#if VERSION_STRING > TBC
         void HandleLfgJoinOpcode(WorldPacket& recv_data);
         void HandleLfgLeaveOpcode(WorldPacket& recv_data);
         void HandleLfrSearchOpcode(WorldPacket& recv_data);
@@ -442,6 +454,7 @@ class SERVER_DECL WorldSession
         void HandleLfgPlayerLockInfoRequestOpcode(WorldPacket& recv_data);
         void HandleLfgTeleportOpcode(WorldPacket& recv_data);
         void HandleLfgPartyLockInfoRequestOpcode(WorldPacket& recv_data);
+#endif
 
         /// Taxi opcodes (TaxiHandler.cpp)
         void HandleTaxiNodeStatusQueryOpcode(WorldPacket& recvPacket);
@@ -504,13 +517,17 @@ class SERVER_DECL WorldSession
         void HandleAutoStoreBankItemOpcode(WorldPacket& recvPacket);
         void HandleCancelTemporaryEnchantmentOpcode(WorldPacket& recvPacket);
         void HandleInsertGemOpcode(WorldPacket& recvPacket);
+#if VERSION_STRING > TBC
         void HandleItemRefundInfoOpcode(WorldPacket& recvPacket);
         void HandleItemRefundRequestOpcode(WorldPacket& recvPacket);
+#endif
 
         // Equipment set opcode
+#if VERSION_STRING > TBC
         void HandleEquipmentSetUse(WorldPacket& data);
         void HandleEquipmentSetSave(WorldPacket& data);
         void HandleEquipmentSetDelete(WorldPacket& data);
+#endif
 
         /// Combat opcodes (CombatHandler.cpp)
         void HandleAttackSwingOpcode(WorldPacket& recvPacket);
@@ -547,15 +564,19 @@ class SERVER_DECL WorldSession
         void HandleQuestlogRemoveQuestOpcode(WorldPacket& recvPacket);
         void HandlePushQuestToPartyOpcode(WorldPacket& recvPacket);
         void HandleQuestPushResult(WorldPacket& recvPacket);
+#if VERSION_STRING > TBC
         void HandleQuestPOIQueryOpcode(WorldPacket& recv_data);
+#endif
     
         /// Vehicles
+#if VERSION_STRING > TBC
         void HandleDismissVehicle(WorldPacket& recv_data);
         void HandleChangeVehicleSeat(WorldPacket& recv_data);
         void HandleRemoveVehiclePassenger(WorldPacket& recv_data);
         void HandleLeaveVehicle(WorldPacket& recv_data);
         void HandleEnterVehicle(WorldPacket& recv_data);
         void HandleVehicleDismiss(WorldPacket& recv_data);
+#endif
         void HandleSetActionBarTogglesOpcode(WorldPacket& recvPacket);
         void HandleMoveSplineCompleteOpcode(WorldPacket& recvPacket);
 
@@ -717,8 +738,10 @@ class SERVER_DECL WorldSession
 
         // At Login
         void HandleCharRenameOpcode(WorldPacket& recv_data);
+#if VERSION_STRING > TBC
         void HandleCharCustomizeLooksOpcode(WorldPacket& recv_data);
         void HandleCharFactionOrRaceChange(WorldPacket& recv_data);
+#endif
         void HandleReadyForAccountDataTimes(WorldPacket& /*recvData*/);
 
         void HandlePartyMemberStatsOpcode(WorldPacket& recv_data);
@@ -758,6 +781,7 @@ class SERVER_DECL WorldSession
         void HandleSetFactionInactiveOpcode(WorldPacket& recv_data);
 
         // Calendar \todo handle it
+#if VERSION_STRING > TBC
         void HandleCalendarGetCalendar(WorldPacket& /*recv_data*/);
         void HandleCalendarComplain(WorldPacket& recv_data);
         void HandleCalendarGetNumPending(WorldPacket& /*recv_data*/);
@@ -773,6 +797,11 @@ class SERVER_DECL WorldSession
         void HandleCalendarEventRemoveInvite(WorldPacket& recv_data);
         void HandleCalendarEventStatus(WorldPacket& recv_data);
         void HandleCalendarEventModeratorStatus(WorldPacket& recv_data);
+#endif
+#if VERSION_STRING == Cata
+        void HandleReadyForAccountDataTimesOpcode(WorldPacket& recv_data);
+        void HandleLoadScreenOpcode(WorldPacket& recv_data);
+#endif
 
         void Unhandled(WorldPacket& recv_data);
 
@@ -847,7 +876,11 @@ class SERVER_DECL WorldSession
         bool LoggingOut; //Player requesting to be logged out
 
         uint32 _latency;
-        uint32 client_build;
+#if VERSION_STRING != Cata
+        uint32_t client_build;
+#else
+        uint16_t client_build;
+#endif
         uint32 instanceId;
         uint8 _updatecount;
 
@@ -866,8 +899,9 @@ class SERVER_DECL WorldSession
         uint32 language;
         WorldPacket* BuildQuestQueryResponse(QuestProperties const* qst);
         uint32 m_muted;
-
+#if VERSION_STRING > TBC
         void SendClientCacheVersion(uint32 version);
+#endif
 
 };
 

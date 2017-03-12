@@ -53,6 +53,170 @@ bool ChatHandler::HandleDebugMoveInfo(const char* /*args*/, WorldSession* m_sess
     return true;
 }
 
+//.debug hover
+bool ChatHandler::HandleDebugHover(const char* /*args*/, WorldSession* m_session)
+{
+    uint32 guid = Arcemu::Util::GUID_LOPART(m_session->GetPlayer()->GetSelection());
+    Unit* selected_unit = GetSelectedUnit(m_session);
+    if (selected_unit == nullptr)
+        return false;
+
+    if (selected_unit->HasUnitMovementFlag(MOVEFLAG_HOVER))
+    {
+        GreenSystemMessage(m_session, "Unset Hover for target.");
+        selected_unit->setMoveHover(false);
+    }
+    else
+    {
+        GreenSystemMessage(m_session, "Set Hover for target.");
+        selected_unit->setMoveHover(true);
+    }
+
+    return true;
+}
+
+//.debug states
+bool ChatHandler::HandleDebugState(const char* /*args*/, WorldSession* m_session)
+{
+    Unit* selected_unit = GetSelectedUnit(m_session);
+    if (selected_unit == nullptr)
+        return false;
+
+    GreenSystemMessage(m_session, "Display unitStateFlag: %u", selected_unit->getUnitStateFlags());
+    
+    return true;
+}
+
+//.debug swim
+bool ChatHandler::HandleDebugSwim(const char* /*args*/, WorldSession* m_session)
+{
+    Creature* selected_creature = GetSelectedCreature(m_session);
+    if (selected_creature == nullptr)
+        return false;
+
+    if (selected_creature->HasUnitMovementFlag(MOVEFLAG_SWIMMING))
+    {
+        GreenSystemMessage(m_session, "Unset Swim for creature %s.", selected_creature->GetCreatureProperties()->Name.c_str());
+        selected_creature->setMoveSwim(false);
+    }
+    else
+    {
+        GreenSystemMessage(m_session, "Set Swim for creature %s.", selected_creature->GetCreatureProperties()->Name.c_str());
+        selected_creature->setMoveSwim(true);
+    }
+
+    return true;
+}
+
+//.debug fly
+bool ChatHandler::HandleDebugFly(const char* /*args*/, WorldSession* m_session)
+{
+    Creature* selected_creature = GetSelectedCreature(m_session);
+    if (selected_creature == nullptr)
+        return false;
+
+    if (selected_creature->HasUnitMovementFlag(MOVEFLAG_CAN_FLY))
+    {
+        GreenSystemMessage(m_session, "Unset Fly for creature %s.", selected_creature->GetCreatureProperties()->Name.c_str());
+        selected_creature->setMoveSwim(false);
+    }
+    else
+    {
+        GreenSystemMessage(m_session, "Set Fly for creature %s.", selected_creature->GetCreatureProperties()->Name.c_str());
+        selected_creature->setMoveSwim(true);
+    }
+
+    return true;
+}
+
+//.debug disablegravity
+bool ChatHandler::HandleDebugDisableGravity(const char* /*args*/, WorldSession* m_session)
+{
+    Unit* selected_unit = GetSelectedUnit(m_session);
+    if (selected_unit == nullptr)
+        return false;
+
+    if (selected_unit->HasUnitMovementFlag(MOVEFLAG_DISABLEGRAVITY))
+    {
+        GreenSystemMessage(m_session, "Enable Gravity for target.");
+        selected_unit->setMoveDisableGravity(false);
+    }
+    else
+    {
+        GreenSystemMessage(m_session, "Disable Gravity  for target.");
+        selected_unit->setMoveDisableGravity(true);
+    }
+
+    return true;
+}
+
+//.debug waterwalk
+bool ChatHandler::HandleDebugWaterWalk(const char* /*args*/, WorldSession* m_session)
+{
+    Unit* selected_unit = GetSelectedUnit(m_session);
+    if (selected_unit == nullptr)
+        return false;
+
+    if (selected_unit->HasUnitMovementFlag(MOVEFLAG_WATER_WALK))
+    {
+        GreenSystemMessage(m_session, "Disable WaterWalking for target.");
+        selected_unit->setMoveLandWalk();
+    }
+    else
+    {
+        GreenSystemMessage(m_session, "Enabled WaterWalking for target.");
+        selected_unit->setMoveWaterWalk();
+    }
+
+    return true;
+}
+
+//.debug featherfall
+bool ChatHandler::HandleDebugFeatherFall(const char* /*args*/, WorldSession* m_session)
+{
+    Unit* selected_unit = GetSelectedUnit(m_session);
+    if (selected_unit == nullptr)
+        return false;
+
+    if (selected_unit->HasUnitMovementFlag(MOVEFLAG_FEATHER_FALL))
+    {
+        GreenSystemMessage(m_session, "Disable FeatherFall for target.");
+        selected_unit->setMoveNormalFall();
+    }
+    else
+    {
+        GreenSystemMessage(m_session, "Enabled FeatherFall for target.");
+        selected_unit->setMoveFeatherFall();
+    }
+
+    return true;
+}
+
+//.debug speed
+bool ChatHandler::HandleDebugSpeed(const char* args, WorldSession* m_session)
+{
+    float speed = float(atof(args));
+    if (speed == 0.0f || speed > 255.0f || speed < 0.1f)
+    {
+        RedSystemMessage(m_session, "Invalid speed set. Value range 0.1f ... 255.0f Use .debug speed <speed>");
+        return true;
+    }
+
+    Unit* selected_unit = GetSelectedUnit(m_session);
+    if (selected_unit == nullptr)
+        return false;
+
+    BlueSystemMessage(m_session, "Setting speeds of selected unit to %3.2f.", speed);
+
+    selected_unit->setSpeedForType(TYPE_WALK, speed);
+    selected_unit->setSpeedForType(TYPE_RUN, (speed + speed / 2));
+    selected_unit->setSpeedForType(TYPE_SWIM, speed);
+    selected_unit->setSpeedForType(TYPE_RUN_BACK, speed / 2);
+    selected_unit->setSpeedForType(TYPE_FLY, speed * 2);
+
+    return true;
+}
+
 //.debug pvpcredit
 bool ChatHandler::HandleDebugPVPCreditCommand(const char* args, WorldSession* m_session)
 {

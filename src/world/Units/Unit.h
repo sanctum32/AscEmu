@@ -45,6 +45,19 @@ class Vehicle;
 
 struct FactionDBC;
 
+enum UnitSpeedType
+{
+    TYPE_WALK           = 0,
+    TYPE_RUN            = 1,
+    TYPE_RUN_BACK       = 2,
+    TYPE_SWIM           = 3,
+    TYPE_SWIM_BACK      = 4,
+    TYPE_TURN_RATE      = 5,
+    TYPE_FLY            = 6,
+    TYPE_FLY_BACK       = 7,
+    TYPE_PITCH_RATE     = 8
+};
+
 // MIT End
 // AGPL Start
 //these refer to visibility ranges. We need to store each stack of the aura and not just visible count.
@@ -72,8 +85,6 @@ struct FactionDBC;
 
 bool SERVER_DECL Rand(float);
 
-#define UF_TARGET_DIED  1
-#define UF_ATTACKING    2           // this unit is attacking it's selection
 #define SPELL_GROUPS    96          // This is actually on 64 bits !
 #define DIMINISHING_GROUP_COUNT 15
 
@@ -193,22 +204,79 @@ public:
 
     //////////////////////////////////////////////////////////////////////////////////////////
     // Movement
-    void SetMoveWaterWalk();
-    void SetMoveLandWalk();
-    void SetMoveFeatherFall();
-    void SetMoveNormalFall();
-    void SetMoveHover(bool set_hover);
-    void SetMoveCanFly(bool set_fly);
+private:
+
+    int32_t m_rootCounter;
+
+public:
+
+    void setMoveWaterWalk();
+    void setMoveLandWalk();
+    void setMoveFeatherFall();
+    void setMoveNormalFall();
+    void setMoveHover(bool set_hover);
+    void setMoveCanFly(bool set_fly);
+    void setMoveRoot(bool set_root);
+    bool isRooted() const;
+
+    void setMoveSwim(bool set_swim);
+    void setMoveDisableGravity(bool disable_gravity);
+    void setMoveWalk(bool set_walk);
+
+    // Speed
+private:
+
+    float m_currentSpeedWalk;
+    float m_currentSpeedRun;
+    float m_currentSpeedRunBack;
+    float m_currentSpeedSwim;
+    float m_currentSpeedSwimBack;
+    float m_currentTurnRate;
+    float m_currentSpeedFly;
+    float m_currentSpeedFlyBack;
+    float m_currentPitchRate;
+
+    float m_basicSpeedWalk;
+    float m_basicSpeedRun;
+    float m_basicSpeedRunBack;
+    float m_basicSpeedSwim;
+    float m_basicSpeedSwimBack;
+    float m_basicTurnRate;
+    float m_basicSpeedFly;
+    float m_basicSpeedFlyBack;
+    float m_basicPitchRate;
+
+public:
+
+    float getSpeedForType(UnitSpeedType speed_type, bool get_basic = false);
+    void setSpeedForType(UnitSpeedType speed_type, float speed, bool set_basic = false);
+    void resetCurrentSpeed();
+
+    void sendMoveSplinePaket(UnitSpeedType speed_type);
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Internal States
+private:
+
+    uint32_t m_unitState;
+
+public:
+
+    void addUnitStateFlag(uint32_t state_flag) { m_unitState |= state_flag; };
+    bool hasUnitStateFlag(uint32_t state_flag) { return (m_unitState & state_flag ? true : false); }
+    void removeUnitStateFlag(uint32_t state_flag) { m_unitState &= ~state_flag; };
+    uint32_t getUnitStateFlags() { return m_unitState; };
+
 
     //////////////////////////////////////////////////////////////////////////////////////////
     // Spells
-    void PlaySpellVisual(uint64_t guid, uint32_t spell_id);
+    void playSpellVisual(uint64_t guid, uint32_t spell_id);
 
     //////////////////////////////////////////////////////////////////////////////////////////
     // Aura
-    Aura* GetAuraWithId(uint32_t spell_id);
-    Aura* GetAuraWithIdForGuid(uint32_t spell_id, uint64_t target_guid);
-    Aura* GetAuraWithAuraEffect(uint32_t aura_effect);
+    Aura* getAuraWithId(uint32_t spell_id);
+    Aura* getAuraWithIdForGuid(uint32_t spell_id, uint64_t target_guid);
+    Aura* getAuraWithAuraEffect(uint32_t aura_effect);
 
 
     // Do not alter anything below this line
@@ -253,11 +321,6 @@ public:
     void SetDualWield(bool enabled);
 
     bool  canReachWithAttack(Unit* pVictim);
-
-    /// State flags are server-only flags to help me know when to do stuff, like die, or attack
-    void addStateFlag(uint32 f) { m_state |= f; };
-    bool hasStateFlag(uint32 f) { return (m_state & f ? true : false); }
-    void clearStateFlag(uint32 f) { m_state &= ~f; };
 
     /// Stats
     uint32 getLevel() { return m_uint32Values[UNIT_FIELD_LEVEL]; };
@@ -778,7 +841,6 @@ public:
     int8 asc_bleed;
 
     uint16 m_noInterrupt;
-    int32 m_rooted;
     bool disarmed;
     uint64 m_detectRangeGUID[5];
     int32  m_detectRangeMOD[5];
@@ -791,7 +853,7 @@ public:
     bool GetSpeedDecrease();
     int32 m_mountedspeedModifier;
     int32 m_flyspeedModifier;
-    virtual void SetSpeeds(uint8 type, float speed) {}
+
     void UpdateSpeed();
 
     // Escort Quests
@@ -839,16 +901,6 @@ public:
     uint64 GetTaggerGUID();
     bool isLootable();
 
-    void Root();
-    void Unroot();
-    bool isRooted()
-    {
-        if (m_rooted)
-            return true;
-        else
-            return false;
-    }
-
     virtual bool isTrainingDummy() { return false; }
 
     void SetFacing(float newo);     //only working if creature is idle
@@ -885,7 +937,6 @@ public:
 
     //solo target auras
     uint32 polySpell;
-    uint32 m_special_state;         //flags for special states (stunned etc)
 
     struct
     {
@@ -1133,7 +1184,7 @@ protected:
     uint16 m_H_regenTimer;
     uint16 m_P_regenTimer;
     uint32 m_interruptedRegenTime;  //PowerInterruptedegenTimer.
-    uint32 m_state;                 // flags for keeping track of some states
+    
     uint32 m_attackTimer;           // timer for attack
     uint32 m_attackTimer_1;
     bool m_dualWield;

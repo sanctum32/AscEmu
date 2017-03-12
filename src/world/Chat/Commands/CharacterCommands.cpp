@@ -1223,7 +1223,9 @@ bool ChatHandler::HandleCharSetAllExploredCommand(const char* /*args*/, WorldSes
         player_target->SetFlag(PLAYER_EXPLORED_ZONES_1 + i, 0xFFFFFFFF);
     }
 
+#if VERSION_STRING > TBC
     player_target->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_EXPLORE_AREA); // update
+#endif
     return true;
 }
 
@@ -1520,10 +1522,10 @@ bool ChatHandler::HandleCharSetSpeedCommand(const char* args, WorldSession* m_se
         BlueSystemMessage(m_session, "Setting your speed to %3.2f.", speed);
     }
 
-    player_target->SetSpeeds(RUN, speed);
-    player_target->SetSpeeds(SWIM, speed);
-    player_target->SetSpeeds(RUNBACK, speed / 2);
-    player_target->SetSpeeds(FLY, speed * 2);
+    player_target->setSpeedForType(TYPE_RUN, speed);
+    player_target->setSpeedForType(TYPE_SWIM, speed);
+    player_target->setSpeedForType(TYPE_RUN_BACK, speed / 2);
+    player_target->setSpeedForType(TYPE_FLY, speed * 2);
 
     return true;
 }

@@ -22,7 +22,7 @@
 #include "Map/MapMgr.h"
 #include "Objects/Faction.h"
 #include "Spell/SpellAuras.h"
-#include "Server/Packets/Opcodes.h"
+#include "Server/Packets/Opcode.h"
 #include "Server/Script/ScriptMgr.h"
 
 #define BLOOD_PLAGUE 55078
@@ -201,7 +201,7 @@ bool DeathGrip(uint32 i, Spell* s)
         posY = d * sinf(alpha) + unitTarget->GetPositionY();
         posZ = s->u_caster->GetPositionZ();
 
-        uint32 time = uint32((unitTarget->CalcDistance(s->m_caster) / ((unitTarget->m_runSpeed * 3.5) * 0.001f)) + 0.5);
+        uint32 time = uint32((unitTarget->CalcDistance(s->m_caster) / ((unitTarget->getSpeedForType(TYPE_RUN) * 3.5) * 0.001f)) + 0.5);
 
         WorldPacket data(SMSG_MONSTER_MOVE, 60);
         data << unitTarget->GetNewGUID();
@@ -223,7 +223,7 @@ bool DeathGrip(uint32 i, Spell* s)
 
         unitTarget->SendMessageToSet(&data, true);
         unitTarget->SetPosition(posX, posY, posZ, alpha, true);
-        unitTarget->addStateFlag(UF_ATTACKING);
+        unitTarget->addUnitStateFlag(UNIT_STATE_ATTACKING);
         unitTarget->smsg_AttackStart(unitTarget);
         unitTarget->setAttackTimer(time, false);
         unitTarget->setAttackTimer(time, true);

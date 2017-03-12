@@ -275,7 +275,7 @@ static MovementFlagName MoveFlagsToNames[] =
     { MOVEFLAG_PITCH_UP, "MOVEFLAG_PITCH_UP" },
     { MOVEFLAG_WALK, "MOVEFLAG_WALK" },
     { MOVEFLAG_TRANSPORT, "MOVEFLAG_TRANSPORT" },
-    { MOVEFLAG_NO_COLLISION, "MOVEFLAG_NO_COLLISION" },
+    { MOVEFLAG_DISABLEGRAVITY, "MOVEFLAG_DISABLEGRAVITY" },
     { MOVEFLAG_ROOTED, "MOVEFLAG_ROOTED" },
     { MOVEFLAG_REDIRECTED, "MOVEFLAG_REDIRECTED" },
     { MOVEFLAG_FALLING, "MOVEFLAG_FALLING" },
@@ -375,7 +375,11 @@ void WorldSession::HandleMovementOpcodes(WorldPacket& recv_data)
     /* Update player movement state                                         */
     /************************************************************************/
 
+#if VERSION_STRING == Cata
+    uint32_t opcode = recv_data.GetOpcode();
+#else
     uint16 opcode = recv_data.GetOpcode();
+#endif
     switch (opcode)
     {
         case MSG_MOVE_START_FORWARD:
@@ -440,9 +444,9 @@ void WorldSession::HandleMovementOpcodes(WorldPacket& recv_data)
         /* Anti-Teleport                                                        */
         /************************************************************************/
         if (sWorld.antihack_teleport && _player->m_position.Distance2DSq(movement_info.position.x, movement_info.position.y) > 3025.0f
-            && _player->m_runSpeed < 50.0f && !_player->obj_movement_info.transporter_info.guid)
+            && _player->getSpeedForType(TYPE_RUN) < 50.0f && !_player->obj_movement_info.transporter_info.guid)
         {
-            sCheatLog.writefromsession(this, "Disconnected for teleport hacking. Player speed: %f, Distance traveled: %f", _player->m_runSpeed, sqrt(_player->m_position.Distance2DSq(movement_info.position.x, movement_info.position.y)));
+            sCheatLog.writefromsession(this, "Disconnected for teleport hacking. Player speed: %f, Distance traveled: %f", _player->getSpeedForType(TYPE_RUN), sqrt(_player->m_position.Distance2DSq(movement_info.position.x, movement_info.position.y)));
             Disconnect();
             return;
         }
@@ -452,7 +456,7 @@ void WorldSession::HandleMovementOpcodes(WorldPacket& recv_data)
     if (sWorld.antihack_speed && !_player->GetTaxiState() && _player->obj_movement_info.transporter_info.guid == 0 && !_player->GetSession()->GetPermissionCount())
     {
         // simplified: just take the fastest speed. less chance of fuckups too
-        float speed = (_player->flying_aura) ? _player->m_flySpeed : (_player->m_swimSpeed > _player->m_runSpeed) ? _player->m_swimSpeed : _player->m_runSpeed;
+        float speed = (_player->flying_aura) ? _player->getSpeedForType(TYPE_FLY) : (_player->getSpeedForType(TYPE_SWIM) > _player->getSpeedForType(TYPE_RUN)) ? _player->getSpeedForType(TYPE_SWIM) : _player->getSpeedForType(TYPE_RUN);
 
         _player->SDetector->AddSample(movement_info.position.x, movement_info.position.y, getMSTime(), speed);
 
@@ -497,7 +501,7 @@ void WorldSession::HandleMovementOpcodes(WorldPacket& recv_data)
     /* Orientation dumping                                                  */
     /************************************************************************/
 #if 0
-    LOG_DEBUG("Packet: 0x%03X (%s)", recv_data.GetOpcode(), LookupName(recv_data.GetOpcode(), g_worldOpcodeNames));
+    LOG_DEBUG("Packet: 0x%03X (%s)", recv_data.GetOpcode(), getOpcodeName(recv_data.GetOpcode()).c_str());
     LOG_DEBUG("Orientation: %.10f", movement_info.orientation);
 #endif
 
@@ -592,6 +596,7 @@ void WorldSession::HandleMovementOpcodes(WorldPacket& recv_data)
 
                 if (health_loss >= mover->GetHealth())
                     health_loss = mover->GetHealth();
+#if VERSION_STRING > TBC
                 else if ((falldistance >= 65) && (mover->GetGUID() == _player->GetGUID()))
                 {
                     // Rather than Updating achievement progress every time fall damage is taken, all criteria currently have 65 yard requirement...
@@ -599,6 +604,7 @@ void WorldSession::HandleMovementOpcodes(WorldPacket& recv_data)
                     // Achievement 1260: Fall 65 yards without dying while completely smashed during the Brewfest Holiday.
                     _player->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_FALL_WITHOUT_DYING, falldistance, Player::GetDrunkenstateByValue(_player->GetDrunkValue()), 0);
                 }
+#endif
 
                 mover->SendEnvironmentalDamageLog(mover->GetGUID(), DAMAGE_FALL, health_loss);
                 mover->DealDamage(mover, health_loss, 0, 0, 0);
@@ -892,7 +898,7 @@ void MovementInfo::init(WorldPacket& data)
     data >> position.z;
     data >> position.o;
 
-    if (flags & MOVEFLAG_TRANSPORT)
+    if (HasMovementFlag(MOVEFLAG_TRANSPORT))
     {
         data >> transporter_info.transGuid;
         data >> transporter_info.position.x;
@@ -900,20 +906,29 @@ void MovementInfo::init(WorldPacket& data)
         data >> transporter_info.position.z;
         data >> transporter_info.position.o;
         data >> transporter_info.time;
-        data >> transporter_info.time2;
+        data >> transporter_info.seat;
+
+        if (HasMovementFlag2(MOVEFLAG2_INTERPOLATED_MOVE))
+        {
+            data >> transporter_info.time2;
+        }
     }
-    if (flags & (MOVEFLAG_SWIMMING | MOVEFLAG_FLYING) || flags2 & MOVEFLAG2_NO_JUMPING)
+
+    if (HasMovementFlag((MOVEFLAG_SWIMMING | MOVEFLAG_FLYING)) || HasMovementFlag2(MOVEFLAG2_ALLOW_PITCHING))
     {
         data >> pitch;
     }
-    if (flags & MOVEFLAG_REDIRECTED)
+
+    data >> fall_time;
+
+    if (HasMovementFlag(MOVEFLAG_REDIRECTED))
     {
         data >> redirectVelocity;
         data >> redirectSin;
         data >> redirectCos;
         data >> redirect2DSpeed;
     }
-    if (flags & MOVEFLAG_SPLINE_MOVER)
+    if (HasMovementFlag(MOVEFLAG_SPLINE_MOVER))
     {
         data >> spline_elevation;
     }
@@ -930,7 +945,7 @@ void MovementInfo::write(WorldPacket& data)
     data << position.z;
     data << position.o;
 
-    if (flags & MOVEFLAG_TRANSPORT)
+    if (HasMovementFlag(MOVEFLAG_TRANSPORT))
     {
         data << transporter_info.transGuid;
         data << transporter_info.position.x;
@@ -938,20 +953,30 @@ void MovementInfo::write(WorldPacket& data)
         data << transporter_info.position.z;
         data << transporter_info.position.o;
         data << transporter_info.time;
-        data << transporter_info.time2;
+        data << transporter_info.seat;
+
+        if (HasMovementFlag2(MOVEFLAG2_INTERPOLATED_MOVE))
+        {
+            data << transporter_info.time2;
+        }
     }
-    if (flags & MOVEFLAG_SWIMMING)
+
+    if (HasMovementFlag((MOVEFLAG_SWIMMING | MOVEFLAG_FLYING)) || HasMovementFlag2(MOVEFLAG2_ALLOW_PITCHING))
     {
         data << pitch;
     }
-    if (flags & MOVEFLAG_FALLING)
+
+    data << fall_time;
+
+    if (HasMovementFlag(MOVEFLAG_FALLING))
     {
         data << redirectVelocity;
         data << redirectSin;
         data << redirectCos;
         data << redirect2DSpeed;
     }
-    if (flags & MOVEFLAG_SPLINE_MOVER)
+
+    if (HasMovementFlag(MOVEFLAG_SPLINE_MOVER))
     {
         data << spline_elevation;
     }

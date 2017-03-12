@@ -338,7 +338,7 @@ bool ChatHandler::HandleReviveCommand(const char* args, WorldSession* m_session)
 
         if (player_target->IsDead())
         {
-            player_target->SetMovement(MOVE_UNROOT, 1);
+            player_target->setMoveRoot(false);
             player_target->ResurrectPlayer();
             player_target->SetHealth(player_target->GetMaxHealth());
             player_target->SetPower(POWER_TYPE_MANA, player_target->GetMaxPower(POWER_TYPE_MANA));
@@ -375,7 +375,7 @@ bool ChatHandler::HandleRootCommand(const char* /*args*/, WorldSession* m_sessio
     if (unit == nullptr)
         return true;
 
-    unit->Root();
+    unit->setMoveRoot(true);
 
     if (unit->IsPlayer())
     {
@@ -399,7 +399,7 @@ bool ChatHandler::HandleUnrootCommand(const char* /*args*/, WorldSession* m_sess
     if (unit == nullptr)
         return true;
 
-    unit->Unroot();
+    unit->setMoveRoot(false);
 
     if (unit->IsPlayer())
     {

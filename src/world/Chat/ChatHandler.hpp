@@ -78,10 +78,12 @@ class SERVER_DECL ChatHandler : public Singleton<ChatHandler>
         bool HandleAccountMuteCommand(const char* args, WorldSession* m_session);
         bool HandleAccountUnmuteCommand(const char* args, WorldSession* m_session);
 
+#if VERSION_STRING > TBC
         // Achievement
         bool HandleAchievementCompleteCommand(const char* args, WorldSession* m_session);
         bool HandleAchievementCriteriaCommand(const char* args, WorldSession* m_session);
         bool HandleAchievementResetCommand(const char* args, WorldSession* m_session);
+#endif
 
         // Admin commands
         bool HandleAdminCastAllCommand(const char* args, WorldSession* m_session);
@@ -176,6 +178,14 @@ class SERVER_DECL ChatHandler : public Singleton<ChatHandler>
 
         // Debug
         bool HandleDebugMoveInfo(const char* /*args*/, WorldSession* m_session);
+        bool HandleDebugHover(const char* /*args*/, WorldSession* m_session);
+        bool HandleDebugState(const char* /*args*/, WorldSession* m_session);
+        bool HandleDebugSwim(const char* /*args*/, WorldSession* m_session);
+        bool HandleDebugFly(const char* /*args*/, WorldSession* m_session);
+        bool HandleDebugDisableGravity(const char* /*args*/, WorldSession* m_session);
+        bool HandleDebugFeatherFall(const char* /*args*/, WorldSession* m_session);
+        bool HandleDebugWaterWalk(const char* /*args*/, WorldSession* m_session);
+        bool HandleDebugSpeed(const char* args, WorldSession* m_session);
         bool HandleDebugPVPCreditCommand(const char* args, WorldSession* m_session);
         bool HandleSendCastFailed(const char* args, WorldSession* m_session);
         // old debugcmds.cpp
@@ -189,7 +199,6 @@ class SERVER_DECL ChatHandler : public Singleton<ChatHandler>
         bool HandleSetBytesCommand(const char* args, WorldSession* m_session);
         bool HandleGetBytesCommand(const char* args, WorldSession* m_session);
         bool HandleDebugLandWalk(const char* args, WorldSession* m_session);
-        bool HandleDebugWaterWalk(const char* args, WorldSession* m_session);
         bool HandleAggroRangeCommand(const char* args, WorldSession* m_session);
         bool HandleKnockBackCommand(const char* args, WorldSession* m_session);
         bool HandleFadeCommand(const char* args, WorldSession* m_session);

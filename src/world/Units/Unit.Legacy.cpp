@@ -119,7 +119,14 @@ static float AttackToRageConversionTable[DBC_PLAYER_LEVEL_CAP + 1] =
     0.0136512559131f    //80
 };
 
-Unit::Unit() : m_combatStatus(this), m_movementManager()
+Unit::Unit() : m_combatStatus(this), m_movementManager(),
+    m_currentSpeedWalk(2.5f), m_currentSpeedRun(7.0f), m_currentSpeedRunBack(4.5f), m_currentSpeedSwim(4.722222f),
+    m_currentSpeedSwimBack(2.5f), m_currentTurnRate(3.141594f), m_currentSpeedFly(7.0f), m_currentSpeedFlyBack(4.5f),
+    m_currentPitchRate(3.14f),
+
+    m_basicSpeedWalk(2.5f), m_basicSpeedRun(7.0f), m_basicSpeedRunBack(4.5f), m_basicSpeedSwim(4.722222f),
+    m_basicSpeedSwimBack(2.5f), m_basicTurnRate(3.141594f), m_basicSpeedFly(7.0f), m_basicSpeedFlyBack(4.5f),
+    m_basicPitchRate(3.14f)
 {
     int i;
 
@@ -130,8 +137,7 @@ Unit::Unit() : m_combatStatus(this), m_movementManager()
     m_ignoreArmorPctMaceSpec = 0;
     m_ignoreArmorPct = 0;
     m_fearmodifiers = 0;
-    m_state = 0;
-    m_special_state = UNIT_STATE_NORMAL;
+    m_unitState = UNIT_STATE_NONE;
     m_deathState = ALIVE;
     m_meleespell = 0;
     m_addDmgOnce = 0;
@@ -248,7 +254,7 @@ Unit::Unit() : m_combatStatus(this), m_movementManager()
     m_extraattacks = 0;
     m_stunned = 0;
     m_manashieldamt = 0;
-    m_rooted = 0;
+    m_rootCounter = 0;
     m_triggerSpell = 0;
     m_triggerDamage = 0;
     m_canMove = 0;
@@ -866,7 +872,7 @@ bool Unit::canReachWithAttack(Unit* pVictim)
             lat = (lat > 500) ? 500 : lat;
 
             // calculate the added distance
-            attackreach += m_runSpeed * 0.001f * lat;
+            attackreach += m_currentSpeedRun * 0.001f * lat;
         }
 
         if (static_cast<Player*>(this)->m_isMoving)
@@ -878,7 +884,7 @@ bool Unit::canReachWithAttack(Unit* pVictim)
             lat = (lat > 500) ? 500 : lat;
 
             // calculate the added distance
-            attackreach += m_runSpeed * 0.001f * lat;
+            attackreach += m_currentSpeedRun * 0.001f * lat;
         }
     }
     return (distance <= attackreach);
@@ -5014,7 +5020,7 @@ void Unit::RemoveAllAurasByRequiredShapeShift(uint32 mask)
 bool Unit::SetAurDuration(uint32 spellId, Unit* caster, uint32 duration)
 {
     LOG_DEBUG("setAurDuration2");
-    Aura* aur = GetAuraWithIdForGuid(spellId, caster->GetGUID());
+    Aura* aur = getAuraWithIdForGuid(spellId, caster->GetGUID());
     if (!aur)
         return false;
     aur->SetDuration(duration);
@@ -5025,7 +5031,7 @@ bool Unit::SetAurDuration(uint32 spellId, Unit* caster, uint32 duration)
 
 bool Unit::SetAurDuration(uint32 spellId, uint32 duration)
 {
-    Aura* aur = GetAuraWithId(spellId);
+    Aura* aur = getAuraWithId(spellId);
 
     if (!aur)
         return false;
@@ -5575,20 +5581,20 @@ void Unit::UpdateSpeed()
 {
     if (GetMount() == 0)
     {
-        m_runSpeed = m_base_runSpeed * (1.0f + ((float)m_speedModifier) / 100.0f);
+        m_currentSpeedRun = m_basicSpeedRun * (1.0f + ((float)m_speedModifier) / 100.0f);
     }
     else
     {
-        m_runSpeed = m_base_runSpeed * (1.0f + ((float)m_mountedspeedModifier) / 100.0f);
-        m_runSpeed += (m_speedModifier < 0) ? (m_base_runSpeed * ((float)m_speedModifier) / 100.0f) : 0;
+        m_currentSpeedRun = m_basicSpeedRun * (1.0f + ((float)m_mountedspeedModifier) / 100.0f);
+        m_currentSpeedRun += (m_speedModifier < 0) ? (m_basicSpeedRun * ((float)m_speedModifier) / 100.0f) : 0;
     }
 
-    m_flySpeed = playerNormalFlightSpeed * (1.0f + ((float)m_flyspeedModifier) / 100.0f);
+    m_currentSpeedFly = m_basicSpeedFly * (1.0f + ((float)m_flyspeedModifier) / 100.0f);
 
     // Limit speed due to effects such as http://www.wowhead.com/?spell=31896 [Judgement of Justice]
-    if (m_maxSpeed && m_runSpeed > m_maxSpeed)
+    if (m_maxSpeed && m_currentSpeedRun > m_maxSpeed)
     {
-        m_runSpeed = m_maxSpeed;
+        m_currentSpeedRun = m_maxSpeed;
     }
 
     if (IsPlayer() && static_cast<Player*>(this)->m_changingMaps)
@@ -5597,8 +5603,8 @@ void Unit::UpdateSpeed()
     }
     else
     {
-        SetSpeeds(RUN, m_runSpeed);
-        SetSpeeds(FLY, m_flySpeed);
+        setSpeedForType(TYPE_RUN, m_currentSpeedRun);
+        setSpeedForType(TYPE_FLY, m_currentSpeedFly);
     }
 }
 
@@ -5740,39 +5746,6 @@ void Unit::CastSpellAoF(float x, float y, float z, SpellInfo* Sp, bool triggered
     targets.m_targetMask = TARGET_FLAG_DEST_LOCATION;
     Spell* newSpell = sSpellFactoryMgr.NewSpell(this, Sp, triggered, 0);
     newSpell->prepare(&targets);
-}
-
-void Unit::Root()
-{
-    AddUnitMovementFlag(MOVEFLAG_ROOTED);
-
-    if (!IsPlayer())
-    {
-        m_aiInterface->m_canMove = false;
-        m_aiInterface->StopMovement(1);
-    }
-
-    m_rooted = 1;
-
-    WorldPacket data(SMSG_FORCE_MOVE_ROOT, 12);
-    data << GetNewGUID();
-    data << uint32(1);
-    SendMessageToSet(&data, true, false);
-}
-
-void Unit::Unroot()
-{
-    RemoveUnitMovementFlag(MOVEFLAG_ROOTED);
-
-    if (!IsPlayer())
-        m_aiInterface->m_canMove = true;
-
-    m_rooted = 0;
-
-    WorldPacket data(SMSG_FORCE_MOVE_UNROOT, 12);
-    data << GetNewGUID();
-    data << uint32(5);
-    SendMessageToSet(&data, true, false);
 }
 
 void Unit::RemoveAurasByBuffType(uint32 buff_type, const uint64 & guid, uint32 skip)
@@ -6126,6 +6099,7 @@ bool Unit::IsPoisoned()
 
 void Unit::SendFullAuraUpdate()
 {
+#if VERSION_STRING > TBC
     WorldPacket data(SMSG_AURA_UPDATE_ALL, 200);
 
     data << WoWGuid(GetNewGUID());
@@ -6170,10 +6144,12 @@ void Unit::SendFullAuraUpdate()
     SendMessageToSet(&data, true);
 
     LOG_DEBUG("Full Aura Update: GUID: " I64FMT " - Updates: %u", GetGUID(), Updates);
+#endif
 }
 
 void Unit::SendAuraUpdate(uint32 AuraSlot, bool remove)
 {
+#if VERSION_STRING > TBC
     Aura* aur = m_auras[AuraSlot];
     ARCEMU_ASSERT(aur != NULL);
 
@@ -6222,6 +6198,7 @@ void Unit::SendAuraUpdate(uint32 AuraSlot, bool remove)
     }
 
     SendMessageToSet(&data, true);
+#endif
 }
 
 uint32 Unit::ModVisualAuraStackCount(Aura* aur, int32 count)
@@ -7286,6 +7263,7 @@ void Unit::SetPower(uint32 type, int32 value)
 
 void Unit::SendPowerUpdate(bool self)
 {
+#if VERSION_STRING > TBC
     uint32 amount = GetUInt32Value(UNIT_FIELD_POWER1 + GetPowerType()); //save the amount, so we send the same to the player and everyone else
 
     WorldPacket data(SMSG_POWER_UPDATE, 14);
@@ -7301,10 +7279,12 @@ void Unit::SendPowerUpdate(bool self)
     WorldPacket* pkt = BuildFieldUpdatePacket(UNIT_FIELD_POWER1 + GetPowerType(), amount);
     SendMessageToSet(pkt, false);
     delete pkt;
+#endif
 }
 
 void Unit::UpdatePowerAmm()
 {
+#if VERSION_STRING > TBC
     if (!IsPlayer())
         return;
     WorldPacket data(SMSG_POWER_UPDATE, 14);
@@ -7312,6 +7292,7 @@ void Unit::UpdatePowerAmm()
     data << uint8(GetPowerType());
     data << GetUInt32Value(UNIT_FIELD_POWER1 + GetPowerType());
     SendMessageToSet(&data, true);
+#endif
 }
 
 void Unit::SetDualWield(bool enabled)
@@ -7668,7 +7649,8 @@ bool Unit::IsCriticalDamageForSpell(Object* victim, SpellInfo* spell)
         {
             CritChance += static_cast<float>(static_cast<Unit*>(victim)->AttackerCritChanceMod[spell->School]);
 
-            if (IsPlayer() && (static_cast<Unit*>(victim)->m_rooted - static_cast<Unit*>(victim)->m_stunned))
+            //\todo Zyres: is tis relly the way this should work?
+            if (IsPlayer() && (static_cast<Unit*>(victim)->m_rootCounter - static_cast<Unit*>(victim)->m_stunned))
                 CritChance += static_cast<float>(static_cast<Player*>(this)->m_RootedCritChanceBonus);
         }
 
@@ -8152,7 +8134,7 @@ void Unit::Possess(Unit* pTarget, uint32 delay)
     if (GetCharmedUnitGUID())
         return;
 
-    Root();
+    setMoveRoot(true);
 
     if (delay != 0)
     {
@@ -8161,7 +8143,7 @@ void Unit::Possess(Unit* pTarget, uint32 delay)
     }
     if (pTarget == NULL)
     {
-        Unroot();
+        setMoveRoot(false);
         return;
     }
 
@@ -8242,7 +8224,7 @@ void Unit::UnPossess()
     if (!(pTarget->IsPet() && static_cast< Pet* >(pTarget) == pThis->GetSummon()))
         pThis->SendEmptyPetSpellList();
 
-    Unroot();
+    setMoveRoot(false);
 
     if (!pTarget->IsPet() && (pTarget->GetCreatedByGUID() == GetGUID()))
     {

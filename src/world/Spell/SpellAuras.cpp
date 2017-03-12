@@ -1972,7 +1972,7 @@ void Aura::SpellAuraModConfuse(bool apply)
         }
         SetNegative();
 
-        m_target->m_special_state |= UNIT_STATE_CONFUSE;
+        m_target->addUnitStateFlag(UNIT_STATE_CONFUSE);
         m_target->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_CONFUSED);
 
         m_target->setAItoUse(true);
@@ -1990,7 +1990,7 @@ void Aura::SpellAuraModConfuse(bool apply)
     }
     else if ((m_flags & (1 << mod->i)) == 0)   //add these checks to mods where immunity can cancel only 1 mod and not whole spell
     {
-        m_target->m_special_state &= ~UNIT_STATE_CONFUSE;
+        m_target->removeUnitStateFlag(UNIT_STATE_CONFUSE);
         m_target->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_CONFUSED);
         if (p_target)
             p_target->SpeedCheatReset();
@@ -2042,7 +2042,7 @@ void Aura::SpellAuraModCharm(bool apply)
         if (caster->GetCharmedUnitGUID() != 0)
             return;
 
-        m_target->m_special_state |= UNIT_STATE_CHARM;
+        m_target->addUnitStateFlag(UNIT_STATE_CHARM);
         m_target->SetCharmTempVal(m_target->GetFaction());
         m_target->SetFaction(caster->GetFaction());
         m_target->UpdateOppFactionSet();
@@ -2077,7 +2077,7 @@ void Aura::SpellAuraModCharm(bool apply)
     }
     else
     {
-        m_target->m_special_state &= ~UNIT_STATE_CHARM;
+        m_target->removeUnitStateFlag(UNIT_STATE_CHARM);
         m_target->SetFaction(m_target->GetCharmTempVal());
         m_target->GetAIInterface()->WipeHateList();
         m_target->GetAIInterface()->WipeTargetList();
@@ -2116,7 +2116,7 @@ void Aura::SpellAuraModFear(bool apply)
 
         SetNegative();
 
-        m_target->m_special_state |= UNIT_STATE_FEAR;
+        m_target->addUnitStateFlag(UNIT_STATE_FEAR);
         m_target->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_FLEEING);
 
         m_target->setAItoUse(true);
@@ -2138,7 +2138,7 @@ void Aura::SpellAuraModFear(bool apply)
 
         if (m_target->m_fearmodifiers <= 0)
         {
-            m_target->m_special_state &= ~UNIT_STATE_FEAR;
+            m_target->removeUnitStateFlag(UNIT_STATE_FEAR);
             m_target->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_FLEEING);
 
             m_target->GetAIInterface()->HandleEvent(EVENT_UNFEAR, NULL, 0);
@@ -2474,16 +2474,17 @@ void Aura::SpellAuraModStun(bool apply)
         }
         SetNegative();
 
-        m_target->m_rooted++;
+        //\todo Zyres: is tis relly the way this should work?
+        m_target->m_rootCounter++;
 
-        if (m_target->m_rooted == 1)
-            m_target->Root();
+        if (m_target->m_rootCounter == 1)
+            m_target->setMoveRoot(true);
 
         if (m_target->IsStealth())
             m_target->RemoveStealth();
 
         m_target->m_stunned++;
-        m_target->m_special_state |= UNIT_STATE_STUN;
+        m_target->addUnitStateFlag(UNIT_STATE_STUN);
         m_target->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED);
 
         if (m_target->IsCreature())
@@ -2509,16 +2510,17 @@ void Aura::SpellAuraModStun(bool apply)
     }
     else if ((m_flags & (1 << mod->i)) == 0)   //add these checks to mods where immunity can cancel only 1 mod and not whole spell
     {
-        m_target->m_rooted--;
+        //\todo Zyres: is tis relly the way this should work?
+        m_target->m_rootCounter--;
 
-        if (m_target->m_rooted == 0)
-            m_target->Unroot();
+        if (m_target->m_rootCounter == 0)
+            m_target->setMoveRoot(false);
 
         m_target->m_stunned--;
 
         if (m_target->m_stunned == 0)
         {
-            m_target->m_special_state &= ~UNIT_STATE_STUN;
+            m_target->removeUnitStateFlag(UNIT_STATE_STUN);
             m_target->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED);
         }
 
@@ -2711,7 +2713,7 @@ void Aura::SpellAuraModStealth(bool apply)
         //Overkill must proc only if we aren't already stealthed, also refreshing duration.
         if (!m_target->IsStealth() && m_target->HasAura(58426))
         {
-            Aura *buff = m_target->GetAuraWithId(58427);
+            Aura *buff = m_target->getAuraWithId(58427);
             if (buff)
             {
                 m_target->SetAurDuration(58427, -1);
@@ -3212,7 +3214,7 @@ void Aura::SpellAuraModPacify(bool apply)
             SetNegative();
 
         m_target->m_pacified++;
-        m_target->m_special_state |= UNIT_STATE_PACIFY;
+        m_target->addUnitStateFlag(UNIT_STATE_PACIFY);
         m_target->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED);
     }
     else
@@ -3221,7 +3223,7 @@ void Aura::SpellAuraModPacify(bool apply)
 
         if (m_target->m_pacified == 0)
         {
-            m_target->m_special_state &= ~UNIT_STATE_PACIFY;
+            m_target->removeUnitStateFlag(UNIT_STATE_PACIFY);
             m_target->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED);
         }
     }
@@ -3240,10 +3242,11 @@ void Aura::SpellAuraModRoot(bool apply)
 
         SetNegative();
 
-        m_target->m_rooted++;
+        //\todo Zyres: is tis relly the way this should work?
+        m_target->m_rootCounter++;
 
-        if (m_target->m_rooted == 1)
-            m_target->Root();
+        if (m_target->m_rootCounter == 1)
+            m_target->setMoveRoot(true);
 
         //warrior talent - second wind triggers on stun and immobilize. This is not used as proc to be triggered always !
         Unit* caster = GetUnitCaster();
@@ -3260,10 +3263,11 @@ void Aura::SpellAuraModRoot(bool apply)
     }
     else if ((m_flags & (1 << mod->i)) == 0)   //add these checks to mods where immunity can cancel only 1 mod and not whole spell
     {
-        m_target->m_rooted--;
+        //\todo Zyres: is tis relly the way this should work?
+        m_target->m_rootCounter--;
 
-        if (m_target->m_rooted == 0)
-            m_target->Unroot();
+        if (m_target->m_rootCounter == 0)
+            m_target->setMoveRoot(false);
 
         if (m_target->IsCreature())
             m_target->GetAIInterface()->AttackReaction(GetUnitCaster(), 1, 0);
@@ -3278,7 +3282,7 @@ void Aura::SpellAuraModSilence(bool apply)
     if (apply)
     {
         m_target->m_silenced++;
-        m_target->m_special_state |= UNIT_STATE_SILENCE;
+        m_target->addUnitStateFlag(UNIT_STATE_SILENCE);
         m_target->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_SILENCED);
 
         if (m_target->GetCurrentSpell() != NULL)
@@ -3290,7 +3294,7 @@ void Aura::SpellAuraModSilence(bool apply)
 
         if (m_target->m_silenced == 0)
         {
-            m_target->m_special_state &= ~UNIT_STATE_SILENCE;
+            m_target->removeUnitStateFlag(UNIT_STATE_SILENCE);
             m_target->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_SILENCED);
         }
     }
@@ -4751,16 +4755,16 @@ void Aura::SpellAuraIncreaseSwimSpeed(bool apply)
     if (apply)
     {
         if (m_target->isAlive())  SetPositive();
-        m_target->m_swimSpeed = 0.04722222f * (100 + mod->m_amount);
+        m_target->m_currentSpeedSwim = 0.04722222f * (100 + mod->m_amount);
     }
     else
-        m_target->m_swimSpeed = playerNormalSwimSpeed;
+        m_target->m_currentSpeedSwim = m_target->m_basicSpeedSwim;
     if (p_target != NULL)
     {
         WorldPacket data(SMSG_FORCE_SWIM_SPEED_CHANGE, 17);
         data << p_target->GetNewGUID();
         data << (uint32)2;
-        data << m_target->m_swimSpeed;
+        data << m_target->m_currentSpeedSwim;
         p_target->GetSession()->SendPacket(&data);
     }
 }
@@ -4796,7 +4800,7 @@ void Aura::SpellAuraPacifySilence(bool apply)
 
         m_target->m_pacified++;
         m_target->m_silenced++;
-        m_target->m_special_state |= UNIT_STATE_PACIFY | UNIT_STATE_SILENCE;
+        m_target->addUnitStateFlag(UNIT_STATE_PACIFY | UNIT_STATE_SILENCE);
         m_target->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED | UNIT_FLAG_SILENCED);
 
         if (m_target->m_currentSpell && m_target->GetGUID() != m_casterGuid &&
@@ -4812,7 +4816,7 @@ void Aura::SpellAuraPacifySilence(bool apply)
 
         if (m_target->m_pacified == 0)
         {
-            m_target->m_special_state &= ~UNIT_STATE_PACIFY;
+            m_target->removeUnitStateFlag(UNIT_STATE_PACIFY);
             m_target->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED);
         }
 
@@ -4820,7 +4824,7 @@ void Aura::SpellAuraPacifySilence(bool apply)
 
         if (m_target->m_silenced == 0)
         {
-            m_target->m_special_state &= ~UNIT_STATE_SILENCE;
+            m_target->removeUnitStateFlag(UNIT_STATE_SILENCE);
             m_target->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_SILENCED);
         }
     }
@@ -4998,8 +5002,8 @@ void Aura::SpellAuraFeignDeath(bool apply)
 
             p_target->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_COMBAT);
 
-            if (p_target->hasStateFlag(UF_ATTACKING))
-                p_target->clearStateFlag(UF_ATTACKING);
+            if (p_target->hasUnitStateFlag(UNIT_STATE_ATTACKING))
+                p_target->removeUnitStateFlag(UNIT_STATE_ATTACKING);
 
             p_target->GetSession()->OutPacket(SMSG_CANCEL_COMBAT);
             p_target->GetSession()->OutPacket(SMSG_CANCEL_AUTO_REPEAT);
@@ -5043,13 +5047,13 @@ void Aura::SpellAuraModDisarm(bool apply)
         SetNegative();
 
         m_target->disarmed = true;
-        m_target->m_special_state |= UNIT_STATE_DISARMED;
+        m_target->addUnitStateFlag(UNIT_STATE_DISARMED);
         m_target->SetFlag(field, flag);
     }
     else
     {
         m_target->disarmed = false;
-        m_target->m_special_state &= ~UNIT_STATE_DISARMED;
+        m_target->removeUnitStateFlag(UNIT_STATE_DISARMED);
         m_target->RemoveFlag(field, flag);
     }
 }
@@ -5295,6 +5299,7 @@ void Aura::SpellAuraMounted(bool apply)
         {
             p_target->AddVehicleComponent(ci->Id, ci->vehicleid);
 
+#if VERSION_STRING > TBC
             WorldPacket data(SMSG_PLAYER_VEHICLE_DATA, 12);
             data << p_target->GetNewGUID();
             data << uint32(p_target->mountvehicleid);
@@ -5302,6 +5307,7 @@ void Aura::SpellAuraMounted(bool apply)
 
             data.Initialize(SMSG_CONTROL_VEHICLE);
             p_target->SendPacket(&data);
+#endif
 
             p_target->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_MOUNT);
             p_target->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_PLAYER_VEHICLE);
@@ -5320,10 +5326,12 @@ void Aura::SpellAuraMounted(bool apply)
             p_target->GetVehicleComponent()->RemoveAccessories();
             p_target->GetVehicleComponent()->EjectAllPassengers();
 
+#if VERSION_STRING > TBC
             WorldPacket data(SMSG_PLAYER_VEHICLE_DATA, 12);
             data << p_target->GetNewGUID();
             data << uint32(0);
             p_target->SendMessageToSet(&data, true);
+#endif
 
             p_target->RemoveVehicleComponent();
         }
@@ -5820,11 +5828,11 @@ void Aura::SpellAuraGhost(bool apply)
         if (apply)
         {
             SetNegative();
-            p_target->SetMovement(MOVE_WATER_WALK, 4);
+            p_target->setMoveWaterWalk();
         }
         else
         {
-            p_target->SetMovement(MOVE_LAND_WALK, 7);
+            p_target->setMoveLandWalk();
         }
     }
 }
@@ -5983,11 +5991,11 @@ void Aura::SpellAuraWaterWalk(bool apply)
         if (apply)
         {
             SetPositive();
-            p_target->SetMoveWaterWalk();
+            p_target->setMoveWaterWalk();
         }
         else
         {
-            p_target->SetMoveLandWalk();
+            p_target->setMoveLandWalk();
         }
     }
 }
@@ -6000,12 +6008,12 @@ void Aura::SpellAuraFeatherFall(bool apply)
     if (apply)
     {
         SetPositive();
-        p_target->SetMoveFeatherFall();
+        p_target->setMoveFeatherFall();
         p_target->m_noFallDamage = true;
     }
     else
     {
-        p_target->SetMoveNormalFall();
+        p_target->setMoveNormalFall();
         p_target->m_noFallDamage = false;
     }
 }
@@ -6016,12 +6024,12 @@ void Aura::SpellAuraHover(bool apply)
 
     if (apply)
     {
-        m_target->SetMoveHover(true);
+        m_target->setMoveHover(true);
         m_target->SetFloatValue(UNIT_FIELD_HOVERHEIGHT, (float(mod->m_amount) / 2));
     }
     else
     {
-        m_target->SetMoveHover(false);
+        m_target->setMoveHover(false);
         m_target->SetFloatValue(UNIT_FIELD_HOVERHEIGHT, 0.0f);
     }
 }
@@ -7981,7 +7989,7 @@ void Aura::SpellAuraEnableFlight(bool apply)
 {
     if (apply)
     {
-        m_target->SetMoveCanFly(true);
+        m_target->setMoveCanFly(true);
         m_target->m_flyspeedModifier += mod->m_amount;
         m_target->UpdateSpeed();
         if (m_target->IsPlayer())
@@ -7991,7 +7999,7 @@ void Aura::SpellAuraEnableFlight(bool apply)
     }
     else
     {
-        m_target->SetMoveCanFly(false);
+        m_target->setMoveCanFly(false);
         m_target->m_flyspeedModifier -= mod->m_amount;
         m_target->UpdateSpeed();
         if (m_target->IsPlayer())
@@ -8006,7 +8014,7 @@ void Aura::SpellAuraEnableFlightWithUnmountedSpeed(bool apply)
     // Used in flight form (only so far)
     if (apply)
     {
-        m_target->SetMoveCanFly(true);
+        m_target->setMoveCanFly(true);
         m_target->m_flyspeedModifier += mod->m_amount;
         m_target->UpdateSpeed();
         if (m_target->IsPlayer())
@@ -8016,7 +8024,7 @@ void Aura::SpellAuraEnableFlightWithUnmountedSpeed(bool apply)
     }
     else
     {
-        m_target->SetMoveCanFly(false);
+        m_target->setMoveCanFly(false);
         m_target->m_flyspeedModifier -= mod->m_amount;
         m_target->UpdateSpeed();
         if (m_target->IsPlayer())
@@ -8137,7 +8145,7 @@ void Aura::SpellAuraSpellHealingStatPCT(bool apply)
 
 void Aura::SpellAuraAllowFlight(bool apply)
 {
-    m_target->SetMoveCanFly(apply);
+    m_target->setMoveCanFly(apply);
 }
 
 void Aura::SpellAuraFinishingMovesCannotBeDodged(bool apply)
@@ -8781,7 +8789,7 @@ bool Aura::DotCanCrit()
         }
     }
 
-    Aura* aura = caster->GetAuraWithAuraEffect(SPELL_AURA_ALLOW_DOT_TO_CRIT);
+    Aura* aura = caster->getAuraWithAuraEffect(SPELL_AURA_ALLOW_DOT_TO_CRIT);
     if (aura == nullptr)
         return false;
 

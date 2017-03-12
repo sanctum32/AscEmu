@@ -337,13 +337,23 @@ typedef std::map<uint32, PlayerSkill>               SkillMap;
 typedef std::set<Player**>                          ReferenceSet;
 typedef std::map<uint32, PlayerCooldown>            PlayerCooldownMap;
 
-//////////////////////////////////////////////////////////////////////////////////////////
-/// Class that holds every created character on the server.
-///
-///\todo Attach characters to user accounts
-//////////////////////////////////////////////////////////////////////////////////////////
+// AGPL End
+
+// MIT Start
 class SERVER_DECL Player : public Unit
 {
+
+public:
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Movement
+    void sendForceMovePaket(UnitSpeedType speed_type, float speed);
+    void sendMoveSetSpeedPaket(UnitSpeedType speed_type, float speed);
+
+private:
+    //MIT End
+    //AGPL Start
+
     friend class WorldSession;
     friend class Pet;
 
@@ -1006,9 +1016,6 @@ class SERVER_DECL Player : public Unit
         /////////////////////////////////////////////////////////////////////////////////////////
         // Movement system
         /////////////////////////////////////////////////////////////////////////////////////////
-        void SetMovement(uint8 pType, uint32 flag);
-        void SetSpeeds(uint8 type, float speed);
-        float GetPlayerSpeed() { return m_runSpeed; }
 
         bool m_isMoving;            /// moving + strafing + jumping
         bool moving;
@@ -1671,8 +1678,6 @@ class SERVER_DECL Player : public Unit
         /// Nose level of the character (needed for proper breathing)
         float m_noseLevel;
 
-        void UpdateLastSpeeds();
-
         void RemoteRevive();
 
         LocationVector m_last_group_position;
@@ -1857,11 +1862,6 @@ class SERVER_DECL Player : public Unit
         int hearth_of_wild_pct;        /// druid hearth of wild talent used on shapeshifting. We either know what is last talent level or memo on learn
 
         uint32 m_team;
-        float m_lastRunSpeed;
-        float m_lastRunBackSpeed;
-        float m_lastSwimSpeed;
-        float m_lastBackSwimSpeed;
-        float m_lastFlySpeed;
 
         uint32 m_indoorCheckTimer;
         void RemovePendingPlayer();
@@ -1955,8 +1955,10 @@ class SERVER_DECL Player : public Unit
         void ToggleXpGain();
         bool CanGainXp();
 
+#if VERSION_STRING > TBC
         AchievementMgr & GetAchievementMgr() { return m_achievementMgr; }
         AchievementMgr m_achievementMgr;
+#endif
 
         /////////////////////////////////////////////////////////////////////////////////////////
         // Talent Specs
@@ -2001,4 +2003,6 @@ class SERVER_DECL Player : public Unit
         // command
         float go_last_x_rotation;
         float go_last_y_rotation;
+
+        // AGPL End
 };

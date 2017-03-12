@@ -371,23 +371,8 @@ bool ChatHandler::HandleDebugLandWalk(const char* args, WorldSession* m_session)
 
     char buf[256];
 
-    chr->SetMovement(MOVE_LAND_WALK, 8);
+    chr->setMoveLandWalk();
     snprintf((char*)buf, 256, "Land Walk Test Ran.");
-    SystemMessage(m_session, buf);
-
-    return true;
-}
-
-bool ChatHandler::HandleDebugWaterWalk(const char* args, WorldSession* m_session)
-{
-    Player* chr = GetSelectedPlayer(m_session, true, true);
-    if (chr == nullptr)
-        return true;
-
-    char buf[256];
-
-    chr->SetMovement(MOVE_WATER_WALK, 4);
-    snprintf((char*)buf, 256, "Water Walk Test Ran.");
     SystemMessage(m_session, buf);
 
     return true;
@@ -945,7 +930,7 @@ bool ChatHandler::HandleAuraUpdateRemove(const char* args, WorldSession* m_sessi
         return false;
     uint8 VisualSlot = (uint8)atoi(pArgs);
     Player* Pl = m_session->GetPlayer();
-    Aura* AuraPtr = Pl->GetAuraWithId(Pl->m_auravisuals[VisualSlot]);
+    Aura* AuraPtr = Pl->getAuraWithId(Pl->m_auravisuals[VisualSlot]);
     if (!AuraPtr)
     {
         SystemMessage(m_session, "No auraid found in slot %u", VisualSlot);
@@ -968,7 +953,7 @@ bool ChatHandler::HandleAuraUpdateAdd(const char* args, WorldSession* m_session)
         return false;
 
     Player* Pl = m_session->GetPlayer();
-    if (Aura* AuraPtr = Pl->GetAuraWithId(SpellID))
+    if (Aura* AuraPtr = Pl->getAuraWithId(SpellID))
     {
         uint8 VisualSlot = AuraPtr->m_visualSlot;
         Pl->SendAuraUpdate(AuraPtr->m_auraSlot, false);

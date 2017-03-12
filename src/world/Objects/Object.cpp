@@ -49,20 +49,6 @@ Object::Object() : m_position(0, 0, 0, 0), m_spawnLocation(0, 0, 0, 0)
     m_currentSpell = NULL;
     m_valuesCount = 0;
 
-    //official Values
-    m_walkSpeed = 2.5f;
-    m_runSpeed = 7.0f;
-    m_base_runSpeed = m_runSpeed;
-    m_base_walkSpeed = m_walkSpeed;
-
-    m_flySpeed = 7.0f;
-    m_backFlySpeed = 4.5f;
-
-    m_backWalkSpeed = 4.5f;
-    m_swimSpeed = 4.722222f;
-    m_backSwimSpeed = 2.5f;
-    m_turnRate = M_PI_FLOAT;
-
     m_phase = 1;                //Set the default phase: 00000000 00000000 00000000 00000001
 
     m_mapMgr = 0;
@@ -332,7 +318,7 @@ void Object::_BuildMovementUpdate(ByteBuffer* data, uint16 flags, Player* target
         if (IsCreature())
         {
             if (static_cast< Unit* >(this)->HasAuraWithName(SPELL_AURA_ENABLE_FLIGHT))
-                flags2 |= (MOVEFLAG_NO_COLLISION | MOVEFLAG_FLYING);
+                flags2 |= (MOVEFLAG_DISABLEGRAVITY | MOVEFLAG_FLYING);
         }
 
     }
@@ -346,11 +332,6 @@ void Object::_BuildMovementUpdate(ByteBuffer* data, uint16 flags, Player* target
         pThis = static_cast< Player* >(this);
         if (pThis->GetSession())
             moveinfo = pThis->GetSession()->GetMovementInfo();
-        if (target == this)
-        {
-            // Updating our last speeds.
-            pThis->UpdateLastSpeeds();
-        }
     }
     Creature* uThis = NULL;
     if (IsCreature())
@@ -389,7 +370,7 @@ void Object::_BuildMovementUpdate(ByteBuffer* data, uint16 flags, Player* target
             }
 
             if (uThis->GetAIInterface()->IsFlying())
-                flags2 |= MOVEFLAG_NO_COLLISION;        //0x400 Zack : Teribus the Cursed had flag 400 instead of 800 and he is flying all the time
+                flags2 |= MOVEFLAG_DISABLEGRAVITY;        //0x400 Zack : Teribus the Cursed had flag 400 instead of 800 and he is flying all the time
             if (uThis->GetAIInterface()->onGameobject)
                 flags2 |= MOVEFLAG_ROOTED;
             if (uThis->GetCreatureProperties()->extra_a9_flags)
@@ -461,24 +442,30 @@ void Object::_BuildMovementUpdate(ByteBuffer* data, uint16 flags, Player* target
             }
         }
 
-        if (m_walkSpeed == 0)
-            *data << float(8.0f);
-        else
-            *data << float(m_walkSpeed);   // walk speed
-        if (m_runSpeed == 0)
-            *data << float(8.0f);
-        else
-            *data << float(m_runSpeed);    // run speed
-        *data << float(m_backWalkSpeed);   // backwards walk speed
-        *data << float(m_swimSpeed);       // swim speed
-        *data << float(m_backSwimSpeed);   // backwards swim speed
-        if (m_flySpeed == 0)
-            *data << float(8.0f);
-        else
-            *data << float(m_flySpeed);    // fly speed
-        *data << float(m_backFlySpeed);    // back fly speed
-        *data << float(m_turnRate);        // turn rate
-        *data << float(7);          // pitch rate, now a constant...
+        if (Unit* unit = static_cast<Unit*>(this))
+        {
+            *data << unit->getSpeedForType(TYPE_WALK);
+            *data << unit->getSpeedForType(TYPE_RUN);
+            *data << unit->getSpeedForType(TYPE_RUN_BACK);
+            *data << unit->getSpeedForType(TYPE_SWIM);
+            *data << unit->getSpeedForType(TYPE_SWIM_BACK);
+            *data << unit->getSpeedForType(TYPE_FLY);
+            *data << unit->getSpeedForType(TYPE_FLY_BACK);
+            *data << unit->getSpeedForType(TYPE_TURN_RATE);
+            *data << unit->getSpeedForType(TYPE_PITCH_RATE);
+        }
+        else                                //\todo Zyres: this is ridiculous... only units have these types, but this function is a mess so don't breake anything.
+        {
+            *data << float(2.5f);
+            *data << float(7.0f);
+            *data << float(4.5f);
+            *data << float(4.722222f);
+            *data << float(2.5f);
+            *data << float(7.0f);
+            *data << float(4.5f);
+            *data << float(3.141594f);
+            *data << float(3.14f);
+        }
 
         if (flags2 & MOVEFLAG_SPLINE_ENABLED)   //VLack: On Mangos this is a nice spline movement code, but we never had such... Also, at this point we haven't got this flag, that's for sure, but fail just in case...
         {
@@ -2260,7 +2247,11 @@ void Object::AddInRangeObject(Object* pObj)
     m_objectsInRange.insert(pObj);
 }
 
+#if VERSION_STRING == Cata
+void Object::OutPacketToSet(uint32 Opcode, uint16 Len, const void* Data, bool self)
+#else
 void Object::OutPacketToSet(uint16 Opcode, uint16 Len, const void* Data, bool self)
+#endif
 {
     if (!IsInWorld())
         return;

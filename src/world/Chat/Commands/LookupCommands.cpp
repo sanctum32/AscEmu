@@ -19,6 +19,7 @@ This file is released under the MIT license. See README-MIT for more information
 //////////////////////////////////////////////////////////////////////////////////////////
 bool ChatHandler::HandleLookupAchievementCommand(const char* args, WorldSession* m_session)
 {
+#if VERSION_STRING > TBC
     if (!*args)
         return false;
 
@@ -237,6 +238,7 @@ bool ChatHandler::HandleLookupAchievementCommand(const char* args, WorldSession*
         SendMultilineMessage(m_session, recout.c_str());
     }
     BlueSystemMessage(m_session, "Search completed in %u ms.", getMSTime() - t);
+#endif
     return true;
 }
 
@@ -263,29 +265,29 @@ bool ChatHandler::HandleLookupCreatureCommand(const char* args, WorldSession* m_
     for (MySQLDataStore::CreaturePropertiesContainer::const_iterator itr = its->begin(); itr != its->end(); ++itr)
     {
         CreatureProperties const* it = sMySQLStore.GetCreatureProperties(itr->second.Id);
-        if (it == nullptr)
-            continue;
-
-        LocalizedCreatureName* lit = (m_session->language > 0) ? sLocalizationMgr.GetLocalizedCreatureName(it->Id, m_session->language) : NULL;
-
-        std::string litName = std::string(lit ? lit->Name : "");
-
-        Util::StringToLowerCase(litName);
-
-        bool localizedFound = false;
-        if (FindXinYString(x, litName))
-            localizedFound = true;
-
-        std::string names_lower = it->lowercase_name;
-        if (FindXinYString(x, names_lower) || localizedFound)
+        if (it != nullptr)
         {
-            SystemMessage(m_session, "ID: %u |cfffff000%s", it->Id, it->Name.c_str());
-            ++count;
+            LocalizedCreatureName* lit = (m_session->language > 0) ? sLocalizationMgr.GetLocalizedCreatureName(it->Id, m_session->language) : NULL;
 
-            if (count == 25)
+            std::string litName = std::string(lit ? lit->Name : "");
+
+            Util::StringToLowerCase(litName);
+
+            bool localizedFound = false;
+            if (FindXinYString(x, litName))
+                localizedFound = true;
+
+            std::string names_lower = it->lowercase_name;
+            if (FindXinYString(x, names_lower) || localizedFound)
             {
-                RedSystemMessage(m_session, "More than 25 results returned. aborting.");
-                break;
+                SystemMessage(m_session, "ID: %u |cfffff000%s", it->Id, it->Name.c_str());
+                ++count;
+
+                if (count == 25)
+                {
+                    RedSystemMessage(m_session, "More than 25 results returned. aborting.");
+                    break;
+                }
             }
         }
     }
@@ -317,16 +319,19 @@ bool ChatHandler::HandleLookupFactionCommand(const char* args, WorldSession* m_s
     for (uint32 index = 0; index < sFactionStore.GetNumRows(); ++index)
     {
         DBC::Structures::FactionEntry const* faction = sFactionStore.LookupEntry(index);
-        std::string y = std::string(faction->Name[0]);
-        Util::StringToLowerCase(y);
-        if (FindXinYString(x, y))
+        if (faction != nullptr)
         {
-            SendHighlightedName(m_session, "Faction", faction->Name[0], y, x, faction->ID);
-            ++count;
-            if (count == 25)
+            std::string y = std::string(faction->Name[0]);
+            Util::StringToLowerCase(y);
+            if (FindXinYString(x, y))
             {
-                RedSystemMessage(m_session, "More than 25 results returned. aborting.");
-                break;
+                SendHighlightedName(m_session, "Faction", faction->Name[0], y, x, faction->ID);
+                ++count;
+                if (count == 25)
+                {
+                    RedSystemMessage(m_session, "More than 25 results returned. aborting.");
+                    break;
+                }
             }
         }
     }

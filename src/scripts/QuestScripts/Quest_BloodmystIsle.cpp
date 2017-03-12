@@ -271,14 +271,14 @@ class WebbedCreature : public CreatureAIScript
         void OnCombatStart(Unit* pTarget)
         {
             _unit->GetAIInterface()->disable_melee = true;
-            _unit->Root();
+            _unit->setMoveRoot(true);
             _unit->GetAIInterface()->StopMovement(0);
         }
 
         void OnCombatStop(Unit* pTarget)
         {
             _unit->GetAIInterface()->disable_melee = false;
-            _unit->Unroot();
+            _unit->setMoveRoot(false);
         }
 
         void OnDied(Unit* pKiller)

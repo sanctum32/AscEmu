@@ -356,8 +356,15 @@ void CommandTableStorage::Init()
         { "moveinfo",           'd', &ChatHandler::HandleDebugMoveInfo,             "",                                                         nullptr, 0, 0, 0 },
         { "setbytes",           'd', &ChatHandler::HandleSetBytesCommand,           "",                                                         nullptr, 0, 0, 0 },
         { "getbytes",           'd', &ChatHandler::HandleGetBytesCommand,           "",                                                         nullptr, 0, 0, 0 },
-        { "landwalk",           'd', &ChatHandler::HandleDebugLandWalk,             "",                                                         nullptr, 0, 0, 0 },
-        { "waterwalk",          'd', &ChatHandler::HandleDebugWaterWalk,            "",                                                         nullptr, 0, 0, 0 },
+        { "landwalk",           'd', &ChatHandler::HandleDebugLandWalk,             "Sets landwalk move for unit",                              nullptr, 0, 0, 0 },
+        { "waterwalk",          'd', &ChatHandler::HandleDebugWaterWalk,            "Sets waterwal move for unit",                              nullptr, 0, 0, 0 },
+        { "hover",              'd', &ChatHandler::HandleDebugHover,                "Toggles hover move on/off for unit",                       nullptr, 0, 0, 0 },
+        { "state",              'd', &ChatHandler::HandleDebugState,                "Display MovementFlags for unit",                           nullptr, 0, 0, 0 },
+        { "swim",               'd', &ChatHandler::HandleDebugSwim,                 "Toggles swim move for unit",                               nullptr, 0, 0, 0 },
+        { "fly",                'd', &ChatHandler::HandleDebugFly,                  "Toggles fly move for unit",                                nullptr, 0, 0, 0 },
+        { "disablegravity",     'd', &ChatHandler::HandleDebugDisableGravity,       "Toggles disablegravitiy move for unit",                    nullptr, 0, 0, 0 },
+        { "featherfall",        'd', &ChatHandler::HandleDebugFeatherFall,          "Toggles featherfall move for unit",                        nullptr, 0, 0, 0 },
+        { "speed",              'd', &ChatHandler::HandleDebugSpeed,                "Sets move speed for unit. Usage: .debug speed <value>",    nullptr, 0, 0, 0 },
         { "castspell",          'd', &ChatHandler::HandleCastSpellCommand,          "Casts spell on target.",                                   nullptr, 0, 0, 0 },
         { "castself",           'd', &ChatHandler::HandleCastSelfCommand,           "Target casts spell <spellId> on itself.",                  nullptr, 0, 0, 0 },
         { "castspellne",        'd', &ChatHandler::HandleCastSpellNECommand,        "Casts spell by spellid on target (only plays animations)", nullptr, 0, 0, 0 },
@@ -761,10 +768,10 @@ void CommandTableStorage::Init()
     static ChatCommand lookupCommandTable[] =
     {
         { "achievement",    'l', &ChatHandler::HandleLookupAchievementCommand,  "Looks up achievement string x.",                                   nullptr, 0, 0, 0 },
-        { "creature",       'l', &ChatHandler::HandleLookupCreatureCommand,     "Looks up item string x.",                                          nullptr, 0, 0, 0 },
+        { "creature",       'l', &ChatHandler::HandleLookupCreatureCommand,     "Looks up creature string x.",                                      nullptr, 0, 0, 0 },
         { "faction",        'l', &ChatHandler::HandleLookupFactionCommand,      "Looks up faction string x.",                                       nullptr, 0, 0, 0 },
         { "item",           'l', &ChatHandler::HandleLookupItemCommand,         "Looks up item string x.",                                          nullptr, 0, 0, 0 },
-        { "object",         'l', &ChatHandler::HandleLookupObjectCommand,       "Looks up gameobject string x.",                                    nullptr, 0, 0 , 0 },
+        { "object",         'l', &ChatHandler::HandleLookupObjectCommand,       "Looks up gameobject string x.",                                    nullptr, 0, 0 ,0 },
         { "quest",          'l', &ChatHandler::HandleLookupQuestCommand,        "Looks up quest string x.",                                         nullptr, 0, 0, 0 },
         { "spell",          'l', &ChatHandler::HandleLookupSpellCommand,        "Looks up spell string x.",                                         nullptr, 0, 0, 0 },
         { "skill",          'l', &ChatHandler::HandleLookupSkillCommand,        "Looks up skill string x.",                                         nullptr, 0, 0, 0 },
@@ -831,9 +838,11 @@ void CommandTableStorage::Init()
 
     static ChatCommand achievementCommandTable[] =
     {
+#if VERSION_STRING > TBC
         { "complete",       'm', &ChatHandler::HandleAchievementCompleteCommand,    "Completes the specified achievement.",                         nullptr, 0, 0, 0 },
         { "criteria",       'm', &ChatHandler::HandleAchievementCriteriaCommand,    "Completes the specified achievement criteria.",                nullptr, 0, 0, 0 },
         { "reset",          'm', &ChatHandler::HandleAchievementResetCommand,       "Resets achievement data from the target.",                     nullptr, 0, 0, 0 },
+#endif
         { nullptr,          '0', nullptr,                                           "",                                                             nullptr, 0, 0, 0 }
     };
     dupe_command_table(achievementCommandTable, _achievementCommandTable);

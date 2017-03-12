@@ -98,10 +98,10 @@ typedef struct
 struct MovementInfo
 {
     WoWGuid object_guid;
-    uint32 flags;
-    uint16 flags2;
+    uint32_t flags;
+    uint16_t flags2;
     LocationVector position;
-    uint32 time;
+    uint32_t time;
 
     //pitch
     //-1.55=looking down, 0=looking forward, +1.55=looking up
@@ -113,7 +113,7 @@ struct MovementInfo
     float redirectCos;
     float redirect2DSpeed;  //9,10 changes if you are not on foot
 
-    uint32 fall_time;       //fall_time in ms
+    uint32_t fall_time;       //fall_time in ms
 
     float spline_elevation;
 
@@ -121,11 +121,11 @@ struct MovementInfo
     {
         Transporter* m_transporter;
         WoWGuid transGuid;
-        uint64 guid;        // switch to WoWGuid
+        uint64_t guid;        // switch to WoWGuid
         LocationVector position;
-        uint32 time;
-        uint32 time2;
-        uint8 seat;
+        uint32_t time;
+        uint32_t time2;
+        uint8_t seat;
 
         void Clear()
         {
@@ -164,6 +164,12 @@ struct MovementInfo
     void init(WorldPacket& data);
     void write(WorldPacket& data);
     bool IsOnTransport() const { return this->transporter_info.guid != 0; };
+
+    //flags uint32_t
+    bool HasMovementFlag(uint32_t move_flags) const { return (flags & move_flags) != 0; }
+
+    //flags2 uint16_t
+    bool HasMovementFlag2(uint16_t move_flags2) const { return (flags2 & move_flags2) != 0; }
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -571,8 +577,11 @@ class SERVER_DECL Object : public EventableObject, public IUpdatable
         /// \return none
         ///
         //////////////////////////////////////////////////////////////////////////////////////////
+#if VERSION_STRING == Cata
+        virtual void OutPacket(uint32 opcode, uint16 len, const void* data) {};
+#else
         virtual void OutPacket(uint16 opcode, uint16 len, const void* data) {};
-
+#endif
 
         //////////////////////////////////////////////////////////////////////////////////////////
         /// void SendPacket(WorldPacket *packet)
@@ -588,7 +597,11 @@ class SERVER_DECL Object : public EventableObject, public IUpdatable
 
         virtual void SendMessageToSet(WorldPacket* data, bool self, bool myteam_only = false);
         void SendMessageToSet(StackBufferBase* data, bool self) { OutPacketToSet(data->GetOpcode(), static_cast<uint16>(data->GetSize()), data->GetBufferPointer(), self); }
+#if VERSION_STRING == Cata
+        virtual void OutPacketToSet(uint32 Opcode, uint16 Len, const void* Data, bool self);
+#else
         virtual void OutPacketToSet(uint16 Opcode, uint16 Len, const void* Data, bool self);
+#endif
 
         //////////////////////////////////////////////////////////////////////////////////////////
         ///void SendAIReaction(uint32 reaction = 2)
@@ -620,19 +633,6 @@ class SERVER_DECL Object : public EventableObject, public IUpdatable
         void LoadValues(const char* data);
 
         uint16 GetValuesCount() const { return m_valuesCount; }
-
-        // Blizzard seem to send those for all object types. weird.
-        float m_walkSpeed;
-        float m_runSpeed;
-        float m_backWalkSpeed;
-        float m_swimSpeed;
-        float m_backSwimSpeed;
-        float m_turnRate;
-        float m_flySpeed;
-        float m_backFlySpeed;
-
-        float m_base_runSpeed;
-        float m_base_walkSpeed;
 
         MovementInfo obj_movement_info;
         Transporter* GetTransport() const;

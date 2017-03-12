@@ -136,6 +136,7 @@ void Vehicle::AddPassenger(Unit* passenger)
 
 void Vehicle::AddPassengerToSeat(Unit* passenger, uint32 seatid)
 {
+#if VERSION_STRING > TBC
     if (seats[seatid]->HasPassenger())
         return;
 
@@ -154,7 +155,7 @@ void Vehicle::AddPassengerToSeat(Unit* passenger, uint32 seatid)
     // set movement info
 
     // root passenger
-    passenger->Root();
+    passenger->setMoveRoot(true);
 
     WorldPacket ack(SMSG_CONTROL_VEHICLE);
     passenger->SendPacket(&ack);
@@ -253,6 +254,7 @@ void Vehicle::AddPassengerToSeat(Unit* passenger, uint32 seatid)
                 c->GetScript()->OnVehicleFull();
         }
     }
+#endif
 }
 
 void Vehicle::EjectPassenger(Unit* passenger)
@@ -328,7 +330,7 @@ void Vehicle::EjectPassengerFromSeat(uint32 seatid)
 
     passenger->SendHopOffVehicle(owner, landposition);
     passenger->SetPosition(landposition);
-    passenger->Unroot();
+    passenger->setMoveRoot(false);
     seats[seatid]->RemovePassenger();
     passenger->SetCurrentVehicle(NULL);
     passenger->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NOT_ATTACKABLE_2);
