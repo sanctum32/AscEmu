@@ -231,7 +231,7 @@ void WorldSession::HandleSwapInvItemOpcode(WorldPacket& recv_data)
     bool skip_combat = false;
     if (srcslot < EQUIPMENT_SLOT_END || dstslot < EQUIPMENT_SLOT_END)        // We're doing an equip swap.
     {
-        if (_player->isInCombat())
+        if (_player->CombatStatus.IsInCombat())
         {
             if (srcslot < EQUIPMENT_SLOT_MAINHAND || dstslot < EQUIPMENT_SLOT_MAINHAND)    // These can't be swapped
             {
@@ -918,12 +918,21 @@ void WorldSession::HandleBuyBackOpcode(WorldPacket& recv_data)
             it->DeleteMe();
         }
 
+#if VERSION_STRING != Cata
         WorldPacket data(16);
         data.Initialize(SMSG_BUY_ITEM);
         data << uint64(guid);
         data << getMSTime(); //VLack: seen is Aspire code
         data << uint32(itemid);
         data << uint32(amount);
+#else
+        WorldPacket data(SMSG_BUY_ITEM, 8 + 4 + 4 + 4);
+        data << uint64(guid);
+        data << uint32(stuff + 1);      // numbered from 1 at client
+        data << int32(amount);
+        data << uint32(amount);
+        data << uint32(amount);
+#endif
         SendPacket(&data);
     }
 }
@@ -1002,9 +1011,9 @@ void WorldSession::HandleSellItemOpcode(WorldPacket& recv_data)
     uint32 price = GetSellPriceForItem(it, quantity);
 
     // Check they don't have more than the max gold
-    if (sWorld.GoldCapEnabled)
+    if (worldConfig.gold.isCapEnabled)
     {
-        if ((_player->GetGold() + price) > sWorld.GoldLimit)
+        if ((_player->GetGold() + price) > worldConfig.gold.limitAmount)
         {
             _player->GetItemInterface()->BuildInventoryChangeError(NULL, NULL, INV_ERR_TOO_MUCH_GOLD);
             return;
@@ -1218,8 +1227,13 @@ void WorldSession::HandleBuyItemInSlotOpcode(WorldPacket& recv_data)   // drag &
 
     WorldPacket data(SMSG_BUY_ITEM, 22);
     data << uint64(srcguid);
+#if VERSION_STRING != Cata
     data << getMSTime();
     data << uint32(itemid);
+#else
+    data << uint32(slot + 1);       // numbered from 1 at client
+    data << int32(amount);
+#endif
     data << uint32(amount);
 
     SendPacket(&data);
@@ -1410,9 +1424,15 @@ void WorldSession::HandleListInventoryOpcode(WorldPacket& recv_data)
     VendorRestrictionEntry const* vendor = sMySQLStore.GetVendorRestriction(unit->GetCreatureProperties()->Id);
 
     //this is a blizzlike check
+#if VERSION_STRING != Cata
     if (!_player->obj_movement_info.IsOnTransport())
+#else
+    if (_player->obj_movement_info.getTransportGuid().IsEmpty())
+#endif
+    {
         if (_player->GetDistanceSq(unit) > 100)
             return; //avoid talking to anyone by guid hacking. Like sell farmed items anytime ? Low chance hack
+    }
 
     if (unit->GetAIInterface())
         unit->GetAIInterface()->StopMovement(180000);
@@ -1440,6 +1460,7 @@ void WorldSession::SendInventoryList(Creature* unit)
         return;
     }
 
+#if VERSION_STRING != Cata
     WorldPacket data(((unit->GetSellItemCount() * 28) + 9));       // allocate
 
     data.SetOpcode(SMSG_LIST_INVENTORY);
@@ -1448,6 +1469,17 @@ void WorldSession::SendInventoryList(Creature* unit)
 
     ItemProperties const* curItem = NULL;
     uint32 counter = 0;
+#else
+    uint32 counter = 0;
+
+    WorldPacket data(((unit->GetSellItemCount()) + 12));       // allocate
+
+    ByteBuffer itemsData(32 * unit->GetSellItemCount());
+    std::vector<bool> enablers;
+    enablers.reserve(2 * unit->GetSellItemCount());
+
+    ItemProperties const* curItem = nullptr;
+#endif
 
     for (std::vector<CreatureItem>::iterator itr = unit->GetSellItemBegin(); itr != unit->GetSellItemEnd(); ++itr)
     {
@@ -1455,7 +1487,7 @@ void WorldSession::SendInventoryList(Creature* unit)
         {
             if ((curItem = sMySQLStore.GetItemProperties(itr->itemid)) != 0)
             {
-                if (!_player->HasFlag(PLAYER_FLAGS, PLAYER_FLAG_GM) && !sWorld.show_all_vendor_items) // looking up everything for active gms
+                if (!_player->HasFlag(PLAYER_FLAGS, PLAYER_FLAG_GM) && !worldConfig.optional.showAllVendorItems) // looking up everything for active gms
                 {
                     if (curItem->AllowableClass && !(_player->getClassMask() & curItem->AllowableClass))
                         continue;
@@ -1479,6 +1511,7 @@ void WorldSession::SendInventoryList(Creature* unit)
                 if ((itr->extended_cost == NULL) || curItem->HasFlag2(ITEM_FLAG2_EXT_COST_REQUIRES_GOLD))
                     price = GetBuyPriceForItem(curItem, 1, _player, unit);
 
+#if VERSION_STRING != Cata
                 data << uint32(counter + 1);    // we start from 0 but client starts from 1
                 data << uint32(curItem->ItemId);
                 data << uint32(curItem->DisplayInfoID);
@@ -1492,6 +1525,28 @@ void WorldSession::SendInventoryList(Creature* unit)
                     data << uint32(itr->extended_cost->costid);
                 else
                     data << uint32(0);
+#else
+                itemsData << uint32(counter + 1);        // client expects counting to start at 1
+                itemsData << uint32(curItem->MaxDurability);
+                if (itr->extended_cost != 0)
+                {
+                    enablers.push_back(0);
+                    itemsData << uint32(itr->extended_cost->costid);
+                }
+                else
+                {
+                    enablers.push_back(1);
+                }
+
+                enablers.push_back(1);                 // unk bit
+
+                itemsData << uint32(curItem->ItemId);
+                itemsData << uint32(1);     // 1 is items, 2 is currency
+                itemsData << uint32(price);
+                itemsData << uint32(curItem->DisplayInfoID);
+                itemsData << int32(av_am);
+                itemsData << uint32(itr->amount);
+#endif
 
                 ++counter;
                 if (counter >= creatureMaxInventoryItems) break;  // cebernic: in 2.4.3, client can't take more than 15 pages,it making crash for us:(
@@ -1499,7 +1554,43 @@ void WorldSession::SendInventoryList(Creature* unit)
         }
     }
 
+#if VERSION_STRING != Cata
     const_cast<uint8*>(data.contents())[8] = (uint8)counter;    // set count
+#else
+    ObjectGuid guid = unit->GetGUID();
+
+    data.SetOpcode(SMSG_LIST_INVENTORY);
+    data.writeBit(guid[1]);
+    data.writeBit(guid[0]);
+
+    data.writeBits(counter, 21); // item count
+
+    data.writeBit(guid[3]);
+    data.writeBit(guid[6]);
+    data.writeBit(guid[5]);
+    data.writeBit(guid[2]);
+    data.writeBit(guid[7]);
+
+    for (std::vector<bool>::const_iterator itr = enablers.begin(); itr != enablers.end(); ++itr)
+        data.writeBit(*itr);
+
+    data.writeBit(guid[4]);
+
+    data.flushBits();
+    data.append(itemsData);
+
+    data.WriteByteSeq(guid[5]);
+    data.WriteByteSeq(guid[4]);
+    data.WriteByteSeq(guid[1]);
+    data.WriteByteSeq(guid[0]);
+    data.WriteByteSeq(guid[6]);
+
+    data << uint8(counter == 0); // unk byte, item count 0: 1, item count != 0: 0 or some "random" value below 300
+
+    data.WriteByteSeq(guid[2]);
+    data.WriteByteSeq(guid[3]);
+    data.WriteByteSeq(guid[7]);
+#endif
 
     SendPacket(&data);
     LOG_DETAIL("WORLD: Sent SMSG_LIST_INVENTORY");
@@ -2204,7 +2295,7 @@ void WorldSession::HandleWrapItemOpcode(WorldPacket& recv_data)
     dst->SaveToDB(destitem_bagslot, destitem_slot, false, NULL);
 }
 
-#if VERSION_STRING > TBC
+#if VERSION_STRING == WotLK
 void WorldSession::HandleItemRefundInfoOpcode(WorldPacket& recvPacket)
 {
     CHECK_INWORLD_RETURN
@@ -2229,7 +2320,9 @@ void WorldSession::HandleItemRefundInfoOpcode(WorldPacket& recvPacket)
     this->SendRefundInfo(GUID);
 
 }
+#endif
 
+#if VERSION_STRING > TBC
 void WorldSession::HandleItemRefundRequestOpcode(WorldPacket& recvPacket)
 {
     CHECK_INWORLD_RETURN
@@ -2239,7 +2332,11 @@ void WorldSession::HandleItemRefundRequestOpcode(WorldPacket& recvPacket)
     uint32 error = 1;
 
     std::pair<time_t, uint32> RefundEntry;
-    DBC::Structures::ItemExtendedCostEntry const* item_extended_cost = NULL;
+#if VERSION_STRING != Cata
+    DBC::Structures::ItemExtendedCostEntry const* item_extended_cost = nullptr;
+#else
+    DB2::Structures::ItemExtendedCostEntry const* item_extended_cost = nullptr;
+#endif
     ItemProperties const* item_proto = nullptr;
 
     recvPacket >> GUID;
@@ -2259,7 +2356,6 @@ void WorldSession::HandleItemRefundRequestOpcode(WorldPacket& recvPacket)
             if (RefundEntry.first != 0 && RefundEntry.second != 0)
             {
                 uint32* played = _player->GetPlayedtime();
-
                 if (played[1] < (RefundEntry.first + 60 * 60 * 2))
                     item_extended_cost = sItemExtendedCostStore.LookupEntry(RefundEntry.second);
             }

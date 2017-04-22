@@ -522,7 +522,7 @@ void Spell::FillAllTargetsInArea(uint32 i, float srcx, float srcy, float srcz, f
         }
         if (IsInrange(srcx, srcy, srcz, (*itr), r))
         {
-            if (sWorld.Collision)
+            if (worldConfig.terrainCollision.isCollisionEnabled)
             {
                 VMAP::IVMapManager* mgr = VMAP::VMapFactory::createOrGetVMapManager();
                 bool isInLOS = mgr->isInLineOfSight(m_caster->GetMapId(), m_caster->GetPositionX(), m_caster->GetPositionY(), m_caster->GetPositionZ(), (*itr)->GetPositionX(), (*itr)->GetPositionY(), (*itr)->GetPositionZ());
@@ -588,7 +588,7 @@ void Spell::FillAllFriendlyInArea(uint32 i, float srcx, float srcy, float srcz, 
 
         if (IsInrange(srcx, srcy, srcz, (*itr), r))
         {
-            if (sWorld.Collision)
+            if (worldConfig.terrainCollision.isCollisionEnabled)
             {
                 VMAP::IVMapManager* mgr = VMAP::VMapFactory::createOrGetVMapManager();
                 bool isInLOS = mgr->isInLineOfSight(m_caster->GetMapId(), m_caster->GetPositionX(), m_caster->GetPositionY(), m_caster->GetPositionZ(), (*itr)->GetPositionX(), (*itr)->GetPositionY(), (*itr)->GetPositionZ());
@@ -1095,7 +1095,7 @@ uint8 Spell::prepare(SpellCastTargets* targets)
         u_caster->castSpell(this);
     }
     else
-        cast(false);
+        castMe(false);
 
     return ccr;
 }
@@ -1178,7 +1178,7 @@ void Spell::AddStartCooldown()
         p_caster->Cooldown_AddStart(GetSpellInfo());
 }
 
-void Spell::cast(bool check)
+void Spell::castMe(bool check)
 {
     if (DuelSpellNoMoreValid())
     {
@@ -1751,14 +1751,14 @@ void Spell::Update(unsigned long time_passed)
         case SPELL_STATE_PREPARING:
         {
             if (static_cast<int32>(time_passed) >= m_timer)
-                cast(true);
+                castMe(true);
             else
             {
                 m_timer -= time_passed;
                 if (static_cast<int32>(time_passed) >= m_timer)
                 {
                     m_timer = 0;
-                    cast(true);
+                    castMe(true);
                 }
             }
 
@@ -1887,7 +1887,7 @@ void Spell::finish(bool successful)
         if (i_caster->GetItemProperties()->Class == ITEM_CLASS_CONSUMABLE && i_caster->GetItemProperties()->SubClass == 1)
         {
             i_caster->GetOwner()->SetLastPotion(i_caster->GetItemProperties()->ItemId);
-            if (!i_caster->GetOwner()->isInCombat())
+            if (!i_caster->GetOwner()->CombatStatus.IsInCombat())
                 i_caster->GetOwner()->UpdatePotionCooldown();
         }
         else
@@ -2136,6 +2136,7 @@ void Spell::SendSpellStart()
                 }
             }
         }
+#if VERSION_STRING != Cata
         else if (hasAttributeExC(ATTRIBUTESEXC_PLAYER_RANGED_SPELLS))
         {
             if (p_caster != nullptr)
@@ -2143,6 +2144,7 @@ void Spell::SendSpellStart()
             else
                 ip = sMySQLStore.GetItemProperties(2512);	/*rough arrow*/
         }
+#endif
 
         if (ip != nullptr)
             data << ip->DisplayInfoID << ip->InventoryType;
@@ -2271,10 +2273,12 @@ void Spell::SendSpellGo()
         }
         else
         {
+#if VERSION_STRING != Cata
             if (p_caster != nullptr)
                 ip = sMySQLStore.GetItemProperties(p_caster->GetUInt32Value(PLAYER_AMMO_ID));
             else // HACK FIX
                 ip = sMySQLStore.GetItemProperties(2512);	/*rough arrow*/
+#endif
         }
         if (ip != nullptr)
         {
@@ -2482,6 +2486,10 @@ void Spell::SendChannelStart(uint32 duration)
         data << WoWGuid(m_caster->GetNewGUID());
         data << uint32(m_spellInfo->Id);
         data << uint32(duration);
+#if VERSION_STRING == Cata
+        data << uint8(0);
+        data << uint8(0);
+#endif
         m_caster->SendMessageToSet(&data, true);
     }
 
@@ -2557,9 +2565,11 @@ bool Spell::HasPower()
         case POWER_TYPE_HAPPINESS:
         {	powerField = UNIT_FIELD_POWER5;						}
         break;
+#if VERSION_STRING == WotLK
         case POWER_TYPE_RUNIC_POWER:
         {	powerField = UNIT_FIELD_POWER7;						}
         break;
+#endif
         case POWER_TYPE_RUNES:
         {
             if (GetSpellInfo()->RuneCostID && p_caster)
@@ -2704,9 +2714,11 @@ bool Spell::TakePower()
         case POWER_TYPE_HAPPINESS:
         {	powerField = UNIT_FIELD_POWER5;						}
         break;
+#if VERSION_STRING == WotLK
         case POWER_TYPE_RUNIC_POWER:
         {	powerField = UNIT_FIELD_POWER7;						}
         break;
+#endif
         case POWER_TYPE_RUNES:
         {
             if (GetSpellInfo()->RuneCostID && p_caster)
@@ -2840,9 +2852,15 @@ void Spell::HandleEffects(uint64 guid, uint32 i)
                 itemTarget = p_caster->GetItemInterface()->GetItemByGUID(m_targets.m_itemTarget);
             if (m_targets.m_targetMask & TARGET_FLAG_TRADE_ITEM)
             {
+#if VERSION_STRING == Cata
+                Player* p_trader = p_caster->getTradeTarget();
+                if (p_trader != nullptr)
+                    itemTarget = p_trader->getTradeData()->getTradeItem((TradeSlots)m_targets.m_itemTarget);
+#else
                 Player* p_trader = p_caster->GetTradeTarget();
                 if (p_trader != NULL)
                     itemTarget = p_trader->getTradeItem((uint32)m_targets.m_itemTarget);
+#endif
             }
         }
     }
@@ -2867,9 +2885,15 @@ void Spell::HandleEffects(uint64 guid, uint32 i)
         {
             if (p_caster != NULL)
             {
+#if VERSION_STRING == Cata
+                Player* plr = p_caster->getTradeTarget();
+                if (plr != nullptr)
+                    itemTarget = plr->getTradeData()->getTradeItem((TradeSlots)guid);
+#else
                 Player* plr = p_caster->GetTradeTarget();
                 if (plr)
                     itemTarget = plr->getTradeItem((uint32)guid);
+#endif
             }
         }
         else
@@ -3194,8 +3218,8 @@ void Spell::DetermineSkillUp()
         else //brown
             chance = 100.0f;
     }
-    if (Rand(chance * sWorld.getRate(RATE_SKILLCHANCE)))
-        p_caster->_AdvanceSkillLine(skill_line_ability->skilline, float2int32(1.0f * sWorld.getRate(RATE_SKILLRATE)));
+    if (Rand(chance * worldConfig.getFloatRate(RATE_SKILLCHANCE)))
+        p_caster->_AdvanceSkillLine(skill_line_ability->skilline, float2int32(1.0f * worldConfig.getFloatRate(RATE_SKILLRATE)));
 }
 
 bool Spell::IsAspect()
@@ -3222,7 +3246,7 @@ uint8 Spell::CanCast(bool tolerate)
         return SPELL_FAILED_MOVING;
 
     // Check if spell requires caster to be in combat to be casted.
-    if (p_caster != NULL && HasCustomFlag(CUSTOM_FLAG_SPELL_REQUIRES_COMBAT) && !p_caster->isInCombat())
+    if (p_caster != NULL && HasCustomFlag(CUSTOM_FLAG_SPELL_REQUIRES_COMBAT) && !p_caster->CombatStatus.IsInCombat())
         return SPELL_FAILED_SPELL_UNAVAILABLE;
 
     /**
@@ -3313,7 +3337,7 @@ uint8 Spell::CanCast(bool tolerate)
         if (u_caster->HasAurasWithNameHash(SPELL_HASH_BLADESTORM) && GetSpellInfo()->custom_NameHash != SPELL_HASH_WHIRLWIND)
             return SPELL_FAILED_CANT_DO_THAT_RIGHT_NOW;
 
-        if (hasAttribute(ATTRIBUTES_REQ_OOC) && u_caster->isInCombat())
+        if (hasAttribute(ATTRIBUTES_REQ_OOC) && u_caster->CombatStatus.IsInCombat())
         {
             // Warbringer (Warrior 51Prot Talent effect)
             if ((GetSpellInfo()->Id != 100 && GetSpellInfo()->Id != 6178 && GetSpellInfo()->Id != 11578)
@@ -3336,7 +3360,7 @@ uint8 Spell::CanCast(bool tolerate)
         /**
          *	Indoor/Outdoor check
          */
-        if (sWorld.Collision)
+        if (worldConfig.terrainCollision.isCollisionEnabled)
         {
             if (GetSpellInfo()->MechanicsType == MECHANIC_MOUNTED)
             {
@@ -3717,10 +3741,15 @@ uint8 Spell::CanCast(bool tolerate)
                         return SPELL_FAILED_BAD_TARGETS;
 
                     // get the player we are trading with
+#if VERSION_STRING == Cata
+                    Player* t_player = p_caster->getTradeTarget();
+                    if (t_player != nullptr)
+                        i_target = t_player->getTradeData()->getTradeItem((TradeSlots)m_targets.m_itemTarget);
+#else
                     Player* t_player = p_caster->GetTradeTarget();
-                    // get the targeted trade item
                     if (t_player)
                         i_target = t_player->getTradeItem((uint32)m_targets.m_itemTarget);
+#endif
                 }
             }
         }
@@ -3813,8 +3842,10 @@ uint8 Spell::CanCast(bool tolerate)
                 if (GetSpellInfo()->EquippedItemSubClass && !(GetSpellInfo()->EquippedItemSubClass & (1 << proto->SubClass)))
                     return SPELL_FAILED_BAD_TARGETS;
 
+#if VERSION_STRING != Cata
                 if (GetSpellInfo()->RequiredItemFlags && !(GetSpellInfo()->RequiredItemFlags & (1 << proto->InventoryType)))
                     return SPELL_FAILED_BAD_TARGETS;
+#endif
 
                 if (GetSpellInfo()->Effect[0] == SPELL_EFFECT_ENCHANT_ITEM &&
                     GetSpellInfo()->baseLevel && (GetSpellInfo()->baseLevel > proto->ItemLevel))
@@ -4003,7 +4034,7 @@ uint8 Spell::CanCast(bool tolerate)
             }
 
             /* Target OOC check */
-            if (hasAttributeEx(ATTRIBUTESEX_REQ_OOC_TARGET) && target->isInCombat())
+            if (hasAttributeEx(ATTRIBUTESEX_REQ_OOC_TARGET) && target->CombatStatus.IsInCombat())
                 return SPELL_FAILED_TARGET_IN_COMBAT;
 
             if (p_caster != NULL)
@@ -4018,7 +4049,7 @@ uint8 Spell::CanCast(bool tolerate)
                         return SPELL_FAILED_NO_AMMO;
                 }
 
-                if (sWorld.Collision)
+                if (worldConfig.terrainCollision.isCollisionEnabled)
                 {
                     if (p_caster->GetMapId() == target->GetMapId() && !p_caster->GetMapMgr()->isInLineOfSight(m_caster->GetPositionX(), m_caster->GetPositionY(), m_caster->GetPositionZ() + 2, target->GetPositionX(), target->GetPositionY(), target->GetPositionZ() + 2))
                         return SPELL_FAILED_LINE_OF_SIGHT;
@@ -4624,11 +4655,13 @@ void Spell::RemoveItems()
     // Ammo Removal
     if (p_caster != nullptr)
     {
+#if VERSION_STRING != Cata
         if (hasAttributeExB(ATTRIBUTESEXB_REQ_RANGED_WEAPON) || hasAttributeExC(ATTRIBUTESEXC_PLAYER_RANGED_SPELLS))
         {
             if (!p_caster->m_requiresNoAmmo)
                 p_caster->GetItemInterface()->RemoveItemAmt_ProtectPointer(p_caster->GetUInt32Value(PLAYER_AMMO_ID), 1, &i_caster);
         }
+#endif
 
         // Reagent Removal
         if (!(p_caster->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NO_REAGANT_COST) && hasAttributeExE(ATTRIBUTESEXE_REAGENT_REMOVAL)))
@@ -5408,7 +5441,7 @@ void Spell::Heal(int32 amount, bool ForceCrit)
 
             tmp_creature = static_cast<Creature*>(*itr);
 
-            if (!tmp_creature->isInCombat() || (tmp_creature->GetAIInterface()->getThreatByPtr(u_caster) == 0 && tmp_creature->GetAIInterface()->getThreatByPtr(unitTarget) == 0))
+            if (!tmp_creature->CombatStatus.IsInCombat() || (tmp_creature->GetAIInterface()->getThreatByPtr(u_caster) == 0 && tmp_creature->GetAIInterface()->getThreatByPtr(unitTarget) == 0))
                 continue;
 
             if (!(u_caster->GetPhase() & (*itr)->GetPhase()))     //Can't see, can't be a threat
@@ -5429,9 +5462,7 @@ void Spell::Heal(int32 amount, bool ForceCrit)
 
         // remember that we healed (for combat status)
         if (unitTarget->IsInWorld() && u_caster->IsInWorld())
-        {
-            u_caster->addHealTarget(unitTarget);
-        }
+            u_caster->CombatStatus.WeHealed(unitTarget);
     }
 }
 
@@ -5461,9 +5492,9 @@ void Spell::DetermineSkillUp(uint32 skillid, uint32 targetlevel, uint32 multipli
     if (multiplicator == 0)
         multiplicator = 1;
 
-    if (Rand((chance * sWorld.getRate(RATE_SKILLCHANCE)) * multiplicator))
+    if (Rand((chance * worldConfig.getFloatRate(RATE_SKILLCHANCE)) * multiplicator))
     {
-        p_caster->_AdvanceSkillLine(skillid, float2int32(1.0f * sWorld.getRate(RATE_SKILLRATE)));
+        p_caster->_AdvanceSkillLine(skillid, float2int32(1.0f * worldConfig.getFloatRate(RATE_SKILLRATE)));
 
         uint32 value = p_caster->_GetSkillLineCurrent(skillid, true);
         uint32 spellid = 0;
@@ -5491,6 +5522,9 @@ void Spell::DetermineSkillUp(uint32 skillid, uint32 targetlevel, uint32 multipli
                 case 450:
                 {	spellid = 55503; }
                 break;// Rank 6
+                case 525:
+                {    spellid = 74497; }
+                break;// Rank 7
             }
         }
 
@@ -5517,6 +5551,9 @@ void Spell::DetermineSkillUp(uint32 skillid, uint32 targetlevel, uint32 multipli
                 case 450:
                 {	spellid = 53040; }
                 break;// Rank 6
+                case 525:
+                {    spellid = 74496; }
+                break;// Rank 7
             }
         }
 
@@ -5544,6 +5581,9 @@ void Spell::DetermineSkillUp(uint32 skillid, uint32 targetlevel, uint32 multipli
                 case 450:
                 {	spellid = 53666; }
                 break;// Rank 6
+                case 525:
+                {    spellid = 74495; }
+                break;// Rank 7
             }
         }
 
@@ -5576,8 +5616,8 @@ void Spell::DetermineSkillUp(uint32 skillid)
         else //brown
             chance = 100.0f;
     }
-    if (Rand(chance * sWorld.getRate(RATE_SKILLCHANCE)))
-        p_caster->_AdvanceSkillLine(skillid, float2int32(1.0f * sWorld.getRate(RATE_SKILLRATE)));
+    if (Rand(chance * worldConfig.getFloatRate(RATE_SKILLCHANCE)))
+        p_caster->_AdvanceSkillLine(skillid, float2int32(1.0f * worldConfig.getFloatRate(RATE_SKILLRATE)));
 }
 
 void Spell::SafeAddTarget(TargetsList* tgt, uint64 guid)

@@ -404,7 +404,7 @@ class LuaUnit
     {
         TEST_UNIT()
             // If Pointer isn't in combat skip everything
-            if (!ptr->isInCombat())
+            if (!ptr->CombatStatus.IsInCombat())
                 return 0;
 
         Unit* pTarget = ptr->GetAIInterface()->getNextTarget();
@@ -757,7 +757,7 @@ class LuaUnit
     {
         if (ptr == NULL || !ptr->IsInWorld())
             RET_NIL()
-            if (ptr->isInCombat())
+            if (ptr->CombatStatus.IsInCombat())
                 lua_pushboolean(L, 1);
             else
                 lua_pushboolean(L, 0);
@@ -1319,7 +1319,7 @@ class LuaUnit
             data << uint8(0);
         }
 
-        sWorld.SendZoneMessage(&data, zone_id, 0);
+        sWorld.sendZoneMessage(&data, zone_id);
 
         return 0;
     }
@@ -1501,13 +1501,13 @@ class LuaUnit
     {
         //should use now instead of GetTarget
         TEST_PLAYER()
-            if (!ptr->isInCombat())
+            if (!ptr->CombatStatus.IsInCombat())
             {
                 lua_pushinteger(L, 0);
                 return 1;
             }
             else
-                PUSH_UNIT(L, ptr->GetMapMgr()->GetUnit(static_cast<Player*>(ptr)->getPrimaryAttackTarget()));
+                PUSH_UNIT(L, ptr->GetMapMgr()->GetUnit(static_cast<Player*>(ptr)->CombatStatus.GetPrimaryAttackTarget()));
         return 1;
     }
 
@@ -3831,7 +3831,7 @@ class LuaUnit
     {
         if (!ptr) return 0;
         uint32 level = CHECK_ULONG(L, 1);
-        if (level <= sWorld.m_levelCap && level > 0)
+        if (level <= worldConfig.optional.playerLevelCap && level > 0)
         {
             if (ptr->IsPlayer())
             {
@@ -4236,22 +4236,22 @@ class LuaUnit
         int kills = static_cast<int>(luaL_checkinteger(L, 1));
         const char* check = luaL_checklstring(L, 2, NULL);
         Player* plr = static_cast<Player*>(ptr);
-        int killscheck = plr->GetUInt32Value(PLAYER_FIELD_LIFETIME_HONORBALE_KILLS);
+        int killscheck = plr->GetUInt32Value(PLAYER_FIELD_LIFETIME_HONORABLE_KILLS);
         if (check && strncmp(check, "add", 4) == 0 && kills > 0)
         {
-            plr->SetUInt32Value(PLAYER_FIELD_LIFETIME_HONORBALE_KILLS, killscheck + kills);
+            plr->SetUInt32Value(PLAYER_FIELD_LIFETIME_HONORABLE_KILLS, killscheck + kills);
             plr->SaveToDB(false);
             return 0;
         }
         else if (check && strncmp(check, "del", 4) == 0 && killscheck >= kills)
         {
-            plr->SetUInt32Value(PLAYER_FIELD_LIFETIME_HONORBALE_KILLS, killscheck - kills);
+            plr->SetUInt32Value(PLAYER_FIELD_LIFETIME_HONORABLE_KILLS, killscheck - kills);
             plr->SaveToDB(false);
             return 0;
         }
         else if (check && strncmp(check, "set", 4) == 0 && kills >= 0)
         {
-            plr->SetUInt32Value(PLAYER_FIELD_LIFETIME_HONORBALE_KILLS, kills);
+            plr->SetUInt32Value(PLAYER_FIELD_LIFETIME_HONORABLE_KILLS, kills);
             plr->SaveToDB(false);
             return 0;
         }
@@ -4596,9 +4596,11 @@ class LuaUnit
         uint32 itemid = (uint32)luaL_checknumber(L, 1);
         uint32 amount = (uint32)luaL_checknumber(L, 2);
         uint32 costid = (uint32)luaL_checknumber(L, 3);
+#if VERSION_STRING != Cata
         auto item_extended_cost = (costid > 0) ? sItemExtendedCostStore.LookupEntry(costid) : NULL;
         if (itemid && amount)
             ctr->AddVendorItem(itemid, amount, item_extended_cost);
+#endif
         return 0;
     }
 
@@ -5048,7 +5050,7 @@ class LuaUnit
         {
             Guild::SendGuildCommandResult(sender->GetSession(), GUILD_INVITE_S, plyr->GetName(), ALREADY_INVITED_TO_GUILD);
         }
-        else if (plyr->GetTeam() != sender->GetTeam() && sender->GetSession()->GetPermissionCount() == 0 && !sWorld.interfaction_guild)
+        else if (plyr->GetTeam() != sender->GetTeam() && sender->GetSession()->GetPermissionCount() == 0 && !worldConfig.interfaction.isInterfactionGuildEnabled)
         {
             Guild::SendGuildCommandResult(sender->GetSession(), GUILD_INVITE_S, "", GUILD_NOT_ALLIED);
         }
@@ -5431,6 +5433,7 @@ class LuaUnit
         if (movement_info != NULL)
         {
             lua_newtable(L);
+#if VERSION_STRING != Cata
             lua_pushstring(L, "x");
             lua_pushnumber(L, movement_info->position.x);
             lua_rawset(L, -3);
@@ -5443,6 +5446,20 @@ class LuaUnit
             lua_pushstring(L, "o");
             lua_pushnumber(L, movement_info->position.o);
             lua_rawset(L, -3);
+#else
+            lua_pushstring(L, "x");
+            lua_pushnumber(L, movement_info->getPosition()->x);
+            lua_rawset(L, -3);
+            lua_pushstring(L, "y");
+            lua_pushnumber(L, movement_info->getPosition()->y);
+            lua_rawset(L, -3);
+            lua_pushstring(L, "z");
+            lua_pushnumber(L, movement_info->getPosition()->z);
+            lua_rawset(L, -3);
+            lua_pushstring(L, "o");
+            lua_pushnumber(L, movement_info->getPosition()->o);
+            lua_rawset(L, -3);
+#endif
         }
         else
             lua_pushnil(L);
@@ -5454,7 +5471,11 @@ class LuaUnit
         TEST_PLAYER()
             MovementInfo* move_info = static_cast<Player*>(ptr)->GetSession()->GetMovementInfo();
         if (move_info != NULL)
+#if VERSION_STRING != Cata
             lua_pushnumber(L, move_info->flags);
+#else
+            lua_pushnumber(L, move_info->getMovementFlags());
+#endif
         else
             RET_NIL()
             return 1;
@@ -5507,6 +5528,7 @@ class LuaUnit
     static int SetTalentPoints(lua_State* L, Unit* ptr)
     {
         TEST_PLAYER()
+#if VERSION_STRING != Cata
         uint32 spec = static_cast<uint32>(luaL_checkinteger(L, 1)); //0 or 1
         uint32 points = static_cast<uint32>(luaL_checkinteger(L, 2));
         static_cast<Player*>(ptr)->m_specs[spec].SetTP(points);
@@ -5515,6 +5537,7 @@ class LuaUnit
             static_cast<Player*>(ptr)->SetUInt32Value(PLAYER_CHARACTER_POINTS1, points);
 
         static_cast<Player*>(ptr)->smsg_TalentsInfo(false);
+#endif
         return 0;
     }
 

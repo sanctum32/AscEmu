@@ -120,13 +120,13 @@ void Pet::SetNameForEntry(uint32 entry)
             }
             else // no name found, generate one and save it
             {
-                m_name = sWorld.GenerateName();
+                m_name = generateName();
                 CharacterDatabase.Execute("INSERT INTO playersummons VALUES(%u, %u, '%s')", m_Owner->GetLowGUID(), entry, m_name.data());
             }
         }
         break;
         default:
-            m_name = sWorld.GenerateName();
+            m_name = generateName();
     }
 }
 
@@ -214,7 +214,11 @@ bool Pet::CreateAsSummon(uint32 entry, CreatureProperties const* ci, Creature* c
         if (myFamily == nullptr)
             m_name = "Pet";
         else
+#if VERSION_STRING != Cata
             m_name.assign(myFamily->name[0]);
+#else
+            m_name.assign(myFamily->name);
+#endif
 
         SetBoundingRadius(created_from_creature->GetBoundingRadius());
         SetCombatReach(created_from_creature->GetCombatReach());
@@ -347,7 +351,7 @@ void Pet::Update(unsigned long time_passed)
         if (m_HappinessTimer == 0)
         {
             int32 burn = 1042;          //Based on WoWWiki pet looses 50 happiness over 6 min => 1042 every 7.5 s
-            if (isInCombat())
+            if (CombatStatus.IsInCombat())
                 burn >>= 1;             //in combat reduce burn by half (guessed)
             ModPower(POWER_TYPE_HAPPINESS, -burn);
             m_HappinessTimer = PET_HAPPINESS_UPDATE_TIMER;  // reset timer
@@ -1538,8 +1542,8 @@ void Pet::ApplyPetLevelAbilities()
     uint32 pet_family = GetCreatureProperties()->Family;
     uint32 level = getLevel();
 
-    if (level > sWorld.m_levelCap)
-        level = sWorld.m_levelCap;
+    if (level > worldConfig.optional.playerLevelCap)
+        level = worldConfig.optional.playerLevelCap;
     else if (level < 1)
         level = 1;
 
@@ -1855,7 +1859,7 @@ void Pet::DealDamage(Unit* pVictim, uint32 damage, uint32 targetEvent, uint32 un
         return;
 
     if (pVictim != this)
-        onDamageDealt(pVictim);
+        CombatStatus.OnDamageDealt(pVictim);
 
     pVictim->SetStandState(STANDSTATE_STAND);
 
@@ -1961,7 +1965,7 @@ void Pet::DealDamage(Unit* pVictim, uint32 damage, uint32 targetEvent, uint32 un
                 team = TEAM_ALLIANCE;
 
             auto area = pVictim->GetArea();
-            sWorld.SendZoneUnderAttackMsg(area ? area->id : GetZoneId(), static_cast<uint8>(team));
+            sWorld.sendZoneUnderAttackMessage(area ? area->id : GetZoneId(), static_cast<uint8>(team));
         }
 
         pVictim->Die(this, damage, spellId);
@@ -2159,7 +2163,7 @@ void Pet::Die(Unit* pAttacker, uint32 damage, uint32 spellid)
     SetHealth(0);
 
     // Wipe our attacker set on death
-    clearAllCombatTargets();
+    CombatStatus.Vanished();
 
     CALL_SCRIPT_EVENT(pAttacker, OnTargetDied)(this);
     pAttacker->smsg_AttackStop(this);

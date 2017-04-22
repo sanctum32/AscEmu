@@ -13,6 +13,7 @@ This file is released under the MIT license. See README-MIT for more information
 #include "ChatHandler.hpp"
 #include "Server/WorldSession.h"
 #include "Server/World.h"
+#include "Server/World.Legacy.h"
 
 initialiseSingleton(ChatHandler);
 
@@ -151,7 +152,7 @@ int ChatHandler::ParseCommands(const char* text, WorldSession* session)
     if (!*text)
         return 0;
 
-    if (session->GetPermissionCount() == 0 && sWorld.m_reqGmForCommands)
+    if (session->GetPermissionCount() == 0 && worldConfig.server.requireGmForCommands)
         return 0;
 
     if (text[0] != '!' && text[0] != '.') // let's not confuse users
@@ -186,7 +187,11 @@ WorldPacket* ChatHandler::FillMessageData(uint32 type, uint32 language, const ch
     //channels are handled in channel handler and so on
     uint32 messageLength = (uint32)strlen(message) + 1;
 
+#if VERSION_STRING == Cata
+    WorldPacket* data = new WorldPacket(SMSG_MESSAGECHAT, messageLength + 60);
+#else
     WorldPacket* data = new WorldPacket(SMSG_MESSAGECHAT, messageLength + 30);
+#endif
 
     *data << uint8(type);
     *data << language;

@@ -39,7 +39,11 @@ void WorldSession::HandleRepopRequestOpcode(WorldPacket& recv_data)
     LOG_DEBUG("WORLD: Recvd CMSG_REPOP_REQUEST Message");
     if (_player->getDeathState() != JUST_DIED)
         return;
+#if VERSION_STRING != Cata
     if (_player->obj_movement_info.IsOnTransport())
+#else
+    if (!_player->obj_movement_info.getTransportGuid().IsEmpty())
+#endif
     {
         auto transport = _player->GetTransport();
         if (transport != nullptr)
@@ -51,6 +55,7 @@ void WorldSession::HandleRepopRequestOpcode(WorldPacket& recv_data)
     GetPlayer()->RepopRequestedPlayer();
 }
 
+#if VERSION_STRING != Cata
 void WorldSession::HandleAutostoreLootItemOpcode(WorldPacket& recv_data)
 {
     CHECK_INWORLD_RETURN
@@ -358,7 +363,7 @@ void WorldSession::HandleLootMoneyOpcode(WorldPacket& recv_data)
         if (money)
         {
             // Check they don't have more than the max gold
-            if (sWorld.GoldCapEnabled && (GetPlayer()->GetGold() + money) > sWorld.GoldLimit)
+            if (worldConfig.gold.isCapEnabled && (GetPlayer()->GetGold() + money) > worldConfig.gold.limitAmount)
             {
                 GetPlayer()->GetItemInterface()->BuildInventoryChangeError(NULL, NULL, INV_ERR_TOO_MUCH_GOLD);
             }
@@ -407,7 +412,7 @@ void WorldSession::HandleLootMoneyOpcode(WorldPacket& recv_data)
             for (std::vector<Player*>::iterator itr2 = targets.begin(); itr2 != targets.end(); ++itr2)
             {
                 // Check they don't have more than the max gold
-                if (sWorld.GoldCapEnabled && ((*itr2)->GetGold() + share) > sWorld.GoldLimit)
+                if (worldConfig.gold.isCapEnabled && ((*itr2)->GetGold() + share) > worldConfig.gold.limitAmount)
                 {
                     (*itr2)->GetItemInterface()->BuildInventoryChangeError(NULL, NULL, INV_ERR_TOO_MUCH_GOLD);
                 }
@@ -672,6 +677,7 @@ void WorldSession::HandleLootReleaseOpcode(WorldPacket& recv_data)
     else
         LOG_DEBUG("Unhandled loot source object type in HandleLootReleaseOpcode");
 }
+#endif
 
 void WorldSession::HandleWhoOpcode(WorldPacket& recv_data)
 {
@@ -759,14 +765,14 @@ void WorldSession::HandleWhoOpcode(WorldPacket& recv_data)
         if (!plr->GetSession() || !plr->IsInWorld())
             continue;
 
-        if (!sWorld.show_gm_in_who_list && !HasGMPermissions())
+        if (!worldConfig.server.showGmInWhoList && !HasGMPermissions())
         {
             if (plr->GetSession()->HasGMPermissions())
                 continue;
         }
 
         // Team check
-        if (!gm && plr->GetTeam() != team && !plr->GetSession()->HasGMPermissions() && !sWorld.interfaction_misc)
+        if (!gm && plr->GetTeam() != team && !plr->GetSession()->HasGMPermissions() && !worldConfig.interfaction.isInterfactionMiscEnabled)
             continue;
 
         ++total_count;
@@ -962,7 +968,7 @@ void WorldSession::HandleLogoutRequestOpcode(WorldPacket& recv_data)
         if (GetPermissionCount() == 0)
         {
             // Never instant logout for players while in combat or duelling
-            if (pPlayer->isInCombat() || pPlayer->DuelingWith != NULL)
+            if (pPlayer->CombatStatus.IsInCombat() || pPlayer->DuelingWith != NULL)
             {
                 data << uint32(1);
                 data << uint8(0);
@@ -970,7 +976,7 @@ void WorldSession::HandleLogoutRequestOpcode(WorldPacket& recv_data)
                 return;
             }
 
-            if (pPlayer->m_isResting || pPlayer->GetTaxiState() || sWorld.m_InstantLogout == 2)
+            if (pPlayer->m_isResting || pPlayer->GetTaxiState() || worldConfig.optional.enableInstantLogoutForAccessType == 2)
             {
                 //Logout on NEXT sessionupdate to preserve processing of dead packets (all pending ones should be processed)
                 SetLogoutTimer(1);
@@ -979,7 +985,7 @@ void WorldSession::HandleLogoutRequestOpcode(WorldPacket& recv_data)
         }
         if (GetPermissionCount() > 0)
         {
-            if (pPlayer->m_isResting || pPlayer->GetTaxiState() || sWorld.m_InstantLogout > 0)
+            if (pPlayer->m_isResting || pPlayer->GetTaxiState() || worldConfig.optional.enableInstantLogoutForAccessType > 0)
             {
                 //Logout on NEXT sessionupdate to preserve processing of dead packets (all pending ones should be processed)
                 SetLogoutTimer(1);
@@ -1139,6 +1145,7 @@ void WorldSession::HandleBugOpcode(WorldPacket& recv_data)
     CharacterDatabase.ExecuteNA(ss.str().c_str());
 }
 
+#if VERSION_STRING != Cata
 void WorldSession::HandleCorpseReclaimOpcode(WorldPacket& recv_data)
 {
     CHECK_INWORLD_RETURN
@@ -1185,6 +1192,7 @@ void WorldSession::HandleCorpseReclaimOpcode(WorldPacket& recv_data)
     GetPlayer()->ResurrectPlayer();
     GetPlayer()->SetHealth(GetPlayer()->GetMaxHealth() / 2);
 }
+#endif
 
 void WorldSession::HandleResurrectResponseOpcode(WorldPacket& recv_data)
 {
@@ -1223,7 +1231,7 @@ void WorldSession::HandleUpdateAccountData(WorldPacket& recv_data)
     //LOG_DETAIL("WORLD: Received CMSG_UPDATE_ACCOUNT_DATA");
 
     uint32 uiID;
-    if (!sWorld.m_useAccountData)
+    if (!worldConfig.server.useAccountData)
         return;
 
     recv_data >> uiID;
@@ -1320,7 +1328,7 @@ void WorldSession::HandleRequestAccountData(WorldPacket& recv_data)
     LOG_DETAIL("WORLD: Received CMSG_REQUEST_ACCOUNT_DATA");
 
     uint32 id;
-    if (!sWorld.m_useAccountData)
+    if (!worldConfig.server.useAccountData)
         return;
     recv_data >> id;
 
@@ -1682,7 +1690,7 @@ void WorldSession::HandleGameObjectUse(WorldPacket& recv_data)
                 uint32 minskill = entry->MinSkill;
 
                 if (plyr->_GetSkillLineCurrent(SKILL_FISHING, false) < maxskill)
-                    plyr->_AdvanceSkillLine(SKILL_FISHING, float2int32(1.0f * sWorld.getRate(RATE_SKILLRATE)));
+                    plyr->_AdvanceSkillLine(SKILL_FISHING, float2int32(1.0f * worldConfig.getFloatRate(RATE_SKILLRATE)));
 
                 GameObject* go = nullptr;
                 GameObject_FishingHole* school = nullptr;
@@ -2126,15 +2134,17 @@ void WorldSession::HandleInspectOpcode(WorldPacket& recv_data)
         PlayerSpec spec = player->m_specs[s];
 
         int32 talent_max_rank;
-        uint32 talent_tab_id;
+        uint32 const* talent_tab_ids;
 
         uint8 talent_count = 0;
         size_t pos = data.wpos();
         data << uint8(talent_count); //fake value, will be overwritten at the end
 
+        talent_tab_ids = getTalentTabPages(player->getClass());
+
         for (uint8 i = 0; i < 3; ++i)
         {
-            talent_tab_id = sWorld.InspectTalentTabPages[player->getClass()][i];
+            uint32 talent_tab_id = talent_tab_ids[i];
 
             for (uint32 j = 0; j < sTalentStore.GetNumRows(); ++j)
             {
@@ -2306,6 +2316,7 @@ void WorldSession::HandleRandomRollOpcode(WorldPacket& recv_data)
         SendPacket(&data);
 }
 
+#if VERSION_STRING != Cata
 void WorldSession::HandleLootMasterGiveOpcode(WorldPacket& recv_data)
 {
     CHECK_INWORLD_RETURN
@@ -2534,6 +2545,7 @@ void WorldSession::HandleLootRollOpcode(WorldPacket& recv_data)
 
     li->PlayerRolled(_player, choice);
 }
+#endif
 
 void WorldSession::HandleOpenItemOpcode(WorldPacket& recv_data)
 {
@@ -2717,7 +2729,7 @@ void WorldSession::HandleSummonResponseOpcode(WorldPacket& recv_data)
         return;
     }
 
-    if (_player->isInCombat())
+    if (_player->CombatStatus.IsInCombat())
         return;
 
     _player->SafeTeleport(_player->m_summonMapId, _player->m_summonInstanceId, _player->m_summonPos);
@@ -2749,6 +2761,7 @@ void WorldSession::HandleSetAutoLootPassOpcode(WorldPacket& recv_data)
     _player->m_passOnLoot = (on != 0) ? true : false;
 }
 
+#if VERSION_STRING > TBC
 void WorldSession::HandleRemoveGlyph(WorldPacket& recv_data)
 {
     CHECK_INWORLD_RETURN
@@ -2773,6 +2786,7 @@ void WorldSession::HandleRemoveGlyph(WorldPacket& recv_data)
     _player->m_specs[_player->m_talentActiveSpec].glyphs[glyphNum] = 0;
     _player->smsg_TalentsInfo(false);
 }
+#endif
 
 void WorldSession::HandleGameobjReportUseOpCode(WorldPacket& recv_data)    // CMSG_GAMEOBJ_REPORT_USE
 {

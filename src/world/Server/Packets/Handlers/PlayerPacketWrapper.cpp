@@ -344,6 +344,9 @@ void Player::SendLoot(uint64 guid, uint8 loot_type, uint32 mapid)
     data << uint8(loot_type);  //loot_type;
     data << uint32(pLoot->gold);
     data << uint8(0);   //loot size reserve
+#if VERSION_STRING == Cata
+    data << uint8(0);
+#endif
 
     std::vector<__LootItem>::iterator iter = pLoot->items.begin();
     uint32 count = 0;
@@ -568,12 +571,10 @@ void Player::SendInitialLogonPackets()
     SendSetProficiency(2, weapon_proficiency);
 
     //Tutorial Flags
-    data.Initialize(SMSG_TUTORIAL_FLAGS);
-
-    for (uint8 i = 0; i < 8; ++i)
-        data << uint32(m_Tutorials[i]);
-
-    m_session->SendPacket(&data);
+    WorldPacket datab(SMSG_TUTORIAL_FLAGS, 4 * 8);
+    for (int i = 0; i < 8; ++i)
+        datab << uint32_t(m_Tutorials[i]);
+    m_session->SendPacket(&datab);
 
 #if VERSION_STRING > TBC
     smsg_TalentsInfo(false);
@@ -606,9 +607,9 @@ void Player::SendInitialLogonPackets()
     WorldPacket ArenaSettings(SMSG_UPDATE_WORLD_STATE, 16);
 
     ArenaSettings << uint32(0xC77);
-    ArenaSettings << uint32(sWorld.Arena_Progress);
+    ArenaSettings << uint32(worldConfig.arena.arenaProgress);
     ArenaSettings << uint32(0xF3D);
-    ArenaSettings << uint32(sWorld.Arena_Season);
+    ArenaSettings << uint32(worldConfig.arena.arenaSeason);
 
     m_session->SendPacket(&ArenaSettings);
 #endif

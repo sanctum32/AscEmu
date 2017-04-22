@@ -892,12 +892,12 @@ void Aura::Remove()
     {
         if (caster != m_target)
         {
-            caster->removeAttackTarget(m_target);
-            m_target->removeAttacker(caster);
+            caster->CombatStatus.RemoveAttackTarget(m_target);
+            m_target->CombatStatus.RemoveAttacker(caster, caster->GetGUID());
         }
     }
     else
-        m_target->removeAttacker(m_casterGuid);
+        m_target->CombatStatus.RemoveAttacker(NULL, m_casterGuid);
 
     /**********************Cooldown**************************
     * this is only needed for some spells
@@ -2350,7 +2350,7 @@ void Aura::EventPeriodicHeal(uint32 amount)
             if (!(*itr)->IsCreature())
                 continue;
             tmp_creature = static_cast<Creature*>(*itr);
-            if (!tmp_creature->isInCombat() || (tmp_creature->GetAIInterface()->getThreatByPtr(u_caster) == 0 && tmp_creature->GetAIInterface()->getThreatByPtr(m_target) == 0))
+            if (!tmp_creature->CombatStatus.IsInCombat() || (tmp_creature->GetAIInterface()->getThreatByPtr(u_caster) == 0 && tmp_creature->GetAIInterface()->getThreatByPtr(m_target) == 0))
                 continue;
 
             if (!(u_caster->GetPhase() & tmp_creature->GetPhase()))   //Can't see, no threat
@@ -2370,9 +2370,7 @@ void Aura::EventPeriodicHeal(uint32 amount)
         }
 
         if (m_target->IsInWorld() && u_caster->IsInWorld())
-        {
-            u_caster->addHealTarget(m_target);
-        }
+            u_caster->CombatStatus.WeHealed(m_target);
     }
 }
 
@@ -4078,10 +4076,16 @@ void Aura::SpellAuraProcTriggerSpell(bool apply)
             return;
         }
 
+#if VERSION_STRING != Cata
         // Initialize mask
         groupRelation[0] = GetSpellInfo()->EffectSpellClassMask[mod->i][0];
         groupRelation[1] = GetSpellInfo()->EffectSpellClassMask[mod->i][1];
         groupRelation[2] = GetSpellInfo()->EffectSpellClassMask[mod->i][2];
+#else
+        groupRelation[0] = GetSpellInfo()->EffectSpellClassMask[0];
+        groupRelation[1] = GetSpellInfo()->EffectSpellClassMask[1];
+        groupRelation[2] = GetSpellInfo()->EffectSpellClassMask[2];
+#endif
 
         // Initialize charges
         charges = GetSpellInfo()->procCharges;
@@ -4959,7 +4963,9 @@ void Aura::SpellAuraFeignDeath(bool apply)
             p_target->EventAttackStop();
             p_target->setDeathState(ALIVE);
 
+#if VERSION_STRING != Classic
             p_target->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH);
+#endif
             p_target->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_FEIGN_DEATH);
             p_target->SetFlag(UNIT_DYNAMIC_FLAGS, U_DYN_FLAG_DEAD);
 
@@ -5010,7 +5016,9 @@ void Aura::SpellAuraFeignDeath(bool apply)
         }
         else
         {
+#if VERSION_STRING != Classic
             p_target->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH);
+#endif
             p_target->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_FEIGN_DEATH);
             p_target->RemoveFlag(UNIT_DYNAMIC_FLAGS, U_DYN_FLAG_DEAD);
             p_target->StopMirrorTimer(MIRROR_TYPE_FIRE);
@@ -5027,6 +5035,7 @@ void Aura::SpellAuraModDisarm(bool apply)
             field = UNIT_FIELD_FLAGS;
             flag = UNIT_FLAG_DISARMED;
             break;
+#if VERSION_STRING != Classic
         case SPELL_AURA_MOD_DISARM_OFFHAND:
             field = UNIT_FIELD_FLAGS_2;
             flag = UNIT_FLAG2_DISARM_OFFHAND;
@@ -5035,6 +5044,7 @@ void Aura::SpellAuraModDisarm(bool apply)
             field = UNIT_FIELD_FLAGS_2;
             flag = UNIT_FLAG2_DISARM_RANGED;
             break;
+#endif
         default:
             return;
     }
@@ -6020,6 +6030,7 @@ void Aura::SpellAuraFeatherFall(bool apply)
 
 void Aura::SpellAuraHover(bool apply)
 {
+#if VERSION_STRING > TBC
     SetPositive();
 
     if (apply)
@@ -6032,12 +6043,17 @@ void Aura::SpellAuraHover(bool apply)
         m_target->setMoveHover(false);
         m_target->SetFloatValue(UNIT_FIELD_HOVERHEIGHT, 0.0f);
     }
+#endif
 }
 
 void Aura::SpellAuraAddPctMod(bool apply)
 {
     int32 val = apply ? mod->m_amount : -mod->m_amount;
+#if VERSION_STRING != Cata
     uint32* AffectedGroups = GetSpellInfo()->EffectSpellClassMask[mod->i];
+#else
+    uint32* AffectedGroups = GetSpellInfo()->EffectSpellClassMask;
+#endif
 
     switch (mod->m_miscValue)  //let's generate warnings for unknown types of modifiers
     {
@@ -6198,7 +6214,11 @@ void Aura::SendModifierLog(int32** m, int32 v, uint32* mask, uint8 type, bool pc
 void Aura::SendDummyModifierLog(std::map< SpellInfo*, uint32 >* m, SpellInfo* spellInfo, uint32 i, bool apply, bool pct)
 {
     int32 v = spellInfo->EffectBasePoints[i] + 1;
+#if VERSION_STRING != Cata
     uint32* mask = spellInfo->EffectSpellClassMask[i];
+#else
+    uint32* mask = spellInfo->EffectSpellClassMask;
+#endif
     uint8 type = static_cast<uint8>(spellInfo->EffectMiscValue[i]);
 
     if (apply)
@@ -6247,6 +6267,7 @@ void Aura::SpellAuraAddClassTargetTrigger(bool apply)
             return;
         }
 
+#if VERSION_STRING != Cata
         // Initialize proc class mask
         procClassMask[0] = GetSpellInfo()->EffectSpellClassMask[mod->i][0];
         procClassMask[1] = GetSpellInfo()->EffectSpellClassMask[mod->i][1];
@@ -6256,6 +6277,17 @@ void Aura::SpellAuraAddClassTargetTrigger(bool apply)
         groupRelation[0] = sp->EffectSpellClassMask[mod->i][0];
         groupRelation[1] = sp->EffectSpellClassMask[mod->i][1];
         groupRelation[2] = sp->EffectSpellClassMask[mod->i][2];
+#else
+        // Initialize proc class mask
+        procClassMask[0] = GetSpellInfo()->EffectSpellClassMask[0];
+        procClassMask[1] = GetSpellInfo()->EffectSpellClassMask[1];
+        procClassMask[2] = GetSpellInfo()->EffectSpellClassMask[2];
+
+        // Initialize mask
+        groupRelation[0] = sp->EffectSpellClassMask[0];
+        groupRelation[1] = sp->EffectSpellClassMask[1];
+        groupRelation[2] = sp->EffectSpellClassMask[2];
+#endif
 
         // Initialize charges
         charges = GetSpellInfo()->procCharges;
@@ -7385,7 +7417,11 @@ void Aura::SpellAuraModHealingByAP(bool apply)
 void Aura::SpellAuraAddFlatModifier(bool apply)
 {
     int32 val = apply ? mod->m_amount : -mod->m_amount;
+#if VERSION_STRING != Cata
     uint32* AffectedGroups = GetSpellInfo()->EffectSpellClassMask[mod->i];
+#else
+    uint32* AffectedGroups = GetSpellInfo()->EffectSpellClassMask;
+#endif
 
     switch (mod->m_miscValue) //let's generate warnings for unknown types of modifiers
     {
@@ -7661,10 +7697,12 @@ void Aura::SpellAuraModPenetration(bool apply) // armor penetration & spell pene
 
         if (p_target != NULL)
         {
+#if VERSION_STRING != Classic
             if (mod->m_miscValue & 124)
                 m_target->ModSignedInt32Value(PLAYER_FIELD_MOD_TARGET_RESISTANCE, mod->m_amount);
             if (mod->m_miscValue & 1)
                 m_target->ModSignedInt32Value(PLAYER_FIELD_MOD_TARGET_PHYSICAL_RESISTANCE, mod->m_amount);
+#endif
         }
     }
     else
@@ -7676,10 +7714,12 @@ void Aura::SpellAuraModPenetration(bool apply) // armor penetration & spell pene
         }
         if (p_target != NULL)
         {
+#if VERSION_STRING != Classic
             if (mod->m_miscValue & 124)
                 m_target->ModSignedInt32Value(PLAYER_FIELD_MOD_TARGET_RESISTANCE, -mod->m_amount);
             if (mod->m_miscValue & 1)
                 m_target->ModSignedInt32Value(PLAYER_FIELD_MOD_TARGET_PHYSICAL_RESISTANCE, -mod->m_amount);
+#endif
         }
     }
 }
@@ -8351,18 +8391,22 @@ void Aura::SpellAuraExpertise(bool apply)
 
 void Aura::SpellAuraForceMoveForward(bool apply)
 {
+#if VERSION_STRING != Classic
     if (apply)
         m_target->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FORCE_MOVE);
     else
         m_target->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FORCE_MOVE);
+#endif
 }
 
 void Aura::SpellAuraComprehendLang(bool apply)
 {
+#if VERSION_STRING != Classic
     if (apply)
         m_target->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_COMPREHEND_LANG);
     else
         m_target->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_COMPREHEND_LANG);
+#endif
 }
 
 void Aura::SpellAuraModPossessPet(bool apply)
@@ -8556,14 +8600,22 @@ void Aura::SpellAuraAllowOnlyAbility(bool apply)
     {
         p_target->m_castFilterEnabled = true;
         for (uint32 x = 0; x < 3; x++)
+#if VERSION_STRING != Cata
             p_target->m_castFilter[x] |= m_spellInfo->EffectSpellClassMask[mod->i][x];
+#else
+            p_target->m_castFilter[x] |= m_spellInfo->EffectSpellClassMask[x];
+#endif
     }
     else
     {
         p_target->m_castFilterEnabled = false;	// check if we can turn it off
         for (uint32 x = 0; x < 3; x++)
         {
+#if VERSION_STRING != Cata
             p_target->m_castFilter[x] &= ~m_spellInfo->EffectSpellClassMask[mod->i][x];
+#else
+            p_target->m_castFilter[x] &= ~m_spellInfo->EffectSpellClassMask[x];
+#endif
             if (p_target->m_castFilter[x])
                 p_target->m_castFilterEnabled = true;
         }
@@ -8771,6 +8823,7 @@ void Aura::Refresh()
 //MIT
 bool Aura::DotCanCrit()
 {
+#if VERSION_STRING != Cata
     Unit* caster = this->GetUnitCaster();
     if (caster == nullptr)
         return false;
@@ -8801,6 +8854,7 @@ bool Aura::DotCanCrit()
     else if (aura_spell_info->EffectApplyAuraName[2] == SPELL_AURA_ALLOW_DOT_TO_CRIT)
         i = 2;
 
+
     if (aura_spell_info->SpellFamilyName == spell_info->SpellFamilyName &&
         (aura_spell_info->EffectSpellClassMask[i][0] & spell_info->SpellGroupType[0] ||
          aura_spell_info->EffectSpellClassMask[i][1] & spell_info->SpellGroupType[1] ||
@@ -8810,6 +8864,60 @@ bool Aura::DotCanCrit()
     }
 
     return false;
+#else
+    Unit* caster = this->GetUnitCaster();
+    if (caster == NULL)
+        return false;
+
+    SpellInfo* sp = this->GetSpellInfo();
+    uint32 index = MAX_TOTAL_AURAS_START;
+    Aura* aura;
+    bool found = false;
+
+    for (;;)
+    {
+        aura = caster->getAuraWithAuraEffect(SPELL_AURA_ALLOW_DOT_TO_CRIT);
+
+        if (aura == NULL)
+            break;
+
+        SpellInfo* aura_sp = aura->GetSpellInfo();
+
+        uint8 i = 0;
+        if (aura_sp->EffectApplyAuraName[1] == SPELL_AURA_ALLOW_DOT_TO_CRIT)
+            i = 1;
+        else if (aura_sp->EffectApplyAuraName[2] == SPELL_AURA_ALLOW_DOT_TO_CRIT)
+            i = 2;
+
+        if (aura_sp->SpellFamilyName == sp->SpellFamilyName &&
+            (aura_sp->EffectSpellClassMask[0] & sp->SpellGroupType[0] ||
+             aura_sp->EffectSpellClassMask[1] & sp->SpellGroupType[1] ||
+             aura_sp->EffectSpellClassMask[2] & sp->SpellGroupType[2]))
+        {
+            found = true;
+            break;
+        }
+    }
+
+    if (found)
+        return true;
+
+    if (caster->IsPlayer())
+    {
+        switch (caster->getClass())
+        {
+            case ROGUE:
+
+                // Rupture can be critical in patch 3.3.3
+                if (sp->custom_NameHash == SPELL_HASH_RUPTURE)
+                    return true;
+
+                break;
+        }
+    }
+
+    return false;
+#endif
 }
 
 
@@ -8949,7 +9057,9 @@ void Aura::SpellAuraMirrorImage(bool apply)
         Summon* s = static_cast< Summon* >(m_target);
 
         s->SetDisplayId(s->GetOwner()->GetDisplayId());
+#if VERSION_STRING != Classic
         s->SetUInt32Value(UNIT_FIELD_FLAGS_2, s->GetUInt32Value(UNIT_FIELD_FLAGS_2) | UNIT_FLAG2_MIRROR_IMAGE);
+#endif
     }
 
     SpellAuraMirrorImage2(apply);

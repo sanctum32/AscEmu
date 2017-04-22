@@ -27,6 +27,9 @@ include(Server/Warden/CMakeLists.txt)
 include(Spell/CMakeLists.txt)
 include(Spell/Customization/CMakeLists.txt)
 include(Storage/CMakeLists.txt)
+if("${ASCEMU_VERSION}" STREQUAL "Cata")
+   include(Storage/DB2/CMakeLists.txt)
+endif()
 include(Storage/DBC/CMakeLists.txt)
 include(Units/CMakeLists.txt)
 include(Units/Creatures/CMakeLists.txt)
@@ -80,6 +83,12 @@ set(sources
    ${SRC_WORLD_PROJECT}
 )
 
+if("${ASCEMU_VERSION}" STREQUAL "Cata")
+   set(sources
+      ${sources}
+      ${SRC_STORAGE_DB2_FILES})
+endif()
+
 include_directories(
    ${OPENSSL_INCLUDE_DIR}
    ${PCRE_INCLUDE_DIR}
@@ -91,6 +100,7 @@ include_directories(
    ${CMAKE_SOURCE_DIR}/src/collision/Models
    ${CMAKE_SOURCE_DIR}/dep/g3dlite/include
    ${CMAKE_SOURCE_DIR}/src/shared
+   ${CMAKE_SOURCE_DIR}/src
    ${CMAKE_CURRENT_SOURCE_DIR}
    ${ZLIB_INCLUDE_DIRS}
 )

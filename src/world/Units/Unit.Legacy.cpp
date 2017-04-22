@@ -34,6 +34,149 @@
 #include "Spell/SpellAuras.h"
 #include "../../scripts/Common/Base.h"
 
+#ifdef AE_CLASSIC
+static float AttackToRageConversionTable[DBC_PLAYER_LEVEL_CAP + 1] =
+{
+    0.0f,               // 0              
+    0.499999998893f,
+    0.34874214056f,
+    0.267397170992f,
+    0.216594535676f,
+    0.181852997475f,
+    0.156596678244f,
+    0.137408407814f,
+    0.12233646474f,
+    0.110185074062f,
+    0.100180723915f,    //10
+    0.0918008940243f,
+    0.084679891259f,
+    0.0785541194583f,
+    0.0732287738371f,
+    0.0685567746212f,
+    0.0644249954237f,
+    0.0607450001819f,
+    0.0574466557344f,
+    0.0544736297718f,
+    0.0517801553458f,   //20
+    0.0493286648502f,
+    0.0470880325642f,
+    0.0450322506478f,
+    0.0431394187932f,
+    0.0413909641335f,
+    0.0397710324301f,
+    0.0382660082118f,
+    0.0368641330875f,
+    0.035555199573f,
+    0.0343303035574f,   //30
+    0.0331816427126f,
+    0.0321023511953f,
+    0.0310863632415f,
+    0.0301282999279f,
+    0.0292233746364f,
+    0.0283673137143f,
+    0.0275562895548f,
+    0.0267868638875f,
+    0.0260559395055f,
+    0.0253607190016f,   //40
+    0.0246986693537f,
+    0.0240674914139f,
+    0.0234650935281f,
+    0.0228895686471f,
+    0.0223391744027f,
+    0.0218123157088f,
+    0.0213075295236f,
+    0.0208234714647f,
+    0.02035890402f,
+    0.019912686137f,    //50
+    0.0194837640053f,
+    0.0190711628769f,
+    0.0186739797893f,
+    0.0182913770778f,
+    0.0179225765793f,
+    0.0175668544424f,
+    0.0172235364711f,
+    0.0168919939405f,
+    0.0165716398271f,
+    0.0162619254091f   //60
+};
+#endif
+#ifdef AE_TBC
+static float AttackToRageConversionTable[DBC_PLAYER_LEVEL_CAP + 1] =
+{
+    0.0f,               // 0              
+    0.499999998893f,
+    0.34874214056f,
+    0.267397170992f,
+    0.216594535676f,
+    0.181852997475f,
+    0.156596678244f,
+    0.137408407814f,
+    0.12233646474f,
+    0.110185074062f,
+    0.100180723915f,    //10
+    0.0918008940243f,
+    0.084679891259f,
+    0.0785541194583f,
+    0.0732287738371f,
+    0.0685567746212f,
+    0.0644249954237f,
+    0.0607450001819f,
+    0.0574466557344f,
+    0.0544736297718f,
+    0.0517801553458f,   //20
+    0.0493286648502f,
+    0.0470880325642f,
+    0.0450322506478f,
+    0.0431394187932f,
+    0.0413909641335f,
+    0.0397710324301f,
+    0.0382660082118f,
+    0.0368641330875f,
+    0.035555199573f,
+    0.0343303035574f,   //30
+    0.0331816427126f,
+    0.0321023511953f,
+    0.0310863632415f,
+    0.0301282999279f,
+    0.0292233746364f,
+    0.0283673137143f,
+    0.0275562895548f,
+    0.0267868638875f,
+    0.0260559395055f,
+    0.0253607190016f,   //40
+    0.0246986693537f,
+    0.0240674914139f,
+    0.0234650935281f,
+    0.0228895686471f,
+    0.0223391744027f,
+    0.0218123157088f,
+    0.0213075295236f,
+    0.0208234714647f,
+    0.02035890402f,
+    0.019912686137f,    //50
+    0.0194837640053f,
+    0.0190711628769f,
+    0.0186739797893f,
+    0.0182913770778f,
+    0.0179225765793f,
+    0.0175668544424f,
+    0.0172235364711f,
+    0.0168919939405f,
+    0.0165716398271f,
+    0.0162619254091f,   //60
+    0.0159623371939f,
+    0.0156723941359f,
+    0.0153916451144f,
+    0.0151196666436f,
+    0.0148560607885f,
+    0.0146004532678f,
+    0.0143524917226f,
+    0.0141118441351f,
+    0.0138781973828f,
+    0.0136512559131f    //70
+};
+#endif
+#ifdef AE_WOTLK
 static float AttackToRageConversionTable[DBC_PLAYER_LEVEL_CAP + 1] =
 {
     0.0f,               // 0              
@@ -116,17 +259,109 @@ static float AttackToRageConversionTable[DBC_PLAYER_LEVEL_CAP + 1] =
     0.0136512559131f,
     0.0136512559131f,
     0.0136512559131f,
-    0.0136512559131f    //80
+    0.0136512559131f     //80
 };
+#endif
+#ifdef AE_CATA
+static float AttackToRageConversionTable[DBC_PLAYER_LEVEL_CAP + 1] =
+{
+    0.0f,               // 0              
+    0.499999998893f,
+    0.34874214056f,
+    0.267397170992f,
+    0.216594535676f,
+    0.181852997475f,
+    0.156596678244f,
+    0.137408407814f,
+    0.12233646474f,
+    0.110185074062f,
+    0.100180723915f,    //10
+    0.0918008940243f,
+    0.084679891259f,
+    0.0785541194583f,
+    0.0732287738371f,
+    0.0685567746212f,
+    0.0644249954237f,
+    0.0607450001819f,
+    0.0574466557344f,
+    0.0544736297718f,
+    0.0517801553458f,   //20
+    0.0493286648502f,
+    0.0470880325642f,
+    0.0450322506478f,
+    0.0431394187932f,
+    0.0413909641335f,
+    0.0397710324301f,
+    0.0382660082118f,
+    0.0368641330875f,
+    0.035555199573f,
+    0.0343303035574f,   //30
+    0.0331816427126f,
+    0.0321023511953f,
+    0.0310863632415f,
+    0.0301282999279f,
+    0.0292233746364f,
+    0.0283673137143f,
+    0.0275562895548f,
+    0.0267868638875f,
+    0.0260559395055f,
+    0.0253607190016f,   //40
+    0.0246986693537f,
+    0.0240674914139f,
+    0.0234650935281f,
+    0.0228895686471f,
+    0.0223391744027f,
+    0.0218123157088f,
+    0.0213075295236f,
+    0.0208234714647f,
+    0.02035890402f,
+    0.019912686137f,    //50
+    0.0194837640053f,
+    0.0190711628769f,
+    0.0186739797893f,
+    0.0182913770778f,
+    0.0179225765793f,
+    0.0175668544424f,
+    0.0172235364711f,
+    0.0168919939405f,
+    0.0165716398271f,
+    0.0162619254091f,   //60
+    0.0159623371939f,
+    0.0156723941359f,
+    0.0153916451144f,
+    0.0151196666436f,
+    0.0148560607885f,
+    0.0146004532678f,
+    0.0143524917226f,
+    0.0141118441351f,
+    0.0138781973828f,
+    0.0136512559131f,   //70
+    0.0136512559131f,
+    0.0136512559131f,
+    0.0136512559131f,
+    0.0136512559131f,
+    0.0136512559131f,
+    0.0136512559131f,
+    0.0136512559131f,
+    0.0136512559131f,
+    0.0136512559131f,
+    0.0136512559131f,    //80
+    0.0136512559131f,
+    0.0136512559131f,
+    0.0136512559131f,
+    0.0136512559131f,
+    0.0136512559131f    // 85
+};
+#endif
 
-Unit::Unit() : m_combatStatus(this), m_movementManager(),
-    m_currentSpeedWalk(2.5f), m_currentSpeedRun(7.0f), m_currentSpeedRunBack(4.5f), m_currentSpeedSwim(4.722222f),
-    m_currentSpeedSwimBack(2.5f), m_currentTurnRate(3.141594f), m_currentSpeedFly(7.0f), m_currentSpeedFlyBack(4.5f),
-    m_currentPitchRate(3.14f),
+Unit::Unit() : m_currentSpeedWalk(2.5f),
+    m_currentSpeedRun(7.0f), m_currentSpeedRunBack(4.5f), m_currentSpeedSwim(4.722222f), m_currentSpeedSwimBack(2.5f),
+    m_currentTurnRate(3.141594f), m_currentSpeedFly(7.0f), m_currentSpeedFlyBack(4.5f), m_currentPitchRate(3.14f),
+    m_basicSpeedWalk(2.5f),
 
-    m_basicSpeedWalk(2.5f), m_basicSpeedRun(7.0f), m_basicSpeedRunBack(4.5f), m_basicSpeedSwim(4.722222f),
-    m_basicSpeedSwimBack(2.5f), m_basicTurnRate(3.141594f), m_basicSpeedFly(7.0f), m_basicSpeedFlyBack(4.5f),
-    m_basicPitchRate(3.14f)
+    m_basicSpeedRun(7.0f), m_basicSpeedRunBack(4.5f), m_basicSpeedSwim(4.722222f), m_basicSpeedSwimBack(2.5f),
+    m_basicTurnRate(3.141594f), m_basicSpeedFly(7.0f), m_basicSpeedFlyBack(4.5f), m_basicPitchRate(3.14f),
+    m_movementManager()
 {
     int i;
 
@@ -152,7 +387,11 @@ Unit::Unit() : m_combatStatus(this), m_movementManager(),
     m_objectType |= TYPE_UNIT;
     m_objectTypeId = TYPEID_UNIT;
 
+#if VERSION_STRING != Cata
     m_updateFlag = (UPDATEFLAG_HIGHGUID | UPDATEFLAG_LIVING | UPDATEFLAG_HAS_POSITION);
+#else
+    m_updateFlag = UPDATEFLAG_LIVING;
+#endif
 
     //DK:modifiers
     PctRegenModifier = 0;
@@ -374,6 +613,7 @@ Unit::Unit() : m_combatStatus(this), m_movementManager(),
     m_damgeShieldsInUse = false;
     //	fearSpell = 0;
     m_extraAttackCounter = false;
+    CombatStatus.SetUnit(this);
     m_chargeSpellsInUse = false;
     //	m_spellsbusy=false;
     m_interruptedRegenTime = 0;
@@ -429,11 +669,6 @@ Unit::Unit() : m_combatStatus(this), m_movementManager(),
     m_manaShieldId = 0;
     m_charmtemp = 0;
     m_auraRaidUpdateMask = 0;
-}
-
-AscEmu::World::Units::CombatStatus& Unit::getCombatStatus()
-{
-    return m_combatStatus;
 }
 
 Unit::~Unit()
@@ -2646,7 +2881,7 @@ void Unit::RegenerateHealth()
     if (this->IsPlayer())
     {
         // These only NOT in combat
-        if (!isInCombat())
+        if (!CombatStatus.IsInCombat())
             static_cast<Player*>(this)->RegenerateHealth(false);
         else
             static_cast<Player*>(this)->RegenerateHealth(true);
@@ -2654,7 +2889,7 @@ void Unit::RegenerateHealth()
     else
     {
         // Only regen health out of combat
-        if (!isInCombat())
+        if (!CombatStatus.IsInCombat())
             static_cast<Creature*>(this)->RegenerateHealth();
     }
 }
@@ -2673,7 +2908,7 @@ void Unit::RegeneratePower(bool isinterrupted)
     if (!IsPlayer() && IsVehicle())
     {
         uint32 powertype = GetPowerType();
-        float wrate = sWorld.getRate(RATE_VEHICLES_POWER_REGEN);
+        float wrate = worldConfig.getFloatRate(RATE_VEHICLES_POWER_REGEN);
         float amount = wrate * 20.0f;
         SetPower(powertype, static_cast<int32>(GetPower(powertype) + amount));
     }
@@ -2704,7 +2939,7 @@ void Unit::RegeneratePower(bool isinterrupted)
             case POWER_TYPE_RAGE:
             {
                 // These only NOT in combat
-                if (!isInCombat())
+                if (!CombatStatus.IsInCombat())
                 {
                     m_P_regenTimer = 3000;
                     if (HasAura(12296))
@@ -2740,10 +2975,12 @@ void Unit::RegeneratePower(bool isinterrupted)
 
             case POWER_TYPE_RUNIC_POWER:
             {
-                if (!isInCombat())
+                if (!CombatStatus.IsInCombat())
                 {
+#if VERSION_STRING == WotLK
                     uint32 cur = GetUInt32Value(UNIT_FIELD_POWER7);
                     SetPower(POWER_TYPE_RUNIC_POWER, cur - 20);
+#endif
                 }
             }
             break;
@@ -3367,10 +3604,12 @@ void Unit::Strike(Unit* pVictim, uint32 weapon_damage_type, SpellInfo* ability, 
         hitmodifier += (weapon_damage_type == RANGED) ? plr->CalcRating(PCR_RANGED_HIT) : plr->CalcRating(PCR_MELEE_HIT);
 
         float expertise_bonus = plr->CalcRating(PCR_EXPERTISE);
+#if VERSION_STRING != Classic
         if (weapon_damage_type == MELEE)
             expertise_bonus += plr->GetUInt32Value(PLAYER_EXPERTISE);
         else if (weapon_damage_type == OFFHAND)
             expertise_bonus += plr->GetUInt32Value(PLAYER_OFFHAND_EXPERTISE);
+#endif
 
         dodge -= expertise_bonus;
         if (dodge < 0)
@@ -4031,7 +4270,7 @@ void Unit::Strike(Unit* pVictim, uint32 weapon_damage_type, SpellInfo* ability, 
             // have to set attack target here otherwise it wont be set
             // because dealdamage is not called.
             //setAttackTarget(pVictim);
-            this->onDamageDealt(pVictim);
+            this->CombatStatus.OnDamageDealt(pVictim);
         }
     }
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -4044,9 +4283,9 @@ void Unit::Strike(Unit* pVictim, uint32 weapon_damage_type, SpellInfo* ability, 
         if (!this->IsPlayer())
         {
             Player* pr = static_cast<Player*>(pVictim);
-            if (Rand(pr->GetSkillUpChance(SKILL_DEFENSE) * sWorld.getRate(RATE_SKILLCHANCE)))
+            if (Rand(pr->GetSkillUpChance(SKILL_DEFENSE) * worldConfig.getFloatRate(RATE_SKILLCHANCE)))
             {
-                pr->_AdvanceSkillLine(SKILL_DEFENSE, float2int32(1.0f * sWorld.getRate(RATE_SKILLRATE)));
+                pr->_AdvanceSkillLine(SKILL_DEFENSE, float2int32(1.0f * worldConfig.getFloatRate(RATE_SKILLRATE)));
                 pr->UpdateChances();
             }
         }
@@ -4061,9 +4300,9 @@ void Unit::Strike(Unit* pVictim, uint32 weapon_damage_type, SpellInfo* ability, 
         {
             static_cast<Player*>(this)->GetItemInterface()->ReduceItemDurability();
             Player* pr = static_cast<Player*>(this);
-            if (Rand(pr->GetSkillUpChance(SubClassSkill) * sWorld.getRate(RATE_SKILLCHANCE)))
+            if (Rand(pr->GetSkillUpChance(SubClassSkill) * worldConfig.getFloatRate(RATE_SKILLCHANCE)))
             {
-                pr->_AdvanceSkillLine(SubClassSkill, float2int32(1.0f * sWorld.getRate(RATE_SKILLRATE)));
+                pr->_AdvanceSkillLine(SubClassSkill, float2int32(1.0f * worldConfig.getFloatRate(RATE_SKILLRATE)));
                 //pr->UpdateChances();
             }
         }
@@ -4111,7 +4350,7 @@ void Unit::Strike(Unit* pVictim, uint32 weapon_damage_type, SpellInfo* ability, 
 
         val = conv * dmg.full_damage + f * s / 2.0f;
         val *= (1 + (static_cast<Player*>(this)->rageFromDamageDealt / 100.0f));
-        float ragerate = sWorld.getRate(RATE_POWER2);
+        float ragerate = worldConfig.getFloatRate(RATE_POWER2);
         val *= 10 * ragerate;
 
         //float r = (7.5f * dmg.full_damage / c + f * s) / 2.0f;
@@ -4211,23 +4450,20 @@ void Unit::smsg_AttackStop(Unit* pVictim)
         pVictim->CombatStatusHandler_ResetPvPTimeout();
         CombatStatusHandler_ResetPvPTimeout();
     }
-
-    // Evairfairy: None of this looks correct at all... TODO Research this
-
-    //else
-    //{
-    //    if (!IsPlayer() || getClass() == ROGUE)
-    //    {
-    //        m_cTimer = getMSTime() + 8000;
-    //        sEventMgr.RemoveEvents(this, EVENT_COMBAT_TIMER);
-    //        sEventMgr.AddEvent(this, &Unit::EventUpdateFlag, EVENT_COMBAT_TIMER, 8000, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
-    //        if (pVictim->IsUnit())   // there could be damage coming from objects/enviromental
-    //            sEventMgr.AddEvent(pVictim, &Unit::EventUpdateFlag, EVENT_COMBAT_TIMER, 8000, 1, 0);
-    //    }
-    //    else
-    //    {
-    //    }
-    //}
+    else
+    {
+        if (!IsPlayer() || getClass() == ROGUE)
+        {
+            m_cTimer = getMSTime() + 8000;
+            sEventMgr.RemoveEvents(this, EVENT_COMBAT_TIMER);
+            sEventMgr.AddEvent(this, &Unit::EventUpdateFlag, EVENT_COMBAT_TIMER, 8000, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+            if (pVictim->IsUnit())   // there could be damage coming from objects/enviromental
+                sEventMgr.AddEvent(pVictim, &Unit::EventUpdateFlag, EVENT_COMBAT_TIMER, 8000, 1, 0);
+        }
+        else
+        {
+        }
+    }
 }
 
 void Unit::smsg_AttackStop(uint64 victimGuid)
@@ -4660,7 +4896,7 @@ void Unit::AddAura(Aura* aur)
         Unit* pCaster = aur->GetUnitCaster();
         if (pCaster && pCaster->isAlive() && this->isAlive())
         {
-            pCaster->onDamageDealt(this);
+            pCaster->CombatStatus.OnDamageDealt(this);
 
             if (IsCreature())
                 m_aiInterface->AttackReaction(pCaster, 1, aur->GetSpellId());
@@ -5909,7 +6145,7 @@ void Unit::RemoveFromWorld(bool free_guid)
 
     RemoveVehicleComponent();
 
-    m_combatStatus.onRemoveFromWorld();
+    CombatStatus.OnRemoveFromWorld();
     if (GetSummonedCritterGUID() != 0)
     {
         SetSummonedCritterGUID(0);
@@ -5956,7 +6192,7 @@ void Unit::RemoveFromWorld(bool free_guid)
 
 void Unit::Deactivate(MapMgr* mgr)
 {
-    clearAllCombatTargets();
+    CombatStatus.Vanished();
     Object::Deactivate(mgr);
 }
 
@@ -6100,7 +6336,11 @@ bool Unit::IsPoisoned()
 void Unit::SendFullAuraUpdate()
 {
 #if VERSION_STRING > TBC
+#if VERSION_STRING != Cata
     WorldPacket data(SMSG_AURA_UPDATE_ALL, 200);
+#else
+    WorldPacket data(SMSG_AURA_UPDATE_ALL);
+#endif
 
     data << WoWGuid(GetNewGUID());
 
@@ -6125,7 +6365,11 @@ void Unit::SendFullAuraUpdate()
 
             data << uint8(aur->m_visualSlot);
             data << uint32(aur->GetSpellId());
+#if VERSION_STRING == Cata
+            data << uint16(Flags);
+#else
             data << uint8(Flags);
+#endif
             data << uint8(getLevel());
             data << uint8(m_auraStackCount[aur->m_visualSlot]);
 
@@ -6153,7 +6397,11 @@ void Unit::SendAuraUpdate(uint32 AuraSlot, bool remove)
     Aura* aur = m_auras[AuraSlot];
     ARCEMU_ASSERT(aur != NULL);
 
+#if VERSION_STRING != Cata
     WorldPacket data(SMSG_AURA_UPDATE, 30);
+#else
+    WorldPacket data(SMSG_AURA_UPDATE);
+#endif
 
     if (remove)
     {
@@ -6177,13 +6425,17 @@ void Unit::SendAuraUpdate(uint32 AuraSlot, bool remove)
         data << uint8(aur->m_visualSlot);
 
         data << uint32(aur->GetSpellId());
+#if VERSION_STRING == Cata
+        data << uint16(flags);
+#else
         data << uint8(flags);
+#endif
 
         Unit* caster = aur->GetUnitCaster();
         if (caster != NULL)
             data << uint8(caster->getLevel());
         else
-            data << uint8(sWorld.m_levelCap);
+            data << uint8(worldConfig.optional.playerLevelCap);
 
         data << uint8(m_auraStackCount[aur->m_visualSlot]);
 
@@ -6464,6 +6716,267 @@ float Unit::get_chance_to_daze(Unit* target)
         return chance_to_daze;
 }
 
+void CombatStatusHandler::ClearMyHealers()		
+{		
+    // this is where we check all our healers		
+    HealedSet::iterator i;		
+    Player* pt;		
+    for (i = m_healers.begin(); i != m_healers.end(); ++i)		
+    {		
+        pt = m_Unit->GetMapMgr()->GetPlayer(*i);		
+        if (pt != NULL)		
+            pt->CombatStatus.RemoveHealed(m_Unit);		
+    }		
+		
+    m_healers.clear();		
+}
+
+void CombatStatusHandler::RemoveHealed(Unit* pHealTarget)		
+{		
+    m_healed.erase(pHealTarget->GetLowGUID());		
+    UpdateFlag();		
+}		
+		
+void CombatStatusHandler::UpdateFlag()		
+{		
+    bool n_status = InternalIsInCombat();		
+    if (n_status != m_lastStatus)		
+    {		
+        m_lastStatus = n_status;		
+        if (n_status)		
+        {		
+            //printf(I64FMT" is now in combat.\n", m_Unit->GetGUID());		
+            m_Unit->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_COMBAT);		
+            if (!m_Unit->hasUnitStateFlag(UNIT_STATE_ATTACKING)) m_Unit->addUnitStateFlag(UNIT_STATE_ATTACKING);
+        }		
+        else		
+        {		
+            //printf(I64FMT" is no longer in combat.\n", m_Unit->GetGUID());		
+            m_Unit->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_COMBAT);		
+            if (m_Unit->hasUnitStateFlag(UNIT_STATE_ATTACKING)) m_Unit->removeUnitStateFlag(UNIT_STATE_ATTACKING);
+		
+            // remove any of our healers from combat too, if they are able to be.		
+            ClearMyHealers();		
+		
+            if (m_Unit->IsPlayer())		
+                static_cast<Player*>(m_Unit)->UpdatePotionCooldown();		
+        }		
+    }		
+}
+
+bool CombatStatusHandler::InternalIsInCombat()
+{		
+    if (m_Unit->IsPlayer() && m_Unit->GetMapMgr() && m_Unit->GetMapMgr()->IsCombatInProgress())		
+        return true;		
+		
+    if (m_healed.size() > 0)		
+        return true;		
+		
+    if (m_attackTargets.size() > 0)		
+        return true;		
+		
+    if (m_attackers.size() > 0)		
+        return true;		
+		
+    return false;		
+}		
+		
+void CombatStatusHandler::AddAttackTarget(const uint64 & guid)		
+{		
+    if (guid == m_Unit->GetGUID())		
+       return;		
+		
+    //we MUST be in world		
+    ARCEMU_ASSERT(m_Unit->IsInWorld());		
+		
+    m_attackTargets.insert(guid);		
+    //printf("Adding attack target " I64FMT " to " I64FMT "\n", guid, m_Unit->GetGUID());		
+    if (m_Unit->IsPlayer() &&		
+        m_primaryAttackTarget != guid)			// players can only have one attack target.		
+    {		
+        if (m_primaryAttackTarget)		
+            ClearPrimaryAttackTarget();		
+		
+        m_primaryAttackTarget = guid;		
+    }		
+		
+    UpdateFlag();		
+}		
+		
+void CombatStatusHandler::ClearPrimaryAttackTarget()		
+{		
+    //printf("ClearPrimaryAttackTarget for " I64FMT "\n", m_Unit->GetGUID());		
+    if (m_primaryAttackTarget != 0)		
+    {		
+        Unit* pt = m_Unit->GetMapMgr()->GetUnit(m_primaryAttackTarget);		
+        if (pt != NULL)		
+        {		
+            // remove from their attacker set. (if we have no longer got any DoT's, etc)		
+            if (!IsAttacking(pt))		
+            {		
+                pt->CombatStatus.RemoveAttacker(m_Unit, m_Unit->GetGUID());		
+                m_attackTargets.erase(m_primaryAttackTarget);		
+            }		
+		
+            m_primaryAttackTarget = 0;		
+        }		
+        else		
+        {		
+            m_attackTargets.erase(m_primaryAttackTarget);		
+            m_primaryAttackTarget = 0;		
+        }		
+    }		
+		
+    UpdateFlag();		
+}		
+		
+bool CombatStatusHandler::IsAttacking(Unit* pTarget)		
+{		
+    // check the target for any of our DoT's.		
+    for (uint32 i = MAX_NEGATIVE_AURAS_EXTEDED_START; i < MAX_NEGATIVE_AURAS_EXTEDED_END; ++i)		
+        if (pTarget->m_auras[i] != NULL)		
+            if (m_Unit->GetGUID() == pTarget->m_auras[i]->m_casterGuid && pTarget->m_auras[i]->IsCombatStateAffecting())		
+                return true;		
+		
+    // place any additional checks here		
+    return false;		
+}		
+		
+void CombatStatusHandler::RemoveAttackTarget(Unit* pTarget)		
+{		
+    // called on aura remove, etc.		
+    AttackerMap::iterator itr = m_attackTargets.find(pTarget->GetGUID());		
+    if (itr == m_attackTargets.end())		
+        return;		
+		
+   if (!IsAttacking(pTarget))		
+    {		
+        //printf("Removing attack target " I64FMT " on " I64FMT "\n", pTarget->GetGUID(), m_Unit->GetGUID());		
+        m_attackTargets.erase(itr);		
+        if (m_primaryAttackTarget == pTarget->GetGUID())		
+            m_primaryAttackTarget = 0;		
+		
+        UpdateFlag();		
+    }		
+    /*else		
+        printf("Cannot remove attack target " I64FMT " from " I64FMT "\n", pTarget->GetGUID(), m_Unit->GetGUID());*/		
+}		
+		
+void CombatStatusHandler::RemoveAttacker(Unit* pAttacker, const uint64 & guid)		
+{
+    AttackerMap::iterator itr = m_attackers.find(guid);
+    if (itr == m_attackers.end())		
+        return;		
+ 		  
+    if ((!pAttacker) || (!pAttacker->CombatStatus.IsAttacking(m_Unit)))
+    {		
+        //printf("Removing attacker " I64FMT " from " I64FMT "\n", guid, m_Unit->GetGUID());		
+        m_attackers.erase(itr);		
+        UpdateFlag();		
+    }		
+    /*else		
+    {		
+    printf("Cannot remove attacker " I64FMT " from " I64FMT "\n", guid, m_Unit->GetGUID());		
+    }*/		
+}
+  		  
+void CombatStatusHandler::OnDamageDealt(Unit* pTarget)
+{
+    // we added an aura, or dealt some damage to a target. they need to have us as an attacker, and they need to be our attack target if not.
+    //printf("OnDamageDealt to " I64FMT " from " I64FMT "\n", pTarget->GetGUID(), m_Unit->GetGUID());		
+    if (pTarget == m_Unit)		
+        return;		
+		
+    //no need to be in combat if dead		
+    if (!pTarget->isAlive() || !m_Unit->isAlive())		
+        return;		
+		
+    AttackerMap::iterator itr = m_attackTargets.find(pTarget->GetGUID());		
+    if (itr == m_attackTargets.end())		
+        AddAttackTarget(pTarget->GetGUID());		
+		
+    itr = pTarget->CombatStatus.m_attackers.find(m_Unit->GetGUID());		
+    if (itr == pTarget->CombatStatus.m_attackers.end())		
+        pTarget->CombatStatus.AddAttacker(m_Unit->GetGUID());		
+		
+    // update the timeout		
+    m_Unit->CombatStatusHandler_ResetPvPTimeout();		
+}		
+		
+void CombatStatusHandler::AddAttacker(const uint64 & guid)		
+{		
+    //we MUST be in world		
+    ARCEMU_ASSERT(m_Unit->IsInWorld());		
+    m_attackers.insert(guid);		
+    UpdateFlag();		
+}
+
+void CombatStatusHandler::ClearAttackers()		
+{		
+    //If we are not in world, CombatStatusHandler::OnRemoveFromWorld() would have been already called so m_attackTargets		
+    //and m_attackers should be empty. If it's not, something wrong happened.		
+		
+    // this is a FORCED function, only use when the reference will be destroyed.		
+    AttackerMap::iterator itr = m_attackTargets.begin();		
+    Unit* pt;		
+    for (; itr != m_attackTargets.end(); ++itr)		
+    {		
+        pt = m_Unit->GetMapMgr()->GetUnit(*itr);		
+        if (pt)		
+        {		
+            pt->CombatStatus.m_attackers.erase(m_Unit->GetGUID());		
+            pt->CombatStatus.UpdateFlag();		
+        }		
+    }		
+		
+    for (itr = m_attackers.begin(); itr != m_attackers.end(); ++itr)		
+    {		
+        pt = m_Unit->GetMapMgr()->GetUnit(*itr);		
+        if (pt)		
+        {		
+            pt->CombatStatus.m_attackTargets.erase(m_Unit->GetGUID());		
+            pt->CombatStatus.UpdateFlag();		
+        }		
+    }		
+		
+    m_attackers.clear();		
+    m_attackTargets.clear();		
+    m_primaryAttackTarget = 0;		
+    UpdateFlag();		
+}		
+		
+void CombatStatusHandler::ClearHealers()		
+{		
+    //If we are not in world, CombatStatusHandler::OnRemoveFromWorld() would have been already called so m_healed should		
+    //be empty. If it's not, something wrong happened.		
+		
+    HealedSet::iterator itr = m_healed.begin();		
+    Player* pt;		
+    for (; itr != m_healed.end(); ++itr)		
+    {		
+        pt = m_Unit->GetMapMgr()->GetPlayer(*itr);		
+        if (pt)		
+        {		
+            pt->CombatStatus.m_healers.erase(m_Unit->GetLowGUID());		
+            pt->CombatStatus.UpdateFlag();		
+        }		
+    }		
+		
+    for (itr = m_healers.begin(); itr != m_healers.end(); ++itr)		
+    {		
+        pt = m_Unit->GetMapMgr()->GetPlayer(*itr);		
+        if (pt)		
+        {		
+            pt->CombatStatus.m_healed.erase(m_Unit->GetLowGUID());		
+            pt->CombatStatus.UpdateFlag();		
+        }		
+    }
+
+    m_healed.clear();
+    m_healers.clear();
+    UpdateFlag();
+}
+
 void Unit::CombatStatusHandler_ResetPvPTimeout()
 {
     if (!IsPlayer())
@@ -6490,7 +7003,105 @@ void Unit::CombatStatusHandler_ResetPvPTimeout()
 
 void Unit::CombatStatusHandler_UpdatePvPTimeout()
 {
-    m_combatStatus.clearAttackTargets();
+    CombatStatus.TryToClearAttackTargets();
+}
+
+void CombatStatusHandler::TryToClearAttackTargets()
+{
+    AttackerMap::iterator i, i2;
+    Unit* pt;
+
+    if (m_Unit->IsPlayer())
+        static_cast<Player*>(m_Unit)->RemoveFlag(PLAYER_FLAGS, PLAYER_FLAG_CONT_PVP);
+
+    for (i = m_attackTargets.begin(); i != m_attackTargets.end();)
+    {
+        i2 = i++;
+        pt = m_Unit->GetMapMgr()->GetUnit(*i2);
+        if (pt == NULL)
+        {
+            m_attackTargets.erase(i2);
+            continue;
+        }
+
+        RemoveAttackTarget(pt);
+        pt->CombatStatus.RemoveAttacker(m_Unit, m_Unit->GetGUID());
+    }
+}
+
+void CombatStatusHandler::AttackersForgetHate()		
+{		
+    AttackerMap::iterator i, i2;		
+    Unit* pt;		
+		
+    for (i = m_attackTargets.begin(); i != m_attackTargets.end();)		
+    {		
+        i2 = i++;		
+        pt = m_Unit->GetMapMgr()->GetUnit(*i2);		
+        if (pt == NULL)		
+        {		
+            m_attackTargets.erase(i2);		
+            continue;		
+        }		
+		
+        if (pt->GetAIInterface())		
+            pt->GetAIInterface()->RemoveThreatByPtr(m_Unit);		
+    }		
+}
+
+bool CombatStatusHandler::IsInCombat() const
+{
+    // If the unit doesn't exist - OR - the unit exists but is not in world
+    if (m_Unit == NULL || !m_Unit->IsInWorld())
+        return false;
+
+    switch (m_Unit->GetTypeId())
+    {
+        case TYPEID_UNIT:
+        {
+            if (m_Unit->IsPet() && static_cast<Pet*>(m_Unit)->GetPetAction() == PET_ACTION_ATTACK)
+                return true;
+            else if (m_Unit->IsPet())
+                return m_lastStatus;
+            else
+                return m_Unit->GetAIInterface()->getAITargetsCount() == 0 ? false : true;
+        }
+        break;
+        case TYPEID_PLAYER:
+        {
+            std::list<Pet*> summons = static_cast<Player*>(m_Unit)->GetSummons();
+            for (std::list<Pet*>::iterator itr = summons.begin(); itr != summons.end(); ++itr)
+            {
+                if ((*itr)->GetPetOwner() == m_Unit && (*itr)->CombatStatus.IsInCombat())
+                    return true;
+            }
+
+            return m_lastStatus;
+        }
+        break;
+        default:
+            return false;
+    }
+}
+
+void CombatStatusHandler::WeHealed(Unit* pHealTarget)
+{
+    if (!pHealTarget->IsPlayer() || !m_Unit->IsPlayer() || pHealTarget == m_Unit)
+        return;
+
+    if (pHealTarget->CombatStatus.IsInCombat())
+    {
+        m_healed.insert(pHealTarget->GetLowGUID());
+        pHealTarget->CombatStatus.m_healers.insert(m_Unit->GetLowGUID());
+    }
+
+    UpdateFlag();
+}
+
+void CombatStatusHandler::OnRemoveFromWorld()
+{
+    ClearAttackers();
+    ClearHealers();
 }
 
 void Unit::Heal(Unit* target, uint32 SpellId, uint32 amount)
@@ -6967,10 +7578,10 @@ void Unit::ReplaceAIInterface(AIInterface* new_interface)
     m_aiInterface = new_interface;
 }
 
-//void Unit::EventUpdateFlag()
-//{
-//    CombatStatus.UpdateFlag();
-//}
+void Unit::EventUpdateFlag()
+{
+    CombatStatus.UpdateFlag();
+}
 
 void Unit::EventModelChange()
 {
@@ -7918,6 +8529,7 @@ void Unit::BuildMovementPacket(ByteBuffer* data)
     *data << GetPositionZ();
     *data << GetOrientation();
 
+#if VERSION_STRING != Cata
     // 0x00000200
     if (HasUnitMovementFlag(MOVEFLAG_TRANSPORT))
     {
@@ -7950,8 +8562,9 @@ void Unit::BuildMovementPacket(ByteBuffer* data)
         *data << (float)GetMovementInfo()->pitch;
 
     *data << (uint32)GetMovementInfo()->fall_time;
-
+#endif
     // 0x00001000
+#if VERSION_STRING != Cata
     if (GetUnitMovementFlags() & MOVEFLAG_REDIRECTED)
     {
         *data << (float)GetMovementInfo()->redirectVelocity;
@@ -7963,6 +8576,7 @@ void Unit::BuildMovementPacket(ByteBuffer* data)
     // 0x04000000
     if (GetUnitMovementFlags() & MOVEFLAG_SPLINE_MOVER)
         *data << (float)GetMovementInfo()->spline_elevation;
+#endif
 }
 
 
@@ -7976,6 +8590,7 @@ void Unit::BuildMovementPacket(ByteBuffer* data, float x, float y, float z, floa
     *data << z;
     *data << o;
 
+#if VERSION_STRING != Cata
     // 0x00000200
     if (HasUnitMovementFlag(MOVEFLAG_TRANSPORT))
     {
@@ -8003,8 +8618,9 @@ void Unit::BuildMovementPacket(ByteBuffer* data, float x, float y, float z, floa
         *data << (float)GetMovementInfo()->pitch;
 
     *data << (uint32)GetMovementInfo()->fall_time;
-
+#endif
     // 0x00001000
+#if VERSION_STRING != Cata
     if (GetUnitMovementFlags() & MOVEFLAG_REDIRECTED)
     {
         *data << (float)GetMovementInfo()->redirectVelocity;
@@ -8016,6 +8632,7 @@ void Unit::BuildMovementPacket(ByteBuffer* data, float x, float y, float z, floa
     // 0x04000000
     if (GetUnitMovementFlags() & MOVEFLAG_SPLINE_MOVER)
         *data << (float)GetMovementInfo()->spline_elevation;
+#endif
 }
 
 void Unit::setLevel(uint32 level)
@@ -8088,8 +8705,10 @@ void Unit::HandleUpdateFieldChange(uint32 Index)
         case UNIT_FIELD_POWER3:
         case UNIT_FIELD_POWER4:
         case UNIT_FIELD_POWER5:
+#if VERSION_STRING == WotLK
         case UNIT_FIELD_POWER6:
         case UNIT_FIELD_POWER7:
+#endif
             Flags = pet ? GROUP_UPDATE_FLAG_PET_CUR_POWER : GROUP_UPDATE_FLAG_CUR_POWER;
             break;
 
@@ -8098,8 +8717,10 @@ void Unit::HandleUpdateFieldChange(uint32 Index)
         case UNIT_FIELD_MAXPOWER3:
         case UNIT_FIELD_MAXPOWER4:
         case UNIT_FIELD_MAXPOWER5:
+#if VERSION_STRING == WotLK
         case UNIT_FIELD_MAXPOWER6:
         case UNIT_FIELD_MAXPOWER7:
+#endif
             Flags = pet ? GROUP_UPDATE_FLAG_PET_CUR_POWER : GROUP_UPDATE_FLAG_MAX_POWER;
             break;
 

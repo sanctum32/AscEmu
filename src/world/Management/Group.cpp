@@ -213,7 +213,6 @@ void Group::Update()
             m_Looter = pNewLeader->getPlayerInfo();
     }
 
-    WorldPacket data(50 + (m_MemberCount * 20));
     GroupMembersSet::iterator itr1, itr2;
 
     uint8 i = 0, j = 0;
@@ -240,7 +239,7 @@ void Group::Update()
                     continue;
                 }
 
-                data.Initialize(SMSG_GROUP_LIST);
+                WorldPacket data(SMSG_GROUP_LIST, (50 + (m_MemberCount * 20)));
                 data << uint8(m_GroupType);
                 data << uint8((*itr1)->subGroup);
 
@@ -262,6 +261,9 @@ void Group::Update()
                 {
                     data << uint8(sLfgMgr.GetState(GetID()) == LFG_STATE_FINISHED_DUNGEON ? 2 : 0);
 					data << uint32(sLfgMgr.GetDungeon(GetID()));
+#if VERSION_STRING == Cata
+                    data << uint8(0);   //unk
+#endif
                 }
 
                 data << uint64(GetID());            // Group guid
@@ -393,7 +395,11 @@ void SubGroup::Disband()
                     data2.put(5, uint32((*itr)->m_loggedInPlayer->iInstanceType));
                     (*itr)->m_loggedInPlayer->GetSession()->SendPacket(&data2);
                     (*itr)->m_loggedInPlayer->GetSession()->SendPacket(&data);
+#if VERSION_STRING == Cata
+                    (*itr)->m_loggedInPlayer->GetSession()->SendEmptyGroupList((*itr)->m_loggedInPlayer);
+#else
                     (*itr)->m_Group->SendNullUpdate((*itr)->m_loggedInPlayer);   // cebernic: panel refresh.
+#endif
                 }
             }
 
@@ -493,16 +499,23 @@ void Group::RemovePlayer(PlayerInfo* info)
     {
         if (pPlayer->GetSession() != NULL)
         {
+#if VERSION_STRING != Cata
             SendNullUpdate(pPlayer);
+#endif
 
             data.SetOpcode(SMSG_GROUP_DESTROYED);
             pPlayer->GetSession()->SendPacket(&data);
 
+#if VERSION_STRING == Cata
+            pPlayer->GetSession()->SendPartyCommandResult(pPlayer, 2, pPlayer->GetName(), ERR_PARTY_NO_ERROR);
+            pPlayer->GetSession()->SendEmptyGroupList(pPlayer);
+#else
             data.Initialize(SMSG_PARTY_COMMAND_RESULT);
             data << uint32(2);
             data << uint8(0);
             data << uint32(0);  // you leave the group
             pPlayer->GetSession()->SendPacket(&data);
+#endif
         }
 
         //Remove some party auras.
@@ -569,7 +582,7 @@ void Group::ExpandToRaid()
     m_groupLock.Acquire();
     m_SubGroupCount = 8;
 
-    for (uint8 i = 1; i < m_SubGroupCount; i++)
+    for (uint8 i = 1; i < m_SubGroupCount; ++i)
         m_SubGroups[i] = new SubGroup(this, i);
 
     m_GroupType = GROUP_TYPE_RAID;
@@ -1048,8 +1061,10 @@ void Group::UpdateOutOfRangePlayer(Player* pPlayer, bool Distribute, WorldPacket
 
     if (mask & GROUP_UPDATE_FLAG_VEHICLE_SEAT)
     {
+#if VERSION_STRING != Cata
         if (Vehicle* veh = pPlayer->GetCurrentVehicle())
             *data << uint32(veh->GetVehicleInfo()->seatID[pPlayer->GetMovementInfo()->transporter_info.seat]);
+#endif
     }
 
     if (mask & GROUP_UPDATE_FLAG_PET_AURAS)
@@ -1143,7 +1158,13 @@ void Group::UpdateAllOutOfRangePlayersFor(Player* pPlayer)
                     hisMask.Clear();
                     myMask.Clear();
                     u1 = u2 = false;
+#if VERSION_STRING == TBC
+                    for (uint32 j = PLAYER_QUEST_LOG_1_1; j <= PLAYER_QUEST_LOG_25_1; ++j)
+#elif VERSION_STRING == Classic
+                    for (uint32 j = PLAYER_QUEST_LOG_1_1; j <= PLAYER_QUEST_LOG_15_4; ++j)
+#else
                     for (uint32 j = PLAYER_QUEST_LOG_1_1; j <= PLAYER_QUEST_LOG_25_5; ++j)
+#endif
                     {
                         if (plr->GetUInt32Value(j))
                         {

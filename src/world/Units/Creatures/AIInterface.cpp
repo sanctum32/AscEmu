@@ -416,7 +416,7 @@ void AIInterface::_UpdateTargets()
         {
             i2 = i++;
             if ((*i2) == NULL || (*i2)->event_GetCurrentInstanceId() != m_Unit->event_GetCurrentInstanceId() ||
-                !(*i2)->isAlive() || m_Unit->GetDistanceSq((*i2)) >= 2500.0f || !(*i2)->isInCombat() || !((*i2)->m_phase & m_Unit->m_phase))
+                !(*i2)->isAlive() || m_Unit->GetDistanceSq((*i2)) >= 2500.0f || !(*i2)->CombatStatus.IsInCombat() || !((*i2)->m_phase & m_Unit->m_phase))
             {
                 m_assistTargets.erase(i2);
             }
@@ -575,7 +575,7 @@ void AIInterface::_UpdateCombat(uint32 p_time)
         }
     }
 
-    if (sWorld.Collision)
+    if (worldConfig.terrainCollision.isCollisionEnabled)
     {
         if (m_Unit->GetMapMgr() != NULL && getNextTarget() != NULL)
         {
@@ -594,8 +594,13 @@ void AIInterface::_UpdateCombat(uint32 p_time)
                     {
                         MovementInfo* mi = static_cast<Player*>(getNextTarget())->GetSession()->GetMovementInfo();
 
+#if VERSION_STRING != Cata
                         if (mi->flags & MOVEFLAG_FLYING)
                             HandleEvent(EVENT_LEAVECOMBAT, m_Unit, 0);
+#else
+                        if (mi->hasMovementFlag(MOVEFLAG_FLYING))
+                            HandleEvent(EVENT_LEAVECOMBAT, m_Unit, 0);
+#endif
                     }
                 }
             }
@@ -856,7 +861,7 @@ void AIInterface::_UpdateCombat(uint32 p_time)
                 float distance = m_Unit->CalcDistance(getNextTarget());
                 bool los = true;
 
-                if (sWorld.Collision)
+                if (worldConfig.terrainCollision.isCollisionEnabled)
                 {
                     VMAP::IVMapManager* mgr = VMAP::VMapFactory::createOrGetVMapManager();
                     los = mgr->isInLineOfSight(m_Unit->GetMapId(), m_Unit->GetPositionX(), m_Unit->GetPositionY(), m_Unit->GetPositionZ(), getNextTarget()->GetPositionX(), getNextTarget()->GetPositionY(), getNextTarget()->GetPositionZ());
@@ -1054,7 +1059,7 @@ void AIInterface::AttackReaction(Unit* pUnit, uint32 damage_dealt, uint32 spellI
     if (m_AIState == STATE_EVADE || !pUnit || !pUnit->isAlive() || m_Unit->IsDead() || (m_Unit == pUnit) || (m_AIType == AITYPE_PASSIVE) || disable_combat)
         return;
 
-    if (sWorld.Collision && pUnit->IsPlayer())
+    if (worldConfig.terrainCollision.isCollisionEnabled && pUnit->IsPlayer())
     {
         if (m_Unit->GetMapMgr() != NULL)
         {
@@ -1070,8 +1075,13 @@ void AIInterface::AttackReaction(Unit* pUnit, uint32 damage_dealt, uint32 spellI
                     {
                         MovementInfo* mi = static_cast< Player* >(pUnit)->GetSession()->GetMovementInfo();
 
+#if VERSION_STRING != Cata
                         if (mi != NULL && !(mi->flags & MOVEFLAG_FALLING) && !(mi->flags & MOVEFLAG_SWIMMING) && !(mi->flags & MOVEFLAG_HOVER))
                             return;
+#else
+                        if (mi != NULL && !(mi->hasMovementFlag(MOVEFLAG_FALLING)) && !(mi->hasMovementFlag(MOVEFLAG_SWIMMING)) && !(mi->hasMovementFlag(MOVEFLAG_HOVER)))
+                            return;
+#endif
                     }
                 }
             }
@@ -1269,7 +1279,7 @@ Unit* AIInterface::FindTarget()
                 continue;
             if (distance > dist)
             {
-                if (sWorld.Collision)
+                if (worldConfig.terrainCollision.isCollisionEnabled)
                 {
                     VMAP::IVMapManager* mgr = VMAP::VMapFactory::createOrGetVMapManager();
                     bool los = mgr->isInLineOfSight(m_Unit->GetMapId(), m_Unit->GetPositionX(), m_Unit->GetPositionY(), m_Unit->GetPositionZ(), tmpPlr->GetPositionX(), tmpPlr->GetPositionY(), tmpPlr->GetPositionZ());
@@ -1319,7 +1329,7 @@ Unit* AIInterface::FindTarget()
 
         if (dist <= _CalcAggroRange(pUnit))
         {
-            if (sWorld.Collision)
+            if (worldConfig.terrainCollision.isCollisionEnabled)
             {
                 if (m_Unit->GetMapMgr()->isInLineOfSight(m_Unit->GetPositionX(), m_Unit->GetPositionY(), m_Unit->GetPositionZ() + 2, pUnit->GetPositionX(), pUnit->GetPositionY(), pUnit->GetPositionZ() + 2))
                 {
@@ -1368,7 +1378,7 @@ Unit* AIInterface::FindTarget()
 
             if (dist <= _CalcAggroRange(pUnit))
             {
-                if (sWorld.Collision)
+                if (worldConfig.terrainCollision.isCollisionEnabled)
                 {
                     if (m_Unit->GetMapMgr()->isInLineOfSight(m_Unit->GetPositionX(), m_Unit->GetPositionY(), m_Unit->GetPositionZ() + 2, pUnit->GetPositionX(), pUnit->GetPositionY(), pUnit->GetPositionZ() + 2))
                     {
@@ -2365,9 +2375,6 @@ void AIInterface::_UpdateMovement(uint32 p_time)
     }
     else if (m_creatureState == STOPPED && (m_AIState == STATE_IDLE || m_AIState == STATE_SCRIPTMOVE) && !m_moveTimer && !m_timeToMove && getUnitToFollow() == NULL) //creature is stopped and out of Combat
     {
-        if (sWorld.getAllowMovement() == false) //is creature movement enabled?
-            return;
-
         if (m_Unit->GetDisplayId() == 5233) //if Spirit Healer don't move
             return;
 
@@ -2532,7 +2539,7 @@ void AIInterface::_UpdateMovement(uint32 p_time)
             float Fy;
             float Fz;
 
-            if (sWorld.DisableFearMovement)
+            if (worldConfig.server.disableFearMovement)
             {
                 if (m_Unit->GetMapId() == 529 || m_Unit->GetMapId() == 566 ||
                     m_Unit->GetMapId() == 489 || m_Unit->GetMapId() == 572 ||
@@ -2570,7 +2577,7 @@ void AIInterface::_UpdateMovement(uint32 p_time)
             float wl = m_Unit->GetMapMgr()->GetLiquidHeight(Fx, Fy);
             //            uint8 wt = m_Unit->GetMapMgr()->GetWaterType(Fx, Fy);
 
-            if (sWorld.Collision)
+            if (worldConfig.terrainCollision.isCollisionEnabled)
             {
                 VMAP::IVMapManager* mgr = VMAP::VMapFactory::createOrGetVMapManager();
                 Fz = mgr->getHeight(m_Unit->GetMapId(), Fx, Fy, m_Unit->GetPositionZ() + 2.0f, 10000.0f);
@@ -3172,7 +3179,7 @@ void AIInterface::WipeTargetList()
     LockAITargets(true);
     m_aiTargets.clear();
     LockAITargets(false);
-    m_Unit->clearAllCombatTargets();
+    m_Unit->CombatStatus.Vanished();
 }
 
 bool AIInterface::taunt(Unit* caster, bool apply)
@@ -3298,8 +3305,8 @@ void AIInterface::CheckTarget(Unit* target)
     TargetMap::iterator it2 = m_aiTargets.find(target->GetGUID());
     if (it2 != m_aiTargets.end() || target == getNextTarget())
     {
-        target->removeAttacker(m_Unit);
-        m_Unit->removeAttackTarget(target);
+        target->CombatStatus.RemoveAttacker(m_Unit, m_Unit->GetGUID());
+        m_Unit->CombatStatus.RemoveAttackTarget(target);
 
         if (it2 != m_aiTargets.end())
         {
@@ -3666,7 +3673,7 @@ bool AIInterface::Move(float & x, float & y, float & z, float o /*= 0*/)
     //m_Unit->m_movementManager.m_spline.m_splineFaceType.SetZ(z);
 
     //Add new points
-    if (sWorld.Pathfinding)
+    if (worldConfig.terrainCollision.isPathfindingEnabled)
     {
         //LogDebugFlag(LF_SCRIPT_MGR, "Pathfinding is enabled");
 
@@ -4183,7 +4190,7 @@ void AIInterface::EventLeaveCombat(Unit* pUnit, uint32 misc1)
     m_hasCalledForHelp = false;
     m_nextSpell = NULL;
     resetNextTarget();
-    m_Unit->clearAllCombatTargets();
+    m_Unit->CombatStatus.Vanished();
 
     if (m_AIType == AITYPE_PET)
     {
@@ -4264,7 +4271,7 @@ void AIInterface::EventDamageTaken(Unit* pUnit, uint32 misc1)
     {
         m_aiTargets.insert(TargetMap::value_type(pUnit->GetGUID(), misc1));
     }
-    pUnit->onDamageDealt(m_Unit);
+    pUnit->CombatStatus.OnDamageDealt(m_Unit);
 }
 
 void AIInterface::EventFollowOwner(Unit* pUnit, uint32 misc1)
@@ -4522,7 +4529,11 @@ void AIInterface::MoveKnockback(float x, float y, float z, float horizontal, flo
     AddSpline(x, y, z);
 
     m_Unit->m_movementManager.m_spline.GetSplineFlags()->m_splineFlagsRaw.trajectory = true;
+#if VERSION_STRING != Cata
     m_Unit->m_movementManager.m_spline.GetSplineFlags()->m_splineFlagsRaw.knockback = true;
+#else
+    m_Unit->m_movementManager.m_spline.GetSplineFlags()->m_splineFlagsRaw.falling = true;
+#endif
 
     SendMoveToPacket();
 
@@ -4537,7 +4548,11 @@ void AIInterface::OnMoveCompleted()
     //remove flags that are temporary
     splineFlags.done = false;
     splineFlags.trajectory = false;
+#if VERSION_STRING != Cata
     splineFlags.knockback = false;
+#else
+    splineFlags.falling = false;
+#endif
 
     //reset spline priority so other movements can happen
     m_splinePriority = SPLINE_PRIORITY_MOVEMENT;
@@ -4629,7 +4644,7 @@ bool AIInterface::MoveCharge(float x, float y, float z)
 
     m_runSpeed *= 3.5f;
 
-    if (sWorld.Pathfinding)
+    if (worldConfig.terrainCollision.isPathfindingEnabled)
     {
         //LogDebugFlag(LF_SCRIPT_MGR, "Pathfinding is enabled");
 

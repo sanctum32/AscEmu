@@ -22,6 +22,7 @@
 #include "Storage/MySQLDataStore.hpp"
 #include "Server/MainServerDefines.h"
 
+#if VERSION_STRING != Cata
 /// \todo refactoring
 bool MailMessage::AddMessageDataToPacket(WorldPacket& data)
 {
@@ -471,9 +472,9 @@ void WorldSession::HandleTakeMoney(WorldPacket& recv_data)
     }
 
     // Check they don't have more than the max gold
-    if (sWorld.GoldCapEnabled)
+    if (worldConfig.gold.isCapEnabled)
     {
-        if ((_player->GetGold() + message->money) > sWorld.GoldLimit)
+        if ((_player->GetGold() + message->money) > worldConfig.gold.limitAmount)
         {
             _player->GetItemInterface()->BuildInventoryChangeError(NULL, NULL, INV_ERR_TOO_MUCH_GOLD);
             return;
@@ -709,3 +710,4 @@ void WorldSession::SendMailError(uint32 error)
     data << error;
     SendPacket(&data);
 }
+#endif

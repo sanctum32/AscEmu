@@ -27,6 +27,11 @@
 #include "Management/Quest.h"
 #include "FastQueue.h"
 #include "Units/Unit.h"
+#include "AuthCodes.h"
+#if VERSION_STRING == Cata
+    #include "Management/AddonMgr.h"
+    #include "Units/Players/PlayerDefines.hpp"
+#endif
 #include <stddef.h>
 #include <string>
 
@@ -71,7 +76,7 @@ struct LfgRoleCheck;
 #define NOTIFICATION_MESSAGE_NO_PERMISSION "You do not have permission to perform that function."
 //#define CHECK_PACKET_SIZE(x, y) if (y > 0 && x.size() < y) { _socket->Disconnect(); return; }
 
-
+#if VERSION_STRING != Cata
 enum MovementFlags
 {
     // Byte 1 (Resets on Movement Key Press)
@@ -144,12 +149,6 @@ enum MovementFlags2
     MOVEFLAG2_INTERPOLATED_PITCH    = 0x1000
 };
 
-struct OpcodeHandler
-{
-    uint16 status;
-    void (WorldSession::*handler)(WorldPacket& recvPacket);
-};
-
 enum ObjectUpdateFlags
 {
     UPDATEFLAG_NONE         = 0x0000,
@@ -162,7 +161,49 @@ enum ObjectUpdateFlags
     UPDATEFLAG_HAS_POSITION = 0x0040,
     UPDATEFLAG_VEHICLE      = 0x0080,
     UPDATEFLAG_POSITION     = 0x0100,
-    UPDATEFLAG_ROTATION     = 0x0200
+    UPDATEFLAG_ROTATION     = 0x0200,
+    UPDATEFLAG_UNK1         = 0x0400,
+    UPDATEFLAG_ANIM_KITS    = 0x0800,
+    UPDATEFLAG_TRANSPORT_ARR = 0x1000,
+    UPDATEFLAG_ENABLE_PORTALS = 0x2000,
+    UPDATEFLAG_UNK2         = 0x4000
+};
+
+#else
+enum TrainerSpellState
+{
+    TRAINER_SPELL_GRAY = 0,
+    TRAINER_SPELL_GREEN = 1,
+    TRAINER_SPELL_RED = 2,
+    TRAINER_SPELL_GREEN_DISABLED = 10
+};
+
+#include "GameCata/Movement/MovementDefines.h"
+
+enum ObjectUpdateFlags
+{
+    UPDATEFLAG_NONE         = 0x0000,
+    UPDATEFLAG_SELF         = 0x0001,
+    UPDATEFLAG_TRANSPORT    = 0x0002,
+    UPDATEFLAG_HAS_TARGET   = 0x0004,
+    UPDATEFLAG_UNK          = 0x0008,
+    UPDATEFLAG_LOWGUID      = 0x0010,
+    UPDATEFLAG_LIVING       = 0x0020,
+    UPDATEFLAG_HAS_POSITION = 0x0040,
+    UPDATEFLAG_VEHICLE      = 0x0080,
+    UPDATEFLAG_POSITION     = 0x0100,
+    UPDATEFLAG_ROTATION     = 0x0200,
+    UPDATEFLAG_UNK1         = 0x0400,
+    UPDATEFLAG_ANIM_KITS    = 0x0800,
+    UPDATEFLAG_TRANSPORT_ARR = 0x1000,
+    UPDATEFLAG_UNK3         = 0x2000
+};
+#endif
+
+struct OpcodeHandler
+{
+    uint16 status;
+    void (WorldSession::*handler)(WorldPacket& recvPacket);
 };
 
 enum SessionStatus
@@ -197,6 +238,7 @@ struct AccountDataEntry
 };
 
 extern OpcodeHandler WorldPacketHandlers[NUM_MSG_TYPES];
+extern LoginErrorCode VerifyName(const char* name, size_t nlen);
 
 class SERVER_DECL WorldSession
 {
@@ -297,7 +339,7 @@ class SERVER_DECL WorldSession
         void SendNotification(const char* message, ...);
         void SendAuctionPlaceBidResultPacket(uint32 itemId, uint32 error);
 #if VERSION_STRING > TBC
-        void SendRefundInfo(uint64 GUID);
+        void SendRefundInfo(uint64_t guid);
 #endif
         void SendNotInArenaTeamPacket(uint8 type);
 
@@ -339,6 +381,7 @@ class SERVER_DECL WorldSession
         void HandleCharCreateOpcode(WorldPacket& recvPacket);
         void HandlePlayerLoginOpcode(WorldPacket& recvPacket);
         void HandleRealmSplitOpcode(WorldPacket& recvPacket);
+        void HandleObjectUpdateFailedOpcode(WorldPacket& recv_data);
         void HandleTimeSyncResp(WorldPacket& recv_data);
         void HandleDeclinedPlayerNameOpcode(WorldPacket& recv_data); // declined names (Cyrillic client)
 
@@ -352,6 +395,9 @@ class SERVER_DECL WorldSession
         void HandleLootReleaseOpcode(WorldPacket& recvPacket);
         void HandleLootMasterGiveOpcode(WorldPacket& recv_data);
         void HandleLootRollOpcode(WorldPacket& recv_data);
+#if VERSION_STRING == Cata
+        Loot* getLootFromHighGuidType(uint32_t highGuid);
+#endif
         void HandleWhoOpcode(WorldPacket& recvPacket);
         void HandleWhoIsOpcode(WorldPacket& recvPacket);
         void HandleLogoutRequestOpcode(WorldPacket& recvPacket);
@@ -420,6 +466,18 @@ class SERVER_DECL WorldSession
         void HandleMoveTeleportAckOpcode(WorldPacket& recv_data);
 
         /// Opcodes implemented in GroupHandler.cpp:
+#if VERSION_STRING == Cata
+    public:
+        void SendPartyCommandResult(Player* pPlayer, uint32_t p1, std::string name, uint32_t err);
+        void SendEmptyGroupList(Player* player);
+
+    private:
+        void HandleGroupInviteResponseOpcode(WorldPacket& recvPacket);
+        void HandleGroupSetRolesOpcode(WorldPacket& recvPacket);
+        void HandleGroupRequestJoinUpdatesOpcode(WorldPacket& recvPacket);
+#else
+        void SendPartyCommandResult(Player* pPlayer, uint32 p1, std::string name, uint32 err);
+#endif
         void HandleGroupInviteOpcode(WorldPacket& recvPacket);
         void HandleGroupCancelOpcode(WorldPacket& recvPacket);
         void HandleGroupAcceptOpcode(WorldPacket& recvPacket);
@@ -431,7 +489,7 @@ class SERVER_DECL WorldSession
         void HandleLootMethodOpcode(WorldPacket& recvPacket);
         void HandleMinimapPingOpcode(WorldPacket& recvPacket);
         void HandleSetPlayerIconOpcode(WorldPacket& recv_data);
-        void SendPartyCommandResult(Player* pPlayer, uint32 p1, std::string name, uint32 err);
+
 
         // Raid
         void HandleConvertGroupToRaidOpcode(WorldPacket& recvPacket);
@@ -546,6 +604,9 @@ class SERVER_DECL WorldSession
         void HandleUpdateProjectilePosition(WorldPacket& recv_data);
 
         /// Skill opcodes (SkillHandler.spp)
+#if VERSION_STRING == Cata
+        void HandleLearnPreviewTalentsOpcode(WorldPacket& recvPacket);
+#endif
         //void HandleSkillLevelUpOpcode(WorldPacket& recvPacket);
         void HandleLearnTalentOpcode(WorldPacket& recvPacket);
         void HandleLearnMultipleTalentsOpcode(WorldPacket& recvPacket);
@@ -614,12 +675,28 @@ class SERVER_DECL WorldSession
         void HandleChannelRosterQuery(WorldPacket& recvPacket);
 
         // Duel
+#if VERSION_STRING == Cata
+    public:
+        void SendDuelCountdown(uint32_t time = 3000);
+        void SendDuelComplete(uint8_t type);
+
+    protected:
+#endif
         void HandleDuelAccepted(WorldPacket& recv_data);
         void HandleDuelCancelled(WorldPacket& recv_data);
 
         // Trade
-        void HandleInitiateTrade(WorldPacket& recv_data);
-        void HandleBeginTrade(WorldPacket& recv_data);
+#if VERSION_STRING == Cata
+    public:
+        void sendTradeResult(TradeStatus result);
+        void sendTradeUpdate(bool trade_state = true);
+        void sendTradeCancel();
+
+    protected:
+#endif
+
+        void HandleInitiateTradeOpcode(WorldPacket& recv_data);
+        void HandleBeginTradeOpcode(WorldPacket& recv_data);
         void HandleBusyTrade(WorldPacket& recv_data);
         void HandleIgnoreTrade(WorldPacket& recv_data);
         void HandleAcceptTrade(WorldPacket& recv_data);
@@ -733,7 +810,11 @@ class SERVER_DECL WorldSession
         void HandleDungeonDifficultyOpcode(WorldPacket& recv_data);
         void HandleRaidDifficultyOpcode(WorldPacket& recv_data);
 
+#if VERSION_STRING != Cata
         uint8 TrainerGetSpellStatus(TrainerSpell* pSpell);
+#else
+        TrainerSpellState TrainerGetSpellStatus(TrainerSpell* pSpell);
+#endif
         void SendMailError(uint32 error);
 
         // At Login
@@ -801,6 +882,19 @@ class SERVER_DECL WorldSession
 #if VERSION_STRING == Cata
         void HandleReadyForAccountDataTimesOpcode(WorldPacket& recv_data);
         void HandleLoadScreenOpcode(WorldPacket& recv_data);
+        void HandleUITimeRequestOpcode(WorldPacket& recv_data);
+        void HandleTimeSyncRespOpcode(WorldPacket& recv_data);
+        void HandleRequestHotfix(WorldPacket& recv_data);
+        void HandleRequestCemeteryListOpcode(WorldPacket& recv_data);
+        void HandleForceSpeedAckOpcodes(WorldPacket& recv_data);
+
+    private:
+        typedef std::list<AddonEntry> AddonsList;
+        AddonsList m_addonList;
+
+    public:
+        void readAddonInfoPacket(ByteBuffer& recv_data);
+        void sendAddonInfo();
 #endif
 
         void Unhandled(WorldPacket& recv_data);
@@ -863,6 +957,7 @@ class SERVER_DECL WorldSession
         int8 _side;
 
         WoWGuid m_MoverWoWGuid;
+        uint64 m_MoverGuid;
 
         uint32 _logoutTime; // time we received a logout request -- wait 20 seconds, and quit
 
@@ -890,6 +985,7 @@ class SERVER_DECL WorldSession
 
         const MovementInfo* GetMovementInfo() const { return &movement_info; }
         static void InitPacketHandlerTable();
+        static void loadSpecificHandlers();
 
         uint32 floodLines;
         time_t floodTime;
@@ -904,7 +1000,5 @@ class SERVER_DECL WorldSession
 #endif
 
 };
-
-typedef std::set<WorldSession*> SessionSet;
 
 #endif // _WORLDSESSION_H

@@ -1,7 +1,7 @@
 /*
 ********************************************************************
 AscEmu char structure
-Last update: 02/04/2017
+Last update: 03/21/2017
 *********************************************************************
 */
 
@@ -93,6 +93,20 @@ CREATE TABLE IF NOT EXISTS `auctions` (
 -- Dumping data for table auctions: ~0 rows (approximately)
 /*!40000 ALTER TABLE `auctions` DISABLE KEYS */;
 /*!40000 ALTER TABLE `auctions` ENABLE KEYS */;
+
+
+-- Dumping structure for table banned_char_log
+CREATE TABLE IF NOT EXISTS  `banned_char_log` (
+  `banned_by` varchar(50) NOT NULL,
+  `banned_player` varchar(50) NOT NULL,
+  `timestamp` int(11) NOT NULL,
+  `banned_until` int(11) NOT NULL,
+  `reason` varchar(150) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- Dumping data for table banned_char_log: ~0 rows (approximately)
+/*!40000 ALTER TABLE `banned_char_log` DISABLE KEYS */;
+/*!40000 ALTER TABLE `banned_char_log` ENABLE KEYS */;
 
 
 -- Dumping structure for table banned_names
@@ -230,6 +244,7 @@ CREATE TABLE IF NOT EXISTS `characters` (
   `numspecs` int(10) NOT NULL DEFAULT '1',
   `currentspec` int(10) NOT NULL DEFAULT '0',
   `talentpoints` longtext NOT NULL,
+  `firsttalenttree` int(11) DEFAULT NULL,
   `phase` int(10) unsigned NOT NULL DEFAULT '1',
   `CanGainXp` int(10) unsigned NOT NULL DEFAULT '1',
   `data` longtext,
@@ -285,7 +300,7 @@ CREATE TABLE IF NOT EXISTS `character_db_version` (
 -- Dumping data for table character_db_version: ~1 rows (approximately)
 /*!40000 ALTER TABLE `character_db_version` DISABLE KEYS */;
 INSERT INTO `character_db_version` (`LastUpdate`) VALUES
-	('2017-02-04_01_queue_tables');
+	('2017-03-21_01_characters');
 /*!40000 ALTER TABLE `character_db_version` ENABLE KEYS */;
 
 
@@ -740,7 +755,7 @@ CREATE TABLE IF NOT EXISTS `mailbox` (
   `money` int(30) NOT NULL DEFAULT '0',
   `attached_item_guids` varchar(200) NOT NULL DEFAULT '',
   `cod` int(30) NOT NULL DEFAULT '0',
-  `stationary` int(30) NOT NULL DEFAULT '0',
+  `stationary` bigint(30) unsigned NOT NULL DEFAULT '0',
   `expiry_time` int(30) NOT NULL DEFAULT '0',
   `delivery_time` int(30) NOT NULL DEFAULT '0',
   `checked_flag` int(30) unsigned NOT NULL DEFAULT '0',

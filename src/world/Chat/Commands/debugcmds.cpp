@@ -33,9 +33,15 @@ bool ChatHandler::HandleDebugDumpMovementCommand(const char* args, WorldSession*
         auto me = session->GetPlayerOrThrow();
 
         SystemMessage(session, "Position: [%f, %f, %f, %f]", me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), me->GetOrientation());
+#if VERSION_STRING != Cata
         SystemMessage(session, "On transport: %s", me->obj_movement_info.transporter_info.guid != 0 ? "yes" : "no");
         SystemMessage(session, "Transport GUID: %lu", me->obj_movement_info.transporter_info.guid);
         SystemMessage(session, "Transport relative position: [%f, %f, %f, %f]", me->obj_movement_info.transporter_info.position.x, me->obj_movement_info.transporter_info.position.y, me->obj_movement_info.transporter_info.position.z, me->obj_movement_info.transporter_info.position.o);
+#else
+        SystemMessage(session, "On transport: %s", !me->obj_movement_info.getTransportGuid().IsEmpty() ? "yes" : "no");
+        //SystemMessage(session, "Transport GUID: %lu", me->obj_movement_info.getTransportGuid());
+        SystemMessage(session, "Transport relative position: [%f, %f, %f, %f]", me->obj_movement_info.getTransportPosition()->x, me->obj_movement_info.getTransportPosition()->y, me->obj_movement_info.getTransportPosition()->z, me->obj_movement_info.getTransportPosition()->o);
+#endif
 
         return true;
     }
@@ -1034,7 +1040,7 @@ bool ChatHandler::HandleRangeCheckCommand(const char* args, WorldSession* m_sess
 
 bool ChatHandler::HandleCollisionTestIndoor(const char* args, WorldSession* m_session)
 {
-    if (sWorld.Collision)
+    if (worldConfig.terrainCollision.isCollisionEnabled)
     {
         Player* plr = m_session->GetPlayer();
         const LocationVector & loc = plr->GetPosition();
@@ -1051,7 +1057,7 @@ bool ChatHandler::HandleCollisionTestIndoor(const char* args, WorldSession* m_se
 
 bool ChatHandler::HandleCollisionTestLOS(const char* args, WorldSession* m_session)
 {
-    if (sWorld.Collision)
+    if (worldConfig.terrainCollision.isCollisionEnabled)
     {
         Object* pObj = NULL;
         Creature* pCreature = GetSelectedCreature(m_session, false);
@@ -1085,7 +1091,7 @@ bool ChatHandler::HandleCollisionTestLOS(const char* args, WorldSession* m_sessi
 
 bool ChatHandler::HandleCollisionGetHeight(const char* args, WorldSession* m_session)
 {
-    if (sWorld.Collision)
+    if (worldConfig.terrainCollision.isCollisionEnabled)
     {
         Player* plr = m_session->GetPlayer();
         float radius = 5.0f;

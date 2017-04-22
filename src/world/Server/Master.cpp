@@ -28,6 +28,8 @@
 #include "Server/Master.h"
 #include "CommonScheduleThread.h"
 #include "Storage/DayWatcherThread.h"
+#include "Management/Channel.h"
+#include "Management/ChannelMgr.h"
 
 createFileSingleton(Master);
 std::string LogFileName;
@@ -48,13 +50,22 @@ SERVER_DECL SessionLogWriter* Player_Log;
 extern DayWatcherThread* dw;
 extern CommonScheduleThread* cs;
 
+// DB version
+#if VERSION_STRING != Cata
+static const char* REQUIRED_CHAR_DB_VERSION = "2017-04-22_01_banned_char_log";
+static const char* REQUIRED_WORLD_DB_VERSION = "2017-02-25_01_gameobject_spawns";
+#else
+static const char* REQUIRED_CHAR_DB_VERSION = "2017-04-22_01_banned_char_log";
+static const char* REQUIRED_WORLD_DB_VERSION = "2017-03-26_01_spawns";
+#endif
+
 void Master::_OnSignal(int s)
 {
     switch (s)
     {
 #ifndef WIN32
         case SIGHUP:
-            sWorld.Rehash(true);
+            sWorld.loadWorldConfigValues(true);
             break;
 #endif
         case SIGINT:
@@ -205,10 +216,20 @@ bool Master::Run(int argc, char** argv)
     ThreadPool.Startup();
     uint32 LoadingTime = getMSTime();
 
+    new EventMgr;
+    new World;
+
     if (!LoadWorldConfiguration(config_file, optional_config_file, realm_config_file))
     {
         return false;
     }
+
+    sWorld.loadWorldConfigValues();
+
+    AscLog.SetFileLoggingLevel(worldConfig.logLevel.fileLogLevel);
+    AscLog.SetDebugFlags(worldConfig.logLevel.debugFlags);
+
+    OpenCheatLogFiles();
 
     if (!_StartDB())
     {
@@ -231,16 +252,7 @@ bool Master::Run(int argc, char** argv)
         delete DatabaseCleaner::getSingletonPtr();
         LogDebug("Maintenance finished.");
     }
-#endif
-    new EventMgr;
-    new World;
 
-    OpenCheatLogFiles();
-
-    /* load the config file */
-    sWorld.Rehash(false);
-
-#ifdef COMMANDLINE_OPT_ENABLE
     /* set new log levels */
     if (file_log_level != (int)DEF_VALUE_NOT_SET)
         Log.SetFileLoggingLevel(file_log_level);
@@ -249,19 +261,16 @@ bool Master::Run(int argc, char** argv)
     // Initialize Opcode Table
     WorldSession::InitPacketHandlerTable();
 
-    std::string host = Config.MainConfig.GetStringDefault("Listen", "Host", "0.0.0.0");
-    int wsport = Config.MainConfig.GetIntDefault("Listen", "WorldServerPort", 8129);
-
     new ScriptMgr;
 
-    if (!sWorld.SetInitialWorldSettings())
+    if (!sWorld.setInitialWorldSettings())
     {
         LOG_ERROR("SetInitialWorldSettings() failed. Something went wrong? Exiting.");
         AscLog.~AscEmuLog();
         return false;
     }
 
-    sWorld.SetStartTime((uint32)UNIXTIME);
+    sWorld.setWorldStartTime((uint32)UNIXTIME);
 
     WorldRunnable* wr = new WorldRunnable();
     ThreadPool.ExecuteTask(wr);
@@ -277,7 +286,7 @@ bool Master::Run(int argc, char** argv)
 
     sScriptMgr.LoadScripts();
 
-    if (Config.MainConfig.GetBoolDefault("Startup", "EnableSpellIDDump", false))
+    if (worldConfig.startup.enableSpellIdDump)
         sScriptMgr.DumpUnimplementedSpells();
 
     LoadingTime = getMSTime() - LoadingTime;
@@ -289,6 +298,36 @@ bool Master::Run(int argc, char** argv)
 
     WritePidFile();
 
+    if (!ChannelMgr::getSingletonPtr())
+        new ChannelMgr;
+
+    channelmgr.seperatechannels = worldConfig.server.seperateChatChannels;
+
+    if (!MailSystem::getSingletonPtr())
+        new MailSystem;
+
+    uint32_t mailFlags = 0;
+
+    if (worldConfig.mail.isCostsForGmDisabled)
+        mailFlags |= MAIL_FLAG_NO_COST_FOR_GM;
+
+    if (worldConfig.mail.isCostsForEveryoneDisabled)
+        mailFlags |= MAIL_FLAG_DISABLE_POSTAGE_COSTS;
+
+    if (worldConfig.mail.isDelayItemsDisabled)
+        mailFlags |= MAIL_FLAG_DISABLE_HOUR_DELAY_FOR_ITEMS;
+
+    if (worldConfig.mail.isMessageExpiryDisabled)
+        mailFlags |= MAIL_FLAG_NO_EXPIRY;
+
+    if (worldConfig.mail.isInterfactionMailEnabled)
+        mailFlags |= MAIL_FLAG_CAN_SEND_TO_OPPOSITE_FACTION;
+
+    if (worldConfig.mail.isInterfactionMailForGmEnabled)
+        mailFlags |= MAIL_FLAG_CAN_SEND_TO_OPPOSITE_FACTION_GM;
+
+    sMailSystem.config_flags = mailFlags;
+
     //ThreadPool.Gobble();
 
     /* Connect to realmlist servers / logon servers */
@@ -296,7 +335,7 @@ bool Master::Run(int argc, char** argv)
     sLogonCommHandler.Startup();
 
     // Create listener
-    ListenSocket<WorldSocket> * ls = new ListenSocket<WorldSocket>(host.c_str(), wsport);
+    ListenSocket<WorldSocket> * ls = new ListenSocket<WorldSocket>(worldConfig.listen.listenHost.c_str(), worldConfig.listen.listenPort);
     bool listnersockcreate = ls->IsOpen();
 #ifdef WIN32
     if (listnersockcreate)
@@ -335,7 +374,7 @@ bool Master::Run(int argc, char** argv)
     ls->Close();
 
     CloseConsoleListener();
-    sWorld.SaveAllPlayers();
+    sWorld.saveAllPlayersToDb();
 
     LogNotice("Network : Shutting down network subsystem.");
 #ifdef WIN32
@@ -348,11 +387,22 @@ bool Master::Run(int argc, char** argv)
 
     delete ls;
 
-    sWorld.LogoutPlayers();
+    sWorld.logoutAllPlayers();
 
     delete LogonCommHandler::getSingletonPtr();
 
-    sWorld.ShutdownClasses();
+    LogNotice("AddonMgr : ~AddonMgr()");
+    sAddonMgr.SaveToDB();
+    delete AddonMgr::getSingletonPtr();
+
+    LogNotice("AuctionMgr : ~AuctionMgr()");
+    delete AuctionMgr::getSingletonPtr();
+    LogNotice("LootMgr : ~LootMgr()");
+    delete LootMgr::getSingletonPtr();
+
+    LogNotice("MailSystem : ~MailSystem()");
+    delete MailSystem::getSingletonPtr();
+
     LogNotice("World : ~World()");
     delete World::getSingletonPtr();
 
@@ -468,16 +518,14 @@ bool Master::_CheckDBVersion()
 
 bool Master::_StartDB()
 {
-    Database_World = NULL;
-    Database_Character = NULL;
-    std::string hostname, username, password, database;
-    int port = 0;
+    Database_World = nullptr;
+    Database_Character = nullptr;
 
-    bool wdb_result = Config.MainConfig.GetString("WorldDatabase", "Username", &username);
-    wdb_result = !wdb_result ? wdb_result : Config.MainConfig.GetString("WorldDatabase", "Password", &password);
-    wdb_result = !wdb_result ? wdb_result : Config.MainConfig.GetString("WorldDatabase", "Hostname", &hostname);
-    wdb_result = !wdb_result ? wdb_result : Config.MainConfig.GetString("WorldDatabase", "Name", &database);
-    wdb_result = !wdb_result ? wdb_result : Config.MainConfig.GetInt("WorldDatabase", "Port", &port);
+    bool wdb_result = !worldConfig.worldDb.user.empty();
+    wdb_result = !wdb_result ? wdb_result : !worldConfig.worldDb.password.empty();
+    wdb_result = !wdb_result ? wdb_result : !worldConfig.worldDb.host.empty();
+    wdb_result = !wdb_result ? wdb_result : !worldConfig.worldDb.dbName.empty();
+    wdb_result = !wdb_result ? wdb_result : worldConfig.worldDb.port;
 
     Database_World = Database::CreateDatabaseInterface();
 
@@ -488,18 +536,18 @@ bool Master::_StartDB()
     }
 
     // Initialize it
-    if (!WorldDatabase.Initialize(hostname.c_str(), (unsigned int)port, username.c_str(),
-        password.c_str(), database.c_str(), Config.MainConfig.GetIntDefault("WorldDatabase", "ConnectionCount", 3), 16384))
+    if (!WorldDatabase.Initialize(worldConfig.worldDb.host.c_str(), (unsigned int)worldConfig.worldDb.port, worldConfig.worldDb.user.c_str(),
+        worldConfig.worldDb.password.c_str(), worldConfig.worldDb.dbName.c_str(), worldConfig.worldDb.connections, 16384))
     {
         LogError("Configs : Connection to WorldDatabase failed. Check your database configurations!");
         return false;
     }
 
-    bool cdb_result = Config.MainConfig.GetString("CharacterDatabase", "Username", &username);
-    cdb_result = !cdb_result ? cdb_result : Config.MainConfig.GetString("CharacterDatabase", "Password", &password);
-    cdb_result = !cdb_result ? cdb_result : Config.MainConfig.GetString("CharacterDatabase", "Hostname", &hostname);
-    cdb_result = !cdb_result ? cdb_result : Config.MainConfig.GetString("CharacterDatabase", "Name", &database);
-    cdb_result = !cdb_result ? cdb_result : Config.MainConfig.GetInt("CharacterDatabase", "Port", &port);
+    bool cdb_result = !worldConfig.charDb.user.empty();
+    cdb_result = !cdb_result ? cdb_result : !worldConfig.charDb.password.empty();
+    cdb_result = !cdb_result ? cdb_result : !worldConfig.charDb.host.empty();
+    cdb_result = !cdb_result ? cdb_result : !worldConfig.charDb.dbName.empty();
+    cdb_result = !cdb_result ? cdb_result : worldConfig.charDb.port;
 
     Database_Character = Database::CreateDatabaseInterface();
 
@@ -510,8 +558,8 @@ bool Master::_StartDB()
     }
 
     // Initialize it
-    if (!CharacterDatabase.Initialize(hostname.c_str(), (unsigned int)port, username.c_str(),
-        password.c_str(), database.c_str(), Config.MainConfig.GetIntDefault("CharacterDatabase", "ConnectionCount", 5), 16384))
+    if (!CharacterDatabase.Initialize(worldConfig.charDb.host.c_str(), (unsigned int)worldConfig.charDb.port, worldConfig.charDb.user.c_str(),
+        worldConfig.charDb.password.c_str(), worldConfig.charDb.dbName.c_str(), worldConfig.charDb.connections, 16384))
     {
         LogError("Configs : Connection to CharacterDatabase failed. Check your database configurations!");
         return false;
@@ -575,7 +623,7 @@ void OnCrash(bool Terminate)
             WorldDatabase.EndThreads();
             CharacterDatabase.EndThreads();
             LogNotice("sql : All pending database operations cleared.");
-            sWorld.SaveAllPlayers();
+            sWorld.saveAllPlayersToDb();
             LogNotice("sql : Data saved.");
         }
     }
@@ -660,11 +708,35 @@ bool Master::LoadWorldConfiguration(char* config_file, char* optional_config_fil
 
 void Master::OpenCheatLogFiles()
 {
-    bool useTimeStamp = Config.MainConfig.GetBoolDefault("log", "TimeStamp", false);
+    bool useTimeStamp = worldConfig.log.addTimeStampToFileName;
 
     Anticheat_Log = new SessionLogWriter(AELog::GetFormattedFileName("logs", "cheaters", useTimeStamp).c_str(), false);
     GMCommand_Log = new SessionLogWriter(AELog::GetFormattedFileName("logs", "gmcommand", useTimeStamp).c_str(), false);
     Player_Log = new SessionLogWriter(AELog::GetFormattedFileName("logs", "players", useTimeStamp).c_str(), false);
+
+    if (Anticheat_Log->IsOpen())
+    {
+        if (!worldConfig.log.logCheaters)
+            Anticheat_Log->Close();
+    }
+    else if (worldConfig.log.logCheaters)
+        Anticheat_Log->Open();
+
+    if (GMCommand_Log->IsOpen())
+    {
+        if (!worldConfig.log.logGmCommands)
+            GMCommand_Log->Close();
+    }
+    else if (worldConfig.log.logGmCommands)
+        GMCommand_Log->Open();
+
+    if (Player_Log->IsOpen())
+    {
+        if (!worldConfig.log.logPlayers)
+            Player_Log->Close();
+    }
+    else if (worldConfig.log.logPlayers)
+            Player_Log->Open();
 }
 
 void Master::StartRemoteConsole()
@@ -719,7 +791,7 @@ void Master::ShutdownThreadPools(bool listnersockcreate)
             FILE* f = fopen("worldserver.uptime", "w");
             if (f)
             {
-                fprintf(f, "%u %u %u %u", sWorld.GetUptime(), sWorld.GetSessionCount(), sWorld.PeakSessionCount, sWorld.mAcceptedConnections);
+                fprintf(f, "%u %u %u %u", sWorld.GetUptime(), sWorld.GetSessionCount(), sWorld.getPeakSessionCount(), sWorld.getAcceptedConnections());
                 fclose(f);
             }
 #endif
@@ -777,7 +849,7 @@ void Master::ShutdownThreadPools(bool listnersockcreate)
                         char str[20];
                         snprintf(str, 20, "%02u:%02u", mins, secs);
                         data << str;
-                        sWorld.SendGlobalMessage(&data, NULL);
+                        sWorld.sendGlobalMessage(&data);
                     }
                 }
                 next_send = getMSTime() + 1000;

@@ -25,6 +25,7 @@
 #include "Management/ItemPrototype.h"
 #include "Storage/DBC/DBCStructures.hpp"
 #include "Objects/Object.h"
+#include "WorldConf.h"
 #include "LootMgr.h"
 
 struct EnchantmentInstance
@@ -146,6 +147,7 @@ enum EnchantmentSlot
     SOCK_ENCHANTMENT_SLOT3          = 4,
     BONUS_ENCHANTMENT_SLOT          = 5,
     PRISMATIC_ENCHANTMENT_SLOT      = 6,
+#if VERSION_STRING != Cata
     MAX_INSPECTED_ENCHANTMENT_SLOT  = 7,
 
     PROP_ENCHANTMENT_SLOT_0         = 7,        /// used with RandomSuffix
@@ -154,6 +156,18 @@ enum EnchantmentSlot
     PROP_ENCHANTMENT_SLOT_3         = 10,       /// used with RandomProperty
     PROP_ENCHANTMENT_SLOT_4         = 11,       /// used with RandomProperty
     MAX_ENCHANTMENT_SLOT            = 12
+#else
+    REFORGE_ENCHANTMENT_SLOT = 8,
+    TRANSMOGRIFY_ENCHANTMENT_SLOT = 9,
+    MAX_INSPECTED_ENCHANTMENT_SLOT = 10,
+
+    PROP_ENCHANTMENT_SLOT_0 = 10,   // used with RandomSuffix
+    PROP_ENCHANTMENT_SLOT_1 = 11,   // used with RandomSuffix
+    PROP_ENCHANTMENT_SLOT_2 = 12,   // used with RandomSuffix and RandomProperty
+    PROP_ENCHANTMENT_SLOT_3 = 13,   // used with RandomProperty
+    PROP_ENCHANTMENT_SLOT_4 = 14,   // used with RandomProperty
+    MAX_ENCHANTMENT_SLOT = 15
+#endif
 };
 
 enum RandomEnchantmentTypes
@@ -256,6 +270,16 @@ class SERVER_DECL Item : public Object
 
         void SetDurabilityToMax() { SetUInt32Value(ITEM_FIELD_DURABILITY, GetUInt32Value(ITEM_FIELD_MAXDURABILITY)); }
 
+#if VERSION_STRING < WotLK
+        uint32 GetEnchantmentId(uint32 index) { return GetUInt32Value(ITEM_FIELD_ENCHANTMENT + 3 * index); }
+        void SetEnchantmentId(uint32 index, uint32 value) { SetUInt32Value(ITEM_FIELD_ENCHANTMENT + 3 * index, value); }
+
+        uint32 GetEnchantmentDuration(uint32 index) { return GetUInt32Value(ITEM_FIELD_ENCHANTMENT + 1 + 3 * index); }
+        void SetEnchantmentDuration(uint32 index, uint32 value) { SetUInt32Value(ITEM_FIELD_ENCHANTMENT + 1 + 3 * index, value); }
+
+        uint32 GetEnchantmentCharges(uint32 index) { return GetUInt32Value(ITEM_FIELD_ENCHANTMENT + 2 + 3 * index); }
+        void SetEnchantmentCharges(uint32 index, uint32 value) { SetUInt32Value(ITEM_FIELD_ENCHANTMENT + 2 + 3 * index, value); }
+#else
         uint32 GetEnchantmentId(uint32 index) { return GetUInt32Value(ITEM_FIELD_ENCHANTMENT_1_1 + 3 * index); }
         void SetEnchantmentId(uint32 index, uint32 value) { SetUInt32Value(ITEM_FIELD_ENCHANTMENT_1_1 + 3 * index, value); }
 
@@ -270,6 +294,7 @@ class SERVER_DECL Item : public Object
         /////////////////////////////////////////////////////////
         void SetCreationTime(uint32 time) { SetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME, time); }
         uint32 GetCreationTime() { return GetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME); }
+#endif
 
         // DB Serialization
         void LoadFromDB(Field* fields, Player* plr, bool light);
@@ -417,6 +442,17 @@ class SERVER_DECL Item : public Object
 
         void SetText(std::string &text){ this->text = text; }
         const std::string& GetText() const{ return this->text; }
+#if VERSION_STRING == Cata
+    protected:
+
+        bool m_isInTrade;
+
+    public:
+
+        void setIsInTrade(bool inTrade = true) { m_isInTrade = inTrade; }
+        bool isInTrade() const { return m_isInTrade; }
+
+#endif
 
     protected:
 

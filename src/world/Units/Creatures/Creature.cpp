@@ -140,19 +140,19 @@ void Creature::Update(unsigned long time_passed)
         switch (this->creature_properties->Rank)
         {
             case ELITE_ELITE:
-                sEventMgr.AddEvent(this, &Creature::OnRemoveCorpse, EVENT_CREATURE_REMOVE_CORPSE, sWorld.m_DecayElite, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+                sEventMgr.AddEvent(this, &Creature::OnRemoveCorpse, EVENT_CREATURE_REMOVE_CORPSE, worldConfig.corpseDecay.eliteTimeInSeconds, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
                 break;
             case ELITE_RAREELITE:
-                sEventMgr.AddEvent(this, &Creature::OnRemoveCorpse, EVENT_CREATURE_REMOVE_CORPSE, sWorld.m_DecayRareElite, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+                sEventMgr.AddEvent(this, &Creature::OnRemoveCorpse, EVENT_CREATURE_REMOVE_CORPSE, worldConfig.corpseDecay.rareEliteTimeInSeconds, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
                 break;
             case ELITE_WORLDBOSS:
-                sEventMgr.AddEvent(this, &Creature::OnRemoveCorpse, EVENT_CREATURE_REMOVE_CORPSE, sWorld.m_DecayWorldboss, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+                sEventMgr.AddEvent(this, &Creature::OnRemoveCorpse, EVENT_CREATURE_REMOVE_CORPSE, worldConfig.corpseDecay.worldbossTimeInSeconds, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
                 break;
             case ELITE_RARE:
-                sEventMgr.AddEvent(this, &Creature::OnRemoveCorpse, EVENT_CREATURE_REMOVE_CORPSE, sWorld.m_DecayRare, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+                sEventMgr.AddEvent(this, &Creature::OnRemoveCorpse, EVENT_CREATURE_REMOVE_CORPSE, worldConfig.corpseDecay.rareTimeInSeconds, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
                 break;
             default:
-                sEventMgr.AddEvent(this, &Creature::OnRemoveCorpse, EVENT_CREATURE_REMOVE_CORPSE, sWorld.m_DecayNormal, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+                sEventMgr.AddEvent(this, &Creature::OnRemoveCorpse, EVENT_CREATURE_REMOVE_CORPSE, worldConfig.corpseDecay.normalTimeInSeconds, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
                 break;
         }
 
@@ -314,7 +314,7 @@ void Creature::generateLoot()
     }
 
     // Master Looting Ninja Checker
-    if (sWorld.antiMasterLootNinja)
+    if (worldConfig.optional.deactivateMasterLootNinja)
     {
         Player* looter = objmgr.GetPlayer((uint32)this->TaggerGuid);
         if (looter && looter->GetGroup() && looter->GetGroup()->GetMethod() == PARTY_LOOT_MASTER)
@@ -377,7 +377,7 @@ void Creature::generateLoot()
         loot.gold = static_cast<uint32>(0.5 + gold_fp);
     }
 
-    loot.gold = static_cast<uint32>(loot.gold * sWorld.getRate(RATE_MONEY));
+    loot.gold = static_cast<uint32>(loot.gold * worldConfig.getFloatRate(RATE_MONEY));
 }
 
 void Creature::SaveToDB()
@@ -896,8 +896,10 @@ void Creature::CalcResistance(uint32 type)
     else
         pos += FlatResistanceMod[type];
 
+#if VERSION_STRING != Classic
     SetUInt32Value(UNIT_FIELD_RESISTANCEBUFFMODSPOSITIVE + type, pos);
     SetUInt32Value(UNIT_FIELD_RESISTANCEBUFFMODSNEGATIVE + type, neg);
+#endif
 
     int32 tot = BaseResistance[type] + pos - neg;
 
@@ -933,8 +935,10 @@ void Creature::CalcStat(uint32 type)
     else
         pos += FlatStatMod[type];
 
+#if VERSION_STRING != Classic
     SetUInt32Value(UNIT_FIELD_POSSTAT0 + type, pos);
     SetUInt32Value(UNIT_FIELD_NEGSTAT0 + type, neg);
+#endif
 
     int32 tot = BaseStats[type] + pos - neg;
     SetStat(type, tot > 0 ? tot : 0);
@@ -964,6 +968,7 @@ void Creature::CalcStat(uint32 type)
         break;
         case STAT_STAMINA:
         {
+#if VERSION_STRING != Classic
             //Health
             uint32 hp = GetBaseHealth();
             uint32 stat_bonus = GetUInt32Value(UNIT_FIELD_POSSTAT2) - GetUInt32Value(UNIT_FIELD_NEGSTAT2);
@@ -976,10 +981,12 @@ void Creature::CalcStat(uint32 type)
             SetUInt32Value(UNIT_FIELD_MAXHEALTH, res);
             if (GetUInt32Value(UNIT_FIELD_HEALTH) > GetUInt32Value(UNIT_FIELD_MAXHEALTH))
                 SetHealth(GetUInt32Value(UNIT_FIELD_MAXHEALTH));
+#endif
         }
         break;
         case STAT_INTELLECT:
         {
+#if VERSION_STRING != Classic
             if (GetPowerType() == POWER_TYPE_MANA)
             {
                 uint32 mana = GetBaseMana();
@@ -992,6 +999,7 @@ void Creature::CalcStat(uint32 type)
                 if (res < mana) res = mana;
                 SetMaxPower(POWER_TYPE_MANA, res);
             }
+#endif
         }
         break;
     }
@@ -1016,7 +1024,7 @@ void Creature::RegenerateHealth()
     if (GetCreatureProperties()->Rank == 3)
         amt *= 10000.0f;
     //Apply shit from conf file
-    amt *= sWorld.getRate(RATE_HEALTH);
+    amt *= worldConfig.getFloatRate(RATE_HEALTH);
 
     if (amt <= 1.0f) //this fixes regen like 0.98
         cur++;
@@ -1037,7 +1045,7 @@ void Creature::RegenerateMana()
     amt = (getLevel() + 10) * PctPowerRegenModifier[POWER_TYPE_MANA];
 
 
-    amt *= sWorld.getRate(RATE_POWER1);
+    amt *= worldConfig.getFloatRate(RATE_POWER1);
     if (amt <= 1.0)  //this fixes regen like 0.98
         cur++;
     else
@@ -1096,7 +1104,7 @@ void Creature::RegenerateFocus()
     uint32 cur = GetPower(POWER_TYPE_FOCUS);
     uint32 mm = GetMaxPower(POWER_TYPE_FOCUS);
     if (cur >= mm)return;
-    float regenrate = sWorld.getRate(RATE_POWER3);
+    float regenrate = worldConfig.getFloatRate(RATE_POWER3);
     float amt = 25.0f * PctPowerRegenModifier[POWER_TYPE_FOCUS] * regenrate;
     cur += (uint32)amt;
     SetPower(POWER_TYPE_FOCUS, (cur >= mm) ? mm : cur);
@@ -1126,7 +1134,11 @@ Trainer* Creature::GetTrainer()
     return mTrainer;
 }
 
+#if VERSION_STRING != Cata
 void Creature::AddVendorItem(uint32 itemid, uint32 amount, DBC::Structures::ItemExtendedCostEntry const* ec)
+#else
+void Creature::AddVendorItem(uint32 itemid, uint32 amount, DB2::Structures::ItemExtendedCostEntry const* ec)
+#endif
 {
     CreatureItem ci;
     ci.amount = amount;
@@ -1290,7 +1302,9 @@ bool Creature::Load(CreatureSpawn* spawn, uint32 mode, MapInfo const* info)
     SetEntry(creature_properties->Id);
     SetScale(creature_properties->Scale);
 
+#if VERSION_STRING > TBC
     SetFloatValue(UNIT_FIELD_HOVERHEIGHT, creature_properties->Scale);
+#endif
 
     uint32 health;
     if (creature_properties->MinHealth > creature_properties->MaxHealth)
@@ -1538,7 +1552,9 @@ void Creature::Load(CreatureProperties const* properties_, float x, float y, flo
     SetEntry(creature_properties->Id);
     SetScale(creature_properties->Scale);
 
+#if VERSION_STRING > TBC
     SetFloatValue(UNIT_FIELD_HOVERHEIGHT, creature_properties->Scale);
+#endif
 
     uint32 health = creature_properties->MinHealth + RandomUInt(creature_properties->MaxHealth - creature_properties->MinHealth);
 
@@ -2140,7 +2156,11 @@ void Creature::GetSellItemByItemId(uint32 itemid, CreatureItem& ci)
     ci.itemid = 0;
 }
 
+#if VERSION_STRING != Cata
 DBC::Structures::ItemExtendedCostEntry const* Creature::GetItemExtendedCostByItemId(uint32 itemid)
+#else
+DB2::Structures::ItemExtendedCostEntry const* Creature::GetItemExtendedCostByItemId(uint32 itemid)
+#endif
 {
     for (std::vector<CreatureItem>::iterator itr = m_SellItems->begin(); itr != m_SellItems->end(); ++itr)
         {
@@ -2245,7 +2265,7 @@ void Creature::DealDamage(Unit* pVictim, uint32 damage, uint32 targetEvent, uint
         return;
 
     if (pVictim != this)
-        onDamageDealt(pVictim);
+        CombatStatus.OnDamageDealt(pVictim);
 
     pVictim->SetStandState(STANDSTATE_STAND);
 
@@ -2392,7 +2412,7 @@ void Creature::Die(Unit* pAttacker, uint32 damage, uint32 spellid)
     SetHealth(0);
 
     // Wipe our attacker set on death
-    clearAllCombatTargets();
+    CombatStatus.Vanished();
 
     RemoveAllNonPersistentAuras();
 
@@ -2574,8 +2594,12 @@ void Creature::HandleMonsterSayEvent(MONSTER_SAY_EVENTS Event)
         // check for special variables $N=name $C=class $R=race $G=gender
         // $G is followed by male_string:female_string;
         std::string newText = text;
-        static const char* races[12] = { "None", "Human", "Orc", "Dwarf", "Night Elf", "Undead", "Tauren", "Gnome", "Troll", "None", "Blood Elf", "Draenei" };
-        static const char* classes[12] = { "None", "Warrior", "Paladin", "Hunter", "Rogue", "Priest", "Death Knight", "Shaman", "Mage", "Warlock", "None", "Druid" };
+#if VERSION_STRING != Cata
+        static const char* races[NUM_RACES] = { "None", "Human", "Orc", "Dwarf", "Night Elf", "Undead", "Tauren", "Gnome", "Troll", "None", "Blood Elf", "Draenei" };
+#else
+        static const char* races[NUM_RACES] = { "None", "Human", "Orc", "Dwarf", "Night Elf", "Undead", "Tauren", "Gnome", "Troll", "Goblin", "Blood Elf", "Draenei", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "Worgen" };
+#endif
+        static const char* classes[MAX_PLAYER_CLASSES] = { "None", "Warrior", "Paladin", "Hunter", "Rogue", "Priest", "Death Knight", "Shaman", "Mage", "Warlock", "None", "Druid" };
         char* test = strstr((char*)text, "$R");
         if (test == NULL)
             test = strstr((char*)text, "$r");

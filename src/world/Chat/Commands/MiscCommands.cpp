@@ -155,15 +155,27 @@ bool ChatHandler::HandleGoStartLocationCommand(const char* args, WorldSession* m
             raceid = 7;
         else if (race == "troll")
             raceid = 8;
+#if VERSION_STRING == Cata
+        else if (race == "goblin")
+            raceid = 9;
+#endif
         else if (race == "bloodelf")
             raceid = 10;
         else if (race == "draenei")
             raceid = 11;
         else if (race == "deathknight")
             classid = 6;
+#if VERSION_STRING == Cata
+        else if (race == "worgen")
+            raceid = 22;
+#endif
         else
         {
+#if VERSION_STRING == Cata
+            RedSystemMessage(m_session, "Invalid start location! Valid locations are: human, dwarf, gnome, nightelf, draenei, orc, troll, goblin, tauren, undead, bloodelf, worgen, deathknight");
+#else
             RedSystemMessage(m_session, "Invalid start location! Valid locations are: human, dwarf, gnome, nightelf, draenei, orc, troll, tauren, undead, bloodelf, deathknight");
+#endif
             return true;
         }
     }
@@ -465,11 +477,11 @@ bool ChatHandler::HandleKickByNameCommand(const char* args, WorldSession* m_sess
             return true;
         }
 
-        if (sWorld.gamemaster_announceKick)
+        if (worldConfig.gm.worldAnnounceOnKickPlayer)
         {
-            char msg[200];
-            snprintf(msg, 200, "%sGM: %s was kicked from the server by %s. Reason: %s", MSG_COLOR_RED, player_target->GetName(), m_session->GetPlayer()->GetName(), kickreason.c_str());
-            sWorld.SendWorldText(msg, NULL);
+            std::stringstream worldAnnounce;
+            worldAnnounce << MSG_COLOR_RED << "GM: " << player_target->GetName() << " was kicked from the server by " << m_session->GetPlayer()->GetName() << ". Reason: " << kickreason;
+            sWorld.sendMessageToAll(worldAnnounce.str(), nullptr);
         }
 
         SystemMessage(player_target->GetSession(), "You are being kicked from the server by %s. Reason: %s", m_session->GetPlayer()->GetName(), kickreason.c_str());
@@ -504,7 +516,7 @@ bool ChatHandler::HandleKKickBySessionCommand(const char* args, WorldSession* m_
             return true;
         }
 
-        sWorld.DisconnectUsersWithAccount(args, m_session);
+        sWorld.disconnectSessionByAccountName(args, m_session);
         sGMLog.writefromsession(m_session, "kicked player with account %s", args);
     }
     else
@@ -525,7 +537,7 @@ bool ChatHandler::HandleKickByIPCommand(const char* args, WorldSession* m_sessio
         return true;
     }
 
-    sWorld.DisconnectUsersWithIP(args, m_session);
+    sWorld.disconnectSessionByIp(args, m_session);
     sGMLog.writefromsession(m_session, "kicked players with IP %s", args);
 
     return true;
@@ -589,13 +601,21 @@ bool ChatHandler::HandleGPSCommand(const char* args, WorldSession* m_session)
     auto out_y = obj->GetPositionY();
     auto out_z = obj->GetPositionZ();
     auto out_o = obj->GetOrientation();
+#if VERSION_STRING != Cata
     auto out_area_name = at->area_name[0]; // enUS, hardcoded until locale is implemented properly
+#else
+    auto out_area_name = at->area_name;
+#endif
 
     snprintf((char*)buf, 400, "|cff00ff00Current Position: |cffffffffMap: |cff00ff00%d |cffffffffZone: |cff00ff00%u |cffffffffArea: |cff00ff00%u |cffffffffPhase: |cff00ff00%u |cffffffffX: |cff00ff00%f |cffffffffY: |cff00ff00%f |cffffffffZ: |cff00ff00%f |cffffffffOrientation: |cff00ff00%f |cffffffffArea Name: |cff00ff00%s |r",
         out_map_id, out_zone_id, out_area_id, out_phase, out_x, out_y, out_z, out_o, out_area_name);
     SystemMessage(m_session, buf);
 
+#if VERSION_STRING != Cata
     if (obj->obj_movement_info.IsOnTransport())
+#else
+    if (!obj->obj_movement_info.getTransportGuid().IsEmpty())
+#endif
     {
         SystemMessage(m_session, "Position on Transport:");
         SystemMessage(m_session, "  tX: %f  tY: %f  tZ: %f  tO: %f", obj->GetTransPositionX(), obj->GetTransPositionY(), obj->GetTransPositionZ(), obj->GetTransPositionO());
@@ -722,38 +742,36 @@ bool ChatHandler::HandleAnnounceCommand(const char* args, WorldSession* m_sessio
         return true;
     }
 
-    char msg[1024];
-    std::string colored_text;
-    colored_text = sWorld.ann_tagcolor;
-    colored_text += "[";
-    colored_text += sWorld.announce_tag;
-    colored_text += "]";
-    colored_text += sWorld.ann_gmtagcolor;
+    std::stringstream worldAnnounce;
+    worldAnnounce << worldConfig.getColorStringForNumber(worldConfig.color.tagColor);
+    worldAnnounce << "[";
+    worldAnnounce << worldConfig.announce.announceTag;
+    worldAnnounce << "]";
+    worldAnnounce << worldConfig.getColorStringForNumber(worldConfig.color.tagGmColor);
 
-    if (sWorld.GMAdminTag)
+    if (worldConfig.announce.enableGmAdminTag)
     {
         if (m_session->CanUseCommand('z'))
-            colored_text += "<Admin>";
+            worldAnnounce << "<Admin>";
         else if (m_session->GetPermissionCount())
-            colored_text += "<GM>";
+            worldAnnounce << "<GM>";
     }
 
-    if (sWorld.NameinAnnounce)
+    if (worldConfig.announce.showNameInAnnounce)
     {
-        colored_text += "|r" + sWorld.ann_namecolor + "|Hplayer:";
-        colored_text += m_session->GetPlayer()->GetName();
-        colored_text += "|h[";
-        colored_text += m_session->GetPlayer()->GetName();
-        colored_text += "]|h:|r " + sWorld.ann_msgcolor;
+        worldAnnounce << "|r" << worldConfig.getColorStringForNumber(worldConfig.color.tagColor) << "|Hplayer:";
+        worldAnnounce << m_session->GetPlayer()->GetName();
+        worldAnnounce << "|h[";
+        worldAnnounce << m_session->GetPlayer()->GetName();
+        worldAnnounce << "]|h:|r " << worldConfig.getColorStringForNumber(worldConfig.color.msgColor);
     }
-    else if (!sWorld.NameinAnnounce)
+    else if (!worldConfig.announce.showNameInAnnounce)
     {
-        colored_text += ": "; colored_text += sWorld.ann_msgcolor;
+        worldAnnounce << ": ";
+        worldAnnounce << worldConfig.getColorStringForNumber(worldConfig.color.msgColor);
     }
 
-    snprintf((char*)msg, 1024, "%s%s", colored_text.c_str(), args);
-
-    sWorld.SendWorldText(msg);
+    sWorld.sendMessageToAll(worldAnnounce.str());
 
     sGMLog.writefromsession(m_session, "used announce command, [%s]", args);
 
@@ -766,15 +784,14 @@ bool ChatHandler::HandleWAnnounceCommand(const char* args, WorldSession* m_sessi
     if (!*args)
         return false;
 
-    char msg[1024];
     std::string colored_widescreen_text;
-    colored_widescreen_text = sWorld.ann_tagcolor;
+    colored_widescreen_text = worldConfig.getColorStringForNumber(worldConfig.color.tagColor);
     colored_widescreen_text += "[";
-    colored_widescreen_text += sWorld.announce_tag;
+    colored_widescreen_text += worldConfig.announce.announceTag;
     colored_widescreen_text += "]";
-    colored_widescreen_text += sWorld.ann_gmtagcolor;
+    colored_widescreen_text += worldConfig.getColorStringForNumber(worldConfig.color.tagGmColor);
 
-    if (sWorld.GMAdminTag)
+    if (worldConfig.announce.enableGmAdminTag)
     {
         if (m_session->CanUseCommand('z'))
             colored_widescreen_text += "<Admin>";
@@ -782,20 +799,18 @@ bool ChatHandler::HandleWAnnounceCommand(const char* args, WorldSession* m_sessi
             colored_widescreen_text += "<GM>";
     }
 
-    if (sWorld.NameinWAnnounce)
+    if (worldConfig.announce.showNameInWAnnounce)
     {
-        colored_widescreen_text += "|r" + sWorld.ann_namecolor + "[";
+        colored_widescreen_text += "|r" + worldConfig.getColorStringForNumber(worldConfig.color.tagColor) + "[";
         colored_widescreen_text += m_session->GetPlayer()->GetName();
-        colored_widescreen_text += "]:|r " + sWorld.ann_msgcolor;
+        colored_widescreen_text += "]:|r " + worldConfig.getColorStringForNumber(worldConfig.color.msgColor);
     }
-    else if (!sWorld.NameinWAnnounce)
+    else if (!worldConfig.announce.showNameInWAnnounce)
     {
-        colored_widescreen_text += ": "; colored_widescreen_text += sWorld.ann_msgcolor;
+        colored_widescreen_text += ": "; colored_widescreen_text += worldConfig.getColorStringForNumber(worldConfig.color.msgColor);
     }
 
-    snprintf((char*)msg, 1024, "%s%s", colored_widescreen_text.c_str(), args);
-
-    sWorld.SendWorldWideScreenText(msg);
+    sWorld.sendAreaTriggerMessage(colored_widescreen_text);
 
     sGMLog.writefromsession(m_session, "used wannounce command [%s]", args);
 
@@ -1001,10 +1016,15 @@ bool ChatHandler::HandlePlayerInfo(const char* args, WorldSession* m_session)
     }
     WorldSession* sess = plr->GetSession();
 
-    static const char* classes[12] =
+    static const char* classes[MAX_PLAYER_CLASSES] =
     { "None", "Warrior", "Paladin", "Hunter", "Rogue", "Priest", "Death Knight", "Shaman", "Mage", "Warlock", "None", "Druid" };
-    static const char* races[12] =
+#if VERSION_STRING != Cata
+    static const char* races[NUM_RACES] =
     { "None", "Human", "Orc", "Dwarf", "Night Elf", "Undead", "Tauren", "Gnome", "Troll", "None", "Blood Elf", "Draenei" };
+#else
+    static const char* races[NUM_RACES] =
+    { "None", "Human", "Orc", "Dwarf", "Night Elf", "Undead", "Tauren", "Gnome", "Troll", "Goblin", "Blood Elf", "Draenei", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "Worgen" };
+#endif
 
     char playedLevel[64];
     char playedTotal[64];
@@ -1216,7 +1236,7 @@ bool ChatHandler::HandleIPBanCommand(const char* args, WorldSession* m_session)
 
     SystemMessage(m_session, "Adding [%s] to IP ban table, expires %s.Reason is :%s", pIp, (expire_time == 0) ? "Never" : ctime(&expire_time), pReason);
     sLogonCommHandler.IPBan_Add(IP.c_str(), (uint32)expire_time, pReason);
-    sWorld.DisconnectUsersWithIP(IP.substr(0, IP.find("/")).c_str(), m_session);
+    sWorld.disconnectSessionByIp(IP.substr(0, IP.find("/")).c_str(), m_session);
     sGMLog.writefromsession(m_session, "banned ip address %s, expires %s", pIp, (expire_time == 0) ? "Never" : ctime(&expire_time));
 
     return true;
@@ -1266,12 +1286,15 @@ bool ChatHandler::HandleBanCharacterCommand(const char* args, WorldSession* m_se
     SystemMessage(m_session, "This ban is due to expire %s%s.", BanTime ? "on " : "", BanTime ? Util::GetDateTimeStringFromTimeStamp(BanTime + (uint32)UNIXTIME).c_str() : "Never");
 
     sGMLog.writefromsession(m_session, "banned %s, reason %s, for %s", pCharacter, (pReason == NULL) ? "No reason" : pReason, BanTime ? Util::GetDateStringFromSeconds(BanTime).c_str() : "ever");
-    char msg[200];
-    snprintf(msg, 200, "%sGM: %s has been banned by %s for %s. Reason: %s", MSG_COLOR_RED, pCharacter, m_session->GetPlayer()->GetName(), BanTime ? Util::GetDateStringFromSeconds(BanTime).c_str() : "ever", (pReason == NULL) ? "No reason." : pReason);
-    sWorld.SendWorldText(msg, NULL);
-    if (sWorld.m_banTable && pInfo)
+    
+    std::stringstream worldAnnounce;
+    worldAnnounce << MSG_COLOR_RED << "GM: " << pCharacter << " has been banned by " << m_session->GetPlayer()->GetName() << " for ";
+    worldAnnounce << (BanTime ? Util::GetDateStringFromSeconds(BanTime) : "ever") << " Reason: " << ((pReason == NULL) ? "No reason." : pReason);
+    sWorld.sendMessageToAll(worldAnnounce.str());
+
+    if (sWorld.settings.log.enableSqlBanLog && pInfo)
     {
-        CharacterDatabase.Execute("INSERT INTO %s VALUES('%s', '%s', %u, %u, '%s')", sWorld.m_banTable, m_session->GetPlayer()->GetName(), pInfo->name, (uint32)UNIXTIME, (uint32)UNIXTIME + BanTime, (pReason == NULL) ? "No reason." : CharacterDatabase.EscapeString(std::string(pReason)).c_str());
+        CharacterDatabase.Execute("INSERT INTO `banned_char_log` VALUES('%s', '%s', %u, %u, '%s')", m_session->GetPlayer()->GetName(), pInfo->name, (uint32)UNIXTIME, (uint32)UNIXTIME + BanTime, (pReason == NULL) ? "No reason." : CharacterDatabase.EscapeString(std::string(pReason)).c_str());
     }
 
     if (pPlayer)

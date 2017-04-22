@@ -65,6 +65,9 @@
 #endif
 //////////////////////////////////////////////////////////////////////////////////////////
 
+#if VERSION_STRING == Cata
+#include "Storage/DB2/DB2Stores.h"
+#endif
 #include "Storage/DBC/DBCStores.h"
 
 //Movement
@@ -80,7 +83,7 @@
 
 #include "Server/IUpdatable.h"
 #include "Server/WUtil.h"
-#include "Server/UpdateFields.h"
+#include "Server/UpdateFieldInclude.h"
 #include "Server/UpdateMask.h"
 #include "Server/Packets/Opcode.h"
 
@@ -173,6 +176,8 @@
 #include "Management/TransporterHandler.h"
 #include "Management/WeatherMgr.h"
 #include "Server/World.h"
+#include "Server/World.Legacy.h"
+#include "Server/WorldConfig.h"
 #include "Management/EquipmentSetMgr.h"
 #include "Management/ItemInterface.h"
 #include "Units/Stats.h"

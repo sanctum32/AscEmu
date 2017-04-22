@@ -6,9 +6,11 @@ This file is released under the MIT license. See README-MIT for more information
 #ifndef _DBC_STORES_H
 #define _DBC_STORES_H
 
+#include "WorldConf.h"
+
+#if VERSION_STRING != Cata
 #include "DBCGlobals.hpp"
 #include "Server/Definitions.h"
-
 
 inline float GetRadius(DBC::Structures::SpellRadiusEntry const* radius)
 {
@@ -119,8 +121,17 @@ extern SERVER_DECL DBC::DBCStorage<DBC::Structures::LiquidTypeEntry> sLiquidType
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::VehicleEntry> sVehicleStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::VehicleSeatEntry> sVehicleSeatStore;
 
-bool LoadDBCs();
-
 DBC::Structures::WMOAreaTableEntry const* GetWMOAreaTableEntryByTriple(int32 root_id, int32 adt_id, int32 group_id);
+
+std::string generateName(uint32 type = 0);
+
+uint32 const* getTalentTabPages(uint8 playerClass);
+
+bool LoadDBCs();
+#endif
+
+#if VERSION_STRING == Cata
+    #include "../world/GameCata/Storage/DBCStores.h"
+#endif
 
 #endif // _DBC_STORES_H

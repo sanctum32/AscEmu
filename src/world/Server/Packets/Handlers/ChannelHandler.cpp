@@ -23,10 +23,12 @@
 #include "Management/ChannelMgr.h"
 #include "Server/WorldSession.h"
 #include "Server/World.h"
+#include "Server/World.Legacy.h"
 #include "Objects/ObjectMgr.h"
 
 initialiseSingleton(ChannelMgr);
 
+#if VERSION_STRING != Cata
 void WorldSession::HandleChannelJoin(WorldPacket& recvPacket)
 {
     CHECK_INWORLD_RETURN
@@ -41,8 +43,7 @@ void WorldSession::HandleChannelJoin(WorldPacket& recvPacket)
     recvPacket >> channelname;
     recvPacket >> pass;
 
-
-    if (sWorld.GmClientChannel.size() && !stricmp(sWorld.GmClientChannel.c_str(), channelname.c_str()) && !GetPermissionCount())
+    if (worldConfig.getGmClientChannelName().size() && !stricmp(worldConfig.getGmClientChannelName().c_str(), channelname.c_str()) && !GetPermissionCount())
         return;
 
     chn = channelmgr.GetCreateChannel(channelname.c_str(), _player, dbc_id);
@@ -52,6 +53,7 @@ void WorldSession::HandleChannelJoin(WorldPacket& recvPacket)
     chn->AttemptJoin(_player, pass.c_str());
     LogDebugFlag(LF_OPCODE, "ChannelJoin %s", channelname.c_str());
 }
+#endif
 
 void WorldSession::HandleChannelLeave(WorldPacket& recvPacket)
 {

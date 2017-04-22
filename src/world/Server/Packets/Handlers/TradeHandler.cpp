@@ -27,9 +27,11 @@
 #include "Map/MapMgr.h"
 #include "Server/WorldSession.h"
 #include "Server/World.h"
+#include "Server/World.Legacy.h"
 #include "Objects/ObjectMgr.h"
 
-void WorldSession::HandleInitiateTrade(WorldPacket& recv_data)
+#if VERSION_STRING != Cata
+void WorldSession::HandleInitiateTradeOpcode(WorldPacket& recv_data)
 {
     CHECK_INWORLD_RETURN
 
@@ -55,7 +57,7 @@ void WorldSession::HandleInitiateTrade(WorldPacket& recv_data)
         TradeStatus = TRADE_STATUS_DEAD;
     else if (pTarget->mTradeTarget != 0)
         TradeStatus = TRADE_STATUS_ALREADY_TRADING;
-    else if (pTarget->GetTeam() != _player->GetTeam() && GetPermissionCount() == 0 && !sWorld.interfaction_trade)
+    else if (pTarget->GetTeam() != _player->GetTeam() && GetPermissionCount() == 0 && !worldConfig.interfaction.isInterfactionTradeEnabled)
         TradeStatus = TRADE_STATUS_WRONG_FACTION;
 
     data << TradeStatus;
@@ -77,7 +79,7 @@ void WorldSession::HandleInitiateTrade(WorldPacket& recv_data)
     pTarget->m_session->SendPacket(&data);
 }
 
-void WorldSession::HandleBeginTrade(WorldPacket& recv_data)
+void WorldSession::HandleBeginTradeOpcode(WorldPacket& recv_data)
 {
     CHECK_INWORLD_RETURN
 
@@ -484,7 +486,7 @@ void WorldSession::HandleAcceptTrade(WorldPacket& recv_data)
             if (pTarget->mTradeGold)
             {
                 // Check they don't have more than the max gold
-                if (sWorld.GoldCapEnabled && (_player->GetGold() + pTarget->mTradeGold) > sWorld.GoldLimit)
+                if (worldConfig.gold.isCapEnabled && (_player->GetGold() + pTarget->mTradeGold) > worldConfig.gold.limitAmount)
                 {
                     _player->GetItemInterface()->BuildInventoryChangeError(NULL, NULL, INV_ERR_TOO_MUCH_GOLD);
                 }
@@ -498,7 +500,7 @@ void WorldSession::HandleAcceptTrade(WorldPacket& recv_data)
             if (_player->mTradeGold)
             {
                 // Check they don't have more than the max gold
-                if (sWorld.GoldCapEnabled && (pTarget->GetGold() + _player->mTradeGold) > sWorld.GoldLimit)
+                if (worldConfig.gold.isCapEnabled && (pTarget->GetGold() + _player->mTradeGold) > worldConfig.gold.limitAmount)
                 {
                     pTarget->GetItemInterface()->BuildInventoryChangeError(NULL, NULL, INV_ERR_TOO_MUCH_GOLD);
                 }
@@ -529,3 +531,4 @@ void WorldSession::HandleAcceptTrade(WorldPacket& recv_data)
         _player->SaveToDB(false);
     }
 }
+#endif

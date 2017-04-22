@@ -289,7 +289,9 @@ void CommandTableStorage::Init()
         { "mana",               'm', nullptr,       "Mods mana points (MP) of selected target.",            nullptr, UNIT_FIELD_POWER1,                 UNIT_FIELD_MAXPOWER1, 1 },
         { "rage",               'm', nullptr,       "Mods rage points of selected target.",                 nullptr, UNIT_FIELD_POWER2,                 UNIT_FIELD_MAXPOWER2, 1 },
         { "energy",             'm', nullptr,       "Mods energy points of selected target.",               nullptr, UNIT_FIELD_POWER4,                 UNIT_FIELD_MAXPOWER4, 1 },
+#if VERSION_STRING == WotLK
         { "runicpower",         'm', nullptr,       "Mods runic power points of selected target.",          nullptr, UNIT_FIELD_POWER7,                 UNIT_FIELD_MAXPOWER7, 1 },
+#endif
         { "strength",           'm', nullptr,       "Mods strength value of the selected target.",          nullptr, UNIT_FIELD_STAT0,                  0,                    1 },
         { "agility",            'm', nullptr,       "Mods agility value of the selected target.",           nullptr, UNIT_FIELD_STAT1,                  0,                    1 },
         { "intelligence",       'm', nullptr,       "Mods intelligence value of the selected target.",      nullptr, UNIT_FIELD_STAT3,                  0,                    1 },
@@ -353,6 +355,7 @@ void CommandTableStorage::Init()
         { "aimove",             'd', &ChatHandler::HandleAIMoveCommand,             "",                                                         nullptr, 0, 0, 0 },
         { "dist",               'd', &ChatHandler::HandleDistanceCommand,           "",                                                         nullptr, 0, 0, 0 },
         { "face",               'd', &ChatHandler::HandleFaceCommand,               "",                                                         nullptr, 0, 0, 0 },
+        { "dumpstate",               'd', &ChatHandler::HandleDebugDumpState,               "",                                                         nullptr, 0, 0, 0 },
         { "moveinfo",           'd', &ChatHandler::HandleDebugMoveInfo,             "",                                                         nullptr, 0, 0, 0 },
         { "setbytes",           'd', &ChatHandler::HandleSetBytesCommand,           "",                                                         nullptr, 0, 0, 0 },
         { "getbytes",           'd', &ChatHandler::HandleGetBytesCommand,           "",                                                         nullptr, 0, 0, 0 },

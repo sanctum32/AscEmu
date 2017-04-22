@@ -126,7 +126,7 @@ void WorldSession::HandleMoveTeleportAckOpcode(WorldPacket& recv_data)
 
     if (m_MoverWoWGuid.GetOldGuid() == _player->GetGUID())
     {
-        if (sWorld.antihack_teleport && !(HasGMPermissions() && sWorld.no_antihack_on_gm) && _player->GetPlayerStatus() != TRANSFER_PENDING)
+        if (worldConfig.antiHack.isTeleportHackCheckEnabled && !(HasGMPermissions() && worldConfig.antiHack.isAntiHackCheckDisabledForGm) && _player->GetPlayerStatus() != TRANSFER_PENDING)
         {
             /* we're obviously cheating */
             sCheatLog.writefromsession(this, "Used teleport hack, disconnecting.");
@@ -134,7 +134,7 @@ void WorldSession::HandleMoveTeleportAckOpcode(WorldPacket& recv_data)
             return;
         }
 
-        if (sWorld.antihack_teleport && !(HasGMPermissions() && sWorld.no_antihack_on_gm) && _player->m_position.Distance2DSq(_player->m_sentTeleportPosition) > 625.0f)	/* 25.0f*25.0f */
+        if (worldConfig.antiHack.isTeleportHackCheckEnabled && !(HasGMPermissions() && worldConfig.antiHack.isAntiHackCheckDisabledForGm) && _player->m_position.Distance2DSq(_player->m_sentTeleportPosition) > 625.0f)	/* 25.0f*25.0f */
         {
             /* cheating.... :(*/
             sCheatLog.writefromsession(this, "Used teleport hack {2}, disconnecting.");
@@ -160,10 +160,11 @@ void WorldSession::HandleMoveTeleportAckOpcode(WorldPacket& recv_data)
     }
 }
 
+#if VERSION_STRING != Cata
 void _HandleBreathing(MovementInfo & movement_info, Player* _player, WorldSession* pSession)
 {
     // no water breathing is required
-    if (!sWorld.BreathingEnabled || _player->FlyCheat || _player->m_bUnlimitedBreath || !_player->isAlive() || _player->GodModeCheat)
+    if (!worldConfig.server.enableBreathing || _player->FlyCheat || _player->m_bUnlimitedBreath || !_player->isAlive() || _player->GodModeCheat)
     {
         // player is flagged as in water
         if (_player->m_UnderwaterState & UNDERWATERSTATE_SWIMMING)
@@ -255,7 +256,9 @@ void _HandleBreathing(MovementInfo & movement_info, Player* _player, WorldSessio
         }
     }
 }
+#endif
 
+#if VERSION_STRING != Cata
 struct MovementFlagName
 {
     uint32 flag;
@@ -438,12 +441,12 @@ void WorldSession::HandleMovementOpcodes(WorldPacket& recv_data)
         _player->isTurning = false;
 
 
-    if (!(HasGMPermissions() && sWorld.no_antihack_on_gm) && !_player->GetCharmedUnitGUID())
+    if (!(HasGMPermissions() && worldConfig.antiHack.isAntiHackCheckDisabledForGm) && !_player->GetCharmedUnitGUID())
     {
         /************************************************************************/
         /* Anti-Teleport                                                        */
         /************************************************************************/
-        if (sWorld.antihack_teleport && _player->m_position.Distance2DSq(movement_info.position.x, movement_info.position.y) > 3025.0f
+        if (worldConfig.antiHack.isTeleportHackCheckEnabled && _player->m_position.Distance2DSq(movement_info.position.x, movement_info.position.y) > 3025.0f
             && _player->getSpeedForType(TYPE_RUN) < 50.0f && !_player->obj_movement_info.transporter_info.guid)
         {
             sCheatLog.writefromsession(this, "Disconnected for teleport hacking. Player speed: %f, Distance traveled: %f", _player->getSpeedForType(TYPE_RUN), sqrt(_player->m_position.Distance2DSq(movement_info.position.x, movement_info.position.y)));
@@ -453,7 +456,7 @@ void WorldSession::HandleMovementOpcodes(WorldPacket& recv_data)
     }
 
     //update the detector
-    if (sWorld.antihack_speed && !_player->GetTaxiState() && _player->obj_movement_info.transporter_info.guid == 0 && !_player->GetSession()->GetPermissionCount())
+    if (worldConfig.antiHack.isSpeedHackCkeckEnabled && !_player->GetTaxiState() && _player->obj_movement_info.transporter_info.guid == 0 && !_player->GetSession()->GetPermissionCount())
     {
         // simplified: just take the fastest speed. less chance of fuckups too
         float speed = (_player->flying_aura) ? _player->getSpeedForType(TYPE_FLY) : (_player->getSpeedForType(TYPE_SWIM) > _player->getSpeedForType(TYPE_RUN)) ? _player->getSpeedForType(TYPE_SWIM) : _player->getSpeedForType(TYPE_RUN);
@@ -744,12 +747,14 @@ void WorldSession::HandleMovementOpcodes(WorldPacket& recv_data)
             mover->SetPosition(movement_info.position.x, movement_info.position.y, movement_info.position.z, movement_info.position.o);
     }
 }
+#endif
 
 void WorldSession::HandleMoveTimeSkippedOpcode(WorldPacket& recv_data)
 {}
 
 void WorldSession::HandleMoveNotActiveMoverOpcode(WorldPacket& recv_data)
 {
+#if VERSION_STRING != Cata
     CHECK_INWORLD_RETURN
 
     WoWGuid guid;
@@ -768,8 +773,8 @@ void WorldSession::HandleMoveNotActiveMoverOpcode(WorldPacket& recv_data)
     // set up to the movement packet
     movement_packet[0] = m_MoverWoWGuid.GetNewGuidMask();
     memcpy(&movement_packet[1], m_MoverWoWGuid.GetNewGuid(), m_MoverWoWGuid.GetNewGuidLen());
+#endif
 }
-
 
 void WorldSession::HandleSetActiveMoverOpcode(WorldPacket& recv_data)
 {
@@ -886,6 +891,7 @@ void WorldSession::HandleTeleportCheatOpcode(WorldPacket& recv_data)
     _player->SafeTeleport(_player->GetMapId(), _player->GetInstanceID(), vec);
 }
 
+#if VERSION_STRING != Cata
 void MovementInfo::init(WorldPacket& data)
 {
     transporter_info.transGuid = 0;
@@ -981,3 +987,4 @@ void MovementInfo::write(WorldPacket& data)
         data << spline_elevation;
     }
 }
+#endif

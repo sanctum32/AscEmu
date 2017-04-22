@@ -47,7 +47,15 @@ enum PlayerTeam : int
 ///
 //////////////////////////////////////////////////////////////////////////////////////////
 
-#define DBC_PLAYER_LEVEL_CAP 80
+#if VERSION_STRING == Classic
+    #define DBC_PLAYER_LEVEL_CAP 60
+#elif VERSION_STRING == TBC
+    #define DBC_PLAYER_LEVEL_CAP 70
+#elif VERSION_STRING == WotLK
+    #define DBC_PLAYER_LEVEL_CAP 80
+#elif VERSION_STRING == Cata
+    #define DBC_PLAYER_LEVEL_CAP 85
+#endif
 
 //////////////////////////////////////////////////////////////////////////////////////////
 /// DBC_PLAYER_SKILL_MAX
@@ -64,7 +72,16 @@ enum PlayerTeam : int
 ///
 //////////////////////////////////////////////////////////////////////////////////////////
 
-#define DBC_PLAYER_SKILL_MAX 450
+#if VERSION_STRING == Classic
+    #define DBC_PLAYER_SKILL_MAX 300
+#elif VERSION_STRING == TBC
+    #define DBC_PLAYER_SKILL_MAX 375
+#elif VERSION_STRING == WotLK
+    #define DBC_PLAYER_SKILL_MAX 450
+#elif VERSION_STRING == Cata
+    #define DBC_PLAYER_SKILL_MAX 525
+#endif
+
 
 //////////////////////////////////////////////////////////////////////////////////////////
 /// Minimum level required arena
@@ -107,8 +124,17 @@ enum Races
     RACE_TAUREN     = 6,
     RACE_GNOME      = 7,
     RACE_TROLL      = 8,
+#if VERSION_STRING == Cata
+    RACE_GOBLIN     = 9,
+#endif
     RACE_BLOODELF   = 10,
-    RACE_DRAENEI    = 11
+    RACE_DRAENEI    = 11,
+#if VERSION_STRING != Cata
+    NUM_RACES
+#else
+    RACE_WORGEN     = 22,
+    NUM_RACES
+#endif
 };
 
 enum PlayerStatus
@@ -472,8 +498,9 @@ enum DrunkenState
     druid - restoration - 282
 */
 
-static const uint32 TalentTreesPerClass[DRUID + 1][3] =
+static const uint32 TalentTreesPerClass[MAX_PLAYER_CLASSES][3] =
 {
+#if VERSION_STRING != Cata
     { 0, 0, 0 },        // NONE
     { 161, 163, 164 },  // WARRIOR
     { 382, 383, 381 },  // PALADIN
@@ -486,6 +513,20 @@ static const uint32 TalentTreesPerClass[DRUID + 1][3] =
     { 302, 303, 301 },  // WARLOCK
     { 0, 0, 0 },        // NONE
     { 283, 281, 282 },  // DRUID
+#else
+    { 0, 0, 0 },        // NONE
+    { 746, 815, 845 },  // WARRIOR      - arms - fury - protection -
+    { 831, 839, 855 },  // PALADIN      - holy - protection - retribution -
+    { 811, 807, 809 },  // HUNTER       - beast - marksmanship - survival -
+    { 182, 181, 183 },  // ROGUE        - assassination - combat - subelty -
+    { 760, 813, 795 },  // PRIEST       - discipline - holy - shadow -
+    { 398, 399, 400 },  // DEATH KNIGHT - blood - frost - unholy -
+    { 261, 263, 262 },  // SHAMAN       - elemental - enchantment - restoration -
+    { 799, 851, 823 },  // MAGE         - arcane - fire - frost -
+    { 871, 867, 865 },  // WARLOCK      - affliction - demonology - destruction -
+    { 0, 0, 0 },        // NONE
+    { 752, 750, 748 },  // DRUID        - balance - feral/combat - restoration -
+#endif
 };
 
 
@@ -510,6 +551,50 @@ enum UnderwaterState
     UNDERWATERSTATE_SLIME           = 64
 };
 
+#if VERSION_STRING == Cata
+enum TradeStatus
+{
+    TRADE_STATUS_OPEN_WINDOW            = 0,
+    TRADE_STATUS_INITIATED              = 1,
+    TRADE_STATUS_NOT_ON_TAPLIST         = 2,
+    TRADE_STATUS_YOU_LOGOUT             = 3,
+    TRADE_STATUS_IGNORE_YOU             = 4,
+    TRADE_STATUS_TARGET_DEAD            = 5,
+    TRADE_STATUS_TRADE_ACCEPT           = 6,
+    TRADE_STATUS_TARGET_LOGOUT          = 7,
+    TRADE_STATUS_UNK8                   = 8,
+    TRADE_STATUS_TRADE_COMPLETE         = 9,
+    TRADE_STATUS_UNK10                  = 10,
+    TRADE_STATUS_UNK11                  = 11,
+    TRADE_STATUS_BEGIN_TRADE            = 12,
+    TRADE_STATUS_YOU_DEAD               = 13,
+    TRADE_STATUS_UNK14                  = 14,
+    TRADE_STATUS_UNK15                  = 15,
+    TRADE_STATUS_TARGET_TO_FAR          = 16,
+    TRADE_STATUS_NO_TARGET              = 17,
+    TRADE_STATUS_UNK18                  = 18,
+    TRADE_STATUS_CURRENCY_NOT_TRADEABLE = 19,
+    TRADE_STATUS_WRONG_FACTION          = 20,
+    TRADE_STATUS_BUSY                   = 21,
+    TRADE_STATUS_UNK22                  = 22,
+    TRADE_STATUS_TRADE_CANCELED         = 23,
+    TRADE_STATUS_CURRENCY               = 24,
+    TRADE_STATUS_BACK_TO_TRADE          = 25,
+    TRADE_STATUS_ONLY_CONJURED          = 26,
+    TRADE_STATUS_YOU_STUNNED            = 27,
+    TRADE_STATUS_UNK28                  = 28,
+    TRADE_STATUS_TARGET_STUNNED         = 29,
+    TRADE_STATUS_UNK30                  = 30,
+    TRADE_STATUS_CLOSE_WINDOW           = 31
+};
+
+enum TradeSlots
+{
+    TRADE_SLOT_COUNT            = 7,
+    TRADE_SLOT_TRADED_COUNT     = 6,
+    TRADE_SLOT_NONTRADED        = 6
+};
+#else
 enum TradeStatus
 {
     TRADE_STATUS_PLAYER_BUSY        = 0x00,
@@ -535,6 +620,7 @@ enum TradeData
     TRADE_GIVE        = 0x00,
     TRADE_RECEIVE     = 0x01
 };
+#endif
 
 enum DuelStatus
 {
@@ -616,9 +702,18 @@ enum PlayerCheats
     #define PLAYER_ACTION_BUTTON_COUNT 132
 #endif
 
-#define PLAYER_ACTION_BUTTON_SIZE PLAYER_ACTION_BUTTON_COUNT * sizeof(ActionButton)
+#if VERSION_STRING != Cata
+    #define PLAYER_ACTION_BUTTON_SIZE PLAYER_ACTION_BUTTON_COUNT * sizeof(ActionButton)
+#else
+    #define PLAYER_ACTION_BUTTON_SIZE PLAYER_ACTION_BUTTON_COUNT * sizeof(uint32)
+#endif
 
 #define MAX_SPEC_COUNT 2
-#define GLYPHS_COUNT 6
+
+#if VERSION_STRING == Cata
+    #define GLYPHS_COUNT 9
+#else
+    #define GLYPHS_COUNT 6
+#endif
 
 #endif // _PLAYER_DEFINES_H

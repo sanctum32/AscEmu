@@ -28,6 +28,7 @@
 #include "Server/MainServerDefines.h"
 #include "Server/WorldSession.h"
 #include "Server/World.h"
+#include "Server/World.Legacy.h"
 #include "Objects/ObjectMgr.h"
 
 void WorldSession::HandleSetVisibleRankOpcode(WorldPacket& recv_data)
@@ -69,7 +70,7 @@ int32 HonorHandler::CalculateHonorPointsForKill(uint32 playerLevel, uint32 victi
         return 0;
 
     float honor_points = -0.53177f + 0.59357f * exp((k_level + 23.54042f) / 26.07859f);
-    honor_points *= World::getSingleton().getRate(RATE_HONOR);
+    honor_points *= World::getSingleton().settings.getFloatRate(RATE_HONOR);
     return float2int32(honor_points);
 }
 
@@ -155,7 +156,7 @@ void HonorHandler::OnPlayerKilled(Player* pPlayer, Player* pVictim)
 
                 bool added = false;
                 Player* plr = static_cast<Player*>(*itr);
-                if (pVictim->hasAttacker(plr->GetGUID()))
+                if (pVictim->CombatStatus.m_attackers.find(plr->GetGUID()) != pVictim->CombatStatus.m_attackers.end())
                 {
                     added = true;
                     contributors.insert(plr);

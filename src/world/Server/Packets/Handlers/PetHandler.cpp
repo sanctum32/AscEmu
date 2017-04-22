@@ -387,11 +387,13 @@ void WorldSession::HandleBuyStableSlot(WorldPacket& recv_data)
 
     int32 stable_cost = 0;
 
+#if VERSION_STRING != Cata
     auto stable_slot_prices = sStableSlotPricesStore.LookupEntry(_player->GetStableSlotCount() + 1);
     if (stable_slot_prices != nullptr)
         stable_cost = stable_slot_prices->Price;
     else
         stable_cost = 99999999;
+#endif
 
 
     WorldPacket data(SMSG_STABLE_RESULT, 1);
@@ -575,6 +577,7 @@ void WorldSession::HandlePetCancelAura(WorldPacket& recvPacket)
         pet->RemoveAura(spellid);
 }
 
+#if VERSION_STRING != Cata
 void WorldSession::HandlePetLearnTalent(WorldPacket& recvPacket)
 {
     CHECK_INWORLD_RETURN
@@ -643,3 +646,4 @@ void WorldSession::HandlePetLearnTalent(WorldPacket& recvPacket)
     // send talent update
     pPet->SendTalentsToOwner();
 }
+#endif

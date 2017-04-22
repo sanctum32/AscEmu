@@ -26,12 +26,42 @@
 #include "Creatures/Creature.h"
 #include "Creatures/Pet.h"
 #include "Server/World.h"
+#include "Server/World.Legacy.h"
 #include "../../scripts/Battlegrounds/AlteracValley.h"
+#include "WorldConf.h"
 
 uint32 getConColor(uint16 AttackerLvl, uint16 VictimLvl)
 {
+#if VERSION_STRING == Classic
     const uint32 grayLevel[DBC_PLAYER_LEVEL_CAP + 1] =
-    { 
+    {
+        0,                                          //0
+        0, 0, 0, 0, 0, 0, 1, 2, 3, 4,               //1-10
+        5, 6, 7, 8, 9, 10, 11, 12, 13, 13,          //11-20
+        14, 15, 16, 17, 18, 19, 20, 21, 22, 22,     //21-30
+        23, 24, 25, 26, 27, 28, 29, 30, 31, 31,     //31-40
+        32, 33, 34, 35, 35, 36, 37, 38, 39, 39,     //41-50
+        40, 41, 42, 43, 43, 44, 45, 46, 47, 47      //51-60
+    };
+#endif
+
+#if VERSION_STRING == TBC
+    const uint32 grayLevel[DBC_PLAYER_LEVEL_CAP + 1] =
+    {
+        0,                                          //0
+        0, 0, 0, 0, 0, 0, 1, 2, 3, 4,               //1-10
+        5, 6, 7, 8, 9, 10, 11, 12, 13, 13,          //11-20
+        14, 15, 16, 17, 18, 19, 20, 21, 22, 22,     //21-30
+        23, 24, 25, 26, 27, 28, 29, 30, 31, 31,     //31-40
+        32, 33, 34, 35, 35, 36, 37, 38, 39, 39,     //41-50
+        40, 41, 42, 43, 43, 44, 45, 46, 47, 47,     //51-60
+        48, 49, 50, 51, 51, 52, 53, 54, 55, 56      //61-70
+    };
+#endif
+
+#if VERSION_STRING == WotLK
+    const uint32 grayLevel[DBC_PLAYER_LEVEL_CAP + 1] =
+    {
         0,                                          //0
         0, 0, 0, 0, 0, 0, 1, 2, 3, 4,               //1-10
         5, 6, 7, 8, 9, 10, 11, 12, 13, 13,          //11-20
@@ -42,6 +72,23 @@ uint32 getConColor(uint16 AttackerLvl, uint16 VictimLvl)
         48, 49, 50, 51, 51, 52, 53, 54, 55, 56,     //61-70
         57, 58, 59, 60, 61, 62, 63, 64, 65, 65      //71-80
     };
+#endif
+
+#if VERSION_STRING == Cata
+    const uint32 grayLevel[DBC_PLAYER_LEVEL_CAP + 1] =
+    {
+        0,                                          //0
+        0, 0, 0, 0, 0, 0, 1, 2, 3, 4,               //1-10
+        5, 6, 7, 8, 9, 10, 11, 12, 13, 13,          //11-20
+        14, 15, 16, 17, 18, 19, 20, 21, 22, 22,     //21-30
+        23, 24, 25, 26, 27, 28, 29, 30, 31, 31,     //31-40
+        32, 33, 34, 35, 35, 36, 37, 38, 39, 39,     //41-50
+        40, 41, 42, 43, 43, 44, 45, 46, 47, 47,     //51-60
+        48, 49, 50, 51, 51, 52, 53, 54, 55, 56,     //61-70
+        57, 58, 59, 60, 61, 62, 63, 64, 65, 65,     //71-80
+        65, 66, 67, 68, 69                          //81-85
+    };
+#endif
 
     if (AttackerLvl + 5 <= VictimLvl)
     {
@@ -215,7 +262,7 @@ uint32 CalculateXpToGive(Unit* pVictim, Unit* pAttacker)
     if (xp == 0.0f)
         return 0;
 
-    xp *= sWorld.getRate(RATE_XP);
+    xp *= worldConfig.getFloatRate(RATE_XP);
 
     // elite boss multiplier
     if (victimI)

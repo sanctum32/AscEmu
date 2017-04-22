@@ -120,6 +120,7 @@ void WorldSession::HandleTrainerListOpcode(WorldPacket& recv_data)
     SendTrainerList(train);
 }
 
+#if VERSION_STRING != Cata
 void WorldSession::SendTrainerList(Creature* pCreature)
 {
     Trainer* pTrainer = pCreature->GetTrainer();
@@ -175,7 +176,6 @@ void WorldSession::SendTrainerList(Creature* pCreature)
         SendPacket(&data);
     }
 }
-
 
 void WorldSession::HandleTrainerBuySpellOpcode(WorldPacket & recvPacket)
 {
@@ -279,6 +279,7 @@ uint8 WorldSession::TrainerGetSpellStatus(TrainerSpell* pSpell)
         return TRAINER_STATUS_NOT_LEARNABLE;
     return TRAINER_STATUS_LEARNABLE;
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////////////////////////
 /// This function handles CMSG_PETITION_SHOWLIST:
@@ -601,6 +602,7 @@ void WorldSession::HandleBinderActivateOpcode(WorldPacket& recv_data)
 
 #define BIND_SPELL_ID 3286
 
+#if VERSION_STRING != Cata
 void WorldSession::SendInnkeeperBind(Creature* pCreature)
 {
     WorldPacket data(45);
@@ -622,6 +624,7 @@ void WorldSession::SendInnkeeperBind(Creature* pCreature)
 
     pCreature->CastSpell(_player->GetGUID(), BIND_SPELL_ID, true);
 }
+#endif
 
 #undef BIND_SPELL_ID
 

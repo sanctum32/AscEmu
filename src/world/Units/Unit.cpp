@@ -9,156 +9,6 @@ This file is released under the MIT license. See README-MIT for more information
 #include "Players/Player.h"
 #include "Spell/SpellAuras.h"
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Combat
-
-void Unit::setCombatFlag(bool enabled)
-{
-    if (enabled)
-    {
-        SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_COMBAT);
-    }
-    else
-    {
-        RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_COMBAT);
-    }
-}
-
-bool Unit::isInCombat() const
-{
-    return m_combatStatus.isInCombat();
-}
-
-bool Unit::isAttacking(Unit* target) const
-{
-    ASSERT(target);
-
-    return m_combatStatus.isAttacking(target);
-}
-
-void Unit::enterCombat()
-{
-    setCombatFlag(true);
-
-    if (!hasUnitStateFlag(UNIT_STATE_ATTACKING))
-    {
-        addUnitStateFlag(UNIT_STATE_ATTACKING);
-    }
-}
-
-void Unit::leaveCombat()
-{
-    setCombatFlag(false);
-
-    if (hasUnitStateFlag(UNIT_STATE_ATTACKING))
-    {
-        removeUnitStateFlag(UNIT_STATE_ATTACKING);
-    }
-
-    if (IsPlayer())
-    {
-        static_cast<Player*>(this)->UpdatePotionCooldown();
-    }
-}
-
-void Unit::onDamageDealt(Unit* target)
-{
-    ASSERT(target);
-
-    m_combatStatus.onDamageDealt(target);
-}
-
-void Unit::addHealTarget(Unit* target)
-{
-    ASSERT(target != nullptr);
-
-    if (target->IsPlayer())
-    {
-        m_combatStatus.addHealTarget(reinterpret_cast<Player*>(target));
-    }
-}
-
-void Unit::removeHealTarget(Unit* target)
-{
-    ASSERT(target != nullptr);
-
-    if (target->IsPlayer())
-    {
-        m_combatStatus.removeHealTarget(reinterpret_cast<Player*>(target));
-    }
-}
-
-void Unit::addHealer(Unit* healer)
-{
-    ASSERT(healer != nullptr);
-
-    if (healer->IsPlayer())
-    {
-        m_combatStatus.addHealer(reinterpret_cast<Player*>(healer));
-    }
-}
-
-void Unit::removeHealer(Unit* healer)
-{
-    ASSERT(healer != nullptr);
-
-    if (healer->IsPlayer())
-    {
-        m_combatStatus.removeHealer(reinterpret_cast<Player*>(healer));
-    }
-}
-
-void Unit::addAttacker(Unit* attacker)
-{
-    ASSERT(attacker);
-
-    m_combatStatus.addAttacker(attacker);
-}
-
-bool Unit::hasAttacker(uint64_t guid) const
-{
-    return m_combatStatus.hasAttacker(guid);
-}
-
-void Unit::removeAttacker(Unit* attacker)
-{
-    ASSERT(attacker != nullptr);
-    //ASSERT(IsInWorld());    //Zyres: unit is not in world. remove attack target only for units in world
-    if (this->IsInWorld())
-    {
-        m_combatStatus.removeAttacker(attacker);
-    }
-}
-
-void Unit::removeAttacker(uint64_t guid)
-{
-    m_combatStatus.removeAttacker(guid);
-}
-
-void Unit::removeAttackTarget(Unit* attackTarget)
-{
-    ASSERT(attackTarget != nullptr);
-    //ASSERT(IsInWorld());    //Zyres: unit is not in world. remove attack target only for units in world
-    if (this->IsInWorld())
-    {
-        m_combatStatus.removeAttackTarget(attackTarget);
-    }
-}
-
-void Unit::updateCombatStatus()
-{
-    m_combatStatus.update();
-}
-
-void Unit::clearAllCombatTargets()
-{
-    m_combatStatus.clearAllCombatTargets();
-}
-
-uint64_t Unit::getPrimaryAttackTarget() const
-{
-    return m_combatStatus.getPrimaryAttackTarget();
-}
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Movement
@@ -170,15 +20,23 @@ void Unit::setMoveWaterWalk()
     if (IsPlayer())
     {
         WorldPacket data(SMSG_MOVE_WATER_WALK, 12);
+#if VERSION_STRING != Cata
         data << GetNewGUID();
         data << uint32(0);
+#else
+        movement_info.writeMovementInfo(data, SMSG_MOVE_WATER_WALK);
+#endif
         SendMessageToSet(&data, true);
     }
 
     if (IsCreature())
     {
         WorldPacket data(SMSG_SPLINE_MOVE_WATER_WALK, 9);
+#if VERSION_STRING != Cata
         data << GetNewGUID();
+#else
+        movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_WATER_WALK);
+#endif
         SendMessageToSet(&data, false);
     }
 }
@@ -190,15 +48,23 @@ void Unit::setMoveLandWalk()
     if (IsPlayer())
     {
         WorldPacket data(SMSG_MOVE_LAND_WALK, 12);
+#if VERSION_STRING != Cata
         data << GetNewGUID();
         data << uint32(0);
+#else
+        movement_info.writeMovementInfo(data, SMSG_MOVE_LAND_WALK);
+#endif
         SendMessageToSet(&data, true);
     }
 
     if (IsCreature())
     {
         WorldPacket data(SMSG_SPLINE_MOVE_LAND_WALK, 9);
+#if VERSION_STRING != Cata
         data << GetNewGUID();
+#else
+        movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_LAND_WALK);
+#endif
         SendMessageToSet(&data, false);
     }
 }
@@ -210,15 +76,23 @@ void Unit::setMoveFeatherFall()
     if (IsPlayer())
     {
         WorldPacket data(SMSG_MOVE_FEATHER_FALL, 12);
+#if VERSION_STRING != Cata
         data << GetNewGUID();
         data << uint32(0);
+#else
+        movement_info.writeMovementInfo(data, SMSG_MOVE_FEATHER_FALL);
+#endif
         SendMessageToSet(&data, true);
     }
 
     if (IsCreature())
     {
         WorldPacket data(SMSG_SPLINE_MOVE_FEATHER_FALL, 9);
+#if VERSION_STRING != Cata
         data << GetNewGUID();
+#else
+        movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_FEATHER_FALL);
+#endif
         SendMessageToSet(&data, false);
     }
 }
@@ -230,15 +104,23 @@ void Unit::setMoveNormalFall()
     if (IsPlayer())
     {
         WorldPacket data(SMSG_MOVE_NORMAL_FALL, 12);
+#if VERSION_STRING != Cata
         data << GetNewGUID();
         data << uint32(0);
+#else
+        movement_info.writeMovementInfo(data, SMSG_MOVE_NORMAL_FALL);
+#endif
         SendMessageToSet(&data, true);
     }
 
     if (IsCreature())
     {
         WorldPacket data(SMSG_SPLINE_MOVE_NORMAL_FALL, 9);
+#if VERSION_STRING != Cata
         data << GetNewGUID();
+#else
+        movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_NORMAL_FALL);
+#endif
         SendMessageToSet(&data, false);
     }
 }
@@ -252,8 +134,12 @@ void Unit::setMoveHover(bool set_hover)
             AddUnitMovementFlag(MOVEFLAG_HOVER);
 
             WorldPacket data(SMSG_MOVE_SET_HOVER, 13);
+#if VERSION_STRING != Cata
             data << GetNewGUID();
             data << uint32(0);
+#else
+            movement_info.writeMovementInfo(data, SMSG_MOVE_SET_HOVER);
+#endif
             SendMessageToSet(&data, true);
         }
         else
@@ -261,8 +147,12 @@ void Unit::setMoveHover(bool set_hover)
             RemoveUnitMovementFlag(MOVEFLAG_HOVER);
 
             WorldPacket data(SMSG_MOVE_UNSET_HOVER, 13);
+#if VERSION_STRING != Cata
             data << GetNewGUID();
             data << uint32(0);
+#else
+            movement_info.writeMovementInfo(data, SMSG_MOVE_UNSET_HOVER);
+#endif
             SendMessageToSet(&data, true);
         }
     }
@@ -277,7 +167,11 @@ void Unit::setMoveHover(bool set_hover)
             SetByteFlag(UNIT_FIELD_BYTES_1, 3, UNIT_BYTE1_FLAG_HOVER);
 
             WorldPacket data(SMSG_SPLINE_MOVE_SET_HOVER, 10);
+#if VERSION_STRING != Cata
             data << GetNewGUID();
+#else
+            movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_SET_HOVER);
+#endif
             SendMessageToSet(&data, false);
         }
         else
@@ -287,7 +181,11 @@ void Unit::setMoveHover(bool set_hover)
             RemoveByteFlag(UNIT_FIELD_BYTES_1, 3, UNIT_BYTE1_FLAG_HOVER);
 
             WorldPacket data(SMSG_SPLINE_MOVE_UNSET_HOVER, 10);
+#if VERSION_STRING != Cata
             data << GetNewGUID();
+#else
+            movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_UNSET_HOVER);
+#endif
             SendMessageToSet(&data, false);
         }
     }
@@ -305,8 +203,12 @@ void Unit::setMoveCanFly(bool set_fly)
             RemoveUnitMovementFlag(MOVEFLAG_FALLING);
 
             WorldPacket data(SMSG_MOVE_SET_CAN_FLY, 13);
+#if VERSION_STRING != Cata
             data << GetNewGUID();
             data << uint32(0);
+#else
+            movement_info.writeMovementInfo(data, SMSG_MOVE_SET_CAN_FLY);
+#endif
             SendMessageToSet(&data, true);
         }
         else
@@ -317,8 +219,12 @@ void Unit::setMoveCanFly(bool set_fly)
             RemoveUnitMovementFlag(MOVEFLAG_ASCENDING);
 
             WorldPacket data(SMSG_MOVE_UNSET_CAN_FLY, 13);
+#if VERSION_STRING != Cata
             data << GetNewGUID();
             data << uint32(0);
+#else
+            movement_info.writeMovementInfo(data, SMSG_MOVE_UNSET_CAN_FLY);
+#endif
             SendMessageToSet(&data, true);
         }
     }
@@ -333,7 +239,11 @@ void Unit::setMoveCanFly(bool set_fly)
             RemoveUnitMovementFlag(MOVEFLAG_FALLING);
 
             WorldPacket data(SMSG_SPLINE_MOVE_SET_FLYING, 10);
+#if VERSION_STRING != Cata
             data << GetNewGUID();
+#else
+            movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_SET_FLYING);
+#endif
             SendMessageToSet(&data, false);
         }
         else
@@ -344,7 +254,11 @@ void Unit::setMoveCanFly(bool set_fly)
             RemoveUnitMovementFlag(MOVEFLAG_ASCENDING);
 
             WorldPacket data(SMSG_SPLINE_MOVE_UNSET_FLYING, 10);
+#if VERSION_STRING != Cata
             data << GetNewGUID();
+#else
+            movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_UNSET_FLYING);
+#endif
             SendMessageToSet(&data, false);
         }
     }
@@ -359,8 +273,12 @@ void Unit::setMoveRoot(bool set_root)
             AddUnitMovementFlag(MOVEFLAG_ROOTED);
 
             WorldPacket data(SMSG_FORCE_MOVE_ROOT, 12);
+#if VERSION_STRING != Cata
             data << GetNewGUID();
             data << uint32(0);
+#else
+            movement_info.writeMovementInfo(data, SMSG_FORCE_MOVE_ROOT);
+#endif
             SendMessageToSet(&data, true);
         }
         else
@@ -368,8 +286,12 @@ void Unit::setMoveRoot(bool set_root)
             RemoveUnitMovementFlag(MOVEFLAG_ROOTED);
 
             WorldPacket data(SMSG_FORCE_MOVE_UNROOT, 12);
+#if VERSION_STRING != Cata
             data << GetNewGUID();
             data << uint32(0);
+#else
+            movement_info.writeMovementInfo(data, SMSG_FORCE_MOVE_UNROOT);
+#endif
             SendMessageToSet(&data, true);
         }
     }
@@ -386,7 +308,11 @@ void Unit::setMoveRoot(bool set_root)
             AddUnitMovementFlag(MOVEFLAG_ROOTED);
 
             WorldPacket data(SMSG_SPLINE_MOVE_ROOT, 9);
+#if VERSION_STRING != Cata
             data << GetNewGUID();
+#else
+            movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_ROOT);
+#endif
             SendMessageToSet(&data, true);
         }
         else
@@ -396,7 +322,11 @@ void Unit::setMoveRoot(bool set_root)
             RemoveUnitMovementFlag(MOVEFLAG_ROOTED);
 
             WorldPacket data(SMSG_SPLINE_MOVE_UNROOT, 9);
+#if VERSION_STRING != Cata
             data << GetNewGUID();
+#else
+            movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_UNROOT);
+#endif
             SendMessageToSet(&data, true);
         }
     }
@@ -416,7 +346,11 @@ void Unit::setMoveSwim(bool set_swim)
             AddUnitMovementFlag(MOVEFLAG_SWIMMING);
 
             WorldPacket data(SMSG_SPLINE_MOVE_START_SWIM, 10);
+#if VERSION_STRING != Cata
             data << GetNewGUID();
+#else
+            movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_START_SWIM);
+#endif
             SendMessageToSet(&data, false);
         }
         else
@@ -424,7 +358,11 @@ void Unit::setMoveSwim(bool set_swim)
             RemoveUnitMovementFlag(MOVEFLAG_SWIMMING);
 
             WorldPacket data(SMSG_SPLINE_MOVE_STOP_SWIM, 10);
+#if VERSION_STRING != Cata
             data << GetNewGUID();
+#else
+            movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_STOP_SWIM);
+#endif
             SendMessageToSet(&data, false);
         }
     }
@@ -440,8 +378,12 @@ void Unit::setMoveDisableGravity(bool disable_gravity)
             AddUnitMovementFlag(MOVEFLAG_DISABLEGRAVITY);
 
             WorldPacket data(SMSG_MOVE_GRAVITY_DISABLE, 13);
+#if VERSION_STRING != Cata
             data << GetNewGUID();
             data << uint32(0);
+#else
+            movement_info.writeMovementInfo(data, SMSG_MOVE_GRAVITY_DISABLE);
+#endif
             SendMessageToSet(&data, true);
         }
         else
@@ -449,8 +391,12 @@ void Unit::setMoveDisableGravity(bool disable_gravity)
             RemoveUnitMovementFlag(MOVEFLAG_DISABLEGRAVITY);
 
             WorldPacket data(SMSG_MOVE_GRAVITY_ENABLE, 13);
+#if VERSION_STRING != Cata
             data << GetNewGUID();
             data << uint32(0);
+#else
+            movement_info.writeMovementInfo(data, SMSG_MOVE_GRAVITY_ENABLE);
+#endif
             SendMessageToSet(&data, true);
         }
     }
@@ -462,7 +408,11 @@ void Unit::setMoveDisableGravity(bool disable_gravity)
             AddUnitMovementFlag(MOVEFLAG_DISABLEGRAVITY);
 
             WorldPacket data(SMSG_SPLINE_MOVE_GRAVITY_DISABLE, 10);
+#if VERSION_STRING != Cata
             data << GetNewGUID();
+#else
+            movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_GRAVITY_DISABLE);
+#endif
             SendMessageToSet(&data, false);
         }
         else
@@ -470,7 +420,11 @@ void Unit::setMoveDisableGravity(bool disable_gravity)
             RemoveUnitMovementFlag(MOVEFLAG_DISABLEGRAVITY);
 
             WorldPacket data(SMSG_SPLINE_MOVE_GRAVITY_ENABLE, 10);
+#if VERSION_STRING != Cata
             data << GetNewGUID();
+#else
+            movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_GRAVITY_ENABLE);
+#endif
             SendMessageToSet(&data, false);
         }
     }
@@ -488,7 +442,11 @@ void Unit::setMoveWalk(bool set_walk)
             AddUnitMovementFlag(MOVEFLAG_WALK);
 
             WorldPacket data(SMSG_SPLINE_MOVE_SET_WALK_MODE, 10);
+#if VERSION_STRING != Cata
             data << GetNewGUID();
+#else
+            movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_SET_WALK_MODE);
+#endif
             SendMessageToSet(&data, false);
         }
         else
@@ -496,7 +454,11 @@ void Unit::setMoveWalk(bool set_walk)
             RemoveUnitMovementFlag(MOVEFLAG_WALK);
 
             WorldPacket data(SMSG_SPLINE_MOVE_SET_RUN_MODE, 10);
+#if VERSION_STRING != Cata
             data << GetNewGUID();
+#else
+            movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_SET_RUN_MODE);
+#endif
             SendMessageToSet(&data, false);
         }
     }
@@ -524,6 +486,8 @@ float Unit::getSpeedForType(UnitSpeedType speed_type, bool get_basic)
             return (get_basic ? m_basicSpeedFlyBack : m_currentSpeedFlyBack);
         case TYPE_PITCH_RATE:
             return (get_basic ? m_basicPitchRate : m_currentPitchRate);
+        default:
+            return m_basicSpeedWalk;
     }
 }
 
@@ -605,7 +569,9 @@ void Unit::setSpeedForType(UnitSpeedType speed_type, float speed, bool set_basic
 
     if (player_mover != nullptr)
     {
+#if VERSION_STRING != Cata
         player_mover->sendForceMovePaket(speed_type, speed);
+#endif
         player_mover->sendMoveSetSpeedPaket(speed_type, speed);
     }
     else

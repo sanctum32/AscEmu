@@ -25,6 +25,7 @@
 #include "Map/WorldCreator.h"
 #include "Objects/ObjectMgr.h"
 
+#if VERSION_STRING != Cata
 //////////////////////////////////////////////////////////////
 /// This function handles CMSG_GROUP_INVITE
 //////////////////////////////////////////////////////////////
@@ -79,7 +80,7 @@ void WorldSession::HandleGroupInviteOpcode(WorldPacket& recv_data)
         return;
     }
 
-    if (player->GetTeam() != _player->GetTeam() && _player->GetSession()->GetPermissionCount() == 0 && !sWorld.interfaction_group)
+    if (player->GetTeam() != _player->GetTeam() && _player->GetSession()->GetPermissionCount() == 0 && !worldConfig.interfaction.isInterfactionGroupEnabled)
     {
         SendPartyCommandResult(_player, 0, membername, ERR_PARTY_WRONG_FACTION);
         return;
@@ -587,3 +588,4 @@ void WorldSession::HandlePartyMemberStatsOpcode(WorldPacket& recv_data)
 
     SendPacket(&data);
 }
+#endif

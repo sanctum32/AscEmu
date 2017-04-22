@@ -816,9 +816,11 @@ void Spell::SpellEffectSchoolDMG(uint32 i) // dmg school
             {
                 if (p_caster != NULL)
                 {
+#if VERSION_STRING != Classic
                     Item* it = static_cast<Item*>(p_caster->GetItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_OFFHAND));
                     if (it && it->GetItemProperties() && it->GetItemProperties()->InventoryType == INVTYPE_SHIELD)
                         dmg = p_caster->GetUInt32Value(PLAYER_SHIELD_BLOCK);
+#endif
                 }
             }break;
             case 34428:
@@ -975,9 +977,11 @@ void Spell::SpellEffectSchoolDMG(uint32 i) // dmg school
             {
                 if (p_caster != nullptr)
                 {
+#if VERSION_STRING != Classic
                     Item* it = static_cast<Item*>(p_caster->GetItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_OFFHAND));
                     if (it && it->GetItemProperties() && it->GetItemProperties()->InventoryType == INVTYPE_SHIELD)
                         dmg = float2int32(1.3f * p_caster->GetUInt32Value(PLAYER_SHIELD_BLOCK));
+#endif
                 }
             }break;
             case 25742:
@@ -1043,6 +1047,7 @@ void Spell::SpellEffectSchoolDMG(uint32 i) // dmg school
             case 49051:
             case 49052:
             {
+#if VERSION_STRING != Cata
                 if (p_caster != NULL)
                 {
                     Item* pItem = p_caster->GetItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_RANGED);
@@ -1065,6 +1070,7 @@ void Spell::SpellEffectSchoolDMG(uint32 i) // dmg school
 
                     dmg = float2int32(ammodmg + bowdmg) + stundmg;
                 }
+#endif
             }break;
             case 64422: // Sonic Screech, Auriaya encounter
             case 64688:
@@ -3447,7 +3453,11 @@ void Spell::SpellEffectLanguage(uint32 i)
     if (!playerTarget || !GetSpellInfo()->EffectMiscValue[i])
         return;
 
+#if VERSION_STRING != Cata
     uint32 skills[15][2] =
+#else
+    uint32 skills[17][2] =
+#endif
     {
         { 0, 0 },
         { SKILL_LANG_ORCISH, 669 },
@@ -3464,7 +3474,12 @@ void Spell::SpellEffectLanguage(uint32 i)
         { SKILL_LANG_TROLL, 7341 },
         { SKILL_LANG_GUTTERSPEAK, 17737 },
         { SKILL_LANG_DRAENEI, 29932 },
+#if VERSION_STRING == Cata
+        { SKILL_LANG_GOBLIN, 69269 },
+        { SKILL_LANG_GILNEAN, 69270 },
+#endif
     };
+
 
     if (skills[GetSpellInfo()->EffectMiscValue[i]][0])
     {
@@ -4172,7 +4187,7 @@ void Spell::SpellEffectPickpocket(uint32 i) // pickpocket
     lootmgr.FillPickpocketingLoot(&static_cast< Creature* >(unitTarget)->loot, unitTarget->GetEntry());
 
     uint32 _rank = static_cast< Creature* >(unitTarget)->GetCreatureProperties()->Rank;
-    unitTarget->loot.gold = float2int32((_rank + 1) * unitTarget->getLevel() * (RandomUInt(5) + 1) * sWorld.getRate(RATE_MONEY));
+    unitTarget->loot.gold = float2int32((_rank + 1) * unitTarget->getLevel() * (RandomUInt(5) + 1) * worldConfig.getFloatRate(RATE_MONEY));
 
     p_caster->SendLoot(unitTarget->GetGUID(), LOOT_PICKPOCKETING, unitTarget->GetMapId());
     target->SetPickPocketed(true);
@@ -4200,6 +4215,7 @@ void Spell::SpellEffectAddFarsight(uint32 i) // Add Farsight
 
 void Spell::SpellEffectUseGlyph(uint32 i)
 {
+#if VERSION_STRING > TBC
     if (!p_caster)
         return;
 
@@ -4243,7 +4259,7 @@ void Spell::SpellEffectUseGlyph(uint32 i)
         p_caster->m_specs[p_caster->m_talentActiveSpec].glyphs[m_glyphslot] = static_cast<uint16>(glyph_new);
         p_caster->smsg_TalentsInfo(false);
     }
-
+#endif
 }
 
 void Spell::SpellEffectHealMechanical(uint32 i)
@@ -4638,7 +4654,7 @@ void Spell::SpellEffectDisenchant(uint32 i)
     {
         if (Rand(100.0f - skill * 0.75f))
         {
-            uint32 SkillUp = float2int32(1.0f * sWorld.getRate(RATE_SKILLRATE));
+            uint32 SkillUp = float2int32(1.0f * worldConfig.getFloatRate(RATE_SKILLRATE));
             if (skill + SkillUp > 60)
                 SkillUp = 60 - skill;
 
@@ -5670,7 +5686,7 @@ void Spell::SpellEffectActivateSpec(uint32 i)
     if (p_caster == NULL)
         return;
 
-    if (p_caster->isInCombat())
+    if (p_caster->CombatStatus.IsInCombat())
     {
         SendCastResult(SPELL_FAILED_AFFECTING_COMBAT);
         return;

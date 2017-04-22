@@ -26,6 +26,7 @@
 #include "Server/MainServerDefines.h"
 #include "Spell/SpellAuras.h"
 #include "Server/World.h"
+#include "Server/World.Legacy.h"
 
 void CreateDummySpell(uint32 id)
 {
@@ -44,8 +45,10 @@ void CreateDummySpell(uint32 id)
     sp->EffectImplicitTargetA[0] = 25;
     sp->custom_NameHash = crc32((const unsigned char*)name, (unsigned int)strlen(name));
     sp->dmg_multiplier[0] = 1.0f;
+#if VERSION_STRING != Cata
     sp->StanceBarOrder = -1;
-    sWorld.dummyspells.push_back(sp);
+#endif
+    sWorld.dummySpellList.push_back(sp);
 }
 
 void Modify_EffectBasePoints(SpellInfo* sp)
@@ -7008,6 +7011,7 @@ void ApplyNormalFixes()
             
             //////////////////////////////////////////////////////////////////////////////////////////
             // SPELL_HASH_SEALS_OF_THE_PURE
+#if VERSION_STRING != Cata
             case 20224:     // Seals of the Pure Rank 1
             case 20225:     // Seals of the Pure Rank 2
             case 20330:     // Seals of the Pure Rank 3
@@ -7018,6 +7022,7 @@ void ApplyNormalFixes()
                 sp->EffectSpellClassMask[0][1] = 0x20000000;
                 sp->EffectSpellClassMask[1][1] = 0x800;
             } break;
+#endif
 
             //////////////////////////////////////////////////////////////////////////////////////////
             // SPELL_HASH_MEND_PET
@@ -8859,6 +8864,7 @@ void ApplyNormalFixes()
         sp->ChannelInterruptFlags = 0; // Remove channeling behaviour.
     }
 
+#if VERSION_STRING != Cata
     //megai2: Everlasting Affliction
     sp = CheckAndReturnSpellEntry(47205);
     if (sp != nullptr)
@@ -8898,6 +8904,7 @@ void ApplyNormalFixes()
         sp->EffectSpellClassMask[1][0] = 0x111;
         sp->EffectSpellClassMask[1][1] = 0;
     }
+#endif
 
     ////////////////////////////////////////////////////////////
     // Backlash
@@ -9580,6 +9587,7 @@ void ApplyNormalFixes()
         sp->EffectImplicitTargetA[1] = 0;
         sp->EffectDieSides[1] = 0;
     }
+#if VERSION_STRING != Cata
     sp = CheckAndReturnSpellEntry(46097); // Brutal Totem of Survival
     if (sp != nullptr)
     {
@@ -9677,6 +9685,7 @@ void ApplyNormalFixes()
         sp->Effect[1] = SPELL_EFFECT_TRIGGER_SPELL;
         sp->EffectTriggerSpell[1] = 43729; // Vengeful Gladiator's Totem of the Third Wind
     }
+#endif
     //////////////////////////////////////////
     // ITEMS                                //
     //////////////////////////////////////////

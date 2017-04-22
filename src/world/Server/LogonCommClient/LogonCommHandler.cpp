@@ -26,6 +26,7 @@
 #include "Config/Config.h"
 #include "Auth/Sha1.h"
 #include "Server/World.h"
+#include "Server/World.Legacy.h"
 
 initialiseSingleton(LogonCommHandler);
 
@@ -33,8 +34,8 @@ LogonCommHandler::LogonCommHandler()
 {
     idhigh = 1;
     next_request = 1;
-    pings = !Config.MainConfig.GetBoolDefault("LogonServer", "DisablePings", false);
-    std::string logon_pass = Config.MainConfig.GetStringDefault("LogonServer", "RemotePassword", "r3m0t3");
+    pings = !worldConfig.logonServer.disablePings;
+    std::string logon_pass = worldConfig.logonServer.remotePassword;
 
     // sha1 hash it
     Sha1Hash hash;
@@ -224,7 +225,7 @@ void LogonCommHandler::Connect(LogonServer* server)
         return;
     }
 
-    LogDetail("LogonCommClient : Authentication OK.");
+    LogDefault("Authentication successfull.");
     LogNotice("LogonCommClient : Logonserver was connected on [%s:%u].", server->Address.c_str(), server->Port);
 
     // Send the initial ping
@@ -393,12 +394,12 @@ void LogonCommHandler::LoadRealmConfiguration()
 {
     LogonServer* ls = new LogonServer;
     ls->ID = idhigh++;
-    ls->Name = Config.RealmConfig.GetStringDefault("LogonServer", "Name", "UnkLogon");
-    ls->Address = Config.RealmConfig.GetStringDefault("LogonServer", "Address", "127.0.0.1");
-    ls->Port = Config.RealmConfig.GetIntDefault("LogonServer", "Port", 8093);
+    ls->Name = worldConfig.logonServer2.name;
+    ls->Address = worldConfig.logonServer2.address;
+    ls->Port = (uint32)worldConfig.logonServer2.port;
     servers.insert(ls);
 
-    uint32 realmcount = Config.RealmConfig.GetIntDefault("LogonServer", "RealmCount", 1);
+    uint32 realmcount = (uint32)worldConfig.logonServer2.realmCount;
     if (realmcount == 0)
     {
         LOG_ERROR("   >> no realms found. this server will not be online anywhere!");

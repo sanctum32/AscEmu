@@ -21,6 +21,8 @@
 #include "StdAfx.h"
 #include "Management/LocalizationMgr.h"
 #include "Server/MainServerDefines.h"
+#include "Server/World.h"
+#include "Server/World.Legacy.h"
 #include "Config/Config.h"
 #include "Log.hpp"
 #include "Database/Database.h"
@@ -213,7 +215,7 @@ void LocalizationMgr::Reload(bool first)
     GetDistinctLanguages(languages, "locales_npc_monstersay");
 
     /// Read Language Bindings From Config
-    std::string ls = Config.MainConfig.GetStringDefault("Localization", "LocaleBindings", "");
+    std::string ls = worldConfig.localization.localizedBindings;
     std::vector<std::string> tbindings = Util::SplitStringBySeperator(ls, " ");
     for (std::vector<std::string>::iterator ztr = tbindings.begin(); ztr != tbindings.end(); ++ztr)
     {

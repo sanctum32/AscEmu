@@ -161,9 +161,9 @@ bool Give5kGold(uint32 i, Spell* s)
 {
     if (s->GetPlayerTarget() != NULL)
     {
-        if (sWorld.GoldCapEnabled && (s->GetPlayerTarget()->GetGold() + 50000000) > sWorld.GoldLimit)
+        if (worldConfig.gold.isCapEnabled && (s->GetPlayerTarget()->GetGold() + 50000000) > worldConfig.gold.limitAmount)
         {
-            s->GetPlayerTarget()->SetGold(sWorld.GoldLimit);
+            s->GetPlayerTarget()->SetGold(worldConfig.gold.limitAmount);
             s->GetPlayerTarget()->GetItemInterface()->BuildInventoryChangeError(NULL, NULL, INV_ERR_TOO_MUCH_GOLD);
         }
         else
