@@ -50,6 +50,8 @@ SERVER_DECL SessionLogWriter* Player_Log;
 extern DayWatcherThread* dw;
 extern CommonScheduleThread* cs;
 
+ConfigMgr Config;
+
 // DB version
 #if VERSION_STRING != Cata
 static const char* REQUIRED_CHAR_DB_VERSION = "2017-04-22_01_banned_char_log";
@@ -110,8 +112,6 @@ ThreadBase* GetConsoleListener();
 bool Master::Run(int argc, char** argv)
 {
     char* config_file = (char*)CONFDIR "/world.conf";
-    char* optional_config_file = (char*)CONFDIR "/optional.conf";
-    char* realm_config_file = (char*)CONFDIR "/realms.conf";
 
     int file_log_level = DEF_VALUE_NOT_SET;
     int screen_log_level = DEF_VALUE_NOT_SET;
@@ -147,11 +147,6 @@ bool Master::Run(int argc, char** argv)
                 strcpy(config_file, arcemu_optarg);
                 break;
 
-            case 'r':
-                realm_config_file = new char[strlen(arcemu_optarg) + 1];
-                strcpy(realm_config_file, arcemu_optarg);
-                break;
-
             case 0:
                 break;
             default:
@@ -185,18 +180,6 @@ bool Master::Run(int argc, char** argv)
         else
             LOG_ERROR("Encountered one or more errors while loading world.conf.");
 
-        LogNotice("Config : Checking config file: %s", realm_config_file);
-        if (Config.RealmConfig.SetSource(realm_config_file, true))
-            LogDetail("Config : Passed realm.conf without errors.");
-        else
-            LOG_ERROR("Encountered one or more errors while loading realm.conf.");
-
-        LogNotice("Config : Checking config file:: %s", optional_config_file);
-        if (Config.OptionalConfig.SetSource(optional_config_file, true))
-            LogDetail("Config : Passed optional.conf without errors.");
-        else
-            LOG_ERROR("Encountered one or more errors while loading optional.conf.");
-
         AscLog.~AscEmuLog();
         return true;
     }
@@ -211,7 +194,6 @@ bool Master::Run(int argc, char** argv)
 
     InitImplicitTargetFlags();
     InitRandomNumberGenerators();
-    LogNotice("Rnd : Initialized Random Number Generators.");
 
     ThreadPool.Startup();
     uint32 LoadingTime = getMSTime();
@@ -219,15 +201,15 @@ bool Master::Run(int argc, char** argv)
     new EventMgr;
     new World;
 
-    if (!LoadWorldConfiguration(config_file, optional_config_file, realm_config_file))
+    if (!LoadWorldConfiguration(config_file))
     {
         return false;
     }
 
     sWorld.loadWorldConfigValues();
 
-    AscLog.SetFileLoggingLevel(worldConfig.logLevel.fileLogLevel);
-    AscLog.SetDebugFlags(worldConfig.logLevel.debugFlags);
+    AscLog.SetFileLoggingLevel(worldConfig.log.worldFileLogLevel);
+    AscLog.SetDebugFlags(worldConfig.log.worldDebugFlags);
 
     OpenCheatLogFiles();
 
@@ -397,6 +379,7 @@ bool Master::Run(int argc, char** argv)
 
     LogNotice("AuctionMgr : ~AuctionMgr()");
     delete AuctionMgr::getSingletonPtr();
+
     LogNotice("LootMgr : ~LootMgr()");
     delete LootMgr::getSingletonPtr();
 
@@ -656,38 +639,16 @@ void Master::PrintBanner()
     AscLog.ConsoleLogError(true, "========================================================"); // Echo off.
 }
 
-bool Master::LoadWorldConfiguration(char* config_file, char* optional_config_file, char* realm_config_file)
+bool Master::LoadWorldConfiguration(char* config_file)
 {
     LogNotice("Config : Loading Config Files...");
-    if (Config.MainConfig.SetSource(config_file))
+    if (Config.MainConfig.openAndLoadConfigFile(config_file))
     {
         LogDetail("Config : " CONFDIR "/world.conf loaded");
     }
     else
     {
         LogError("Config : error occurred loading " CONFDIR "/world.conf");
-        AscLog.~AscEmuLog();
-        return false;
-    }
-
-    if (Config.OptionalConfig.SetSource(optional_config_file))
-    {
-        LogDetail("Config : " CONFDIR "/optional.conf loaded");
-    }
-    else
-    {
-        LogError("Config : error occurred loading " CONFDIR "/optional.conf");
-        AscLog.~AscEmuLog();
-        return false;
-    }
-
-    if (Config.RealmConfig.SetSource(realm_config_file))
-    {
-        LogDetail("Config : " CONFDIR "/realms.conf loaded");
-    }
-    else
-    {
-        LogError("Config : error occurred loading " CONFDIR "/realms.conf");
         AscLog.~AscEmuLog();
         return false;
     }
@@ -708,34 +669,35 @@ bool Master::LoadWorldConfiguration(char* config_file, char* optional_config_fil
 
 void Master::OpenCheatLogFiles()
 {
-    bool useTimeStamp = worldConfig.log.addTimeStampToFileName;
+    bool useTimeStamp = worldConfig.log.enableTimeStamp;
+    std::string logDir = worldConfig.log.extendedLogsDir;
 
-    Anticheat_Log = new SessionLogWriter(AELog::GetFormattedFileName("logs", "cheaters", useTimeStamp).c_str(), false);
-    GMCommand_Log = new SessionLogWriter(AELog::GetFormattedFileName("logs", "gmcommand", useTimeStamp).c_str(), false);
-    Player_Log = new SessionLogWriter(AELog::GetFormattedFileName("logs", "players", useTimeStamp).c_str(), false);
+    Anticheat_Log = new SessionLogWriter(AELog::GetFormattedFileName(logDir.c_str(), "cheaters", useTimeStamp).c_str(), false);
+    GMCommand_Log = new SessionLogWriter(AELog::GetFormattedFileName(logDir.c_str(), "gmcommands", useTimeStamp).c_str(), false);
+    Player_Log = new SessionLogWriter(AELog::GetFormattedFileName(logDir.c_str(), "players", useTimeStamp).c_str(), false);
 
     if (Anticheat_Log->IsOpen())
     {
-        if (!worldConfig.log.logCheaters)
+        if (!worldConfig.log.enableCheaterLog)
             Anticheat_Log->Close();
     }
-    else if (worldConfig.log.logCheaters)
+    else if (worldConfig.log.enableCheaterLog)
         Anticheat_Log->Open();
 
     if (GMCommand_Log->IsOpen())
     {
-        if (!worldConfig.log.logGmCommands)
+        if (!worldConfig.log.enableGmCommandLog)
             GMCommand_Log->Close();
     }
-    else if (worldConfig.log.logGmCommands)
+    else if (worldConfig.log.enableGmCommandLog)
         GMCommand_Log->Open();
 
     if (Player_Log->IsOpen())
     {
-        if (!worldConfig.log.logPlayers)
+        if (!worldConfig.log.enablePlayerLog)
             Player_Log->Close();
     }
-    else if (worldConfig.log.logPlayers)
+    else if (worldConfig.log.enablePlayerLog)
             Player_Log->Open();
 }
 

@@ -732,10 +732,12 @@ bool World::setInitialWorldSettings()
     if (!loadDbcDb2Stores())
         return false;
 
-    new TaxiMgr;
-    new WorldLog;
+    new TaxiMgr; 
     new ChatHandler;
     new SpellProcMgr;
+
+    new WorldLog;
+    sWorldLog.InitWorldLog(worldConfig.log.enableWorldPacketLog);
 
     new SpellCustomizations;
     sSpellCustomizations.StartSpellCustomization();
@@ -812,6 +814,8 @@ bool World::loadDbcDb2Stores()
         AscLog.ConsoleLogMajorError("One or more of the DBC files are missing.", "These are absolutely necessary for the server to function.", "The server will not start without them.", "");
         return false;
     }
+
+    return true;
 }
 
 void World::loadMySQLStores()
@@ -1028,9 +1032,10 @@ void World::logoutAllPlayers()
         (i->second)->LogoutPlayer(true);
 
     LogNotice("World", "Deleting sessions...");
-    for (activeSessionMap::iterator i = mActiveSessionMapStore.begin(); i != mActiveSessionMapStore.end(); ++i)
+    for (activeSessionMap::iterator i = mActiveSessionMapStore.begin(); i != mActiveSessionMapStore.end();)
     {
         WorldSession* worldSession = i->second;
+        ++i;
         deleteSession(worldSession);
     }
 }
