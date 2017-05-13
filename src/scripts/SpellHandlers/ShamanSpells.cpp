@@ -22,6 +22,8 @@
 #include "Management/ItemInterface.h"
 #include "Spell/SpellAuras.h"
 #include "Server/Script/ScriptMgr.h"
+#include "Spell/Definitions/ProcFlags.h"
+#include <Spell/Definitions/PowerType.h>
 
 /************************************************************************/
 /* Spell Defs                                                           */

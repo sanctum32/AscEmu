@@ -26,6 +26,15 @@
 #include "Spell/SpellMgr.h"
 #include "Spell/SpellAuras.h"
 #include "../../scripts/Common/Base.h"
+#include "Spell/Definitions/ProcFlags.h"
+#include "Spell/Definitions/SpellIsFlags.h"
+
+ // MIT Start
+void DynamicObject::Create(Unit* caster, Spell* spell, LocationVector lv, uint32 duration, float radius, uint32 type)
+{
+    Create(caster, spell, lv.x, lv.y, lv.z, duration, radius, type);
+}
+// MIT End
 
 DynamicObject::DynamicObject(uint32 high, uint32 low)
 {
@@ -156,7 +165,7 @@ void DynamicObject::UpdateTargets()
             if (targets.find(target->GetGUID()) != targets.end())
                 continue;
 
-            if (GetDistanceSq(target) <= radius)
+            if (getDistanceSq(target) <= radius)
             {
                 pAura = sSpellFactoryMgr.NewAura(m_spellProto, m_aliveDuration, u_caster, target, true);
                 for (uint8 i = 0; i < 3; ++i)
@@ -191,7 +200,7 @@ void DynamicObject::UpdateTargets()
             jtr2 = jtr;
             ++jtr;
 
-            if ((target != NULL) && (GetDistanceSq(target) > radius))
+            if ((target != NULL) && (getDistanceSq(target) > radius))
             {
                 target->RemoveAura(m_spellProto->Id);
                 targets.erase(jtr2);

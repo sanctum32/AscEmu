@@ -23,6 +23,7 @@
 #include "Map/MapMgr.h"
 #include "Spell/SpellMgr.h"
 #include "Spell/SpellAuras.h"
+#include <Spell/Definitions/PowerType.h>
 
 //////////////////////////////////////////////////////////////
 //bool SoulLinkParent( uint32 i, Spell *s )
@@ -503,7 +504,7 @@ bool SummonSuccubusQuest(uint32 i, Spell* s)
 
     Creature* pCreature = s->p_caster->GetMapMgr()->CreateCreature(cp->Id);
     pCreature->Load(cp, s->p_caster->GetPositionX(), s->p_caster->GetPositionY(), s->p_caster->GetPositionZ());
-    pCreature->GetAIInterface()->Init(pCreature, AITYPE_AGRO, Movement::WP_MOVEMENT_SCRIPT_NONE);
+    pCreature->GetAIInterface()->Init(pCreature, AI_SCRIPT_AGRO, Movement::WP_MOVEMENT_SCRIPT_NONE);
     pCreature->GetAIInterface()->taunt(s->p_caster, true);
     pCreature->PushToWorld(s->p_caster->GetMapMgr());
     pCreature->Despawn(60000, 0);
@@ -521,7 +522,7 @@ bool SummonVoidWalkerQuest(uint32 i, Spell* s)
 
     Creature* pCreature = p_caster->GetMapMgr()->CreateCreature(cp->Id);
     pCreature->Load(cp, p_caster->GetPositionX(), p_caster->GetPositionY(), p_caster->GetPositionZ());
-    pCreature->GetAIInterface()->Init(pCreature, AITYPE_AGRO, Movement::WP_MOVEMENT_SCRIPT_NONE);
+    pCreature->GetAIInterface()->Init(pCreature, AI_SCRIPT_AGRO, Movement::WP_MOVEMENT_SCRIPT_NONE);
     pCreature->GetAIInterface()->taunt(p_caster, true);
     pCreature->PushToWorld(p_caster->GetMapMgr());
     pCreature->Despawn(60000, 0);
@@ -539,7 +540,7 @@ bool SummonFelHunterQuest(uint32 i, Spell* s)
 
     Creature* pCreature = p_caster->GetMapMgr()->CreateCreature(cp->Id);
     pCreature->Load(cp, p_caster->GetPositionX(), p_caster->GetPositionY(), p_caster->GetPositionZ());
-    pCreature->GetAIInterface()->Init(pCreature, AITYPE_AGRO, Movement::WP_MOVEMENT_SCRIPT_NONE);
+    pCreature->GetAIInterface()->Init(pCreature, AI_SCRIPT_AGRO, Movement::WP_MOVEMENT_SCRIPT_NONE);
     pCreature->GetAIInterface()->taunt(p_caster, true);
     pCreature->PushToWorld(p_caster->GetMapMgr());
     pCreature->Despawn(60000, 0);
@@ -573,17 +574,6 @@ bool DemonicKnowledge(uint32 i, Aura* a, bool apply)
 
             PetOwner->CalcDamage();
         }
-    }
-
-    return true;
-}
-
-bool EyeOfKilrog(uint32 i, Aura* a, bool apply)
-{
-    Unit* m_target = a->GetTarget();
-
-    if(!apply)
-    {
     }
 
     return true;
@@ -732,8 +722,6 @@ void SetupWarlockSpells(ScriptMgr* mgr)
     mgr->register_script_effect(8712, &SummonFelHunterQuest);
 
     mgr->register_dummy_aura(35696, &DemonicKnowledge);
-
-    mgr->register_dummy_aura(126, &EyeOfKilrog);
 
     uint32 improvedlifetapids[] =
     {

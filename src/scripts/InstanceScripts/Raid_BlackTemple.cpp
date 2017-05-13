@@ -1557,7 +1557,7 @@ class NajentusAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
-            _unit->GetAIInterface()->SetAIState(STATE_IDLE);
+            _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
 
             RemoveAIUpdateEvent();
         }
@@ -1634,9 +1634,9 @@ class NajentusAI : public CreatureAIScript
                             case TARGET_ATTACKING:
                                 _unit->CastSpell(target, spells[i].info, spells[i].instant);
                                 break;
-                                //_unit->GetMapMgr()->GetInterface()->SpawnGameObject(NAJENTUS_SPINE_GO , target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), 0.207343, true, 0, 0); break;
+                                //_unit->GetMapMgr()->GetInterface()->SpawnGameObject(NAJENTUS_SPINE_GO , target->GetPosition(), 0.207343, true, 0, 0); break;
                             case TARGET_DESTINATION:
-                                _unit->CastSpellAoF(target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), spells[i].info, spells[i].instant);
+                                _unit->CastSpellAoF(target->GetPosition(), spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_RANDOM_FRIEND:
                             case TARGET_RANDOM_SINGLE:
@@ -1704,7 +1704,7 @@ class NajentusAI : public CreatureAIScript
                         _unit->CastSpell(random_target, spells[i].info, spells[i].instant);
                         break;
                     case TARGET_RANDOM_DESTINATION:
-                        _unit->CastSpellAoF(random_target->GetPositionX(), random_target->GetPositionY(), random_target->GetPositionZ(), spells[i].info, spells[i].instant);
+                        _unit->CastSpellAoF(random_target->GetPosition(), spells[i].info, spells[i].instant);
                         break;
                 }
 
@@ -1759,7 +1759,7 @@ class SupremusAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
-            _unit->GetAIInterface()->SetAIState(STATE_IDLE);
+            _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
 
@@ -2052,7 +2052,7 @@ class GurtoggAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
-            _unit->GetAIInterface()->SetAIState(STATE_IDLE);
+            _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
 
             if (_unit->isAlive())
                 _unit->SendScriptTextChatMessage(4648);     //I'll rip the meat from your bones!
@@ -2162,7 +2162,7 @@ class GurtoggAI : public CreatureAIScript
                     {
                         _unit->setAttackTimer(spells[6].attackstoptimer, false);
 
-                        _unit->CastSpellAoF(RageTarget->GetPositionX(), RageTarget->GetPositionY(), RageTarget->GetPositionZ(), spells[6].info, spells[6].instant);
+                        _unit->CastSpellAoF(RageTarget->GetPosition(), spells[6].info, spells[6].instant);
 
                         spells[6].casttime = t + spells[6].cooldown;
                         return;
@@ -2272,7 +2272,7 @@ class GurtoggAI : public CreatureAIScript
                                 _unit->CastSpell(target, spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_DESTINATION:
-                                _unit->CastSpellAoF(target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), spells[i].info, spells[i].instant);
+                                _unit->CastSpellAoF(target->GetPosition(), spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_RANDOM_FRIEND:
                             case TARGET_RANDOM_SINGLE:
@@ -2337,7 +2337,7 @@ class GurtoggAI : public CreatureAIScript
                         _unit->CastSpell(random_target, spells[i].info, spells[i].instant);
                         break;
                     case TARGET_RANDOM_DESTINATION:
-                        _unit->CastSpellAoF(random_target->GetPositionX(), random_target->GetPositionY(), random_target->GetPositionZ(), spells[i].info, spells[i].instant);
+                        _unit->CastSpellAoF(random_target->GetPosition(), spells[i].info, spells[i].instant);
                         break;
                 }
 
@@ -2820,7 +2820,7 @@ class ShahrazAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
-            _unit->GetAIInterface()->SetAIState(STATE_IDLE);
+            _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
 
             RemoveAIUpdateEvent();
         }
@@ -2953,7 +2953,7 @@ class ShahrazAI : public CreatureAIScript
                                 _unit->CastSpell(target, spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_DESTINATION:
-                                _unit->CastSpellAoF(target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), spells[i].info, spells[i].instant);
+                                _unit->CastSpellAoF(target->GetPosition(), spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_RANDOM_FRIEND:
                             case TARGET_RANDOM_SINGLE:
@@ -3018,7 +3018,7 @@ class ShahrazAI : public CreatureAIScript
                         _unit->CastSpell(random_target, spells[i].info, spells[i].instant);
                         break;
                     case TARGET_RANDOM_DESTINATION:
-                        _unit->CastSpellAoF(random_target->GetPositionX(), random_target->GetPositionY(), random_target->GetPositionZ(), spells[i].info, spells[i].instant);
+                        _unit->CastSpellAoF(random_target->GetPosition(), spells[i].info, spells[i].instant);
                         break;
                 }
 
@@ -3314,7 +3314,7 @@ class TeronGorefiendAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
-            _unit->GetAIInterface()->SetAIState(STATE_IDLE);
+            _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
 
             RemoveAIUpdateEvent();
         }
@@ -3373,7 +3373,7 @@ class TeronGorefiendAI : public CreatureAIScript
                                 _unit->CastSpell(target, spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_DESTINATION:
-                                _unit->CastSpellAoF(target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), spells[i].info, spells[i].instant);
+                                _unit->CastSpellAoF(target->GetPosition(), spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_RANDOM_FRIEND:
                             case TARGET_RANDOM_SINGLE:
@@ -3438,7 +3438,7 @@ class TeronGorefiendAI : public CreatureAIScript
                         _unit->CastSpell(random_target, spells[i].info, spells[i].instant);
                         break;
                     case TARGET_RANDOM_DESTINATION:
-                        _unit->CastSpellAoF(random_target->GetPositionX(), random_target->GetPositionY(), random_target->GetPositionZ(), spells[i].info, spells[i].instant);
+                        _unit->CastSpellAoF(random_target->GetPosition(), spells[i].info, spells[i].instant);
                         break;
                 }
 
@@ -3512,7 +3512,7 @@ class ShadeofakamaAI : public CreatureAIScript
         {
             hm = 100;
             _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
-            _unit->GetAIInterface()->SetAIState(STATE_IDLE);
+            _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
 
@@ -3657,7 +3657,7 @@ class ShadeofakamaAI : public CreatureAIScript
                                 _unit->CastSpell(target, spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_DESTINATION:
-                                _unit->CastSpellAoF(target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), spells[i].info, spells[i].instant);
+                                _unit->CastSpellAoF(target->GetPosition(), spells[i].info, spells[i].instant);
                                 break;
                         }
 
@@ -4046,7 +4046,7 @@ class EyeBeamTriggerAI : public MoonScriptCreatureAI
         EyeBeamTriggerAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
             _unit->SetUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_2);
-            _unit->GetAIInterface()->SetAIState(STATE_SCRIPTMOVE);
+            _unit->GetAIInterface()->setAiState(AI_STATE_SCRIPTMOVE);
             _unit->m_noRespawn = true;
 
             SetAllowMelee(false);
@@ -4058,7 +4058,7 @@ class EyeBeamTriggerAI : public MoonScriptCreatureAI
         void OnCombatStop(Unit* mTarget)
         {
             _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
-            _unit->GetAIInterface()->SetAIState(STATE_IDLE);
+            _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 
         void AIUpdate()
@@ -4362,7 +4362,7 @@ class AkamaAI : public MoonScriptBossAI
         void OnCombatStop(Unit* pTarget)
         {
             _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
-            _unit->GetAIInterface()->SetAIState(STATE_IDLE);
+            _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             SetWieldWeapon(false);
         }
 
@@ -4612,7 +4612,7 @@ class AkamaAI : public MoonScriptBossAI
                     SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
                     SetWaypointToMove(0);
                     RemoveAIUpdateEvent();
-                    _unit->GetAIInterface()->SetAIState(STATE_IDLE);
+                    _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
 
                     _unit->GetAIInterface()->AttackReaction(mIllidanAI->GetUnit(), 1, 0);
 
@@ -4677,7 +4677,7 @@ class AkamaAI : public MoonScriptBossAI
                 else if (mIllidanAI->GetUnit()->GetAIInterface()->Flying())
                 {
                     SetCanEnterCombat(false);
-                    _unit->GetAIInterface()->SetAIState(STATE_IDLE);
+                    _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
                     // azolex to prevent compile error
                     uint32 nullfix = 0;
                     _unit->GetAIInterface()->setNextTarget(nullfix);
@@ -4713,7 +4713,7 @@ class AkamaAI : public MoonScriptBossAI
                         if (GetCanEnterCombat())
                         {
                             SetCanEnterCombat(false);
-                            _unit->GetAIInterface()->SetAIState(STATE_IDLE);
+                            _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
                             // ugly code, trows compile error if left just null, this should do it ~ azolex
                             uint32 nullfix = 0;
                             _unit->GetAIInterface()->setNextTarget(nullfix);
@@ -4826,7 +4826,7 @@ class AkamaAI : public MoonScriptBossAI
                     break;
                 default:
                     {
-                        _unit->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
+                        _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                         _unit->GetAIInterface()->setWaypointToMove(iWaypointId + 1);
                     }
             }
@@ -5466,7 +5466,7 @@ class IllidanStormrageAI : public MoonScriptBossAI
                 ApplyAura(ILLIDAN_DEATH2);
 
                 pMaiev->SetUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_9);
-                pMaiev->GetAIInterface()->SetAIState(STATE_IDLE);
+                pMaiev->GetAIInterface()->setAiState(AI_STATE_IDLE);
                 pMaiev->GetAIInterface()->WipeTargetList();
                 pMaiev->GetAIInterface()->WipeHateList();
             }
@@ -5606,7 +5606,7 @@ class IllidanStormrageAI : public MoonScriptBossAI
                     if (pAkamaAI->mScenePart <= 2 && pAkamaAI->GetCanEnterCombat())
                     {
                         pAkamaAI->SetCanEnterCombat(false);
-                        pAkamaAI->GetUnit()->GetAIInterface()->SetAIState(STATE_IDLE);
+                        pAkamaAI->GetUnit()->GetAIInterface()->setAiState(AI_STATE_IDLE);
                         // ugly code, trows compile error if left just null, this should do it ~ azolex
                         uint32 nullfix = 0;
                         pAkamaAI->GetUnit()->GetAIInterface()->setNextTarget(nullfix);
@@ -5662,7 +5662,7 @@ class IllidanStormrageAI : public MoonScriptBossAI
                     case 1:
                         for (uint8 i = 0; i < 2; ++i)
                         {
-                            _unit->CastSpellAoF(UnitPos[i].x, UnitPos[i].y, UnitPos[i].z, sSpellCustomizations.GetSpellInfo(ILLIDAN_THROW_GLAIVE1), false);
+                            _unit->CastSpellAoF(LocationVector(UnitPos[i].x, UnitPos[i].y, UnitPos[i].z), sSpellCustomizations.GetSpellInfo(ILLIDAN_THROW_GLAIVE1), false);
                         }
                         SetWieldWeapon(false);
                         break;
@@ -5800,7 +5800,7 @@ class IllidanStormrageAI : public MoonScriptBossAI
                     mFoA2 = NULL;
                 }
             }
-            if (_unit->GetAIInterface()->GetWaypointScriptType() != Movement::WP_MOVEMENT_SCRIPT_WANTEDWP && !IsCasting())
+            if (_unit->GetAIInterface()->getWaypointScriptType() != Movement::WP_MOVEMENT_SCRIPT_WANTEDWP && !IsCasting())
             {
                 if (_unit->GetChannelSpellId() == 0)
                 {
@@ -6132,7 +6132,7 @@ class IllidanStormrageAI : public MoonScriptBossAI
                     pMaievAI->GetUnit()->SetEmoteState(EMOTE_ONESHOT_READY1H);
                     pMaievAI->SetCanEnterCombat(true);
                     pMaievAI->GetUnit()->GetAIInterface()->setCurrentAgent(AGENT_NULL);
-                    pMaievAI->GetUnit()->GetAIInterface()->SetAIState(STATE_IDLE);
+                    pMaievAI->GetUnit()->GetAIInterface()->setAiState(AI_STATE_IDLE);
                     pMaievAI->SetCanMove(true);
                     pMaievAI->GetUnit()->GetAIInterface()->AttackReaction(_unit, 1, 0);
                     pMaievAI->GetUnit()->SetEmoteState(EMOTE_ONESHOT_READY1H);
@@ -6541,7 +6541,7 @@ class CageTrapTriggerAI : public MoonScriptCreatureAI
         void OnCombatStop(Unit* pTarget)
         {
             _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
-            _unit->GetAIInterface()->SetAIState(STATE_IDLE);
+            _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 
         void AIUpdate()

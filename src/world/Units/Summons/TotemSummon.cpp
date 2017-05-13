@@ -22,6 +22,8 @@
 #include "Units/Summons/TotemSummon.h"
 #include "Storage/MySQLDataStore.hpp"
 #include "Spell/SpellAuras.h"
+#include "Spell/Definitions/SpellCastTargetFlags.h"
+#include "Spell/Definitions/PowerType.h"
 
 TotemSummon::TotemSummon(uint64 GUID) : Summon(GUID)
 {}
@@ -82,7 +84,7 @@ void TotemSummon::Load(CreatureProperties const* properties_, Unit* owner, Locat
         HealDoneMod[school] = owner->HealDoneMod[school];
     }
 
-    m_aiInterface->Init(this, AITYPE_TOTEM, Movement::WP_MOVEMENT_SCRIPT_NONE, owner);
+    m_aiInterface->Init(this, AI_SCRIPT_TOTEM, Movement::WP_MOVEMENT_SCRIPT_NONE, owner);
     DisableAI();
 }
 
@@ -127,7 +129,7 @@ void TotemSummon::SetupSpells()
         TotemSpell->HasEffect(SPELL_EFFECT_APPLY_GROUP_AREA_AURA) ||
         TotemSpell->HasEffect(SPELL_EFFECT_APPLY_RAID_AREA_AURA) ||
         TotemSpell->HasEffect(SPELL_EFFECT_PERSISTENT_AREA_AURA) ||
-        (TotemSpell->HasEffect(SPELL_EFFECT_APPLY_AURA) && TotemSpell->AppliesAreaAura(SPELL_AURA_PERIODIC_TRIGGER_SPELL)))
+        (TotemSpell->HasEffect(SPELL_EFFECT_APPLY_AURA) && TotemSpell->appliesAreaAura(SPELL_AURA_PERIODIC_TRIGGER_SPELL)))
         castingtotem = false;
 
     if (!castingtotem)
@@ -141,9 +143,7 @@ void TotemSummon::SetupSpells()
 
         if (!TotemSpell->HasEffect(SPELL_AURA_PERIODIC_TRIGGER_SPELL))
         {
-            targets.m_destX = GetPositionX();
-            targets.m_destY = GetPositionY();
-            targets.m_destZ = GetPositionZ();
+            targets.setDestination(GetPosition());
             targets.m_targetMask = TARGET_FLAG_DEST_LOCATION;
         }
         pSpell->prepare(&targets);

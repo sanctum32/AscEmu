@@ -26,6 +26,7 @@ include(Server/Script/CMakeLists.txt)
 include(Server/Warden/CMakeLists.txt)
 include(Spell/CMakeLists.txt)
 include(Spell/Customization/CMakeLists.txt)
+include(Spell/Definitions/CMakeLists.txt)
 include(Storage/CMakeLists.txt)
 if("${ASCEMU_VERSION}" STREQUAL "Cata")
    include(Storage/DB2/CMakeLists.txt)
@@ -51,7 +52,10 @@ set(sources
    ${SRC_GAMECLASSIC_FILES}
    ${SRC_GAMEBC_FILES}
    ${SRC_GAMELK_FILES}
+
    ${SRC_GAMECATA_FILES}
+   ${SRC_GAMECATA_UNITS_FILES}
+   ${SRC_GAMECATA_UNITS_PLAYERS_FILES}
 
    ${SRC_CHAT_FILES}
    ${SRC_COMMAND_FILES}
@@ -74,6 +78,7 @@ set(sources
    ${SRC_LOGON_COMMUNICATION_CLIENT_FILES}
    ${SRC_SPELL_FILES}
    ${SRC_SPELL_CUSTOM_FILES}
+   ${SRC_SPELL_DEFINITIONS_FILES}
    ${SRC_STORAGE_FILES}
    ${SRC_STORAGE_DBC_FILES}
    ${SRC_UNITS_FILES}
@@ -99,6 +104,7 @@ include_directories(
    ${CMAKE_SOURCE_DIR}/src/collision/Maps
    ${CMAKE_SOURCE_DIR}/src/collision/Models
    ${CMAKE_SOURCE_DIR}/dep/g3dlite/include
+   ${CMAKE_SOURCE_DIR}/dep/lualib/src
    ${CMAKE_SOURCE_DIR}/src/shared
    ${CMAKE_SOURCE_DIR}/src
    ${CMAKE_CURRENT_SOURCE_DIR}
@@ -111,8 +117,12 @@ if(USE_PCH AND PCHSupport_FOUND)
     ADD_NATIVE_PRECOMPILED_HEADER(${PROJECT_NAME} StdAfx.h ${CMAKE_CURRENT_SOURCE_DIR}/StdAfx.cpp)
 endif()
 
+if(WIN32 AND NOT USE_PCH)
+    set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/INCREMENTAL:NO")
+endif()
+
 set_target_properties(${PROJECT_NAME} PROPERTIES ENABLE_EXPORTS TRUE)
-add_dependencies(${PROJECT_NAME} shared g3dlite collision Detour Recast)
+add_dependencies(${PROJECT_NAME} shared g3dlite collision Detour Recast lualib)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/WorldConf.h.in ${CMAKE_CURRENT_SOURCE_DIR}/WorldConf.h)
 
 target_link_libraries(${PROJECT_NAME} shared g3dlite collision Detour Recast ${PCRE_LIBRARIES})

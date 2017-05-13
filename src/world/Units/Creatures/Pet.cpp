@@ -32,6 +32,9 @@
 #include "Map/MapMgr.h"
 #include "Spell/SpellMgr.h"
 #include "Spell/SpellAuras.h"
+#include "Spell/Definitions/ProcFlags.h"
+#include <Spell/Definitions/AuraInterruptFlags.h>
+#include "Spell/Definitions/PowerType.h"
 
 #define WATER_ELEMENTAL         510
 #define WATER_ELEMENTAL_NEW     37994
@@ -753,7 +756,7 @@ void Pet::OnPushToWorld()
 
 void Pet::InitializeMe(bool first)
 {
-    GetAIInterface()->Init(this, AITYPE_PET, Movement::WP_MOVEMENT_SCRIPT_NONE, m_Owner);
+    GetAIInterface()->Init(this, AI_SCRIPT_PET, Movement::WP_MOVEMENT_SCRIPT_NONE, m_Owner);
     GetAIInterface()->SetUnitToFollow(m_Owner);
     GetAIInterface()->SetFollowDistance(3.0f);
 
@@ -1607,7 +1610,7 @@ void Pet::ApplyStatsForLevel()
         float scale_diff = float(myFamily->maxsize - myFamily->minsize);
         float factor = scale_diff / level_diff;
         float scale = factor * pet_level + myFamily->minsize;
-        if (myFamily->ID == 23) // Imps have strange values set into CreatureFamily.dbc, 
+        if (myFamily->ID == 23) // Imps have strange values set into CreatureFamily.dbc,
             SetScale(1.0f);    // they always will be set to be 0.5f. But that's not right.
         else
             SetScale(scale);

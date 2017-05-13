@@ -33,11 +33,26 @@
 #include "Objects/Faction.h"
 #include "Spell/SpellAuras.h"
 #include "../../scripts/Common/Base.h"
+#include "Spell/Definitions/SpellLog.h"
+#include "Spell/Definitions/SpellCastTargetFlags.h"
+#include "Spell/Definitions/ProcFlags.h"
+#include <Spell/Definitions/AuraInterruptFlags.h>
+#include "Spell/Definitions/SpellSchoolConversionTable.h"
+#include "Spell/Definitions/SpellTypes.h"
+#include "Spell/Definitions/SpellIsFlags.h"
+#include "Spell/Definitions/SpellMechanics.h"
+#include "Spell/Definitions/PowerType.h"
+#include "Spell/Definitions/SpellDidHitResult.h"
+
+using ascemu::World::Spell::Helpers::spellModFlatIntValue;
+using ascemu::World::Spell::Helpers::spellModPercentageIntValue;
+using ascemu::World::Spell::Helpers::spellModFlatFloatValue;
+using ascemu::World::Spell::Helpers::spellModPercentageFloatValue;
 
 #ifdef AE_CLASSIC
 static float AttackToRageConversionTable[DBC_PLAYER_LEVEL_CAP + 1] =
 {
-    0.0f,               // 0              
+    0.0f,               // 0
     0.499999998893f,
     0.34874214056f,
     0.267397170992f,
@@ -103,7 +118,7 @@ static float AttackToRageConversionTable[DBC_PLAYER_LEVEL_CAP + 1] =
 #ifdef AE_TBC
 static float AttackToRageConversionTable[DBC_PLAYER_LEVEL_CAP + 1] =
 {
-    0.0f,               // 0              
+    0.0f,               // 0
     0.499999998893f,
     0.34874214056f,
     0.267397170992f,
@@ -179,7 +194,7 @@ static float AttackToRageConversionTable[DBC_PLAYER_LEVEL_CAP + 1] =
 #ifdef AE_WOTLK
 static float AttackToRageConversionTable[DBC_PLAYER_LEVEL_CAP + 1] =
 {
-    0.0f,               // 0              
+    0.0f,               // 0
     0.499999998893f,
     0.34874214056f,
     0.267397170992f,
@@ -265,7 +280,7 @@ static float AttackToRageConversionTable[DBC_PLAYER_LEVEL_CAP + 1] =
 #ifdef AE_CATA
 static float AttackToRageConversionTable[DBC_PLAYER_LEVEL_CAP + 1] =
 {
-    0.0f,               // 0              
+    0.0f,               // 0
     0.499999998893f,
     0.34874214056f,
     0.267397170992f,
@@ -541,7 +556,7 @@ Unit::Unit() : m_currentSpeedWalk(2.5f),
     //		CalculateActualArmor();
 
     m_aiInterface = new AIInterface();
-    m_aiInterface->Init(this, AITYPE_AGRO, Movement::WP_MOVEMENT_SCRIPT_NONE);
+    m_aiInterface->Init(this, AI_SCRIPT_AGRO, Movement::WP_MOVEMENT_SCRIPT_NONE);
 
     m_emoteState = 0;
     m_oldEmote = 0;
@@ -1084,7 +1099,7 @@ bool Unit::canReachWithAttack(Unit* pVictim)
     //	float targetscale = pVictim->m_floatValues[OBJECT_FIELD_SCALE_X];
     //	float selfscale = m_floatValues[OBJECT_FIELD_SCALE_X];
 
-    //float distance = sqrt(GetDistanceSq(pVictim));
+    //float distance = sqrt(getDistanceSq(pVictim));
     float delta_x = pVictim->GetPositionX() - GetPositionX();
     float delta_y = pVictim->GetPositionY() - GetPositionY();
     float distance = sqrt(delta_x * delta_x + delta_y * delta_y);
@@ -1157,7 +1172,7 @@ void Unit::GiveGroupXP(Unit* pVictim, Player* PlayerInGroup)
         {
             pGroupGuy = (*itr)->m_loggedInPlayer;
             if (pGroupGuy && pGroupGuy->isAlive() && /* PlayerInGroup->GetInstanceID()==pGroupGuy->GetInstanceID() &&*/
-                pVictim->GetMapMgr() == pGroupGuy->GetMapMgr() && pGroupGuy->GetDistanceSq(pVictim) < 100 * 100)
+                pVictim->GetMapMgr() == pGroupGuy->GetMapMgr() && pGroupGuy->getDistanceSq(pVictim) < 100 * 100)
             {
                 active_player_list[active_player_count] = pGroupGuy;
                 active_player_count++;
@@ -1388,7 +1403,7 @@ uint32 Unit::HandleProc(uint32 flag, Unit* victim, SpellInfo* CastingSpell, bool
             }
         }
 
-        SM_FIValue(SM_FChanceOfSuccess, (int32*)&proc_Chance, ospinfo->SpellGroupType);
+        spellModFlatIntValue(SM_FChanceOfSuccess, (int32*)&proc_Chance, ospinfo->SpellGroupType);
         if (!Rand(proc_Chance))
             continue;
 
@@ -1731,9 +1746,7 @@ uint32 Unit::HandleProc(uint32 flag, Unit* victim, SpellInfo* CastingSpell, bool
                         SpellInfo* spellInfo = sSpellCustomizations.GetSpellInfo(spellId);   //we already modified this spell on server loading so it must exist
                         Spell* spell = sSpellFactoryMgr.NewSpell(new_caster, spellInfo, true, NULL);
                         SpellCastTargets targets;
-                        targets.m_destX = GetPositionX();
-                        targets.m_destY = GetPositionY();
-                        targets.m_destZ = GetPositionZ();
+                        targets.setDestination(GetPosition());
                         spell->prepare(&targets);
                     }
                     spell_proc->mDeleted = true;
@@ -2321,7 +2334,11 @@ uint32 Unit::HandleProc(uint32 flag, Unit* victim, SpellInfo* CastingSpell, bool
                     if (!(CastingSpell->custom_c_is_flags & SPELL_FLAG_IS_HEALING) || this == victim)
                         continue;
                     //this is not counting the bonus effects on heal
-                    dmg_overwrite[0] = ((CastingSpell->EffectBasePoints[IsHealingSpell(CastingSpell) - 1] + 1) * (ospinfo->EffectBasePoints[0] + 1) / 100);
+                    auto idx = CastingSpell->firstBeneficialEffect();
+                    if (idx != 1)
+                    {
+                        dmg_overwrite[0] = ((CastingSpell->EffectBasePoints[idx] + 1) * (ospinfo->EffectBasePoints[0] + 1) / 100);
+                    }
                 }
                 break;
                 //paladin - Light's Grace
@@ -3222,20 +3239,20 @@ uint32 Unit::GetSpellDidHitResult(Unit* pVictim, uint32 weapon_damage_type, Spel
         diffAcapped -= (float)(getLevel() * 5);
     //<SHIT END>
 
-    // by victim state 
+    // by victim state
     if (pVictim->IsPlayer() && pVictim->GetStandState()) //every not standing state is>0
     {
         hitchance = 100.0f;
     }
 
-    // by damage type and by weapon type 
+    // by damage type and by weapon type
     if (weapon_damage_type == RANGED)
     {
         dodge = 0.0f;
         parry = 0.0f;
     }
 
-    // by skill difference 
+    // by skill difference
     float vsk = (float)self_skill - (float)victim_skill;
     dodge = std::max(0.0f, dodge - vsk * 0.04f);
 
@@ -3257,10 +3274,10 @@ uint32 Unit::GetSpellDidHitResult(Unit* pVictim, uint32 weapon_damage_type, Spel
 
     if (ability != nullptr)
     {
-        SM_FFValue(SM_FHitchance, &hitchance, ability->SpellGroupType);
+        spellModFlatFloatValue(SM_FHitchance, &hitchance, ability->SpellGroupType);
 #ifdef COLLECTION_OF_UNTESTED_STUFF_AND_TESTERS
         float spell_flat_modifers = 0;
-        SM_FFValue(SM_FHitchance, &spell_flat_modifers, ability->SpellGroupType);
+        spellModFlatFloatValue(SM_FHitchance, &spell_flat_modifers, ability->SpellGroupType);
         if (spell_flat_modifers != 0)
             LOG_DEBUG("!!!!!spell resist mod flat %f,  spell resist bonus %f, spell group %u", spell_flat_modifers, hitchance, ability->SpellGroupType);
 #endif
@@ -3538,7 +3555,7 @@ void Unit::Strike(Unit* pVictim, uint32 weapon_damage_type, SpellInfo* ability, 
 
     //////////////////////////////////////////////////////////////////////////////////////////
     //Advanced Chances Modifications
-    // by talents 
+    // by talents
     if (pVictim->IsPlayer())
     {
         if (weapon_damage_type != RANGED)
@@ -3588,8 +3605,8 @@ void Unit::Strike(Unit* pVictim, uint32 weapon_damage_type, SpellInfo* ability, 
 
     if (ability != nullptr)
     {
-        SM_FFValue(SM_CriticalChance, &crit, ability->SpellGroupType);
-        SM_FFValue(SM_FHitchance, &hitchance, ability->SpellGroupType);
+        spellModFlatFloatValue(SM_CriticalChance, &crit, ability->SpellGroupType);
+        spellModFlatFloatValue(SM_FHitchance, &hitchance, ability->SpellGroupType);
     }
 
     // by ratings
@@ -3849,13 +3866,13 @@ void Unit::Strike(Unit* pVictim, uint32 weapon_damage_type, SpellInfo* ability, 
                 // \todo Don't really know why it was here. It should be calculated on Spel::CalculateEffect. Maybe it was bugged there...
                 //			if (ability && ability->SpellGroupType)
                 //			{
-                //				SM_FIValue(TO_UNIT(this)->SM_FDamageBonus, &dmg.full_damage, ability->SpellGroupType);
-                //				SM_PIValue(TO_UNIT(this)->SM_PDamageBonus, &dmg.full_damage, ability->SpellGroupType);
+                //				spellModFlatIntValue(TO_UNIT(this)->SM_FDamageBonus, &dmg.full_damage, ability->SpellGroupType);
+                //				spellModPercentageIntValue(TO_UNIT(this)->SM_PDamageBonus, &dmg.full_damage, ability->SpellGroupType);
                 //			}
                 //			else
                 //			{
-                //				SM_FIValue(((Unit*)this)->SM_FMiscEffect,&dmg.full_damage,(uint64)1<<63);
-                //				SM_PIValue(((Unit*)this)->SM_PMiscEffect,&dmg.full_damage,(uint64)1<<63);
+                //				spellModFlatIntValue(((Unit*)this)->SM_FMiscEffect,&dmg.full_damage,(uint64)1<<63);
+                //				spellModPercentageIntValue(((Unit*)this)->SM_PMiscEffect,&dmg.full_damage,(uint64)1<<63);
                 //			}
 
                 dmg.full_damage += pVictim->DamageTakenMod[dmg.school_type];
@@ -3965,7 +3982,7 @@ void Unit::Strike(Unit* pVictim, uint32 weapon_damage_type, SpellInfo* ability, 
                         if (ability != nullptr)
                         {
                             int32 dmg_bonus_pct = 100;
-                            SM_FIValue(SM_PCriticalDamage, &dmg_bonus_pct, ability->SpellGroupType);
+                            spellModFlatIntValue(SM_PCriticalDamage, &dmg_bonus_pct, ability->SpellGroupType);
                             dmgbonus = dmgbonus * dmg_bonus_pct / 100;
                         }
 
@@ -4095,7 +4112,7 @@ void Unit::Strike(Unit* pVictim, uint32 weapon_damage_type, SpellInfo* ability, 
     //special states processing
     if (pVictim->IsCreature())
     {
-        if (pVictim->GetAIInterface() && (pVictim->GetAIInterface()->getAIState() == STATE_EVADE ||
+        if (pVictim->GetAIInterface() && (pVictim->GetAIInterface()->isAiState(AI_STATE_EVADE) ||
             (pVictim->GetAIInterface()->GetIsSoulLinked() && pVictim->GetAIInterface()->getSoullinkedWith() != this)))
         {
             vstate = EVADE;
@@ -4536,7 +4553,7 @@ void Unit::AddAura(Aura* aur)
     if (aur == NULL)
         return;
 
-    if (!(isAlive() || (aur->GetSpellInfo()->IsDeathPersistent())))
+    if (!(isAlive() || (aur->GetSpellInfo()->isDeathPersistent())))
     {
         delete aur;
         return;
@@ -4617,8 +4634,8 @@ void Unit::AddAura(Aura* aur)
                 Unit* ucaster = aur->GetUnitCaster();
                 if (ucaster != nullptr)
                 {
-                    SM_FIValue(ucaster->SM_FCharges, &charges, aur->GetSpellInfo()->SpellGroupType);
-                    SM_PIValue(ucaster->SM_PCharges, &charges, aur->GetSpellInfo()->SpellGroupType);
+                    spellModFlatIntValue(ucaster->SM_FCharges, &charges, aur->GetSpellInfo()->SpellGroupType);
+                    spellModPercentageIntValue(ucaster->SM_PCharges, &charges, aur->GetSpellInfo()->SpellGroupType);
                 }
                 maxStack = charges;
             }
@@ -5191,7 +5208,7 @@ void Unit::RemoveNegativeAuras()
     {
         if (m_auras[x])
         {
-            if (m_auras[x]->GetSpellInfo()->IsDeathPersistent())
+            if (m_auras[x]->GetSpellInfo()->isDeathPersistent())
                 continue;
             else
                 m_auras[x]->Remove();
@@ -5211,7 +5228,7 @@ void Unit::RemoveAllNonPersistentAuras()
     for (uint32 x = MAX_TOTAL_AURAS_START; x < MAX_TOTAL_AURAS_END; x++)
         if (m_auras[x])
         {
-            if (m_auras[x]->GetSpellInfo()->IsDeathPersistent())
+            if (m_auras[x]->GetSpellInfo()->isDeathPersistent())
                 continue;
             else
                 m_auras[x]->Remove();
@@ -5400,7 +5417,7 @@ int32 Unit::GetSpellDmgBonus(Unit* pVictim, SpellInfo* spellInfo, int32 base_dmg
                 if (caster->IsPlayer())
                 {
                     int32 durmod = 0;
-                    SM_FIValue(caster->SM_FDur, &durmod, spellInfo->SpellGroupType);
+                    spellModFlatIntValue(caster->SM_FDur, &durmod, spellInfo->SpellGroupType);
                     plus_damage += static_cast<float>(plus_damage * durmod / 15000);
                 }
             }
@@ -5425,12 +5442,12 @@ int32 Unit::GetSpellDmgBonus(Unit* pVictim, SpellInfo* spellInfo, int32 base_dmg
 
 
         int32 bonus_damage = 0;
-        SM_FIValue(caster->SM_FPenalty, &bonus_damage, spellInfo->SpellGroupType);
-        SM_FIValue(caster->SM_FDamageBonus, &bonus_damage, spellInfo->SpellGroupType);
+        spellModFlatIntValue(caster->SM_FPenalty, &bonus_damage, spellInfo->SpellGroupType);
+        spellModFlatIntValue(caster->SM_FDamageBonus, &bonus_damage, spellInfo->SpellGroupType);
 
         int32 dmg_bonus_pct = 0;
-        SM_FIValue(caster->SM_PPenalty, &dmg_bonus_pct, spellInfo->SpellGroupType);
-        SM_FIValue(caster->SM_PDamageBonus, &dmg_bonus_pct, spellInfo->SpellGroupType);
+        spellModFlatIntValue(caster->SM_PPenalty, &dmg_bonus_pct, spellInfo->SpellGroupType);
+        spellModFlatIntValue(caster->SM_PDamageBonus, &dmg_bonus_pct, spellInfo->SpellGroupType);
 
         plus_damage += static_cast<float>((base_dmg + bonus_damage) * dmg_bonus_pct / 100);
 
@@ -5575,9 +5592,13 @@ void Unit::MoveToWaypoint(uint32 wp_id)
         }
 
         ai->m_currentWaypoint = wp_id;
+
         if (wp->flags != 0)
+        {
             ai->SetRun();
-        ai->MoveTo(wp->x, wp->y, wp->z, 0);
+        }
+
+        ai->MoveTo(wp->x, wp->y, wp->z);
     }
 }
 
@@ -5799,7 +5820,7 @@ void Unit::DropAurasOnDeath()
     for (uint32 x = MAX_REMOVABLE_AURAS_START; x < MAX_REMOVABLE_AURAS_END; x++)
         if (m_auras[x])
         {
-            if (m_auras[x] && m_auras[x]->GetSpellInfo()->IsDeathPersistent())
+            if (m_auras[x] && m_auras[x]->GetSpellInfo()->isDeathPersistent())
                 continue;
             else
                 m_auras[x]->Remove();
@@ -5970,15 +5991,13 @@ uint8 Unit::CastSpell(Unit* Target, SpellInfo* Sp, uint32 forced_basepoints, int
     return newSpell->prepare(&targets);
 }
 
-void Unit::CastSpellAoF(float x, float y, float z, SpellInfo* Sp, bool triggered)
+void Unit::CastSpellAoF(LocationVector lv, SpellInfo* Sp, bool triggered)
 {
-    if (Sp == NULL)
+    if (Sp == nullptr)
         return;
 
     SpellCastTargets targets;
-    targets.m_destX = x;
-    targets.m_destY = y;
-    targets.m_destZ = z;
+    targets.setDestination(lv);
     targets.m_targetMask = TARGET_FLAG_DEST_LOCATION;
     Spell* newSpell = sSpellFactoryMgr.NewSpell(this, Sp, triggered, 0);
     newSpell->prepare(&targets);
@@ -6292,7 +6311,7 @@ bool Unit::HasAuraWithName(uint32 name)
 
     for (uint32 i = MAX_TOTAL_AURAS_START; i < MAX_TOTAL_AURAS_END; ++i)
     {
-        if (m_auras[i] != NULL && m_auras[i]->GetSpellInfo()->AppliesAreaAura(name))
+        if (m_auras[i] != NULL && m_auras[i]->GetSpellInfo()->appliesAreaAura(name))
             return true;
     }
 
@@ -6305,7 +6324,7 @@ uint32 Unit::GetAuraCountWithName(uint32 name)
 
     for (uint32 i = MAX_TOTAL_AURAS_START; i < MAX_TOTAL_AURAS_END; ++i)
     {
-        if (m_auras[i] != NULL && m_auras[i]->GetSpellInfo()->AppliesAreaAura(name))
+        if (m_auras[i] != NULL && m_auras[i]->GetSpellInfo()->appliesAreaAura(name))
             ++count;
     }
 
@@ -6716,260 +6735,260 @@ float Unit::get_chance_to_daze(Unit* target)
         return chance_to_daze;
 }
 
-void CombatStatusHandler::ClearMyHealers()		
-{		
-    // this is where we check all our healers		
-    HealedSet::iterator i;		
-    Player* pt;		
-    for (i = m_healers.begin(); i != m_healers.end(); ++i)		
-    {		
-        pt = m_Unit->GetMapMgr()->GetPlayer(*i);		
-        if (pt != NULL)		
-            pt->CombatStatus.RemoveHealed(m_Unit);		
-    }		
-		
-    m_healers.clear();		
+void CombatStatusHandler::ClearMyHealers()
+{
+    // this is where we check all our healers
+    HealedSet::iterator i;
+    Player* pt;
+    for (i = m_healers.begin(); i != m_healers.end(); ++i)
+    {
+        pt = m_Unit->GetMapMgr()->GetPlayer(*i);
+        if (pt != NULL)
+            pt->CombatStatus.RemoveHealed(m_Unit);
+    }
+
+    m_healers.clear();
 }
 
-void CombatStatusHandler::RemoveHealed(Unit* pHealTarget)		
-{		
-    m_healed.erase(pHealTarget->GetLowGUID());		
-    UpdateFlag();		
-}		
-		
-void CombatStatusHandler::UpdateFlag()		
-{		
-    bool n_status = InternalIsInCombat();		
-    if (n_status != m_lastStatus)		
-    {		
-        m_lastStatus = n_status;		
-        if (n_status)		
-        {		
-            //printf(I64FMT" is now in combat.\n", m_Unit->GetGUID());		
-            m_Unit->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_COMBAT);		
+void CombatStatusHandler::RemoveHealed(Unit* pHealTarget)
+{
+    m_healed.erase(pHealTarget->GetLowGUID());
+    UpdateFlag();
+}
+
+void CombatStatusHandler::UpdateFlag()
+{
+    bool n_status = InternalIsInCombat();
+    if (n_status != m_lastStatus)
+    {
+        m_lastStatus = n_status;
+        if (n_status)
+        {
+            //printf(I64FMT" is now in combat.\n", m_Unit->GetGUID());
+            m_Unit->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_COMBAT);
             if (!m_Unit->hasUnitStateFlag(UNIT_STATE_ATTACKING)) m_Unit->addUnitStateFlag(UNIT_STATE_ATTACKING);
-        }		
-        else		
-        {		
-            //printf(I64FMT" is no longer in combat.\n", m_Unit->GetGUID());		
-            m_Unit->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_COMBAT);		
+        }
+        else
+        {
+            //printf(I64FMT" is no longer in combat.\n", m_Unit->GetGUID());
+            m_Unit->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_COMBAT);
             if (m_Unit->hasUnitStateFlag(UNIT_STATE_ATTACKING)) m_Unit->removeUnitStateFlag(UNIT_STATE_ATTACKING);
-		
-            // remove any of our healers from combat too, if they are able to be.		
-            ClearMyHealers();		
-		
-            if (m_Unit->IsPlayer())		
-                static_cast<Player*>(m_Unit)->UpdatePotionCooldown();		
-        }		
-    }		
+
+            // remove any of our healers from combat too, if they are able to be.
+            ClearMyHealers();
+
+            if (m_Unit->IsPlayer())
+                static_cast<Player*>(m_Unit)->UpdatePotionCooldown();
+        }
+    }
 }
 
 bool CombatStatusHandler::InternalIsInCombat()
-{		
-    if (m_Unit->IsPlayer() && m_Unit->GetMapMgr() && m_Unit->GetMapMgr()->IsCombatInProgress())		
-        return true;		
-		
-    if (m_healed.size() > 0)		
-        return true;		
-		
-    if (m_attackTargets.size() > 0)		
-        return true;		
-		
-    if (m_attackers.size() > 0)		
-        return true;		
-		
-    return false;		
-}		
-		
-void CombatStatusHandler::AddAttackTarget(const uint64 & guid)		
-{		
-    if (guid == m_Unit->GetGUID())		
-       return;		
-		
-    //we MUST be in world		
-    ARCEMU_ASSERT(m_Unit->IsInWorld());		
-		
-    m_attackTargets.insert(guid);		
-    //printf("Adding attack target " I64FMT " to " I64FMT "\n", guid, m_Unit->GetGUID());		
-    if (m_Unit->IsPlayer() &&		
-        m_primaryAttackTarget != guid)			// players can only have one attack target.		
-    {		
-        if (m_primaryAttackTarget)		
-            ClearPrimaryAttackTarget();		
-		
-        m_primaryAttackTarget = guid;		
-    }		
-		
-    UpdateFlag();		
-}		
-		
-void CombatStatusHandler::ClearPrimaryAttackTarget()		
-{		
-    //printf("ClearPrimaryAttackTarget for " I64FMT "\n", m_Unit->GetGUID());		
-    if (m_primaryAttackTarget != 0)		
-    {		
-        Unit* pt = m_Unit->GetMapMgr()->GetUnit(m_primaryAttackTarget);		
-        if (pt != NULL)		
-        {		
-            // remove from their attacker set. (if we have no longer got any DoT's, etc)		
-            if (!IsAttacking(pt))		
-            {		
-                pt->CombatStatus.RemoveAttacker(m_Unit, m_Unit->GetGUID());		
-                m_attackTargets.erase(m_primaryAttackTarget);		
-            }		
-		
-            m_primaryAttackTarget = 0;		
-        }		
-        else		
-        {		
-            m_attackTargets.erase(m_primaryAttackTarget);		
-            m_primaryAttackTarget = 0;		
-        }		
-    }		
-		
-    UpdateFlag();		
-}		
-		
-bool CombatStatusHandler::IsAttacking(Unit* pTarget)		
-{		
-    // check the target for any of our DoT's.		
-    for (uint32 i = MAX_NEGATIVE_AURAS_EXTEDED_START; i < MAX_NEGATIVE_AURAS_EXTEDED_END; ++i)		
-        if (pTarget->m_auras[i] != NULL)		
-            if (m_Unit->GetGUID() == pTarget->m_auras[i]->m_casterGuid && pTarget->m_auras[i]->IsCombatStateAffecting())		
-                return true;		
-		
-    // place any additional checks here		
-    return false;		
-}		
-		
-void CombatStatusHandler::RemoveAttackTarget(Unit* pTarget)		
-{		
-    // called on aura remove, etc.		
-    AttackerMap::iterator itr = m_attackTargets.find(pTarget->GetGUID());		
-    if (itr == m_attackTargets.end())		
-        return;		
-		
-   if (!IsAttacking(pTarget))		
-    {		
-        //printf("Removing attack target " I64FMT " on " I64FMT "\n", pTarget->GetGUID(), m_Unit->GetGUID());		
-        m_attackTargets.erase(itr);		
-        if (m_primaryAttackTarget == pTarget->GetGUID())		
-            m_primaryAttackTarget = 0;		
-		
-        UpdateFlag();		
-    }		
-    /*else		
-        printf("Cannot remove attack target " I64FMT " from " I64FMT "\n", pTarget->GetGUID(), m_Unit->GetGUID());*/		
-}		
-		
-void CombatStatusHandler::RemoveAttacker(Unit* pAttacker, const uint64 & guid)		
+{
+    if (m_Unit->IsPlayer() && m_Unit->GetMapMgr() && m_Unit->GetMapMgr()->IsCombatInProgress())
+        return true;
+
+    if (m_healed.size() > 0)
+        return true;
+
+    if (m_attackTargets.size() > 0)
+        return true;
+
+    if (m_attackers.size() > 0)
+        return true;
+
+    return false;
+}
+
+void CombatStatusHandler::AddAttackTarget(const uint64 & guid)
+{
+    if (guid == m_Unit->GetGUID())
+       return;
+
+    //we MUST be in world
+    ARCEMU_ASSERT(m_Unit->IsInWorld());
+
+    m_attackTargets.insert(guid);
+    //printf("Adding attack target " I64FMT " to " I64FMT "\n", guid, m_Unit->GetGUID());
+    if (m_Unit->IsPlayer() &&
+        m_primaryAttackTarget != guid)			// players can only have one attack target.
+    {
+        if (m_primaryAttackTarget)
+            ClearPrimaryAttackTarget();
+
+        m_primaryAttackTarget = guid;
+    }
+
+    UpdateFlag();
+}
+
+void CombatStatusHandler::ClearPrimaryAttackTarget()
+{
+    //printf("ClearPrimaryAttackTarget for " I64FMT "\n", m_Unit->GetGUID());
+    if (m_primaryAttackTarget != 0)
+    {
+        Unit* pt = m_Unit->GetMapMgr()->GetUnit(m_primaryAttackTarget);
+        if (pt != NULL)
+        {
+            // remove from their attacker set. (if we have no longer got any DoT's, etc)
+            if (!IsAttacking(pt))
+            {
+                pt->CombatStatus.RemoveAttacker(m_Unit, m_Unit->GetGUID());
+                m_attackTargets.erase(m_primaryAttackTarget);
+            }
+
+            m_primaryAttackTarget = 0;
+        }
+        else
+        {
+            m_attackTargets.erase(m_primaryAttackTarget);
+            m_primaryAttackTarget = 0;
+        }
+    }
+
+    UpdateFlag();
+}
+
+bool CombatStatusHandler::IsAttacking(Unit* pTarget)
+{
+    // check the target for any of our DoT's.
+    for (uint32 i = MAX_NEGATIVE_AURAS_EXTEDED_START; i < MAX_NEGATIVE_AURAS_EXTEDED_END; ++i)
+        if (pTarget->m_auras[i] != NULL)
+            if (m_Unit->GetGUID() == pTarget->m_auras[i]->m_casterGuid && pTarget->m_auras[i]->IsCombatStateAffecting())
+                return true;
+
+    // place any additional checks here
+    return false;
+}
+
+void CombatStatusHandler::RemoveAttackTarget(Unit* pTarget)
+{
+    // called on aura remove, etc.
+    AttackerMap::iterator itr = m_attackTargets.find(pTarget->GetGUID());
+    if (itr == m_attackTargets.end())
+        return;
+
+   if (!IsAttacking(pTarget))
+    {
+        //printf("Removing attack target " I64FMT " on " I64FMT "\n", pTarget->GetGUID(), m_Unit->GetGUID());
+        m_attackTargets.erase(itr);
+        if (m_primaryAttackTarget == pTarget->GetGUID())
+            m_primaryAttackTarget = 0;
+
+        UpdateFlag();
+    }
+    /*else
+        printf("Cannot remove attack target " I64FMT " from " I64FMT "\n", pTarget->GetGUID(), m_Unit->GetGUID());*/
+}
+
+void CombatStatusHandler::RemoveAttacker(Unit* pAttacker, const uint64 & guid)
 {
     AttackerMap::iterator itr = m_attackers.find(guid);
-    if (itr == m_attackers.end())		
-        return;		
- 		  
+    if (itr == m_attackers.end())
+        return;
+
     if ((!pAttacker) || (!pAttacker->CombatStatus.IsAttacking(m_Unit)))
-    {		
-        //printf("Removing attacker " I64FMT " from " I64FMT "\n", guid, m_Unit->GetGUID());		
-        m_attackers.erase(itr);		
-        UpdateFlag();		
-    }		
-    /*else		
-    {		
-    printf("Cannot remove attacker " I64FMT " from " I64FMT "\n", guid, m_Unit->GetGUID());		
-    }*/		
+    {
+        //printf("Removing attacker " I64FMT " from " I64FMT "\n", guid, m_Unit->GetGUID());
+        m_attackers.erase(itr);
+        UpdateFlag();
+    }
+    /*else
+    {
+    printf("Cannot remove attacker " I64FMT " from " I64FMT "\n", guid, m_Unit->GetGUID());
+    }*/
 }
-  		  
+
 void CombatStatusHandler::OnDamageDealt(Unit* pTarget)
 {
     // we added an aura, or dealt some damage to a target. they need to have us as an attacker, and they need to be our attack target if not.
-    //printf("OnDamageDealt to " I64FMT " from " I64FMT "\n", pTarget->GetGUID(), m_Unit->GetGUID());		
-    if (pTarget == m_Unit)		
-        return;		
-		
-    //no need to be in combat if dead		
-    if (!pTarget->isAlive() || !m_Unit->isAlive())		
-        return;		
-		
-    AttackerMap::iterator itr = m_attackTargets.find(pTarget->GetGUID());		
-    if (itr == m_attackTargets.end())		
-        AddAttackTarget(pTarget->GetGUID());		
-		
-    itr = pTarget->CombatStatus.m_attackers.find(m_Unit->GetGUID());		
-    if (itr == pTarget->CombatStatus.m_attackers.end())		
-        pTarget->CombatStatus.AddAttacker(m_Unit->GetGUID());		
-		
-    // update the timeout		
-    m_Unit->CombatStatusHandler_ResetPvPTimeout();		
-}		
-		
-void CombatStatusHandler::AddAttacker(const uint64 & guid)		
-{		
-    //we MUST be in world		
-    ARCEMU_ASSERT(m_Unit->IsInWorld());		
-    m_attackers.insert(guid);		
-    UpdateFlag();		
+    //printf("OnDamageDealt to " I64FMT " from " I64FMT "\n", pTarget->GetGUID(), m_Unit->GetGUID());
+    if (pTarget == m_Unit)
+        return;
+
+    //no need to be in combat if dead
+    if (!pTarget->isAlive() || !m_Unit->isAlive())
+        return;
+
+    AttackerMap::iterator itr = m_attackTargets.find(pTarget->GetGUID());
+    if (itr == m_attackTargets.end())
+        AddAttackTarget(pTarget->GetGUID());
+
+    itr = pTarget->CombatStatus.m_attackers.find(m_Unit->GetGUID());
+    if (itr == pTarget->CombatStatus.m_attackers.end())
+        pTarget->CombatStatus.AddAttacker(m_Unit->GetGUID());
+
+    // update the timeout
+    m_Unit->CombatStatusHandler_ResetPvPTimeout();
 }
 
-void CombatStatusHandler::ClearAttackers()		
-{		
-    //If we are not in world, CombatStatusHandler::OnRemoveFromWorld() would have been already called so m_attackTargets		
-    //and m_attackers should be empty. If it's not, something wrong happened.		
-		
-    // this is a FORCED function, only use when the reference will be destroyed.		
-    AttackerMap::iterator itr = m_attackTargets.begin();		
-    Unit* pt;		
-    for (; itr != m_attackTargets.end(); ++itr)		
-    {		
-        pt = m_Unit->GetMapMgr()->GetUnit(*itr);		
-        if (pt)		
-        {		
-            pt->CombatStatus.m_attackers.erase(m_Unit->GetGUID());		
-            pt->CombatStatus.UpdateFlag();		
-        }		
-    }		
-		
-    for (itr = m_attackers.begin(); itr != m_attackers.end(); ++itr)		
-    {		
-        pt = m_Unit->GetMapMgr()->GetUnit(*itr);		
-        if (pt)		
-        {		
-            pt->CombatStatus.m_attackTargets.erase(m_Unit->GetGUID());		
-            pt->CombatStatus.UpdateFlag();		
-        }		
-    }		
-		
-    m_attackers.clear();		
-    m_attackTargets.clear();		
-    m_primaryAttackTarget = 0;		
-    UpdateFlag();		
-}		
-		
-void CombatStatusHandler::ClearHealers()		
-{		
-    //If we are not in world, CombatStatusHandler::OnRemoveFromWorld() would have been already called so m_healed should		
-    //be empty. If it's not, something wrong happened.		
-		
-    HealedSet::iterator itr = m_healed.begin();		
-    Player* pt;		
-    for (; itr != m_healed.end(); ++itr)		
-    {		
-        pt = m_Unit->GetMapMgr()->GetPlayer(*itr);		
-        if (pt)		
-        {		
-            pt->CombatStatus.m_healers.erase(m_Unit->GetLowGUID());		
-            pt->CombatStatus.UpdateFlag();		
-        }		
-    }		
-		
-    for (itr = m_healers.begin(); itr != m_healers.end(); ++itr)		
-    {		
-        pt = m_Unit->GetMapMgr()->GetPlayer(*itr);		
-        if (pt)		
-        {		
-            pt->CombatStatus.m_healed.erase(m_Unit->GetLowGUID());		
-            pt->CombatStatus.UpdateFlag();		
-        }		
+void CombatStatusHandler::AddAttacker(const uint64 & guid)
+{
+    //we MUST be in world
+    ARCEMU_ASSERT(m_Unit->IsInWorld());
+    m_attackers.insert(guid);
+    UpdateFlag();
+}
+
+void CombatStatusHandler::ClearAttackers()
+{
+    //If we are not in world, CombatStatusHandler::OnRemoveFromWorld() would have been already called so m_attackTargets
+    //and m_attackers should be empty. If it's not, something wrong happened.
+
+    // this is a FORCED function, only use when the reference will be destroyed.
+    AttackerMap::iterator itr = m_attackTargets.begin();
+    Unit* pt;
+    for (; itr != m_attackTargets.end(); ++itr)
+    {
+        pt = m_Unit->GetMapMgr()->GetUnit(*itr);
+        if (pt)
+        {
+            pt->CombatStatus.m_attackers.erase(m_Unit->GetGUID());
+            pt->CombatStatus.UpdateFlag();
+        }
+    }
+
+    for (itr = m_attackers.begin(); itr != m_attackers.end(); ++itr)
+    {
+        pt = m_Unit->GetMapMgr()->GetUnit(*itr);
+        if (pt)
+        {
+            pt->CombatStatus.m_attackTargets.erase(m_Unit->GetGUID());
+            pt->CombatStatus.UpdateFlag();
+        }
+    }
+
+    m_attackers.clear();
+    m_attackTargets.clear();
+    m_primaryAttackTarget = 0;
+    UpdateFlag();
+}
+
+void CombatStatusHandler::ClearHealers()
+{
+    //If we are not in world, CombatStatusHandler::OnRemoveFromWorld() would have been already called so m_healed should
+    //be empty. If it's not, something wrong happened.
+
+    HealedSet::iterator itr = m_healed.begin();
+    Player* pt;
+    for (; itr != m_healed.end(); ++itr)
+    {
+        pt = m_Unit->GetMapMgr()->GetPlayer(*itr);
+        if (pt)
+        {
+            pt->CombatStatus.m_healers.erase(m_Unit->GetLowGUID());
+            pt->CombatStatus.UpdateFlag();
+        }
+    }
+
+    for (itr = m_healers.begin(); itr != m_healers.end(); ++itr)
+    {
+        pt = m_Unit->GetMapMgr()->GetPlayer(*itr);
+        if (pt)
+        {
+            pt->CombatStatus.m_healed.erase(m_Unit->GetLowGUID());
+            pt->CombatStatus.UpdateFlag();
+        }
     }
 
     m_healed.clear();
@@ -7029,24 +7048,24 @@ void CombatStatusHandler::TryToClearAttackTargets()
     }
 }
 
-void CombatStatusHandler::AttackersForgetHate()		
-{		
-    AttackerMap::iterator i, i2;		
-    Unit* pt;		
-		
-    for (i = m_attackTargets.begin(); i != m_attackTargets.end();)		
-    {		
-        i2 = i++;		
-        pt = m_Unit->GetMapMgr()->GetUnit(*i2);		
-        if (pt == NULL)		
-        {		
-            m_attackTargets.erase(i2);		
-            continue;		
-        }		
-		
-        if (pt->GetAIInterface())		
-            pt->GetAIInterface()->RemoveThreatByPtr(m_Unit);		
-    }		
+void CombatStatusHandler::AttackersForgetHate()
+{
+    AttackerMap::iterator i, i2;
+    Unit* pt;
+
+    for (i = m_attackTargets.begin(); i != m_attackTargets.end();)
+    {
+        i2 = i++;
+        pt = m_Unit->GetMapMgr()->GetUnit(*i2);
+        if (pt == NULL)
+        {
+            m_attackTargets.erase(i2);
+            continue;
+        }
+
+        if (pt->GetAIInterface())
+            pt->GetAIInterface()->RemoveThreatByPtr(m_Unit);
+    }
 }
 
 bool CombatStatusHandler::IsInCombat() const
@@ -7451,7 +7470,7 @@ void Unit::CancelSpell(Spell* ptr)
 void Unit::EventStopChanneling(bool abort)
 {
     auto spell = GetCurrentSpell();
-    
+
     if (spell == nullptr)
         return;
 
@@ -7826,7 +7845,7 @@ void Unit::RemoveReflect(uint32 spellid, bool apply)
                     if (member == NULL || member == pPlayer || !member->IsInWorld() || !member->isAlive() || member->HasAura(59725))
                         continue;
 
-                    if (!IsInrange(pPlayer, member, 20))
+                    if (!member->isInRange(pPlayer, 20))
                         continue;
                     pPlayer->CastSpell(member, 59725, true);
                     targets -= 1;
@@ -8265,7 +8284,7 @@ bool Unit::IsCriticalDamageForSpell(Object* victim, SpellInfo* spell)
                 CritChance += static_cast<float>(static_cast<Player*>(this)->m_RootedCritChanceBonus);
         }
 
-        SM_FFValue(SM_CriticalChance, &CritChance, spell->SpellGroupType);
+        spellModFlatFloatValue(SM_CriticalChance, &CritChance, spell->SpellGroupType);
 
         if (victim->IsPlayer())
             resilience_type = PCR_SPELL_CRIT_RESILIENCE;
@@ -8298,7 +8317,7 @@ bool Unit::IsCriticalDamageForSpell(Object* victim, SpellInfo* spell)
 float Unit::GetCriticalDamageBonusForSpell(Object* victim, SpellInfo* spell, float amount)
 {
     int32 critical_bonus = 100;
-    SM_FIValue(SM_PCriticalDamage, &critical_bonus, spell->SpellGroupType);
+    spellModFlatIntValue(SM_PCriticalDamage, &critical_bonus, spell->SpellGroupType);
 
     if (critical_bonus > 0)
     {
@@ -8345,7 +8364,7 @@ bool Unit::IsCriticalHealForSpell(Object* victim, SpellInfo* spell)
     if (victim->IsUnit() && static_cast<Unit*>(victim)->HasAurasWithNameHash(SPELL_HASH_SACRED_SHIELD) && spell->custom_NameHash == SPELL_HASH_FLASH_OF_LIGHT)
         crit_chance += 50;
 
-    SM_FIValue(this->SM_CriticalChance, &crit_chance, spell->SpellGroupType);
+    spellModFlatIntValue(this->SM_CriticalChance, &crit_chance, spell->SpellGroupType);
 
     return Rand(crit_chance);
 }
@@ -8353,7 +8372,7 @@ bool Unit::IsCriticalHealForSpell(Object* victim, SpellInfo* spell)
 float Unit::GetCriticalHealBonusForSpell(Object* victim, SpellInfo* spell, float amount)
 {
     int32 critical_bonus = 100;
-    SM_FIValue(this->SM_PCriticalDamage, &critical_bonus, spell->SpellGroupType);
+    spellModFlatIntValue(this->SM_PCriticalDamage, &critical_bonus, spell->SpellGroupType);
 
     if (critical_bonus > 0)
     {
@@ -8455,7 +8474,7 @@ void Unit::SendHopOffVehicle(Unit* vehicleowner, LocationVector& landposition)
     data << uint32(getMSTime());
     data << uint8(4);                            // SPLINETYPE_FACING_ANGLE
     data << float(GetOrientation());             // guess
-    data << uint32(0x01000000);                  // SPLINEFLAG_EXIT_VEHICLE 
+    data << uint32(0x01000000);                  // SPLINEFLAG_EXIT_VEHICLE
     data << uint32(0);                           // Time in between points
     data << uint32(1);                           // 1 single waypoint
     data << float(vehicleowner->GetPositionX());

@@ -34,6 +34,9 @@
 #include "Map/MapMgr.h"
 #include "Map/WorldCreatorDefines.hpp"
 #include "Map/WorldCreator.h"
+#include "Spell/Definitions/ProcFlags.h"
+#include <Spell/Definitions/AuraInterruptFlags.h>
+#include "Spell/Definitions/PowerType.h"
 
 Creature::Creature(uint64 guid)
 {
@@ -356,7 +359,7 @@ void Creature::generateLoot()
         gold_fp = 0.0;
         while (random_bits != 0)
         {
-            // If last bit is one .. 
+            // If last bit is one ..
             if ((random_bits & 0x01) == 1)
                 // .. increase loot by 1/12th of expected value
                 gold_fp += chunk_size;
@@ -388,7 +391,7 @@ void Creature::SaveToDB()
         m_spawn->entry = GetEntry();
         m_spawn->form = 0;
         m_spawn->id = spawnid = objmgr.GenerateCreatureSpawnID();
-        m_spawn->movetype = (uint8)m_aiInterface->GetWaypointScriptType();
+        m_spawn->movetype = (uint8)m_aiInterface->getWaypointScriptType();
         m_spawn->displayid = m_uint32Values[UNIT_FIELD_DISPLAYID];
         m_spawn->x = m_position.x;
         m_spawn->y = m_position.y;
@@ -442,7 +445,7 @@ void Creature::SaveToDB()
         << m_position.y << ","
         << m_position.z << ","
         << m_position.o << ","
-        << uint32(m_aiInterface->GetWaypointScriptType()) << ","
+        << uint32(m_aiInterface->getWaypointScriptType()) << ","
         << m_uint32Values[UNIT_FIELD_DISPLAYID] << ","
         << GetFaction() << ","
         << m_uint32Values[UNIT_FIELD_FLAGS] << ","
@@ -451,8 +454,8 @@ void Creature::SaveToDB()
         << m_uint32Values[UNIT_FIELD_BYTES_2] << ","
         << m_uint32Values[UNIT_NPC_EMOTESTATE] << ",0,";
 
-    ss << m_spawn->channel_spell << "," 
-        << m_spawn->channel_target_go << "," 
+    ss << m_spawn->channel_spell << ","
+        << m_spawn->channel_target_go << ","
         << m_spawn->channel_target_creature << ",";
 
     ss << uint32(GetStandState()) << ",";
@@ -810,7 +813,7 @@ void Creature::EnslaveExpire()
             break;
     };
 
-    GetAIInterface()->Init(((Unit*)this), AITYPE_AGRO, Movement::WP_MOVEMENT_SCRIPT_NONE);
+    GetAIInterface()->Init(((Unit*)this), AI_SCRIPT_AGRO, Movement::WP_MOVEMENT_SCRIPT_NONE);
 
     UpdateOppFactionSet();
     UpdateSameFactionSet();
@@ -853,7 +856,7 @@ void Creature::OnRemoveInRangeObject(Object* pObj)
         // we lost our escorter, return to the spawn.
         m_aiInterface->StopMovement(10000);
         m_escorter = NULL;
-        GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
+        GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
         //DestroyCustomWaypointMap(); //function not needed at all, crashing on delete(*int)
         //GetAIInterface()->deleteWaypoints();//this can repleace DestroyCustomWaypointMap, but it's crashing on delete too
         Despawn(1000, 1000);
@@ -1363,7 +1366,7 @@ bool Creature::Load(CreatureSpawn* spawn, uint32 mode, MapInfo const* info)
     // set position
     m_position.ChangeCoords(spawn->x, spawn->y, spawn->z, spawn->o);
     m_spawnLocation.ChangeCoords(spawn->x, spawn->y, spawn->z, spawn->o);
-    m_aiInterface->SetWaypointScriptType((Movement::WaypointMovementScript)spawn->movetype);
+    m_aiInterface->setWaypointScriptType((Movement::WaypointMovementScript)spawn->movetype);
     m_aiInterface->LoadWaypointMapFromDB(spawn->id);
 
     m_aiInterface->timed_emotes = objmgr.GetTimedEmoteList(spawn->id);
@@ -1439,7 +1442,7 @@ bool Creature::Load(CreatureSpawn* spawn, uint32 mode, MapInfo const* info)
     else
     {
         GetAIInterface()->SetAllowedToEnterCombat(false);
-        GetAIInterface()->SetAIType(AITYPE_PASSIVE);
+        GetAIInterface()->setAiScriptType(AI_SCRIPT_PASSIVE);
     }
 
     // load formation data
@@ -1540,7 +1543,7 @@ void Creature::Load(CreatureProperties const* properties_, float x, float y, flo
     else
     {
         GetAIInterface()->SetAllowedToEnterCombat(false);
-        GetAIInterface()->SetAIType(AITYPE_PASSIVE);
+        GetAIInterface()->setAiScriptType(AI_SCRIPT_PASSIVE);
     }
 
     setSpeedForType(TYPE_WALK, creature_properties->walk_speed, true);
@@ -1654,7 +1657,7 @@ void Creature::Load(CreatureProperties const* properties_, float x, float y, flo
     m_aiInterface->m_FleeHealth = creature_properties->m_fleeHealth;
     m_aiInterface->m_FleeDuration = creature_properties->m_fleeDuration;
 
-    GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
+    GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
     GetAIInterface()->SetWalk();
 
     // load formation data
@@ -1933,7 +1936,7 @@ void Creature::SetGuardWaypoints()
     if (!GetMapMgr())
         return;
 
-    GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_RANDOMWP);
+    GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_RANDOMWP);
     for (uint8 i = 1; i <= 4; i++)
     {
         float ang = RandomFloat(100.0f) / 100.0f;

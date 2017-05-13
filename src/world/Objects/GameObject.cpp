@@ -27,6 +27,7 @@
 #include "Map/MapCell.h"
 #include "Map/MapMgr.h"
 #include "Faction.h"
+#include "Spell/Definitions/ProcFlags.h"
 
 GameObject::GameObject(uint64 guid)
 {
@@ -424,7 +425,7 @@ struct QuaternionCompressed
         double w = 1 - (x * x + y * y + z * z);
         ARCEMU_ASSERT(w >= 0);
         w = sqrt(w);
-        
+
         return Quat(float(x), float(y), float(z), float(w));
     }
 
@@ -458,9 +459,8 @@ void GameObject::CastSpell(uint64 TargetGUID, SpellInfo* sp)
 
     SpellCastTargets tgt(TargetGUID);
 
-    tgt.m_destX = GetPositionX();
-    tgt.m_destY = GetPositionY();
-    tgt.m_destZ = GetPositionZ();
+    // TODO: Is this meant to be set source?
+    tgt.setDestination(GetPosition());
 
     s->prepare(&tgt);
 }
@@ -801,7 +801,7 @@ void GameObject_Trap::Update(unsigned long time_passed)
             if ((m_summoner != NULL) && (o->GetGUID() == m_summoner->GetGUID()))
                 continue;
 
-            dist = GetDistanceSq(o);
+            dist = getDistanceSq(o);
 
             if (dist <= maxdistance)
             {

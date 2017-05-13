@@ -48,6 +48,19 @@
 #include "Objects/Faction.h"
 #include "Spell/SpellAuras.h"
 #include "Map/WorldCreator.h"
+#include "Spell/Definitions/SpellCastTargetFlags.h"
+#include "Spell/Definitions/ProcFlags.h"
+#include <Spell/Definitions/AuraInterruptFlags.h>
+#include "Spell/Definitions/SpellRanged.h"
+#include "Spell/Definitions/SpellIsFlags.h"
+#include "Spell/Definitions/SpellMechanics.h"
+#include "Spell/Definitions/PowerType.h"
+#include "Spell/Definitions/Spec.h"
+
+using ascemu::World::Spell::Helpers::spellModFlatIntValue;
+using ascemu::World::Spell::Helpers::spellModPercentageIntValue;
+using ascemu::World::Spell::Helpers::spellModFlatFloatValue;
+using ascemu::World::Spell::Helpers::spellModPercentageFloatValue;
 
 UpdateMask Player::m_visibleUpdateMask;
 
@@ -851,7 +864,7 @@ bool Player::Create(WorldPacket& data)
 
     m_mapId = info->mapId;
     SetZoneId(info->zoneId);
-    m_position.ChangeCoords(info->positionX, info->positionY, info->positionZ);
+    m_position.ChangeCoords(info->positionX, info->positionY, info->positionZ, info->orientation);
     m_bind_pos_x = info->positionX;
     m_bind_pos_y = info->positionY;
     m_bind_pos_z = info->positionZ;
@@ -2826,7 +2839,7 @@ void Player::SaveToDB(bool bNewCharacter /* =false */)
         ss << uint32(1);
     else
         ss << uint32(0);
-    
+
     ss << "', ";
 
     ss << uint32(this->HasWonRbgToday());
@@ -3314,7 +3327,7 @@ void Player::LoadFromDBProc(QueryResultVector & results)
         dmgLog << "has over " << worldConfig.limit.maxArenaPoints << " arena points " << m_arenaPoints;
         sCheatLog.writefromsession(m_session, dmgLog.str().c_str());
 
-        if (worldConfig.limit.broadcastMessageToGmOnExceeding)          // report to online GMs    
+        if (worldConfig.limit.broadcastMessageToGmOnExceeding)          // report to online GMs
             sendReportToGmMessage(GetName(), dmgLog.str());
 
         if (worldConfig.limit.disconnectPlayerForExceedingLimits)
@@ -3503,7 +3516,7 @@ void Player::LoadFromDBProc(QueryResultVector & results)
 
         sCheatLog.writefromsession(m_session, dmgLog.str().c_str());
 
-        if (worldConfig.limit.broadcastMessageToGmOnExceeding)  
+        if (worldConfig.limit.broadcastMessageToGmOnExceeding)
             sendReportToGmMessage(GetName(), dmgLog.str());
 
         if (worldConfig.limit.disconnectPlayerForExceedingLimits)
@@ -4993,7 +5006,7 @@ void Player::RepopAtGraveyard(float ox, float oy, float oz, uint32 mapid)
             if (pGrave->MapId == mapid && (pGrave->FactionID == GetTeam() || pGrave->FactionID == 3))
             {
                 temp.ChangeCoords(pGrave->X, pGrave->Y, pGrave->Z);
-                dist = src.DistanceSq(temp);
+                dist = src.distanceSquare(temp);
                 if (first || dist < closest_dist)
                 {
                     first = false;
@@ -5613,13 +5626,13 @@ void Player::UpdateStats()
 
         // Manaregen
         // table from http://www.wowwiki.com/Mana_regeneration
-        const static float BaseRegen[80/*DBC_PLAYER_LEVEL_CAP*/] = 
-        { 
-            0.034965f, 0.034191f, 0.033465f, 0.032526f, 0.031661f, 0.031076f, 0.030523f, 0.029994f, 0.029307f, 0.028661f, 0.027584f, 0.026215f, 0.025381f, 0.024300f, 0.023345f, 0.022748f, 0.021958f, 0.021386f, 0.020790f, 0.020121f, 0.019733f, 0.019155f, 0.018819f, 0.018316f, 0.017936f, 0.017576f, 0.017201f, 0.016919f, 0.016581f, 0.016233f, 0.015994f, 0.015707f, 0.015464f, 0.015204f, 0.014956f, 0.014744f, 0.014495f, 0.014302f, 0.014094f, 0.013895f, 0.013724f, 0.013522f, 0.013363f, 0.013175f, 0.012996f, 0.012853f, 0.012687f, 0.012539f, 0.012384f, 0.012233f, 0.012113f, 0.011973f, 0.011859f, 0.011714f, 0.011575f, 0.011473f, 0.011342f, 0.011245f, 0.011110f, 0.010999f, 0.010700f, 0.010522f, 0.010290f, 0.010119f, 0.009968f, 0.009808f, 0.009651f, 0.009553f, 0.009445f, 0.009327f, 0.008859f, 0.008415f, 0.007993f, 0.007592f, 0.007211f, 0.006849f, 0.006506f, 0.006179f, 0.005869f, 0.005575f 
+        const static float BaseRegen[80/*DBC_PLAYER_LEVEL_CAP*/] =
+        {
+            0.034965f, 0.034191f, 0.033465f, 0.032526f, 0.031661f, 0.031076f, 0.030523f, 0.029994f, 0.029307f, 0.028661f, 0.027584f, 0.026215f, 0.025381f, 0.024300f, 0.023345f, 0.022748f, 0.021958f, 0.021386f, 0.020790f, 0.020121f, 0.019733f, 0.019155f, 0.018819f, 0.018316f, 0.017936f, 0.017576f, 0.017201f, 0.016919f, 0.016581f, 0.016233f, 0.015994f, 0.015707f, 0.015464f, 0.015204f, 0.014956f, 0.014744f, 0.014495f, 0.014302f, 0.014094f, 0.013895f, 0.013724f, 0.013522f, 0.013363f, 0.013175f, 0.012996f, 0.012853f, 0.012687f, 0.012539f, 0.012384f, 0.012233f, 0.012113f, 0.011973f, 0.011859f, 0.011714f, 0.011575f, 0.011473f, 0.011342f, 0.011245f, 0.011110f, 0.010999f, 0.010700f, 0.010522f, 0.010290f, 0.010119f, 0.009968f, 0.009808f, 0.009651f, 0.009553f, 0.009445f, 0.009327f, 0.008859f, 0.008415f, 0.007993f, 0.007592f, 0.007211f, 0.006849f, 0.006506f, 0.006179f, 0.005869f, 0.005575f
         };
 
         uint32 level = getLevel();
-        
+
         if (level > DBC_PLAYER_LEVEL_CAP)
             level = DBC_PLAYER_LEVEL_CAP;
         //float amt = (0.001f + sqrt((float)Intellect) * Spirit * BaseRegen[level-1])*PctPowerRegenModifier[POWER_TYPE_MANA];
@@ -5777,7 +5790,7 @@ bool Player::CanSee(Object* obj) // * Invisibility & Stealth Detection - Partha 
         {
             Player* pObj = static_cast< Player* >(obj);
 
-            if (myCorpseInstanceId == GetInstanceID() && obj->GetDistanceSq(myCorpseLocation) <= CORPSE_VIEW_DISTANCE)
+            if (myCorpseInstanceId == GetInstanceID() && obj->getDistanceSq(myCorpseLocation) <= CORPSE_VIEW_DISTANCE)
                 return !pObj->m_isGmInvisible; // we can see all players within range of our corpse except invisible GMs
 
             if (m_deathVision) // if we have arena death-vision we can see all players except invisible GMs
@@ -5791,7 +5804,7 @@ bool Player::CanSee(Object* obj) // * Invisibility & Stealth Detection - Partha 
             if (obj->IsCorpse() && static_cast< Corpse* >(obj)->GetOwner() == GetGUID())
                 return true;
 
-            if (obj->GetDistanceSq(myCorpseLocation) <= CORPSE_VIEW_DISTANCE)
+            if (obj->getDistanceSq(myCorpseLocation) <= CORPSE_VIEW_DISTANCE)
                 return true; // we can see everything within range of our corpse
         }
 
@@ -5864,8 +5877,8 @@ bool Player::CanSee(Object* obj) // * Invisibility & Stealth Detection - Partha 
 
                 detectRange += GetBoundingRadius(); // adjust range for size of player
                 detectRange += pObj->GetBoundingRadius(); // adjust range for size of stealthed player
-                //LogDefault("Player::CanSee(%s): detect range = %f yards (%f ingame units), cansee = %s , distance = %f" , pObj->GetName() , detectRange , detectRange * detectRange , (GetDistance2dSq(pObj) > detectRange * detectRange) ? "yes" : "no" , GetDistanceSq(pObj));
-                if (GetDistanceSq(pObj) > detectRange * detectRange)
+                //LogDefault("Player::CanSee(%s): detect range = %f yards (%f ingame units), cansee = %s , distance = %f" , pObj->GetName() , detectRange , detectRange * detectRange , (GetDistance2dSq(pObj) > detectRange * detectRange) ? "yes" : "no" , getDistanceSq(pObj));
+                if (getDistanceSq(pObj) > detectRange * detectRange)
                     return (HasFlag(PLAYER_FLAGS, PLAYER_FLAG_GM) != 0); // GM can see stealthed players
             }
 
@@ -6220,13 +6233,13 @@ int32 Player::CanShootRangedWeapon(uint32 spellid, Unit* target, bool autoshot)
     float dist = CalcDistance(this, target);
     float maxr = GetMaxRange(spell_range) + 2.52f;
 
-    SM_FFValue(this->SM_FRange, &maxr, spell_info->SpellGroupType);
-    SM_PFValue(this->SM_PRange, &maxr, spell_info->SpellGroupType);
+    spellModFlatFloatValue(this->SM_FRange, &maxr, spell_info->SpellGroupType);
+    spellModPercentageFloatValue(this->SM_PRange, &maxr, spell_info->SpellGroupType);
 
     //float bonusRange = 0;
     // another hackfix: bonus range from hunter talent hawk eye: +2/4/6 yard range to ranged weapons
     //if (autoshot)
-    //SM_FFValue(SM_FRange, &bonusRange, sSpellCustomizations.GetSpellInfo(75)->SpellGroupType); // HORRIBLE hackfixes :P
+    //spellModFlatFloatValue(SM_FRange, &bonusRange, sSpellCustomizations.GetSpellInfo(75)->SpellGroupType); // HORRIBLE hackfixes :P
     // Partha: +2.52yds to max range, this matches the range the client is calculating.
     // see extra/supalosa_range_research.txt for more info
     //bonusRange = 2.52f;
@@ -6307,7 +6320,7 @@ bool Player::HasWonRbgToday()
     return this->m_bgIsRbgWon;
 }
 
-/*! Used to set whether a player has won a random battleground today 
+/*! Used to set whether a player has won a random battleground today
  *  \param value Value to assign to m_bgIsRbgWon */
 void Player::SetHasWonRbgToday(bool value)
 {
@@ -6587,7 +6600,7 @@ void Player::Reset_Talents()
         if (temp_talent == nullptr)
             continue;
 
-        if (temp_talent->TalentTree != TalentTreesPerClass[playerClass][0] && 
+        if (temp_talent->TalentTree != TalentTreesPerClass[playerClass][0] &&
             temp_talent->TalentTree != TalentTreesPerClass[playerClass][1] &&
             temp_talent->TalentTree != TalentTreesPerClass[playerClass][2])
         {
@@ -10187,7 +10200,7 @@ void Player::_AddSkillLine(uint32 SkillLine, uint32 Curr_sk, uint32 Max_sk)
     // force to be within limits
     Curr_sk = (Curr_sk > DBC_PLAYER_SKILL_MAX ? DBC_PLAYER_SKILL_MAX : (Curr_sk < 1 ? 1 : Curr_sk));
     Max_sk = (Max_sk > DBC_PLAYER_SKILL_MAX ? DBC_PLAYER_SKILL_MAX : Max_sk);
- 
+
     ItemProf* prof;
     SkillMap::iterator itr = m_skills.find(SkillLine);
     if (itr != m_skills.end())
@@ -10538,7 +10551,7 @@ void Player::_AddLanguages(bool All)
 
     uint32 spell_id;
     static uint32 skills[] =
-    { 
+    {
         SKILL_LANG_COMMON,
         SKILL_LANG_ORCISH,
         SKILL_LANG_DWARVEN,
@@ -10654,7 +10667,7 @@ void Player::UpdatePvPCurrencies()
     this->UpdateArenaPoints();
 }
 
-/*! Fills parameters with reward for winning a random battleground 
+/*! Fills parameters with reward for winning a random battleground
  *  \param wonBattleground True if the player won the battleground
  *  \param &honorPoints Amount of honor the player would receieve
  *  \param &arenaPoints Number of arena points the player would receive */
@@ -10983,8 +10996,8 @@ void Player::Cooldown_Add(SpellInfo* pSpell, Item* pItemCaster)
     uint32 spell_category_recovery_time = pSpell->CategoryRecoveryTime;
     if (spell_category_recovery_time > 0 && category_id)
     {
-        SM_FIValue(SM_FCooldownTime, &cool_time, pSpell->SpellGroupType);
-        SM_PIValue(SM_PCooldownTime, &cool_time, pSpell->SpellGroupType);
+        spellModFlatIntValue(SM_FCooldownTime, &cool_time, pSpell->SpellGroupType);
+        spellModPercentageIntValue(SM_PCooldownTime, &cool_time, pSpell->SpellGroupType);
 
         AddCategoryCooldown(category_id, spell_category_recovery_time + mstime, spell_id, pItemCaster ? pItemCaster->GetItemProperties()->ItemId : 0);
     }
@@ -10992,8 +11005,8 @@ void Player::Cooldown_Add(SpellInfo* pSpell, Item* pItemCaster)
     uint32 spell_recovery_t = pSpell->RecoveryTime;
     if (spell_recovery_t > 0)
     {
-        SM_FIValue(SM_FCooldownTime, &cool_time, pSpell->SpellGroupType);
-        SM_PIValue(SM_PCooldownTime, &cool_time, pSpell->SpellGroupType);
+        spellModFlatIntValue(SM_FCooldownTime, &cool_time, pSpell->SpellGroupType);
+        spellModPercentageIntValue(SM_PCooldownTime, &cool_time, pSpell->SpellGroupType);
 
         _Cooldown_Add(COOLDOWN_TYPE_SPELL, spell_id, spell_recovery_t + mstime, spell_id, pItemCaster ? pItemCaster->GetItemProperties()->ItemId : 0);
     }
@@ -11012,8 +11025,8 @@ void Player::Cooldown_AddStart(SpellInfo* pSpell)
     else
         atime = float2int32(pSpell->StartRecoveryTime * GetCastSpeedMod());
 
-    SM_FIValue(SM_FGlobalCooldown, &atime, pSpell->SpellGroupType);
-    SM_PIValue(SM_PGlobalCooldown, &atime, pSpell->SpellGroupType);
+    spellModFlatIntValue(SM_FGlobalCooldown, &atime, pSpell->SpellGroupType);
+    spellModPercentageIntValue(SM_PGlobalCooldown, &atime, pSpell->SpellGroupType);
 
     if (atime < 0)
         return;
@@ -12365,7 +12378,7 @@ uint32 Player::CalcTalentPointsHaveSpent(uint32 spec)
         points_used_up += treeitr->second + 1;
 
     return points_used_up;
-} 
+}
 #endif
 
 void Player::SetDungeonDifficulty(uint8 diff)
@@ -13960,7 +13973,7 @@ void Player::CastSpellArea()
         }
 
 
-    // Some spells applied at enter into zone (with subzones) 
+    // Some spells applied at enter into zone (with subzones)
     SpellAreaForAreaMapBounds szBounds = sSpellFactoryMgr.GetSpellAreaForAreaMapBounds(ZoneId);
     for (SpellAreaForAreaMap::const_iterator itr = szBounds.first; itr != szBounds.second; ++itr)
         if (itr->second->autocast && itr->second->IsFitToRequirements(this, ZoneId, AreaId))
@@ -14036,7 +14049,7 @@ void Player::SendGuildMOTD()
     data << uint8(GUILD_EVENT_MOTD);
     data << uint8(1);
     data << GetGuild()->GetMOTD();
-    SendPacket(&data);	
+    SendPacket(&data);
 }
 
 void Player::SetClientControl(Unit* target, uint8 allowMove)

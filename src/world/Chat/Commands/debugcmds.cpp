@@ -25,6 +25,7 @@
 #include "Server/MainServerDefines.h"
 #include "Map/MapMgr.h"
 #include "Spell/SpellAuras.h"
+#include "Spell/Definitions/SpellCastTargetFlags.h"
 
 bool ChatHandler::HandleDebugDumpMovementCommand(const char* args, WorldSession* session)
 {
@@ -237,11 +238,11 @@ bool ChatHandler::HandleAIMoveCommand(const char* args, WorldSession* m_session)
             y = (static_cast< Creature* >(obj)->GetPositionY() + y * q) / (1 + q);
             z = (static_cast< Creature* >(obj)->GetPositionZ() + z * q) / (1 + q);
         }
-        static_cast< Creature* >(obj)->GetAIInterface()->MoveTo(x, y, z, 0);
+        static_cast< Creature* >(obj)->GetAIInterface()->MoveTo(x, y, z);
     }
     else
     {
-        static_cast<Creature*>(obj)->GetAIInterface()->MoveTo(x, y, z, o);
+        static_cast<Creature*>(obj)->GetAIInterface()->MoveTo(x, y, z);
     }
 
     return true;
@@ -327,11 +328,11 @@ bool ChatHandler::HandleSetBytesCommand(const char* args, WorldSession* m_sessio
     uint8 Value4 = static_cast<uint8>(atol(pValue4));
 
     std::stringstream sstext;
-    sstext << "Set Field " << BytesIndex 
-        << " bytes to " << uint16((uint8)Value1) 
-        << " " << uint16((uint8)Value2) 
-        << " " << uint16((uint8)Value3) 
-        << " " << uint16((uint8)Value4) 
+    sstext << "Set Field " << BytesIndex
+        << " bytes to " << uint16((uint8)Value1)
+        << " " << uint16((uint8)Value2)
+        << " " << uint16((uint8)Value3)
+        << " " << uint16((uint8)Value4)
         << '\0';
     obj->SetUInt32Value(BytesIndex, ((Value1) | (Value2 << 8) | (Value3 << 16) | (Value4 << 24)));
     SystemMessage(m_session, sstext.str().c_str());
@@ -666,11 +667,11 @@ bool ChatHandler::HandleDebugDumpCoordsCommmand(const char* args, WorldSession* 
 //As requested by WaRxHeAd for database development.
 //This should really only be available in special cases and NEVER on real servers... -DGM
 
-//#define _ONLY_FOOLS_TRY_THIS_
+//#define ONLY_FOOLS_TRY_THIS_
 
 bool ChatHandler::HandleSQLQueryCommand(const char* args, WorldSession* m_session)
 {
-#ifdef _ONLY_FOOLS_TRY_THIS_
+#ifdef ONLY_FOOLS_TRY_THIS_
     if (!*args)
     {
         RedSystemMessage(m_session, "No query given.");
@@ -734,7 +735,7 @@ bool ChatHandler::HandleSQLQueryCommand(const char* args, WorldSession* m_sessio
 
 bool ChatHandler::HandleSendpacket(const char* args, WorldSession* m_session)
 {
-#ifdef _ONLY_FOOLS_TRY_THIS_
+#ifdef ONLY_FOOLS_TRY_THIS_
 
     uint32 arg_len = strlen(args);
     char* xstring = new char[arg_len];
@@ -775,7 +776,6 @@ bool ChatHandler::HandleSendpacket(const char* args, WorldSession* m_session)
 
 
     int j = 3;
-    int x = 0;
     do
     {
         if (xstring[j] == '\0')
@@ -791,8 +791,7 @@ bool ChatHandler::HandleSendpacket(const char* args, WorldSession* m_session)
             //j++;
         }
         j++;
-    }
-    while (j < arg_len);
+    } while (j < arg_len);
 
     data.hexlike();
 
@@ -810,22 +809,32 @@ bool ChatHandler::HandleDebugSpawnWarCommand(const char* args, WorldSession* m_s
 
     // takes 2 or 3 arguments: npcid, count, (health)
     if (sscanf(args, "%u %u %u", &npcid, &count, &health) != 3)
+    {
         if (sscanf(args, "%u %u", &count, &npcid) != 2)
+        {
             return false;
+        }
+    }
 
     if (!count || !npcid)
+    {
         return false;
+    }
 
     CreatureProperties const* cp = sMySQLStore.GetCreatureProperties(npcid);
     if (cp == nullptr)
+    {
         return false;
+    }
 
     MapMgr* m = m_session->GetPlayer()->GetMapMgr();
 
     // if we have selected unit, use its position
     Unit* unit = m->GetUnit(m_session->GetPlayer()->GetSelection());
-    if (unit == NULL)
+    if (unit == nullptr)
+    {
         unit = m_session->GetPlayer(); // otherwise ours
+    }
 
     float bx = unit->GetPositionX();
     float by = unit->GetPositionY();
@@ -1028,8 +1037,8 @@ bool ChatHandler::HandleRangeCheckCommand(const char* args, WorldSession* m_sess
         m_session->SystemMessage("Invalid selection.");
         return true;
     }
-    float DistSq = unit->GetDistanceSq(m_session->GetPlayer());
-    m_session->SystemMessage("GetDistanceSq  :   %u", float2int32(DistSq));
+    float DistSq = unit->getDistanceSq(m_session->GetPlayer());
+    m_session->SystemMessage("getDistanceSq  :   %u", float2int32(DistSq));
     LocationVector locvec(m_session->GetPlayer()->GetPositionX(), m_session->GetPlayer()->GetPositionY(), m_session->GetPlayer()->GetPositionZ());
     float DistReal = unit->CalcDistance(locvec);
     m_session->SystemMessage("CalcDistance   :   %u", float2int32(DistReal));
@@ -1147,12 +1156,8 @@ SpellCastTargets SetTargets(SpellInfo* sp, uint32 type, uint32 targettype, Unit*
     SpellCastTargets targets;
     targets.m_unitTarget = 0;
     targets.m_itemTarget = 0;
-    targets.m_srcX = 0;
-    targets.m_srcY = 0;
-    targets.m_srcZ = 0;
-    targets.m_destX = 0;
-    targets.m_destY = 0;
-    targets.m_destZ = 0;
+    targets.setSource(LocationVector(0, 0, 0));
+    targets.setDestination(LocationVector(0, 0, 0));
 
     if (targettype == TTYPE_SINGLETARGET)
     {
@@ -1162,16 +1167,12 @@ SpellCastTargets SetTargets(SpellInfo* sp, uint32 type, uint32 targettype, Unit*
     else if (targettype == TTYPE_SOURCE)
     {
         targets.m_targetMask = TARGET_FLAG_SOURCE_LOCATION;
-        targets.m_srcX = src->GetPositionX();
-        targets.m_srcY = src->GetPositionY();
-        targets.m_srcZ = src->GetPositionZ();
+        targets.setSource(src->GetPosition());
     }
     else if (targettype == TTYPE_DESTINATION)
     {
         targets.m_targetMask = TARGET_FLAG_DEST_LOCATION;
-        targets.m_destX = dst->GetPositionX();
-        targets.m_destY = dst->GetPositionY();
-        targets.m_destZ = dst->GetPositionZ();
+        targets.setDestination(dst->GetPosition());
     }
 
     return targets;

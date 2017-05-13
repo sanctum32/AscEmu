@@ -37,7 +37,7 @@ TargetType::~TargetType()
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //Class SpellDesc
-SpellDesc::SpellDesc(SpellInfo* pInfo, SpellFunc pFnc, TargetType pTargetType, float pChance, float pCastTime, int32 pCooldown, float pMinRange, float pMaxRange, 
+SpellDesc::SpellDesc(SpellInfo* pInfo, SpellFunc pFnc, TargetType pTargetType, float pChance, float pCastTime, int32 pCooldown, float pMinRange, float pMaxRange,
                      bool pStrictRange, const char* pText, TextType pTextType, uint32 pSoundId, const char* pAnnouncement)
 {
     mInfo = pInfo;
@@ -138,7 +138,7 @@ void MoonScriptCreatureAI::MoveTo(float pX, float pY, float pZ, bool pRun)
     if (pRun)
         _unit->GetAIInterface()->SetRun();
 
-    _unit->GetAIInterface()->MoveTo(pX, pY, pZ, 0);
+    _unit->GetAIInterface()->MoveTo(pX, pY, pZ);
 };
 
 void MoonScriptCreatureAI::MoveToSpawnOrigin()
@@ -524,7 +524,7 @@ void MoonScriptCreatureAI::Despawn(uint32 pDelay, uint32 pRespawnTime)
     _unit->Despawn(pDelay, pRespawnTime);
 };
 
-SpellDesc* MoonScriptCreatureAI::AddSpell(uint32 pSpellId, TargetType pTargetType, float pChance, float pCastTime, int32 pCooldown, float pMinRange, float pMaxRange, 
+SpellDesc* MoonScriptCreatureAI::AddSpell(uint32 pSpellId, TargetType pTargetType, float pChance, float pCastTime, int32 pCooldown, float pMinRange, float pMaxRange,
                                           bool pStrictRange, const char* pText, TextType pTextType, uint32 pSoundId, const char* pAnnouncement)
 {
     //Cannot add twice same spell id    - M4ksiu: Disabled, until I rewrite SetPhase(...) function to not disable same spells that are in different phases
@@ -554,7 +554,7 @@ SpellDesc* MoonScriptCreatureAI::AddSpell(uint32 pSpellId, TargetType pTargetTyp
     return NewSpell;
 }
 
-SpellDesc* MoonScriptCreatureAI::AddSpellFunc(SpellFunc pFnc, TargetType pTargetType, float pChance, float pCastTime, int32 pCooldown, float pMinRange, float pMaxRange, 
+SpellDesc* MoonScriptCreatureAI::AddSpellFunc(SpellFunc pFnc, TargetType pTargetType, float pChance, float pCastTime, int32 pCooldown, float pMinRange, float pMaxRange,
                                               bool pStrictRange, const char* pText, TextType pTextType, uint32 pSoundId, const char* pAnnouncement)
 {
     if (!pFnc) return NULL;
@@ -696,7 +696,7 @@ EmoteDesc* MoonScriptCreatureAI::AddEmote(EventType pEventType, uint32_t scriptt
                 LogDebugFlag(LF_SCRIPT_MGR, "MoonScriptCreatureAI::AddEmote() : Invalid Message Type: %u !", ct->type);
                 break;
         }
-    
+
         NewEmote = new EmoteDesc(ct->text.c_str(), pType, ct->sound);
         switch (pEventType)
         {
@@ -989,7 +989,7 @@ void MoonScriptCreatureAI::ForceWaypointMove(uint32 pWaypointId)
         SetCanMove(true);
 
     StopMovement();
-    _unit->GetAIInterface()->SetAIState(STATE_SCRIPTMOVE);
+    _unit->GetAIInterface()->setAiState(AI_STATE_SCRIPTMOVE);
     SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
     SetWaypointToMove(pWaypointId);
 }
@@ -1002,14 +1002,14 @@ void MoonScriptCreatureAI::SetWaypointToMove(uint32 pWaypointId)
 void MoonScriptCreatureAI::StopWaypointMovement()
 {
     SetBehavior(Behavior_Default);
-    _unit->GetAIInterface()->SetAIState(STATE_SCRIPTIDLE);
+    _unit->GetAIInterface()->setAiState(AI_STATE_SCRIPTIDLE);
     SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
     SetWaypointToMove(0);
 }
 
 void MoonScriptCreatureAI::SetWaypointMoveType(Movement::WaypointMovementScript wp_move_script_type)
 {
-    _unit->GetAIInterface()->SetWaypointScriptType(wp_move_script_type);
+    _unit->GetAIInterface()->setWaypointScriptType(wp_move_script_type);
 
 }
 
@@ -1275,7 +1275,7 @@ void MoonScriptCreatureAI::CastSpellOnTarget(Unit* pTarget, TargetType pType, Sp
         case TargetGen_Destination:
         case TargetGen_RandomUnitDestination:
         case TargetGen_RandomPlayerDestination:
-            _unit->CastSpellAoF(pTarget->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ(), pEntry, pInstant);
+            _unit->CastSpellAoF(pTarget->GetPosition(), pEntry, pInstant);
             break;
 
         default:

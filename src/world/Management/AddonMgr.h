@@ -18,14 +18,14 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _ADDONMGR_H
-#define _ADDONMGR_H
+#ifndef ADDONMGR_H
+#define ADDONMGR_H
 
 #include "WorldConf.h"
 #include "WorldPacket.h"
-#if VERSION_STRING != Cata
 #include "Server/WorldSession.h"
-#endif
+
+#include "Singleton.h"
 
  // hacky key
 #if VERSION_STRING != Cata
@@ -96,7 +96,7 @@ class AddonMgr : public Singleton < AddonMgr >
         void SaveToDB();
 
         void SendAddonInfoPacket(WorldPacket* source, uint32 pos, WorldSession* m_session);
-        bool AppendPublicKey(WorldPacket& data, std::string & AddonName, uint32 CRC);
+        bool AppendPublicKey(WorldPacket& data, std::string& AddonName, uint32 CRC);
 
     private:
 
@@ -110,4 +110,4 @@ class AddonMgr : public Singleton < AddonMgr >
 
 #define sAddonMgr AddonMgr::getSingleton()
 
-#endif      // _ADDONMGR_H
+#endif      // ADDONMGR_H

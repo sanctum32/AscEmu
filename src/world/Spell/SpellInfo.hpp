@@ -3,35 +3,47 @@ Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
-#ifndef _SPELL_INFO_HPP
-#define _SPELL_INFO_HPP
+#pragma once
 
 #include "SpellDefines.hpp"
 #include "WorldConf.h"
+#include "CommonTypes.hpp"
+#include <string>
 
 class Player;
+class Unit;
 
 class SERVER_DECL SpellInfo
 {
-    public:
+public:
+    SpellInfo();
+    ~SpellInfo();
 
-        SpellInfo();
-        ~SpellInfo();
+    // helper functions
+    bool HasEffect(uint32 effect) const;
+    bool HasEffectApplyAuraName(uint32_t aura_name);
+    bool HasCustomFlagForEffect(uint32 effect, uint32 flag);
 
-        // helper functions
-        bool HasEffect(uint32 effect);
-        bool HasEffectApplyAuraName(uint32_t aura_name);
-        bool HasCustomFlagForEffect(uint32 effect, uint32 flag);
+    bool isDamagingSpell() const;
+    bool isHealingSpell() const;
+    int firstBeneficialEffect() const;
 
-        bool IsPassive();
-        bool IsProfession();
-        bool IsPrimaryProfession();
-        bool IsPrimaryProfessionSkill(uint32 skill_id);
+    uint32_t getSpellDuration(Unit* caster) const;
 
-        bool IsDeathPersistent();
+    bool hasTargetType(uint32_t type) const;
+    int aiTargetType() const;
+    bool isTargetingStealthed() const;
+    bool isRequireCooldownSpell() const;
 
-        bool AppliesAreaAura(uint32 aura);
-        uint32 GetAreaAuraEffectId();
+    bool IsPassive();
+    bool IsProfession();
+    bool IsPrimaryProfession();
+    bool IsPrimaryProfessionSkill(uint32 skill_id);
+
+    bool isDeathPersistent() const;
+
+    bool appliesAreaAura(uint32 aura) const;
+    uint32 GetAreaAuraEffectId();
 
 #if VERSION_STRING != Cata
         //////////////////////////////////////////////////////////////////////////////////////////
@@ -106,7 +118,7 @@ class SERVER_DECL SpellInfo
         int32 EffectMiscValue[MAX_SPELL_EFFECTS];
         int32 EffectMiscValueB[MAX_SPELL_EFFECTS];
         uint32 EffectTriggerSpell[MAX_SPELL_EFFECTS];
-        float EffectPointsPerComboPoint[MAX_SPELL_EFFECTS]; 
+        float EffectPointsPerComboPoint[MAX_SPELL_EFFECTS];
         uint32 EffectSpellClassMask[3][3];
         uint32 SpellVisual;
         uint32 field114;                                          // (131-132 SpellVisual[2])
@@ -298,7 +310,7 @@ class SERVER_DECL SpellInfo
         // data from SpellTotems.dbc
         uint32 TotemCategory[MAX_SPELL_TOTEM_CATEGORIES];
         uint32 Totem[MAX_SPELL_TOTEMS];
-    
+
         // data from SpellEffect.dbc
         uint32 Effect[MAX_SPELL_EFFECTS];
         float EffectMultipleValue[MAX_SPELL_EFFECTS];
@@ -358,5 +370,3 @@ class SERVER_DECL SpellInfo
         void* (*SpellFactoryFunc);
         void* (*AuraFactoryFunc);
 };
-
-#endif  //_SPELL_INFO_HPP

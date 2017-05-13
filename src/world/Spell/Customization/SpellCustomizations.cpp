@@ -23,6 +23,10 @@
 #include "Spell/SpellAuras.h"
 #include "Singleton.h"
 #include <unordered_map>
+#include "Spell/Definitions/ProcFlags.h"
+#include "Spell/Definitions/SpellDamageType.h"
+#include "Spell/Definitions/SpellCustomFlags.h"
+#include "Spell/Definitions/SpellIsFlags.h"
 
 initialiseSingleton(SpellCustomizations);
 
@@ -765,13 +769,13 @@ void SpellCustomizations::SetRangedSpellBool(SpellInfo* spell_entry)
 void SpellCustomizations::SetMissingCIsFlags(SpellInfo* spell_entry)
 {
     // Zyres: Special cases, not handled in spell_custom_assign!
-    if (IsDamagingSpell(spell_entry))
+    if (spell_entry->isDamagingSpell())
         spell_entry->custom_c_is_flags |= SPELL_FLAG_IS_DAMAGING;
-    if (IsHealingSpell(spell_entry))
+    if (spell_entry->isHealingSpell())
         spell_entry->custom_c_is_flags |= SPELL_FLAG_IS_HEALING;
-    if (IsTargetingStealthed(spell_entry))
+    if (spell_entry->isTargetingStealthed())
         spell_entry->custom_c_is_flags |= SPELL_FLAG_IS_TARGETINGSTEALTHED;
-    if (IsRequireCooldownSpell(spell_entry))
+    if (spell_entry->isRequireCooldownSpell())
         spell_entry->custom_c_is_flags |= SPELL_FLAG_IS_REQUIRECOOLDOWNUPDATE;
 }
 
@@ -782,10 +786,8 @@ void SpellCustomizations::SetCustomFlags(SpellInfo* spell_entry)
     {
         return;
     }
-    else
-    {
-        spell_entry->CustomFlags = CUSTOM_FLAG_SPELL_REQUIRES_COMBAT;
-    }
+
+    spell_entry->CustomFlags = CUSTOM_FLAG_SPELL_REQUIRES_COMBAT;
 }
 
 void SpellCustomizations::SetOnShapeshiftChange(SpellInfo* spell_entry)

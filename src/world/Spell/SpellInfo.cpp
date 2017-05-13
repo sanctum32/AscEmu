@@ -6,6 +6,7 @@ This file is released under the MIT license. See README-MIT for more information
 #include "StdAfx.h"
 #include "Management/Skill.h"
 #include "../../scripts/Battlegrounds/AlteracValley.h"
+#include "Definitions/SpellEffectTarget.h"
 
 SpellInfo::SpellInfo()
 {
@@ -325,11 +326,15 @@ SpellInfo::SpellInfo()
 SpellInfo::~SpellInfo() {}
 
 
-bool SpellInfo::HasEffect(uint32 effect)
+bool SpellInfo::HasEffect(uint32 effect) const
 {
     for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
+    {
         if (Effect[i] == effect)
+        {
             return true;
+        }
+    }
 
     return false;
 }
@@ -352,6 +357,283 @@ bool SpellInfo::HasCustomFlagForEffect(uint32 effect, uint32 flag)
         return true;
     else
         return false;
+}
+
+bool SpellInfo::isDamagingSpell() const
+{
+    if (HasEffect(SPELL_EFFECT_SCHOOL_DAMAGE)          ||
+        HasEffect(SPELL_EFFECT_ENVIRONMENTAL_DAMAGE)   ||
+        HasEffect(SPELL_EFFECT_HEALTH_LEECH)           ||
+        HasEffect(SPELL_EFFECT_WEAPON_DAMAGE_NOSCHOOL) ||
+        HasEffect(SPELL_EFFECT_ADD_EXTRA_ATTACKS)      ||
+        HasEffect(SPELL_EFFECT_WEAPON_PERCENT_DAMAGE)  ||
+        HasEffect(SPELL_EFFECT_POWER_BURN)             ||
+        HasEffect(SPELL_EFFECT_ATTACK))
+        return true;
+
+    if (appliesAreaAura(SPELL_AURA_PERIODIC_DAMAGE)         ||
+        appliesAreaAura(SPELL_AURA_PROC_TRIGGER_DAMAGE)     ||
+        appliesAreaAura(SPELL_AURA_PERIODIC_DAMAGE_PERCENT) ||
+        appliesAreaAura(SPELL_AURA_POWER_BURN))
+        return true;
+
+    return false;
+}
+
+bool SpellInfo::isHealingSpell() const
+{
+    if (firstBeneficialEffect() != -1)
+    {
+        return true;
+    }
+
+    switch (Id)
+    {
+        case 635:   // Holy Light Rank 1
+        case 639:   // Holy Light Rank 2
+        case 647:   // Holy Light Rank 3
+        case 1026:  // Holy Light Rank 4
+        case 1042:  // Holy Light Rank 5
+        case 3472:  // Holy Light Rank 6
+        case 10328: // Holy Light Rank 7
+        case 10329: // Holy Light Rank 8
+        case 13952:
+        case 15493:
+        case 25263:
+        case 25292: // Holy Light Rank 9
+        case 27135: // Holy Light Rank 10
+        case 27136: // Holy Light Rank 11
+        case 29383:
+        case 29427:
+        case 29562:
+        case 31713:
+        case 32769:
+        case 37979:
+        case 43451:
+        case 44479:
+        case 46029:
+        case 48781: // Holy Light Rank 12
+        case 48782: // Holy Light Rank 13
+        case 52444:
+        case 56539: // Holy Light Rank 13
+        case 58053: // Holy Light Rank 13
+        case 66112: // Holy Light Rank 13
+        case 68011: // Holy Light Rank 13
+        case 68012: // Holy Light Rank 13
+        case 68013: // Holy Light Rank 13
+        case 19750: // Flash of Light Rank 1
+        case 19939: // Flash of Light Rank 2
+        case 19940: // Flash of Light Rank 3
+        case 19941: // Flash of Light Rank 4
+        case 19942: // Flash of Light Rank 5
+        case 19943: // Flash of Light Rank 6
+        case 25514:
+        case 27137: // Flash of Light Rank 7
+        case 33641:
+        case 37249:
+        case 37254:
+        case 37257:
+        case 48784: // Flash of Light Rank 8
+        case 48785: // Flash of Light Rank 9
+        case 57766:
+        case 59997:
+        case 66113: // Flash of Light Rank 9
+        case 66922:
+        case 68008: // Flash of Light Rank 9
+        case 68009: // Flash of Light Rank 9
+        case 68010: // Flash of Light Rank 9
+        case 71930:
+        {
+            return true;
+        }
+        default:
+            break;
+    }
+
+    return false;
+}
+
+int SpellInfo::firstBeneficialEffect() const
+{
+    for (auto i = 0; i < 3; ++i)
+    {
+        switch (Effect[i])
+        {
+        case SPELL_EFFECT_HEALTH_LEECH:
+        case SPELL_EFFECT_HEAL:
+        case SPELL_EFFECT_HEAL_MAX_HEALTH:
+            return i;
+        case SPELL_EFFECT_APPLY_AURA:
+        case SPELL_EFFECT_APPLY_GROUP_AREA_AURA:
+        case SPELL_EFFECT_APPLY_RAID_AREA_AURA:
+        {
+            switch (EffectApplyAuraName[i])
+            {
+            case SPELL_AURA_PERIODIC_HEAL:
+            case SPELL_AURA_PERIODIC_HEALTH_FUNNEL:
+                return i;
+            default:
+                break;
+            }
+            break;
+        }
+        default:
+            break;
+        }
+    }
+
+    return -1;
+}
+
+uint32_t SpellInfo::getSpellDuration(Unit* caster) const
+{
+    auto spell_duration = sSpellDurationStore.LookupEntry(DurationIndex);
+    if (spell_duration == nullptr)
+    {
+        return 0;
+    }
+
+    if (caster == nullptr)
+    {
+        return spell_duration->Duration1;
+    }
+
+    auto ret = spell_duration->Duration1 + (spell_duration->Duration2 * caster->getLevel());
+    if (ret > spell_duration->Duration3)
+    {
+        return spell_duration->Duration3;
+    }
+    return ret;
+}
+
+bool SpellInfo::hasTargetType(uint32_t type) const
+{
+    for (auto i = 0; i < 3; ++i)
+    {
+        if (EffectImplicitTargetA[i] == type ||
+            EffectImplicitTargetB[i] == type)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+int SpellInfo::aiTargetType() const
+{
+    /*  this is not good as one spell effect can target self and other one an enemy,
+    maybe we should make it for each spell effect or use as flags */
+    if (
+        hasTargetType(EFF_TARGET_INVISIBLE_OR_HIDDEN_ENEMIES_AT_LOCATION_RADIUS) ||
+        hasTargetType(EFF_TARGET_ALL_TARGETABLE_AROUND_LOCATION_IN_RADIUS)       ||
+        hasTargetType(EFF_TARGET_ALL_ENEMY_IN_AREA)                              ||
+        hasTargetType(EFF_TARGET_ALL_ENEMY_IN_AREA_INSTANT)                      ||
+        hasTargetType(EFF_TARGET_ALL_ENEMY_IN_AREA_CHANNELED)                    ||
+        hasTargetType(EFF_TARGET_ALL_TARGETABLE_AROUND_LOCATION_IN_RADIUS_OVER_TIME)
+    )
+    {
+        return TTYPE_DESTINATION;
+    }
+
+    if (
+        hasTargetType(EFF_TARGET_LOCATION_TO_SUMMON)      ||
+        hasTargetType(EFF_TARGET_IN_FRONT_OF_CASTER)      ||
+        hasTargetType(EFF_TARGET_ALL_FRIENDLY_IN_AREA)    ||
+        hasTargetType(EFF_TARGET_PET_SUMMON_LOCATION)     ||
+        hasTargetType(EFF_TARGET_LOCATION_INFRONT_CASTER) ||
+        hasTargetType(EFF_TARGET_CONE_IN_FRONT)
+    )
+    {
+        return TTYPE_SOURCE;
+    }
+    if (
+        hasTargetType(EFF_TARGET_SINGLE_ENEMY)                      ||
+        hasTargetType(EFF_TARGET_ALL_ENEMIES_AROUND_CASTER)         ||
+        hasTargetType(EFF_TARGET_DUEL)                              ||
+        hasTargetType(EFF_TARGET_SCRIPTED_OR_SINGLE_TARGET)         ||
+        hasTargetType(EFF_TARGET_CHAIN)                             ||
+        hasTargetType(EFF_TARGET_CURRENT_SELECTION)                 ||
+        hasTargetType(EFF_TARGET_TARGET_AT_ORIENTATION_TO_CASTER)   ||
+        hasTargetType(EFF_TARGET_MULTIPLE_GUARDIAN_SUMMON_LOCATION) ||
+        hasTargetType(EFF_TARGET_SELECTED_ENEMY_CHANNELED)
+    )
+    {
+        return TTYPE_SINGLETARGET;
+    }
+
+    if (
+        hasTargetType(EFF_TARGET_ALL_PARTY_AROUND_CASTER)     ||
+        hasTargetType(EFF_TARGET_SINGLE_FRIEND)               ||
+        hasTargetType(EFF_TARGET_PET_MASTER)                  ||
+        hasTargetType(EFF_TARGET_ALL_PARTY_IN_AREA_CHANNELED) ||
+        hasTargetType(EFF_TARGET_ALL_PARTY_IN_AREA)           ||
+        hasTargetType(EFF_TARGET_SINGLE_PARTY)                ||
+        hasTargetType(EFF_TARGET_ALL_PARTY)                   ||
+        hasTargetType(EFF_TARGET_ALL_RAID)                    ||
+        hasTargetType(EFF_TARGET_PARTY_MEMBER)                ||
+        hasTargetType(EFF_TARGET_AREAEFFECT_PARTY_AND_CLASS)
+    )
+    {
+        return TTYPE_OWNER;
+    }
+
+    if (
+        hasTargetType(EFF_TARGET_SELF) ||
+        hasTargetType(4) ||
+        hasTargetType(EFF_TARGET_PET) ||
+        hasTargetType(EFF_TARGET_MINION)
+    )
+    {
+        return TTYPE_CASTER;
+    }
+
+    return TTYPE_NULL;
+}
+
+bool SpellInfo::isTargetingStealthed() const
+{
+    if (hasTargetType(EFF_TARGET_INVISIBLE_OR_HIDDEN_ENEMIES_AT_LOCATION_RADIUS) ||
+        hasTargetType(EFF_TARGET_ALL_ENEMIES_AROUND_CASTER) ||
+        hasTargetType(EFF_TARGET_ALL_ENEMY_IN_AREA_CHANNELED) ||
+        hasTargetType(EFF_TARGET_ALL_ENEMY_IN_AREA_INSTANT))
+    {
+        return true;
+    }
+
+    switch (Id)
+    {
+                    // SPELL_HASH_MAGMA_TOTEM
+        case 8187:  // Magma Totem Rank 1
+        case 8190:  // Magma Totem Rank 1
+        case 10579: // Magma Totem Rank 2
+        case 10580: // Magma Totem Rank 3
+        case 10581: // Magma Totem Rank 4
+        case 10585: // Magma Totem Rank 2
+        case 10586: // Magma Totem Rank 3
+        case 10587: // Magma Totem Rank 4
+        case 25550: // Magma Totem Rank 5
+        case 25552: // Magma Totem Rank 5
+        case 58731: // Magma Totem Rank 6
+        case 58732: // Magma Totem Rank 6
+        case 58734: // Magma Totem Rank 7
+        case 58735: // Magma Totem Rank 7
+        {
+            return true;
+        }
+        default:
+            break;
+    }
+
+    return false;
+}
+
+bool SpellInfo::isRequireCooldownSpell() const
+{
+    auto cond1 = Attributes & ATTRIBUTES_TRIGGER_COOLDOWN && AttributesEx & ATTRIBUTESEX_NOT_BREAK_STEALTH;
+    auto cond2 = Attributes & ATTRIBUTES_TRIGGER_COOLDOWN && (!AttributesEx || AttributesEx & ATTRIBUTESEX_REMAIN_OOC);
+
+    return cond1 || cond2;
 }
 
 bool SpellInfo::IsPassive()
@@ -402,24 +684,32 @@ bool SpellInfo::IsPrimaryProfessionSkill(uint32 skill_id)
     return false;
 }
 
-bool SpellInfo::IsDeathPersistent()
+bool SpellInfo::isDeathPersistent() const
 {
     return (AttributesExC & ATTRIBUTESEXC_CAN_PERSIST_AND_CASTED_WHILE_DEAD) != 0;
 }
 
-bool SpellInfo::AppliesAreaAura(uint32 aura)
+bool SpellInfo::appliesAreaAura(uint32 aura) const
 {
     for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)
     {
-        if ((Effect[i] == SPELL_EFFECT_PERSISTENT_AREA_AURA ||
-             Effect[i] == SPELL_EFFECT_APPLY_GROUP_AREA_AURA ||
-             Effect[i] == SPELL_EFFECT_APPLY_RAID_AREA_AURA ||
-             Effect[i] == SPELL_EFFECT_APPLY_PET_AREA_AURA ||
-             Effect[i] == SPELL_EFFECT_APPLY_FRIEND_AREA_AURA ||
-             Effect[i] == SPELL_EFFECT_APPLY_ENEMY_AREA_AURA ||
-             Effect[i] == SPELL_EFFECT_APPLY_OWNER_AREA_AURA) &&
-            EffectApplyAuraName[i] == aura)
-            return true;
+        switch (Effect[i])
+        {
+            case SPELL_EFFECT_PERSISTENT_AREA_AURA:
+            case SPELL_EFFECT_APPLY_GROUP_AREA_AURA:
+            case SPELL_EFFECT_APPLY_RAID_AREA_AURA:
+            case SPELL_EFFECT_APPLY_PET_AREA_AURA:
+            case SPELL_EFFECT_APPLY_FRIEND_AREA_AURA:
+            case SPELL_EFFECT_APPLY_ENEMY_AREA_AURA:
+            case SPELL_EFFECT_APPLY_OWNER_AREA_AURA:
+                if (EffectApplyAuraName[i] == aura)
+                {
+                    return true;
+                }
+                break;
+            default:
+                break;
+        }
     }
 
     return false;

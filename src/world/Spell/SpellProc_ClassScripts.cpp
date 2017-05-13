@@ -27,6 +27,12 @@
 #include "Map/MapMgr.h"
 #include "SpellMgr.h"
 #include "SpellAuras.h"
+#include "Definitions/ProcFlags.h"
+#include "Definitions/SpellIsFlags.h"
+#include "Definitions/SpellEffectTarget.h"
+
+using ascemu::World::Spell::Helpers::spellModFlatIntValue;
+using ascemu::World::Spell::Helpers::spellModPercentageIntValue;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Warrior ProcScripts
@@ -286,8 +292,8 @@ class CutToTheChaseSpellProc : public SpellProc
             // Duration of 5 combo maximum
             int32 dur = 21 * MSTIME_SECOND;
 
-            SM_FIValue(mTarget->SM_FDur, &dur, aura->GetSpellInfo()->SpellGroupType);
-            SM_PIValue(mTarget->SM_PDur, &dur, aura->GetSpellInfo()->SpellGroupType);
+            spellModFlatIntValue(mTarget->SM_FDur, &dur, aura->GetSpellInfo()->SpellGroupType);
+            spellModPercentageIntValue(mTarget->SM_PDur, &dur, aura->GetSpellInfo()->SpellGroupType);
 
             // Set new aura's duration, reset event timer and set client visual aura
             aura->SetDuration(dur);
@@ -414,11 +420,11 @@ class VampiricEmbraceSpellProc : public SpellProc
     bool DoEffect(Unit* victim, SpellInfo* CastingSpell, uint32 flag, uint32 dmg, uint32 abs, int* dmg_overwrite, uint32 weapon_damage_type)
     {
         // Only proc for damaging shadow spells
-        if (CastingSpell->School != SCHOOL_SHADOW || !IsDamagingSpell(CastingSpell))
+        if (CastingSpell->School != SCHOOL_SHADOW || !CastingSpell->isDamagingSpell())
             return true;
 
         // Only proc for single target spells
-        if (!(HasTargetType(CastingSpell, EFF_TARGET_SINGLE_ENEMY) || HasTargetType(CastingSpell, EFF_TARGET_SELECTED_ENEMY_CHANNELED)))
+        if (!(CastingSpell->hasTargetType(EFF_TARGET_SINGLE_ENEMY) || CastingSpell->hasTargetType(EFF_TARGET_SELECTED_ENEMY_CHANNELED)))
             return true;
 
         dmg_overwrite[0] = dmg;
@@ -676,7 +682,7 @@ class SpiritualAttunementSpellProc : public SpellProc
 
     bool CanProc(Unit* victim, SpellInfo* CastingSpell)
     {
-        if (CastingSpell == NULL || !IsHealingSpell(CastingSpell))
+        if (CastingSpell == NULL || !CastingSpell->isHealingSpell())
             return false;
 
         return true;

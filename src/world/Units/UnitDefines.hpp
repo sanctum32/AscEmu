@@ -16,8 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _UNIT_DEFINES_H
-#define _UNIT_DEFINES_H
+#pragma once
 
 #include "CommonTypes.hpp"
 #include "LocationVector.h"
@@ -821,18 +820,6 @@ enum AURA_CHECK_RESULT
     AURA_CHECK_RESULT_LOWER_BUFF_PRESENT    = 3
 };
 
-enum School
-{
-    SCHOOL_NORMAL = 0,
-    SCHOOL_HOLY   = 1,
-    SCHOOL_FIRE   = 2,
-    SCHOOL_NATURE = 3,
-    SCHOOL_FROST  = 4,
-    SCHOOL_SHADOW = 5,
-    SCHOOL_ARCANE = 6,
-    SCHOOL_COUNT
-};
-
 struct TransportData
 {
     uint64 transportGuid;
@@ -972,5 +959,3 @@ static const PetFlagNames PetFlagToName[] =
 };
 
 static const uint32 numpetflags = sizeof(PetFlagToName) / sizeof(PetFlagNames);
-
-#endif      // _UNIT_DEFINES_H

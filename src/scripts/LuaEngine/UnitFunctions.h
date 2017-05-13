@@ -38,6 +38,10 @@
 #include "Management/Group.h"
 #include "Objects/Faction.h"
 #include "Spell/SpellAuras.h"
+#include "Server/WorldSession.h"
+#include "Objects/Object.h"
+#include "LuaGlobal.h"
+#include <Spell/Definitions/PowerType.h>
 
 class LuaUnit
 {
@@ -71,13 +75,13 @@ class LuaUnit
         if (plr == NULL)
             return 0;
 
-        if (Menu != NULL)
-            delete Menu;
+        if (LuaGlobal::instance()->m_menu != NULL)
+            delete LuaGlobal::instance()->m_menu;
 
-        Menu = new Arcemu::Gossip::Menu(ptr->GetGUID(), text_id);
+        LuaGlobal::instance()->m_menu = new Arcemu::Gossip::Menu(ptr->GetGUID(), text_id);
 
         if (autosend != 0)
-            Menu->Send(plr);
+            LuaGlobal::instance()->m_menu->Send(plr);
 
         return 0;
     }
@@ -91,12 +95,12 @@ class LuaUnit
         const char * boxmessage = luaL_optstring(L, 5, "");
         uint32 boxmoney = static_cast<uint32>(luaL_optinteger(L, 6, 0));
 
-        if (Menu == NULL){
+        if (LuaGlobal::instance()->m_menu == NULL){
             LOG_ERROR("There is no menu to add items to!");
             return 0;
         }
 
-        Menu->AddItem(icon, menu_text, IntId, boxmoney, boxmessage, coded);
+        LuaGlobal::instance()->m_menu->AddItem(icon, menu_text, IntId, boxmoney, boxmessage, coded);
 
         return 0;
     }
@@ -105,13 +109,13 @@ class LuaUnit
     {
         Player* plr = CHECK_PLAYER(L, 1);
 
-        if (Menu == NULL){
+        if (LuaGlobal::instance()->m_menu == NULL){
             LOG_ERROR("There is no menu to send!");
             return 0;
         }
 
         if (plr != NULL)
-            Menu->Send(plr);
+            LuaGlobal::instance()->m_menu->Send(plr);
 
         return 0;
     }
@@ -155,14 +159,14 @@ class LuaUnit
     static int GossipAddQuests(lua_State *L, Unit *ptr){
         TEST_UNIT()
 
-            if (Menu == NULL){
+            if (LuaGlobal::instance()->m_menu == NULL){
                 LOG_ERROR("There's no menu to fill quests into.");
                 return 0;
             }
 
         Player *player = CHECK_PLAYER(L, 1);
 
-        sQuestMgr.FillQuestMenu(static_cast< Creature* >(ptr), player, *Menu);
+        sQuestMgr.FillQuestMenu(static_cast< Creature* >(ptr), player, *LuaGlobal::instance()->m_menu);
 
         return 0;
     }
@@ -173,12 +177,12 @@ class LuaUnit
         TEST_PLAYER()
             Player * plr = static_cast<Player*>(ptr);
 
-        if (Menu == NULL){
+        if (LuaGlobal::instance()->m_menu == NULL){
             LOG_ERROR("There is no menu to complete!");
             return 0;
         }
 
-        Menu->Complete(plr);
+        LuaGlobal::instance()->m_menu->Complete(plr);
 
         return 0;
     }
@@ -439,9 +443,9 @@ class LuaUnit
             float x = CHECK_FLOAT(L, 1);
         float y = CHECK_FLOAT(L, 2);
         float z = CHECK_FLOAT(L, 3);
-        float o = CHECK_FLOAT(L, 4);
+        //float o = CHECK_FLOAT(L, 4);
 
-        ptr->GetAIInterface()->MoveTo(x, y, z, o);
+        ptr->GetAIInterface()->MoveTo(x, y, z);
         return 0;
     }
 
@@ -454,9 +458,9 @@ class LuaUnit
         float x2 = CHECK_FLOAT(L, 4);
         float y2 = CHECK_FLOAT(L, 5);
         float z2 = CHECK_FLOAT(L, 6);
-        float o2 = CHECK_FLOAT(L, 7);
+        //float o2 = CHECK_FLOAT(L, 7);
 
-        ptr->GetAIInterface()->MoveTo(x1 + (RandomFloat(x2 - x1)), y1 + (RandomFloat(y2 - y1)), z1 + (RandomFloat(z2 - z1)), o2);
+        ptr->GetAIInterface()->MoveTo(x1 + (RandomFloat(x2 - x1)), y1 + (RandomFloat(y2 - y1)), z1 + (RandomFloat(z2 - z1)));
         return 0;
     }
 
@@ -464,7 +468,7 @@ class LuaUnit
     {
         TEST_UNIT()
             uint32 typ = CHECK_ULONG(L, 1);
-        ptr->GetAIInterface()->SetWaypointScriptType((Movement::WaypointMovementScript)typ);
+        ptr->GetAIInterface()->setWaypointScriptType((Movement::WaypointMovementScript)typ);
         return 0;
     }
 
@@ -638,12 +642,12 @@ class LuaUnit
         if (!strcmp(typeName, "function"))
             functionRef = luaL_ref(L, LUA_REGISTRYINDEX);
         else if (!strcmp(typeName, "string"))
-            functionRef = ExtractfRefFromCString(L, luaL_checkstring(L, 1));
+            functionRef = LuaHelpers::ExtractfRefFromCString(L, luaL_checkstring(L, 1));
         if (functionRef)
         {
             Creature* creature = static_cast<Creature*>(ptr);
             sEventMgr.AddEvent(creature, &Creature::TriggerScriptEvent, functionRef, EVENT_LUA_CREATURE_EVENTS, delay, repeats, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
-            std::map< uint64, std::set<int> > & objRefs = sLuaMgr.getObjectFunctionRefs();
+            std::map< uint64, std::set<int> > & objRefs = LuaGlobal::instance()->luaEngine()->getObjectFunctionRefs();
             std::map< uint64, std::set<int> >::iterator itr = objRefs.find(ptr->GetGUID());
             if (itr == objRefs.end())
             {
@@ -676,12 +680,12 @@ class LuaUnit
         if (!strcmp(typeName, "function"))
             functionRef = luaL_ref(L, LUA_REGISTRYINDEX);
         else if (!strcmp(typeName, "string"))
-            functionRef = ExtractfRefFromCString(L, luaL_checkstring(L, 1));
+            functionRef = LuaHelpers::ExtractfRefFromCString(L, luaL_checkstring(L, 1));
         if (functionRef)
         {
-            TimedEvent* ev = TimedEvent::Allocate(ptr, new CallbackP1<LuaEngine, int>(&sLuaMgr, &LuaEngine::CallFunctionByReference, functionRef), EVENT_LUA_CREATURE_EVENTS, delay, repeats);
+            TimedEvent* ev = TimedEvent::Allocate(ptr, new CallbackP1<LuaEngine, int>(LuaGlobal::instance()->luaEngine().get(), &LuaEngine::CallFunctionByReference, functionRef), EVENT_LUA_CREATURE_EVENTS, delay, repeats);
             ptr->event_AddEvent(ev);
-            std::map< uint64, std::set<int> > & objRefs = sLuaMgr.getObjectFunctionRefs();
+            std::map< uint64, std::set<int> > & objRefs = LuaGlobal::instance()->luaEngine()->getObjectFunctionRefs();
             std::map< uint64, std::set<int> >::iterator itr = objRefs.find(ptr->GetGUID());
             if (itr == objRefs.end())
             {
@@ -702,7 +706,7 @@ class LuaUnit
         TEST_UNITPLAYER();
         sEventMgr.RemoveEvents(ptr, EVENT_LUA_CREATURE_EVENTS);
         //Unref all contained references
-        std::map< uint64, std::set<int> > & objRefs = sLuaMgr.getObjectFunctionRefs();
+        std::map< uint64, std::set<int> > & objRefs = LuaGlobal::instance()->luaEngine()->getObjectFunctionRefs();
         std::map< uint64, std::set<int> >::iterator itr = objRefs.find(ptr->GetGUID());
         if (itr != objRefs.end())
         {
@@ -904,7 +908,7 @@ class LuaUnit
         int id = static_cast<int>(luaL_checkinteger(L, 1));
         if (id)
         {
-            ptr->GetAIInterface()->SetWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
+            ptr->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
             ptr->GetAIInterface()->setWaypointToMove(id);
         }
         return 0;
@@ -976,7 +980,7 @@ class LuaUnit
 
         for (std::set< Object* >::iterator itr = ptr->GetInRangePlayerSetBegin(); itr != ptr->GetInRangePlayerSetEnd(); ++itr)
         {
-            d2 = (*itr)->GetDistanceSq(ptr);
+            d2 = (*itr)->getDistanceSq(ptr);
             if (!ret || d2 < dist)
             {
                 dist = d2;
@@ -2035,15 +2039,23 @@ class LuaUnit
 
     static int ReturnToSpawnPoint(lua_State* L, Unit* ptr)
     {
+
         if (ptr == nullptr)
+        {
             return 0;
+        }
 
         float x = ptr->GetSpawnX();
         float y = ptr->GetSpawnY();
         float z = ptr->GetSpawnZ();
         float o = ptr->GetSpawnO();
+
         if (ptr->IsCreature())
-            ptr->GetAIInterface()->MoveTo(x, y, z, o);
+        {
+            ptr->GetAIInterface()->MoveTo(x, y, z);
+            ptr->SetOrientation(o);
+        }
+
         return 0;
     }
 
@@ -2258,7 +2270,7 @@ class LuaUnit
         uint32 sp = CHECK_ULONG(L, 4);
         if (!sp || !ptr)
             return 0;
-        ptr->CastSpellAoF(x, y, z, sSpellCustomizations.GetSpellInfo(sp), true);
+        ptr->CastSpellAoF(LocationVector(x, y, z), sSpellCustomizations.GetSpellInfo(sp), true);
         return 0;
     }
 
@@ -2270,7 +2282,7 @@ class LuaUnit
         uint32 sp = CHECK_ULONG(L, 4);
         if (!sp || !ptr)
             return 0;
-        ptr->CastSpellAoF(x, y, z, sSpellCustomizations.GetSpellInfo(sp), false);
+        ptr->CastSpellAoF(LocationVector(x, y, z), sSpellCustomizations.GetSpellInfo(sp), false);
         return 0;
     }
 
@@ -2513,7 +2525,7 @@ class LuaUnit
     static int GetAIState(lua_State* L, Unit* ptr)
     {
         TEST_UNIT()
-            lua_pushnumber(L, ptr->GetAIInterface()->getAIState());
+            lua_pushnumber(L, ptr->GetAIInterface()->getAiState());
         return 1;
     }
 
@@ -3940,40 +3952,40 @@ class LuaUnit
             switch (state)
             {
                 case 0:
-                    ptr->GetAIInterface()->SetAIState(STATE_IDLE);
+                    ptr->GetAIInterface()->setAiState(AI_STATE_IDLE);
                     break;
                 case 1:
-                    ptr->GetAIInterface()->SetAIState(STATE_ATTACKING);
+                    ptr->GetAIInterface()->setAiState(AI_STATE_ATTACKING);
                     break;
                 case 2:
-                    ptr->GetAIInterface()->SetAIState(STATE_CASTING);
+                    ptr->GetAIInterface()->setAiState(AI_STATE_CASTING);
                     break;
                 case 3:
-                    ptr->GetAIInterface()->SetAIState(STATE_FLEEING);
+                    ptr->GetAIInterface()->setAiState(AI_STATE_FLEEING);
                     break;
                 case 4:
-                    ptr->GetAIInterface()->SetAIState(STATE_FOLLOWING);
+                    ptr->GetAIInterface()->setAiState(AI_STATE_FOLLOWING);
                     break;
                 case 5:
-                    ptr->GetAIInterface()->SetAIState(STATE_EVADE);
+                    ptr->GetAIInterface()->setAiState(AI_STATE_EVADE);
                     break;
                 case 6:
-                    ptr->GetAIInterface()->SetAIState(STATE_MOVEWP);
+                    ptr->GetAIInterface()->setAiState(AI_STATE_MOVEWP);
                     break;
                 case 7:
-                    ptr->GetAIInterface()->SetAIState(STATE_FEAR);
+                    ptr->GetAIInterface()->setAiState(AI_STATE_FEAR);
                     break;
                 case 8:
-                    ptr->GetAIInterface()->SetAIState(STATE_WANDER);
+                    ptr->GetAIInterface()->setAiState(AI_STATE_WANDER);
                     break;
                 case 9:
-                    ptr->GetAIInterface()->SetAIState(STATE_STOPPED);
+                    ptr->GetAIInterface()->setAiState(AI_STATE_STOPPED);
                     break;
                 case 10:
-                    ptr->GetAIInterface()->SetAIState(STATE_SCRIPTMOVE);
+                    ptr->GetAIInterface()->setAiState(AI_STATE_SCRIPTMOVE);
                     break;
                 case 11:
-                    ptr->GetAIInterface()->SetAIState(STATE_SCRIPTIDLE);
+                    ptr->GetAIInterface()->setAiState(AI_STATE_SCRIPTIDLE);
                     break;
             }
         }
@@ -5763,7 +5775,7 @@ class LuaUnit
             closest_unit = (*itr);
             if (!closest_unit->IsUnit() || isHostile(closest_unit, ptr))
                 continue;
-            current_dist = closest_unit->GetDistanceSq(ptr);
+            current_dist = closest_unit->getDistanceSq(ptr);
             if (current_dist < closest_dist)
             {
                 closest_dist = current_dist;
@@ -5996,7 +6008,7 @@ class LuaUnit
     static int GetMovementType(lua_State* L, Unit* ptr)
     {
         TEST_UNIT();
-        RET_NUMBER((uint32)ptr->GetAIInterface()->GetWaypointScriptType());
+        RET_NUMBER((uint32)ptr->GetAIInterface()->getWaypointScriptType());
         return 1;
     }
     static int GetQuestLogSlot(lua_State* L, Unit* ptr)

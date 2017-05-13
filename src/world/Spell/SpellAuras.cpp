@@ -32,6 +32,22 @@
 #include "Map/MapMgr.h"
 #include "Objects/Faction.h"
 #include "SpellAuras.h"
+#include "Definitions/SpellModifierType.h"
+#include "SpellHelpers.h"
+#include "Definitions/ProcFlags.h"
+#include "Definitions/AuraInterruptFlags.h"
+#include "Definitions/SpellSchoolConversionTable.h"
+#include "Definitions/SpellTypes.h"
+#include "Definitions/SpellIsFlags.h"
+#include "Definitions/SpellState.h"
+#include "Definitions/SpellMechanics.h"
+#include "Definitions/PowerType.h"
+
+using ascemu::World::Spell::Helpers::decimalToMask;
+using ascemu::World::Spell::Helpers::spellModFlatFloatValue;
+using ascemu::World::Spell::Helpers::spellModFlatIntValue;
+using ascemu::World::Spell::Helpers::spellModPercentageFloatValue;
+using ascemu::World::Spell::Helpers::spellModPercentageIntValue;
 
 pSpellAura SpellAuraHandler[TOTAL_SPELL_AURAS] =
 {
@@ -41,30 +57,30 @@ pSpellAura SpellAuraHandler[TOTAL_SPELL_AURAS] =
     &Aura::SpellAuraPeriodicDamage,                                         //   3 SPELL_AURA_PERIODIC_DAMAGE
     &Aura::SpellAuraDummy,                                                  //   4 SPELL_AURA_DUMMY
     &Aura::SpellAuraModConfuse,                                             //   5 SPELL_AURA_MOD_CONFUSE
-    &Aura::SpellAuraModCharm,                                               //   6 SPELL_AURA_MOD_CHARM 
-    &Aura::SpellAuraModFear,                                                //   7 SPELL_AURA_MOD_FEAR 
-    &Aura::SpellAuraPeriodicHeal,                                           //   8 SPELL_AURA_PERIODIC_HEAL 
-    &Aura::SpellAuraModAttackSpeed,                                         //   9 SPELL_AURA_MOD_ATTACKSPEED 
+    &Aura::SpellAuraModCharm,                                               //   6 SPELL_AURA_MOD_CHARM
+    &Aura::SpellAuraModFear,                                                //   7 SPELL_AURA_MOD_FEAR
+    &Aura::SpellAuraPeriodicHeal,                                           //   8 SPELL_AURA_PERIODIC_HEAL
+    &Aura::SpellAuraModAttackSpeed,                                         //   9 SPELL_AURA_MOD_ATTACKSPEED
     &Aura::SpellAuraModThreatGenerated,                                     //  10 SPELL_AURA_MOD_THREAT
-    &Aura::SpellAuraModTaunt,                                               //  11 SPELL_AURA_MOD_TAUNT 
-    &Aura::SpellAuraModStun,                                                //  12 SPELL_AURA_MOD_STUN 
-    &Aura::SpellAuraModDamageDone,                                          //  13 SPELL_AURA_MOD_DAMAGE_DONE 
-    &Aura::SpellAuraModDamageTaken,                                         //  14 SPELL_AURA_MOD_DAMAGE_TAKEN 
-    &Aura::SpellAuraDamageShield,                                           //  15 SPELL_AURA_DAMAGE_SHIELD 
+    &Aura::SpellAuraModTaunt,                                               //  11 SPELL_AURA_MOD_TAUNT
+    &Aura::SpellAuraModStun,                                                //  12 SPELL_AURA_MOD_STUN
+    &Aura::SpellAuraModDamageDone,                                          //  13 SPELL_AURA_MOD_DAMAGE_DONE
+    &Aura::SpellAuraModDamageTaken,                                         //  14 SPELL_AURA_MOD_DAMAGE_TAKEN
+    &Aura::SpellAuraDamageShield,                                           //  15 SPELL_AURA_DAMAGE_SHIELD
     &Aura::SpellAuraModStealth,                                             //  16 SPELL_AURA_MOD_STEALTH
     &Aura::SpellAuraModDetect,                                              //  17 SPELL_AURA_MOD_DETECT
-    &Aura::SpellAuraModInvisibility,                                        //  18 SPELL_AURA_MOD_INVISIBILITY 
+    &Aura::SpellAuraModInvisibility,                                        //  18 SPELL_AURA_MOD_INVISIBILITY
     &Aura::SpellAuraModInvisibilityDetection,                               //  19 SPELL_AURA_MOD_INVISIBILITY_DETECTION
     &Aura::SpellAuraModTotalHealthRegenPct,                                 //  20 SPELL_AURA_MOD_TOTAL_HEALTH_REGEN_PCT
     &Aura::SpellAuraModTotalManaRegenPct,                                   //  21 SPELL_AURA_MOD_TOTAL_MANA_REGEN_PCT
     &Aura::SpellAuraModResistance,                                          //  22 SPELL_AURA_MOD_RESISTANCE
     &Aura::SpellAuraPeriodicTriggerSpell,                                   //  23 SPELL_AURA_PERIODIC_TRIGGER_SPELL
     &Aura::SpellAuraPeriodicEnergize,                                       //  24 SPELL_AURA_PERIODIC_ENERGIZE
-    &Aura::SpellAuraModPacify,                                              //  25 SPELL_AURA_MOD_PACIFY 
-    &Aura::SpellAuraModRoot,                                                //  26 SPELL_AURA_MOD_ROOT 
-    &Aura::SpellAuraModSilence,                                             //  27 SPELL_AURA_MOD_SILENCE 
-    &Aura::SpellAuraReflectSpells,                                          //  28 SPELL_AURA_REFLECT_SPELLS 
-    &Aura::SpellAuraModStat,                                                //  29 SPELL_AURA_MOD_STAT 
+    &Aura::SpellAuraModPacify,                                              //  25 SPELL_AURA_MOD_PACIFY
+    &Aura::SpellAuraModRoot,                                                //  26 SPELL_AURA_MOD_ROOT
+    &Aura::SpellAuraModSilence,                                             //  27 SPELL_AURA_MOD_SILENCE
+    &Aura::SpellAuraReflectSpells,                                          //  28 SPELL_AURA_REFLECT_SPELLS
+    &Aura::SpellAuraModStat,                                                //  29 SPELL_AURA_MOD_STAT
     &Aura::SpellAuraModSkill,                                               //  30 SPELL_AURA_MOD_SKILL
     &Aura::SpellAuraModIncreaseSpeed,                                       //  31 SPELL_AURA_MOD_INCREASE_SPEED
     &Aura::SpellAuraModIncreaseMountedSpeed,                                //  32 SPELL_AURA_MOD_INCREASE_MOUNTED_SPEED
@@ -80,11 +96,11 @@ pSpellAura SpellAuraHandler[TOTAL_SPELL_AURAS] =
     &Aura::SpellAuraProcTriggerSpell,                                       //  42 SPELL_AURA_PROC_TRIGGER_SPELL
     &Aura::SpellAuraProcTriggerDamage,                                      //  43 SPELL_AURA_PROC_TRIGGER_DAMAGE
     &Aura::SpellAuraTrackCreatures,                                         //  44 SPELL_AURA_TRACK_CREATURES
-    &Aura::SpellAuraTrackResources,                                         //  45 SPELL_AURA_TRACK_RESOURCES 
+    &Aura::SpellAuraTrackResources,                                         //  45 SPELL_AURA_TRACK_RESOURCES
     &Aura::SpellAuraNULL,                                                   //  46 SPELL_AURA_MOD_PARRY_SKILL, obsolete? not used in 1.12.1 spell.dbc
     &Aura::SpellAuraModParryPerc,                                           //  47 SPELL_AURA_MOD_PARRY_PERCENT
     &Aura::SpellAuraNULL,                                                   //  48 SPELL_AURA_MOD_DODGE_SKILL obsolete?
-    &Aura::SpellAuraModDodgePerc,                                           //  49 SPELL_AURA_MOD_DODGE_PERCENT 
+    &Aura::SpellAuraModDodgePerc,                                           //  49 SPELL_AURA_MOD_DODGE_PERCENT
     &Aura::SpellAuraNULL,                                                   //  50 SPELL_AURA_MOD_BLOCK_SKILL obsolete?,
     &Aura::SpellAuraModBlockPerc,                                           //  51 SPELL_AURA_MOD_BLOCK_PERCENT
     &Aura::SpellAuraModCritPerc,                                            //  52 SPELL_AURA_MOD_CRIT_PERCENT
@@ -103,8 +119,8 @@ pSpellAura SpellAuraHandler[TOTAL_SPELL_AURAS] =
     &Aura::SpellAuraModCastingSpeed,                                        //  65 SPELL_AURA_MOD_CASTING_SPEED
     &Aura::SpellAuraFeignDeath,                                             //  66 SPELL_AURA_FEIGN_DEATH
     &Aura::SpellAuraModDisarm,                                              //  67 SPELL_AURA_MOD_DISARM
-    &Aura::SpellAuraModStalked,                                             //  68 SPELL_AURA_MOD_STALKED 
-    &Aura::SpellAuraSchoolAbsorb,                                           //  69 SPELL_AURA_SCHOOL_ABSORB 
+    &Aura::SpellAuraModStalked,                                             //  68 SPELL_AURA_MOD_STALKED
+    &Aura::SpellAuraSchoolAbsorb,                                           //  69 SPELL_AURA_SCHOOL_ABSORB
     &Aura::SpellAuraNULL,                                                   //  70 SPELL_AURA_EXTRA_ATTACKS obsolete?
     &Aura::SpellAuraModSpellCritChanceSchool,                               //  71 SPELL_AURA_MOD_SPELL_CRIT_CHANCE_SCHOOL
     &Aura::SpellAuraModPowerCost,                                           //  72 SPELL_AURA_MOD_POWER_COST
@@ -112,12 +128,12 @@ pSpellAura SpellAuraHandler[TOTAL_SPELL_AURAS] =
     &Aura::SpellAuraReflectSpellsSchool,                                    //  74 SPELL_AURA_REFLECT_SPELLS_SCHOOL
     &Aura::SpellAuraModLanguage,                                            //  75 SPELL_AURA_MOD_LANGUAGE
     &Aura::SpellAuraAddFarSight,                                            //  76 SPELL_AURA_FAR_SIGHT
-    &Aura::SpellAuraMechanicImmunity,                                       //  77 SPELL_AURA_MECHANIC_IMMUNITY 
+    &Aura::SpellAuraMechanicImmunity,                                       //  77 SPELL_AURA_MECHANIC_IMMUNITY
     &Aura::SpellAuraMounted,                                                //  78 SPELL_AURA_MOUNTED
     &Aura::SpellAuraModDamagePercDone,                                      //  79 SPELL_AURA_MOD_DAMAGE_PERCENT_DONE
     &Aura::SpellAuraModPercStat,                                            //  80 SPELL_AURA_MOD_PERCENT_STAT
     &Aura::SpellAuraSplitDamage,                                            //  81 SPELL_AURA_SPLIT_DAMAGE
-    &Aura::SpellAuraWaterBreathing,                                         //  82 SPELL_AURA_WATER_BREATHING 
+    &Aura::SpellAuraWaterBreathing,                                         //  82 SPELL_AURA_WATER_BREATHING
     &Aura::SpellAuraModBaseResistance,                                      //  83 SPELL_AURA_MOD_BASE_RESISTANCE
     &Aura::SpellAuraModRegen,                                               //  84 SPELL_AURA_MOD_REGEN
     &Aura::SpellAuraModPowerRegen,                                          //  85 SPELL_AURA_MOD_POWER_REGEN
@@ -183,7 +199,7 @@ pSpellAura SpellAuraHandler[TOTAL_SPELL_AURAS] =
     &Aura::SpellAuraNULL,                                                   // 145 SPELL_AURA_CHARISMA obsolete?
     &Aura::SpellAuraNULL,                                                   // 146 SPELL_AURA_PERSUADED obsolete
     &Aura::SpellAuraNULL,                                                   // 147 SPELL_AURA_ADD_CREATURE_IMMUNITY http://wow.allakhazam.com/db/spell.html?wspell=36798
-    &Aura::SpellAuraRetainComboPoints,                                      // 148 SPELL_AURA_RETAIN_COMBO_POINTS 
+    &Aura::SpellAuraRetainComboPoints,                                      // 148 SPELL_AURA_RETAIN_COMBO_POINTS
     &Aura::SpellAuraResistPushback,                                         // 149 SPELL_AURA_RESIST_PUSHBACK Resist Pushback //Simply resist spell casting delay
     &Aura::SpellAuraModShieldBlockPCT,                                      // 150 SPELL_AURA_MOD_SHIELD_BLOCK_PCT Mod Shield Absorbed dmg %
     &Aura::SpellAuraTrackStealthed,                                         // 151 SPELL_AURA_TRACK_STEALTHED Track Stealthed
@@ -683,15 +699,23 @@ Player* Aura::GetPlayerCaster()
     if (m_casterGuid == m_target->GetGUID())
     {
         if (m_target->IsPlayer())
+        {
             return static_cast<Player*>(m_target);
-        else//caster is not a player
-            return NULL;
+        }
+        else //caster is not a player
+        {
+            return nullptr;
+        }
     }
 
     if (m_target->GetMapMgr())
+    {
         return m_target->GetMapMgr()->GetPlayer(Arcemu::Util::GUID_LOPART(m_casterGuid));
+    }
     else
-        return NULL;
+    {
+        return nullptr;
+    }
 }
 
 Unit* Aura::GetUnitCaster()
@@ -884,7 +908,7 @@ void Aura::Remove()
         m_target->m_auras[m_auraSlot] = NULL;
 
     // reset diminishing return timer if needed
-    ::UnapplyDiminishingReturnTimer(m_target, m_spellInfo);
+    m_target->removeDiminishingReturnTimer(m_spellInfo);
 
     // remove attacker
     Unit* caster = GetUnitCaster();
@@ -1057,7 +1081,7 @@ void Aura::EventUpdateGroupAA(float r)
     {
         if (m_target->GetGUID() != owner->GetGUID())
         {
-            if ((m_target->GetDistanceSq(owner) <= r))
+            if ((m_target->getDistanceSq(owner) <= r))
             {
                 if (!owner->HasAura(m_spellInfo->Id))
                     targets.insert(owner->GetGUID());
@@ -1084,7 +1108,7 @@ void Aura::EventUpdateGroupAA(float r)
             if (op == NULL)
                 continue;
 
-            if (m_target->GetDistanceSq(op) > r)
+            if (m_target->getDistanceSq(op) > r)
                 continue;
 
             if (m_target->GetInstanceID() != op->GetInstanceID())
@@ -1119,7 +1143,7 @@ void Aura::EventUpdateGroupAA(float r)
             continue;
         }
 
-        if (m_target->GetDistanceSq(tp) > r)
+        if (m_target->getDistanceSq(tp) > r)
             removable = true;
 
         if ((m_target->GetPhase() & tp->GetPhase()) == 0)
@@ -1166,7 +1190,7 @@ void Aura::EventUpdateRaidAA(float r)
     {
         if (m_target->GetGUID() != owner->GetGUID())
         {
-            if ((m_target->GetDistanceSq(owner) <= r))
+            if ((m_target->getDistanceSq(owner) <= r))
             {
                 if (!owner->HasAura(m_spellInfo->Id))
                     targets.insert(owner->GetGUID());
@@ -1204,7 +1228,7 @@ void Aura::EventUpdateRaidAA(float r)
                 if (op->GetInstanceID() != m_target->GetInstanceID())
                     continue;
 
-                if (m_target->GetDistanceSq(op) > r)
+                if (m_target->getDistanceSq(op) > r)
                     continue;
 
                 if ((m_target->GetPhase() & op->GetPhase()) == 0)
@@ -1238,7 +1262,7 @@ void Aura::EventUpdateRaidAA(float r)
             continue;
         }
 
-        if (m_target->GetDistanceSq(tp) > r)
+        if (m_target->getDistanceSq(tp) > r)
             removable = true;
 
         if ((m_target->GetPhase() & tp->GetPhase()) == 0)
@@ -1269,7 +1293,7 @@ void Aura::EventUpdatePetAA(float r)
     {
         Pet* pet = *itr;
 
-        if (p->GetDistanceSq(pet) > r)
+        if (p->getDistanceSq(pet) > r)
             continue;
 
         if (!pet->isAlive())
@@ -1293,7 +1317,7 @@ void Aura::EventUpdatePetAA(float r)
         Pet* pet = *itr2;
         ++itr;
 
-        if (p->GetDistanceSq(pet) <= r)
+        if (p->getDistanceSq(pet) <= r)
             continue;
 
         pet->RemoveAura(m_spellInfo->Id);
@@ -1315,7 +1339,7 @@ void Aura::EventUpdateFriendAA(float r)
 
         Unit* ou = static_cast<Unit*>(o);
 
-        if (u->GetDistanceSq(ou) > r)
+        if (u->getDistanceSq(ou) > r)
             continue;
 
         if ((u->GetPhase() & ou->GetPhase()) == 0)
@@ -1350,7 +1374,7 @@ void Aura::EventUpdateFriendAA(float r)
             continue;
         }
 
-        if (u->GetDistanceSq(tu) > r)
+        if (u->getDistanceSq(tu) > r)
             removable = true;
 
         if (isHostile(u, tu))
@@ -1385,7 +1409,7 @@ void Aura::EventUpdateEnemyAA(float r)
 
         Unit* ou = static_cast<Unit*>(o);
 
-        if (u->GetDistanceSq(ou) > r)
+        if (u->getDistanceSq(ou) > r)
             continue;
 
         if ((u->GetPhase() & ou->GetPhase()) == 0)
@@ -1417,7 +1441,7 @@ void Aura::EventUpdateEnemyAA(float r)
             continue;
         }
 
-        if (u->GetDistanceSq(tu) > r)
+        if (u->getDistanceSq(tu) > r)
             removable = true;
 
         if (!isHostile(u, tu))
@@ -1455,7 +1479,7 @@ void Aura::EventUpdateOwnerAA(float r)
 
     if (ou->isAlive() &&
         !ou->HasAura(m_spellInfo->Id) &&
-        (c->GetDistanceSq(ou) <= r))
+        (c->getDistanceSq(ou) <= r))
     {
 
         Aura* a = sSpellFactoryMgr.NewAura(m_spellInfo, GetDuration(), c, ou, true);
@@ -1465,7 +1489,7 @@ void Aura::EventUpdateOwnerAA(float r)
     }
 
 
-    if (!ou->isAlive() || (c->GetDistanceSq(ou) > r))
+    if (!ou->isAlive() || (c->getDistanceSq(ou) > r))
         ou->RemoveAura(m_spellInfo->Id);
 }
 
@@ -1775,8 +1799,8 @@ void Aura::SpellAuraPeriodicDamage(bool apply)
         {
             if (c != nullptr)
             {
-                SM_FIValue(c->SM_FDOT, (int32*)&dmg, gr);
-                SM_PIValue(c->SM_PDOT, (int32*)&dmg, gr);
+                spellModFlatIntValue(c->SM_FDOT, (int32*)&dmg, gr);
+                spellModPercentageIntValue(c->SM_PDOT, (int32*)&dmg, gr);
             }
         }
 
@@ -2046,7 +2070,7 @@ void Aura::SpellAuraModCharm(bool apply)
         m_target->SetCharmTempVal(m_target->GetFaction());
         m_target->SetFaction(caster->GetFaction());
         m_target->UpdateOppFactionSet();
-        m_target->GetAIInterface()->Init(m_target, AITYPE_PET, Movement::WP_MOVEMENT_SCRIPT_NONE, caster);
+        m_target->GetAIInterface()->Init(m_target, AI_SCRIPT_PET, Movement::WP_MOVEMENT_SCRIPT_NONE, caster);
         m_target->SetCharmedByGUID(caster->GetGUID());
         caster->SetCharmedUnitGUID(target->GetGUID());
         //damn it, the other effects of enslave demon will agro him on us anyway :S
@@ -2082,7 +2106,7 @@ void Aura::SpellAuraModCharm(bool apply)
         m_target->GetAIInterface()->WipeHateList();
         m_target->GetAIInterface()->WipeTargetList();
         m_target->UpdateOppFactionSet();
-        m_target->GetAIInterface()->Init(m_target, AITYPE_AGRO, Movement::WP_MOVEMENT_SCRIPT_NONE);
+        m_target->GetAIInterface()->Init(m_target, AI_SCRIPT_AGRO, Movement::WP_MOVEMENT_SCRIPT_NONE);
         m_target->SetCharmedByGUID(0);
 
         if (caster->GetSession() != NULL)   // crashfix
@@ -2173,8 +2197,8 @@ void Aura::SpellAuraPeriodicHeal(bool apply)
         Unit* c = GetUnitCaster();
         if (c != nullptr)
         {
-            SM_FIValue(c->SM_FMiscEffect, &val, GetSpellInfo()->SpellGroupType);
-            SM_PIValue(c->SM_PMiscEffect, &val, GetSpellInfo()->SpellGroupType);
+            spellModFlatIntValue(c->SM_FMiscEffect, &val, GetSpellInfo()->SpellGroupType);
+            spellModPercentageIntValue(c->SM_PMiscEffect, &val, GetSpellInfo()->SpellGroupType);
         }
 
         if (val > 0)
@@ -2229,7 +2253,7 @@ void Aura::EventPeriodicHeal(uint32 amount)
                 if (c->IsPlayer())
                 {
                     int durmod = 0;
-                    SM_FIValue(c->SM_FDur, &durmod, m_spellInfo->SpellGroupType);
+                    spellModFlatIntValue(c->SM_FDur, &durmod, m_spellInfo->SpellGroupType);
                     bonus += bonus * durmod / 15000;
                 }
             }
@@ -2238,17 +2262,17 @@ void Aura::EventPeriodicHeal(uint32 amount)
         /*
         int penalty_pct = 0;
         int penalty_flt = 0;
-        SM_FIValue(c->SM_PPenalty, &penalty_pct, GetSpellProto()->SpellGroupType);
+        spellModFlatIntValue(c->SM_PPenalty, &penalty_pct, GetSpellProto()->SpellGroupType);
         bonus += bonus * (penalty_pct / 100);
-        SM_FIValue(c->SM_FPenalty, &penalty_flt, GetSpellProto()->SpellGroupType);
+        spellModFlatIntValue(c->SM_FPenalty, &penalty_flt, GetSpellProto()->SpellGroupType);
         bonus += penalty_flt;
         */
-        SM_PIValue(c->SM_PPenalty, &bonus, m_spellInfo->SpellGroupType);
+        spellModPercentageIntValue(c->SM_PPenalty, &bonus, m_spellInfo->SpellGroupType);
 #ifdef COLLECTION_OF_UNTESTED_STUFF_AND_TESTERS
         int spell_flat_modifers = 0;
         int spell_pct_modifers = 0;
-        SM_FIValue(c->SM_FPenalty, &spell_flat_modifers, GetSpellProto()->SpellGroupType);
-        SM_FIValue(c->SM_PPenalty, &spell_pct_modifers, GetSpellProto()->SpellGroupType);
+        spellModFlatIntValue(c->SM_FPenalty, &spell_flat_modifers, GetSpellProto()->SpellGroupType);
+        spellModFlatIntValue(c->SM_PPenalty, &spell_pct_modifers, GetSpellProto()->SpellGroupType);
         if (spell_flat_modifers != 0 || spell_pct_modifers != 0)
             LOG_DEBUG("!!!!!HEAL : spell dmg bonus(p=24) mod flat %d , spell dmg bonus(p=24) pct %d , spell dmg bonus %d, spell group %u", spell_flat_modifers, spell_pct_modifers, bonus, GetSpellProto()->SpellGroupType);
 #endif
@@ -2296,7 +2320,7 @@ void Aura::EventPeriodicHeal(uint32 amount)
     if (c != NULL)
     {
         add += float2int32(add * (m_target->HealTakenPctMod[m_spellInfo->School] + c->HealDonePctMod[GetSpellInfo()->School]));
-        SM_PIValue(c->SM_PDOT, &add, m_spellInfo->SpellGroupType);
+        spellModPercentageIntValue(c->SM_PDOT, &add, m_spellInfo->SpellGroupType);
 
         if (this->DotCanCrit())
         {
@@ -3067,11 +3091,11 @@ void Aura::SpellAuraPeriodicTriggerSpellWithValue(bool apply)
 
         float amptitude = static_cast<float>(GetSpellInfo()->EffectAmplitude[mod->i]);
         Unit* caster = GetUnitCaster();
-        uint32 numticks = GetSpellDuration(m_spellInfo, caster) / m_spellInfo->EffectAmplitude[mod->i];
+        uint32 numticks = m_spellInfo->getSpellDuration(caster) / m_spellInfo->EffectAmplitude[mod->i];
         if (caster != NULL)
         {
-            SM_FFValue(caster->SM_FAmptitude, &amptitude, m_spellInfo->SpellGroupType);
-            SM_PFValue(caster->SM_PAmptitude, &amptitude, m_spellInfo->SpellGroupType);
+            spellModFlatFloatValue(caster->SM_FAmptitude, &amptitude, m_spellInfo->SpellGroupType);
+            spellModPercentageFloatValue(caster->SM_PAmptitude, &amptitude, m_spellInfo->SpellGroupType);
             if (m_spellInfo->ChannelInterruptFlags != 0)
                 amptitude *= caster->GetCastSpeedMod();
         }
@@ -3145,11 +3169,11 @@ void Aura::SpellAuraPeriodicTriggerSpell(bool apply)
 
         float amptitude = static_cast<float>(GetSpellInfo()->EffectAmplitude[mod->i]);
         Unit* caster = GetUnitCaster();
-        uint32 numticks = GetSpellDuration(m_spellInfo, caster) / m_spellInfo->EffectAmplitude[mod->i];
+        uint32 numticks = m_spellInfo->getSpellDuration(caster) / m_spellInfo->EffectAmplitude[mod->i];
         if (caster != NULL)
         {
-            SM_FFValue(caster->SM_FAmptitude, &amptitude, m_spellInfo->SpellGroupType);
-            SM_PFValue(caster->SM_PAmptitude, &amptitude, m_spellInfo->SpellGroupType);
+            spellModFlatFloatValue(caster->SM_FAmptitude, &amptitude, m_spellInfo->SpellGroupType);
+            spellModPercentageFloatValue(caster->SM_PAmptitude, &amptitude, m_spellInfo->SpellGroupType);
             if (m_spellInfo->ChannelInterruptFlags != 0)
                 amptitude *= caster->GetCastSpeedMod();
         }
@@ -3921,10 +3945,10 @@ void Aura::SpellAuraModShapeshift(bool apply)
     else
     {
         if (shapeshift_form->id != FORM_STEALTH)
-            m_target->RemoveAllAurasByRequiredShapeShift(DecimalToMask(mod->m_miscValue));
+            m_target->RemoveAllAurasByRequiredShapeShift(ascemu::World::Spell::Helpers::decimalToMask(mod->m_miscValue));
 
         if (m_target->IsCasting() && m_target->m_currentSpell && m_target->m_currentSpell->GetSpellInfo()
-            && (m_target->m_currentSpell->GetSpellInfo()->RequiredShapeShift & DecimalToMask(mod->m_miscValue)))
+            && (m_target->m_currentSpell->GetSpellInfo()->RequiredShapeShift & decimalToMask(mod->m_miscValue)))
             m_target->InterruptSpell();
 
         //execute before changing shape back
@@ -4092,8 +4116,8 @@ void Aura::SpellAuraProcTriggerSpell(bool apply)
         Unit* ucaster = GetUnitCaster();
         if (ucaster != nullptr)
         {
-            SM_FIValue(ucaster->SM_FCharges, &charges, GetSpellInfo()->SpellGroupType);
-            SM_PIValue(ucaster->SM_PCharges, &charges, GetSpellInfo()->SpellGroupType);
+            spellModFlatIntValue(ucaster->SM_FCharges, &charges, GetSpellInfo()->SpellGroupType);
+            spellModPercentageIntValue(ucaster->SM_PCharges, &charges, GetSpellInfo()->SpellGroupType);
         }
 
         m_target->AddProcTriggerSpell(spellId, GetSpellInfo()->Id, m_casterGuid, GetSpellInfo()->procChance, GetSpellInfo()->procFlags, charges, groupRelation, NULL);
@@ -4210,7 +4234,7 @@ void Aura::SpellAuraModDodgePerc(bool apply)
     //if (m_target->GetTypeId() == TYPEID_PLAYER)
     {
         int32 amt = mod->m_amount;
-        //		SM_FIValue(m_target->SM_FSPELL_VALUE, &amt, GetSpellProto()->SpellGroupType);
+        //		spellModFlatIntValue(m_target->SM_FSPELL_VALUE, &amt, GetSpellProto()->SpellGroupType);
         if (apply)
         {
             if (amt < 0)
@@ -4332,8 +4356,8 @@ void Aura::EventPeriodicLeech(uint32 amount)
 
     amount += bonus;
 
-    SM_FIValue(m_caster->SM_FDOT, (int32*)&amount, sp->SpellGroupType);
-    SM_PIValue(m_caster->SM_PDOT, (int32*)&amount, sp->SpellGroupType);
+    spellModFlatIntValue(m_caster->SM_FDOT, (int32*)&amount, sp->SpellGroupType);
+    spellModPercentageIntValue(m_caster->SM_PDOT, (int32*)&amount, sp->SpellGroupType);
 
 
     if (DotCanCrit())
@@ -4456,8 +4480,8 @@ void Aura::SpellAuraModHitChance(bool apply)
     Unit* c = GetUnitCaster();
     if (c != nullptr)
     {
-        SM_FIValue(c->SM_FMiscEffect, &val, GetSpellInfo()->SpellGroupType);
-        SM_PIValue(c->SM_PMiscEffect, &val, GetSpellInfo()->SpellGroupType);
+        spellModFlatIntValue(c->SM_FMiscEffect, &val, GetSpellInfo()->SpellGroupType);
+        spellModPercentageIntValue(c->SM_PMiscEffect, &val, GetSpellInfo()->SpellGroupType);
     }
 
     if (apply)
@@ -5739,8 +5763,8 @@ void Aura::SpellAuraPeriodicDamagePercent(bool apply)
         //	Unit*c=GetUnitCaster();
         //	if (c)
         //	{
-        //		SM_FIValue(c->SM_FDOT,(int32*)&dmg,gr);
-        //		SM_PIValue(c->SM_PDOT,(int32*)&dmg,gr);
+        //		spellModFlatIntValue(c->SM_FDOT,(int32*)&dmg,gr);
+        //		spellModPercentageIntValue(c->SM_PDOT,(int32*)&dmg,gr);
         //	}
         //}
 
@@ -6294,8 +6318,8 @@ void Aura::SpellAuraAddClassTargetTrigger(bool apply)
         Unit* ucaster = GetUnitCaster();
         if (ucaster != nullptr)
         {
-            SM_FIValue(ucaster->SM_FCharges, &charges, GetSpellInfo()->SpellGroupType);
-            SM_PIValue(ucaster->SM_PCharges, &charges, GetSpellInfo()->SpellGroupType);
+            spellModFlatIntValue(ucaster->SM_FCharges, &charges, GetSpellInfo()->SpellGroupType);
+            spellModPercentageIntValue(ucaster->SM_PCharges, &charges, GetSpellInfo()->SpellGroupType);
         }
 
         m_target->AddProcTriggerSpell(sp->Id, GetSpellInfo()->Id, m_casterGuid, GetSpellInfo()->EffectBasePoints[mod->i] + 1, PROC_ON_CAST_SPELL, charges, groupRelation, procClassMask);
@@ -6855,7 +6879,7 @@ void Aura::SpellAuraModRangedHaste(bool apply)
         //		{
         //			Unit* pCaster = GetUnitCaster();
         //			if (pCaster)
-        //				SM_FIValue(pCaster->SM_FSPELL_VALUE,&amount,0x100000);
+        //				spellModFlatIntValue(pCaster->SM_FSPELL_VALUE,&amount,0x100000);
         //		}
 
         if (apply)
@@ -8925,11 +8949,11 @@ bool Aura::IsCombatStateAffecting()
 {
     SpellInfo* sp = m_spellInfo;
 
-    if (sp->AppliesAreaAura(SPELL_AURA_PERIODIC_DAMAGE) ||
-        sp->AppliesAreaAura(SPELL_AURA_PERIODIC_DAMAGE_PERCENT) ||
-        sp->AppliesAreaAura(SPELL_AURA_PERIODIC_TRIGGER_SPELL) ||
-        sp->AppliesAreaAura(SPELL_AURA_PERIODIC_LEECH) ||
-        sp->AppliesAreaAura(SPELL_AURA_PERIODIC_MANA_LEECH))
+    if (sp->appliesAreaAura(SPELL_AURA_PERIODIC_DAMAGE) ||
+        sp->appliesAreaAura(SPELL_AURA_PERIODIC_DAMAGE_PERCENT) ||
+        sp->appliesAreaAura(SPELL_AURA_PERIODIC_TRIGGER_SPELL) ||
+        sp->appliesAreaAura(SPELL_AURA_PERIODIC_LEECH) ||
+        sp->appliesAreaAura(SPELL_AURA_PERIODIC_MANA_LEECH))
         return true;
 
     return false;
@@ -8968,12 +8992,12 @@ void AbsorbAura::SpellAuraSchoolAbsorb(bool apply)
     Unit* caster = GetUnitCaster();
     if (caster != nullptr)
     {
-        SM_FIValue(caster->SM_FMiscEffect, &val, GetSpellInfo()->SpellGroupType);
-        SM_PIValue(caster->SM_PMiscEffect, &val, GetSpellInfo()->SpellGroupType);
+        spellModFlatIntValue(caster->SM_FMiscEffect, &val, GetSpellInfo()->SpellGroupType);
+        spellModPercentageIntValue(caster->SM_PMiscEffect, &val, GetSpellInfo()->SpellGroupType);
 
         //This will fix talents that affects damage absorbed.
         int flat = 0;
-        SM_FIValue(caster->SM_FMiscEffect, &flat, GetSpellInfo()->SpellGroupType);
+        spellModFlatIntValue(caster->SM_FMiscEffect, &flat, GetSpellInfo()->SpellGroupType);
         val += val * flat / 100;
 
         //For spells Affected by Bonus Healing we use Dspell_coef_override.

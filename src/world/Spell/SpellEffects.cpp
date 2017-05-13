@@ -40,6 +40,29 @@
 #include "Objects/Faction.h"
 #include "SpellMgr.h"
 #include "SpellAuras.h"
+#include "Definitions/SpellCastTargetFlags.h"
+#include "Definitions/SpellDamageType.h"
+#include "Definitions/ProcFlags.h"
+#include "Definitions/CastInterruptFlags.h"
+#include "Definitions/AuraInterruptFlags.h"
+#include "Definitions/ChannelInterruptFlags.h"
+#include "Definitions/PreventionType.h"
+#include "Definitions/SpellRanged.h"
+#include "Definitions/LockTypes.h"
+#include "Definitions/SpellIsFlags.h"
+#include "Definitions/TeleportEffectCustomFlags.h"
+#include "Definitions/SummonControlTypes.h"
+#include "Definitions/SummonTypes.h"
+#include "Definitions/SpellState.h"
+#include "Definitions/DispelType.h"
+#include "Definitions/SpellMechanics.h"
+#include "Definitions/PowerType.h"
+#include "Definitions/Spec.h"
+
+using ascemu::World::Spell::Helpers::spellModFlatIntValue;
+using ascemu::World::Spell::Helpers::spellModPercentageIntValue;
+using ascemu::World::Spell::Helpers::spellModFlatFloatValue;
+using ascemu::World::Spell::Helpers::spellModPercentageFloatValue;
 
 pSpellEffect SpellEffectsHandler[TOTAL_SPELL_EFFECTS] =
 {
@@ -583,7 +606,7 @@ void Spell::SpellEffectSchoolDMG(uint32 i) // dmg school
             {
                 if (u_caster != nullptr)
                 {
-                    SM_FIValue(u_caster->SM_PJumpReduce, &reduce, GetSpellInfo()->SpellGroupType);
+                    spellModFlatIntValue(u_caster->SM_PJumpReduce, &reduce, GetSpellInfo()->SpellGroupType);
                 }
                 chaindamage += ((GetSpellInfo()->EffectBasePoints[i] + 51) * reduce / 100);
             }
@@ -601,7 +624,7 @@ void Spell::SpellEffectSchoolDMG(uint32 i) // dmg school
             {
                 if (u_caster != nullptr)
                 {
-                    SM_FIValue(u_caster->SM_PJumpReduce, &reduce, GetSpellInfo()->SpellGroupType);
+                    spellModFlatIntValue(u_caster->SM_PJumpReduce, &reduce, GetSpellInfo()->SpellGroupType);
                 }
                 chaindamage = chaindamage * reduce / 100;
             }
@@ -1435,7 +1458,9 @@ void Spell::SpellEffectApplyAura(uint32 i)  // Apply Aura
 
         // Handle diminishing returns, if it should be resisted, it'll make duration 0 here.
         if (!(GetSpellInfo()->IsPassive())) // Passive
-            ::ApplyDiminishingReturnTimer(&Duration, unitTarget, GetSpellInfo());
+        {
+            unitTarget->applyDiminishingReturnTimer(&Duration, GetSpellInfo());
+        }
 
         if (!Duration)
         {
@@ -1612,7 +1637,7 @@ void Spell::SpellEffectHeal(uint32 i) // Heal
             int32 reduce = GetSpellInfo()->EffectDieSides[i] + 1;
             if (u_caster != nullptr)
             {
-                SM_FIValue(u_caster->SM_PJumpReduce, &reduce, GetSpellInfo()->SpellGroupType);
+                spellModFlatIntValue(u_caster->SM_PJumpReduce, &reduce, GetSpellInfo()->SpellGroupType);
             }
             chaindamage -= (reduce * chaindamage) / 100;
             Heal((int32)chaindamage);
@@ -2337,16 +2362,17 @@ void Spell::SpellEffectPersistentAA(uint32 i) // Persistent Area Aura
         break;
         case TARGET_FLAG_SOURCE_LOCATION:
         {
-            dynObj->Create(u_caster, this, m_targets.m_srcX,
-                           m_targets.m_srcY, m_targets.m_srcZ, dur, r, DYNAMIC_OBJECT_AREA_SPELL);
+            auto source = m_targets.source();
+            dynObj->Create(u_caster, this, source.x, source.y, source.z, dur, r, DYNAMIC_OBJECT_AREA_SPELL);
         }
         break;
         case TARGET_FLAG_DEST_LOCATION:
         {
+            auto destination = m_targets.destination();
             if (u_caster != nullptr)
-                dynObj->Create(u_caster, this, m_targets.m_destX, m_targets.m_destY, m_targets.m_destZ, dur, r, DYNAMIC_OBJECT_AREA_SPELL);
+                dynObj->Create(u_caster, this, destination.x, destination.y, destination.z, dur, r, DYNAMIC_OBJECT_AREA_SPELL);
             else if (g_caster != nullptr)
-                dynObj->Create(g_caster->m_summoner, this, m_targets.m_destX, m_targets.m_destY, m_targets.m_destZ, dur, r, DYNAMIC_OBJECT_AREA_SPELL);
+                dynObj->Create(g_caster->m_summoner, this, destination.x, destination.y, destination.z, dur, r, DYNAMIC_OBJECT_AREA_SPELL);
         }
         break;
         default:
@@ -2354,7 +2380,7 @@ void Spell::SpellEffectPersistentAA(uint32 i) // Persistent Area Aura
             return;
     }
 
-    if (u_caster != NULL)
+    if (u_caster)
         if (GetSpellInfo()->ChannelInterruptFlags > 0)
         {
             u_caster->SetChannelSpellTargetGUID(dynObj->GetGUID());
@@ -2388,7 +2414,7 @@ void Spell::SpellEffectSummon(uint32 i)
     LocationVector v(0.0f, 0.0f, 0.0f, 0.0f);
 
     if ((m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION) != 0)
-        v = LocationVector(m_targets.m_destX, m_targets.m_destY, m_targets.m_destZ);
+        v = m_targets.destination();
     else
         v = m_caster->GetPosition();
 
@@ -2492,11 +2518,12 @@ void Spell::SpellEffectSummonWild(uint32 i)  // Summon Wild
         return;
     }
     float x, y, z;
-    if (m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION && m_targets.m_destX && m_targets.m_destY && m_targets.m_destZ)
+    if (m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION && m_targets.destination().isSet())
     {
-        x = m_targets.m_destX;
-        y = m_targets.m_destY;
-        z = m_targets.m_destZ;
+        auto destination = m_targets.destination();
+        x = destination.x;
+        y = destination.y;
+        z = destination.z;
     }
     else
     {
@@ -2905,7 +2932,7 @@ void Spell::SpellEffectTriggerMissile(uint32 i) // Trigger Missile
     // Cast the triggered spell on the destination location, spells like Freezing Arrow use it
     if ((u_caster != NULL) && (m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION))
     {
-        u_caster->CastSpellAoF(m_targets.m_destX, m_targets.m_destY, m_targets.m_destZ, spInfo, true);
+        u_caster->CastSpellAoF(m_targets.destination(), spInfo, true);
         return;
     }
 
@@ -2919,11 +2946,12 @@ void Spell::SpellEffectTriggerMissile(uint32 i) // Trigger Missile
         Unit* t = static_cast< Unit* >((*itr));
 
         float r;
-        float d = m_targets.m_destX - t->GetPositionX();
+        auto destination = m_targets.destination();
+        float d = destination.x - t->GetPositionX();
         r = d * d;
-        d = m_targets.m_destY - t->GetPositionY();
+        d = destination.y - t->GetPositionY();
         r += d * d;
-        d = m_targets.m_destZ - t->GetPositionZ();
+        d = destination.z - t->GetPositionZ();
         r += d * d;
 
         if (sqrt(r) > spellRadius) continue;
@@ -3670,13 +3698,14 @@ void Spell::SpellEffectSummonObject(uint32 i)
     {
         posx = px;
         posy = py;
-        if ((m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION) && (m_targets.m_destX && m_targets.m_destY && m_targets.m_destZ))
+        auto destination = m_targets.destination();
+        if ((m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION) && destination.isSet())
         {
-            posx = m_targets.m_destX;
-            posy = m_targets.m_destY;
-            pz = m_targets.m_destZ;
+            posx = destination.x;
+            posy = destination.y;
+            pz = destination.z;
         }
-        
+
         go = m_caster->GetMapMgr()->CreateGameObject(entry);
 
         go->CreateFromProto(entry, mapid, posx, posy, pz, orient);
@@ -4027,8 +4056,8 @@ void Spell::SpellEffectThreat(uint32 i) // Threat
 
     int32 amount = GetSpellInfo()->EffectBasePoints[i];
 
-    SM_FIValue(u_caster->SM_FMiscEffect, &amount, GetSpellInfo()->SpellGroupType);
-    SM_PIValue(u_caster->SM_PMiscEffect, &amount, GetSpellInfo()->SpellGroupType);
+    spellModFlatIntValue(u_caster->SM_FMiscEffect, &amount, GetSpellInfo()->SpellGroupType);
+    spellModPercentageIntValue(u_caster->SM_PMiscEffect, &amount, GetSpellInfo()->SpellGroupType);
 
 
     bool chck = unitTarget->GetAIInterface()->modThreatByPtr(u_caster, amount);
@@ -4155,13 +4184,15 @@ void Spell::SpellEffectDistract(uint32 i) // Distract
     if (!unitTarget || !unitTarget->isAlive())
         return;
 
-    if (m_targets.m_destX != 0.0f || m_targets.m_destY != 0.0f || m_targets.m_destZ != 0.0f)
+    if (m_targets.destination().isSet())
     {
         //      unitTarget->GetAIInterface()->MoveTo(m_targets.m_destX, m_targets.m_destY, m_targets.m_destZ, 0);
         uint32 Stare_duration = GetDuration();
         if (Stare_duration > 30 * 60 * 1000)
             Stare_duration = 10000;//if we try to stare for more then a half an hour then better not stare at all :P (bug)
-        float newo = unitTarget->calcRadAngle(unitTarget->GetPositionX(), unitTarget->GetPositionY(), m_targets.m_destX, m_targets.m_destY);
+
+        auto destination = m_targets.destination();
+        float newo = unitTarget->calcRadAngle(unitTarget->GetPositionX(), unitTarget->GetPositionY(), destination.x, destination.y);
         unitTarget->GetAIInterface()->StopMovement(Stare_duration);
         unitTarget->SetFacing(newo);
     }
@@ -4198,15 +4229,14 @@ void Spell::SpellEffectAddFarsight(uint32 i) // Add Farsight
     if (p_caster == NULL)
         return;
 
-    float x = m_targets.m_destX;
-    float y = m_targets.m_destY;
-    float z = m_targets.m_destZ;
-    if (x == 0) x = m_targets.m_srcX;
-    if (y == 0) y = m_targets.m_srcY;
-    if (z == 0) z = m_targets.m_srcZ;
+    auto lv = m_targets.destination();
+    if (!lv.isSet())
+    {
+        lv = m_targets.source();
+    }
 
     DynamicObject* dynObj = p_caster->GetMapMgr()->CreateDynamicObject();
-    dynObj->Create(u_caster, this, x, y, z, GetDuration(), GetRadius(i), DYNAMIC_OBJECT_FARSIGHT_FOCUS);
+    dynObj->Create(u_caster, this, lv, GetDuration(), GetRadius(i), DYNAMIC_OBJECT_FARSIGHT_FOCUS);
     dynObj->SetInstanceID(p_caster->GetInstanceID());
     p_caster->SetFarsightTarget(dynObj->GetGUID());
 
@@ -4516,8 +4546,8 @@ void Spell::SpellEffectSelfResurrect(uint32 i)
         case 21169: //Reincarnation. Resurrect with 20% health and mana
         {
             int32 amt = 20;
-            SM_FIValue(unitTarget->SM_FMiscEffect, &amt, GetSpellInfo()->SpellGroupType);
-            SM_PIValue(unitTarget->SM_PMiscEffect, &amt, GetSpellInfo()->SpellGroupType);
+            spellModFlatIntValue(unitTarget->SM_FMiscEffect, &amt, GetSpellInfo()->SpellGroupType);
+            spellModPercentageIntValue(unitTarget->SM_PMiscEffect, &amt, GetSpellInfo()->SpellGroupType);
             health = uint32((unitTarget->GetMaxHealth() * amt) / 100);
             mana = uint32((unitTarget->GetMaxPower(POWER_TYPE_MANA) * amt) / 100);
         }
@@ -4769,9 +4799,10 @@ void Spell::SpellEffectSummonObjectSlot(uint32 i)
 
     if (m_targets.m_targetMask & TARGET_FLAG_DEST_LOCATION)
     {
-        dx = m_targets.m_destX;
-        dy = m_targets.m_destY;
-        dz = m_targets.m_destZ;
+        auto destination = m_targets.destination();
+        dx = destination.x;
+        dy = destination.y;
+        dz = destination.z;
     }
     else
     {
@@ -4830,8 +4861,8 @@ void Spell::SpellEffectSummonDeadPet(uint32 i)
     Pet* pPet = p_caster->GetSummon();
     if (pPet)
     {
-        SM_FIValue(p_caster->SM_FMiscEffect, &damage, GetSpellInfo()->SpellGroupType);
-        SM_PIValue(p_caster->SM_PMiscEffect, &damage, GetSpellInfo()->SpellGroupType);
+        spellModFlatIntValue(p_caster->SM_FMiscEffect, &damage, GetSpellInfo()->SpellGroupType);
+        spellModPercentageIntValue(p_caster->SM_PMiscEffect, &damage, GetSpellInfo()->SpellGroupType);
 
         pPet->SetUInt32Value(UNIT_DYNAMIC_FLAGS, 0);
         pPet->SetHealth((uint32)((pPet->GetMaxHealth() * damage) / 100));
@@ -4848,8 +4879,8 @@ void Spell::SpellEffectSummonDeadPet(uint32 i)
         if (pPet == NULL)//no pets to Revive
             return;
 
-        SM_FIValue(p_caster->SM_FMiscEffect, &damage, GetSpellInfo()->SpellGroupType);
-        SM_PIValue(p_caster->SM_PMiscEffect, &damage, GetSpellInfo()->SpellGroupType);
+        spellModFlatIntValue(p_caster->SM_FMiscEffect, &damage, GetSpellInfo()->SpellGroupType);
+        spellModPercentageIntValue(p_caster->SM_PMiscEffect, &damage, GetSpellInfo()->SpellGroupType);
 
         pPet->SetHealth((uint32)((pPet->GetMaxHealth() * damage) / 100));
     }

@@ -24,6 +24,8 @@
 #include "Spell/SpellAuras.h"
 #include "Server/Packets/Opcode.h"
 #include "Server/Script/ScriptMgr.h"
+#include "Spell/Definitions/ProcFlags.h"
+#include <Spell/Definitions/DispelType.h>
 
 #define BLOOD_PLAGUE 55078
 #define FROST_FEVER 55095
@@ -113,32 +115,20 @@ bool Strangulate(uint32 i, Aura* pAura, bool apply)
 
 bool RaiseDead(uint32 i, Spell* s)
 {
-    if(s->p_caster == NULL)
+    if (s->p_caster == nullptr)
+    {
         return false;
+    }
 
     float x = s->p_caster->GetPositionX();
     float y = s->p_caster->GetPositionY() - 1;
     float z = s->p_caster->GetPositionZ();
 
-    SpellInfo* sp = NULL;
+    SpellInfo* sp = nullptr;
 
     // Master of Ghouls
-    if(!s->p_caster->HasAura(52143))
+    if (s->p_caster->HasAura(52143) == false)
     {
-        Corpse* corpseTarget = s->GetCorpseTarget();
-
-        // We need a corpse for this spell
-        // Doesn't seem to be supported yet, so let's comment this for now
-        /*
-        if( corpseTarget != NULL )
-            return true;
-
-        x = corpseTarget->GetPositionX();
-        y = corpseTarget->GetPositionY();
-        z = corpseTarget->GetPositionZ();
-        */
-
-
         // Minion version, 1 min duration
         sp = sSpellCustomizations.GetSpellInfo(46585);
     }
@@ -148,7 +138,7 @@ bool RaiseDead(uint32 i, Spell* s)
         sp = sSpellCustomizations.GetSpellInfo(52150);
     }
 
-    s->p_caster->CastSpellAoF(x, y, z, sp, true);
+    s->p_caster->CastSpellAoF(LocationVector(x, y, z), sp, true);
 
     return true;
 }

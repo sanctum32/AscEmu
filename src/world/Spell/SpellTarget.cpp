@@ -26,6 +26,8 @@
 #include "Objects/GameObject.h"
 #include "Server/World.h"
 #include "Server/World.Legacy.h"
+#include "Definitions/SpellCastTargetFlags.h"
+#include "Definitions/SpellDidHitResult.h"
 
 uint32 g_spellImplicitTargetFlags[MAX_IMPLICIT_TARGET_VALUE];
 
@@ -200,7 +202,7 @@ void Spell::AddScriptedOrSpellFocusTargets(uint32 i, uint32 TargetType, float r,
 
 void Spell::AddConeTargets(uint32 i, uint32 TargetType, float r, uint32 maxtargets)
 {
-    TargetsList* list = &m_targetUnits[i];
+    std::vector<uint64_t>* list = &m_targetUnits[i];
     ObjectSet::iterator itr;
     for (itr = m_caster->GetInRangeSetBegin(); itr != m_caster->GetInRangeSetEnd(); ++itr)
     {
@@ -229,7 +231,7 @@ void Spell::AddChainTargets(uint32 i, uint32 TargetType, float r, uint32 maxtarg
     if (targ == NULL)
         return;
 
-    TargetsList* list = &m_targetUnits[i];
+    std::vector<uint64_t>* list = &m_targetUnits[i];
 
     //if selected target is party member, then jumps on party
     Unit* firstTarget = NULL;
@@ -255,7 +257,7 @@ void Spell::AddChainTargets(uint32 i, uint32 TargetType, float r, uint32 maxtarg
     //range
     range /= jumps; //hacky, needs better implementation!
 
-    SM_FIValue(u_caster->SM_FAdditionalTargets, (int32*)&jumps, m_spellInfo->SpellGroupType);
+    ascemu::World::Spell::Helpers::spellModFlatIntValue(u_caster->SM_FAdditionalTargets, (int32*)&jumps, m_spellInfo->SpellGroupType);
 
     AddTarget(i, TargetType, firstTarget);
 
@@ -265,6 +267,7 @@ void Spell::AddChainTargets(uint32 i, uint32 TargetType, float r, uint32 maxtarg
     ObjectSet::iterator itr;
     for (itr = firstTarget->GetInRangeSetBegin(); itr != firstTarget->GetInRangeSetEnd(); ++itr)
     {
+        auto obj = *itr;
         if (!(*itr)->IsUnit() || !static_cast<Unit*>((*itr))->isAlive())
             continue;
 
@@ -272,12 +275,12 @@ void Spell::AddChainTargets(uint32 i, uint32 TargetType, float r, uint32 maxtarg
             continue;
 
         //healing spell, full health target = NONO
-        if (IsHealingSpell(m_spellInfo) && static_cast<Unit*>(*itr)->GetHealthPct() == 100)
+        if (m_spellInfo->isHealingSpell() && static_cast<Unit*>(*itr)->GetHealthPct() == 100)
             continue;
 
         size_t oldsize;
 
-        if (IsInrange(firstTarget->GetPositionX(), firstTarget->GetPositionY(), firstTarget->GetPositionZ(), (*itr), range))
+        if (obj->isInRange(firstTarget->GetPositionX(), firstTarget->GetPositionY(), firstTarget->GetPositionZ(), range))
         {
             oldsize = list->size();
             AddTarget(i, TargetType, (*itr));
@@ -368,16 +371,14 @@ void Spell::AddAOETargets(uint32 i, uint32 TargetType, float r, uint32 maxtarget
     else
     {
         m_targets.m_targetMask |= TARGET_FLAG_DEST_LOCATION;
-        source.x = m_targets.m_destX;
-        source.y = m_targets.m_destY;
-        source.z = m_targets.m_destZ;
+        source = m_targets.destination();
     }
 
     //caster might be in the aoe LOL
     if (m_caster->CalcDistance(source) <= r)
         AddTarget(i, TargetType, m_caster);
 
-    TargetsList* t = &m_targetUnits[i];
+    std::vector<uint64_t>* t = &m_targetUnits[i];
 
     for (ObjectSet::iterator itr = m_caster->GetInRangeSetBegin(); itr != m_caster->GetInRangeSetEnd(); ++itr)
     {
@@ -392,7 +393,7 @@ void Spell::AddAOETargets(uint32 i, uint32 TargetType, float r, uint32 maxtarget
 
 bool Spell::AddTarget(uint32 i, uint32 TargetType, Object* obj)
 {
-    TargetsList* t = &m_targetUnits[i];
+    std::vector<uint64_t>* t = &m_targetUnits[i];
 
     if (obj == NULL || !obj->IsInWorld())
         return false;
@@ -445,7 +446,7 @@ bool Spell::AddTarget(uint32 i, uint32 TargetType, Object* obj)
     else
     {
         //check target isnt already in
-        for (TargetsList::iterator itr = m_targetUnits[i].begin(); itr != m_targetUnits[i].end(); ++itr)
+        for (std::vector<uint64_t>::iterator itr = m_targetUnits[i].begin(); itr != m_targetUnits[i].end(); ++itr)
         {
             if (obj->GetGUID() == *itr)
                 return false;
@@ -464,9 +465,10 @@ bool Spell::AddTarget(uint32 i, uint32 TargetType, Object* obj)
             //are we using a different location?
             if (TargetType & SPELL_TARGET_AREA)
             {
-                x = m_targets.m_destX;
-                y = m_targets.m_destY;
-                z = m_targets.m_destZ;
+                auto destination = m_targets.destination();
+                x = destination.x;
+                y = destination.y;
+                z = destination.z;
             }
             else if (TargetType & SPELL_TARGET_AREA_CHAIN)
             {
@@ -640,13 +642,15 @@ bool Spell::GenerateTargets(SpellCastTargets* t)
 
                 float r = RandomFloat(GetRadius(0));
                 float ang = RandomFloat(M_PI_FLOAT * 2);
-                t->m_destX = m_caster->GetPositionX() + (cosf(ang) * r);
-                t->m_destY = m_caster->GetPositionY() + (sinf(ang) * r);
-                t->m_destZ = m_caster->GetMapMgr()->GetLandHeight(t->m_destX, t->m_destY, m_caster->GetPositionZ() + 2.0f);
+                auto lv = LocationVector();
+                lv.x = m_caster->GetPositionX() + (cosf(ang) * r);
+                lv.y = m_caster->GetPositionY() + (sinf(ang) * r);
+                lv.z = m_caster->GetMapMgr()->GetLandHeight(lv.x, lv.y, m_caster->GetPositionZ() + 2.0f);
+                t->setDestination(lv);
                 t->m_targetMask = TARGET_FLAG_DEST_LOCATION;
 
                 VMAP::IVMapManager* mgr = VMAP::VMapFactory::createOrGetVMapManager();
-                isInLOS = mgr->isInLineOfSight(m_caster->GetMapId(), m_caster->GetPositionX(), m_caster->GetPositionY(), m_caster->GetPositionZ(), t->m_destX, t->m_destY, t->m_destZ);
+                isInLOS = mgr->isInLineOfSight(m_caster->GetMapId(), m_caster->GetPositionX(), m_caster->GetPositionY(), m_caster->GetPositionZ(), lv.x, lv.y, lv.z);
             }
             while (worldConfig.terrainCollision.isCollisionEnabled && !isInLOS);
             result = true;
@@ -657,12 +661,10 @@ bool Spell::GenerateTargets(SpellCastTargets* t)
             if (u_caster->GetUInt64Value(UNIT_FIELD_CHANNEL_OBJECT))
             {
                 Object* target = u_caster->GetMapMgr()->_GetObject(u_caster->GetUInt64Value(UNIT_FIELD_CHANNEL_OBJECT));
-                if (target != NULL)
+                if (target)
                 {
                     t->m_targetMask |= TARGET_FLAG_DEST_LOCATION | TARGET_FLAG_UNIT;
-                    t->m_destX = target->GetPositionX();
-                    t->m_destY = target->GetPositionY();
-                    t->m_destZ = target->GetPositionZ();
+                    t->setDestination(target->GetPosition());
                 }
                 result = true;
             }
@@ -671,17 +673,13 @@ bool Spell::GenerateTargets(SpellCastTargets* t)
                 if (u_caster->GetAIInterface()->getNextTarget() != NULL && TargetType & SPELL_TARGET_REQUIRE_ATTACKABLE)
                 {
                     t->m_targetMask |= TARGET_FLAG_DEST_LOCATION | TARGET_FLAG_UNIT;
-                    t->m_destX = u_caster->GetAIInterface()->getNextTarget()->GetPositionX();
-                    t->m_destY = u_caster->GetAIInterface()->getNextTarget()->GetPositionY();
-                    t->m_destZ = u_caster->GetAIInterface()->getNextTarget()->GetPositionZ();
+                    t->setDestination(u_caster->GetAIInterface()->getNextTarget()->GetPosition());
                     result = true;
                 }
                 else if (TargetType & SPELL_TARGET_REQUIRE_FRIENDLY)
                 {
                     t->m_targetMask |= TARGET_FLAG_DEST_LOCATION | TARGET_FLAG_UNIT;
-                    t->m_destX = u_caster->GetPositionX();
-                    t->m_destY = u_caster->GetPositionY();
-                    t->m_destZ = u_caster->GetPositionZ();
+                    t->setDestination(u_caster->GetPosition());
                     result = true;
                 }
             }
@@ -690,12 +688,8 @@ bool Spell::GenerateTargets(SpellCastTargets* t)
         {
             t->m_targetMask |= TARGET_FLAG_SOURCE_LOCATION | TARGET_FLAG_UNIT;
             t->m_unitTarget = u_caster->GetGUID();
-            t->m_srcX = u_caster->GetPositionX();
-            t->m_srcY = u_caster->GetPositionY();
-            t->m_srcZ = u_caster->GetPositionZ();
-            t->m_destX = u_caster->GetPositionX();
-            t->m_destY = u_caster->GetPositionY();
-            t->m_destZ = u_caster->GetPositionZ();
+            t->setSource(u_caster->GetPosition());
+            t->setDestination(u_caster->GetPosition());
             result = true;
         }
 
@@ -723,9 +717,7 @@ bool Spell::GenerateTargets(SpellCastTargets* t)
             if (u_caster->GetAIInterface()->getNextTarget() != NULL)
             {
                 t->m_targetMask |= TARGET_FLAG_DEST_LOCATION;
-                t->m_destX = u_caster->GetAIInterface()->getNextTarget()->GetPositionX();
-                t->m_destY = u_caster->GetAIInterface()->getNextTarget()->GetPositionY();
-                t->m_destZ = u_caster->GetAIInterface()->getNextTarget()->GetPositionZ();
+                t->setDestination(u_caster->GetAIInterface()->getNextTarget()->GetPosition());
                 result = true;
             }
         }

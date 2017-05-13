@@ -18,8 +18,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __WORLDSESSION_H
-#define __WORLDSESSION_H
+#ifndef WORLDSESSION_H
+#define WORLDSESSION_H
 
 
 #include <Threading/Mutex.h>
@@ -31,7 +31,9 @@
 #if VERSION_STRING == Cata
     #include "Management/AddonMgr.h"
     #include "Units/Players/PlayerDefines.hpp"
+    #include "Units/Players/Player.h"
 #endif
+
 #include <stddef.h>
 #include <string>
 
@@ -54,6 +56,7 @@ struct LfgPlayerBoot;
 struct LfgProposal;
 struct LfgReward;
 struct LfgRoleCheck;
+struct AddonEntry;
 
 //#define SESSION_CAP 5
 #define CHECK_INWORLD_RETURN if (_player == NULL || !_player->IsInWorld()) { return; }
@@ -1001,4 +1004,4 @@ class SERVER_DECL WorldSession
 
 };
 
-#endif // _WORLDSESSION_H
+#endif // WORLDSESSION_H
