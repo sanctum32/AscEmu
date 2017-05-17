@@ -56,6 +56,9 @@
 #include "Spell/Definitions/SpellMechanics.h"
 #include "Spell/Definitions/PowerType.h"
 #include "Spell/Definitions/Spec.h"
+#include "Spell/SpellHelpers.h"
+#include "Spell/Customization/SpellCustomizations.hpp"
+#include "Units/Creatures/Pet.h"
 
 using ascemu::World::Spell::Helpers::spellModFlatIntValue;
 using ascemu::World::Spell::Helpers::spellModPercentageIntValue;
@@ -1952,6 +1955,7 @@ void Player::ActivateSpec(uint8 spec)
     uint8 OldSpec = m_talentActiveSpec;
     m_talentActiveSpec = spec;
 
+#if VERSION_STRING != TBC
     // remove old glyphs
     for (uint8 i = 0; i < GLYPHS_COUNT; ++i)
     {
@@ -1961,6 +1965,7 @@ void Player::ActivateSpec(uint8 spec)
 
         RemoveAura(glyph_properties->SpellID);
     }
+#endif
 
     // remove old talents
     for (std::map<uint32, uint8>::iterator itr = m_specs[OldSpec].talents.begin(); itr != m_specs[OldSpec].talents.end(); ++itr)
@@ -1972,6 +1977,7 @@ void Player::ActivateSpec(uint8 spec)
         removeSpell(talent_info->RankID[itr->second], true, false, 0);
     }
 
+#if VERSION_STRING != TBC
     // add new glyphs
     for (uint8 i = 0; i < GLYPHS_COUNT; ++i)
     {
@@ -1981,6 +1987,7 @@ void Player::ActivateSpec(uint8 spec)
 
         CastSpell(this, glyph_properties->SpellID, true);
     }
+#endif
 
     //add talents from new spec
     for (std::map<uint32, uint8>::iterator itr = m_specs[m_talentActiveSpec].talents.begin(); itr != m_specs[m_talentActiveSpec].talents.end(); ++itr)
@@ -4346,12 +4353,14 @@ void Player::_ApplyItemMods(Item* item, int16 slot, bool apply, bool justdrokedo
             FlatResistanceModifierPos[6] -= proto->ArcaneRes;
         CalcResistance(6);
     }
+
+#if VERSION_STRING != TBC
     /* Heirloom scaling items */
     if (proto->ScalingStatsEntry != 0)
     {
         int i = 0;
         auto scaling_stat_distribution = sScalingStatDistributionStore.LookupEntry(proto->ScalingStatsEntry);
-        DBC::Structures::ScalingStatValuesEntry const* ssvrow = NULL;
+        DBC::Structures::ScalingStatValuesEntry const* ssvrow = nullptr;
         uint32 StatType;
         uint32 StatMod;
         uint32 plrLevel = getLevel();
@@ -4385,6 +4394,10 @@ void Player::_ApplyItemMods(Item* item, int16 slot, bool apply, bool justdrokedo
             col = GetStatScalingStatValueColumn(proto, SCALINGSTATSTAT);
             if (col == -1)
                 continue;
+
+            if (ssvrow == nullptr)
+                continue;
+
             StatMultiplier = ssvrow->multiplier[col];
             StatValue = StatMod * StatMultiplier / 10000;
             ModifyBonuses(StatType, StatValue, apply);
@@ -4397,9 +4410,12 @@ void Player::_ApplyItemMods(Item* item, int16 slot, bool apply, bool justdrokedo
             col = GetStatScalingStatValueColumn(proto, SCALINGSTATSPELLPOWER);
             if (col != -1)
             {
-                StatMultiplier = ssvrow->multiplier[col];
-                StatValue = StatMod * StatMultiplier / 10000;
-                ModifyBonuses(45, StatValue, apply);
+                if (ssvrow != nullptr)
+                {
+                    StatMultiplier = ssvrow->multiplier[col];
+                    StatValue = StatMod * StatMultiplier / 10000;
+                    ModifyBonuses(45, StatValue, apply);
+                }
             }
         }
 
@@ -4407,22 +4423,40 @@ void Player::_ApplyItemMods(Item* item, int16 slot, bool apply, bool justdrokedo
         col = GetStatScalingStatValueColumn(proto, SCALINGSTATARMOR);
         if (col != -1)
         {
-            uint32 scaledarmorval = ssvrow->multiplier[col];
-            if (apply)BaseResistance[0] += scaledarmorval;
-            else  BaseResistance[0] -= scaledarmorval;
-            CalcResistance(0);
+            if (ssvrow != nullptr)
+            {
+                uint32 scaledarmorval = ssvrow->multiplier[col];
+
+                if (apply)
+                    BaseResistance[0] += scaledarmorval;
+                else
+                    BaseResistance[0] -= scaledarmorval;
+
+                CalcResistance(0);
+            }
         }
 
         /* Calculating the damages correct for our level and applying it */
         col = GetStatScalingStatValueColumn(proto, SCALINGSTATDAMAGE);
         if (col != -1)
         {
-            uint32 scaleddps = ssvrow->multiplier[col];
+            uint32 scaleddps;
+
+            if (ssvrow != nullptr)
+            {
+                scaleddps = ssvrow->multiplier[col];
+            }
+            else
+            {
+                scaleddps = 1;
+            }
+
             float dpsmod = 1.0;
 
             if (proto->ScalingStatsFlag & 0x1400)
                 dpsmod = 0.2f;
-            else dpsmod = 0.3f;
+            else
+                dpsmod = 0.3f;
 
             float scaledmindmg = (scaleddps - (scaleddps * dpsmod)) * (proto->Delay / 1000);
             float scaledmaxdmg = (scaleddps * (dpsmod + 1.0f)) * (proto->Delay / 1000);
@@ -4450,6 +4484,7 @@ void Player::_ApplyItemMods(Item* item, int16 slot, bool apply, bool justdrokedo
         /* Normal items */
     }
     else
+#endif
     {
         // Stats
         for (uint8 i = 0; i < proto->itemstatscount; ++i)
@@ -7938,14 +7973,21 @@ void Player::SendGossipMenu(uint32 TitleTextId, uint64 npcGUID)
 bool Player::IsInCity()
 {
     auto at = GetMapMgr()->GetArea(GetPositionX(), GetPositionY(), GetPositionZ());
-    ::DBC::Structures::AreaTableEntry const* zt = NULL;
-    if (at->zone)
-        zt = MapManagement::AreaManagement::AreaStorage::GetAreaById(at->zone);
+    if (at != nullptr)
+    {
+        ::DBC::Structures::AreaTableEntry const* zt = nullptr;
+        if (at->zone)
+            zt = MapManagement::AreaManagement::AreaStorage::GetAreaById(at->zone);
 
-    bool areaIsCity = at->flags & AREA_CITY_AREA || at->flags & AREA_CITY;
-    bool zoneIsCity = zt && (zt->flags & AREA_CITY_AREA || zt->flags & AREA_CITY);
+        bool areaIsCity = at->flags & AREA_CITY_AREA || at->flags & AREA_CITY;
+        bool zoneIsCity = zt && (zt->flags & AREA_CITY_AREA || zt->flags & AREA_CITY);
 
-    return (areaIsCity || zoneIsCity);
+        return (areaIsCity || zoneIsCity);
+    }
+    else
+    {
+        return false;
+    }
 }
 
 void Player::ZoneUpdate(uint32 ZoneId)
@@ -9297,6 +9339,8 @@ void Player::CompleteLoading()
 
     sInstanceMgr.BuildSavedInstancesForPlayer(this);
     CombatStatus.UpdateFlag();
+
+#if VERSION_STRING != TBC
     // add glyphs
     for (uint8 j = 0; j < GLYPHS_COUNT; ++j)
     {
@@ -9306,6 +9350,8 @@ void Player::CompleteLoading()
 
         CastSpell(this, glyph_properties->SpellID, true);
     }
+#endif
+
     //sEventMgr.AddEvent(this,&Player::SendAllAchievementData,EVENT_SEND_ACHIEVEMNTS_TO_PLAYER,ACHIEVEMENT_SEND_DELAY,1,0);
     sEventMgr.AddEvent(static_cast< Unit* >(this), &Unit::UpdatePowerAmm, EVENT_SEND_PACKET_TO_PLAYER_AFTER_LOGIN, LOGIN_CIENT_SEND_DELAY, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
 }

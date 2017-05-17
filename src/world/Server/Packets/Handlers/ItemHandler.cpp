@@ -131,7 +131,7 @@ void WorldSession::HandleSplitOpcode(WorldPacket& recv_data)
             i1->ModStackCount(-count);
 
             i2 = objmgr.CreateItem(i1->GetEntry(), _player);
-            if (i2 == NULL)
+            if (i2 == nullptr)
                 return;
 
             i2->SetStackCount(c);
@@ -167,12 +167,15 @@ void WorldSession::HandleSplitOpcode(WorldPacket& recv_data)
             }
 
             result = _player->GetItemInterface()->SafeAddItem(i2, DstInvSlot, DstSlot);
-            if (!result)
+            if (result == ADD_ITEM_RESULT_ERROR)
             {
                 LOG_ERROR("HandleSplit: Error while adding item to dstslot");
-                i2->DeleteFromDB();
-                i2->DeleteMe();
-                i2 = NULL;
+                if (i2 != nullptr)
+                {
+                    i2->DeleteFromDB();
+                    i2->DeleteMe();
+                    i2 = nullptr;
+                };
             }
         }
         else
@@ -2083,6 +2086,7 @@ void WorldSession::HandleInsertGemOpcode(WorldPacket& recvPacket)
                         continue;
                     }
                 }
+#if VERSION_STRING != TBC
                 if (ip->ItemLimitCategory)
                 {
                     auto item_limit_category = sItemLimitCategoryStore.LookupEntry(ip->ItemLimitCategory);
@@ -2092,6 +2096,7 @@ void WorldSession::HandleInsertGemOpcode(WorldPacket& recvPacket)
                         continue;
                     }
                 }
+#endif
             }
 
             it = itemi->SafeRemoveAndRetreiveItemByGuid(gemguid[i], true);

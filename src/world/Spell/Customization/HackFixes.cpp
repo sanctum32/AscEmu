@@ -38,6 +38,8 @@
 #include "Spell/Definitions/DispelType.h"
 #include "Spell/Definitions/SpellMechanics.h"
 #include "Spell/Definitions/SpellEffectTarget.h"
+#include "Spell/SpellHelpers.h"
+#include "SpellCustomizations.hpp"
 
 using ascemu::World::Spell::Helpers::decimalToMask;
 

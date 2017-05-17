@@ -21,6 +21,8 @@
 #ifndef SPELLTARGET_H
 #define SPELLTARGET_H
 
+#include <cstdint>
+
 enum SpellImplicitTargetType
 {
     SPELL_TARGET_REQUIRE_GAMEOBJECT         = 0x00000001,
@@ -49,7 +51,7 @@ enum SpellImplicitTargetType
 
 #define MAX_IMPLICIT_TARGET_VALUE 1337
 
-extern uint32 g_spellImplicitTargetFlags[MAX_IMPLICIT_TARGET_VALUE];
+extern uint32_t g_spellImplicitTargetFlags[MAX_IMPLICIT_TARGET_VALUE];
 
 void InitImplicitTargetFlags();
 

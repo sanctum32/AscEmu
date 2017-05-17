@@ -24,6 +24,7 @@
 #include "Server/MainServerDefines.h"
 #include "SpellMgr.h"
 #include "SpellAuras.h"
+#include "Customization/SpellCustomizations.hpp"
 
 initialiseSingleton(SpellFactoryMgr);
 
@@ -77,6 +78,7 @@ void SpellFactoryMgr::AddAuraByNameHash(uint32 name_hash, aura_factory_function 
 
 SpellInfo* SpellFactoryMgr::GetSpellEntryByDifficulty(uint32 id, uint8 difficulty)
 {
+#if VERSION_STRING != TBC
     auto spell_difficulty = sSpellDifficultyStore.LookupEntry(id);
     if (spell_difficulty == nullptr)
         return NULL;
@@ -85,6 +87,9 @@ SpellInfo* SpellFactoryMgr::GetSpellEntryByDifficulty(uint32 id, uint8 difficult
         return NULL;
 
     return sSpellCustomizations.GetSpellInfo(spell_difficulty->SpellId[difficulty]);
+#else
+    return nullptr;
+#endif
 }
 
 Spell* SpellFactoryMgr::NewSpell(Object* Caster, SpellInfo* info, bool triggered, Aura* aur)
@@ -371,6 +376,7 @@ bool SpellArea::IsFitToRequirements(Player* player, uint32 newZone, uint32 newAr
 
 bool SpellInfo::CheckLocation(uint32 map_id, uint32 zone_id, uint32 area_id, Player* player)
 {
+#if VERSION_STRING != TBC
     // normal case
     if (RequiresAreaId > 0)
     {
@@ -391,6 +397,7 @@ bool SpellInfo::CheckLocation(uint32 map_id, uint32 zone_id, uint32 area_id, Pla
         if (!found)
             return false;
     }
+#endif
 
     // DB base check (if non empty then must fit at least single for allow)
     SpellAreaMapBounds saBounds = sSpellFactoryMgr.GetSpellAreaMapBounds(Id);

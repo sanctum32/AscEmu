@@ -28,6 +28,7 @@
 #include "Server/MainServerDefines.h"
 #include "Map/MapMgr.h"
 #include "Spell/SpellAuras.h"
+#include "Spell/Customization/SpellCustomizations.hpp"
 
 uint32 QuestMgr::CalcQuestStatus(Object* quest_giver, Player* plr, QuestRelation* qst)
 {
@@ -1624,12 +1625,15 @@ uint32 QuestMgr::GenerateQuestXP(Player* plr, QuestProperties const* qst)
             }
         }
 
+#if VERSION_STRING != TBC
         if (const auto pXPData = sQuestXPStore.LookupEntry(baseLevel))
         {
             uint32 rawXP = xpMultiplier * pXPData->xpIndex[qst->RewXPId] / 10;
 
             realXP = static_cast<uint32>(std::round(rawXP));
         }
+#endif
+
         return realXP;
     }
 }

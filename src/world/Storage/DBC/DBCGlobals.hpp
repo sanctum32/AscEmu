@@ -9,6 +9,7 @@ This file is released under the MIT license. See README-MIT for more information
 #include "DBCLoader.hpp"
 #include "DBCStructures.hpp"
 #include "Log.hpp"
+#include <iostream>
 
 namespace DBC
 {
@@ -120,10 +121,15 @@ namespace DBC
                     << "). Extracted file might be from wrong client version or a database-update has been forgotten.";
                 std::string buf = stream.str();
                 errors.push_back(buf);
+
+                std::cout << stream.str() << std::endl;
+
                 fclose(file);
             }
             else
             {
+                std::cout << dbc_file_path << " does not exist" << std::endl;
+
                 errors.push_back(dbc_file_path);
             }
         }

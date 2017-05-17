@@ -28,8 +28,10 @@
 #include "Server/World.Legacy.h"
 #include "Definitions/SpellCastTargetFlags.h"
 #include "Definitions/SpellDidHitResult.h"
+#include "SpellHelpers.h"
+#include "Units/Creatures/Pet.h"
 
-uint32 g_spellImplicitTargetFlags[MAX_IMPLICIT_TARGET_VALUE];
+uint32_t g_spellImplicitTargetFlags[MAX_IMPLICIT_TARGET_VALUE];
 
 void InitImplicitTargetFlags()
 {

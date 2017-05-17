@@ -24,17 +24,11 @@
 #include "SpellCastTargets.h"
 #include "Definitions/SpellTargetMod.h"
 #include "Spell/SpellInfo.hpp"
-#include "Spell/Customization/SpellCustomizations.hpp"
-#include "SpellTarget.h"
 #include "SpellFailure.h"
-#include "Units/Creatures/AIInterface.h"
 #include "Units/Creatures/Creature.h"
 #include "Units/Players/Player.h"
 #include "Units/Unit.h"
-#include "Units/Creatures/Pet.h"
-#include "SpellEffects.h"
 #include "SpellTargetConstraint.h"
-#include "Spell/SpellHelpers.h"
 
 class WorldSession;
 class Unit;
@@ -59,7 +53,7 @@ class SERVER_DECL Spell : public EventableObject
         Spell(Object* Caster, SpellInfo* info, bool triggered, Aura* aur);
         ~Spell();
 
-        int32 event_GetInstanceID() { return m_caster->GetInstanceID(); }
+    int32 event_GetInstanceID() override;
 
         bool m_overrideBasePoints;
         uint32 m_overridenBasePoints[3];
@@ -117,22 +111,16 @@ class SERVER_DECL Spell : public EventableObject
         // Checks the caster is ready for cast
         virtual uint8 CanCast(bool);
 
-        bool HasCustomFlag(uint32 flag)
-        {
-            if ((GetSpellInfo()->CustomFlags & flag) != 0)
-                return true;
-            else
-                return false;
-        }
+    bool HasCustomFlag(uint32 flag);
 
-        inline bool hasAttribute(SpellAttributes attribute) { return (GetSpellInfo()->Attributes & attribute) != 0; }
-        inline bool hasAttributeEx(SpellAttributesEx attribute) { return (GetSpellInfo()->AttributesEx & attribute) != 0; }
-        inline bool hasAttributeExB(SpellAttributesExB attribute) { return (GetSpellInfo()->AttributesExB & attribute) != 0; }
-        inline bool hasAttributeExC(SpellAttributesExC attribute) { return (GetSpellInfo()->AttributesExC & attribute) != 0; }
-        inline bool hasAttributeExD(SpellAttributesExD attribute) { return (GetSpellInfo()->AttributesExD & attribute) != 0; }
-        inline bool hasAttributeExE(SpellAttributesExE attribute) { return (GetSpellInfo()->AttributesExE & attribute) != 0; }
-        inline bool hasAttributeExF(SpellAttributesExF attribute) { return (GetSpellInfo()->AttributesExF & attribute) != 0; }
-        inline bool hasAttributeExG(SpellAttributesExG attribute) { return (GetSpellInfo()->AttributesExG & attribute) != 0; }
+    bool hasAttribute(SpellAttributes attribute);
+    bool hasAttributeEx(SpellAttributesEx attribute);
+    bool hasAttributeExB(SpellAttributesExB attribute);
+    bool hasAttributeExC(SpellAttributesExC attribute);
+    bool hasAttributeExD(SpellAttributesExD attribute);
+    bool hasAttributeExE(SpellAttributesExE attribute);
+    bool hasAttributeExF(SpellAttributesExF attribute);
+    bool hasAttributeExG(SpellAttributesExG attribute);
 
         // Removes reagents, ammo, and items/charges
         void RemoveItems();
@@ -152,19 +140,18 @@ class SERVER_DECL Spell : public EventableObject
 
         bool Reflect(Unit* refunit);
 
-        inline uint32 getState() { return m_spellState; }
-        inline void SetUnitTarget(Unit* punit) { unitTarget = punit; }
-        inline void SetTargetConstraintCreature(Creature* pCreature) { targetConstraintCreature = pCreature; }
-        inline void SetTargetConstraintGameObject(GameObject* pGameobject) { targetConstraintGameObject = pGameobject; }
-        inline Creature* GetTargetConstraintCreature() { return targetConstraintCreature; }
-        inline GameObject* GetTargetConstraintGameObject() { return targetConstraintGameObject; }
+    uint32 getState() const;
+    void SetUnitTarget(Unit* punit);
+    void SetTargetConstraintCreature(Creature* pCreature);
+    void SetTargetConstraintGameObject(GameObject* pGameobject);
+    Creature* GetTargetConstraintCreature() const;
+    GameObject* GetTargetConstraintGameObject() const;
 
         // Send Packet functions
         void SetExtraCastResult(SpellExtraError result);
         void SendCastResult(Player* caster, uint8 castCount, uint8 result, SpellExtraError extraError);
         void WriteCastResult(WorldPacket& data, Player* caster, uint32 spellInfo, uint8 castCount, uint8 result, SpellExtraError extraError);
         void SendCastResult(uint8 result);
-        void SetCustomCastResultMessage(SpellExtraError result);
         void SendSpellStart();
         void SendSpellGo();
         void SendLogExecute(uint32 damage, uint64 & targetGuid);
@@ -180,10 +167,8 @@ class SERVER_DECL Spell : public EventableObject
         void HandleAddAura(uint64 guid);
         void writeSpellGoTargets(WorldPacket* data);
         void writeSpellMissedTargets(WorldPacket* data);
-        // Zyres: Not called.
-        //void writeAmmoToPacket(WorldPacket* data);
         uint32 pSpellId;
-        SpellInfo* ProcedOnSpell; //some spells need to know the origins of the proc too
+        SpellInfo* ProcedOnSpell;
         SpellCastTargets m_targets;
         SpellExtraError m_extraError;
 
@@ -325,50 +310,6 @@ class SERVER_DECL Spell : public EventableObject
         void SpellEffectJumpTarget(uint32 i);
         void SpellEffectJumpBehindTarget(uint32 i);
 
-        // Spell Targets Handlers
-        void SpellTargetNULL(uint32 i, uint32 j);
-        void SpellTargetDefault(uint32 i, uint32 j);
-        void SpellTargetSelf(uint32 i, uint32 j);
-        void SpellTargetInvisibleAOE(uint32 i, uint32 j);
-        void SpellTargetFriendly(uint32 i, uint32 j);
-        void SpellTargetPet(uint32 i, uint32 j);
-        void SpellTargetSingleTargetEnemy(uint32 i, uint32 j);
-        void SpellTargetCustomAreaOfEffect(uint32 i, uint32 j);
-        void SpellTargetAreaOfEffect(uint32 i, uint32 j);
-        void SpellTargetLandUnderCaster(uint32 i, uint32 j);            /// I don't think this is the correct name for this one
-        void SpellTargetAllPartyMembersRangeNR(uint32 i, uint32 j);
-        void SpellTargetSingleTargetFriend(uint32 i, uint32 j);
-        void SpellTargetAoE(uint32 i, uint32 j);                        // something special
-        void SpellTargetSingleGameobjectTarget(uint32 i, uint32 j);
-        void SpellTargetInFrontOfCaster(uint32 i, uint32 j);
-        void SpellTargetSingleFriend(uint32 i, uint32 j);
-        void SpellTargetGameobject_itemTarget(uint32 i, uint32 j);
-        void SpellTargetPetOwner(uint32 i, uint32 j);
-        void SpellTargetEnemysAreaOfEffect(uint32 i, uint32 j);
-        void SpellTargetTypeTAOE(uint32 i, uint32 j);
-        void SpellTargetAllyBasedAreaEffect(uint32 i, uint32 j);
-        void SpellTargetScriptedEffects(uint32 i, uint32 j);
-        void SpellTargetSummon(uint32 i, uint32 j);
-        void SpellTargetNearbyPartyMembers(uint32 i, uint32 j);
-        void SpellTargetSingleTargetPartyMember(uint32 i, uint32 j);
-        void SpellTargetScriptedEffects2(uint32 i, uint32 j);
-        void SpellTargetPartyMember(uint32 i, uint32 j);
-        void SpellTargetDummyTarget(uint32 i, uint32 j);
-        void SpellTargetFishing(uint32 i, uint32 j);
-        void SpellTargetType40(uint32 i, uint32 j);
-        void SpellTargetTotem(uint32 i, uint32 j);
-        void SpellTargetChainTargeting(uint32 i, uint32 j);
-        void SpellTargetSimpleTargetAdd(uint32 i, uint32 j);
-        void SpellTargetAllRaid(uint32 i, uint32 j);
-        void SpellTargetTargetAreaSelectedUnit(uint32 i, uint32 j);
-        void SpellTargetInFrontOfCaster2(uint32 i, uint32 j);
-        void SpellTargetTargetPartyMember(uint32 i, uint32 j);
-        void SpellTargetSameGroupSameClass(uint32 i, uint32 j);
-        //these are custom
-        void SpellTargetSinglePartyInjured(uint32 i, uint32 j);
-        void SpellTargetMultiplePartyInjured(uint32 i, uint32 j);
-        void SpellTargetNonCombatPet(uint32 i, uint32 j);
-
         void Heal(int32 amount, bool ForceCrit = false);
 
         GameObject*     g_caster;
@@ -387,11 +328,11 @@ class SERVER_DECL Spell : public EventableObject
         std::vector<uint64_t> UniqueTargets;
         std::vector<SpellTargetMod> ModeratedTargets;
 
-        inline Item* GetItemTarget() { return itemTarget; }
-        inline Unit* GetUnitTarget() { return unitTarget; }
-        inline Player* GetPlayerTarget() { return playerTarget; }
-        inline GameObject* GetGameObjectTarget() { return gameObjTarget; }
-        Corpse* GetCorpseTarget() { return corpseTarget; }
+    Item* GetItemTarget() const;
+    Unit* GetUnitTarget() const;
+    Player* GetPlayerTarget() const;
+    GameObject* GetGameObjectTarget() const;
+    Corpse* GetCorpseTarget() const;
 
         uint32 chaindamage;
         // -------------------------------------------
@@ -399,134 +340,17 @@ class SERVER_DECL Spell : public EventableObject
         bool IsAspect();
         bool IsSeal();
 
-        inline SpellInfo* GetSpellInfo() { return (m_spellInfo_override == NULL) ? m_spellInfo : m_spellInfo_override; }
-        void InitProtoOverride()
-        {
-            if (m_spellInfo_override != NULL)
-                return;
-            m_spellInfo_override = sSpellCustomizations.GetSpellInfo(m_spellInfo->Id);
-        }
-        uint32 GetDuration()
-        {
-            if (bDurSet)return Dur;
-            bDurSet = true;
-            int32 c_dur = 0;
+    SpellInfo* GetSpellInfo();
 
-            if (GetSpellInfo()->DurationIndex)
-            {
-                auto spell_duration = sSpellDurationStore.LookupEntry(GetSpellInfo()->DurationIndex);
-                if (spell_duration)
-                {
-                    //check for negative and 0 durations.
-                    //duration affected by level
-                    if ((int32)spell_duration->Duration1 < 0 && spell_duration->Duration2 && u_caster)
-                    {
-                        this->Dur = uint32(((int32)spell_duration->Duration1 + (spell_duration->Duration2 * u_caster->getLevel())));
-                        if ((int32)this->Dur > 0 && spell_duration->Duration3 > 0 && (int32)this->Dur > (int32)spell_duration->Duration3)
-                        {
-                            this->Dur = spell_duration->Duration3;
-                        }
+    void InitProtoOverride();
 
-                        if ((int32)this->Dur < 0)
-                            this->Dur = 0;
-                        c_dur = this->Dur;
-                    }
-                    if (!c_dur)
-                    {
-                        this->Dur = spell_duration->Duration1;
-                    }
-                    //combo point lolerCopter? ;P
-                    if (p_caster)
-                    {
-                        uint32 cp = p_caster->m_comboPoints;
-                        if (cp)
-                        {
-                            uint32 bonus = (cp * (spell_duration->Duration3 - spell_duration->Duration1)) / 5;
-                            if (bonus)
-                            {
-                                this->Dur += bonus;
-                                m_requiresCP = true;
-                            }
-                        }
-                    }
+    uint32 GetDuration();
 
-                    if (u_caster != nullptr)
-                    {
-                        ascemu::World::Spell::Helpers::spellModFlatIntValue(u_caster->SM_FDur, (int32*)&this->Dur, GetSpellInfo()->SpellGroupType);
-                        ascemu::World::Spell::Helpers::spellModPercentageIntValue(u_caster->SM_PDur, (int32*)&this->Dur, GetSpellInfo()->SpellGroupType);
-    #ifdef COLLECTION_OF_UNTESTED_STUFF_AND_TESTERS
-                        int spell_flat_modifers = 0;
-                        int spell_pct_modifers = 0;
-                        spellModFlatIntValue(u_caster->SM_FDur, &spell_flat_modifers, GetProto()->SpellGroupType);
-                        spellModFlatIntValue(u_caster->SM_PDur, &spell_pct_modifers, GetProto()->SpellGroupType);
-                        if (spell_flat_modifers != 0 || spell_pct_modifers != 0)
-                            LOG_DEBUG("!!!!!spell duration mod flat %d , spell duration mod pct %d , spell duration %d, spell group %u", spell_flat_modifers, spell_pct_modifers, Dur, GetProto()->SpellGroupType);
-    #endif
-                    }
-                }
-                else
-                {
-                    this->Dur = (uint32)-1;
-                }
-            }
-            else
-            {
-                this->Dur = (uint32)-1;
-            }
+    float GetRadius(uint32 i);
 
-            return this->Dur;
-        }
+    static uint32 GetBaseThreat(uint32 dmg);
 
-        inline float GetRadius(uint32 i)
-        {
-            if (bRadSet[i])
-                return Rad[i];
-            bRadSet[i] = true;
-            Rad[i] = ::GetRadius(sSpellRadiusStore.LookupEntry(GetSpellInfo()->EffectRadiusIndex[i]));
-            if (u_caster != nullptr)
-            {
-                ascemu::World::Spell::Helpers::spellModFlatFloatValue(u_caster->SM_FRadius, &Rad[i], GetSpellInfo()->SpellGroupType);
-                ascemu::World::Spell::Helpers::spellModPercentageFloatValue(u_caster->SM_PRadius, &Rad[i], GetSpellInfo()->SpellGroupType);
-    #ifdef COLLECTION_OF_UNTESTED_STUFF_AND_TESTERS
-                float spell_flat_modifers = 0;
-                float spell_pct_modifers = 1;
-                spellModFlatFloatValue(u_caster->SM_FRadius, &spell_flat_modifers, GetProto()->SpellGroupType);
-                spellModPercentageFloatValue(u_caster->SM_PRadius, &spell_pct_modifers, GetProto()->SpellGroupType);
-                if (spell_flat_modifers != 0 || spell_pct_modifers != 1)
-                    LOG_DEBUG("!!!!!spell radius mod flat %f , spell radius mod pct %f , spell radius %f, spell group %u", spell_flat_modifers, spell_pct_modifers, Rad[i], GetProto()->SpellGroupType);
-    #endif
-            }
-
-            return Rad[i];
-        }
-
-        inline static uint32 GetBaseThreat(uint32 dmg)
-        {
-            //there should be a formula to determine what spell cause threat and which don't
-            /*        switch(GetProto()->custom_NameHash)
-                    {
-                    //hunter's mark
-                    case 4287212498:
-                    {
-                    return 0;
-                    }break;
-                    }*/
-            return dmg;
-        }
-
-        inline static uint32 GetMechanic(SpellInfo* sp)
-        {
-            if (sp->MechanicsType)
-                return sp->MechanicsType;
-            if (sp->EffectMechanic[2])
-                return sp->EffectMechanic[2];
-            if (sp->EffectMechanic[1])
-                return sp->EffectMechanic[1];
-            if (sp->EffectMechanic[0])
-                return sp->EffectMechanic[0];
-
-            return 0;
-        }
+    static uint32 GetMechanic(SpellInfo* sp);
 
         bool IsStealthSpell();
         bool IsInvisibilitySpell();
@@ -562,32 +386,21 @@ class SERVER_DECL Spell : public EventableObject
         /// \return true if Spell is now invalid because the duel is over false if Spell is valid.
         ///
         ///////////////////////////////////////////////////////////////////////////////
-        bool DuelSpellNoMoreValid()
-        {
-            if (duelSpell && (
-                (p_caster != NULL && p_caster->GetDuelState() != DUEL_STATE_STARTED) ||
-                (u_caster != NULL && u_caster->IsPet() && static_cast< Pet* >(u_caster)->GetPetOwner() && static_cast< Pet* >(u_caster)->GetPetOwner()->GetDuelState() != DUEL_STATE_STARTED)))
-                return true;
-            else
-                return false;
-        }
+    bool DuelSpellNoMoreValid() const;
 
-        inline void safe_cancel()
-        {
-            m_cancelled = true;
-        }
+    void safe_cancel();
 
         /// Spell state's
         /// Spell failed
-        inline bool GetSpellFailed() { return m_Spell_Failed; }
-        inline void SetSpellFailed(bool failed = true) { m_Spell_Failed = failed; }
+    bool GetSpellFailed() const;
+    void SetSpellFailed(bool failed = true);
 
-        inline bool IsReflected() { return m_IsReflected; }
-        inline void SetReflected(bool reflected = true) { m_IsReflected = reflected; }
+    bool IsReflected() const;
+    void SetReflected(bool reflected = true);
 
         /// Spell possibility's
-        inline bool GetCanReflect() { return m_CanRelect; }
-        inline void SetCanReflect(bool reflect = true) { m_CanRelect = reflect; }
+    bool GetCanReflect() const;
+    void SetCanReflect(bool reflect = true);
 
 
         Spell* m_reflectedParent;
@@ -638,7 +451,7 @@ class SERVER_DECL Spell : public EventableObject
         SpellTargetConstraint* m_target_constraint;
 
         virtual int32 DoCalculateEffect(uint32 i, Unit* target, int32 value);
-        virtual void DoAfterHandleEffect(Unit* target, uint32 i) {}
+    virtual void DoAfterHandleEffect(Unit* target, uint32 i);
 
     public:     //Modified by LUAppArc private->public
 
