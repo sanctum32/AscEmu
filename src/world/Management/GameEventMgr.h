@@ -212,8 +212,8 @@ class GameEventMgr : public Singleton < GameEventMgr >
                 bool m_IsActive = false;
                 bool Pause(int timeout = 1500);
                 void Resume();
-                bool run();
-                void OnShutdown();
+                bool runThread();
+                void onShutdown();
                 void Update();
                 void CleanupEntities();
                 void SpawnActiveEvents();

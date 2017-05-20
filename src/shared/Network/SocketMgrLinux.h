@@ -95,8 +95,8 @@ class SocketWorkerThread : public ThreadBase
         struct epoll_event events[THREAD_EVENT_SIZE];
         bool running;
     public:
-        bool run();
-        void OnShutdown()
+        bool runThread();
+        void onShutdown()
         {
             running = false;
         }

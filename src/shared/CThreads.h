@@ -22,7 +22,7 @@
 #ifndef _C_THREADS_H
 #define _C_THREADS_H
 
-#include "Threading/ThreadStarter.h"
+#include "Threading/ThreadBase.h"
 #include "Threading/AtomicCounter.h"
 
 class MapMgr;
@@ -64,7 +64,7 @@ class SERVER_DECL CThread : public ThreadBase
         int GetThreadId() { return ThreadId; }
         time_t GetStartTime() { return start_time; }
         virtual bool run();
-        virtual void OnShutdown();
+        virtual void onShutdown();
 
     protected:
 

@@ -110,13 +110,13 @@ class LogonCommWatcherThread : public ThreadBase
     ~LogonCommWatcherThread()
     {}
 
-    void OnShutdown()
+    void onShutdown()
     {
         running = false;
         cond.Signal();
     }
 
-    bool run()
+    bool runThread()
     {
         sLogonCommHandler.ConnectAll();
         while (running)
