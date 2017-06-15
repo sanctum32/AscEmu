@@ -262,8 +262,6 @@ ObjectMgr::~ObjectMgr()
 
     worldstate_templates.clear();
 
-    LogNotice("ObjectMgr : Clearing up areatrigger data");
-    _areaTriggerStore.clear();
 
     LogNotice("ObjectMgr : Clearing up event scripts...");
     mEventScriptMaps.clear();
@@ -713,7 +711,7 @@ void ObjectMgr::LoadInstanceBossInfos()
         InstanceBossInfo* bossInfo = new InstanceBossInfo();
         bossInfo->mapid = (uint32)result->Fetch()[0].GetUInt32();
 
-        MapInfo const* mapInfo = sMySQLStore.GetWorldMapInfo(bossInfo->mapid);
+        MapInfo const* mapInfo = sMySQLStore.getWorldMapInfo(bossInfo->mapid);
         if (mapInfo == NULL || mapInfo->type == INSTANCE_NULL)
         {
             LogDebugFlag(LF_DB_TABLES, "Not loading boss information for map %u! (continent or unknown map)", bossInfo->mapid);
@@ -880,7 +878,7 @@ void ObjectMgr::LoadAchievementRewards()
         //check mail data before item for report including wrong item case
         if (reward.sender)
         {
-            if (!sMySQLStore.GetCreatureProperties(reward.sender))
+            if (!sMySQLStore.getCreatureProperties(reward.sender))
             {
                 LogDebugFlag(LF_DB_TABLES, "ObjectMgr : achievement_reward %u has invalid creature entry %u as sender, mail reward skipped.", entry, reward.sender);
                 reward.sender = 0;
@@ -1450,7 +1448,7 @@ void ObjectMgr::LoadSpellEffectsOverride()
 
 Item* ObjectMgr::CreateItem(uint32 entry, Player* owner)
 {
-    ItemProperties const* proto = sMySQLStore.GetItemProperties(entry);
+    ItemProperties const* proto = sMySQLStore.getItemProperties(entry);
     if (proto ==nullptr)
         return nullptr;
 
@@ -1487,7 +1485,7 @@ Item* ObjectMgr::LoadItem(uint32 lowguid)
 
     if (result)
     {
-        ItemProperties const* pProto = sMySQLStore.GetItemProperties(result->Fetch()[2].GetUInt32());
+        ItemProperties const* pProto = sMySQLStore.getItemProperties(result->Fetch()[2].GetUInt32());
         if (!pProto)
             return nullptr;
 
@@ -2048,7 +2046,7 @@ void ObjectMgr::GenerateLevelUpInfo()
         // Search for a playercreateinfo.
         for (uint8 Race = RACE_HUMAN; Race <= NUM_RACES - 1; ++Race)
         {
-            PlayerCreateInfo const* PCI = sMySQLStore.GetPlayerCreateInfo(static_cast<uint8>(Race), static_cast<uint8>(Class));
+            PlayerCreateInfo const* PCI = sMySQLStore.getPlayerCreateInfo(static_cast<uint8>(Race), static_cast<uint8>(Class));
 
             if (PCI == nullptr)
                 continue;   // Class not valid for this race.
@@ -3606,81 +3604,6 @@ std::multimap< uint32, WorldState >* ObjectMgr::GetWorldStatesForMap(uint32 map)
         return itr->second;
 }
 
-AreaTrigger const* ObjectMgr::GetMapEntranceTrigger(uint32 Map) const
-{
-    for (AreaTriggerContainer::const_iterator itr = _areaTriggerStore.begin(); itr != _areaTriggerStore.end(); ++itr)
-    {
-        if (itr->second.Mapid == Map)
-        {
-            auto const* area_trigger_entry = sAreaTriggerStore.LookupEntry(itr->first);
-            if (area_trigger_entry)
-                return &itr->second;
-        }
-    }
-    return nullptr;
-}
-
-void ObjectMgr::LoadAreaTrigger()
-{
-    // need for reload case
-    _areaTriggerStore.clear();
-
-    //                                                  0      1    2     3       4       5           6          7             8               9                  10
-    QueryResult* result = WorldDatabase.Query("SELECT entry, type, map, screen, name, position_x, position_y, position_z, orientation, required_honor_rank, required_level FROM areatriggers");
-    if (!result)
-    {
-        LogDebugFlag(LF_DB_TABLES, "AreaTrigger : Loaded 0 area trigger teleport definitions. DB table `areatriggers` is empty.");
-        return;
-    }
-
-    uint32_t count = 0;
-    do
-    {
-        Field* fields = result->Fetch();
-
-        AreaTrigger at;
-        at.AreaTriggerID = fields[0].GetUInt32();
-        at.Type = fields[1].GetUInt8();
-        at.Mapid = fields[2].GetUInt16();
-        at.PendingScreen = fields[3].GetUInt32();
-        at.Name = fields[4].GetString();
-        at.x = fields[5].GetFloat();
-        at.y = fields[6].GetFloat();
-        at.z = fields[7].GetFloat();
-        at.o = fields[8].GetFloat();
-        at.required_honor_rank = fields[9].GetUInt32();
-        at.required_level = fields[10].GetUInt32();
-
-        DBC::Structures::AreaTriggerEntry const* area_trigger_entry = sAreaTriggerStore.LookupEntry(at.AreaTriggerID);
-        if (!area_trigger_entry)
-        {
-            LogDebugFlag(LF_DB_TABLES, "AreaTrigger : Area trigger (ID:%u) does not exist in `AreaTrigger.dbc`.", at.AreaTriggerID);
-            continue;
-        }
-
-        DBC::Structures::MapEntry const* map_entry = sMapStore.LookupEntry(at.Mapid);
-        if (!map_entry)
-        {
-            LogDebugFlag(LF_DB_TABLES, "AreaTrigger : Area trigger (ID:%u) target map (ID: %u) does not exist in `Map.dbc`.", at.AreaTriggerID, at.Mapid);
-            continue;
-        }
-
-        if (at.x == 0 && at.y == 0 && at.z == 0 && (at.Type == 1 || at.Type == 4))    // check target coordinates only for teleport triggers
-        {
-            LogDebugFlag(LF_DB_TABLES, "AreaTrigger : Area trigger (ID:%u) target coordinates not provided.", at.AreaTriggerID);
-            continue;
-        }
-
-        _areaTriggerStore[at.AreaTriggerID] = at;
-        ++count;
-
-    } while (result->NextRow());
-
-    delete result;
-
-    LogDetail("AreaTrigger : Loaded %u area trigger teleport definitions", count);
-}
-
 void ObjectMgr::LoadEventScripts()
 {
     LogNotice("ObjectMgr : Loading Event Scripts...");
@@ -3901,7 +3824,7 @@ void ObjectMgr::LoadCreatureAIAgents()
             {
                 Field* fields = result->Fetch();
                 uint32 entry = fields[0].GetUInt32();
-                CreatureProperties const* cn = sMySQLStore.GetCreatureProperties(entry);
+                CreatureProperties const* cn = sMySQLStore.getCreatureProperties(entry);
                 SpellInfo* spe = sSpellCustomizations.GetSpellInfo(fields[6].GetUInt32());
 
                 if (spe == nullptr)

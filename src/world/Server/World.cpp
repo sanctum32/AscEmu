@@ -114,7 +114,6 @@ World::~World()
 
     LogNotice("WordFilter : ~WordFilter()");
     delete g_chatFilter;
-    delete g_characterNameFilter;
 
     LogNotice("Rnd : ~Rnd()");
     CleanupRandomNumberGenerators();
@@ -823,48 +822,52 @@ void World::loadMySQLStores()
 {
     new MySQLDataStore;
 
-    sMySQLStore.LoadAdditionalTableConfig();
+    sMySQLStore.loadAdditionalTableConfig();
 
-    sMySQLStore.LoadItemPagesTable();
-    sMySQLStore.LoadItemPropertiesTable();
-    sMySQLStore.LoadCreaturePropertiesTable();
-    sMySQLStore.LoadGameObjectPropertiesTable();
-    sMySQLStore.LoadQuestPropertiesTable();
-    sMySQLStore.LoadGameObjectQuestItemBindingTable();
-    sMySQLStore.LoadGameObjectQuestPickupBindingTable();
+    sMySQLStore.loadItemPagesTable();
+    sMySQLStore.loadItemPropertiesTable();
+    sMySQLStore.loadCreaturePropertiesTable();
+    sMySQLStore.loadGameObjectPropertiesTable();
+    sMySQLStore.loadQuestPropertiesTable();
+    sMySQLStore.loadGameObjectQuestItemBindingTable();
+    sMySQLStore.loadGameObjectQuestPickupBindingTable();
 
-    sMySQLStore.LoadCreatureDifficultyTable();
-    sMySQLStore.LoadDisplayBoundingBoxesTable();
-    sMySQLStore.LoadVendorRestrictionsTable();
-    sMySQLStore.LoadAreaTriggersTable();
-    sMySQLStore.LoadNpcTextTable();
-    sMySQLStore.LoadNpcScriptTextTable();
-    sMySQLStore.LoadGossipMenuOptionTable();
-    sMySQLStore.LoadGraveyardsTable();
-    sMySQLStore.LoadTeleportCoordsTable();
-    sMySQLStore.LoadFishingTable();
-    sMySQLStore.LoadWorldMapInfoTable();
-    sMySQLStore.LoadZoneGuardsTable();
-    sMySQLStore.LoadBattleMastersTable();
-    sMySQLStore.LoadTotemDisplayIdsTable();
-    sMySQLStore.LoadSpellClickSpellsTable();
+    sMySQLStore.loadCreatureDifficultyTable();
+    sMySQLStore.loadDisplayBoundingBoxesTable();
+    sMySQLStore.loadVendorRestrictionsTable();
 
-    sMySQLStore.LoadWorldStringsTable();
-    sMySQLStore.LoadPointOfInterestTable();
-    sMySQLStore.LoadItemSetLinkedSetBonusTable();
-    sMySQLStore.LoadCreatureInitialEquipmentTable();
+    sMySQLStore.loadNpcTextTable();
+    sMySQLStore.loadNpcScriptTextTable();
+    sMySQLStore.loadGossipMenuOptionTable();
+    sMySQLStore.loadGraveyardsTable();
+    sMySQLStore.loadTeleportCoordsTable();
+    sMySQLStore.loadFishingTable();
+    sMySQLStore.loadWorldMapInfoTable();
+    sMySQLStore.loadZoneGuardsTable();
+    sMySQLStore.loadBattleMastersTable();
+    sMySQLStore.loadTotemDisplayIdsTable();
+    sMySQLStore.loadSpellClickSpellsTable();
 
-    sMySQLStore.LoadPlayerCreateInfoTable();
-    sMySQLStore.LoadPlayerCreateInfoSkillsTable();
-    sMySQLStore.LoadPlayerCreateInfoSpellsTable();
-    sMySQLStore.LoadPlayerCreateInfoItemsTable();
-    sMySQLStore.LoadPlayerXpToLevelTable();
+    sMySQLStore.loadWorldStringsTable();
+    sMySQLStore.loadPointOfInterestTable();
+    sMySQLStore.loadItemSetLinkedSetBonusTable();
+    sMySQLStore.loadCreatureInitialEquipmentTable();
 
-    sMySQLStore.LoadSpellOverrideTable();
+    sMySQLStore.loadPlayerCreateInfoTable();
+    sMySQLStore.loadPlayerCreateInfoSkillsTable();
+    sMySQLStore.loadPlayerCreateInfoSpellsTable();
+    sMySQLStore.loadPlayerCreateInfoItemsTable();
+    sMySQLStore.loadPlayerXpToLevelTable();
 
-    sMySQLStore.LoadNpcGossipTextIdTable();
-    sMySQLStore.LoadPetLevelAbilitiesTable();
+    sMySQLStore.loadSpellOverrideTable();
+
+    sMySQLStore.loadNpcGossipTextIdTable();
+    sMySQLStore.loadPetLevelAbilitiesTable();
     sMySQLStore.loadBroadcastTable();
+
+    sMySQLStore.loadAreaTriggerTable();
+    sMySQLStore.loadWordFilterCharacterNames();
+    sMySQLStore.loadWordFilterChat();
 }
 
 void World::loadMySQLTablesByTask(uint32_t start_time)
@@ -917,7 +920,6 @@ void World::loadMySQLTablesByTask(uint32_t start_time)
     MAKE_TASK(ObjectMgr, LoadProfessionDiscoveries);
     MAKE_TASK(ObjectMgr, LoadVehicleAccessories);
     MAKE_TASK(ObjectMgr, LoadWorldStateTemplates);
-    MAKE_TASK(ObjectMgr, LoadAreaTrigger);
 
 #if VERSION_STRING > TBC
     MAKE_TASK(ObjectMgr, LoadAchievementRewards);
@@ -942,10 +944,7 @@ void World::loadMySQLTablesByTask(uint32_t start_time)
     CommandTableStorage::getSingleton().Load();
     LogNotice("WordFilter : Loading...");
 
-    g_characterNameFilter = new WordFilter();
     g_chatFilter = new WordFilter();
-    g_characterNameFilter->Load("wordfilter_character_names");
-    g_chatFilter->Load("wordfilter_chat");
 
     LogDetail("WordFilter : Done. Database loaded in %ums.", getMSTime() - start_time);
 

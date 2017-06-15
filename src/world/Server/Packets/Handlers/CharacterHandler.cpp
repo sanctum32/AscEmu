@@ -211,7 +211,7 @@ void WorldSession::HandleCharCreateOpcode(WorldPacket& recv_data)
         return;
     }
 
-    res = g_characterNameFilter->Parse(name, false) ? E_CHAR_NAME_PROFANE : E_CHAR_NAME_SUCCESS;
+    res = sMySQLStore.isCharacterNameAllowed(name) ? E_CHAR_NAME_PROFANE : E_CHAR_NAME_SUCCESS;
     if (res != E_CHAR_NAME_SUCCESS)
     {
         OutPacket(SMSG_CHAR_CREATE, 1, &res);
@@ -970,7 +970,7 @@ void WorldSession::HandleCharFactionOrRaceChange(WorldPacket& recv_data)
         newflags = lflag - used_loginFlag;
     }
     delete query;
-    if (!sMySQLStore.GetPlayerCreateInfo(race, info->cl))
+    if (!sMySQLStore.getPlayerCreateInfo(race, info->cl))
     {
         WorldPacket data(SMSG_CHAR_FACTION_CHANGE, 1);
         data << uint8(E_CHAR_CREATE_ERROR);

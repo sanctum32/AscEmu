@@ -112,32 +112,12 @@ struct FishingZoneEntry
     uint32 MaxSkill;
 };
 
-struct ZoneGuardEntry
-{
-    uint32 ZoneID;
-    uint32 HordeEntry;
-    uint32 AllianceEntry;
-};
-
 struct ProfessionDiscovery
 {
     uint32 SpellId;
     uint32 SpellToDiscover;
     uint32 SkillValue;
     float Chance;
-};
-
-struct ItemPage
-{
-    uint32 id;
-    std::string text;
-    uint32 next_page;
-};
-
-struct GossipMenuOption
-{
-    uint32 id;
-    std::string text;
 };
 
 struct WorldStringTable
@@ -483,9 +463,6 @@ class SERVER_DECL ObjectMgr : public Singleton < ObjectMgr >, public EventableOb
 
         TimedEmoteList* GetTimedEmoteList(uint32 spawnid);
 
-        // other objects
-        typedef std::unordered_map<uint32, AreaTrigger>                 AreaTriggerContainer;
-
         // Set typedef's
         typedef std::unordered_map<uint32, Group*>                      GroupMap;
 
@@ -628,7 +605,6 @@ class SERVER_DECL ObjectMgr : public Singleton < ObjectMgr >, public EventableOb
 
         void LoadAchievementRewards();
 #endif
-        void LoadAreaTrigger();
         void LoadPlayersInfo();
 
         void LoadGuilds();
@@ -777,8 +753,6 @@ class SERVER_DECL ObjectMgr : public Singleton < ObjectMgr >, public EventableOb
 
         std::set<ProfessionDiscovery*> ProfessionDiscoveryTable;
 
-        AreaTrigger const* GetMapEntranceTrigger(uint32 Map) const;
-
 #if VERSION_STRING > TBC
         void LoadAchievementCriteriaList();
         AchievementCriteriaEntryList const & GetAchievementCriteriaByType(AchievementCriteriaTypes type);
@@ -837,10 +811,6 @@ class SERVER_DECL ObjectMgr : public Singleton < ObjectMgr >, public EventableOb
         std::unordered_map<uint32, Movement::WayPointMap*> m_waypoints;           /// stored by spawnid
         std::unordered_map<uint32, TimedEmoteList*> m_timedemotes;      /// stored by spawnid
 
-        AreaTriggerContainer _areaTriggerStore;
-
-        ///// Object Tables ////
-        // These tables are modified as creatures are created and destroyed in the world
 
         // Group List
         RWLock m_groupLock;

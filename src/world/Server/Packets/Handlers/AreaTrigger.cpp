@@ -87,7 +87,7 @@ uint32 CheckTriggerPrerequisites(AreaTrigger const* pAreaTrigger, WorldSession* 
     if (pPlayer->TriggerpassCheat)
         return AREA_TRIGGER_FAILURE_OK;
 
-    if (pAreaTrigger->required_level && pPlayer->getLevel() < pAreaTrigger->required_level)
+    if (pAreaTrigger->requiredLevel && pPlayer->getLevel() < pAreaTrigger->requiredLevel)
         return AREA_TRIGGER_FAILURE_LEVEL;
 
     if (pPlayer->iInstanceType >= MODE_HEROIC && pMapInfo->type != INSTANCE_MULTIMODE && pMapInfo->type != INSTANCE_NULL)
@@ -155,11 +155,11 @@ void WorldSession::_HandleAreaTriggerOpcode(uint32 id)
         return;
     }
 
-    AreaTrigger const* pAreaTrigger = sMySQLStore.GetAreaTrigger(id);
+    AreaTrigger const* pAreaTrigger = sMySQLStore.getAreaTrigger(id);
     if (pAreaTrigger == nullptr)
         return;
 
-    switch (pAreaTrigger->Type)
+    switch (pAreaTrigger->type)
     {
         case ATTYPE_INSTANCE:
         {
@@ -168,7 +168,7 @@ void WorldSession::_HandleAreaTriggerOpcode(uint32 id)
                 break;
             if (worldConfig.instance.checkTriggerPrerequisitesOnEnter)
             {
-                uint32 reason = CheckTriggerPrerequisites(pAreaTrigger, this, _player, sMySQLStore.GetWorldMapInfo(pAreaTrigger->Mapid));
+                uint32 reason = CheckTriggerPrerequisites(pAreaTrigger, this, _player, sMySQLStore.getWorldMapInfo(pAreaTrigger->mapId));
                 if (reason != AREA_TRIGGER_FAILURE_OK)
                 {
                     const char* pReason = GetPlayer()->GetSession()->LocalizedWorldSrv(AreaTriggerFailureMessages[reason]);
@@ -179,13 +179,13 @@ void WorldSession::_HandleAreaTriggerOpcode(uint32 id)
                     switch (reason)
                     {
                         case AREA_TRIGGER_FAILURE_LEVEL:
-                            snprintf(msg, 200, pReason, pAreaTrigger->required_level);
+                            snprintf(msg, 200, pReason, pAreaTrigger->requiredLevel);
                             data << msg;
                             break;
                         case AREA_TRIGGER_FAILURE_NO_ATTUNE_I:
                         {
-                            MapInfo const* pMi = sMySQLStore.GetWorldMapInfo(pAreaTrigger->Mapid);
-                            ItemProperties const* pItem = sMySQLStore.GetItemProperties(pMi->required_item);
+                            MapInfo const* pMi = sMySQLStore.getWorldMapInfo(pAreaTrigger->mapId);
+                            ItemProperties const* pItem = sMySQLStore.getItemProperties(pMi->required_item);
                             if (pItem)
                                 snprintf(msg, 200, GetPlayer()->GetSession()->LocalizedWorldSrv(ServerString::SS_MUST_HAVE_ITEM), pItem->Name.c_str());
                             else
@@ -196,8 +196,8 @@ void WorldSession::_HandleAreaTriggerOpcode(uint32 id)
                         break;
                         case AREA_TRIGGER_FAILURE_NO_ATTUNE_QA:
                         {
-                            MapInfo const* pMi = sMySQLStore.GetWorldMapInfo(pAreaTrigger->Mapid);
-                            QuestProperties const* pQuest = sMySQLStore.GetQuestProperties(pMi->required_quest_A);
+                            MapInfo const* pMi = sMySQLStore.getWorldMapInfo(pAreaTrigger->mapId);
+                            QuestProperties const* pQuest = sMySQLStore.getQuestProperties(pMi->required_quest_A);
                             if (pQuest)
                                 snprintf(msg, 200, GetPlayer()->GetSession()->LocalizedWorldSrv(ServerString::SS_MUST_HAVE_QUEST), pQuest->title.c_str());
                             else
@@ -208,8 +208,8 @@ void WorldSession::_HandleAreaTriggerOpcode(uint32 id)
                         break;
                         case AREA_TRIGGER_FAILURE_NO_ATTUNE_QH:
                         {
-                            MapInfo const* pMi = sMySQLStore.GetWorldMapInfo(pAreaTrigger->Mapid);
-                            QuestProperties const* pQuest = sMySQLStore.GetQuestProperties(pMi->required_quest_H);
+                            MapInfo const* pMi = sMySQLStore.getWorldMapInfo(pAreaTrigger->mapId);
+                            QuestProperties const* pQuest = sMySQLStore.getQuestProperties(pMi->required_quest_H);
                             if (pQuest)
                                 snprintf(msg, 200, GetPlayer()->GetSession()->LocalizedWorldSrv(ServerString::SS_MUST_HAVE_QUEST), pQuest->title.c_str());
                             else
@@ -220,8 +220,8 @@ void WorldSession::_HandleAreaTriggerOpcode(uint32 id)
                         break;
                         case AREA_TRIGGER_FAILURE_NO_KEY:
                         {
-                            MapInfo const* pMi = sMySQLStore.GetWorldMapInfo(pAreaTrigger->Mapid);
-                            ItemProperties const* pItem = sMySQLStore.GetItemProperties(pMi->heroic_key_1);
+                            MapInfo const* pMi = sMySQLStore.getWorldMapInfo(pAreaTrigger->mapId);
+                            ItemProperties const* pItem = sMySQLStore.getItemProperties(pMi->heroic_key_1);
                             if (pItem)
                                 snprintf(msg, 200, GetPlayer()->GetSession()->LocalizedWorldSrv(ServerString::SS_MUST_HAVE_ITEM), pItem->Name.c_str());
                             else
@@ -232,7 +232,7 @@ void WorldSession::_HandleAreaTriggerOpcode(uint32 id)
                         break;
                         case AREA_TRIGGER_FAILURE_LEVEL_HEROIC:
                         {
-                            MapInfo const* pMi = sMySQLStore.GetWorldMapInfo(pAreaTrigger->Mapid);
+                            MapInfo const* pMi = sMySQLStore.getWorldMapInfo(pAreaTrigger->mapId);
                             snprintf(msg, 200, pReason, pMi->minlevel_heroic);
                             data << msg;
                         }
@@ -247,8 +247,8 @@ void WorldSession::_HandleAreaTriggerOpcode(uint32 id)
                     return;
                 }
             }
-            GetPlayer()->SaveEntryPoint(pAreaTrigger->Mapid);
-            GetPlayer()->SafeTeleport(pAreaTrigger->Mapid, 0, LocationVector(pAreaTrigger->x, pAreaTrigger->y, pAreaTrigger->z, pAreaTrigger->o));
+            GetPlayer()->SaveEntryPoint(pAreaTrigger->mapId);
+            GetPlayer()->SafeTeleport(pAreaTrigger->mapId, 0, LocationVector(pAreaTrigger->x, pAreaTrigger->y, pAreaTrigger->z, pAreaTrigger->o));
         }
         break;
         case ATTYPE_QUESTTRIGGER:
@@ -265,8 +265,8 @@ void WorldSession::_HandleAreaTriggerOpcode(uint32 id)
         {
             if (GetPlayer()->GetPlayerStatus() != TRANSFER_PENDING) //only ports if player is out of pendings
             {
-                GetPlayer()->SaveEntryPoint(pAreaTrigger->Mapid);
-                GetPlayer()->SafeTeleport(pAreaTrigger->Mapid, 0, LocationVector(pAreaTrigger->x, pAreaTrigger->y, pAreaTrigger->z, pAreaTrigger->o));
+                GetPlayer()->SaveEntryPoint(pAreaTrigger->mapId);
+                GetPlayer()->SafeTeleport(pAreaTrigger->mapId, 0, LocationVector(pAreaTrigger->x, pAreaTrigger->y, pAreaTrigger->z, pAreaTrigger->o));
             }
         }
         break;

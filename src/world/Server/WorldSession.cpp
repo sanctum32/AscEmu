@@ -28,6 +28,7 @@
 #include "Management/Battleground/Battleground.h"
 #include "Server/LogonCommClient/LogonCommHandler.h"
 #include "Storage/MySQLDataStore.hpp"
+#include "Storage/MySQLStructures.h"
 #include "Management/LocalizationMgr.h"
 #include "Server/MainServerDefines.h"
 #include "Map/MapMgr.h"
@@ -630,7 +631,7 @@ char szError[64];
 // These strings can be found in npc_script_text tables in the database
 const char* WorldSession::LocalizedCreatureTexts(uint32 id)
 {
-    NpcScriptText const* wst = sMySQLStore.GetNpcScriptText(id);
+    NpcScriptText const* wst = sMySQLStore.getNpcScriptText(id);
     if (!wst)
     {
         memset(szError, 0, 64);
@@ -650,7 +651,7 @@ const char* WorldSession::LocalizedCreatureTexts(uint32 id)
 // These strings can be found in gossip_menu_option tables in the database
 const char* WorldSession::LocalizedGossipOption(uint32 id)
 {
-    GossipMenuOption const* wst = sMySQLStore.GetGossipMenuOption(id);
+    MySQLStructure::GossipMenuOption const* wst = sMySQLStore.getGossipMenuOption(id);
     if (!wst)
     {
         memset(szError, 0, 64);
@@ -669,7 +670,7 @@ const char* WorldSession::LocalizedGossipOption(uint32 id)
 // These strings can be found in the worldstring tables in the database
 const char* WorldSession::LocalizedWorldSrv(uint32 id)
 {
-    WorldStringTable const* wst = sMySQLStore.GetWorldString(id);
+    WorldStringTable const* wst = sMySQLStore.getWorldString(id);
     if (!wst)
     {
         memset(szError, 0, 64);
@@ -686,7 +687,7 @@ const char* WorldSession::LocalizedWorldSrv(uint32 id)
 
 const char* WorldSession::LocalizedMapName(uint32 id)
 {
-    MapInfo const* mi = sMySQLStore.GetWorldMapInfo(id);
+    MapInfo const* mi = sMySQLStore.getWorldMapInfo(id);
     if (!mi)
     {
         memset(szError, 0, 64);
@@ -703,7 +704,7 @@ const char* WorldSession::LocalizedMapName(uint32 id)
 
 const char* WorldSession::LocalizedBroadCast(uint32 id)
 {
-    Broadcast const* wb = sMySQLStore.getBroadcastById(id);
+    MySQLStructure::WorldBroadCast const* wb = sMySQLStore.getWorldBroadcastById(id);
     if (!wb)
     {
         memset(szError, 0, 64);

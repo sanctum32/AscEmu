@@ -25,6 +25,7 @@
 #include "Units/Stats.h"
 #include "Server/Packets/Movement/CreatureMovement.hpp"
 #include "Storage/MySQLDataStore.hpp"
+#include "Storage/MySQLStructures.h"
 #include "Server/MainServerDefines.h"
 #include "Map/MapMgr.h"
 #include "Objects/Faction.h"
@@ -1448,11 +1449,11 @@ bool AIInterface::FindFriends(float dist)
         if (!at)
             return result;
 
-        ZoneGuardEntry const* zoneSpawn;
+        MySQLStructure::ZoneGuards const* zoneSpawn;
         if (at->zone != 0)
-            zoneSpawn = sMySQLStore.GetZoneGuard(at->zone);
+            zoneSpawn = sMySQLStore.getZoneGuard(at->zone);
         else
-            zoneSpawn = sMySQLStore.GetZoneGuard(at->id);
+            zoneSpawn = sMySQLStore.getZoneGuard(at->id);
 
         if (!zoneSpawn)
             return result;
@@ -1461,14 +1462,14 @@ bool AIInterface::FindFriends(float dist)
         if (isAlliance(m_Unit))
             team = 0;
 
-        uint32 guardid = zoneSpawn->AllianceEntry;
+        uint32 guardid = zoneSpawn->allianceEntry;
         if (team == 1)
-            guardid = zoneSpawn->HordeEntry;
+            guardid = zoneSpawn->hordeEntry;
 
         if (!guardid)
             return result;
 
-        CreatureProperties const* cp = sMySQLStore.GetCreatureProperties(guardid);
+        CreatureProperties const* cp = sMySQLStore.getCreatureProperties(guardid);
         if (cp == nullptr)
             return result;
 
@@ -4682,8 +4683,8 @@ void AIInterface::SetCreatureProtoDifficulty(uint32 entry)
 {
     if (GetDifficultyType() != 0)
     {
-        uint32 creature_difficulty_entry = sMySQLStore.GetCreatureDifficulty(entry, GetDifficultyType());
-        auto properties_difficulty = sMySQLStore.GetCreatureProperties(creature_difficulty_entry);
+        uint32 creature_difficulty_entry = sMySQLStore.getCreatureDifficulty(entry, GetDifficultyType());
+        auto properties_difficulty = sMySQLStore.getCreatureProperties(creature_difficulty_entry);
         Creature* creature = static_cast<Creature*>(m_Unit);
         if (properties_difficulty != nullptr)
         {
