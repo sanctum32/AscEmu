@@ -5,6 +5,17 @@ This file is released under the MIT license. See README-MIT for more information
 
 #pragma once
 
+enum AreaTriggerType
+{
+    ATTYPE_NULL = 0,
+    ATTYPE_INSTANCE = 1,
+    ATTYPE_QUESTTRIGGER = 2,
+    ATTYPE_INN = 3,
+    ATTYPE_TELEPORT = 4,
+    ATTYPE_SPELL = 5,
+    ATTYPE_BATTLEGROUND = 6
+};
+
 namespace MySQLStructure
 {
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -21,15 +32,34 @@ namespace MySQLStructure
     //ai_threattospellid
 
     //areatriggers
+    struct AreaTrigger
+    {
+        uint32_t id;
+        uint8_t type;
+        uint32_t mapId;
+        uint32_t pendingScreen;
+        std::string name;
+        float x;
+        float y;
+        float z;
+        float o;
+        uint32_t requiredHonorRank;
+        uint32_t requiredLevel;
+    };
 
     //auctionhouse
-
-    //\TODO table banned_phrases not used
-    //banned_phrases
 
     //battlemasters
 
     //creature_difficulty
+    struct CreatureDifficulty
+    {
+        uint32_t id;
+        uint32_t difficultyEntry1;
+        uint32_t difficultyEntry2;
+        uint32_t difficultyEntry3;
+    };
+
     //creature_formations
     //creature_initial_equip
     //creature_properties
@@ -48,7 +78,14 @@ namespace MySQLStructure
 
     //event_scripts
 
+    //\TODO rename table to fishing_zones
     //fishing
+    struct FishingZones
+    {
+        uint32_t zoneId;
+        uint32_t minSkill;
+        uint32_t maxSkill;
+    };
 
     //gameobject_properties
     //gameobject_quest_finisher
@@ -106,9 +143,6 @@ namespace MySQLStructure
     //loot_pickpocketing
     //loot_skinning
 
-    //\TODO table map_checkpoint not used
-    //map_checkpoint
-
     //npc_gossip_textid
 
     //npc_monstersay
@@ -116,6 +150,17 @@ namespace MySQLStructure
     //npc_text
 
     //pet_level_abilities
+    struct PetLevelAbilities
+    {
+        uint32_t level;
+        uint32_t health;
+        uint32_t armor;
+        uint32_t strength;
+        uint32_t agility;
+        uint32_t stamina;
+        uint32_t intellect;
+        uint32_t spirit;
+    };
 
     //petdefaultspells
 
@@ -127,6 +172,16 @@ namespace MySQLStructure
     //playercreateinfo_spells
 
     //points_of_interest
+    struct PointsOfInterest
+    {
+        uint32_t id;
+        float x;
+        float y;
+        uint32_t icon;
+        uint32_t flags;
+        uint32_t data;
+        std::string iconName;
+    };
 
     //professiondiscoveries
 
@@ -157,6 +212,13 @@ namespace MySQLStructure
     //spelloverride
     //spelltargetconstraints
     //totemdisplayids
+    struct TotemDisplayIds
+    {
+        uint32_t displayId;
+        uint32_t draeneiId;
+        uint32_t trollId;
+        uint32_t orcId;
+    };
 
     //trainer_defs
     //trainer_spells
@@ -168,14 +230,22 @@ namespace MySQLStructure
     //vehicle_accessories
 
     //vendor_restrictions
+    struct VendorRestrictions
+    {
+        uint32_t entry;
+        int32_t racemask;
+        int32_t classmask;
+        uint32_t reqrepfaction;
+        uint32_t reqrepvalue;
+        uint32_t canbuyattextid;
+        uint32_t cannotbuyattextid;
+        uint32_t flags;
+    };
+
     //vendors
 
     //weather
-    //weather_season
 
-    //\brief loaded on server startup. Related Class "WordFilter"
-    //\TODO switch to std::string in class WordFilter.
-    // Rewrite WordFilter, split character name and chat word filter in two seperated functions/classes.
     //wordfilter_character_names
     struct WordFilterCharacterNames
     {
@@ -194,9 +264,6 @@ namespace MySQLStructure
     //\brief loaded on server startup. Not needed after server startup
     //world_db_version
 
-    //\TODO table world_instance_entrance not used
-    //world_instance_entrance
-
     //worldbroadcast
     struct WorldBroadCast
     {
@@ -212,6 +279,11 @@ namespace MySQLStructure
     //worldstate_templates
 
     //worldstring_tables
+    struct WorldStringTable
+    {
+        uint32_t id;
+        std::string text;
+    };
 
     //\brief Data used in AIInterface.cpp (summoned id in function FindFriends)
     //zoneguards

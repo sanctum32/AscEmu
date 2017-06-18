@@ -1263,13 +1263,13 @@ void MySQLDataStore::loadCreatureDifficultyTable()
 
         uint32_t entry = fields[0].GetUInt32();
 
-        CreatureDifficulty& creatureDifficulty = _creatureDifficultyStore[entry];
+        MySQLStructure::CreatureDifficulty& creatureDifficulty = _creatureDifficultyStore[entry];
 
-        creatureDifficulty.Id = entry;
+        creatureDifficulty.id = entry;
 
-        creatureDifficulty.difficulty_entry_1 = fields[1].GetUInt32();
-        creatureDifficulty.difficulty_entry_2 = fields[2].GetUInt32();
-        creatureDifficulty.difficulty_entry_3 = fields[3].GetUInt32();
+        creatureDifficulty.difficultyEntry1 = fields[1].GetUInt32();
+        creatureDifficulty.difficultyEntry2 = fields[2].GetUInt32();
+        creatureDifficulty.difficultyEntry3 = fields[3].GetUInt32();
 
 
         ++creature_difficulty_count;
@@ -1288,20 +1288,20 @@ uint32_t MySQLDataStore::getCreatureDifficulty(uint32_t entry, uint8_t difficult
         {
             case 1:
             {
-                if (itr->first == entry && itr->second.difficulty_entry_1 != 0)
-                    return itr->second.difficulty_entry_1;
+                if (itr->first == entry && itr->second.difficultyEntry1 != 0)
+                    return itr->second.difficultyEntry1;
             }
             break;
             case 2:
             {
-                if (itr->first == entry && itr->second.difficulty_entry_2 != 0)
-                    return itr->second.difficulty_entry_2;
+                if (itr->first == entry && itr->second.difficultyEntry2 != 0)
+                    return itr->second.difficultyEntry2;
             }
             break;
             case 3:
             {
-                if (itr->first == entry && itr->second.difficulty_entry_3 != 0)
-                    return itr->second.difficulty_entry_3;
+                if (itr->first == entry && itr->second.difficultyEntry3 != 0)
+                    return itr->second.difficultyEntry3;
             }
             break;
             default:
@@ -1391,7 +1391,7 @@ void MySQLDataStore::loadVendorRestrictionsTable()
 
         uint32_t entry = fields[0].GetUInt32();
 
-        VendorRestrictionEntry& vendorRestriction = _vendorRestrictionsStore[entry];
+        MySQLStructure::VendorRestrictions& vendorRestriction = _vendorRestrictionsStore[entry];
 
         vendorRestriction.entry = entry;
         vendorRestriction.racemask = fields[1].GetInt32();
@@ -1410,7 +1410,7 @@ void MySQLDataStore::loadVendorRestrictionsTable()
     LogDetail("MySQLDataLoads : Loaded %u restrictions from `vendor_restrictions` table in %u ms!", vendor_restricitons_count, getMSTime() - start_time);
 }
 
-VendorRestrictionEntry const* MySQLDataStore::getVendorRestriction(uint32_t entry)
+MySQLStructure::VendorRestrictions const* MySQLDataStore::getVendorRestriction(uint32_t entry)
 {
     VendorRestrictionContainer::const_iterator itr = _vendorRestrictionsStore.find(entry);
     if (itr != _vendorRestrictionsStore.end())
@@ -1722,11 +1722,11 @@ void MySQLDataStore::loadFishingTable()
 
         uint32_t entry = fields[0].GetUInt32();
 
-        FishingZoneEntry& fishingZone = _fishingZonesStore[entry];
+        MySQLStructure::FishingZones& fishingZone = _fishingZonesStore[entry];
 
-        fishingZone.ZoneID = entry;
-        fishingZone.MinSkill = fields[1].GetUInt32();
-        fishingZone.MaxSkill = fields[2].GetUInt32();
+        fishingZone.zoneId = entry;
+        fishingZone.minSkill = fields[1].GetUInt32();
+        fishingZone.maxSkill = fields[2].GetUInt32();
 
         ++fishing_count;
     } while (fishing_result->NextRow());
@@ -1736,7 +1736,7 @@ void MySQLDataStore::loadFishingTable()
     LogDetail("MySQLDataLoads : Loaded %u rows from `fishing` table in %u ms!", fishing_count, getMSTime() - start_time);
 }
 
-FishingZoneEntry const* MySQLDataStore::getFishingZone(uint32_t entry)
+MySQLStructure::FishingZones const* MySQLDataStore::getFishingZone(uint32_t entry)
 {
     FishingZonesContainer::const_iterator itr = _fishingZonesStore.find(entry);
     if (itr != _fishingZonesStore.end())
@@ -1927,12 +1927,12 @@ void MySQLDataStore::loadTotemDisplayIdsTable()
 
         uint32_t entry = fields[0].GetUInt32();
 
-        TotemDisplayIdEntry& totemDisplayId = _totemDisplayIdsStore[entry];
+        MySQLStructure::TotemDisplayIds& totemDisplayId = _totemDisplayIdsStore[entry];
 
-        totemDisplayId.DisplayId = entry;
-        totemDisplayId.DraeneiId = fields[1].GetUInt32();
-        totemDisplayId.TrollId = fields[2].GetUInt32();
-        totemDisplayId.OrcId = fields[3].GetUInt32();
+        totemDisplayId.displayId = entry;
+        totemDisplayId.draeneiId = fields[1].GetUInt32();
+        totemDisplayId.trollId = fields[2].GetUInt32();
+        totemDisplayId.orcId = fields[3].GetUInt32();
 
         ++totemdisplayids_count;
     } while (totemdisplayids_result->NextRow());
@@ -1942,7 +1942,7 @@ void MySQLDataStore::loadTotemDisplayIdsTable()
     LogDetail("MySQLDataLoads : Loaded %u rows from `totemdisplayids` table in %u ms!", totemdisplayids_count, getMSTime() - start_time);
 }
 
-TotemDisplayIdEntry const* MySQLDataStore::getTotemDisplayId(uint32_t entry)
+MySQLStructure::TotemDisplayIds const* MySQLDataStore::getTotemDisplayId(uint32_t entry)
 {
     TotemDisplayIdContainer::const_iterator itr = _totemDisplayIdsStore.find(entry);
     if (itr != _totemDisplayIdsStore.end())
@@ -2019,7 +2019,7 @@ void MySQLDataStore::loadWorldStringsTable()
 
         uint32_t entry = fields[0].GetUInt32();
 
-        WorldStringTable& worldString = _worldStringsStore[entry];
+        MySQLStructure::WorldStringTable& worldString = _worldStringsStore[entry];
 
         worldString.id = entry;
         worldString.text = fields[1].GetString();
@@ -2032,7 +2032,7 @@ void MySQLDataStore::loadWorldStringsTable()
     LogDetail("MySQLDataLoads : Loaded %u rows from `worldstring_tables` table in %u ms!", worldstring_tables_count, getMSTime() - start_time);
 }
 
-WorldStringTable const* MySQLDataStore::getWorldString(uint32_t entry)
+MySQLStructure::WorldStringTable const* MySQLDataStore::getWorldString(uint32_t entry)
 {
     WorldStringContainer::const_iterator itr = _worldStringsStore.find(entry);
     if (itr != _worldStringsStore.end())
@@ -2041,7 +2041,7 @@ WorldStringTable const* MySQLDataStore::getWorldString(uint32_t entry)
     return nullptr;
 }
 
-void MySQLDataStore::loadPointOfInterestTable()
+void MySQLDataStore::loadPointsOfInterestTable()
 {
     uint32_t start_time = getMSTime();
 
@@ -2055,7 +2055,7 @@ void MySQLDataStore::loadPointOfInterestTable()
 
     LogNotice("MySQLDataLoads : Table `points_of_interest` has %u columns", points_of_interest_result->GetFieldCount());
 
-    _pointOfInterestStore.rehash(points_of_interest_result->GetRowCount());
+    _pointsOfInterestStore.rehash(points_of_interest_result->GetRowCount());
 
     uint32_t points_of_interest_count = 0;
     do
@@ -2064,15 +2064,15 @@ void MySQLDataStore::loadPointOfInterestTable()
 
         uint32_t entry = fields[0].GetUInt32();
 
-        PointOfInterest& pointOfInterest = _pointOfInterestStore[entry];
+        MySQLStructure::PointsOfInterest& pointOfInterest = _pointsOfInterestStore[entry];
 
-        pointOfInterest.entry = entry;
+        pointOfInterest.id = entry;
         pointOfInterest.x = fields[1].GetFloat();
         pointOfInterest.y = fields[2].GetFloat();
         pointOfInterest.icon = fields[3].GetUInt32();
         pointOfInterest.flags = fields[4].GetUInt32();
         pointOfInterest.data = fields[5].GetUInt32();
-        pointOfInterest.icon_name = fields[6].GetString();
+        pointOfInterest.iconName = fields[6].GetString();
 
         ++points_of_interest_count;
     } while (points_of_interest_result->NextRow());
@@ -2082,10 +2082,10 @@ void MySQLDataStore::loadPointOfInterestTable()
     LogDetail("MySQLDataLoads : Loaded %u rows from `points_of_interest` table in %u ms!", points_of_interest_count, getMSTime() - start_time);
 }
 
-PointOfInterest const* MySQLDataStore::getPointOfInterest(uint32_t entry)
+MySQLStructure::PointsOfInterest const* MySQLDataStore::getPointOfInterest(uint32_t entry)
 {
-    PointOfInterestContainer::const_iterator itr = _pointOfInterestStore.find(entry);
-    if (itr != _pointOfInterestStore.end())
+    PointsOfInterestContainer::const_iterator itr = _pointsOfInterestStore.find(entry);
+    if (itr != _pointsOfInterestStore.end())
         return &(itr->second);
 
     return nullptr;
@@ -2593,7 +2593,7 @@ void MySQLDataStore::loadPetLevelAbilitiesTable()
 
     LogNotice("MySQLDataLoads : Table `pet_level_abilities` has %u columns", pet_level_abilities_result->GetFieldCount());
 
-    _petAbilitiesStore.rehash(pet_level_abilities_result->GetRowCount());
+    _petLevelAbilitiesStore.rehash(pet_level_abilities_result->GetRowCount());
 
     uint32_t pet_level_abilities_count = 0;
     do
@@ -2602,7 +2602,7 @@ void MySQLDataStore::loadPetLevelAbilitiesTable()
 
         uint32_t entry = fields[0].GetInt32();
 
-        PetAbilities& petAbilities = _petAbilitiesStore[entry];
+        MySQLStructure::PetLevelAbilities& petAbilities = _petLevelAbilitiesStore[entry];
 
         petAbilities.level = entry;
         petAbilities.health = fields[1].GetUInt32();
@@ -2625,10 +2625,10 @@ void MySQLDataStore::loadPetLevelAbilitiesTable()
         LOG_ERROR("Table `pet_level_abilities` includes definitions for %u level, but your defined level cap is %u!", pet_level_abilities_count, worldConfig.player.playerLevelCap);
 }
 
-PetAbilities const* MySQLDataStore::getPetLevelAbilities(uint32_t level)
+MySQLStructure::PetLevelAbilities const* MySQLDataStore::getPetLevelAbilities(uint32_t level)
 {
-    PetAbilitiesContainer::const_iterator itr = _petAbilitiesStore.find(level);
-    if (itr != _petAbilitiesStore.end())
+    PetLevelAbilitiesContainer::const_iterator itr = _petLevelAbilitiesStore.find(level);
+    if (itr != _petLevelAbilitiesStore.end())
         return &(itr->second);
 
     return nullptr;
@@ -2705,7 +2705,7 @@ void MySQLDataStore::loadAreaTriggerTable()
     {
         Field* fields = area_trigger_result->Fetch();
 
-        AreaTrigger areaTrigger;
+        MySQLStructure::AreaTrigger areaTrigger;
         areaTrigger.id = fields[0].GetUInt32();
         areaTrigger.type = fields[1].GetUInt8();
         areaTrigger.mapId = fields[2].GetUInt16();
@@ -2748,7 +2748,7 @@ void MySQLDataStore::loadAreaTriggerTable()
     LogDetail("MySQLDataLoads : Loaded %u rows from `areatriggers` table in %u ms!", areaTrigger_count, getMSTime() - start_time);
 }
 
-AreaTrigger const* MySQLDataStore::getAreaTrigger(uint32_t entry)
+MySQLStructure::AreaTrigger const* MySQLDataStore::getAreaTrigger(uint32_t entry)
 {
     AreaTriggerContainer::const_iterator itr = _areaTriggerStore.find(entry);
     if (itr != _areaTriggerStore.end())
@@ -2757,7 +2757,7 @@ AreaTrigger const* MySQLDataStore::getAreaTrigger(uint32_t entry)
     return nullptr;
 }
 
-AreaTrigger const* MySQLDataStore::getMapEntranceTrigger(uint32_t mapId)
+MySQLStructure::AreaTrigger const* MySQLDataStore::getMapEntranceTrigger(uint32_t mapId)
 {
     for (AreaTriggerContainer::const_iterator itr = _areaTriggerStore.begin(); itr != _areaTriggerStore.end(); ++itr)
     {

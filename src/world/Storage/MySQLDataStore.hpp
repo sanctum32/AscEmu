@@ -8,7 +8,6 @@ This file is released under the MIT license. See README-MIT for more information
 #include "Singleton.h"
 #include "Server/Packets/Handlers/MiscHandler.h"
 #include "Server/Packets/Handlers/NPCHandler.h"
-#include "Server/Packets/Handlers/AreaTrigger.h"
 #include "../../scripts/Battlegrounds/IsleOfConquest.h"
 #include "Objects/ObjectMgr.h"
 #include "Spell/Definitions/SpellClickSpell.h"
@@ -37,22 +36,22 @@ public:
     typedef std::unordered_map<uint32_t, GameObjectProperties> GameObjectPropertiesContainer;
     typedef std::unordered_map<uint32_t, QuestProperties> QuestPropertiesContainer;
 
-    typedef std::unordered_map<uint32_t, CreatureDifficulty> CreatureDifficultyContainer;
+    typedef std::unordered_map<uint32_t, MySQLStructure::CreatureDifficulty> CreatureDifficultyContainer;
     typedef std::unordered_map<uint32_t, DisplayBounding> DisplayBoundingBoxesContainer;
-    typedef std::unordered_map<uint32_t, VendorRestrictionEntry> VendorRestrictionContainer;
+    typedef std::unordered_map<uint32_t, MySQLStructure::VendorRestrictions> VendorRestrictionContainer;
     typedef std::unordered_map<uint32_t, NpcText> NpcTextContainer;
     typedef std::unordered_map<uint32_t, NpcScriptText> NpcScriptTextContainer;
     typedef std::unordered_map<uint32_t, MySQLStructure::GossipMenuOption> GossipMenuOptionContainer;
     typedef std::unordered_map<uint32_t, GraveyardTeleport> GraveyardsContainer;
     typedef std::unordered_map<uint32_t, TeleportCoords> TeleportCoordsContainer;
-    typedef std::unordered_map<uint32_t, FishingZoneEntry> FishingZonesContainer;
+    typedef std::unordered_map<uint32_t, MySQLStructure::FishingZones> FishingZonesContainer;
     typedef std::unordered_map<uint32_t, MapInfo> WorldMapInfoContainer;
     typedef std::unordered_map<uint32_t, MySQLStructure::ZoneGuards> ZoneGuardsContainer;
     typedef std::unordered_map<uint32_t, BGMaster> BattleMastersContainer;
-    typedef std::unordered_map<uint32_t, TotemDisplayIdEntry> TotemDisplayIdContainer;
+    typedef std::unordered_map<uint32_t, MySQLStructure::TotemDisplayIds> TotemDisplayIdContainer;
     typedef std::unordered_map<uint32_t, SpellClickSpell> SpellClickSpellContainer;
-    typedef std::unordered_map<uint32_t, WorldStringTable> WorldStringContainer;
-    typedef std::unordered_map<uint32_t, PointOfInterest> PointOfInterestContainer;
+    typedef std::unordered_map<uint32_t, MySQLStructure::WorldStringTable> WorldStringContainer;
+    typedef std::unordered_map<uint32_t, MySQLStructure::PointsOfInterest> PointsOfInterestContainer;
 
     typedef std::unordered_map<int32, ItemSetLinkedItemSetBonus> ItemSetDefinedSetBonusContainer;
 
@@ -63,11 +62,11 @@ public:
 
     typedef std::map<uint32_t, uint32_t> NpcGossipTextIdMap;
 
-    typedef std::unordered_map<uint32_t, PetAbilities> PetAbilitiesContainer;
+    typedef std::unordered_map<uint32_t, MySQLStructure::PetLevelAbilities> PetLevelAbilitiesContainer;
 
     typedef std::unordered_map<uint32_t, MySQLStructure::WorldBroadCast> WorldBroadcastContainer;
 
-    typedef std::unordered_map<uint32_t, AreaTrigger> AreaTriggerContainer;
+    typedef std::unordered_map<uint32_t, MySQLStructure::AreaTrigger> AreaTriggerContainer;
 
     typedef std::list<MySQLStructure::WordFilterCharacterNames> WordFilterCharacterNamesSet;
     typedef std::list<MySQLStructure::WordFilterChat> WordFilterChatSet;
@@ -93,7 +92,7 @@ public:
     DisplayBounding const* getDisplayBounding(uint32_t entry);
     DisplayBoundingBoxesContainer const* getDisplayBoundingBoxesStore() { return &_displayBoundingBoxesStore; }
 
-    VendorRestrictionEntry const* getVendorRestriction(uint32_t entry);
+    MySQLStructure::VendorRestrictions const* getVendorRestriction(uint32_t entry);
     VendorRestrictionContainer const* getVendorRestrictionsStore() { return &_vendorRestrictionsStore; }
 
     NpcText const* getNpcText(uint32_t entry);
@@ -111,7 +110,7 @@ public:
     TeleportCoords const* getTeleportCoord(uint32_t entry);
     TeleportCoordsContainer const* getTeleportCoordsStore() { return &_teleportCoordsStore; }
 
-    FishingZoneEntry const* getFishingZone(uint32_t entry);
+    MySQLStructure::FishingZones const* getFishingZone(uint32_t entry);
     FishingZonesContainer const* getFischingZonesStore() { return &_fishingZonesStore; }
 
     MapInfo const* getWorldMapInfo(uint32_t entry);
@@ -123,17 +122,17 @@ public:
     BGMaster const* getBattleMaster(uint32_t entry);
     BattleMastersContainer const* getBattleMastersStore() { return &_battleMastersStore; }
 
-    TotemDisplayIdEntry const* getTotemDisplayId(uint32_t entry);
+    MySQLStructure::TotemDisplayIds const* getTotemDisplayId(uint32_t entry);
     TotemDisplayIdContainer const* getTotemDisplayIdsStore() { return &_totemDisplayIdsStore; }
 
     SpellClickSpell const* getSpellClickSpell(uint32_t entry);
     SpellClickSpellContainer const* getSpellClickSpellsStore() { return &_spellClickSpellsStore; }
 
-    WorldStringTable const* getWorldString(uint32_t entry);
+    MySQLStructure::WorldStringTable const* getWorldString(uint32_t entry);
     WorldStringContainer const* getWorldStringsStore() { return &_worldStringsStore; }
 
-    PointOfInterest const* getPointOfInterest(uint32_t entry);
-    PointOfInterestContainer const* getPointOfInterestStore() { return &_pointOfInterestStore; }
+    MySQLStructure::PointsOfInterest const* getPointOfInterest(uint32_t entry);
+    PointsOfInterestContainer const* getPointOfInterestStore() { return &_pointsOfInterestStore; }
 
     uint32_t getItemSetLinkedBonus(int32 itemset);
 
@@ -142,15 +141,15 @@ public:
 
     uint32_t getGossipTextIdForNpc(uint32_t entry);
 
-    PetAbilities const* getPetLevelAbilities(uint32_t level);
-    PetAbilitiesContainer const* getPetAbilitiesStore() { return &_petAbilitiesStore; }
+    MySQLStructure::PetLevelAbilities const* getPetLevelAbilities(uint32_t level);
+    PetLevelAbilitiesContainer const* getPetAbilitiesStore() { return &_petLevelAbilitiesStore; }
 
     MySQLStructure::WorldBroadCast const* getWorldBroadcastById(uint32_t level);
     WorldBroadcastContainer* getWorldBroadcastStore() { return &_worldBroadcastStore; }
 
-    AreaTrigger const* getAreaTrigger(uint32_t entry);
+    MySQLStructure::AreaTrigger const* getAreaTrigger(uint32_t entry);
     AreaTriggerContainer const* getAreaTriggersStore() { return &_areaTriggerStore; }
-    AreaTrigger const* getMapEntranceTrigger(uint32_t mapId);
+    MySQLStructure::AreaTrigger const* getMapEntranceTrigger(uint32_t mapId);
 
     bool isCharacterNameAllowed(std::string charName);
 
@@ -187,7 +186,7 @@ public:
 
     void loadWorldStringsTable();
 
-    void loadPointOfInterestTable();
+    void loadPointsOfInterestTable();
 
     void loadItemSetLinkedSetBonusTable();
     void loadCreatureInitialEquipmentTable();
@@ -235,7 +234,7 @@ public:
 
     WorldStringContainer _worldStringsStore;
 
-    PointOfInterestContainer _pointOfInterestStore;
+    PointsOfInterestContainer _pointsOfInterestStore;
 
     ItemSetDefinedSetBonusContainer _definedItemSetBonusStore;
 
@@ -246,7 +245,7 @@ public:
 
     NpcGossipTextIdMap _npcGossipTextIdStore;
 
-    PetAbilitiesContainer _petAbilitiesStore;
+    PetLevelAbilitiesContainer _petLevelAbilitiesStore;
 
     WorldBroadcastContainer _worldBroadcastStore;
 

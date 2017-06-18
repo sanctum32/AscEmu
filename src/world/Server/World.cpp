@@ -118,9 +118,6 @@ World::~World()
     LogNotice("Rnd : ~Rnd()");
     CleanupRandomNumberGenerators();
 
-    for (AreaTriggerMap::iterator i = mAreaTriggerMap.begin(); i != mAreaTriggerMap.end(); ++i)
-        delete i->second;
-
     LogNotice("SpellProcMgr : ~SpellProcMgr()");
     delete SpellProcMgr::getSingletonPtr();
 
@@ -849,7 +846,7 @@ void World::loadMySQLStores()
     sMySQLStore.loadSpellClickSpellsTable();
 
     sMySQLStore.loadWorldStringsTable();
-    sMySQLStore.loadPointOfInterestTable();
+    sMySQLStore.loadPointsOfInterestTable();
     sMySQLStore.loadItemSetLinkedSetBonusTable();
     sMySQLStore.loadCreatureInitialEquipmentTable();
 

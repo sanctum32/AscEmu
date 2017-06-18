@@ -45,6 +45,7 @@
 #include "Management/ArenaTeam.h"
 #include "Server/LogonCommClient/LogonCommHandler.h"
 #include "Storage/MySQLDataStore.hpp"
+#include "Storage/MySQLStructures.h"
 #include "Server/Warden/SpeedDetector.h"
 #include "Server/MainServerDefines.h"
 #include "Config/Config.h"
@@ -1607,7 +1608,7 @@ void Player::_EventExploration()
 #if VERSION_STRING != Cata
     if (!(currFields & val) && !GetTaxiState() && !obj_movement_info.transporter_info.guid) //Unexplored Area        // bur: we don't want to explore new areas when on taxi
 #else
-    if (!(currFields & val) && !GetTaxiState() && !obj_movement_info.getTransportGuid().IsEmpty()) //Unexplored Area        // bur: we don't want to explore new areas when on taxi
+    if (!(currFields & val) && !GetTaxiState() && obj_movement_info.getTransportGuid().IsEmpty()) //Unexplored Area        // bur: we don't want to explore new areas when on taxi
 #endif
     {
         SetUInt32Value(offset, (uint32)(currFields | val));
@@ -3413,7 +3414,15 @@ void Player::LoadFromDBProc(QueryResultVector & results)
     float transportZ = get_next_field.GetFloat();
     float transportO = get_next_field.GetFloat();
 
-    obj_movement_info.setTransportData(transportGuid, transportX, transportY, transportZ, transportO, 0, 0);
+    if (transportGuid != 0)
+    {
+        obj_movement_info.setTransportData(transportGuid, transportX, transportY, transportZ, transportO, 0, 0);
+    }
+    else
+    {
+        obj_movement_info.clearTransportData();
+    }
+
 #endif
 
     LoadSpells(results[13].result);
@@ -13837,7 +13846,7 @@ void Player::AddQuestKill(uint32 questid, uint8 reqid, uint32 delay)
         quest_entry->SendQuestComplete();
 }
 
-bool Player::CanBuyAt(VendorRestrictionEntry const* vendor)
+bool Player::CanBuyAt(MySQLStructure::VendorRestrictions const* vendor)
 {
     if (vendor == NULL)
         return true;
@@ -13928,9 +13937,9 @@ void Player::RemoveVehicleComponent()
 
 void Player::Gossip_SendSQLPOI(uint32 id)
 {
-    PointOfInterest const* pPOI = sMySQLStore.getPointOfInterest(id);
-    if (pPOI != NULL)
-        Gossip_SendPOI(pPOI->x, pPOI->y, pPOI->icon, pPOI->flags, pPOI->data, pPOI->icon_name.c_str());
+    MySQLStructure::PointsOfInterest const* pPOI = sMySQLStore.getPointOfInterest(id);
+    if (pPOI != nullptr)
+        Gossip_SendPOI(pPOI->x, pPOI->y, pPOI->icon, pPOI->flags, pPOI->data, pPOI->iconName.c_str());
 }
 
 void Player::ResetTimeSync()
