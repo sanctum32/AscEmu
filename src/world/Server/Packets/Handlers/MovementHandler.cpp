@@ -76,6 +76,8 @@ uint32 mTimeStamp()
 
 #endif
 
+//\TODO move it to version specific files.
+#if VERSION_STRING != Cata
 void WorldSession::HandleMoveWorldportAckOpcode(WorldPacket& recv_data)
 {
     GetPlayer()->SetPlayerStatus(NONE);
@@ -115,7 +117,9 @@ void WorldSession::HandleMoveWorldportAckOpcode(WorldPacket& recv_data)
         _player->AddToWorld();
     }
 }
+#endif
 
+#if VERSION_STRING != Cata
 void WorldSession::HandleMoveTeleportAckOpcode(WorldPacket& recv_data)
 {
     WoWGuid guid;
@@ -161,6 +165,7 @@ void WorldSession::HandleMoveTeleportAckOpcode(WorldPacket& recv_data)
         }
     }
 }
+#endif
 
 #if VERSION_STRING != Cata
 void _HandleBreathing(MovementInfo & movement_info, Player* _player, WorldSession* pSession)

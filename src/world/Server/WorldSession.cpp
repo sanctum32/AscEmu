@@ -1129,7 +1129,7 @@ void WorldSession::HandleEquipmentSetDelete(WorldPacket& data)
 }
 #endif
 
-#if VERSION_STRING > TBC
+#if VERSION_STRING == WotLK
 void WorldSession::HandleQuestPOIQueryOpcode(WorldPacket& recv_data)
 {
     CHECK_INWORLD_RETURN LOG_DEBUG("Received CMSG_QUEST_POI_QUERY");
@@ -1261,6 +1261,14 @@ void WorldSession::HandleMirrorImageOpcode(WorldPacket& recv_data)
 
 void WorldSession::Unhandled(WorldPacket& recv_data)
 {}
+
+void WorldSession::nothingToHandle(WorldPacket& recv_data)
+{
+    if (recv_data.isEmpty() == false)
+    {
+        LogDebugFlag(LF_OPCODE, "Opcode %s (0x%.4X) received. Apply nothingToHandle handler but size is %u!", getOpcodeName(recv_data.GetOpcode()).c_str(), recv_data.GetOpcode(), recv_data.size());
+    }
+}
 
 void WorldSession::HandleDismissCritter(WorldPacket& recv_data)
 {

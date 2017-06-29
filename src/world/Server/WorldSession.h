@@ -32,6 +32,7 @@
     #include "Management/AddonMgr.h"
     #include "Units/Players/PlayerDefines.hpp"
     #include "Units/Players/Player.h"
+    struct AddonEntry;
 #endif
 
 #include <stddef.h>
@@ -78,6 +79,8 @@ struct AddonEntry;
 
 #define NOTIFICATION_MESSAGE_NO_PERMISSION "You do not have permission to perform that function."
 //#define CHECK_PACKET_SIZE(x, y) if (y > 0 && x.size() < y) { _socket->Disconnect(); return; }
+
+#define REGISTERED_ADDON_PREFIX_SOFTCAP 64
 
 #if VERSION_STRING != Cata
 enum MovementFlags
@@ -501,9 +504,16 @@ class SERVER_DECL WorldSession
         void HandleRequestRaidInfoOpcode(WorldPacket& recvPacket);
         void HandleReadyCheckOpcode(WorldPacket& recv_data);
         void HandleGroupPromote(WorldPacket& recv_data);
+#if VERSION_STRING == Cata
+        void HandleGroupRoleCheckBeginOpcode(WorldPacket& recv_data);
+#endif
 
         //LFG
         void HandleLfgSetCommentOpcode(WorldPacket& recv_data);
+#if VERSION_STRING == Cata
+        void HandleLfgLockInfoOpcode(WorldPacket& recv_data);
+#endif
+
 #if VERSION_STRING > TBC
         void HandleLfgJoinOpcode(WorldPacket& recv_data);
         void HandleLfgLeaveOpcode(WorldPacket& recv_data);
@@ -891,9 +901,14 @@ class SERVER_DECL WorldSession
         void HandleRequestCemeteryListOpcode(WorldPacket& recv_data);
         void HandleForceSpeedAckOpcodes(WorldPacket& recv_data);
 
+        // Reports
+        void HandleReportOpcode(WorldPacket& recv_data);
+        void HandleReportPlayerOpcode(WorldPacket& recv_data);
+
     private:
         typedef std::list<AddonEntry> AddonsList;
         AddonsList m_addonList;
+
 
     public:
         void readAddonInfoPacket(ByteBuffer& recv_data);
@@ -901,6 +916,7 @@ class SERVER_DECL WorldSession
 #endif
 
         void Unhandled(WorldPacket& recv_data);
+        void nothingToHandle(WorldPacket& recv_data);
 
     public:
 
@@ -1000,6 +1016,15 @@ class SERVER_DECL WorldSession
         uint32 m_muted;
 #if VERSION_STRING > TBC
         void SendClientCacheVersion(uint32 version);
+#endif
+
+#if VERSION_STRING == Cata
+        bool isAddonMessageFiltered;
+        std::vector<std::string> mRegisteredAddonPrefixesVector;
+
+        bool isAddonRegistered(const std::string& addon_name) const;
+        void HandleUnregisterAddonPrefixesOpcode(WorldPacket& /*recv_data*/);
+        void HandleAddonRegisteredPrefixesOpcode(WorldPacket& recv_data);
 #endif
 
 };

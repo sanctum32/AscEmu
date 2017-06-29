@@ -397,6 +397,11 @@ class SERVER_DECL ByteBuffer
             return _rpos;
         };
 
+        void rfinish()
+        {
+            _rpos = wpos();
+        }
+
         size_t wpos()
         {
             return _wpos;
@@ -467,6 +472,11 @@ class SERVER_DECL ByteBuffer
         {
             return _storage.size();
         };
+
+        bool isEmpty() const
+        {
+            return _storage.empty();
+        }
 
         void resize(size_t newsize)
         {
@@ -931,6 +941,7 @@ class SERVER_DECL ByteBuffer
         const uint8* contents() const { return &_storage[0]; };
 
         inline size_t size() const { return _storage.size(); };
+        bool isEmpty() const { return _storage.empty(); }
         // one should never use resize probably
         void resize(size_t newsize)
         {
