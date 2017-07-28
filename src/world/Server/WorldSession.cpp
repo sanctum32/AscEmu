@@ -29,10 +29,13 @@
 #include "Server/LogonCommClient/LogonCommHandler.h"
 #include "Storage/MySQLDataStore.hpp"
 #include "Storage/MySQLStructures.h"
-#include "Management/LocalizationMgr.h"
 #include "Server/MainServerDefines.h"
 #include "Map/MapMgr.h"
 #include "Spell/Definitions/PowerType.h"
+
+#if VERSION_STRING != Cata
+#include "Management/Guild.h"
+#endif
 
 OpcodeHandler WorldPacketHandlers[NUM_MSG_TYPES];
 
@@ -345,12 +348,14 @@ void WorldSession::LogoutPlayer(bool Save)
 
         // Issue a message telling all guild members that this player signed
         // off
+#if VERSION_STRING != Cata
         if (_player->IsInGuild())
         {
             Guild* pGuild = _player->m_playerInfo->guild;
             if (pGuild != NULL)
-                pGuild->LogGuildEvent(GUILD_EVENT_HASGONEOFFLINE, 1, _player->GetName());
+                pGuild->LogGuildEvent(GE_SIGNED_OFF, 1, _player->GetName());
         }
+#endif
 
         _player->GetItemInterface()->EmptyBuyBack();
         _player->GetItemInterface()->removeLootableItems();
@@ -627,25 +632,6 @@ void WorldSession::Delete()
 
 char szError[64];
 
-// Returns a npc text indexed by id
-// These strings can be found in npc_script_text tables in the database
-const char* WorldSession::LocalizedCreatureTexts(uint32 id)
-{
-    NpcScriptText const* wst = sMySQLStore.getNpcScriptText(id);
-    if (!wst)
-    {
-        memset(szError, 0, 64);
-        sprintf(szError, "ID:%u is not in npc_script_text", id);
-        return szError;
-    }
-
-    LocalizedCreatureText* lpi = (language > 0) ? sLocalizationMgr.GetLocalizedCreatureText(id, language) : NULL;
-    if (lpi)
-        return lpi->Text;
-    else
-        return wst->text.c_str();
-}
-
 
 // Returns a gossip menu option indexed by id
 // These strings can be found in gossip_menu_option tables in the database
@@ -659,11 +645,15 @@ const char* WorldSession::LocalizedGossipOption(uint32 id)
         return szError;
     }
 
-    LocalizedGossipMenuOption* lpi = (language > 0) ? sLocalizationMgr.GetLocalizedGossipMenuOption(id, language) : NULL;
-    if (lpi)
-        return lpi->Text;
+    MySQLStructure::LocalesGossipMenuOption const* lpi = (language > 0) ? sMySQLStore.getLocalizedGossipMenuOption(id, language) : nullptr;
+    if (lpi != nullptr)
+    {
+        return lpi->name;
+    }
     else
+    {
         return wst->text.c_str();
+    }
 }
 
 // Returns a worldstring indexed by id
@@ -678,16 +668,20 @@ const char* WorldSession::LocalizedWorldSrv(uint32 id)
         return szError;
     }
 
-    LocalizedWorldStringTable* lpi = (language > 0) ? sLocalizationMgr.GetLocalizedWorldStringTable(id, language) : NULL;
-    if (lpi)
-        return lpi->Text;
+    MySQLStructure::LocalesWorldStringTable const* lpi = (language > 0) ? sMySQLStore.getLocalizedWorldStringTable(id, language) : nullptr;
+    if (lpi != nullptr)
+    {
+        return lpi->text;
+    }
     else
+    {
         return wst->text.c_str();
+    }
 }
 
 const char* WorldSession::LocalizedMapName(uint32 id)
 {
-    MapInfo const* mi = sMySQLStore.getWorldMapInfo(id);
+    MySQLStructure::MapInfo const* mi = sMySQLStore.getWorldMapInfo(id);
     if (!mi)
     {
         memset(szError, 0, 64);
@@ -695,11 +689,15 @@ const char* WorldSession::LocalizedMapName(uint32 id)
         return szError;
     }
 
-    LocalizedWorldMapInfo* lpi = (language > 0) ? sLocalizationMgr.GetLocalizedWorldMapInfo(id, language) : NULL;
-    if (lpi)
-        return lpi->Text;
+    MySQLStructure::LocalesWorldmapInfo const* lpi = (language > 0) ? sMySQLStore.getLocalizedWorldmapInfo(id, language) : nullptr;
+    if (lpi != nullptr)
+    {
+        return lpi->text;
+    }
     else
+    {
         return mi->name.c_str();
+    }
 }
 
 const char* WorldSession::LocalizedBroadCast(uint32 id)
@@ -712,10 +710,10 @@ const char* WorldSession::LocalizedBroadCast(uint32 id)
         return szError;
     }
 
-    LocalizedWorldBroadCast* lpi = (language > 0) ? sLocalizationMgr.GetLocalizedWorldBroadCast(id, language) : nullptr;
+    MySQLStructure::LocalesWorldbroadcast const* lpi = (language > 0) ? sMySQLStore.getLocalizedWorldbroadcast(id, language) : nullptr;
     if (lpi)
     {
-        return lpi->Text;
+        return lpi->text;
     }
     else
     {
@@ -1207,10 +1205,17 @@ void WorldSession::HandleMirrorImageOpcode(WorldPacket& recv_data)
         data << uint8(pcaster->GetByte(PLAYER_BYTES, 3));	// hair color
         data << uint8(pcaster->GetByte(PLAYER_BYTES_2, 0));	// facial hair
 
+#if VERSION_STRING != Cata
         if (pcaster->IsInGuild())
             data << uint32(pcaster->GetGuildId());
         else
             data << uint32(0);
+#else
+        if (pcaster->GetGuild())
+            data << uint32(pcaster->GetGuildId());
+        else
+            data << uint32(0);
+#endif
 
         static const uint32 imageitemslots[] =
         {
@@ -1260,7 +1265,9 @@ void WorldSession::HandleMirrorImageOpcode(WorldPacket& recv_data)
 }
 
 void WorldSession::Unhandled(WorldPacket& recv_data)
-{}
+{
+    recv_data.rfinish();
+}
 
 void WorldSession::nothingToHandle(WorldPacket& recv_data)
 {
@@ -1307,32 +1314,60 @@ void WorldSession::SendClientCacheVersion(uint32 version)
 }
 #endif
 
-void WorldSession::SendPacket(WorldPacket* packet) {
+void WorldSession::SendPacket(WorldPacket* packet)
+{
+    if (packet->GetOpcode() == 0x0000)
+    {
+        LOG_ERROR("Return, packet 0x0000 is not a valid packet!");
+        return;
+    }
+
     if (_socket && _socket->IsConnected())
+    {
         _socket->SendPacket(packet);
+    }
 }
 
-void WorldSession::SendPacket(StackBufferBase* packet) {
+void WorldSession::SendPacket(StackBufferBase* packet)
+{
+    if (packet->GetOpcode() == 0x0000)
+    {
+        LOG_ERROR("Return, packet 0x0000 is not a valid packet!");
+        return;
+    }
+
     if (_socket && _socket->IsConnected())
+    {
         _socket->SendPacket(packet);
+    }
 }
 
-void WorldSession::OutPacket(uint16 opcode) {
+void WorldSession::OutPacket(uint16 opcode)
+{
     if (_socket && _socket->IsConnected())
+    {
         _socket->OutPacket(opcode, 0, NULL);
+    }
 }
 
-void WorldSession::OutPacket(uint16 opcode, uint16 len, const void* data) {
+void WorldSession::OutPacket(uint16 opcode, uint16 len, const void* data)
+{
     if (_socket && _socket->IsConnected())
+    {
         _socket->OutPacket(opcode, len, data);
+    }
 }
 
-void WorldSession::QueuePacket(WorldPacket* packet) {
+void WorldSession::QueuePacket(WorldPacket* packet)
+{
     m_lastPing = (uint32)UNIXTIME;
     _recvQueue.Push(packet);
 }
 
-void WorldSession::Disconnect() {
+void WorldSession::Disconnect()
+{
     if (_socket && _socket->IsConnected())
+    {
         _socket->Disconnect();
+    }
 }

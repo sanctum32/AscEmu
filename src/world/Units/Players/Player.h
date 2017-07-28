@@ -35,6 +35,10 @@
 #include "WorldConf.h"
 #include "Management/AuctionHouse.h"
 
+#if VERSION_STRING == Cata
+#include "GameCata/Management/Guild.h"
+#endif
+
 
 class QuestLogEntry;
 struct BGScore;
@@ -190,9 +194,14 @@ class SERVER_DECL PlayerInfo
         PlayerInstanceMap savedInstanceIds[NUM_INSTANCE_MODES];
 
         Player* m_loggedInPlayer;
+#if VERSION_STRING != Cata
         Guild* guild;
         GuildRank* guildRank;
         GuildMember* guildMember;
+#else
+        uint32 m_guild;
+        uint32 guildRank;
+#endif
 };
 
 struct PlayerPet
@@ -318,6 +327,18 @@ class PlayerSpec
         }
 
         void AddTalent(uint32 talentid, uint8 rankid);
+        bool HasTalent(uint32 talentid, uint8 rankid)
+        {
+            std::map<uint32, uint8>::iterator itr = talents.find(talentid);
+            if (itr != talents.end())
+            {
+                return itr->second == rankid;
+            }
+            else
+            {
+                return false;
+            }
+        }
 
         std::map<uint32, uint8> talents;
         uint16 glyphs[GLYPHS_COUNT];
@@ -400,7 +421,8 @@ public:
 
     void handleFall(MovementInfo const& movement_info);
     bool isPlayerJumping(MovementInfo const& movement_info, uint16_t opcode);
-    void handleBreathing(MovementInfo& movement_info, WorldSession* session);
+    void handleBreathing(MovementInfo const& movement_info, WorldSession* session);
+    void handleAuraInterruptForMovementFlags(MovementInfo const& movement_info);
 
     //////////////////////////////////////////////////////////////////////////////////////////
     // Spells
@@ -433,8 +455,21 @@ public:
 
     void sendReportToGmMessage(std::string playerName, std::string damageLog);
 
-
+#if VERSION_STRING == Cata
 private:
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Chat
+public:
+    void sendChatPacket(uint32_t type, uint32_t language, const char* message, uint64_t guid, uint8_t flag);
+    WorldPacket buildChatMessagePacket(Player* targetPlayer, uint32_t type, uint32_t language, const char* message, uint64_t guid, uint8_t flag);
+    bool hasLanguage(uint32_t language);
+    bool hasSkilledSkill(uint32_t skill);
+#endif
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Misc
+    bool isGMFlagSet();
     //MIT End
     //AGPL Start
 
@@ -930,24 +965,17 @@ private:
         /////////////////////////////////////////////////////////////////////////////////////////
         // Guilds
         /////////////////////////////////////////////////////////////////////////////////////////
+#if VERSION_STRING != Cata
         Guild* GetGuild() { return m_playerInfo->guild; }
 
         //\todo fix this
         bool IsInGuild()
         {
-#if VERSION_STRING != Cata
             return (m_uint32Values[PLAYER_GUILDID] != 0) ? true : false;
-#else
-            return false;
-#endif
         }
         uint32 GetGuildId()
         {
-#if VERSION_STRING != Cata
             return m_uint32Values[PLAYER_GUILDID];
-#else
-            return 0;
-#endif
         }
         void SetGuildId(uint32 guildId);
         uint32 GetGuildRank() { return m_uint32Values[PLAYER_GUILDRANK]; }
@@ -957,6 +985,33 @@ private:
         void SetGuildInvitersGuid(uint32 guid) { m_invitersGuid = guid; }
         void UnSetGuildInvitersGuid() { m_invitersGuid = 0; }
         GuildMember* GetGuildMember() { return m_playerInfo->guildMember; }
+#else
+        uint32 m_GuildId;
+        uint32 m_GuildIdInvited;
+
+        void SetGuildId(uint32 guildId);
+        void SetGuildRank(uint32 guildRank);
+        void SetInGuild(uint32 guildId);
+
+        void SetRank(uint8 rankId) { SetUInt32Value(PLAYER_GUILDRANK, rankId); }
+        uint8 GetRank() const { return uint8(GetUInt32Value(PLAYER_GUILDRANK)); }
+
+        void SetGuildLevel(uint32 level) { SetUInt32Value(PLAYER_GUILDLEVEL, level); }
+        uint32 GetGuildLevel() { return GetUInt32Value(PLAYER_GUILDLEVEL); }
+
+        void SetGuildIdInvited(uint32 GuildId) { m_GuildIdInvited = GuildId; }
+        uint32 GetGuildId() const { return GetUInt32Value(OBJECT_FIELD_DATA); /* return only lower part */ }
+        Guild* GetGuild();
+        bool IsInGuild() { return GetGuild() != nullptr; }
+
+        static uint32 GetGuildIdFromDB(uint64 guid);
+        static int8 GetRankFromDB(uint64 guid);
+        uint32 GetGuildRank() { return (uint32)GetRankFromDB(GetGUID()); }
+
+        int GetGuildIdInvited() { return m_GuildIdInvited; }
+
+        std::string GetGuildName();
+#endif
 
         /////////////////////////////////////////////////////////////////////////////////////////
         // Duel
@@ -1813,6 +1868,7 @@ private:
 #if VERSION_STRING > TBC
         void SetGlyph(uint32 slot, uint32 id) { SetUInt32Value(PLAYER_FIELD_GLYPHS_1 + slot, id); }
         uint32 GetGlyph(uint32 slot) { return GetUInt32Value(PLAYER_FIELD_GLYPHS_1 + slot); }
+        uint32 GetGlyph(uint32 spec, uint32 slot) const { return m_specs[spec].glyphs[slot]; }
 #endif
 
         /// Do this on /pvp off
@@ -2176,7 +2232,9 @@ private:
         PlayerInfo* getPlayerInfo() const { return m_playerInfo; }
 
         void LoadFieldsFromString(const char* string, uint32 firstField, uint32 fieldsNum);
+#if VERSION_STRING > TBC
         void UpdateGlyphs();
+#endif
 
         // Avenging Wrath
         bool mAvengingWrath;

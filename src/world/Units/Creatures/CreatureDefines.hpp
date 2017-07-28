@@ -88,16 +88,6 @@ struct spawn_timed_emotes
 };
 typedef std::list<spawn_timed_emotes*> TimedEmoteList;
 
-struct NpcMonsterSay
-{
-    float Chance;
-    uint32 Language;
-    uint32 Type;
-    const char* MonsterName;
-
-    uint32 TextCount;
-    const char** Texts;
-};
 
 enum MONSTER_SAY_EVENTS
 {
@@ -172,7 +162,6 @@ struct CreatureProperties
     uint32 waypointid;
 
     std::string lowercase_name;
-    NpcMonsterSay* MonsterSay[NUM_MONSTER_SAY_EVENTS];
 
     uint8 GetGenderAndCreateRandomDisplayID(uint32* des) const
     {
@@ -236,13 +225,6 @@ struct CreatureProperties
 
 #pragma pack(pop)
 
-//\brief used in class FormationMgr
-struct Formation
-{
-    uint32 fol;
-    float ang;
-    float dist;
-};
 
 enum UNIT_TYPE
 {

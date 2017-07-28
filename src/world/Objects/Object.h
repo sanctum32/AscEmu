@@ -34,6 +34,7 @@
 
 #include "WoWGuid.h"
 #include "../shared/LocationVector.h"
+#include "Storage/MySQLStructures.h"
 #include "Storage/DBC/DBCStructures.hpp"
 #if VERSION_STRING == Cata
     #include "Storage/DB2/DB2Structures.h"
@@ -41,6 +42,7 @@
 #include "../shared/StackBuffer.h"
 #include "../shared/CommonDefines.hpp"
 #include "WorldPacket.h"
+#include "Units/Creatures/CreatureDefines.hpp"
 
 class SpellInfo;
 
@@ -79,6 +81,7 @@ enum HIGHGUID_TYPE
     HIGHGUID_TYPE_PET				= 0xF1400000,
     HIGHGUID_TYPE_VEHICLE			= 0xF1500000,
     HIGHGUID_TYPE_GROUP             = 0x1F500000,
+    HIGHGUID_TYPE_GUILD             = 0x1FF70000,
 //===============================================
     HIGHGUID_TYPE_MASK				= 0xFFF00000,
     LOWGUID_ENTRY_MASK				= 0x00FFFFFF,
@@ -584,6 +587,9 @@ public:
         }
 
         void EventSetUInt32Value(uint32 index, uint32 value);
+
+        void SetUInt16Value(uint16 index, uint8 offset, uint16 value);
+        uint16 GetUInt16Value(uint16 index, uint8 offset) const;
         void SetUInt32Value(const uint32 index, const uint32 value);
 
         /// Set uint64 property
@@ -600,6 +606,14 @@ public:
         {
             ARCEMU_ASSERT(index < m_valuesCount);
             return m_uint32Values[index] & flag;
+        }
+
+        void ApplyModFlag(uint16 index, uint32 flag, bool apply)
+        {
+            if (apply)
+                SetFlag(index, flag);
+            else
+                RemoveFlag(index, flag);
         }
 
         ////////////////////////////////////////
@@ -764,6 +778,9 @@ public:
         //////////////////////////////////////////////////////////////////////////////////////////
         virtual void SendPacket(WorldPacket* packet) {};
 
+
+        void SendCreatureChatMessageInRange(Creature* creature, uint32_t textId);
+        void SendMonsterSayMessageInRange(Creature* creature, MySQLStructure::NpcMonsterSay* npcMonsterSay, int randChoice, uint32_t event);
 
         virtual void SendMessageToSet(WorldPacket* data, bool self, bool myteam_only = false);
         void SendMessageToSet(StackBufferBase* data, bool self) { OutPacketToSet(data->GetOpcode(), static_cast<uint16>(data->GetSize()), data->GetBufferPointer(), self); }

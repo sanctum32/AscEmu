@@ -20,7 +20,6 @@ This file is released under the MIT license. See README-MIT for more information
 #include "WorldSocket.h"
 #include "Storage/MySQLDataStore.hpp"
 #include <CrashHandler.h>
-#include "Management/LocalizationMgr.h"
 #include "Server/MainServerDefines.h"
 #include "Config/Config.h"
 #include "Map/MapCell.h"
@@ -30,6 +29,11 @@ This file is released under the MIT license. See README-MIT for more information
 #include "BroadcastMgr.h"
 #include "World.Legacy.h"
 #include "Spell/Customization/SpellCustomizations.hpp"
+
+#if VERSION_STRING == Cata
+#include "GameCata/Management/GuildMgr.h"
+#include "GameCata/Management/GuildFinderMgr.h"
+#endif
 
 initialiseSingleton(World);
 
@@ -79,9 +83,6 @@ World::World()
 
 World::~World()
 {
-    LogNotice("LocalizationMgr : ~LocalizationMgr()");
-    sLocalizationMgr.Shutdown();
-
     LogNotice("WorldLog : ~WorldLog()");
     delete WorldLog::getSingletonPtr();
 
@@ -106,6 +107,14 @@ World::~World()
     LogNotice("TaxiMgr : ~TaxiMgr()");
     delete TaxiMgr::getSingletonPtr();
 
+#if VERSION_STRING == Cata
+    LogNotice("GuildMgr", "~GuildMgr()");
+    delete GuildMgr::getSingletonPtr();
+    
+    LogNotice("GuildFinderMgr", "~GuildFinderMgr()");
+    delete GuildFinderMgr::getSingletonPtr();
+#endif
+
     LogNotice("BattlegroundMgr : ~BattlegroundMgr()");
     delete CBattlegroundManager::getSingletonPtr();
 
@@ -123,6 +132,9 @@ World::~World()
 
     LogNotice("SpellFactoryMgr : ~SpellFactoryMgr()");
     delete SpellFactoryMgr::getSingletonPtr();
+
+    LogNotice("MySQLDataStore : ~MySQLDataStore()");
+    delete MySQLDataStore::getSingletonPtr();
 
     delete mEventableObjectHolder;
 
@@ -731,6 +743,10 @@ bool World::setInitialWorldSettings()
         return false;
 
     new TaxiMgr;
+#if VERSION_STRING == Cata
+    new GuildFinderMgr;
+    new GuildMgr;
+#endif
     new ChatHandler;
     new SpellProcMgr;
 
@@ -769,6 +785,14 @@ bool World::setInitialWorldSettings()
     LogDetail("World : Loading LFG rewards...");
     new LfgMgr;
     sLfgMgr.LoadRewards();
+
+#if VERSION_STRING == Cata
+    sGuildMgr.loadGuildXpForLevelFromDB();
+    sGuildMgr.loadGuildRewardsFromDB();
+    sGuildMgr.loadGuildDataFromDB();
+
+    sGuildFinderMgr.loadGuildFinderDataFromDB();
+#endif
 
     mQueueUpdateTimer = settings.server.queueUpdateInterval;
 
@@ -865,6 +889,24 @@ void World::loadMySQLStores()
     sMySQLStore.loadAreaTriggerTable();
     sMySQLStore.loadWordFilterCharacterNames();
     sMySQLStore.loadWordFilterChat();
+    sMySQLStore.loadCreatureFormationsTable();
+
+    sMySQLStore.loadLocalesCreature();
+    sMySQLStore.loadLocalesGameobject();
+    sMySQLStore.loadLocalesGossipMenuOption();
+    sMySQLStore.loadLocalesItem();
+    sMySQLStore.loadLocalesItemPages();
+    sMySQLStore.loadLocalesNPCMonstersay();
+    sMySQLStore.loadLocalesNpcScriptText();
+    sMySQLStore.loadLocalesNpcText();
+    sMySQLStore.loadLocalesQuest();
+    sMySQLStore.loadLocalesWorldbroadcast();
+    sMySQLStore.loadLocalesWorldmapInfo();
+    sMySQLStore.loadLocalesWorldStringTable();
+
+    sMySQLStore.loadNpcMonstersayTable();
+    //sMySQLStore.loadDefaultPetSpellsTable();      Zyres 2017/07/16 not used
+    sMySQLStore.loadProfessionDiscoveriesTable();
 }
 
 void World::loadMySQLTablesByTask(uint32_t start_time)
@@ -904,17 +946,14 @@ void World::loadMySQLTablesByTask(uint32_t start_time)
     MAKE_TASK(ObjectMgr, LoadSpellRequired);
     MAKE_TASK(ObjectMgr, LoadSkillLineAbilityMap);
 #endif
-    MAKE_TASK(ObjectMgr, LoadDefaultPetSpells);
     MAKE_TASK(ObjectMgr, LoadPetSpellCooldowns);
     MAKE_TASK(ObjectMgr, LoadGuildCharters);
     MAKE_TASK(ObjectMgr, LoadGMTickets);
     MAKE_TASK(ObjectMgr, SetHighestGuids);
     MAKE_TASK(ObjectMgr, LoadReputationModifiers);
-    MAKE_TASK(ObjectMgr, LoadMonsterSay);
     MAKE_TASK(ObjectMgr, LoadGroups);
     MAKE_TASK(ObjectMgr, LoadCreatureAIAgents);
     MAKE_TASK(ObjectMgr, LoadArenaTeams);
-    MAKE_TASK(ObjectMgr, LoadProfessionDiscoveries);
     MAKE_TASK(ObjectMgr, LoadVehicleAccessories);
     MAKE_TASK(ObjectMgr, LoadWorldStateTemplates);
 
@@ -935,8 +974,6 @@ void World::loadMySQLTablesByTask(uint32_t start_time)
 #undef MAKE_TASK
 
     tl.wait();
-
-    sLocalizationMgr.Reload(false);
 
     CommandTableStorage::getSingleton().Load();
     LogNotice("WordFilter : Loading...");
@@ -974,6 +1011,10 @@ void World::Update(unsigned long time_passed)
 #ifdef SESSION_CAP
     if (GetSessionCount() >= SESSION_CAP)
         TerminateProcess(GetCurrentProcess(), 0);
+#endif
+
+#if VERSION_STRING == Cata
+    sGuildMgr.update((uint32)time_passed);
 #endif
 }
 

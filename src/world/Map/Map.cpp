@@ -27,7 +27,7 @@
 
 // Class Map
 // Holder for all instances of each mapmgr, handles transferring players between, and template holding.
-Map::Map(uint32 mapid, MapInfo const* inf)
+Map::Map(uint32 mapid, MySQLStructure::MapInfo const* inf)
 {
     memset(spawns, 0, sizeof(CellSpawns*) * _sizeX);
 
@@ -150,7 +150,7 @@ void Map::LoadSpawns(bool reload)
                     Field* fields = creature_spawn_result->Fetch();
                     CreatureSpawn* cspawn = new CreatureSpawn;
                     cspawn->id = fields[0].GetUInt32();
-                    cspawn->form = FormationMgr::getSingleton().GetFormation(cspawn->id);
+                    cspawn->form = sMySQLStore.getCreatureFormationBySpawnId(cspawn->id);
 
                     uint32 creature_entry = fields[1].GetUInt32();
                     auto creature_properties = sMySQLStore.getCreatureProperties(creature_entry);

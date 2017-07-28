@@ -20,10 +20,15 @@
  */
 
 #include "StdAfx.h"
+#include "Management/Guild.h"
 #include "Management/Item.h"
 #include "Management/ItemInterface.h"
 #include "Server/MainServerDefines.h"
 #include "../../scripts/Common/Base.h"
+#include "WorldConf.h"
+#include "Guild/GuildDefinitions.h"
+
+#if VERSION_STRING != Cata
 
 Guild::Guild()
 {
@@ -76,11 +81,17 @@ Guild::~Guild()
     for (GuildBankTabVector::iterator itr = m_bankTabs.begin(); itr != m_bankTabs.end(); ++itr)
     {
         for (uint8 i = 0; i < MAX_GUILD_BANK_SLOTS; ++i)
+        {
             if ((*itr)->pSlots[i] != NULL)
+            {
                 (*itr)->pSlots[i]->DeleteMe();
+            }
+        }
 
         for (std::list<GuildBankEvent*>::iterator it2 = (*itr)->lLog.begin(); it2 != (*itr)->lLog.end(); ++it2)
+        {
             delete(*it2);
+        }
         (*itr)->lLog.clear();
 
         free((*itr)->szTabIcon);
@@ -104,10 +115,12 @@ Guild::~Guild()
         free(m_guildName);
 }
 
-void Guild::SendGuildCommandResult(WorldSession* pClient, uint32 iCmd, const char* szMsg, uint32 iType)
+void Guild::sendCommandResult(WorldSession* pClient, GuildCommandType iCmd, GuildCommandError iType, const char* szMsg)
 {
     WorldPacket data(SMSG_GUILD_COMMAND_RESULT, (9 + strlen(szMsg)));
-    data << iCmd << szMsg << iType;
+    data << uint32_t(iCmd);
+    data << szMsg;
+    data << uint32_t(iType);
     pClient->SendPacket(&data);
 }
 
@@ -166,7 +179,7 @@ void Guild::LogGuildEvent(uint8 iEvent, uint8 iStringCount, ...)
     }
 
     va_end(ap);
-    SendPacket(&data);
+    sendPacket(&data);
 }
 
 void Guild::AddGuildLogEntry(uint8 iEvent, uint8 iParamCount, ...)
@@ -211,7 +224,7 @@ void Guild::AddGuildLogEntry(uint8 iEvent, uint8 iParamCount, ...)
     m_lock.Release();
 }
 
-void Guild::SendPacket(WorldPacket* data)
+void Guild::sendPacket(WorldPacket* data)
 {
     m_lock.Acquire();
     for (GuildMemberMap::iterator itr = m_members.begin(); itr != m_members.end(); ++itr)
@@ -319,7 +332,7 @@ void Guild::PromoteGuildMember(PlayerInfo* pMember, WorldSession* pClient)
     if (!pClient->GetPlayer()->getPlayerInfo()->guildRank->CanPerformCommand(GR_RIGHT_PROMOTE) ||
         (pMember->guildRank->iId - pClient->GetPlayer()->getPlayerInfo()->guildRank->iId) <= 1)
     {
-        SendGuildCommandResult(pClient, GUILD_PROMOTE_S, "", GUILD_PERMISSIONS);
+        sendCommandResult(pClient, GC_TYPE_PROMOTE, GC_ERROR_PERMISSIONS);
         return;
     }
 
@@ -360,8 +373,8 @@ void Guild::PromoteGuildMember(PlayerInfo* pMember, WorldSession* pClient)
     itr->second->pPlayer->guildRank = newRank;
 
     // log it
-    LogGuildEvent(GUILD_EVENT_PROMOTION, 3, pClient->GetPlayer()->GetName(), pMember->name, newRank->szRankName);
-    AddGuildLogEntry(GUILD_LOG_EVENT_PROMOTION, 3, pClient->GetPlayer()->GetLowGUID(), pMember->guid, newRank->iId);
+    LogGuildEvent(GE_PROMOTION, 3, pClient->GetPlayer()->GetName(), pMember->name, newRank->szRankName);
+    AddGuildLogEntry(GE_LOG_PROMOTE_PLAYER, 3, pClient->GetPlayer()->GetLowGUID(), pMember->guid, newRank->iId);
 
     // update in the database
     CharacterDatabase.Execute("UPDATE guild_data SET guildRank = %u WHERE playerid = %u AND guildid = %u", newRank->iId, pMember->guid, m_guildId);
@@ -383,7 +396,7 @@ void Guild::DemoteGuildMember(PlayerInfo* pMember, WorldSession* pClient)
         pMember->guid == GetGuildLeader() ||
         pClient->GetPlayer()->getPlayerInfo()->guildRank->iId >= pMember->guildRank->iId)
     {
-        SendGuildCommandResult(pClient, GUILD_PROMOTE_S, "", GUILD_PERMISSIONS);
+        sendCommandResult(pClient, GC_TYPE_PROMOTE, GC_ERROR_PERMISSIONS);
         return;
     }
 
@@ -417,8 +430,8 @@ void Guild::DemoteGuildMember(PlayerInfo* pMember, WorldSession* pClient)
     itr->second->pPlayer->guildRank = newRank;
 
     // log it
-    LogGuildEvent(GUILD_EVENT_DEMOTION, 3, pClient->GetPlayer()->GetName(), pMember->name, newRank->szRankName);
-    AddGuildLogEntry(GUILD_LOG_EVENT_DEMOTION, 3, pClient->GetPlayer()->GetLowGUID(), pMember->guid, newRank->iId);
+    LogGuildEvent(GE_DEMOTION, 3, pClient->GetPlayer()->GetName(), pMember->name, newRank->szRankName);
+    AddGuildLogEntry(GE_LOG_DEMOTE_PLAYER, 3, pClient->GetPlayer()->GetLowGUID(), pMember->guid, newRank->iId);
 
     // update in the database
     CharacterDatabase.Execute("UPDATE guild_data SET guildRank = %u WHERE playerid = %u AND guildid = %u", newRank->iId, pMember->guid, m_guildId);
@@ -450,8 +463,10 @@ bool Guild::LoadFromDB(Field* f)
     // load ranks
     uint32 j;
     QueryResult* result = CharacterDatabase.Query("SELECT * FROM guild_ranks WHERE guildId = %u ORDER BY rankId ASC", m_guildId);
-    if (result == NULL)
+    if (result == nullptr)
+    {
         return false;
+    }
 
     uint32 sid = 0;
 
@@ -676,9 +691,9 @@ void Guild::SetMOTD(const char* szNewMotd, WorldSession* pClient)
     if (pClient->GetPlayer()->getPlayerInfo()->guild != this)
         return;
 
-    if (!pClient->GetPlayer()->getPlayerInfo()->guildRank->CanPerformCommand(GR_RIGHT_SETMOTD))
+    if (pClient->GetPlayer()->getPlayerInfo()->guildRank->CanPerformCommand(GR_RIGHT_SETMOTD) == false)
     {
-        Guild::SendGuildCommandResult(pClient, GUILD_INVITE_S, "", GUILD_PERMISSIONS);
+        Guild::sendCommandResult(pClient, GC_TYPE_INVITE, GC_ERROR_PERMISSIONS);
         return;
     }
 
@@ -696,7 +711,7 @@ void Guild::SetMOTD(const char* szNewMotd, WorldSession* pClient)
         CharacterDatabase.Execute("UPDATE guilds SET motd = \'\' WHERE guildId = %u", m_guildId);
     }
 
-    LogGuildEvent(GUILD_EVENT_MOTD, 1, szNewMotd);
+    LogGuildEvent(GE_MOTD, 1, szNewMotd);
 }
 
 void Guild::SetGuildInformation(const char* szGuildInformation, WorldSession* pClient)
@@ -706,7 +721,7 @@ void Guild::SetGuildInformation(const char* szGuildInformation, WorldSession* pC
 
     if (!pClient->GetPlayer()->getPlayerInfo()->guildRank->CanPerformCommand(GR_RIGHT_EGUILDINFO))
     {
-        Guild::SendGuildCommandResult(pClient, GUILD_INVITE_S, "", GUILD_PERMISSIONS);
+        Guild::sendCommandResult(pClient, GC_TYPE_INVITE, GC_ERROR_PERMISSIONS);
         return;
     }
 
@@ -777,8 +792,8 @@ void Guild::AddGuildMember(PlayerInfo* pMember, WorldSession* pClient, int32 For
     }
 
     CharacterDatabase.Execute("INSERT INTO guild_data VALUES(%u, %u, %u, '', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)", m_guildId, pMember->guid, r->iId);
-    LogGuildEvent(GUILD_EVENT_JOINED, 1, pMember->name);
-    AddGuildLogEntry(GUILD_LOG_EVENT_JOIN, 1, pMember->guid);
+    LogGuildEvent(GE_JOINED, 1, pMember->name);
+    AddGuildLogEntry(GE_LOG_JOIN_GUILD, 1, pMember->guid);
     m_lock.Release();
 }
 
@@ -797,7 +812,7 @@ void Guild::RemoveGuildMember(PlayerInfo* pMember, WorldSession* pClient)
             && pClient->GetPlayer()->getPlayerInfo() != pMember)
             || (RDiff <= 0 && pClient->GetPlayer()->getPlayerInfo() != pMember))
         {
-            Guild::SendGuildCommandResult(pClient, GUILD_CREATE_S, "", GUILD_PERMISSIONS);
+            Guild::sendCommandResult(pClient, GC_TYPE_CREATE, GC_ERROR_PERMISSIONS);
             return;
         }
     }
@@ -830,13 +845,13 @@ void Guild::RemoveGuildMember(PlayerInfo* pMember, WorldSession* pClient)
     {
         if (plr)
             sChatHandler.SystemMessage(plr->GetSession(), "You have been kicked from the guild by %s", pClient->GetPlayer()->GetName());
-        LogGuildEvent(GUILD_EVENT_REMOVED, 2, pMember->name, pClient->GetPlayer()->GetName());
-        AddGuildLogEntry(GUILD_LOG_EVENT_REMOVAL, 2, pClient->GetPlayer()->GetLowGUID(), pMember->guid);
+        LogGuildEvent(GE_REMOVED, 2, pMember->name, pClient->GetPlayer()->GetName());
+        AddGuildLogEntry(GE_LOG_UNINVITE_PLAYER, 2, pClient->GetPlayer()->GetLowGUID(), pMember->guid);
     }
     else
     {
-        LogGuildEvent(GUILD_EVENT_LEFT, 1, pMember->name);
-        AddGuildLogEntry(GUILD_LOG_EVENT_LEFT, 1, pMember->guid);
+        LogGuildEvent(GE_LEFT, 1, pMember->name);
+        AddGuildLogEntry(GE_LOG_LEAVE_GUILD, 1, pMember->guid);
     }
 
     m_lock.Release();
@@ -863,7 +878,7 @@ void Guild::SetPublicNote(PlayerInfo* pMember, const char* szNewNote, WorldSessi
 
     if (!pClient->GetPlayer()->getPlayerInfo()->guildRank->CanPerformCommand(GR_RIGHT_EPNOTE))
     {
-        Guild::SendGuildCommandResult(pClient, GUILD_MEMBER_S, "", GUILD_PERMISSIONS);
+        Guild::sendCommandResult(pClient, GC_TYPE_GUILD_CHAT, GC_ERROR_PERMISSIONS);
         return;
     }
 
@@ -890,7 +905,7 @@ void Guild::SetPublicNote(PlayerInfo* pMember, const char* szNewNote, WorldSessi
     }
     m_lock.Release();
 
-    Guild::SendGuildCommandResult(pClient, GUILD_PUBLIC_NOTE_CHANGED_S, pMember->name, 0);
+    Guild::sendCommandResult(pClient, GC_TYPE_PUBLIC_NOTE, GC_ERROR_SUCCESS, pMember->name);
 }
 
 void Guild::SetOfficerNote(PlayerInfo* pMember, const char* szNewNote, WorldSession* pClient)
@@ -903,7 +918,7 @@ void Guild::SetOfficerNote(PlayerInfo* pMember, const char* szNewNote, WorldSess
 
     if (!pClient->GetPlayer()->getPlayerInfo()->guildRank->CanPerformCommand(GR_RIGHT_EOFFNOTE))
     {
-        Guild::SendGuildCommandResult(pClient, GUILD_MEMBER_S, "", GUILD_PERMISSIONS);
+        Guild::sendCommandResult(pClient, GC_TYPE_GUILD_CHAT, GC_ERROR_PERMISSIONS);
         return;
     }
 
@@ -930,7 +945,7 @@ void Guild::SetOfficerNote(PlayerInfo* pMember, const char* szNewNote, WorldSess
     }
     m_lock.Release();
 
-    Guild::SendGuildCommandResult(pClient, GUILD_OFFICER_NOTE_CHANGED_S, pMember->name, 0);
+    Guild::sendCommandResult(pClient, GC_TYPE_CHANGE_RANK, GC_ERROR_SUCCESS, pMember->name);
 }
 
 void Guild::RemoveGuildRank(WorldSession* pClient)
@@ -963,7 +978,7 @@ void Guild::RemoveGuildRank(WorldSession* pClient)
     m_lock.Release();
 }
 
-void Guild::Disband()
+void Guild::disband()
 {
     m_lock.Acquire();
     for (GuildMemberMap::iterator itr = m_members.begin(); itr != m_members.end(); ++itr)
@@ -995,7 +1010,7 @@ void Guild::ChangeGuildMaster(PlayerInfo* pNewMaster, WorldSession* pClient)
 {
     if (pClient->GetPlayer()->GetLowGUID() != m_guildLeader)
     {
-        Guild::SendGuildCommandResult(pClient, GUILD_PROMOTE_S, "", GUILD_PERMISSIONS);
+        Guild::sendCommandResult(pClient, GC_TYPE_PROMOTE, GC_ERROR_PERMISSIONS);
         return;
     }
 
@@ -1012,14 +1027,14 @@ void Guild::ChangeGuildMaster(PlayerInfo* pNewMaster, WorldSession* pClient)
     ARCEMU_ASSERT(m_ranks[0] != NULL);
     if (itr == m_members.end())
     {
-        Guild::SendGuildCommandResult(pClient, GUILD_PROMOTE_S, pNewMaster->name, GUILD_PLAYER_NOT_IN_GUILD_S);
+        Guild::sendCommandResult(pClient, GC_TYPE_PROMOTE, GC_ERROR_PLAYER_NOT_IN_GUILD_S, pNewMaster->name);
         m_lock.Release();
         return;
     }
     if (itr2 == m_members.end())
     {
         // wtf??
-        Guild::SendGuildCommandResult(pClient, GUILD_PROMOTE_S, "", GUILD_INTERNAL);
+        Guild::sendCommandResult(pClient, GC_TYPE_PROMOTE, GC_ERROR_INTERNAL);
         m_lock.Release();
         return;
     }
@@ -1035,7 +1050,7 @@ void Guild::ChangeGuildMaster(PlayerInfo* pNewMaster, WorldSession* pClient)
     m_lock.Release();
 
 
-    LogGuildEvent(GUILD_EVENT_LEADER_CHANGED, 2, pClient->GetPlayer()->GetName(), pNewMaster->name);
+    LogGuildEvent(GE_LEADER_CHANGED, 2, pClient->GetPlayer()->GetName(), pNewMaster->name);
     ///\todo Figure out the GUILD_LOG_EVENT_LEADER_CHANGED code
 }
 
@@ -1055,12 +1070,12 @@ void Guild::GuildChat(const char* szMessage, WorldSession* pClient, uint32 iType
 
     if (!pClient->GetPlayer()->getPlayerInfo()->guildRank->CanPerformCommand(GR_RIGHT_GCHATSPEAK))
     {
-        Guild::SendGuildCommandResult(pClient, GUILD_MEMBER_S, "", GUILD_PERMISSIONS);
+        Guild::sendCommandResult(pClient, GC_TYPE_GUILD_CHAT, GC_ERROR_PERMISSIONS);
         return;
     }
 
     WorldPacket* data = sChatHandler.FillMessageData(CHAT_MSG_GUILD, ((int32)iType) == CHAT_MSG_ADDON ? -1 : LANG_UNIVERSAL, szMessage,
-                                                     pClient->GetPlayer()->GetGUID(), pClient->GetPlayer()->HasFlag(PLAYER_FLAGS, PLAYER_FLAG_GM) ? 4 : 0);
+                                                     pClient->GetPlayer()->GetGUID(), pClient->GetPlayer()->isGMFlagSet() ? 4 : 0);
 
     m_lock.Acquire();
     for (GuildMemberMap::iterator itr = m_members.begin(); itr != m_members.end(); ++itr)
@@ -1080,7 +1095,7 @@ void Guild::OfficerChat(const char* szMessage, WorldSession* pClient, uint32 iTy
 
     if (!pClient->GetPlayer()->getPlayerInfo()->guildRank->CanPerformCommand(GR_RIGHT_OFFCHATSPEAK))
     {
-        Guild::SendGuildCommandResult(pClient, GUILD_MEMBER_S, "", GUILD_PERMISSIONS);
+        Guild::sendCommandResult(pClient, GC_TYPE_GUILD_CHAT, GC_ERROR_PERMISSIONS);
         return;
     }
 
@@ -1111,8 +1126,8 @@ void Guild::SendGuildLog(WorldSession* pClient)
         data << uint8((*itr)->iEvent);
         switch ((*itr)->iEvent)
         {
-            case GUILD_LOG_EVENT_DEMOTION:
-            case GUILD_LOG_EVENT_PROMOTION:
+            case GE_LOG_DEMOTE_PLAYER:
+            case GE_LOG_PROMOTE_PLAYER:
             {
                 data << uint64((*itr)->iEventData[0]);
                 data << uint64((*itr)->iEventData[1]);
@@ -1120,16 +1135,16 @@ void Guild::SendGuildLog(WorldSession* pClient)
             }
             break;
 
-            case GUILD_LOG_EVENT_INVITE:
-            case GUILD_LOG_EVENT_REMOVAL:
+            case GE_LOG_INVITE_PLAYER:
+            case GE_LOG_UNINVITE_PLAYER:
             {
                 data << uint64((*itr)->iEventData[0]);
                 data << uint64((*itr)->iEventData[1]);
             }
             break;
 
-            case GUILD_LOG_EVENT_JOIN:
-            case GUILD_LOG_EVENT_LEFT:
+            case GE_LOG_JOIN_GUILD:
+            case GE_LOG_LEAVE_GUILD:
             {
                 data << uint64((*itr)->iEventData[0]);
             }
@@ -1219,18 +1234,28 @@ void Guild::SendGuildRoster(WorldSession* pClient)
         data << uint8(itr->first->gender);
         data << itr->first->lastZone;
 
-        if (!pPlayer)
+        if (pPlayer == nullptr)
+        {
             data << float((UNIXTIME - itr->first->lastOnline) / 86400.0);
+        }
 
         if (itr->second->szPublicNote)
+        {
             data << itr->second->szPublicNote;
+        }
         else
+        {
             data << uint8(0);
+        }
 
         if (ofnote && itr->second->szOfficerNote != NULL)
+        {
             data << itr->second->szOfficerNote;
+        }
         else
+        {
             data << uint8(0);
+        }
     }
 
     m_lock.Release();
@@ -1431,10 +1456,10 @@ void Guild::DepositMoney(WorldSession* pClient, uint32 uAmount)
     // broadcast guild event telling everyone the new balance
     char buf[20];
     snprintf(buf, 20, "%llu", m_bankBalance);
-    LogGuildEvent(GUILD_EVENT_SETNEWBALANCE, 1, buf);
+    LogGuildEvent(GE_BANK_TAB_UPDATED, 1, buf);
 
     // log it!
-    LogGuildBankActionMoney(GUILD_BANK_LOG_EVENT_DEPOSIT_MONEY, pClient->GetPlayer()->GetLowGUID(), uAmount);
+    LogGuildBankActionMoney(GB_LOG_DEPOSIT_MONEY, pClient->GetPlayer()->GetLowGUID(), uAmount);
 }
 
 void Guild::WithdrawMoney(WorldSession* pClient, uint32 uAmount)
@@ -1482,7 +1507,7 @@ void Guild::WithdrawMoney(WorldSession* pClient, uint32 uAmount)
     SpendMoney(uAmount);
 
     // log it!
-    LogGuildBankActionMoney(GUILD_BANK_LOG_EVENT_WITHDRAW_MONEY, pClient->GetPlayer()->GetLowGUID(), uAmount);
+    LogGuildBankActionMoney(GB_LOG_WITHDRAW_MONEY, pClient->GetPlayer()->GetLowGUID(), uAmount);
 }
 
 void Guild::SpendMoney(uint32 uAmount)
@@ -1496,7 +1521,7 @@ void Guild::SpendMoney(uint32 uAmount)
     // notify everyone with the new balance
     char buf[20];
     snprintf(buf, 20, "%llu", m_bankBalance);
-    LogGuildEvent(GUILD_EVENT_SETNEWBALANCE, 1, buf);
+    LogGuildEvent(GE_BANK_TAB_UPDATED, 1, buf);
 }
 
 void Guild::SendGuildBankLog(WorldSession* pClient, uint8 iSlot)
@@ -1659,3 +1684,4 @@ void Guild::SendGuildInfo(WorldSession* pClient)
 
     pClient->SendPacket(&data);
 }
+#endif

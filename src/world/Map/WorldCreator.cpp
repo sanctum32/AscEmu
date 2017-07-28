@@ -27,9 +27,6 @@
 
 SERVER_DECL InstanceMgr sInstanceMgr;
 
-initialiseSingleton(FormationMgr);
-
-
 InstanceMgr::InstanceMgr()
 {
     memset(m_maps, 0, sizeof(Map*)* NUM_MAPS);
@@ -41,8 +38,6 @@ InstanceMgr::InstanceMgr()
 
 void InstanceMgr::Load(TaskList* l)
 {
-    new FormationMgr;
-
     // Create all non-instance type maps.
     QueryResult* result = CharacterDatabase.Query("SELECT MAX(id) FROM instances");
     if (result)
@@ -155,14 +150,12 @@ void InstanceMgr::Shutdown()
             m_maps[i] = NULL;
         }
     }
-
-    delete FormationMgr::getSingletonPtr();
 }
 
 uint32 InstanceMgr::PreTeleport(uint32 mapid, Player* plr, uint32 instanceid)
 {
     // preteleport is where all the magic happens :P instance creation, etc.
-    MapInfo const* inf = sMySQLStore.getWorldMapInfo(mapid);
+    MySQLStructure::MapInfo const* inf = sMySQLStore.getWorldMapInfo(mapid);
     Group* pGroup;
     InstanceMap* instancemap;
     Instance* in;
@@ -218,7 +211,7 @@ uint32 InstanceMgr::PreTeleport(uint32 mapid, Player* plr, uint32 instanceid)
     {
         uint32 newtype = 0;
 
-        if (!inf->HasDifficulty(plr->GetRaidDifficulty()))
+        if (!inf->hasDifficulty(plr->GetRaidDifficulty()))
         {
             // no it doesn't so we will downscale it
 
@@ -244,7 +237,7 @@ uint32 InstanceMgr::PreTeleport(uint32 mapid, Player* plr, uint32 instanceid)
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
             // check if we have this mode
-            if (!inf->HasDifficulty(newtype))
+            if (!inf->hasDifficulty(newtype))
             {
 
                 //appearantly we don't so we set to 10men normal, which is the default for old raids too
@@ -533,7 +526,7 @@ MapMgr* InstanceMgr::GetMapMgr(uint32 mapId)
 
 MapMgr* InstanceMgr::GetInstance(Object* obj)
 {
-    MapInfo const* inf = sMySQLStore.getWorldMapInfo(obj->GetMapId());
+    MySQLStructure::MapInfo const* inf = sMySQLStore.getWorldMapInfo(obj->GetMapId());
     if (inf == nullptr || obj->GetMapId() >= NUM_MAPS)
         return nullptr;
 
@@ -637,7 +630,7 @@ MapMgr* InstanceMgr::GetInstance(Object* obj)
 
 MapMgr* InstanceMgr::_CreateInstance(uint32 mapid, uint32 instanceid)
 {
-    MapInfo const* inf = sMySQLStore.getWorldMapInfo(mapid);
+    MySQLStructure::MapInfo const* inf = sMySQLStore.getWorldMapInfo(mapid);
 
     ARCEMU_ASSERT(inf != nullptr && inf->type == INSTANCE_NULL);
     ARCEMU_ASSERT(mapid < NUM_MAPS && m_maps[mapid] != NULL);
@@ -678,7 +671,7 @@ void InstanceMgr::_CreateMap(uint32 mapid)
     if (mapid >= NUM_MAPS)
         return;
 
-    MapInfo const* inf = sMySQLStore.getWorldMapInfo(mapid);
+    MySQLStructure::MapInfo const* inf = sMySQLStore.getWorldMapInfo(mapid);
     if (inf == nullptr)
         return;
 
@@ -704,7 +697,7 @@ uint32 InstanceMgr::GenerateInstanceID()
 
 void InstanceMgr::_LoadInstances()
 {
-    MapInfo const* inf;
+    MySQLStructure::MapInfo const* inf;
     Instance* in;
     QueryResult* result;
 
@@ -1244,30 +1237,4 @@ void InstanceMgr::DeleteBattlegroundInstance(uint32 mapid, uint32 instanceid)
 
     _DeleteInstance(itr->second, true);
     m_mapLock.Release();
-}
-
-FormationMgr::FormationMgr()
-{
-    QueryResult* res = WorldDatabase.Query("SELECT * FROM creature_formations");
-    if (res)
-    {
-        Formation* f;
-        do
-        {
-            f = new Formation;
-            f->fol = res->Fetch()[1].GetUInt32();
-            f->ang = res->Fetch()[2].GetFloat();
-            f->dist = res->Fetch()[3].GetFloat();
-            m_formations[res->Fetch()[0].GetUInt32()] = f;
-        }
-        while (res->NextRow());
-        delete res;
-    }
-}
-
-FormationMgr::~FormationMgr()
-{
-    FormationMap::iterator itr;
-    for (itr = m_formations.begin(); itr != m_formations.end(); ++itr)
-        delete itr->second;
 }

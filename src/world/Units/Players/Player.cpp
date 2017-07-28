@@ -115,7 +115,7 @@ bool Player::isPlayerJumping(MovementInfo const& movement_info, uint16_t opcode)
     return false;
 }
 
-void Player::handleBreathing(MovementInfo& movement_info, WorldSession* session)
+void Player::handleBreathing(MovementInfo const& movement_info, WorldSession* session)
 {
 }
 
@@ -144,4 +144,11 @@ void Player::sendReportToGmMessage(std::string playerName, std::string damageLog
     gm_ann += damageLog;
 
     sWorld.sendMessageToOnlineGms(gm_ann.c_str());
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Misc
+bool Player::isGMFlagSet()
+{
+    return HasFlag(PLAYER_FLAGS, PLAYER_FLAG_GM);
 }

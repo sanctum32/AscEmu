@@ -26,7 +26,6 @@
 #include "Management/ItemInterface.h"
 #include "Storage/MySQLDataStore.hpp"
 #include "Storage/MySQLStructures.h"
-#include "Management/LocalizationMgr.h"
 #include "Server/MainServerDefines.h"
 #include "Map/MapMgr.h"
 
@@ -742,12 +741,20 @@ void WorldSession::HandleItemQuerySingleOpcode(WorldPacket& recv_data)
         return;
     }
 
-    std::string Name = itemProto->Name;
-    std::string Description = itemProto->Description;
+    std::string Name;
+    std::string Description;
 
-    LocalizedItem* li = (language > 0) ? sLocalizationMgr.GetLocalizedItem(itemid, language) : NULL;
-    if (li)
-        Name = li->Name;
+    MySQLStructure::LocalesItem const* li = (language > 0) ? sMySQLStore.getLocalizedItem(itemid, language) : nullptr;
+    if (li != nullptr)
+    {
+        Name = li->name;
+        Description = li->description;
+    }
+    else
+    {
+        Name = itemProto->Name;
+        Description = itemProto->Description;
+    }
 
     WorldPacket data(SMSG_ITEM_QUERY_SINGLE_RESPONSE, 800);
     data << itemProto->ItemId;
@@ -1496,7 +1503,7 @@ void WorldSession::SendInventoryList(Creature* unit)
         {
             if ((curItem = sMySQLStore.getItemProperties(itr->itemid)) != 0)
             {
-                if (!_player->HasFlag(PLAYER_FLAGS, PLAYER_FLAG_GM) && !worldConfig.player.showAllVendorItems) // looking up everything for active gms
+                if (!_player->isGMFlagSet() && !worldConfig.player.showAllVendorItems) // looking up everything for active gms
                 {
                     if (curItem->AllowableClass && !(_player->getClassMask() & curItem->AllowableClass))
                         continue;
@@ -1784,6 +1791,7 @@ void WorldSession::HandleRepairItemOpcode(WorldPacket& recvPacket)
 
     if (guildmoney)
     {
+#if VERSION_STRING != Cata
         if (_player->IsInGuild())
         {
             if (!(_player->GetGuildRankS()->iRights & GR_RIGHT_GUILD_BANK_REPAIR))
@@ -1793,6 +1801,7 @@ void WorldSession::HandleRepairItemOpcode(WorldPacket& recvPacket)
         }
         else
             return;//can't repair with guild money if player is not in guild.
+#endif
     }
 
     if (!itemguid)
@@ -1825,8 +1834,10 @@ void WorldSession::HandleRepairItemOpcode(WorldPacket& recvPacket)
                 }
             }
         }
+#if VERSION_STRING != Cata
         if (totalcost > 0)  //we already checked if it's in guild in RepairItem()
-            _player->GetGuild()->LogGuildBankActionMoney(GUILD_BANK_LOG_EVENT_REPAIR, _player->GetLowGUID(), totalcost);
+            _player->GetGuild()->LogGuildBankActionMoney(GB_LOG_REPAIR_MONEY, _player->GetLowGUID(), totalcost);
+#endif
     }
     else
     {

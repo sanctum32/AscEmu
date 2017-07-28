@@ -139,7 +139,15 @@
 #include "Objects/CObjectFactory.h"
 #include "Management/CRitual.h"
 #include "Management/Group.h"
+
+#if VERSION_STRING != Cata
 #include "Management/Guild.h"
+#else
+#include "GameCata/Management/GuildFinderMgr.h"
+#include "GameCata/Management/Guild.h"
+#include "GameCata/Management/GuildMgr.h"
+#endif
+
 #include "Server/Packets/Handlers/HonorHandler.h"
 #include "Management/ItemPrototype.h"
 #include "Management/Item.h"
@@ -154,7 +162,6 @@
 #include "Map/Map.h"
 #include "Map/MapCell.h"
 #include "Map/TerrainMgr.h"
-#include "Server/Packets/Handlers/MiscHandler.h"
 #include "Server/Packets/Handlers/NPCHandler.h"
 #include "Units/Creatures/Pet.h"
 #include "Server/WorldSocket.h"
@@ -197,7 +204,6 @@
 #include "Storage/DatabaseCleaner.h"
 #include "Storage/DayWatcherThread.h"
 #include "Server/BroadcastMgr.h"
-#include "Management/LocalizationMgr.h"
 
 #include "Server/Master.h"
 

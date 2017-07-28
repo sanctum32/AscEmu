@@ -2132,9 +2132,9 @@ void Spell::SpellEffectCreateItem(uint32 i)
 
             uint32 discovered_recipe = 0;
 
-            for (std::set<ProfessionDiscovery*>::iterator itr = objmgr.ProfessionDiscoveryTable.begin(); itr != objmgr.ProfessionDiscoveryTable.end(); ++itr)
+            for (std::set<MySQLStructure::ProfessionDiscovery*>::iterator itr = sMySQLStore._professionDiscoveryStore.begin(); itr != sMySQLStore._professionDiscoveryStore.end(); ++itr)
             {
-                ProfessionDiscovery* pf = *itr;
+                MySQLStructure::ProfessionDiscovery* pf = *itr;
                 if (spellid == pf->SpellId && p_caster->_GetSkillLineCurrent(skill_line_ability->skilline) >= pf->SkillValue && !p_caster->HasSpell(pf->SpellToDiscover) && Rand(pf->Chance))
                 {
                     discovered_recipe = pf->SpellToDiscover;
@@ -3512,12 +3512,13 @@ void Spell::SpellEffectLanguage(uint32 i)
 #endif
     };
 
-
+#if VERSION_STRING != Cata
     if (skills[GetSpellInfo()->EffectMiscValue[i]][0])
     {
         playerTarget->_AddSkillLine(skills[GetSpellInfo()->EffectMiscValue[i]][0], 300, 300);
         playerTarget->addSpell(skills[GetSpellInfo()->EffectMiscValue[i]][1]);
     }
+#endif
 }
 
 void Spell::SpellEffectDualWield(uint32 i)

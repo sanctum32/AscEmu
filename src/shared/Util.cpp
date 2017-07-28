@@ -55,6 +55,29 @@ namespace Util
         return y.find(x) != std::string::npos;
     }
 
+    uint32_t getLanguagesIdFromString(std::string langstr)
+    {
+        if (langstr.compare("enGB") == 0 || langstr.compare("enUS") == 0)
+            return 0;
+
+        if (langstr.compare("koKR") == 0)
+            return 1;
+
+        if (langstr.compare("frFR") == 0)
+            return 2;
+
+        if (langstr.compare("deDE") == 0)
+            return 3;
+
+        if (langstr.compare("esES") == 0)
+            return 4;
+
+        if (langstr.compare("ruRU") == 0)
+            return 5;
+
+        return 0;
+    }
+
 
     //////////////////////////////////////////////////////////////////////////////////////////
     // Time calculation
@@ -197,5 +220,29 @@ namespace Util
 
         return time_period;
     }
-}
 
+    std::string ByteArrayToHexString(uint8_t const* bytes, uint32_t arrayLength, bool reverseArray)
+    {
+        int32_t initPos = 0;
+        int32_t endPos = arrayLength;
+        int8_t op = 1;
+
+        if (reverseArray)
+        {
+            initPos = arrayLength - 1;
+            endPos = -1;
+            op = -1;
+        }
+
+        std::ostringstream ss;
+        for (int32_t i = initPos; i != endPos; i += op)
+        {
+            char buffer[4];
+            sprintf(buffer, "%02X", bytes[i]);
+            ss << buffer;
+        }
+
+        return ss.str();
+    }
+
+}

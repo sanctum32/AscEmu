@@ -65,6 +65,10 @@
 #include "Spell/Customization/SpellCustomizations.hpp"
 #include "Units/Creatures/Pet.h"
 
+#if VERSION_STRING == Cata
+#include "GameCata/Management/GuildMgr.h"
+#endif
+
 using ascemu::World::Spell::Helpers::spellModFlatIntValue;
 using ascemu::World::Spell::Helpers::spellModPercentageIntValue;
 using ascemu::World::Spell::Helpers::spellModFlatFloatValue;
@@ -246,6 +250,9 @@ Player::Player(uint32 guid)
     m_duelCountdownTimer(0),
     m_duelStatus(0),
     m_duelState(DUEL_STATE_FINISHED),        // finished
+#if VERSION_STRING == Cata
+    m_GuildIdInvited(0),
+#endif
     // Rest
     m_timeLogoff(0),
     m_isResting(0),
@@ -444,6 +451,8 @@ Player::Player(uint32 guid)
     m_talentSpecsCount = 1;
 #if VERSION_STRING == Cata
     m_FirstTalentTreeLock = 0;
+
+    m_GuildId = 0;
 #endif
 
     for (uint8 s = 0; s < MAX_SPEC_COUNT; ++s)
@@ -943,7 +952,10 @@ bool Player::Create(WorldPacket& data)
         setLevel(55);
         SetNextLevelXp(148200);
     }
+
+#if VERSION_STRING > TBC
     UpdateGlyphs();
+#endif
 
     SetPrimaryProfessionPoints(worldConfig.player.maxProfessions);
 
@@ -1047,8 +1059,12 @@ bool Player::Create(WorldPacket& data)
         if (skill_line == nullptr)
             continue;
 
+#if VERSION_STRING != Cata
         if (skill_line->type != SKILL_TYPE_LANGUAGE)
             _AddSkillLine(skill_line->id, ss->currentval, ss->maxval);
+#else
+        _AddSkillLine(skill_line->id, ss->currentval, ss->maxval);
+#endif
     }
     _UpdateMaxSkillCounts();
     //Chances depend on stats must be in this order!
@@ -1658,6 +1674,19 @@ void Player::GiveXP(uint32 xp, const uint64 & guid, bool allowbonus)
     if (xp < 1)
         return;
 
+#if VERSION_STRING == Cata
+    //this is new since 403. As we gain XP we also gain XP with our guild
+    if (m_playerInfo && m_playerInfo->m_guild)
+    {
+        uint32 guild_share = xp / 100;
+
+        Guild* guild = sGuildMgr.getGuildById(m_playerInfo->m_guild);
+
+        if (guild)
+            guild->giveXP(guild_share, this);
+    }
+#endif
+
     // Obviously if Xp gaining is disabled we don't want to gain XP
     if (!m_XpGain)
         return;
@@ -1726,7 +1755,9 @@ void Player::GiveXP(uint32 xp, const uint64 & guid, bool allowbonus)
         _UpdateMaxSkillCounts();
         UpdateStats();
         //UpdateChances();
+#if VERSION_STRING > TBC
         UpdateGlyphs();
+#endif
 
         // ScriptMgr hook for OnPostLevelUp
         sHookInterface.OnPostLevelUp(this);
@@ -1925,26 +1956,72 @@ void Player::smsg_TalentsInfo(bool SendPetTalents)
         data << uint32(GetCurrentTalentPoints());
         data << uint8(m_talentSpecsCount);
         data << uint8(m_talentActiveSpec);
-        for (uint8 s = 0; s < m_talentSpecsCount; ++s)
+
+        if (m_talentSpecsCount)
         {
-            PlayerSpec spec = m_specs[s];
-            data << uint32(m_FirstTalentTreeLock);
-
-            //Send Talent
-            data << uint8(spec.talents.size());
-
-            std::map<uint32, uint8>::iterator itr;
-            for (itr = spec.talents.begin(); itr != spec.talents.end(); ++itr)
+            if (m_talentSpecsCount > MAX_SPEC_COUNT)
             {
-                data << uint32(itr->first);     // TalentId
-                data << uint8(itr->second);     // TalentRank
+                m_talentSpecsCount = MAX_SPEC_COUNT;
             }
 
-            // Send Glyph info
-            data << uint8(GLYPHS_COUNT);
-            for (uint8 i = 0; i < GLYPHS_COUNT; ++i)
+            for (uint8 s = 0; s < m_talentSpecsCount; ++s)
             {
-                data << uint16(spec.glyphs[i]);
+                PlayerSpec spec = m_specs[s];
+                data << uint32(m_FirstTalentTreeLock);
+
+                uint8 talentCount = 0;
+                size_t pos = data.wpos();
+                data << uint8(talentCount);
+
+                uint32 const* talentTabPages = getTalentTabPages(getClass());
+
+                for (uint8 i = 0; i < 3; ++i)
+                {
+                    uint32 talentTabPage = talentTabPages[i];
+
+                    for (uint32 talentId = 0; talentId < sTalentStore.GetNumRows(); ++talentId)
+                    {
+                        DBC::Structures::TalentEntry const* talentInfo = sTalentStore.LookupEntry(talentId);
+                        if (!talentInfo)
+                        {
+                            continue;
+                        }
+
+                        if (talentInfo->TalentTree != talentTabPage)
+                        {
+                            continue;
+                        }
+
+                        int8 currrentTalentMaxRank = -1;
+                        for (int8 rank = 5 - 1; rank >= 0; --rank)
+                        {
+                            if (talentInfo->RankID[rank] && spec.HasTalent(talentInfo->RankID[rank], s))
+                            {
+                                currrentTalentMaxRank = rank;
+                                break;
+                            }
+                        }
+
+                        if (currrentTalentMaxRank < 0)
+                        {
+                            continue;
+                        }
+
+                        data << uint32(talentInfo->TalentID);
+                        data << uint8(currrentTalentMaxRank);
+
+                        ++talentCount;
+                    }
+                }
+
+                data.put<uint8>(pos, talentCount);
+
+                data << uint8(GLYPHS_COUNT);
+
+                for (uint8 i = 0; i < GLYPHS_COUNT; ++i)
+                {
+                    data << uint16(GetGlyph(s, i));
+                }
             }
         }
     }
@@ -3666,10 +3743,14 @@ void Player::LoadFromDBProc(QueryResultVector & results)
             break;
     }
 
+#if VERSION_STRING != Cata
     if (m_session->CanUseCommand('c'))
         _AddLanguages(true);
     else
         _AddLanguages(false);
+#else
+    _AddLanguages(false);
+#endif
 
     if (GetGuildId())
         SetUInt32Value(PLAYER_GUILD_TIMESTAMP, (uint32)UNIXTIME);
@@ -4685,7 +4766,7 @@ void Player::RepopRequestedPlayer()
         return;
     }
 
-    MapInfo const* pMapinfo = NULL;
+    MySQLStructure::MapInfo const* pMapinfo = NULL;
 
     // Set death state to corpse, that way players will lose visibility
     setDeathState(CORPSE);
@@ -5033,14 +5114,14 @@ void Player::RepopAtGraveyard(float ox, float oy, float oz, uint32 mapid)
     }
     else
     {
-        GraveyardTeleport const* pGrave = nullptr;
+        MySQLStructure::Graveyards const* pGrave = nullptr;
         MySQLDataStore::GraveyardsContainer const* its = sMySQLStore.getGraveyardsStore();
         for (MySQLDataStore::GraveyardsContainer::const_iterator itr = its->begin(); itr != its->end(); ++itr)
         {
-            pGrave = sMySQLStore.getGraveyard(itr->second.ID);
-            if (pGrave->MapId == mapid && (pGrave->FactionID == GetTeam() || pGrave->FactionID == 3))
+            pGrave = sMySQLStore.getGraveyard(itr->second.id);
+            if (pGrave->mapId == mapid && (pGrave->factionId == GetTeam() || pGrave->factionId == 3))
             {
-                temp.ChangeCoords(pGrave->X, pGrave->Y, pGrave->Z);
+                temp.ChangeCoords(pGrave->position_x, pGrave->position_y, pGrave->position_z);
                 dist = src.distanceSquare(temp);
                 if (first || dist < closest_dist)
                 {
@@ -5054,7 +5135,7 @@ void Player::RepopAtGraveyard(float ox, float oy, float oz, uint32 mapid)
         Keeps the player from hanging out to dry.*/
         if (first && pGrave != nullptr)//crappy Databases with no graveyards.
         {
-            dest.ChangeCoords(pGrave->X, pGrave->Y, pGrave->Z);
+            dest.ChangeCoords(pGrave->position_x, pGrave->position_y, pGrave->position_z);
             first = false;
         }
 
@@ -7932,7 +8013,7 @@ void Player::SaveEntryPoint(uint32 mapId)
     if (IS_INSTANCE(GetMapId()))
         return; // don't save if we're not on the main continent.
     //otherwise we could end up in an endless loop :P
-    MapInfo const* pMapinfo = sMySQLStore.getWorldMapInfo(mapId);
+    MySQLStructure::MapInfo const* pMapinfo = sMySQLStore.getWorldMapInfo(mapId);
 
     if (pMapinfo)
     {
@@ -8125,7 +8206,7 @@ void Player::UpdateChannels(uint16 AreaID)
     //Check for instances?
     if (!AreaID || AreaID == 0xFFFF)
     {
-        MapInfo const* pMapinfo = sMySQLStore.getWorldMapInfo(GetMapId());
+        MySQLStructure::MapInfo const* pMapinfo = sMySQLStore.getWorldMapInfo(GetMapId());
         if (IS_INSTANCE(GetMapId()))
             AreaName = pMapinfo->name;
         else
@@ -8136,7 +8217,7 @@ void Player::UpdateChannels(uint16 AreaID)
         AreaName = at2->area_name[0];
         if (AreaName.length() < 2)
         {
-            MapInfo const* pMapinfo = sMySQLStore.getWorldMapInfo(GetMapId());
+            MySQLStructure::MapInfo const* pMapinfo = sMySQLStore.getWorldMapInfo(GetMapId());
             AreaName = pMapinfo->name;
         }
     }
@@ -8591,7 +8672,9 @@ void Player::ApplyLevelInfo(LevelInfo* Info, uint32 Level)
     _UpdateMaxSkillCounts();
     UpdateStats();
     //UpdateChances();
+#if VERSION_STRING > TBC
     UpdateGlyphs();
+#endif
     m_playerInfo->lastLevel = Level;
 #if VERSION_STRING > TBC
     GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_REACH_LEVEL);
@@ -8674,7 +8757,7 @@ bool Player::SafeTeleport(uint32 MapID, uint32 InstanceID, const LocationVector 
     }
 
     bool instance = false;
-    MapInfo const* mi = sMySQLStore.getWorldMapInfo(MapID);
+    MySQLStructure::MapInfo const* mi = sMySQLStore.getWorldMapInfo(MapID);
 
     if (InstanceID && (uint32)m_instanceId != InstanceID)
     {
@@ -8763,7 +8846,7 @@ bool Player::SafeTeleport(uint32 MapID, uint32 InstanceID, const LocationVector 
     }
 
     bool instance = false;
-    MapInfo const* mi = sMySQLStore.getWorldMapInfo(MapID);
+    MySQLStructure::MapInfo const* mi = sMySQLStore.getWorldMapInfo(MapID);
 
     if (InstanceID && (uint32)m_instanceId != InstanceID)
     {
@@ -8902,8 +8985,84 @@ void Player::SetGuildId(uint32 guildId)
     {
         SetUInt32Value(PLAYER_GUILDID, guildId);
     }
+#else
+    if (IsInWorld())
+    {
+        m_GuildId = guildId;
+        if (m_GuildId == 0)
+        {
+            SetUInt64Value(OBJECT_FIELD_DATA, 0);
+            SetUInt32Value(OBJECT_FIELD_TYPE, GetUInt32Value(OBJECT_FIELD_TYPE) | 0x00010000);
+        }
+        else
+        {
+            SetUInt64Value(OBJECT_FIELD_DATA, m_GuildId);
+            SetUInt32Value(OBJECT_FIELD_TYPE, GetUInt32Value(OBJECT_FIELD_TYPE) & ~0x00010000);
+        }
+
+        //ApplyModFlag(PLAYER_FLAGS, PLAYER_FLAGS_GUILD_LEVEL_ENABLED, guildId != 0 );
+        SetUInt16Value(OBJECT_FIELD_TYPE, 1, m_GuildId != 0);
+    }
 #endif
 }
+
+#if VERSION_STRING == Cata
+void Player::SetInGuild(uint32 guildId)
+{
+    if (IsInWorld())
+    {
+        m_GuildId = guildId;
+        if (m_GuildId == 0)
+        {
+            SetUInt64Value(OBJECT_FIELD_DATA, 0);
+            SetUInt32Value(OBJECT_FIELD_TYPE, GetUInt32Value(OBJECT_FIELD_TYPE) | 0x00010000);
+        }
+        else
+        {
+            SetUInt64Value(OBJECT_FIELD_DATA, m_GuildId);
+            SetUInt32Value(OBJECT_FIELD_TYPE, GetUInt32Value(OBJECT_FIELD_TYPE) & ~0x00010000);
+        }
+
+        ApplyModFlag(PLAYER_FLAGS, PLAYER_FLAGS_GUILD_LVL_ENABLED, guildId != 0 );
+        SetUInt16Value(OBJECT_FIELD_TYPE, 1, m_GuildId != 0);
+    }
+}
+
+Guild* Player::GetGuild()
+{
+    uint32 guildId = GetGuildId();
+    return guildId ? sGuildMgr.getGuildById(guildId) : NULL;
+}
+
+uint32 Player::GetGuildIdFromDB(uint64 guid)
+{
+    QueryResult* result = CharacterDatabase.Query("SELECT guildId, playerGuid FROM guild_member WHERE playerGuid = %u", Arcemu::Util::GUID_LOPART(guid));
+    if (result)
+    {
+        Field* fields = result->Fetch();
+        return fields[0].GetUInt32();
+    }
+    else
+        return 0;
+}
+
+int8 Player::GetRankFromDB(uint64 guid)
+{
+    QueryResult* result = CharacterDatabase.Query("SELECT playerGuid, rank FROM guild_member WHERE playerGuid = %u", Arcemu::Util::GUID_LOPART(guid));
+    if (result)
+    {
+        Field* fields = result->Fetch();
+        return fields[1].GetUInt8();
+    }
+    else
+        return -1;
+}
+
+std::string Player::GetGuildName()
+{
+    return GetGuildId() ? sGuildMgr.getGuildById(GetGuildId())->getName() : "";
+}
+#endif
 
 void Player::SetGuildRank(uint32 guildRank)
 {
@@ -9476,7 +9635,7 @@ void Player::CompleteLoading()
 void Player::OnWorldPortAck()
 {
     //only resurrect if player is porting to a instance portal
-    MapInfo const* pMapinfo = sMySQLStore.getWorldMapInfo(GetMapId());
+    MySQLStructure::MapInfo const* pMapinfo = sMySQLStore.getWorldMapInfo(GetMapId());
     if (IsDead())
     {
         if (pMapinfo)
@@ -9491,7 +9650,7 @@ void Player::OnWorldPortAck()
     if (pMapinfo)
     {
         WorldPacket data(4);
-        if (pMapinfo->HasFlag(WMI_INSTANCE_WELCOME) && GetMapMgr())
+        if (pMapinfo->hasFlag(WMI_INSTANCE_WELCOME) && GetMapMgr())
         {
             std::string welcome_msg;
             welcome_msg = std::string(GetSession()->LocalizedWorldSrv(ServerString::SS_INSTANCE_WELCOME)) + " ";
@@ -9753,8 +9912,13 @@ bool Player::CanSignCharter(Charter* charter, Player* requester)
     if (charter->CharterType >= CHARTER_TYPE_ARENA_2V2 && m_arenaTeams[charter->CharterType - 1] != NULL)
         return false;
 
+#if VERSION_STRING != Cata
     if (charter->CharterType == CHARTER_TYPE_GUILD && IsInGuild())
         return false;
+#else
+    if (charter->CharterType == CHARTER_TYPE_GUILD && requester->GetGuild())
+        return false;
+#endif
 
     if (m_charters[charter->CharterType] || requester->GetTeam() != GetTeam() || this == requester)
         return false;
@@ -10709,7 +10873,6 @@ void Player::_AddLanguages(bool All)
      * Otherwise weird stuff could happen :P
      * - Burlex
      */
-
     PlayerSkill sk;
 
     uint32 spell_id;
@@ -11864,9 +12027,9 @@ void Player::UpdatePowerAmm()
 }
 
 // Initialize Glyphs or update them after level change
+#if VERSION_STRING == WotLK
 void Player::UpdateGlyphs()
 {
-#if VERSION_STRING > TBC
     uint32 level = getLevel();
 
     if (level >= 15)
@@ -11888,8 +12051,59 @@ void Player::UpdateGlyphs()
 
     // Enable number of glyphs depending on level
     SetUInt32Value(PLAYER_GLYPHS_ENABLED, glyphMask[level]);
-#endif
 }
+#endif
+
+#if VERSION_STRING == Cata
+enum GlyphSlotMask
+{
+    GS_MASK_1 = 0x001,
+    GS_MASK_2 = 0x002,
+    GS_MASK_3 = 0x040,
+
+    GS_MASK_4 = 0x004,
+    GS_MASK_5 = 0x008,
+    GS_MASK_6 = 0x080,
+
+    GS_MASK_7 = 0x010,
+    GS_MASK_8 = 0x020,
+    GS_MASK_9 = 0x100,
+
+    GS_MASK_LEVEL_25 = GS_MASK_1 | GS_MASK_2 | GS_MASK_3,
+    GS_MASK_LEVEL_50 = GS_MASK_4 | GS_MASK_5 | GS_MASK_6,
+    GS_MASK_LEVEL_75 = GS_MASK_7 | GS_MASK_8 | GS_MASK_9
+};
+
+void Player::UpdateGlyphs()
+{
+    uint32 slot = 0;
+    for (uint32 i = 0; i < sGlyphSlotStore.GetNumRows(); ++i)
+    {
+        if (DBC::Structures::GlyphSlotEntry const* glyphSlot = sGlyphSlotStore.LookupEntry(i))
+        {
+            SetUInt32Value(PLAYER_FIELD_GLYPH_SLOTS_1 + slot++, glyphSlot->Id);
+        }
+    }
+
+    uint32 level = getLevel();
+    uint32 slotMask = 0;
+
+    if (level >= 25)
+    {
+        slotMask = GS_MASK_LEVEL_25;
+    }
+    if (level >= 50)
+    {
+        slotMask = GS_MASK_LEVEL_50;
+    }
+    if (level >= 75)
+    {
+        slotMask = GS_MASK_LEVEL_75;
+    }
+
+    SetUInt32Value(PLAYER_GLYPHS_ENABLED, slotMask);
+}
+#endif
 
 // Fills fields from firstField to firstField+fieldsNum-1 with integers from the string
 void Player::LoadFieldsFromString(const char* string, uint32 firstField, uint32 fieldsNum)
@@ -13909,9 +14123,10 @@ bool Player::SaveSkills(bool NewCharacter, QueryBuffer* buf)
 
     for (SkillMap::iterator itr = m_skills.begin(); itr != m_skills.end(); ++itr)
     {
+#if VERSION_STRING != Cata
         if (itr->second.Skill->type == SKILL_TYPE_LANGUAGE)
             continue;
-
+#endif
         uint32 skillid = itr->first;
         uint32 currval = itr->second.CurrentValue;
         uint32 maxval = itr->second.MaximumValue;
@@ -14263,9 +14478,13 @@ void Player::SendGuildMOTD()
         return;
 
     WorldPacket data(SMSG_GUILD_EVENT, 50);
-    data << uint8(GUILD_EVENT_MOTD);
+#if VERSION_STRING != Cata
+    data << uint8(GE_MOTD);
+#else
+    data << uint8(255);
+#endif
     data << uint8(1);
-    data << GetGuild()->GetMOTD();
+    data << GetGuild()->getMOTD();
     SendPacket(&data);
 }
 

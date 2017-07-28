@@ -27,6 +27,7 @@
 #include "Units/Stats.h"
 #include "Management/ArenaTeam.h"
 #include "Storage/MySQLDataStore.hpp"
+#include "Storage/MySQLStructures.h"
 #include "Units/Players/PlayerClasses.hpp"
 #include "Server/MainServerDefines.h"
 #include "Config/Config.h"
@@ -36,6 +37,11 @@
 #include "Spell/Customization/SpellCustomizations.hpp"
 #include "Units/Creatures/Pet.h"
 #include "Spell/SpellEffects.h"
+#if VERSION_STRING == Cata
+#include "GameCata/Management/GuildMgr.h"
+#else
+#include "Management/Guild.h"
+#endif
 
 initialiseSingleton(ObjectMgr);
 
@@ -125,26 +131,6 @@ ObjectMgr::~ObjectMgr()
         delete i->second;
     }
 
-    LogNotice("ObjectMgr : Deleting NPC Say Texts...");
-    for (uint8 i = 0; i < NUM_MONSTER_SAY_EVENTS; ++i)
-    {
-        NpcMonsterSay* p;
-        for (MonsterSayMap::iterator itr = mMonsterSays[i].begin(); itr != mMonsterSays[i].end(); ++itr)
-        {
-            p = itr->second;
-            for (uint32 j = 0; j < p->TextCount; ++j)
-            {
-                free((char*)p->Texts[j]);
-            }
-
-            delete[] p->Texts;
-            free((char*)p->MonsterName);
-            delete p;
-        }
-
-        mMonsterSays[i].clear();
-    }
-
     LogNotice("ObjectMgr", "Deleting Charters...");
     for (uint8 i = 0; i < NUM_CHARTER_TYPES; ++i)
     {
@@ -226,11 +212,6 @@ ObjectMgr::~ObjectMgr()
     {
         delete(*itr).second;
     }
-
-    LogNotice("ObjectMgr : Deleting Profession Discoveries...");
-    std::set<ProfessionDiscovery*>::iterator itr = ProfessionDiscoveryTable.begin();
-    for (; itr != ProfessionDiscoveryTable.end(); ++itr)
-        delete(*itr);
 
     LogNotice("ObjectMgr : Cleaning up spell target constraints...");
     for (SpellTargetConstraintMap::iterator itr = m_spelltargetconstraints.begin(); itr != m_spelltargetconstraints.end(); ++itr)
@@ -321,17 +302,19 @@ void ObjectMgr::DeletePlayerInfo(uint32 guid)
         pl->m_Group->RemovePlayer(pl);
     }
 
+#if VERSION_STRING != Cata
     if (pl->guild)
     {
         if (pl->guild->GetGuildLeader() == pl->guid)
         {
-            pl->guild->Disband();
+            pl->guild->disband();
         }
         else
         {
             pl->guild->RemoveGuildMember(pl, nullptr);
         }
     }
+#endif
 
     std::string pnam = std::string(pl->name);
     Util::StringToLowerCase(pnam);
@@ -451,9 +434,14 @@ void ObjectMgr::LoadPlayersInfo()
             pn->m_Group = 0;
             pn->subGroup = 0;
             pn->m_loggedInPlayer = NULL;
+#if VERSION_STRING != Cata
             pn->guild = NULL;
             pn->guildRank = NULL;
             pn->guildMember = NULL;
+#else
+            pn->m_guild = 0;
+            pn->guildRank = GUILD_RANK_NONE;
+#endif
 
             // Raid & heroic Instance IDs
             // Must be done before entering world...
@@ -529,7 +517,9 @@ void ObjectMgr::LoadPlayersInfo()
         delete result;
     }
     LogDetail("ObjectMgr : %u players loaded.", m_playersinfo.size());
+#if VERSION_STRING != Cata
     LoadGuilds();
+#endif
 }
 
 PlayerInfo* ObjectMgr::GetPlayerInfoByName(const char* name)
@@ -573,6 +563,7 @@ void ObjectMgr::LoadCompletedAchievements()
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // DK:LoadGuilds()
+#if VERSION_STRING != Cata
 void ObjectMgr::LoadGuilds()
 {
     QueryResult* result = CharacterDatabase.Query("SELECT * FROM guilds");
@@ -586,13 +577,14 @@ void ObjectMgr::LoadGuilds()
                 delete pGuild;
             }
             else
-                mGuild.insert(std::make_pair(pGuild->GetGuildId(), pGuild));
+                mGuild.insert(std::make_pair(pGuild->getGuildId(), pGuild));
         }
         while (result->NextRow());
         delete result;
     }
     LogDetail("ObjectMgr : %u guilds loaded.", mGuild.size());
 }
+#endif
 
 Corpse* ObjectMgr::LoadCorpse(uint32 guid)
 {
@@ -711,7 +703,7 @@ void ObjectMgr::LoadInstanceBossInfos()
         InstanceBossInfo* bossInfo = new InstanceBossInfo();
         bossInfo->mapid = (uint32)result->Fetch()[0].GetUInt32();
 
-        MapInfo const* mapInfo = sMySQLStore.getWorldMapInfo(bossInfo->mapid);
+        MySQLStructure::MapInfo const* mapInfo = sMySQLStore.getWorldMapInfo(bossInfo->mapid);
         if (mapInfo == NULL || mapInfo->type == INSTANCE_NULL)
         {
             LogDebugFlag(LF_DB_TABLES, "Not loading boss information for map %u! (continent or unknown map)", bossInfo->mapid);
@@ -967,7 +959,11 @@ void ObjectMgr::SetHighestGuids()
         delete result;
     }
 
+#if VERSION_STRING != Cata
     result = CharacterDatabase.Query("SELECT MAX(guildid) FROM guilds");
+#else
+    result = CharacterDatabase.Query("SELECT MAX(guildid) FROM guild");
+#endif
     if (result)
     {
         m_hiGuildId.SetVal(result->Fetch()[0].GetUInt32());
@@ -1111,10 +1107,11 @@ Player* ObjectMgr::GetPlayer(uint32 guid)
     return rv;
 }
 
+#if VERSION_STRING != Cata
 void ObjectMgr::AddGuild(Guild* pGuild)
 {
     ARCEMU_ASSERT(pGuild != NULL);
-    mGuild[pGuild->GetGuildId()] = pGuild;
+    mGuild[pGuild->getGuildId()] = pGuild;
 }
 
 uint32 ObjectMgr::GetTotalGuildCount()
@@ -1133,17 +1130,23 @@ bool ObjectMgr::RemoveGuild(uint32 guildId)
     mGuild.erase(i);
     return true;
 }
+#endif
 
 Guild* ObjectMgr::GetGuild(uint32 guildId)
 {
+#if VERSION_STRING != Cata
     GuildMap::const_iterator itr = mGuild.find(guildId);
     if (itr == mGuild.end())
         return NULL;
     return itr->second;
+#else
+    return sGuildMgr.getGuildById(guildId);
+#endif
 }
 
 Guild* ObjectMgr::GetGuildByLeaderGuid(uint64 leaderGuid)
 {
+#if VERSION_STRING != Cata
     GuildMap::const_iterator itr;
     for (itr = mGuild.begin(); itr != mGuild.end(); ++itr)
     {
@@ -1151,17 +1154,25 @@ Guild* ObjectMgr::GetGuildByLeaderGuid(uint64 leaderGuid)
             return itr->second;
     }
     return NULL;
+#else
+    return sGuildMgr.getGuildByLeader(leaderGuid);
+#endif
 }
+
 
 Guild* ObjectMgr::GetGuildByGuildName(std::string guildName)
 {
+#if VERSION_STRING != Cata
     GuildMap::const_iterator itr;
     for (itr = mGuild.begin(); itr != mGuild.end(); ++itr)
     {
-        if (itr->second->GetGuildName() == guildName)
+        if (itr->second->getGuildName() == guildName)
             return itr->second;
     }
     return NULL;
+#else
+    return sGuildMgr.getGuildByName(guildName);
+#endif
 }
 
 
@@ -2291,45 +2302,6 @@ LevelInfo* ObjectMgr::GetLevelInfo(uint32 Race, uint32 Class, uint32 Level)
     return nullptr;
 }
 
-void ObjectMgr::LoadDefaultPetSpells()
-{
-    QueryResult* result = WorldDatabase.Query("SELECT * FROM petdefaultspells");
-    if (result)
-    {
-        do
-        {
-            Field* f = result->Fetch();
-            uint32 Entry = f[0].GetUInt32();
-            uint32 spell = f[1].GetUInt32();
-            SpellInfo* sp = sSpellCustomizations.GetSpellInfo(spell);
-
-            if (spell && Entry && sp)
-            {
-                PetDefaultSpellMap::iterator itr = mDefaultPetSpells.find(Entry);
-                if (itr != mDefaultPetSpells.end())
-                    itr->second.insert(sp);
-                else
-                {
-                    std::set<SpellInfo*> s;
-                    s.insert(sp);
-                    mDefaultPetSpells[Entry] = s;
-                }
-            }
-        }
-        while (result->NextRow());
-        delete result;
-    }
-}
-
-std::set<SpellInfo*>* ObjectMgr::GetDefaultPetSpells(uint32 Entry)
-{
-    PetDefaultSpellMap::iterator itr = mDefaultPetSpells.find(Entry);
-    if (itr == mDefaultPetSpells.end())
-        return 0;
-
-    return &(itr->second);
-}
-
 void ObjectMgr::LoadPetSpellCooldowns()
 {
     for (uint32 i = 0; i < sCreatureSpellDataStore.GetNumRows(); ++i)
@@ -2438,11 +2410,39 @@ TimedEmoteList* ObjectMgr::GetTimedEmoteList(uint32 spawnid)
 void ObjectMgr::LoadCreatureWaypoints()
 {
     QueryResult* result = WorldDatabase.Query("SELECT * FROM creature_waypoints");
-    if (!result)return;
+    if (result == nullptr)
+        return;
 
+    uint32_t waypointCount = 0;
+    uint32_t cachedSpawnId = 0;
+    bool isValidSpawn = true;
     do
     {
         Field* fields = result->Fetch();
+        uint32_t spawnid = fields[0].GetUInt32();
+
+        if (cachedSpawnId != spawnid)
+        {
+            cachedSpawnId = spawnid;
+            isValidSpawn = true;
+        }
+
+        if (isValidSpawn == false)
+        {
+            continue;
+        }
+
+        if (isValidSpawn == true)
+        {
+            QueryResult* spawnResult = WorldDatabase.Query("SELECT * FROM creature_spawns WHERE id = %u", spawnid);
+            if (spawnResult == nullptr)
+            {
+                LogDebugFlag(LF_DB_TABLES, "Table `creature_waypoints` includes waypoints for invalid spawndid %u, Skipped!", spawnid);
+                isValidSpawn = false;
+                continue;
+            }
+        }
+
         Movement::WayPoint* wp = new Movement::WayPoint;
         wp->id = fields[1].GetUInt32();
         wp->x = fields[2].GetFloat();
@@ -2458,7 +2458,6 @@ void ObjectMgr::LoadCreatureWaypoints()
         wp->backwardskinid = fields[12].GetUInt32();
 
         std::unordered_map<uint32, Movement::WayPointMap*>::const_iterator i;
-        uint32 spawnid = fields[0].GetUInt32();
         i = m_waypoints.find(spawnid);
         if (i == m_waypoints.end())
         {
@@ -2475,10 +2474,12 @@ void ObjectMgr::LoadCreatureWaypoints()
 
             (*(i->second))[wp->id] = wp;
         }
+
+        ++waypointCount;
     }
     while (result->NextRow());
 
-    LogNotice("ObjectMgr : %u waypoints cached.", result->GetRowCount());
+    LogNotice("ObjectMgr : %u waypoints cached.", waypointCount);
     delete result;
 }
 
@@ -2902,81 +2903,6 @@ ReputationModifier* ObjectMgr::GetReputationModifier(uint32 entry_id, uint32 fac
 
     // no data. fallback to default -5 value.
     return nullptr;
-}
-
-void ObjectMgr::LoadMonsterSay()
-{
-    QueryResult* result = WorldDatabase.Query("SELECT * FROM npc_monstersay");
-    if (!result)
-        return;
-
-    do
-    {
-        Field* fields = result->Fetch();
-        uint32 Entry = fields[0].GetUInt32();
-        uint32 Event = fields[1].GetUInt32();
-
-        if (Event >= NUM_MONSTER_SAY_EVENTS)
-            continue;
-
-        if (mMonsterSays[Event].find(Entry) != mMonsterSays[Event].end())
-        {
-            LogDebugFlag(LF_DB_TABLES, "LoadMonsterSay : Duplicate monstersay event %u for entry %u, skipping", Event, Entry);
-            continue;
-        }
-
-        NpcMonsterSay* ms = new NpcMonsterSay;
-        ms->Chance = fields[2].GetFloat();
-        ms->Language = fields[3].GetUInt32();
-        ms->Type = fields[4].GetUInt32();
-        ms->MonsterName = fields[5].GetString() ? strdup(fields[5].GetString()) : strdup("None");
-
-        char* texts[5];
-        char* text;
-        uint32 textcount = 0;
-
-        for (uint8 i = 0; i < 5; ++i)
-        {
-            text = (char*)fields[6 + i].GetString();
-            if (!text) continue;
-            if (strlen(fields[6 + i].GetString()) < 5)
-                continue;
-
-            texts[textcount] = strdup(fields[6 + i].GetString());
-
-            // check for ;
-            if (texts[textcount][strlen(texts[textcount]) - 1] == ';')
-                texts[textcount][strlen(texts[textcount]) - 1] = 0;
-
-            ++textcount;
-        }
-
-        if (!textcount)
-        {
-            free(((char*)ms->MonsterName));
-            delete ms;
-            continue;
-        }
-
-        ms->Texts = new const char*[textcount];
-        memcpy(ms->Texts, texts, sizeof(char*) * textcount);
-        ms->TextCount = textcount;
-
-        mMonsterSays[Event].insert(std::make_pair(Entry, ms));
-
-    }
-    while (result->NextRow());
-    LogDetail("ObjectMgr : %u monster say events loaded.", result->GetRowCount());
-    delete result;
-}
-
-NpcMonsterSay* ObjectMgr::HasMonsterSay(uint32 Entry, MONSTER_SAY_EVENTS Event)
-{
-    if (mMonsterSays[Event].empty())
-        return nullptr;
-
-    MonsterSayMap::iterator itr = mMonsterSays[Event].find(Entry);
-    return itr == mMonsterSays[Event].end() ? nullptr : itr->second;
 }
 
 void ObjectMgr::LoadInstanceReputationModifiers()
@@ -3793,24 +3719,7 @@ void ObjectMgr::EventScriptsUpdate(Player* plr, uint32 next_event)
     }
 }
 
-void ObjectMgr::LoadProfessionDiscoveries()
-{
-    QueryResult* result = WorldDatabase.Query("SELECT * from professiondiscoveries");
-    if (result != nullptr)
-    {
-        do
-        {
-            Field* f = result->Fetch();
-            ProfessionDiscovery* pf = new ProfessionDiscovery;
-            pf->SpellId = f[0].GetUInt32();
-            pf->SpellToDiscover = f[1].GetUInt32();
-            pf->SkillValue = f[2].GetUInt32();
-            pf->Chance = f[3].GetFloat();
-            ProfessionDiscoveryTable.insert(pf);
-        } while (result->NextRow());
-        delete result;
-    }
-}
+
 
 void ObjectMgr::LoadCreatureAIAgents()
 {

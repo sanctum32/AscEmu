@@ -34,6 +34,9 @@
 #include "Map/WorldCreator.h"
 #include "Spell/Definitions/LockTypes.h"
 #include "Spell/Customization/SpellCustomizations.hpp"
+#if VERSION_STRING == Cata
+#include "GameCata/Management/GuildMgr.h"
+#endif
 
 void WorldSession::HandleRepopRequestOpcode(WorldPacket& recv_data)
 {
@@ -790,8 +793,13 @@ void WorldSession::HandleWhoOpcode(WorldPacket& recv_data)
         // Guild name
         if (gname)
         {
-            if (!plr->GetGuild() || strcmp(plr->GetGuild()->GetGuildName(), guildname.c_str()) != 0)
+#if VERSION_STRING != Cata
+            if (!plr->GetGuild() || strcmp(plr->GetGuild()->getGuildName(), guildname.c_str()) != 0)
                 continue;
+#else
+            if (!plr->GetGuild() || strcmp(plr->GetGuild()->getName().c_str(), guildname.c_str()) != 0)
+                continue;
+#endif
         }
 
         // Level check
@@ -848,10 +856,17 @@ void WorldSession::HandleWhoOpcode(WorldPacket& recv_data)
         // so add the names :)
         data << plr->GetName();
 
+#if VERSION_STRING != Cata
         if (plr->m_playerInfo->guild)
-            data << plr->m_playerInfo->guild->GetGuildName();
+            data << plr->m_playerInfo->guild->getGuildName();
         else
             data << uint8(0);	   // Guild name
+#else
+        if (plr->m_playerInfo->m_guild)
+            data << sGuildMgr.getGuildById(plr->m_playerInfo->m_guild)->getName().c_str();
+        else
+            data << uint8(0);	   // Guild name
+#endif
 
         data << plr->getLevel();
         data << uint32(plr->getClass());
@@ -1110,6 +1125,7 @@ void WorldSession::HandleStandStateChangeOpcode(WorldPacket& recv_data)
     _player->SetStandState(animstate);
 }
 
+#if VERSION_STRING != Cata
 void WorldSession::HandleBugOpcode(WorldPacket& recv_data)
 {
     CHECK_INWORLD_RETURN
@@ -1147,6 +1163,7 @@ void WorldSession::HandleBugOpcode(WorldPacket& recv_data)
 
     CharacterDatabase.ExecuteNA(ss.str().c_str());
 }
+#endif
 
 #if VERSION_STRING != Cata
 void WorldSession::HandleCorpseReclaimOpcode(WorldPacket& recv_data)
@@ -1229,6 +1246,7 @@ void WorldSession::HandleResurrectResponseOpcode(WorldPacket& recv_data)
     _player->setMoveRoot(false);
 }
 
+#if VERSION_STRING != Cata
 void WorldSession::HandleUpdateAccountData(WorldPacket& recv_data)
 {
     //LOG_DETAIL("WORLD: Received CMSG_UPDATE_ACCOUNT_DATA");
@@ -1325,6 +1343,7 @@ void WorldSession::HandleUpdateAccountData(WorldPacket& recv_data)
     SendPacket(&rdata);
 #endif
 }
+#endif
 
 void WorldSession::HandleRequestAccountData(WorldPacket& recv_data)
 {
@@ -2235,6 +2254,16 @@ void WorldSession::HandleInspectOpcode(WorldPacket& recv_data)
     }
     data.put<uint32>(slot_mask_pos, slot_mask);
 
+#if VERSION_STRING == Cata
+    if (Guild* guild = sGuildMgr.getGuildById(player->GetGuildId()))
+    {
+        data << guild->getGUID();
+        data << uint32(guild->getLevel());
+        data << uint64(guild->getExperience());
+        data << uint32(guild->getMembersCount());
+    }
+#endif
+
     SendPacket(&data);
 }
 
@@ -2249,6 +2278,7 @@ void WorldSession::HandleSetActionBarTogglesOpcode(WorldPacket & recvPacket)
     GetPlayer()->SetByte(PLAYER_FIELD_BYTES, 2, cActionBarId);
 }
 
+#if VERSION_STRING != Cata
 // Handlers for acknowledgement opcodes (removes some 'unknown opcode' flood from the logs)
 void WorldSession::HandleAcknowledgementOpcodes(WorldPacket& recv_data)
 {
@@ -2264,6 +2294,7 @@ void WorldSession::HandleAcknowledgementOpcodes(WorldPacket& recv_data)
             break;*/
     }
 }
+#endif
 
 void WorldSession::HandleSelfResurrectOpcode(WorldPacket& recv_data)
 {

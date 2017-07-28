@@ -773,6 +773,8 @@ bool ChatHandler::HandleAnnounceCommand(const char* args, WorldSession* m_sessio
         worldAnnounce << worldConfig.getColorStringForNumber(worldConfig.announce.msgColor);
     }
 
+    worldAnnounce << args;
+
     sWorld.sendMessageToAll(worldAnnounce.str());
 
     sGMLog.writefromsession(m_session, "used announce command, [%s]", args);
@@ -786,33 +788,35 @@ bool ChatHandler::HandleWAnnounceCommand(const char* args, WorldSession* m_sessi
     if (!*args)
         return false;
 
-    std::string colored_widescreen_text;
-    colored_widescreen_text = worldConfig.getColorStringForNumber(worldConfig.announce.tagColor);
-    colored_widescreen_text += "[";
-    colored_widescreen_text += worldConfig.announce.announceTag;
-    colored_widescreen_text += "]";
-    colored_widescreen_text += worldConfig.getColorStringForNumber(worldConfig.announce.tagGmColor);
+    std::stringstream colored_widescreen_text;
+    colored_widescreen_text << worldConfig.getColorStringForNumber(worldConfig.announce.tagColor);
+    colored_widescreen_text << "[";
+    colored_widescreen_text << worldConfig.announce.announceTag;
+    colored_widescreen_text << "]";
+    colored_widescreen_text << worldConfig.getColorStringForNumber(worldConfig.announce.tagGmColor);
 
     if (worldConfig.announce.enableGmAdminTag)
     {
         if (m_session->CanUseCommand('z'))
-            colored_widescreen_text += "<Admin>";
+            colored_widescreen_text << "<Admin>";
         else if (m_session->GetPermissionCount())
-            colored_widescreen_text += "<GM>";
+            colored_widescreen_text << "<GM>";
     }
 
     if (worldConfig.announce.showNameInWAnnounce)
     {
-        colored_widescreen_text += "|r" + worldConfig.getColorStringForNumber(worldConfig.announce.tagColor) + "[";
-        colored_widescreen_text += m_session->GetPlayer()->GetName();
-        colored_widescreen_text += "]:|r " + worldConfig.getColorStringForNumber(worldConfig.announce.msgColor);
+        colored_widescreen_text << "|r" << worldConfig.getColorStringForNumber(worldConfig.announce.tagColor) << "[";
+        colored_widescreen_text << m_session->GetPlayer()->GetName();
+        colored_widescreen_text << "]:|r " << worldConfig.getColorStringForNumber(worldConfig.announce.msgColor);
     }
     else if (!worldConfig.announce.showNameInWAnnounce)
     {
-        colored_widescreen_text += ": "; colored_widescreen_text += worldConfig.getColorStringForNumber(worldConfig.announce.msgColor);
+        colored_widescreen_text << ": "; colored_widescreen_text << worldConfig.getColorStringForNumber(worldConfig.announce.msgColor);
     }
 
-    sWorld.sendAreaTriggerMessage(colored_widescreen_text);
+    colored_widescreen_text << args;
+
+    sWorld.sendAreaTriggerMessage(colored_widescreen_text.str());
 
     sGMLog.writefromsession(m_session, "used wannounce command [%s]", args);
 
@@ -844,10 +848,14 @@ bool ChatHandler::HandleAppearCommand(const char* args, WorldSession* m_session)
             SystemMessage(chr->GetSession(), "%s is appearing to your location.", m_session->GetPlayer()->GetName());
         }
 
+#if VERSION_STRING != Cata
         if (m_session->GetPlayer()->GetMapId() == chr->GetMapId() && m_session->GetPlayer()->GetInstanceID() == chr->GetInstanceID())
             m_session->GetPlayer()->SafeTeleport(chr->GetMapId(), chr->GetInstanceID(), chr->GetPosition());
         else
             m_session->GetPlayer()->SafeTeleport(chr->GetMapMgr(), chr->GetPosition());
+#else
+        m_session->GetPlayer()->SafeTeleport(chr->GetMapId(), 0, chr->GetPosition());
+#endif
 
     }
     else

@@ -24,12 +24,10 @@
 #include "TerrainMgr.h"
 #include "CellHandlerDefines.hpp"
 #include "Storage/DBC/DBCStructures.hpp"
+#include "Storage/MySQLStructures.h"
 
 class MapMgr;
-struct MapInfo;
 class TerrainMgr;
-
-struct Formation;
 
 struct CreatureSpawn
 {
@@ -39,7 +37,7 @@ struct CreatureSpawn
     float y;
     float z;
     float o;
-    Formation* form;
+    MySQLStructure::CreatureFormation const* form;    // formation
     uint8 movetype;
     uint32 displayid;
     uint32 factionid;
@@ -115,7 +113,7 @@ class SERVER_DECL Map
 {
     public:
 
-        Map(uint32 mapid, MapInfo const* inf);
+        Map(uint32 mapid, MySQLStructure::MapInfo const* inf);
         ~Map();
 
         std::string GetMapName();
@@ -130,7 +128,7 @@ class SERVER_DECL Map
 
     private:
 
-        MapInfo const* _mapInfo;
+        MySQLStructure::MapInfo const* _mapInfo;
         uint32 _mapId;
         std::string name;
 

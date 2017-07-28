@@ -31,6 +31,9 @@ namespace Util
     /*! \brief Returns true if string x is in sttrin y */
     bool findXinYString(std::string& x, std::string& y);
 
+    /*! \brief Returns wow specific language string to id*/
+    uint32_t getLanguagesIdFromString(std::string langstr);
+
 
     //////////////////////////////////////////////////////////////////////////////////////////
     // Time calculation/formatting
@@ -58,6 +61,8 @@ namespace Util
 
     /*! \brief Returns calculated time based on (second) values e.g. 5h will return 5 * 60 * 60 */
     uint32_t GetTimePeriodFromString(const char* str);
+
+    std::string ByteArrayToHexString(uint8_t const* bytes, uint32_t arrayLength, bool reverseArray = false);
 
 }
 

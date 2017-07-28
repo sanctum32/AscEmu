@@ -39,6 +39,7 @@
 #include "Spell/Definitions/PowerType.h"
 #include "Pet.h"
 #include "Spell/SpellEffects.h"
+#include "Storage/MySQLStructures.h"
 
 Creature::Creature(uint64 guid)
 {
@@ -1288,7 +1289,7 @@ bool Creature::Teleport(const LocationVector& vec, MapMgr* map)
     }
 }
 
-bool Creature::Load(CreatureSpawn* spawn, uint32 mode, MapInfo const* info)
+bool Creature::Load(CreatureSpawn* spawn, uint32 mode, MySQLStructure::MapInfo const* info)
 {
     m_spawn = spawn;
     creature_properties = sMySQLStore.getCreatureProperties(spawn->entry);
@@ -1450,9 +1451,9 @@ bool Creature::Load(CreatureSpawn* spawn, uint32 mode, MapInfo const* info)
     // load formation data
     if (spawn->form != NULL)
     {
-        m_aiInterface->m_formationLinkSqlId = spawn->form->fol;
-        m_aiInterface->m_formationFollowDistance = spawn->form->dist;
-        m_aiInterface->m_formationFollowAngle = spawn->form->ang;
+        m_aiInterface->m_formationLinkSqlId = spawn->form->targetSpawnId;
+        m_aiInterface->m_formationFollowDistance = spawn->form->followDistance;
+        m_aiInterface->m_formationFollowAngle = spawn->form->followAngle;
     }
     else
     {
@@ -2500,37 +2501,12 @@ void Creature::SendChatMessage(uint8 type, uint32 lang, const char* msg, uint32 
 // 4. Sending localizations if available... puh
 void Creature::SendScriptTextChatMessage(uint32 textid)
 {
-    NpcScriptText const* ct = sMySQLStore.getNpcScriptText(textid);
-
-    const char* name = GetCreatureProperties()->Name.c_str();
-    size_t CreatureNameLength = strlen((char*)name) + 1;
-    size_t MessageLength = strlen((char*)ct->text.c_str()) + 1;
-
-    if (ct->emote != 0)
-        this->EventAddEmote(ct->emote, ct->duration);
-
-    if (ct->sound != 0)
-        this->PlaySoundToSet(ct->sound);
-
-    // Send chat msg
-    WorldPacket data(SMSG_MESSAGECHAT, 35 + CreatureNameLength + MessageLength);
-    data << uint8(ct->type);            // f.e. CHAT_MSG_MONSTER_SAY enum ChatMsg (perfect name for this enum XD)
-    data << uint32(ct->language);       // f.e. LANG_UNIVERSAL enum Languages
-    data << GetGUID();                  // guid of the npc
-    data << uint32(0);
-    data << uint32(CreatureNameLength); // the length of the npc name (needed to calculate text beginning)
-    data << name;                       // name of the npc
-    data << uint64(0);
-    data << uint32(MessageLength);      // the length of the message (needed to calculate the bubble)
-    data << ct->text;                   // the text
-    data << uint8(0x00);
-
-    SendMessageToSet(&data, true);      // sending this
+    SendCreatureChatMessageInRange(this, textid);
 }
 
 void Creature::SendTimedScriptTextChatMessage(uint32 textid, uint32 delay)
 {
-    NpcScriptText const* ct = sMySQLStore.getNpcScriptText(textid);
+    MySQLStructure::NpcScriptText const* ct = sMySQLStore.getNpcScriptText(textid);
     const char* msg = ct->text.c_str();
     if (delay)
     {
@@ -2541,7 +2517,7 @@ void Creature::SendTimedScriptTextChatMessage(uint32 textid, uint32 delay)
     }
 
     if (ct->emote != 0)
-        this->EventAddEmote(ct->emote, ct->duration);
+        this->EventAddEmote((EmoteType)ct->emote, ct->duration);
 
     const char* name = GetCreatureProperties()->Name.c_str();
     size_t CreatureNameLength = strlen((char*)name) + 1;
@@ -2550,7 +2526,7 @@ void Creature::SendTimedScriptTextChatMessage(uint32 textid, uint32 delay)
     WorldPacket data(SMSG_MESSAGECHAT, 35 + CreatureNameLength + MessageLength);
     data << uint8(ct->type);            // f.e. CHAT_MSG_MONSTER_SAY enum ChatMsg (perfect name for this enum XD)
     data << uint32(ct->language);       // f.e. LANG_UNIVERSAL enum Languages
-    data << GetGUID();                  // guid of the npc
+    data << uint64(GetGUID());          // guid of the npc
     data << uint32(0);
     data << uint32(CreatureNameLength); // the length of the npc name (needed to calculate text beginning)
     data << name;                       // name of the npc
@@ -2587,93 +2563,20 @@ void Creature::SendChatMessageToPlayer(uint8 type, uint32 lang, const char* msg,
 
 void Creature::HandleMonsterSayEvent(MONSTER_SAY_EVENTS Event)
 {
-    NpcMonsterSay* ms = creature_properties->MonsterSay[Event];
-    if (ms == NULL)
-        return;
-
-    if (Rand(ms->Chance))
+    MySQLStructure::NpcMonsterSay* npcMonsterSay = sMySQLStore.getMonstersayEventForCreature(GetEntry(), Event);
+    if (npcMonsterSay == nullptr)
     {
-        // chance successful.
-        int choice = (ms->TextCount == 1) ? 0 : RandomUInt(ms->TextCount - 1);
-        const char* text = ms->Texts[choice];
-        // check for special variables $N=name $C=class $R=race $G=gender
-        // $G is followed by male_string:female_string;
-        std::string newText = text;
-#if VERSION_STRING != Cata
-        static const char* races[NUM_RACES] = { "None", "Human", "Orc", "Dwarf", "Night Elf", "Undead", "Tauren", "Gnome", "Troll", "None", "Blood Elf", "Draenei" };
-#else
-        static const char* races[NUM_RACES] = { "None", "Human", "Orc", "Dwarf", "Night Elf", "Undead", "Tauren", "Gnome", "Troll", "Goblin", "Blood Elf", "Draenei", "None", "None", "None", "None", "None", "None", "None", "None", "None", "None", "Worgen" };
-#endif
-        static const char* classes[MAX_PLAYER_CLASSES] = { "None", "Warrior", "Paladin", "Hunter", "Rogue", "Priest", "Death Knight", "Shaman", "Mage", "Warlock", "None", "Druid" };
-        char* test = strstr((char*)text, "$R");
-        if (test == NULL)
-            test = strstr((char*)text, "$r");
-        if (test != NULL)
+        return;
+    }
+    else
+    {
+        int choice;
+        if (Rand(npcMonsterSay->chance))
         {
-            uint64 targetGUID = GetTargetGUID();
-            Unit* CurrentTarget = GetMapMgr()->GetUnit(targetGUID);
-            if (CurrentTarget)
-            {
-                ptrdiff_t testOfs = test - text;
-                newText.replace(testOfs, 2, races[CurrentTarget->getRace()]);
-            }
-        }
-        test = strstr((char*)text, "$N");
-        if (test == NULL)
-            test = strstr((char*)text, "$n");
-        if (test != NULL)
-        {
-            uint64 targetGUID = GetTargetGUID();
-            Unit* CurrentTarget = GetMapMgr()->GetUnit(targetGUID);
-            if (CurrentTarget && CurrentTarget->IsPlayer())
-            {
-                ptrdiff_t testOfs = test - text;
-                newText.replace(testOfs, 2, static_cast<Player*>(CurrentTarget)->GetName());
-            }
-        }
-        test = strstr((char*)text, "$C");
-        if (test == NULL)
-            test = strstr((char*)text, "$c");
-        if (test != NULL)
-        {
-            uint64 targetGUID = GetTargetGUID();
-            Unit* CurrentTarget = GetMapMgr()->GetUnit(targetGUID);
-            if (CurrentTarget)
-            {
-                ptrdiff_t testOfs = test - text;
-                newText.replace(testOfs, 2, classes[CurrentTarget->getClass()]);
-            }
-        }
-        test = strstr((char*)text, "$G");
-        if (test == NULL)
-            test = strstr((char*)text, "$g");
-        if (test != NULL)
-        {
-            uint64 targetGUID = GetTargetGUID();
-            Unit* CurrentTarget = GetMapMgr()->GetUnit(targetGUID);
-            if (CurrentTarget)
-            {
-                char* g0 = test + 2;
-                char* g1 = strchr(g0, ':');
-                if (g1)
-                {
-                    char* gEnd = strchr(g1, ';');
-                    if (gEnd)
-                    {
-                        *g1 = 0x00;
-                        ++g1;
-                        *gEnd = 0x00;
-                        ++gEnd;
-                        *test = 0x00;
-                        newText = text;
-                        newText += (CurrentTarget->getGender() == 0) ? g0 : g1;
-                        newText += gEnd;
-                    }
-                }
-            }
+            choice = (npcMonsterSay->textCount == 1) ? 0 : RandomUInt(npcMonsterSay->textCount - 1);
         }
 
-        SendChatMessage(static_cast<uint8>(ms->Type), ms->Language, newText.c_str());
+        SendMonsterSayMessageInRange(this, npcMonsterSay, choice, Event);
     }
 }
 

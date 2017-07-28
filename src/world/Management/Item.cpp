@@ -21,15 +21,19 @@
 
 #include "StdAfx.h"
 #include "Storage/MySQLDataStore.hpp"
+#include "Storage/MySQLStructures.h"
 #include "Management/Item.h"
 #include "Management/Container.h"
 #include "Management/ItemInterface.h"
-#include "Management/LocalizationMgr.h"
 #include "Server/MainServerDefines.h"
 #include "Map/MapMgr.h"
 #include "Spell/SpellMgr.h"
 #include "Spell/Definitions/ProcFlags.h"
 #include "Spell/Customization/SpellCustomizations.hpp"
+
+#if VERSION_STRING != Cata
+#include "Management/Guild.h"
+#endif
 
 Item::Item()
 {
@@ -357,8 +361,10 @@ void Item::ApplyRandomProperties(bool apply)
 
 void Item::SaveToDB(int8 containerslot, int8 slot, bool firstsave, QueryBuffer* buf)
 {
-    if (!m_isDirty && !firstsave)
+    if (m_isDirty == false && firstsave == false)
+    {
         return;
+    }
 
     uint64 GiftCreatorGUID = GetGiftCreatorGUID();
     uint64 CreatorGUID = GetCreatorGUID();
@@ -1170,12 +1176,15 @@ std::string GetItemLinkByProto(ItemProperties const* iProto, uint32 language = 0
     }
 
     // try to get localized version
-    LocalizedItem* lit = (language > 0) ? sLocalizationMgr.GetLocalizedItem(iProto->ItemId, language) : 0;
-
+    MySQLStructure::LocalesItem const* lit = (language > 0) ? sMySQLStore.getLocalizedItem(iProto->ItemId, language) : nullptr;
     if (lit)
-        snprintf(buffer, 256, "|%s|Hitem:%u:0:0:0:0:0:0:0|h[%s]|h|r", colour.c_str(), iProto->ItemId, lit->Name);
+    {
+        snprintf(buffer, 256, "|%s|Hitem:%u:0:0:0:0:0:0:0|h[%s]|h|r", colour.c_str(), iProto->ItemId, lit->name);
+    }
     else
+    {
         snprintf(buffer, 256, "|%s|Hitem:%u:0:0:0:0:0:0:0|h[%s]|h|r", colour.c_str(), iProto->ItemId, iProto->Name.c_str());
+    }
 
 
     ItemLink = static_cast<const char*>(buffer);
@@ -1354,6 +1363,8 @@ bool Item::RepairItem(Player* pPlayer, bool guildmoney, int32* pCost)   //pCost 
     int32 cost = RepairItemCost();
     if (cost <= 0)
         return false;
+
+#if VERSION_STRING != Cata
     if (guildmoney && pPlayer->IsInGuild())
     {
         if (!pPlayer->GetGuildMember()->RepairItem((uint32)cost))
@@ -1362,6 +1373,7 @@ bool Item::RepairItem(Player* pPlayer, bool guildmoney, int32* pCost)   //pCost 
             *pCost += cost;
     }
     else//we pay with our gold
+#endif
     {
         if (!pPlayer->HasGold(cost))
             return false;

@@ -11,8 +11,11 @@ set(SRC_GAMECATA_FILES
     ${PATH_PREFIX}/Handlers/BattlegroundHandler.cpp
     ${PATH_PREFIX}/Handlers/ChannelHandler.cpp
     ${PATH_PREFIX}/Handlers/CharacterHandler.cpp
+    ${PATH_PREFIX}/Handlers/ChatHandler.cpp
     ${PATH_PREFIX}/Handlers/DuelHandler.cpp
+    ${PATH_PREFIX}/Handlers/GMTicketHandler.cpp
     ${PATH_PREFIX}/Handlers/GroupHandler.cpp
+    ${PATH_PREFIX}/Handlers/GuildHandler.cpp
     ${PATH_PREFIX}/Handlers/ItemHandler.cpp
     ${PATH_PREFIX}/Handlers/LfgHandler.cpp
     ${PATH_PREFIX}/Handlers/LootHandler.cpp

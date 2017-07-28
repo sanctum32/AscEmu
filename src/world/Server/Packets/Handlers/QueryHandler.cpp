@@ -22,7 +22,6 @@
 #include "StdAfx.h"
 #include "Storage/MySQLDataStore.hpp"
 #include "Storage/MySQLStructures.h"
-#include "Management/LocalizationMgr.h"
 #include "Map/WorldCreatorDefines.hpp"
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -72,19 +71,20 @@ void WorldSession::HandleQueryTimeOpcode(WorldPacket& recv_data)
 //////////////////////////////////////////////////////////////////////////////////////////
 /// This function handles CMSG_CREATURE_QUERY:
 //////////////////////////////////////////////////////////////////////////////////////////
+#if VERSION_STRING != Cata
 void WorldSession::HandleCreatureQueryOpcode(WorldPacket& recv_data)
 {
     CHECK_INWORLD_RETURN
 
     CHECK_PACKET_SIZE(recv_data, 12);
 
-    WorldPacket data(SMSG_CREATURE_QUERY_RESPONSE, 250); //VLack: thanks Aspire, this was 146 before
     uint32 entry;
     uint64 guid;
-    CreatureProperties const* ci;
 
     recv_data >> entry;
     recv_data >> guid;
+
+    WorldPacket data(SMSG_CREATURE_QUERY_RESPONSE, 250); //VLack: thanks Aspire, this was 146 before
 
     if (entry == 300000)
     {
@@ -98,20 +98,20 @@ void WorldSession::HandleCreatureQueryOpcode(WorldPacket& recv_data)
         {
             data << uint32(0);
         }
+
         data << uint8(0);
     }
     else
     {
-        ci = sMySQLStore.getCreatureProperties(entry);
-        if (ci == NULL)
-            return;
-
-        LocalizedCreatureName* lcn = (language > 0) ? sLocalizationMgr.GetLocalizedCreatureName(entry, language) : NULL;
-
-#if VERSION_STRING != Cata
-        if (lcn == NULL)
+        CreatureProperties const* ci = sMySQLStore.getCreatureProperties(entry);
+        if (ci == nullptr)
         {
-            LOG_DETAIL("WORLD: CMSG_CREATURE_QUERY '%s'", ci->Name.c_str());
+            return;
+        }
+
+        MySQLStructure::LocalesCreature const* lcn = (language > 0) ? sMySQLStore.getLocalizedCreature(entry, language) : nullptr;
+        if (lcn == nullptr)
+        {
             data << entry;
             data << ci->Name;       // name of the creature
             data << uint8(0);       // name2, always seems to be empty
@@ -121,21 +121,14 @@ void WorldSession::HandleCreatureQueryOpcode(WorldPacket& recv_data)
         }
         else
         {
-            LOG_DETAIL("WORLD: CMSG_CREATURE_QUERY '%s' (localized to %s)", ci->Name.c_str(), lcn->Name);
             data << entry;
-            data << lcn->Name;
+            data << lcn->name;
             data << uint8(0);
             data << uint8(0);
             data << uint8(0);
-            data << lcn->SubName;
+            data << lcn->subName;
         }
-#else
-        data << entry;
-        data << (lcn ? ci->Name : ci->Name);
-        for (uint8 i = 0; i < 7; ++i)
-            data << uint8(0);
-        data << (lcn ? lcn->SubName : ci->SubName);
-#endif
+
         data << ci->info_str;       // this is a string in 2.3.0 Example: stormwind guard has : "Direction"
         data << ci->Flags1;         // flags like skinnable
         data << ci->Type;           // humanoid, beast, etc
@@ -156,11 +149,13 @@ void WorldSession::HandleCreatureQueryOpcode(WorldPacket& recv_data)
         {
             data << uint32(ci->QuestItems[i]);
         }
+
         data << ci->waypointid;
     }
 
     SendPacket(&data);
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////////////////////////
 /// This function handles CMSG_GAMEOBJECT_QUERY:
@@ -182,19 +177,25 @@ void WorldSession::HandleGameObjectQueryOpcode(WorldPacket& recv_data)
 
     auto gameobject_info = sMySQLStore.getGameObjectProperties(entryID);
     if (gameobject_info == nullptr)
+    {
         return;
+    }
 
-    LocalizedGameObjectName* lgn = (language > 0) ? sLocalizationMgr.GetLocalizedGameObjectName(entryID, language) : NULL;
+    MySQLStructure::LocalesGameobject const* lgn = (language > 0) ? sMySQLStore.getLocalizedGameobject(entryID, language) : nullptr;
 
-    data << entryID;                // unique identifier of the GO template
-    data << gameobject_info->type;           // type of the gameobject
-    data << gameobject_info->display_id;      // displayid/modelid of the gameobject
+    data << entryID;                        // unique identifier of the GO template
+    data << gameobject_info->type;          // type of the gameobject
+    data << gameobject_info->display_id;    // displayid/modelid of the gameobject
 
     // Name of the gameobject
-    if (lgn)
-        data << lgn->Name;
+    if (lgn != nullptr)
+    {
+        data << lgn->name;
+    }
     else
+    {
         data << gameobject_info->name;
+    }
 
     data << uint8(0);               // name2, always seems to be empty
     data << uint8(0);               // name3, always seems to be empty
@@ -249,7 +250,7 @@ void WorldSession::HandleCorpseQueryOpcode(WorldPacket& recv_data)
 
     Corpse* pCorpse;
     WorldPacket data(MSG_CORPSE_QUERY, 25);
-    MapInfo const* pMapinfo;
+    MySQLStructure::MapInfo const* pMapinfo;
 
     pCorpse = objmgr.GetCorpseByOwner(GetPlayer()->GetLowGUID());
     if (pCorpse)
@@ -306,16 +307,24 @@ void WorldSession::HandlePageTextQueryOpcode(WorldPacket& recv_data)
     while (pageid)
     {
         MySQLStructure::ItemPage const* page = sMySQLStore.getItemPage(pageid);
-        if (!page)
+        if (page == nullptr)
+        {
             return;
+        }
 
-        LocalizedItemPage* lpi = (language > 0) ? sLocalizationMgr.GetLocalizedItemPage(pageid, language) : NULL;
+        MySQLStructure::LocalesItemPages const* lpi = (language > 0) ? sMySQLStore.getLocalizedItemPages(pageid, language) : nullptr;
+
         WorldPacket data(SMSG_PAGE_TEXT_QUERY_RESPONSE, 1000);
         data << pageid;
-        if (lpi)
-            data << lpi->Text;
+
+        if (lpi != nullptr)
+        {
+            data << lpi->text;
+        }
         else
+        {
             data << page->text;
+        }
 
         data << page->nextPage;
         pageid = page->nextPage;
@@ -344,11 +353,15 @@ void WorldSession::HandleItemNameQueryOpcode(WorldPacket& recv_data)
     ItemProperties const* proto = sMySQLStore.getItemProperties(itemid);
     if (proto != nullptr)
     {
-        LocalizedItem* li = (language > 0) ? sLocalizationMgr.GetLocalizedItem(itemid, language) : NULL;
-        if (li)
-            Name = li->Name;
+        MySQLStructure::LocalesItem const* li = (language > 0) ? sMySQLStore.getLocalizedItem(itemid, language) : nullptr;
+        if (li != nullptr)
+        {
+            Name = li->name;
+        }
         else
+        {
             Name = proto->Name;
+        }
 
         reply << Name;
         reply << proto->InventoryType;

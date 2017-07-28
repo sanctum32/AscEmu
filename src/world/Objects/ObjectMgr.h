@@ -28,6 +28,7 @@
 #include "Management/Guild.h"
 #include "Storage/DBC/DBCStructures.hpp"
 #include "Storage/DBC/DBCStores.h"
+#include "Storage/MySQLStructures.h"
 #if VERSION_STRING == Cata
     #include "Storage/DB2/DB2Stores.h"
     #include "Storage/DB2/DB2Structures.h"
@@ -97,33 +98,6 @@ enum
     GM_TICKET_CHAT_OPCODE_COMMENT       = 10,
     GM_TICKET_CHAT_OPCODE_ONLINESTATE   = 11
 };
-
-#pragma pack(push,1)
-
-struct ProfessionDiscovery
-{
-    uint32 SpellId;
-    uint32 SpellToDiscover;
-    uint32 SkillValue;
-    float Chance;
-};
-
-struct NpcScriptText
-{
-    uint32 id;                  // unique id \todo remove this and use creature_entry + text_id as key
-    std::string text;                 
-    uint32 creature_entry;      // creature entry ID
-    uint32 text_id;             // text_id started with 0
-    ChatMsg type;
-    Languages language;
-    float probability;          // chance/percent
-    EmoteType emote;            // emote id on say
-    uint32 duration;
-    uint32 sound;               // the sound on say
-    uint32 broadcast_id;        
-};
-
-#pragma pack(pop)
 
 struct SpellReplacement
 {
@@ -438,7 +412,6 @@ class SERVER_DECL ObjectMgr : public Singleton < ObjectMgr >, public EventableOb
         typedef std::map<uint32, LevelInfo*>                            LevelMap;
         typedef std::map<std::pair<uint32, uint32>, LevelMap*>          LevelInfoMap;
         
-        typedef std::map<uint32, std::set<SpellInfo*> >                PetDefaultSpellMap;
         typedef std::map<uint32, uint32>                                PetSpellCooldownMap;
         typedef std::multimap <uint32, uint32>                          BCEntryStorage;
         typedef std::map<uint32, SpellTargetConstraint*>                SpellTargetConstraintMap;
@@ -500,9 +473,11 @@ class SERVER_DECL ObjectMgr : public Singleton < ObjectMgr >, public EventableOb
         void DeletePlayerInfo(uint32 guid);
 
         // Guild
+#if VERSION_STRING != Cata
         void AddGuild(Guild* pGuild);
         uint32 GetTotalGuildCount();
         bool RemoveGuild(uint32 guildId);
+#endif
         Guild* GetGuild(uint32 guildId);
         Guild* GetGuildByLeaderGuid(uint64 leaderGuid);
         Guild* GetGuildByGuildName(std::string guildName);
@@ -566,7 +541,9 @@ class SERVER_DECL ObjectMgr : public Singleton < ObjectMgr >, public EventableOb
 #endif
         void LoadPlayersInfo();
 
+#if VERSION_STRING != Cata
         void LoadGuilds();
+#endif
         Corpse* LoadCorpse(uint32 guid);
         void LoadCorpses(MapMgr* mgr);
         void LoadGMTickets();
@@ -629,20 +606,14 @@ class SERVER_DECL ObjectMgr : public Singleton < ObjectMgr >, public EventableOb
 
         void LoadCreatureAIAgents();
 
-        void LoadProfessionDiscoveries();
-
-
         void CreateGossipMenuForPlayer(GossipMenu** Location, uint64 Guid, uint32 TextID, Player* Plr);
 
         LevelInfo* GetLevelInfo(uint32 Race, uint32 Class, uint32 Level);
         void GenerateLevelUpInfo();
 
-        void LoadDefaultPetSpells();
-        std::set<SpellInfo*>* GetDefaultPetSpells(uint32 Entry);
         uint32 GetPetSpellCooldown(uint32 SpellId);
         void LoadPetSpellCooldowns();
         Movement::WayPointMap* GetWayPointMap(uint32 spawnid);
-
 
         void ResetDailies();
 
@@ -676,12 +647,6 @@ class SERVER_DECL ObjectMgr : public Singleton < ObjectMgr >, public EventableOb
         void AddArenaTeam(ArenaTeam* team);
         Mutex m_arenaTeamLock;
 
-        typedef std::unordered_map<uint32, NpcMonsterSay*> MonsterSayMap;
-        MonsterSayMap mMonsterSays[NUM_MONSTER_SAY_EVENTS];
-
-        NpcMonsterSay* HasMonsterSay(uint32 Entry, MONSTER_SAY_EVENTS Event);
-        void LoadMonsterSay();
-
         bool HandleInstanceReputationModifiers(Player* pPlayer, Unit* pVictim);
         void LoadInstanceReputationModifiers();
 
@@ -706,11 +671,8 @@ class SERVER_DECL ObjectMgr : public Singleton < ObjectMgr >, public EventableOb
         void EventScriptsUpdate(Player* plr, uint32 next_event);
         ////////////////////////////////////////////
 
-
         inline GuildMap::iterator GetGuildsBegin() { return mGuild.begin(); }
         inline GuildMap::iterator GetGuildsEnd() { return mGuild.end(); }
-
-        std::set<ProfessionDiscovery*> ProfessionDiscoveryTable;
 
 #if VERSION_STRING > TBC
         void LoadAchievementCriteriaList();
@@ -785,7 +747,6 @@ class SERVER_DECL ObjectMgr : public Singleton < ObjectMgr >, public EventableOb
 
         TrainerMap mTrainers;
         LevelInfoMap mLevelInfo;
-        PetDefaultSpellMap mDefaultPetSpells;
         PetSpellCooldownMap mPetSpellCooldowns;
         SpellTargetConstraintMap m_spelltargetconstraints;
 #if VERSION_STRING > TBC
