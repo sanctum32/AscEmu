@@ -1,4 +1,5 @@
 sudo: false
+dist: trusty
 language: cpp
 
 os:
@@ -22,7 +23,7 @@ before_install:
 install:
   - mkdir ascemu_build
   - cd ascemu_build
-  - cmake ../ -DCMAKE_BUILD_TYPE=Release -DBUILD_TOOLS=1
+  - cmake ../ -DCMAKE_BUILD_TYPE=Release -DBUILD_TOOLS=0
 
 addons:
   apt:
