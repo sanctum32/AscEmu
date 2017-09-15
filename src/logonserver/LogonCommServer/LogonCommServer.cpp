@@ -17,18 +17,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "LogonCommServer/LogonRealmOpcodes.hpp"
 #include "LogonStdAfx.h"
+#include "LogonCommDefines.h"
 
-#pragma pack(push, 1)
-typedef struct
-{
-    uint16 opcode;
-    uint32 size;
-} logonpacket;
-#pragma pack(pop)
-
-static void swap32(uint32* p) { *p = ((*p >> 24) & 0xff) | ((*p >> 8) & 0xff00) | ((*p << 8) & 0xff0000) | (*p << 24); }
 
 LogonCommServerSocket::LogonCommServerSocket(SOCKET fd) : Socket(fd, 65536, 524288)
 {
@@ -99,7 +90,7 @@ void LogonCommServerSocket::OnRead()
             }
 
             /* reverse byte order */
-            swap32(&remaining);
+            byteSwapUInt32(&remaining);
         }
 
         // do we have a full packet?
@@ -279,11 +270,11 @@ void LogonCommServerSocket::SendPacket(WorldPacket* data)
     bool rv;
     BurstBegin();
 
-    logonpacket header;
+    LogonWorldPacket header;
     header.opcode = data->GetOpcode();
     //header.size   = ntohl((u_long)data->size());
     header.size = (uint32)data->size();
-    swap32(&header.size);
+    byteSwapUInt32(&header.size);
 
     if (use_crypto)
         sendCrypto.Process((unsigned char*)&header, (unsigned char*)&header, 6);
@@ -327,21 +318,21 @@ void LogonCommServerSocket::HandleAuthChallenge(WorldPacket & recvData)
     recvCrypto.Setup(key, 20);
     sendCrypto.Setup(key, 20);
 
-    /* packets are encrypted from now on */
+    // packets are encrypted from now on
     use_crypto = true;
 
-    /* send the response packet */
+    // send the response packet
     WorldPacket data(LRSMSG_AUTH_RESPONSE, 1);
     data << result;
     SendPacket(&data);
 
-    /* set our general var */
+    // set our general var
     authenticated = result;
 }
 
 void LogonCommServerSocket::HandleMappingReply(WorldPacket & recvData)
 {
-    /* this packet is gzipped, whee! :D */
+    // this packet is gzipped, whee! :D
     uint32 real_size;
     recvData >> real_size;
     uLongf rsize = real_size;
@@ -472,29 +463,29 @@ void LogonCommServerSocket::HandleDatabaseModify(WorldPacket & recvData)
             pAccount->Banned = duration;
 
             // update it in the sql (duh)
-            sLogonSQL->Execute("UPDATE accounts SET banned = %u, banreason = '%s' WHERE login = \"%s\"", duration, sLogonSQL->EscapeString(banreason).c_str(), sLogonSQL->EscapeString(account).c_str());
+            sLogonSQL->Execute("UPDATE accounts SET banned = %u, banreason = '%s' WHERE acc_name = \"%s\"", duration, sLogonSQL->EscapeString(banreason).c_str(), sLogonSQL->EscapeString(account).c_str());
 
         }
         break;
 
-        case Method_Account_Set_GM:
+        case Method_Account_Set_GM: //unused!
         {
-            std::string account;
-            std::string gm;
-            recvData >> account;
-            recvData >> gm;
+            //std::string account;
+            //std::string gm;
+            //recvData >> account;
+            //recvData >> gm;
 
-            // remember we expect this in uppercase
-            Util::StringToUpperCase(account);
+            //// remember we expect this in uppercase
+            //Util::StringToUpperCase(account);
 
-            Account* pAccount = sAccountMgr.GetAccount(account);
-            if (pAccount == NULL)
-                return;
+            //Account* pAccount = sAccountMgr.GetAccount(account);
+            //if (pAccount == NULL)
+            //    return;
 
-            pAccount->SetGMFlags(account.c_str());
+            //pAccount->SetGMFlags(account.c_str());
 
-            // update it in the sql (duh)
-            sLogonSQL->Execute("UPDATE accounts SET gm = \"%s\" WHERE login = \"%s\"", sLogonSQL->EscapeString(gm).c_str(), sLogonSQL->EscapeString(account).c_str());
+            //// update it in the sql (duh)
+            //sLogonSQL->Execute("UPDATE accounts SET gm = \"%s\" WHERE acc_name = \"%s\"", sLogonSQL->EscapeString(gm).c_str(), sLogonSQL->EscapeString(account).c_str());
 
         }
         break;
@@ -516,7 +507,7 @@ void LogonCommServerSocket::HandleDatabaseModify(WorldPacket & recvData)
             pAccount->Muted = duration;
 
             // update it in the sql (duh)
-            sLogonSQL->Execute("UPDATE accounts SET muted = %u WHERE login = \"%s\"", duration, sLogonSQL->EscapeString(account).c_str());
+            sLogonSQL->Execute("UPDATE accounts SET muted = %u WHERE acc_name = \"%s\"", duration, sLogonSQL->EscapeString(account).c_str());
         }
         break;
 
@@ -564,7 +555,7 @@ void LogonCommServerSocket::HandleDatabaseModify(WorldPacket & recvData)
             pass.assign(account_name);
             pass.push_back(':');
             pass.append(old_password);
-            auto check_oldpass_query = sLogonSQL->Query("SELECT login, encrypted_password FROM accounts WHERE encrypted_password=SHA(UPPER('%s')) AND login='%s'", pass.c_str(), account_name.c_str());
+            auto check_oldpass_query = sLogonSQL->Query("SELECT acc_name, encrypted_password FROM accounts WHERE encrypted_password = SHA(UPPER('%s')) AND acc_name = '%s'", pass.c_str(), account_name.c_str());
 
             if (!check_oldpass_query)
             {
@@ -583,7 +574,7 @@ void LogonCommServerSocket::HandleDatabaseModify(WorldPacket & recvData)
                 new_pass.push_back(':');
                 new_pass.append(new_password);
 
-                auto new_pass_query = sLogonSQL->Query("UPDATE accounts SET encrypted_password=SHA(UPPER('%s')) WHERE login='%s'", new_pass.c_str(), account_name.c_str());
+                auto new_pass_query = sLogonSQL->Query("UPDATE accounts SET encrypted_password = SHA(UPPER('%s')) WHERE acc_name = '%s'", new_pass.c_str(), account_name.c_str());
 
                 /*The query is already done, don't know why we are here. \todo check sLogonSQL query handling.
                 if (!new_pass_query)
@@ -650,7 +641,7 @@ void LogonCommServerSocket::HandleDatabaseModify(WorldPacket & recvData)
                 pass.push_back(':');
                 pass.append(password);
 
-                auto create_account = sLogonSQL->Query("INSERT INTO `accounts`(`login`,`encrypted_password`,`gm`,`banned`,`email`,`flags`,`banreason`) VALUES ('%s', SHA(UPPER('%s')),'0','0','','24','')", name_save.c_str(), pass.c_str());
+                auto create_account = sLogonSQL->Query("INSERT INTO `accounts`(`acc_name`,`encrypted_password`,`banned`,`email`,`flags`,`banreason`) VALUES ('%s', SHA(UPPER('%s')),'0','','24','')", name_save.c_str(), pass.c_str());
 
                 result = Result_Account_Finished;
 
@@ -672,15 +663,16 @@ void LogonCommServerSocket::HandleRequestCheckAccount(WorldPacket & recvData)
     uint32 method;
     recvData >> method;
 
+
+    std::string account_name;           // account to check
+    std::string request_name;           // account request the check
+
+    WorldPacket data(LRSMSG_ACCOUNT_RESULT, 300);
+
     switch (method)
     {
         case 1:            // account exist?
         {
-            // Prepare our "send-back" packet
-            WorldPacket data(LRSMSG_ACCOUNT_RESULT, 300);
-
-            std::string account_name;           // account to check
-            std::string request_name;           // account request the check
             std::string additional;             // additional data
 
             recvData >> account_name;
@@ -694,14 +686,13 @@ void LogonCommServerSocket::HandleRequestCheckAccount(WorldPacket & recvData)
             // remember we expect this in uppercase
             Util::StringToUpperCase(account_name);
 
-            auto account_check = sAccountMgr.GetAccount(account_name);
+            Account* account_check = sAccountMgr.GetAccount(account_name);
             if (account_check == nullptr)
             {
                 // Send packet "account not available"
                 data << uint8(1);
                 data << account_name_save;  // requested account
                 data << request_name;       // account_name for receive the session
-                SendPacket(&data);
             }
             else if (!additional_data)
             {
@@ -709,7 +700,6 @@ void LogonCommServerSocket::HandleRequestCheckAccount(WorldPacket & recvData)
                 data << uint8(2);
                 data << account_name_save;  // requested account
                 data << request_name;       // account_name for receive the session
-                SendPacket(&data);
             }
             else
             {
@@ -718,11 +708,39 @@ void LogonCommServerSocket::HandleRequestCheckAccount(WorldPacket & recvData)
                 data << account_name_save;  // requested account
                 data << request_name;       // account_name for receive the session
                 data << additional;         // additional data
-                SendPacket(&data);
+                data << uint32(account_check->AccountId);
             }
-        }
-        break;
+        } break;
+        case 2:            // get account id
+        {
+            recvData >> account_name;
+            recvData >> request_name;
+
+            std::string account_name_save = account_name;  // save original account_name to check
+
+            // remember we expect this in uppercase
+            Util::StringToUpperCase(account_name);
+
+            Account* account_check = sAccountMgr.GetAccount(account_name);
+            if (account_check == nullptr)
+            {
+                // Send packet "account not available"
+                data << uint8(1);
+                data << account_name_save;  // requested account
+                data << request_name;       // account_name for receive the session
+            }
+            else
+            {
+                // Send packet "account id"
+                data << uint8(4);
+                data << account_name_save;  // requested account
+                data << request_name;       // account_name for receive the session
+                data << uint32(account_check->AccountId);
+            }
+        } break;
     }
+
+    SendPacket(&data);
 }
 
 void LogonCommServerSocket::HandleRequestAllAccounts(WorldPacket& /*recvData*/)

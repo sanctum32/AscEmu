@@ -29,16 +29,8 @@
 #include <map>
 #include "Server/World.h"
 #include "Server/World.Legacy.h"
+#include "LogonCommDefines.h"
 
-#pragma pack(push, 1)
-typedef struct
-{
-    uint16 opcode;
-    uint32 size;
-} logonpacket;
-#pragma pack(pop)
-
-static void swap32(uint32* p) { *p = ((*p >> 24 & 0xff)) | ((*p >> 8) & 0xff00) | ((*p << 8) & 0xff0000) | (*p << 24); }
 
 LogonCommClientSocket::LogonCommClientSocket(SOCKET fd) : Socket(fd, 724288, 262444)
 {
@@ -51,7 +43,7 @@ LogonCommClientSocket::LogonCommClientSocket(SOCKET fd) : Socket(fd, 724288, 262
     authenticated = 0;
     pingtime = 0;
 
-    LOG_DEBUG("Created LogonCommClientSocket %u", m_fd);
+    LOG_DEBUG("Create new LogonCommClientSocket %u", m_fd);
 }
 
 void LogonCommClientSocket::OnRead()
@@ -75,7 +67,7 @@ void LogonCommClientSocket::OnRead()
             }
 
             // convert network byte order
-            swap32(&remaining);
+            byteSwapUInt32(&remaining);
         }
 
         // do we have a full packet?
@@ -155,7 +147,7 @@ void LogonCommClientSocket::HandleRegister(WorldPacket& recvData)
 
     LogDefault("Realm `%s` registered as realm %u.", realmname.c_str(), realmlid);
 
-    LogonCommHandler::getSingleton().AdditionAck(_id, realmlid);
+    LogonCommHandler::getSingleton().addRealmToRealmlistResult(_id, realmlid);
     realm_ids.insert(realmlid);
 }
 
@@ -164,12 +156,12 @@ void LogonCommClientSocket::HandleSessionInfo(WorldPacket& recvData)
     uint32 request_id;
     recvData >> request_id;
 
-    Mutex & m = sLogonCommHandler.GetPendingLock();
+    Mutex & m = sLogonCommHandler.getPendingLock();
     m.Acquire();
 
     // find the socket with this request
-    WorldSocket* sock = sLogonCommHandler.GetSocketByRequest(request_id);
-    if (sock == 0 || sock->Authed || !sock->IsConnected())       // Expired/Client disconnected
+    WorldSocket* sock = sLogonCommHandler.getWorldSocketForClientRequestId(request_id);
+    if (sock == nullptr || sock->Authed || !sock->IsConnected())       // Expired/Client disconnected
     {
         m.Release();
         return;
@@ -177,7 +169,7 @@ void LogonCommClientSocket::HandleSessionInfo(WorldPacket& recvData)
 
     // extract sessionkey / account information (done by WS)
     sock->Authed = true;
-    sLogonCommHandler.RemoveUnauthedSocket(request_id);
+    sLogonCommHandler.removeUnauthedClientSocket(request_id);
     sock->InformationRetreiveCallback(recvData, request_id);
     m.Release();
 }
@@ -199,7 +191,7 @@ void LogonCommClientSocket::SendPing()
 
 void LogonCommClientSocket::SendPacket(WorldPacket* data, bool no_crypto)
 {
-    logonpacket header;
+    LogonWorldPacket header;
     bool rv;
     if (!IsConnected() || IsDeleted())
         return;
@@ -209,7 +201,7 @@ void LogonCommClientSocket::SendPacket(WorldPacket* data, bool no_crypto)
     header.opcode = data->GetOpcode();
     //header.size   = ntohl((u_long)data->size());
     header.size = (uint32)data->size();
-    swap32(&header.size);
+    byteSwapUInt32(&header.size);
 
 
     if (use_crypto && !no_crypto)
@@ -234,7 +226,7 @@ void LogonCommClientSocket::OnDisconnect()
     if (_id != 0)
     {
         LOG_DETAIL("Calling ConnectionDropped() due to OnDisconnect().");
-        sLogonCommHandler.ConnectionDropped(_id);
+        sLogonCommHandler.dropLogonServerConnection(_id);
     }
 }
 
@@ -436,7 +428,7 @@ void LogonCommClientSocket::HandlePopulationRequest(WorldPacket& recvData)
     // Send the result
     WorldPacket data(LRCMSG_REALM_POPULATION_RESULT, 16);
     data << realmId;
-    data << LogonCommHandler::getSingleton().GetServerPopulation();
+    data << LogonCommHandler::getSingleton().getRealmPopulation();
     SendPacket(&data, false);
 }
 
@@ -492,24 +484,27 @@ void LogonCommClientSocket::HandleModifyDatabaseResult(WorldPacket& recvData)
             const char* account_string = account_name.c_str();
             const char* created_string = created_name.c_str();
 
-            WorldSession* pSession = sWorld.getSessionByAccountName(account_string);
-            if (pSession == nullptr)
+            if (account_name.compare("none") != 0)
             {
-                LOG_ERROR("No session found!");
-                return;
-            }
+                WorldSession* pSession = sWorld.getSessionByAccountName(account_string);
+                if (pSession == nullptr)
+                {
+                    LOG_ERROR("No session found!");
+                    return;
+                }
 
-            if (result_id == Result_Account_Exists)
-            {
-                pSession->SystemMessage("Account name: '%s' already in use!", created_string);
-            }
-            else if (result_id == Result_Account_Finished)
-            {
-                pSession->SystemMessage("Account: '%s' created", created_string);
-            }
-            else
-            {
-                LOG_ERROR("HandleModifyDatabaseResult: Unknown logon result in Method_Account_Create");
+                if (result_id == Result_Account_Exists)
+                {
+                    pSession->SystemMessage("Account name: '%s' already in use!", created_string);
+                }
+                else if (result_id == Result_Account_Finished)
+                {
+                    pSession->SystemMessage("Account: '%s' created", created_string);
+                }
+                else
+                {
+                    LOG_ERROR("HandleModifyDatabaseResult: Unknown logon result in Method_Account_Create");
+                }
             }
 
         }break;
@@ -530,50 +525,88 @@ void LogonCommClientSocket::HandleResultCheckAccount(WorldPacket& recvData)
     const char* request_string = request_name.c_str();
     const char* account_string = account_name.c_str();
 
-    auto session_name = sWorld.getSessionByAccountName(request_string);
+    WorldSession* session_name = sWorld.getSessionByAccountName(request_string);
     if (session_name == nullptr)
     {
-        LOG_ERROR("Receiver %s not found!", request_string);
-        return;
+        if (request_name.compare("none") != 0)
+        {
+            LOG_ERROR("Receiver %s not found!", request_string);
+            return;
+        }
     }
 
     switch (result_id)
     {
         case 1:     // Account not available
         {
-            session_name->SystemMessage("Account: %s not found in database!", account_string);
-        }
-        break;
+            if (request_name.compare("none") != 0)
+                session_name->SystemMessage("Account: %s not found in database!", account_string);
+        } break;
         case 2:     // No additional data set
         {
-            session_name->SystemMessage("No gmlevel set for account: %s !", account_string);
-        }
-        break;
+            if (request_name.compare("none") != 0)
+                session_name->SystemMessage("No gmlevel set for account: %s !", account_string);
+        } break;
         case 3:     // Everything is okay
         {
             std::string gmlevel;
             recvData >> gmlevel;
 
-            const char* gmlevel_string = gmlevel.c_str();
+            uint32 accountId;
+            recvData >> accountId;
 
-            //Update account_forced_permissions
-            CharacterDatabase.Execute("REPLACE INTO account_forced_permissions (`login`, `permissions`) VALUES ('%s', '%s')", account_string, gmlevel_string);
-            session_name->SystemMessage("Forced permissions Account has been updated to '%s' for account '%s'. The change will be effective immediately.", gmlevel_string, account_string);
-
-            //Update forcedpermission map
-            sLogonCommHandler.AddForcedPermission(account_string, gmlevel_string);
-
-            //Write info to gmlog
-            sGMLog.writefromsession(session_name, "set account %s forced_permissions to %s", account_string, gmlevel_string);
-
-            //Send information to updated account
-            WorldSession* updated_account_session = sWorld.getSessionByAccountName(account_string);
-            if (updated_account_session != nullptr)
+            if (gmlevel.compare("0") != 0)
             {
-                updated_account_session->SystemMessage("Your permissions has been updated! Please reconnect your account.");
+                //Update account_permissions
+                CharacterDatabase.Execute("REPLACE INTO account_permissions (`id`, `permissions`, `name`) VALUES (%u, '%s', '%s')", accountId, gmlevel.c_str(), account_string);
+                if (request_name.compare("none") != 0)
+                    session_name->SystemMessage("Account permissions has been updated to '%s' for account '%s' (%u). The change will be effective immediately.", gmlevel.c_str(), account_string, accountId);
+
+                //Update forcedpermission map
+                sLogonCommHandler.setAccountPermission(accountId, gmlevel.c_str());
+
+                //Write info to gmlog
+                if (request_name.compare("none") != 0)
+                    sGMLog.writefromsession(session_name, "set account %s (%u) permissions to %s", account_string, accountId, gmlevel.c_str());
+
+                //Send information to updated account
+                WorldSession* updated_account_session = sWorld.getSessionByAccountName(account_string);
+                if (updated_account_session != nullptr)
+                {
+                    updated_account_session->SystemMessage("Your permissions has been updated! Please reconnect your account.");
+                }
             }
+            else
+            {
+                //Update account_permissions
+                CharacterDatabase.Execute("DELETE FROM account_permissions WHERE id = %u", accountId);
+                if (request_name.compare("none") != 0)
+                    session_name->SystemMessage("Account permissions removed for account '%s' (%u). The change will be effective immediately.", account_string, accountId);
+
+                //Update forcedpermission map
+                sLogonCommHandler.removeAccountPermission(accountId);
+
+                //Write info to gmlog
+                if (request_name.compare("none") != 0)
+                    sGMLog.writefromsession(session_name, "removed permissions for account %s (%u)", account_string, accountId);
+
+                //Send information to updated account
+                WorldSession* updated_account_session = sWorld.getSessionByAccountName(account_string);
+                if (updated_account_session != nullptr)
+                {
+                    sWorld.disconnectSessionByAccountName(account_string, session_name);
+                }
+            }
+
+        } break;
+        case 4:     // Account ID
+        {
+            uint32 account_id;
+            recvData >> account_id;
+
+            if (request_name.compare("none") != 0)
+                session_name->SystemMessage("Account '%s' has account ID %u.", account_string, account_id);
         }
-        break;
     }
 }
 

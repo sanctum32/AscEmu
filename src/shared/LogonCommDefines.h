@@ -1,23 +1,11 @@
 /*
- * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- */
+Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+This file is released under the MIT license. See README-MIT for more information.
+*/
 
-#ifndef _LOGON_REALM_OPCODES_H
-#define _LOGON_REALM_OPCODES_H
+#pragma once
+
+#include "Common.hpp"
 
 //////////////////////////////////////////////////////////////////////////////////////////
 /// \brief Logon Realm communication
@@ -77,4 +65,22 @@ enum AccountDatabaseResult
     Result_Account_Exists
 };
 
-#endif      //_LOGON_REALM_OPCODES_H
+#pragma pack(push, 1)
+struct LogonWorldPacket
+{
+    uint16_t opcode;
+    uint32_t size;
+};
+#pragma pack(pop)
+
+
+static void byteSwapUInt16(uint16_t* byte16)
+{
+    *byte16 = ((*byte16 >> 8) & 0xFF00) | ((*byte16 << 8) & 0xFF0000);
+}
+
+static void byteSwapUInt32(uint32_t* byte32)
+{
+    *byte32 = ((*byte32 >> 24) & 0xFF) | ((*byte32 >> 8) & 0xFF00) | ((*byte32 << 8) & 0xFF0000) | (*byte32 << 24);
+}
+

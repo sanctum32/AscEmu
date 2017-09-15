@@ -51,10 +51,52 @@ bool handleBanAccountCommand(BaseConsole* baseConsole, int argumentCount, std::s
 
     uint32_t banned = (uint32_t)UNIXTIME + timeperiod;
 
-    sLogonCommHandler.Account_SetBanned(accountName.c_str(), banned, banReason.c_str());
+    sLogonCommHandler.setAccountBanned(accountName.c_str(), banned, banReason.c_str());
 
     baseConsole->Write("Account '%s' has been banned until %s. The change will be effective immediately.\r\n", accountName.c_str(),
         Util::GetDateTimeStringFromTimeStamp(timeperiod + (uint32_t)UNIXTIME).c_str());
+
+    return true;
+}
+
+bool handleCreateAccountCommand(BaseConsole* baseConsole, int argumentCount, std::string consoleInput, bool isWebClient)
+{
+    if (argumentCount > 0 && consoleInput.empty())
+        return false;
+
+    std::string accountName;
+    std::string password;
+    std::string none("none");
+
+    std::stringstream accountBanStream(consoleInput);
+    accountBanStream >> accountName;
+    accountBanStream >> password;
+    std::getline(accountBanStream, password);
+
+    sLogonCommHandler.createAccount(accountName.c_str(), password.c_str(), none.c_str());
+
+    baseConsole->Write("Account '%s' has been created with password: '%s'. The change will be effective immediately.\r\n", accountName.c_str(), password.c_str());
+
+    return true;
+}
+
+bool handleAccountPermission(BaseConsole* baseConsole, int argumentCount, std::string consoleInput, bool isWebClient)
+{
+    if (argumentCount > 0 && consoleInput.empty())
+        return false;
+
+    std::string accountName;
+    std::string permission;
+    std::string none("none");
+
+    std::stringstream accountBanStream(consoleInput);
+    accountBanStream >> accountName;
+    accountBanStream >> permission;
+    std::getline(accountBanStream, permission);
+
+    sLogonCommHandler.checkIfAccountExist(accountName.c_str(), none.c_str(), permission.c_str());
+
+    baseConsole->Write("Permission '%s' has been set for Account: '%s'. The change will be effective immediately.\r\n", permission.c_str(), accountName.c_str());
 
     return true;
 }
@@ -272,7 +314,7 @@ bool handleUnbanAccountCommand(BaseConsole* baseConsole, int argumentCount, std:
     if (argumentCount > 0 && consoleInput.empty())
         return false;
 
-    sLogonCommHandler.Account_SetBanned(consoleInput.c_str(), 0, "");
+    sLogonCommHandler.setAccountBanned(consoleInput.c_str(), 0, "");
     baseConsole->Write("Account '%s' has been unbanned.\r\n", consoleInput.c_str());
 
     return true;
@@ -394,7 +436,7 @@ bool handlePrintTimeDateCommand(BaseConsole* baseConsole, int /*argumentCount*/,
 
 bool handleGetAccountsCommand(BaseConsole* baseConsole, int /*argumentCount*/, std::string /*consoleInput*/, bool isWebClient)
 {
-    sLogonCommHandler.RequestAccountData();
+    sLogonCommHandler.requestAccountData();
 
     std::cout << "Command result is: " << sLogonCommHandler.accountResult << std::endl;
 
