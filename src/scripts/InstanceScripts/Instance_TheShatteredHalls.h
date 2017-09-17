@@ -1,23 +1,9 @@
 /*
- * AscScripts for AscEmu Framework
- * Copyright (C) 2008-2015 Sun++ Team <http://www.sunplusplus.info/>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- */
+Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+This file is released under the MIT license. See README-MIT for more information.
+*/
 
-#ifndef _INSTANCE_SHATTERED_HALLS_H
-#define _INSTANCE_SHATTERED_HALLS_H
+#pragma once
 
 enum CreatureEntry
 {
@@ -101,8 +87,8 @@ enum CreatureSpells
     SP_SHADOWMOON_ACOLYTE_PW_SHIELD     = 35944,    // 41373, 29408, 36052, 35944, 32595
     SP_SHADOWMOON_ACOLYTE_MIND_BLAST    = 31516,    //26048 //38259 // ofc not sure (and this one can be really overpowered)
     SP_SHADOWMOON_ACOLYTE_RESIST_SHADOW = 30479,    // not sure to those both
-    //#define PRAYER_OF_HEALING 15585    // crashes server
-    //#define 105 resist shadow buff?
+    //PRAYER_OF_HEALING 15585    // crashes server
+    //105 resist shadow buff?
     // Self Visual - Sleep Until Cancelled (DND) 16093 ?
 
     // ShatteredHandAssassinAI
@@ -148,7 +134,7 @@ enum CreatureSpells
 
     // Blood Guard PorungAI
     SP_BLOOD_GUARD_PORUNG_CLEAVE        = 37476,    // right description, but no idea if this is right spell
-    //#define FEAR <-- disabled in 2.1
+    //FEAR <-- disabled in 2.1
 
     // WarbringerOmroggAI
     SP_WARBRINGER_OMROGG_THUNDERCLAP    = 30633,
@@ -191,5 +177,3 @@ enum CreatureSay
     SAY_WARCHIEF_KARGATH_06 = 8735      // The true horde... will... prevail!
 
 };
-
-#endif // _INSTANCE_SHATTERED_HALLS_H

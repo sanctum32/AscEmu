@@ -1,23 +1,9 @@
 /*
- * AscScripts for AscEmu Framework
- * Copyright (C) 2008-2015 Sun++ Team <http://www.sunplusplus.info/>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- */
+Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+This file is released under the MIT license. See README-MIT for more information.
+*/
 
-#ifndef _INSTANCE_THE_MECHANAR_H
-#define _INSTANCE_THE_MECHANAR_H
+#pragma once
 
 enum CreatureEntry
 {
@@ -86,7 +72,7 @@ enum CreatureSpells
     // Arcane ServantAI
     SP_ARCANE_VOLLEY                        = 35255,
     SP_ARCANE_EXPLOSION                     = 22271,
-    //#define SPOTLIGHT 35259 // SSS
+    //SPOTLIGHT = 35259 // SSS
 
     // Bloodwarder CenturionAI
     SP_CENTURION_SHIELD_BASH                = 35178,
@@ -94,14 +80,14 @@ enum CreatureSpells
     SP_CENTURION_MELT_ARMOR                 = 35185,
     SP_CENTURION_CHILLING_TOUCH             = 12531,
     SP_CENTURION_ETHEREAL_TELEPORT          = 34427,    // SSS
-   //#define SEED_OF_CORRUPTION 37826 // SSS
+   //SEED_OF_CORRUPTION = 37826 // SSS
 
    // Bloodwarder PhysicianAI
     SP_PHYSICIAN_HOLY_SHOCK                 = 36340,
     SP_PHYSICIAN_ANESTHETIC                 = 36333,
     SP_PHYSICIAN_BANDAGE                    = 36348,    // DBC: 36348; mine choice 38919
     SP_PHYSICIAN_ETHEREAL_TELEPORT_PHYS     = 34427,    // SSS
-    //#define SEED_OF_CORRUPTION 37826 // SSS
+    //SEED_OF_CORRUPTION = 37826 // SSS
 
     // Bloodwarder SlayerAI
     SP_SLAYER_WHIRLWIND                     = 13736,    // DBC: 13736, 15589;
@@ -153,7 +139,7 @@ enum CreatureSpells
     SP_SS_NETHERBINDER_SUMMON_ARCANE_GOLEM1 = 35251,    // DBC: 35251, 35260; Guardian, so won't work now
     SP_SS_NETHERBINDER_SUMMON_ARCANE_GOLEM2 = 35260,
     SP_SS_NETHERBINDER_DISPEL_MAGIC         = 23859,    // no idea about this one
-    //#define SEED_OF_CORRUPTION 37826
+    //SEED_OF_CORRUPTION = 37826
 
     // Tempest-Forge DestroyerAI
     SP_TEMPEST_DESTROYER_KNOCKDOWN          = 35783,
@@ -180,11 +166,11 @@ enum CreatureSpells
     SP_MECH_LORD_REFLECTIVE_DAMAGE_SHIELD   = 35159,
     SP_MECH_LORD_REFLECTIVE_MAGIC_SHIELD    = 35158,
     SP_MECH_LORD_SEED_OF_CORRUPTION         = 37826,    // SSS (server side script) (is it really used?)
-    /*#define NETHER_CHARGE 34303
-    #define NETHER_CHARGE_PASSIVE 35150 // SSS
-    #define NETHER_CHARGE_PULSE 35151    // SSS
-    #define NETHER_CHARGE_TIMER 37670
-    #define NETHER_DETONATION 35152        // Spell from Timer
+    /*NETHER_CHARGE 34303
+    NETHER_CHARGE_PASSIVE 35150 // SSS
+    NETHER_CHARGE_PULSE 35151    // SSS
+    NETHER_CHARGE_TIMER 37670
+    NETHER_DETONATION 35152        // Spell from Timer
     // Note: All for bombs :O*/
 
     // Nethermancer Sepethrea AI
@@ -192,7 +178,7 @@ enum CreatureSpells
     SP_NETH_SEPETHREA_FROST_ATTACK          = 35263,
     SP_NETH_SEPETHREA_ARCANE_BLAST          = 35314,
     SP_NETH_SEPETHREA_DRAGONS_BREATH        = 35250,
-    //#define KNOCKBACK 37317    // not sure to this one!
+    //KNOCKBACK 37317    // not sure to this one!
 
     // Pathaleon the Calculator AI
     SP_PATHALEON_MANA_TRAP                  = 36021,    // I am not sure to any of those ids =(
@@ -253,5 +239,3 @@ enum CreatureSay
     SAY_PATHALEON_08        = 5119,    // The project will... continue.
 
 };
-
-#endif // _INSTANCE_THE_MECHANAR_H

@@ -1,23 +1,9 @@
 /*
- * AscScripts for AscEmu Framework
- * Copyright (C) 2008-2015 Sun++ Team <http://www.sunplusplus.info/>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- */
+Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+This file is released under the MIT license. See README-MIT for more information.
+*/
 
-#ifndef _INSTANCE_SHADOW_LABYRINTH_H
-#define _INSTANCE_SHADOW_LABYRINTH_H
+#pragma once
 
 enum CreatureEntry
 {
@@ -145,9 +131,9 @@ enum CreatureSpells
     SP_MURMUR_SONIC_BOOM1                   = 33923,   // anything missed? additional dmging spell?
     SP_MURMUR_SONIC_BOOM2                   = 33666,
     SP_MURMUR_RESONANCE                     = 33657    // should be applied only when no target in melee combat range (each 5 sec)
-    /*#define THUNDERING_STORM 39365
-    #define SUPPRESSION_BLAST 33332*/
-    // #define SONIC_BOOM 33666
+    /*const uint32 THUNDERING_STORM = 39365
+    const uint32 SUPPRESSION_BLAST = 33332*/
+    // const uint32 SONIC_BOOM 33666
     // 33666 or 38795 (I think it's dummy (33923); it should be connected with Murmur's Touch; Murmur should say
     // Murmur draws energy from the air then use Murmur's Touch (33711), Sonic Boom (33923) and
     // release Sonic Boom (38052); it also shouldn't attack during all those casts;
@@ -199,5 +185,3 @@ enum CreatureSay
     SAY_GRD_VORPIL_08               = 4640      // I give my life... gladly.
 
 };
-
-#endif // _INSTANCE_SHADOW_LABYRINTH_H

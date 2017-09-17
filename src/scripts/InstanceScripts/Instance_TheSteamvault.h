@@ -1,23 +1,9 @@
 /*
- * AscScripts for AscEmu Framework
- * Copyright (C) 2008-2015 Sun++ Team <http://www.sunplusplus.info/>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- */
+Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+This file is released under the MIT license. See README-MIT for more information.
+*/
 
-#ifndef _INSTANCE_THE_STEAMVAULT_H
-#define _INSTANCE_THE_STEAMVAULT_H
+#pragma once
 
 enum CreatureEntry
 {
@@ -87,13 +73,13 @@ enum CreatureSpells
     // Also it should heal other naga like etc.
 
     // CoilfangWarriorAI
-    //#define MORTAL_STRIKE 29572  // should it really be here?
+    //MORTAL_STRIKE 29572  // should it really be here?
     MORTAL_BLOW                 = 35105,
     BATTLE_SHOUT                = 31403,
     // Defensive Stance 7164 ?
 
     // CoilfangSirenAI
-    //#define MOONFIRE 20690 // not sure to id    // not used ?
+    //MOONFIRE 20690 // not sure to id    // not used ?
     AOE_FEAR                    = 29321,    //30584 // Maybe should be: 33547 or 29321
     LIGHTNING_BOLT              = 15234,    //36152 // 1 target
     ARCANE_FLARE                = 35106,
@@ -124,7 +110,7 @@ enum CreatureSpells
     ENRAGE_SlAVEMASTER          = 8269,
 
     // CoilfangWaterElementalAI
-    //#define FROSTBOLT_VOLLEY 36741
+    //FROSTBOLT_VOLLEY 36741
     WATER_BOLT_WOLLEY           = 34449,
 
     // CoilfangMyrmidonAI
@@ -133,7 +119,7 @@ enum CreatureSpells
     EXECUTE                     = 7160,     //38959 // should activate only on target with <= 25% hp // not sure about it
 
     // TidalSurgerAI
-    //#define KNOCKBACK 30056
+    //KNOCKBACK 30056
     WATER_SPOUT                 = 37250,
     FROST_NOVA_SURGER           = 15531,
 
@@ -198,5 +184,3 @@ enum CreatureSay
     SAY_WARLORD_KALITRESH_08        = 4819,     // For her Excellency... for... Vashj!
 
 };
-
-#endif // _INSTANCE_THE_STEAMVAULT_H

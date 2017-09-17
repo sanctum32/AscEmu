@@ -8,28 +8,28 @@
 #include "Management/Gossip/GossipMenu.hpp"
 
 //////////////////////////////////////////////////////////////////////////////////////////
-///\details <b>Darkmoon Faire (Elwynn Forest)</b>\n
+//\details <b>Darkmoon Faire (Elwynn Forest)</b>\n
 // event_properties entry: 4 \n
 // event_properties holiday: 374 \n
-///\todo Check all Darkmoon Faire events
+//\todo Check all Darkmoon Faire events
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
-///\details <b>Darkmoon Faire (Mulgore)</b>\n
+//\details <b>Darkmoon Faire (Mulgore)</b>\n
 // event_properties entry: 5 \n
 // event_properties holiday: 375 \n
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
-///\details <b>Darkmoon Faire (Terokkar Forest)</b>\n
+//\details <b>Darkmoon Faire (Terokkar Forest)</b>\n
 // event_properties entry: 3 \n
 // event_properties holiday: 376 \n
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
-///\details <b>Darkmoon Faire Gameobjects</b>\n
+//\details <b>Darkmoon Faire Gameobjects</b>\n
 
-/// Blastenheimer 5000 Ultra Cannon
+// Blastenheimer 5000 Ultra Cannon
 class Blastenheimer5000 : public GameObjectAIScript
 {
     public:
@@ -99,13 +99,13 @@ Drop Mine - 39685, 25024
 Nitrous Boost - 27746
 
 
-#define CANNON 24933            //39692, 34154
-#define MORTAR 25003            //33861 -- Triggers Explosion, 39695 --- Summons Mortar
-#define NITROUS 27746           //Needs Scripting
-#define FLAMETHROWER 39693      //25027
-#define MACHINEGUN 25026
-#define DROPMINE 25024
-#define SHIELD 27759
+const uint32 CANNON = 24933            //39692, 34154
+const uint32 MORTAR = 25003            //33861 -- Triggers Explosion, 39695 --- Summons Mortar
+const uint32 NITROUS = 27746           //Needs Scripting
+const uint32 FLAMETHROWER = 39693      //25027
+const uint32 MACHINEGUN = 25026
+const uint32 DROPMINE = 25024
+const uint32 SHIELD = 27759
 
 static uint32 TonkSpecials[4] = { FLAMETHROWER, MACHINEGUN, DROPMINE, SHIELD };
 

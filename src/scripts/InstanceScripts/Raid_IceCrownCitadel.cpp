@@ -1,21 +1,7 @@
 /*
- * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- */
-
+Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+This file is released under the MIT license. See README-MIT for more information.
+*/
 
 #include "Setup.h"
 #include "Raid_IceCrownCitadel.h"
@@ -26,14 +12,14 @@
 //ICC zone: 4812
 //Prepared creature entry:
 //
-//#define CN_DEATHBRINGER_SAURFANG    37813
-//#define CN_FESTERGUT                36626
-//#define CN_ROTFACE                  36627
-//#define CN_PROFESSOR_PUTRICIDE      36678
-//#define CN_PRINCE_VALANAR           37970
-//#define CN_BLOOD_QUEEN_LANATHEL     37955
-//#define CN_SINDRAGOSA               36853
-//#define CN_THE_LICHKING             36597
+//CN_DEATHBRINGER_SAURFANG    37813
+//CN_FESTERGUT                36626
+//CN_ROTFACE                  36627
+//CN_PROFESSOR_PUTRICIDE      36678
+//CN_PRINCE_VALANAR           37970
+//N_BLOOD_QUEEN_LANATHEL     37955
+//CN_SINDRAGOSA               36853
+//CN_THE_LICHKING             36597
 //
 ///\todo  start boss scripts
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -251,11 +237,11 @@ public:
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Boss: Lord Marrowgar
-#define LM_BERSERK 47008
-#define BONE_SLICE 69055
-#define BONE_SPIKE 69057        // Not shure about this
-#define BONE_STORM 69076
-#define SOUL_FEAST 71203        // Needs a script
+const uint32 LM_BERSERK = 47008;
+const uint32 BONE_SLICE = 69055;
+const uint32 BONE_SPIKE = 69057;       // Not shure about this
+const uint32 BONE_STORM = 69076;
+const uint32 SOUL_FEAST = 71203;       // Needs a script
 
 class LordMarrowgarAI : public MoonScriptBossAI
 {
@@ -444,7 +430,7 @@ class LordMarrowgarAI : public MoonScriptBossAI
         uint8 nrspells;
 };
 
-#define IMPALED 69065
+const uint32 IMPALED = 69065;
 
 class BoneSpikeAI : public MoonScriptBossAI
 {
