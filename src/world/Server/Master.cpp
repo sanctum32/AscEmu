@@ -45,9 +45,9 @@ SERVER_DECL Database* Database_Character;
 SERVER_DECL Database* Database_World;
 
 // mainserv defines
-SERVER_DECL SessionLogWriter* GMCommand_Log;
-SERVER_DECL SessionLogWriter* Anticheat_Log;
-SERVER_DECL SessionLogWriter* Player_Log;
+SERVER_DECL SessionLog* GMCommand_Log;
+SERVER_DECL SessionLog* Anticheat_Log;
+SERVER_DECL SessionLog* Player_Log;
 
 // threads
 extern DayWatcherThread* dw;
@@ -200,7 +200,7 @@ bool Master::Run(int argc, char** argv)
     InitRandomNumberGenerators();
 
     ThreadPool.Startup();
-    uint32 LoadingTime = getMSTime();
+    auto startTime = Util::TimeNow();
 
     new EventMgr;
     new World;
@@ -277,8 +277,7 @@ bool Master::Run(int argc, char** argv)
         sScriptMgr.DumpUnimplementedSpells();
     }
 
-    LoadingTime = getMSTime() - LoadingTime;
-    LogDetail("Server : Ready for connections. Startup time: %ums", LoadingTime);
+    LogDetail("Server : Ready for connections. Startup time: %u ms", Util::GetTimeDifferenceToNow(startTime));
 
     ThreadPool.ExecuteTask(new GameEventMgr::GameEventMgrThread());
 
@@ -680,44 +679,44 @@ void Master::OpenCheatLogFiles()
     bool useTimeStamp = worldConfig.log.enableTimeStamp;
     std::string logDir = worldConfig.log.extendedLogsDir;
 
-    Anticheat_Log = new SessionLogWriter(AELog::GetFormattedFileName(logDir.c_str(), "cheaters", useTimeStamp).c_str(), false);
-    GMCommand_Log = new SessionLogWriter(AELog::GetFormattedFileName(logDir.c_str(), "gmcommands", useTimeStamp).c_str(), false);
-    Player_Log = new SessionLogWriter(AELog::GetFormattedFileName(logDir.c_str(), "players", useTimeStamp).c_str(), false);
+    Anticheat_Log = new SessionLog(AELog::GetFormattedFileName(logDir.c_str(), "cheaters", useTimeStamp).c_str(), false);
+    GMCommand_Log = new SessionLog(AELog::GetFormattedFileName(logDir.c_str(), "gmcommands", useTimeStamp).c_str(), false);
+    Player_Log = new SessionLog(AELog::GetFormattedFileName(logDir.c_str(), "players", useTimeStamp).c_str(), false);
 
-    if (Anticheat_Log->IsOpen())
+    if (Anticheat_Log->isSessionLogOpen())
     {
         if (!worldConfig.log.enableCheaterLog)
         {
-            Anticheat_Log->Close();
+            Anticheat_Log->closeSessionLog();
         }
     }
     else if (worldConfig.log.enableCheaterLog)
     {
-        Anticheat_Log->Open();
+        Anticheat_Log->openSessionLog();
     }
 
-    if (GMCommand_Log->IsOpen())
+    if (GMCommand_Log->isSessionLogOpen())
     {
         if (!worldConfig.log.enableGmCommandLog)
         {
-            GMCommand_Log->Close();
+            GMCommand_Log->closeSessionLog();
         }
     }
     else if (worldConfig.log.enableGmCommandLog)
     {
-        GMCommand_Log->Open();
+        GMCommand_Log->openSessionLog();
     }
 
-    if (Player_Log->IsOpen())
+    if (Player_Log->isSessionLogOpen())
     {
         if (!worldConfig.log.enablePlayerLog)
         {
-            Player_Log->Close();
+            Player_Log->closeSessionLog();
         }
     }
     else if (worldConfig.log.enablePlayerLog)
     {
-        Player_Log->Open();
+        Player_Log->openSessionLog();
     }
 }
 
@@ -759,7 +758,7 @@ void Master::ShutdownThreadPools(bool listnersockcreate)
     time_t curTime;
     uint32 loopcounter = 0;
     auto last_time = Util::TimeNow();
-    uint32 next_printout = getMSTime(), next_send = getMSTime();
+    uint32 next_printout = Util::getMSTime(), next_send = Util::getMSTime();
 
     while (!m_stopEvent && listnersockcreate)
     {
@@ -794,7 +793,7 @@ void Master::ShutdownThreadPools(bool listnersockcreate)
         auto etime = Util::GetTimeDifference(start, last_time);
         if (m_ShutdownEvent)
         {
-            if (getMSTime() >= next_printout)
+            if (Util::getMSTime() >= next_printout)
             {
                 if (m_ShutdownTimer > 60000.0f)
                 {
@@ -804,10 +803,10 @@ void Master::ShutdownThreadPools(bool listnersockcreate)
                 else
                 LogNotice("Server : Shutdown in %i seconds.", (int)(m_ShutdownTimer / 1000.0f));
 
-                next_printout = getMSTime() + 500;
+                next_printout = Util::getMSTime() + 500;
             }
 
-            if (getMSTime() >= next_send)
+            if (Util::getMSTime() >= next_send)
             {
                 int time = m_ShutdownTimer / 1000;
                 if ((time % 30 == 0) || time < 10)
@@ -834,7 +833,7 @@ void Master::ShutdownThreadPools(bool listnersockcreate)
                         sWorld.sendGlobalMessage(&data);
                     }
                 }
-                next_send = getMSTime() + 1000;
+                next_send = Util::getMSTime() + 1000;
             }
             if (diff >= m_ShutdownTimer)
                 break;
