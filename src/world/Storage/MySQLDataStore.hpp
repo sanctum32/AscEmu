@@ -96,6 +96,9 @@ public:
     typedef std::unordered_map<uint32_t, MySQLStructure::TransportCreatures> TransportCreaturesContainer;
     typedef std::unordered_map<uint32_t, MySQLStructure::TransportData> TransportDataContainer;
 
+    typedef std::unordered_map<uint32_t, MySQLStructure::GossipMenuInit> GossipMenuInitMap;
+    typedef std::multimap<uint32_t, MySQLStructure::GossipMenuItems> GossipMenuItemsContainer;
+
     //helper
     MySQLStructure::ItemPage const* getItemPage(uint32_t entry);
     ItemPageContainer const* getItemPagesStore() { return &_itemPagesStore; }
@@ -199,6 +202,7 @@ public:
 
     TransportCreaturesContainer* getTransportCreaturesStore() { return &_transportCreaturesStore; }
     
+    GossipMenuInitMap const* getGossipMenuInitTextId() { return &_gossipMenuInitStore; }
 
     bool isCharacterNameAllowed(std::string charName);
 
@@ -285,6 +289,8 @@ public:
     void loadTransportCreaturesTable();
     void loadTransportDataTable();
 
+    void loadGossipMenuItemsTable();
+
 
     ItemPageContainer _itemPagesStore;
     ItemPropertiesContainer _itemPropertiesStore;
@@ -353,6 +359,9 @@ public:
 
     TransportCreaturesContainer _transportCreaturesStore;
     TransportDataContainer _transportDataStore;
+
+    GossipMenuInitMap _gossipMenuInitStore;
+    GossipMenuItemsContainer _gossipMenuItemsStores;
 };
 
 #define sMySQLStore MySQLDataStore::getSingleton()
