@@ -19,7 +19,6 @@
  */
 
 #include "Setup.h"
-#include "Management/Gossip/GossipMenu.hpp"
 
 class HeroesofOld : public QuestScript
 {
@@ -30,7 +29,7 @@ public:
 
         if (!spawncheckcr)
         {
-            Creature* general = sEAS.SpawnCreature(mTarget, 7750, -10619, -2997, 28.8f, 4, 0);
+            Creature* general = mTarget->GetMapMgr()->CreateAndSpawnCreature(7750, -10619, -2997, 28.8f, 4);
             general->Despawn(3 * 60 * 1000, 0);
         }
 
@@ -38,64 +37,59 @@ public:
 
         if (!spawncheckgobj)
         {
-            GameObject* generalsbox = sEAS.SpawnGameobject(mTarget, 141980, -10622, -2994, 28.6f, 4, 4, 0, 0, 0, 0);
-            sEAS.GameobjectDelete(generalsbox, 3 * 60 * 1000);
+            GameObject* generalsbox = mTarget->GetMapMgr()->CreateAndSpawnGameObject(141980, -10622, -2994, 28.6f, 4, 4);
+            if (generalsbox != nullptr)
+                generalsbox->Despawn(3 * 60 * 1000, 0);
         }
     }
 };
 
 
-class HeroesofOld1 : public GossipScript
+class HeroesofOld1 : public Arcemu::Gossip::Script
 {
 public:
-    void GossipHello(Object* pObject, Player* plr)
+    void OnHello(Object* pObject, Player* plr)
     {
         if (!plr)
             return;
 
-        GossipMenu* Menu;
         Creature* general = static_cast<Creature*>(pObject);
-        if (general == NULL)
+        if (general == nullptr)
             return;
 
-        objmgr.CreateGossipMenuForPlayer(&Menu, pObject->GetGUID(), 1, plr);
+        Arcemu::Gossip::Menu menu(pObject->GetGUID(), 1);
         if (plr->HasQuest(2702) || plr->HasFinishedQuest(2702))
-            Menu->AddItem(GOSSIP_ICON_CHAT, plr->GetSession()->LocalizedGossipOption(453), 1);     // I need to speak with Corporal.
+            menu.AddItem(GOSSIP_ICON_CHAT, plr->GetSession()->LocalizedGossipOption(453), 1);     // I need to speak with Corporal.
 
-        Menu->SendTo(plr);
+        menu.Send(plr);
     }
 
-    void GossipSelectOption(Object* pObject, Player* plr, uint32 Id, uint32 IntId, const char* EnteredCode)
+    void OnSelectOption(Object* pObject, Player* plr, uint32 Id, const char* EnteredCode, uint32 gossipId)
     {
         if (!plr)
             return;
 
         Creature* general = static_cast<Creature*>(pObject);
-        if (general == NULL)
+        if (general == nullptr)
             return;
 
-        switch (IntId)
+        switch (Id)
         {
-            case 0:
-                GossipHello(pObject, plr);
-                break;
-
             case 1:
             {
                 Creature* spawncheckcr = plr->GetMapMgr()->GetInterface()->GetCreatureNearestCoords(plr->GetPositionX(), plr->GetPositionY(), plr->GetPositionZ(), 7750);
-
                 if (!spawncheckcr)
                 {
-                    general = sEAS.SpawnCreature(plr, 7750, -10619, -2997, 28.8f, 4, 0);
+                    general = plr->GetMapMgr()->CreateAndSpawnCreature(7750, -10619, -2997, 28.8f, 4);
                     general->Despawn(3 * 60 * 1000, 0);
                 }
 
                 GameObject* spawncheckgobj = plr->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(plr->GetPositionX(), plr->GetPositionY(), plr->GetPositionZ(), 141980);
-
                 if (!spawncheckgobj)
                 {
-                    GameObject* generalsbox = sEAS.SpawnGameobject(plr, 141980, -10622, -2994, 28.6f, 4, 4, 0, 0, 0, 0);
-                    sEAS.GameobjectDelete(generalsbox, 3 * 60 * 1000);
+                    GameObject* generalsbox = plr->GetMapMgr()->CreateAndSpawnGameObject(141980, -10622, -2994, 28.6f, 4, 4);
+                    if (generalsbox != nullptr)
+                        generalsbox->Despawn(3 * 60 * 1000, 0);
                 }
             }
         }
@@ -109,6 +103,6 @@ void SetupBlastedLands(ScriptMgr* mgr)
     QuestScript* HeroesoO = new HeroesofOld();
     mgr->register_quest_script(2702, HeroesoO);
 
-    GossipScript* gossip1 = new HeroesofOld1();
-    mgr->register_gossip_script(7572, gossip1);
+    Arcemu::Gossip::Script* gossip1 = new HeroesofOld1();
+    mgr->register_creature_gossip(7572, gossip1);
 }

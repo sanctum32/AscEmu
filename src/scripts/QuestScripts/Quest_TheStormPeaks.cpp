@@ -17,100 +17,118 @@
  */
 
 #include "Setup.h"
-#include "Management/Gossip/GossipMenu.hpp"
 
  // The Gifts of Loken
 class LokensFury : public GameObjectAIScript
 {
 public:
-    ADD_GAMEOBJECT_FACTORY_FUNCTION(LokensFury);
+
     LokensFury(GameObject* goinstance) : GameObjectAIScript(goinstance) {};
+    static GameObjectAIScript* Create(GameObject* GO) { return new LokensFury(GO); };
 
     void OnActivate(Player* pPlayer)
     {
-        if (sEAS.GetQuest(pPlayer, 12965))
-            sEAS.KillMobForQuest(pPlayer, 12965, 0);
-    };
+        uint32 i = 0;
+        QuestLogEntry* pQuest = pPlayer->GetQuestLogForEntry(12965);
+        if (!pQuest)
+            return;
 
+        if (pQuest->GetMobCount(i) < pQuest->GetQuest()->required_mob_or_go_count[i])
+        {
+            pQuest->SetMobCount(i, pQuest->GetMobCount(i) + 1);
+            pQuest->SendUpdateAddKill(i);
+            pQuest->UpdatePlayerFields();
+        }
+    }
 };
 
 class LokensPower : public GameObjectAIScript
 {
 public:
-    ADD_GAMEOBJECT_FACTORY_FUNCTION(LokensPower);
+
     LokensPower(GameObject* goinstance) : GameObjectAIScript(goinstance) {};
+    static GameObjectAIScript* Create(GameObject* GO) { return new LokensPower(GO); };
 
     void OnActivate(Player* pPlayer)
     {
-        if (sEAS.GetQuest(pPlayer, 12965))
-            sEAS.KillMobForQuest(pPlayer, 12965, 1);
-    };
+        uint32 i = 1;
+        QuestLogEntry* pQuest = pPlayer->GetQuestLogForEntry(12965);
+        if (!pQuest)
+            return;
 
+        if (pQuest->GetMobCount(i) < pQuest->GetQuest()->required_mob_or_go_count[i])
+        {
+            pQuest->SetMobCount(i, pQuest->GetMobCount(i) + 1);
+            pQuest->SendUpdateAddKill(i);
+            pQuest->UpdatePlayerFields();
+        }
+    }
 };
 
 class LokensFavor : public GameObjectAIScript
 {
 public:
-    ADD_GAMEOBJECT_FACTORY_FUNCTION(LokensFavor);
+
     LokensFavor(GameObject* goinstance) : GameObjectAIScript(goinstance) {};
+    static GameObjectAIScript* Create(GameObject* GO) { return new LokensFavor(GO); };
 
     void OnActivate(Player* pPlayer)
     {
-        if (sEAS.GetQuest(pPlayer, 12965))
-            sEAS.KillMobForQuest(pPlayer, 12965, 2);
-    };
-
-};
-
-class SCRIPT_DECL MissingScout_Gossip : public GossipScript
-{
-public:
-    void GossipHello(Object* pObject, Player* plr)
-    {
-        GossipMenu* Menu;
-        objmgr.CreateGossipMenuForPlayer(&Menu, pObject->GetGUID(), 13611, plr);
-        if (plr->HasQuest(12864))
-            Menu->AddItem(GOSSIP_ICON_CHAT, plr->GetSession()->LocalizedGossipOption(499), 1);     // Are you okay? I've come to take you back to Frosthold if you can stand.
-
-        Menu->SendTo(plr);
-    }
-    void GossipSelectOption(Object* pObject, Player* plr, uint32 Id, uint32 IntId, const char* Code)
-    {
-        Creature* pCreature = (pObject->IsCreature()) ? (static_cast<Creature*>(pObject)) : NULL;
-        if (pCreature == NULL)
+        uint32 i = 2;
+        QuestLogEntry* pQuest = pPlayer->GetQuestLogForEntry(12965);
+        if (!pQuest)
             return;
 
-        GossipMenu* Menu;
-        switch (IntId)
+        if (pQuest->GetMobCount(i) < pQuest->GetQuest()->required_mob_or_go_count[i])
+        {
+            pQuest->SetMobCount(i, pQuest->GetMobCount(i) + 1);
+            pQuest->SendUpdateAddKill(i);
+            pQuest->UpdatePlayerFields();
+        }
+    }
+};
+
+class MissingScout_Gossip : public Arcemu::Gossip::Script
+{
+public:
+    void OnHello(Object* pObject, Player* plr)
+    {
+        if (plr->HasQuest(12864))
+        {
+            Arcemu::Gossip::Menu menu(pObject->GetGUID(), 13612, plr->GetSession()->language);
+            menu.AddItem(GOSSIP_ICON_CHAT, plr->GetSession()->LocalizedGossipOption(499), 1);     // Are you okay? I've come to take you back to Frosthold if you can stand.
+            menu.Send(plr);
+        }
+    }
+
+    void OnSelectOption(Object* pObject, Player* plr, uint32 Id, const char* Code, uint32 gossipId)
+    {
+        switch (Id)
         {
             case 1:
             {
-                objmgr.CreateGossipMenuForPlayer(&Menu, pObject->GetGUID(), 13612, plr);
-                Menu->AddItem(GOSSIP_ICON_CHAT, plr->GetSession()->LocalizedGossipOption(500), 2);     // I'm sorry that I didn't get here sooner. What happened?
-                Menu->SendTo(plr);
-            }
-            break;
+                Arcemu::Gossip::Menu menu(pObject->GetGUID(), 13612, plr->GetSession()->language);
+                menu.AddItem(GOSSIP_ICON_CHAT, plr->GetSession()->LocalizedGossipOption(500), 2);     // I'm sorry that I didn't get here sooner. What happened?
+                menu.Send(plr);
+            } break;
             case 2:
             {
-                objmgr.CreateGossipMenuForPlayer(&Menu, pObject->GetGUID(), 13613, plr);
-                Menu->AddItem(GOSSIP_ICON_CHAT, plr->GetSession()->LocalizedGossipOption(501), 3);     // I'll go get some help. Hang in there.
-                Menu->SendTo(plr);
-            }
-            break;
+                Arcemu::Gossip::Menu menu(pObject->GetGUID(), 13613, plr->GetSession()->language);
+                menu.AddItem(GOSSIP_ICON_CHAT, plr->GetSession()->LocalizedGossipOption(501), 3);     // I'll go get some help. Hang in there.
+                menu.Send(plr);
+            } break;
             case 3:
             {
-                objmgr.CreateGossipMenuForPlayer(&Menu, pObject->GetGUID(), 13614, plr);
-                Menu->SendTo(plr);
+                Arcemu::Gossip::Menu::SendSimpleMenu(pObject->GetGUID(), 13614, plr);
 
                 QuestLogEntry* qle = plr->GetQuestLogForEntry(12864);
-                if (qle == NULL || qle->GetMobCount(0) != 0)
+                if (qle == nullptr || qle->GetMobCount(0) != 0)
                     return;
 
                 qle->SetMobCount(0, 1);
                 qle->SendUpdateAddKill(0);
                 qle->UpdatePlayerFields();
-            }
-            break;
+            } break;
         }
     }
 
@@ -123,6 +141,7 @@ void SetupTheStormPeaks(ScriptMgr* mgr)
     mgr->register_gameobject_script(192120, &LokensFury::Create);
     mgr->register_gameobject_script(192121, &LokensPower::Create);
     mgr->register_gameobject_script(192122, &LokensFavor::Create);
-    GossipScript* MissingScoutGossip = new MissingScout_Gossip;
-    mgr->register_gossip_script(29811, MissingScoutGossip);
+
+    Arcemu::Gossip::Script* MissingScoutGossip = new MissingScout_Gossip();
+    mgr->register_creature_gossip(29811, MissingScoutGossip);
 }

@@ -33,7 +33,6 @@
 
 #define ADD_CREATURE_FACTORY_FUNCTION(cl) static CreatureAIScript * Create(Creature* c) { return new cl(c); }
 #define ADD_INSTANCE_FACTORY_FUNCTION(ClassName) static InstanceScript* Create(MapMgr* pMapMgr) { return new ClassName(pMapMgr); };
-#define ADD_GAMEOBJECT_FACTORY_FUNCTION(ClassName) static GameObjectAIScript* Create(GameObject* GO) { return new ClassName(GO); };
 
 class Channel;
 class Guild;
@@ -198,10 +197,7 @@ class SERVER_DECL ScriptMgr : public Singleton<ScriptMgr>
         void register_dummy_spell(uint32 entry, exp_handle_dummy_spell callback);
         void register_script_effect(uint32 entry, exp_handle_script_effect callback);
         void register_instance_script(uint32 pMapId, exp_create_instance_ai pCallback);
-        void register_gossip_script(uint32 entry, GossipScript* gs);
-        void register_go_gossip_script(uint32 entry, GossipScript* gs);
         void register_hook(ServerHookEvents event, void* function_pointer);
-        void register_item_gossip_script(uint32 entry, GossipScript* gs);
         void register_quest_script(uint32 entry, QuestScript* qs);
         void register_event_script(uint32 entry, EventScript* es);
 
@@ -482,11 +478,6 @@ class SERVER_DECL GossipScript : public Arcemu::Gossip::Script
         virtual void GossipHello(Object* /*pObject*/, Player* /*plr*/) {}
         virtual void GossipSelectOption(Object* /*pObject*/, Player* /*Plr*/, uint32 /*Id*/, uint32 /*IntId*/, const char* /*EnteredCode*/, uint32_t /*gossipId*/) {}
         virtual void GossipEnd(Object* /*pObject*/, Player* /*Plr*/) {}
-
-        //support for Gossip scripts added before r4106
-        virtual void OnHello(Object* pObject, Player* Plr);
-        virtual void OnSelectOption(Object* pObject, Player* Plr, uint32 Id, const char* EnteredCode, uint32_t gossipId);
-        virtual void OnEnd(Object* pObject, Player* Plr);
 };
 
 class SERVER_DECL QuestScript

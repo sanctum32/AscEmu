@@ -23,7 +23,6 @@
 
 #include "WorldConf.h"
 #include "Management/GameEvent.h"
-#include "Management/Gossip/GossipMenu.hpp"
 #include "Management/Item.h"
 #include "Storage/MySQLDataStore.hpp"
 #include <git_version.h>
@@ -343,16 +342,6 @@ void ScriptMgr::register_dummy_spell(uint32 entry, exp_handle_dummy_spell callba
     _spells.insert(HandleDummySpellMap::value_type(entry, callback));
 }
 
-void ScriptMgr::register_gossip_script(uint32 entry, GossipScript* gs)
-{
-    register_creature_gossip(entry, gs);
-}
-
-void ScriptMgr::register_go_gossip_script(uint32 entry, GossipScript* gs)
-{
-    register_go_gossip(entry, gs);
-}
-
 void ScriptMgr::register_quest_script(uint32 entry, QuestScript* qs)
 {
     QuestProperties const* q = sMySQLStore.getQuestProperties(entry);
@@ -528,11 +517,6 @@ bool ScriptMgr::CallScriptedItem(Item* pItem, Player* pPlayer)
         return true;
     }
     return false;
-}
-
-void ScriptMgr::register_item_gossip_script(uint32 entry, GossipScript* gs)
-{
-    register_item_gossip(entry, gs);
 }
 
 /* CreatureAI Stuff */
@@ -783,31 +767,6 @@ void ScriptMgr::UnloadScriptEngines()
                 engine_unloadfunc();
         }
     }
-}
-
-//support for Gossip scripts added before r4106 changes
-// \todo remove this support/update old scripts
-void GossipScript::OnHello(Object* pObject, Player* Plr)
-{
-    GossipHello(pObject, Plr);
-}
-
-void GossipScript::OnSelectOption(Object* pObject, Player* Plr, uint32 Id, const char* EnteredCode, uint32_t gossipId)
-{
-    uint32 IntId = Id;
-
-    if (Plr->CurrentGossipMenu != NULL)
-    {
-        GossipMenuItem item = Plr->CurrentGossipMenu->GetItem(Id);
-        IntId = item.IntId;
-    }
-
-    GossipSelectOption(pObject, Plr, Id, IntId, EnteredCode, gossipId);
-}
-
-void GossipScript::OnEnd(Object* pObject, Player* Plr)
-{
-    GossipEnd(pObject, Plr);
 }
 
 /* Hook Implementations */

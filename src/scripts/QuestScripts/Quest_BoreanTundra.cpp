@@ -17,7 +17,6 @@
  */
 
 #include "Setup.h"
-#include "Management/Gossip/GossipMenu.hpp"
 #include "Units/Creatures/Creature.h"
 #include "Units/Summons/Summon.h"
 
@@ -26,13 +25,22 @@ class BellRope : public GameObjectAIScript
 {
 public:
 
-    ADD_GAMEOBJECT_FACTORY_FUNCTION(BellRope);
     BellRope(GameObject* goinstance) : GameObjectAIScript(goinstance) {};
+    static GameObjectAIScript* Create(GameObject* GO) { return new BellRope(GO); };
 
     void OnActivate(Player* pPlayer)
     {
-        if (sEAS.GetQuest(pPlayer, 11965))
-            sEAS.KillMobForQuest(pPlayer, 11965, 0);
+        uint32 i = 0;
+        QuestLogEntry* pQuest = pPlayer->GetQuestLogForEntry(11965);
+        if (!pQuest)
+            return;
+
+        if (pQuest->GetMobCount(i) < pQuest->GetQuest()->required_mob_or_go_count[i])
+        {
+            pQuest->SetMobCount(i, pQuest->GetMobCount(i) + 1);
+            pQuest->SendUpdateAddKill(i);
+            pQuest->UpdatePlayerFields();
+        }
     }
 };
 
@@ -41,13 +49,22 @@ class ColdarraGeoMonitorNexus : public GameObjectAIScript
 {
 public:
 
-    ADD_GAMEOBJECT_FACTORY_FUNCTION(ColdarraGeoMonitorNexus);
     ColdarraGeoMonitorNexus(GameObject* goinstance) : GameObjectAIScript(goinstance) {};
+    static GameObjectAIScript* Create(GameObject* GO) { return new ColdarraGeoMonitorNexus(GO); };
 
     void OnActivate(Player* pPlayer)
     {
-        if (sEAS.GetQuest(pPlayer, 11900))
-            sEAS.KillMobForQuest(pPlayer, 11900, 0);
+        uint32 i = 0;
+        QuestLogEntry* pQuest = pPlayer->GetQuestLogForEntry(11900);
+        if (!pQuest)
+            return;
+
+        if (pQuest->GetMobCount(i) < pQuest->GetQuest()->required_mob_or_go_count[i])
+        {
+            pQuest->SetMobCount(i, pQuest->GetMobCount(i) + 1);
+            pQuest->SendUpdateAddKill(i);
+            pQuest->UpdatePlayerFields();
+        }
     }
 };
 
@@ -55,13 +72,22 @@ class ColdarraGeoMonitorSouth : public GameObjectAIScript
 {
 public:
 
-    ADD_GAMEOBJECT_FACTORY_FUNCTION(ColdarraGeoMonitorSouth);
     ColdarraGeoMonitorSouth(GameObject* goinstance) : GameObjectAIScript(goinstance) {};
+    static GameObjectAIScript* Create(GameObject* GO) { return new ColdarraGeoMonitorSouth(GO); };
 
     void OnActivate(Player* pPlayer)
     {
-        if (sEAS.GetQuest(pPlayer, 11900))
-            sEAS.KillMobForQuest(pPlayer, 11900, 1);
+        uint32 i = 1;
+        QuestLogEntry* pQuest = pPlayer->GetQuestLogForEntry(11900);
+        if (!pQuest)
+            return;
+
+        if (pQuest->GetMobCount(i) < pQuest->GetQuest()->required_mob_or_go_count[i])
+        {
+            pQuest->SetMobCount(i, pQuest->GetMobCount(i) + 1);
+            pQuest->SendUpdateAddKill(i);
+            pQuest->UpdatePlayerFields();
+        }
     }
 };
 
@@ -69,13 +95,22 @@ class ColdarraGeoMonitorNorth : public GameObjectAIScript
 {
 public:
 
-    ADD_GAMEOBJECT_FACTORY_FUNCTION(ColdarraGeoMonitorNorth);
     ColdarraGeoMonitorNorth(GameObject* goinstance) : GameObjectAIScript(goinstance) {};
+    static GameObjectAIScript* Create(GameObject* GO) { return new ColdarraGeoMonitorNorth(GO); };
 
     void OnActivate(Player* pPlayer)
     {
-        if (sEAS.GetQuest(pPlayer, 11900))
-            sEAS.KillMobForQuest(pPlayer, 11900, 2);
+        uint32 i = 2;
+        QuestLogEntry* pQuest = pPlayer->GetQuestLogForEntry(11900);
+        if (!pQuest)
+            return;
+
+        if (pQuest->GetMobCount(i) < pQuest->GetQuest()->required_mob_or_go_count[i])
+        {
+            pQuest->SetMobCount(i, pQuest->GetMobCount(i) + 1);
+            pQuest->SendUpdateAddKill(i);
+            pQuest->UpdatePlayerFields();
+        }
     }
 };
 
@@ -83,13 +118,22 @@ class ColdarraGeoMonitorWest : public GameObjectAIScript
 {
 public:
 
-    ADD_GAMEOBJECT_FACTORY_FUNCTION(ColdarraGeoMonitorWest);
     ColdarraGeoMonitorWest(GameObject* goinstance) : GameObjectAIScript(goinstance) {};
+    static GameObjectAIScript* Create(GameObject* GO) { return new ColdarraGeoMonitorWest(GO); };
 
     void OnActivate(Player* pPlayer)
     {
-        if (sEAS.GetQuest(pPlayer, 11900))
-            sEAS.KillMobForQuest(pPlayer, 11900, 3);
+        uint32 i = 3;
+        QuestLogEntry* pQuest = pPlayer->GetQuestLogForEntry(11900);
+        if (!pQuest)
+            return;
+
+        if (pQuest->GetMobCount(i) < pQuest->GetQuest()->required_mob_or_go_count[i])
+        {
+            pQuest->SetMobCount(i, pQuest->GetMobCount(i) + 1);
+            pQuest->SendUpdateAddKill(i);
+            pQuest->UpdatePlayerFields();
+        }
     }
 };
 
@@ -113,15 +157,23 @@ class NerubarEggSac : public GameObjectAIScript
 {
 public:
 
-    ADD_GAMEOBJECT_FACTORY_FUNCTION(NerubarEggSac);
     NerubarEggSac(GameObject* goinstance) : GameObjectAIScript(goinstance) {};
+    static GameObjectAIScript* Create(GameObject* GO) { return new NerubarEggSac(GO); };
 
     void OnActivate(Player* pPlayer)
     {
-        if (sEAS.GetQuest(pPlayer, 11602))
+        uint32 i = 0;
+        QuestLogEntry* pQuest = pPlayer->GetQuestLogForEntry(11602);
+        if (!pQuest)
             return;
 
-        sEAS.KillMobForQuest(pPlayer, 11602, 0);
+        if (pQuest->GetMobCount(i) < pQuest->GetQuest()->required_mob_or_go_count[i])
+        {
+            pQuest->SetMobCount(i, pQuest->GetMobCount(i) + 1);
+            pQuest->SendUpdateAddKill(i);
+            pQuest->UpdatePlayerFields();
+        }
+
         _gameobject->SetState(GO_STATE_CLOSED);
         _gameobject->SetState(GO_STATE_OPEN);
         _gameobject->Despawn(500, 60000);
@@ -159,18 +211,54 @@ class SeaforiumDepthCharge : public MoonScriptCreatureAI
                     {
                         _unit->CastSpell(_unit, 45502, true);
 
+                        QuestLogEntry* pQuest = p->GetQuestLogForEntry(11608);
+                        if (!pQuest)
+                            return;
+
                         float posX = pSinkhole->GetPositionX();
                         if (posX == 2657.13f)
-                            sEAS.KillMobForQuest(p, 11608, 0);
+                        {
+                            uint32 i = 0;
+                            if (pQuest->GetMobCount(i) < pQuest->GetQuest()->required_mob_or_go_count[i])
+                            {
+                                pQuest->SetMobCount(i, pQuest->GetMobCount(i) + 1);
+                                pQuest->SendUpdateAddKill(i);
+                                pQuest->UpdatePlayerFields();
+                            }
+                        }
 
                         if (posX == 2716.02f)
-                            sEAS.KillMobForQuest(p, 11608, 1);
+                        {
+                            uint32 i = 1;
+                            if (pQuest->GetMobCount(i) < pQuest->GetQuest()->required_mob_or_go_count[i])
+                            {
+                                pQuest->SetMobCount(i, pQuest->GetMobCount(i) + 1);
+                                pQuest->SendUpdateAddKill(i);
+                                pQuest->UpdatePlayerFields();
+                            }
+                        }
 
                         if (posX == 2877.96f)
-                            sEAS.KillMobForQuest(p, 11608, 2);
+                        {
+                            uint32 i = 2;
+                            if (pQuest->GetMobCount(i) < pQuest->GetQuest()->required_mob_or_go_count[i])
+                            {
+                                pQuest->SetMobCount(i, pQuest->GetMobCount(i) + 1);
+                                pQuest->SendUpdateAddKill(i);
+                                pQuest->UpdatePlayerFields();
+                            }
+                        }
 
                         if (posX == 2962.16f)
-                            sEAS.KillMobForQuest(p, 11608, 3);
+                        {
+                            uint32 i = 3;
+                            if (pQuest->GetMobCount(i) < pQuest->GetQuest()->required_mob_or_go_count[i])
+                            {
+                                pQuest->SetMobCount(i, pQuest->GetMobCount(i) + 1);
+                                pQuest->SendUpdateAddKill(i);
+                                pQuest->UpdatePlayerFields();
+                            }
+                        }
 
                     }
                 }
@@ -186,16 +274,24 @@ class BlueDragonEgg : public GameObjectAIScript
 {
 public:
 
-    ADD_GAMEOBJECT_FACTORY_FUNCTION(BlueDragonEgg);
     BlueDragonEgg(GameObject* goinstance) : GameObjectAIScript(goinstance) {};
+    static GameObjectAIScript* Create(GameObject* GO) { return new BlueDragonEgg(GO); };
 
     void OnActivate(Player* pPlayer)
     {
-        if (!sEAS.GetQuest(pPlayer, 11936))
+        uint32 i = 0;
+        QuestLogEntry* pQuest = pPlayer->GetQuestLogForEntry(11936);
+        if (!pQuest)
             return;
 
-        sEAS.KillMobForQuest(pPlayer, 11936, 0);
-        ///\todo why setting gameobject state 1 and 0?!?!
+        if (pQuest->GetMobCount(i) < pQuest->GetQuest()->required_mob_or_go_count[i])
+        {
+            pQuest->SetMobCount(i, pQuest->GetMobCount(i) + 1);
+            pQuest->SendUpdateAddKill(i);
+            pQuest->UpdatePlayerFields();
+        }
+
+        //\todo why setting gameobject state 1 and 0?!?!
         _gameobject->SetState(GO_STATE_CLOSED);
         _gameobject->SetState(GO_STATE_OPEN);
         _gameobject->Despawn(500, 60000);
@@ -225,71 +321,75 @@ enum eFizzcrank
 };
 
 
-class FizzcrankGossip : public GossipScript
+class FizzcrankGossip : public Arcemu::Gossip::Script
 {
 public:
 
-    void GossipHello(Object* pObject, Player* pPlayer)
+    void OnHello(Object* pObject, Player* pPlayer)
     {
-        GossipMenu* Menu;
+        Arcemu::Gossip::Menu menu(pObject->GetGUID(), 12435, pPlayer->GetSession()->language);
+        if (pPlayer->HasQuest(QUEST_THE_MECHAGNOMES))
+            menu.AddItem(GOSSIP_ICON_CHAT, pPlayer->GetSession()->LocalizedGossipOption(GOSSIP_OPTION_FIZZCRANK_1), 1);
 
-        objmgr.CreateGossipMenuForPlayer(&Menu, pObject->GetGUID(), 12435, pPlayer);
-
-        if (sEAS.GetQuest(pPlayer, QUEST_THE_MECHAGNOMES))
-            Menu->AddItem(GOSSIP_ICON_CHAT, pPlayer->GetSession()->LocalizedGossipOption(GOSSIP_OPTION_FIZZCRANK_1), 1);
-
-        Menu->SendTo(pPlayer);
+        menu.Send(pPlayer);
     }
 
-    void GossipSelectOption(Object* pObject, Player* pPlayer, uint32 Id, uint32 IntId, const char* Code)
+    void OnSelectOption(Object* pObject, Player* pPlayer, uint32 Id, const char* Code, uint32 gossipId)
     {
-        GossipMenu* Menu;
-        switch (IntId)
+        switch (Id)
         {
             case 1:
-                objmgr.CreateGossipMenuForPlayer(&Menu, pObject->GetGUID(), GOSSIP_TEXTID_FIZZCRANK1, pPlayer);
-                Menu->AddItem(GOSSIP_ICON_CHAT, pPlayer->GetSession()->LocalizedGossipOption(GOSSIP_OPTION_FIZZCRANK_2), 2);
-                Menu->SendTo(pPlayer);
-                break;
+            {
+                Arcemu::Gossip::Menu menu(pObject->GetGUID(), GOSSIP_TEXTID_FIZZCRANK1, pPlayer->GetSession()->language);
+                menu.AddItem(GOSSIP_ICON_CHAT, pPlayer->GetSession()->LocalizedGossipOption(GOSSIP_OPTION_FIZZCRANK_2), 2);
+                menu.Send(pPlayer);
+            }break;
             case 2:
-                objmgr.CreateGossipMenuForPlayer(&Menu, pObject->GetGUID(), GOSSIP_TEXTID_FIZZCRANK2, pPlayer);
-                Menu->AddItem(GOSSIP_ICON_CHAT, pPlayer->GetSession()->LocalizedGossipOption(GOSSIP_OPTION_FIZZCRANK_2), 3);
-                Menu->SendTo(pPlayer);
-                break;
+            {
+                Arcemu::Gossip::Menu menu(pObject->GetGUID(), GOSSIP_TEXTID_FIZZCRANK2, pPlayer->GetSession()->language);
+                menu.AddItem(GOSSIP_ICON_CHAT, pPlayer->GetSession()->LocalizedGossipOption(GOSSIP_OPTION_FIZZCRANK_2), 3);
+                menu.Send(pPlayer);
+            }break;
             case 3:
-                objmgr.CreateGossipMenuForPlayer(&Menu, pObject->GetGUID(), GOSSIP_TEXTID_FIZZCRANK3, pPlayer);
-                Menu->AddItem(GOSSIP_ICON_CHAT, pPlayer->GetSession()->LocalizedGossipOption(GOSSIP_OPTION_FIZZCRANK_2), 4);
-                Menu->SendTo(pPlayer);
-                break;
+            {
+                Arcemu::Gossip::Menu menu(pObject->GetGUID(), GOSSIP_TEXTID_FIZZCRANK3, pPlayer->GetSession()->language);
+                menu.AddItem(GOSSIP_ICON_CHAT, pPlayer->GetSession()->LocalizedGossipOption(GOSSIP_OPTION_FIZZCRANK_2), 4);
+                menu.Send(pPlayer);
+            }break;
             case 4:
-                objmgr.CreateGossipMenuForPlayer(&Menu, pObject->GetGUID(), GOSSIP_TEXTID_FIZZCRANK4, pPlayer);
-                Menu->AddItem(GOSSIP_ICON_CHAT, pPlayer->GetSession()->LocalizedGossipOption(GOSSIP_OPTION_FIZZCRANK_2), 5);
-                Menu->SendTo(pPlayer);
-                break;
+            {
+                Arcemu::Gossip::Menu menu(pObject->GetGUID(), GOSSIP_TEXTID_FIZZCRANK4, pPlayer->GetSession()->language);
+                menu.AddItem(GOSSIP_ICON_CHAT, pPlayer->GetSession()->LocalizedGossipOption(GOSSIP_OPTION_FIZZCRANK_2), 5);
+                menu.Send(pPlayer);
+            }break;
             case 5:
-                objmgr.CreateGossipMenuForPlayer(&Menu, pObject->GetGUID(), GOSSIP_TEXTID_FIZZCRANK5, pPlayer);
-                Menu->AddItem(GOSSIP_ICON_CHAT, pPlayer->GetSession()->LocalizedGossipOption(GOSSIP_OPTION_FIZZCRANK_2), 6);
-                Menu->SendTo(pPlayer);
-                break;
+            {
+                Arcemu::Gossip::Menu menu(pObject->GetGUID(), GOSSIP_TEXTID_FIZZCRANK5, pPlayer->GetSession()->language);
+                menu.AddItem(GOSSIP_ICON_CHAT, pPlayer->GetSession()->LocalizedGossipOption(GOSSIP_OPTION_FIZZCRANK_2), 6);
+                menu.Send(pPlayer);
+            }break;
             case 6:
-                objmgr.CreateGossipMenuForPlayer(&Menu, pObject->GetGUID(), GOSSIP_TEXTID_FIZZCRANK6, pPlayer);
-                Menu->AddItem(GOSSIP_ICON_CHAT, pPlayer->GetSession()->LocalizedGossipOption(GOSSIP_OPTION_FIZZCRANK_2), 7);
-                Menu->SendTo(pPlayer);
-                break;
+            {
+                Arcemu::Gossip::Menu menu(pObject->GetGUID(), GOSSIP_TEXTID_FIZZCRANK6, pPlayer->GetSession()->language);
+                menu.AddItem(GOSSIP_ICON_CHAT, pPlayer->GetSession()->LocalizedGossipOption(GOSSIP_OPTION_FIZZCRANK_2), 7);
+                menu.Send(pPlayer);
+            }break;
             case 7:
-                objmgr.CreateGossipMenuForPlayer(&Menu, pObject->GetGUID(), GOSSIP_TEXTID_FIZZCRANK7, pPlayer);
-                Menu->AddItem(GOSSIP_ICON_CHAT, pPlayer->GetSession()->LocalizedGossipOption(GOSSIP_OPTION_FIZZCRANK_2), 8);
-                Menu->SendTo(pPlayer);
-                break;
+            {
+                Arcemu::Gossip::Menu menu(pObject->GetGUID(), GOSSIP_TEXTID_FIZZCRANK7, pPlayer->GetSession()->language);
+                menu.AddItem(GOSSIP_ICON_CHAT, pPlayer->GetSession()->LocalizedGossipOption(GOSSIP_OPTION_FIZZCRANK_2), 8);
+                menu.Send(pPlayer);
+            }break;
             case 8:
-                objmgr.CreateGossipMenuForPlayer(&Menu, pObject->GetGUID(), GOSSIP_TEXTID_FIZZCRANK8, pPlayer);
-                Menu->AddItem(GOSSIP_ICON_CHAT, pPlayer->GetSession()->LocalizedGossipOption(GOSSIP_OPTION_FIZZCRANK_2), 9);
-                Menu->SendTo(pPlayer);
-                break;
+            {
+                Arcemu::Gossip::Menu menu(pObject->GetGUID(), GOSSIP_TEXTID_FIZZCRANK8, pPlayer->GetSession()->language);
+                menu.AddItem(GOSSIP_ICON_CHAT, pPlayer->GetSession()->LocalizedGossipOption(GOSSIP_OPTION_FIZZCRANK_2), 9);
+                menu.Send(pPlayer);
+            }break;
             case 9:
-                objmgr.CreateGossipMenuForPlayer(&Menu, pObject->GetGUID(), GOSSIP_TEXTID_FIZZCRANK9, pPlayer);
-                Menu->SendTo(pPlayer);
-                break;
+            {
+                Arcemu::Gossip::Menu::SendSimpleMenu(pObject->GetGUID(), GOSSIP_TEXTID_FIZZCRANK9, pPlayer);
+            }break;
         }
     }
 };
@@ -304,11 +404,11 @@ enum eSurristrasz
     SPELL_ABMER_TO_COLDARRA = 46064
 };
 
-class SurristraszGossip : public GossipScript
+class SurristraszGossip : public Arcemu::Gossip::Script
 {
 public:
 
-    void GossipHello(Object* pObject, Player* pPlayer)
+    void OnHello(Object* pObject, Player* pPlayer)
     {
         uint32 Text = sMySQLStore.getGossipTextIdForNpc(static_cast<Creature*>(pObject)->GetEntry());
 
@@ -324,17 +424,9 @@ public:
         menu.Send(pPlayer);
     }
 
-    void GossipSelectOption(Object* pObject, Player* pPlayer, uint32 Id, uint32 IntId, const char* Code)
+    void OnSelectOption(Object* pObject, Player* pPlayer, uint32 Id, const char* Code, uint32 gossipId)
     {
-        if (!pObject->IsCreature())
-            return;
-
-        switch (IntId)
-        {
-            case 1:
-                pPlayer->GetSession()->SendTaxiList(static_cast<Creature*>(pObject));
-                break;
-        }
+        pPlayer->GetSession()->SendTaxiList(static_cast<Creature*>(pObject));
     }
 };
 
@@ -345,8 +437,8 @@ class WestPointStationValve : public GameObjectAIScript
 {
 public:
 
-    ADD_GAMEOBJECT_FACTORY_FUNCTION(WestPointStationValve);
     WestPointStationValve(GameObject* goinstance) : GameObjectAIScript(goinstance) {};
+    static GameObjectAIScript* Create(GameObject* GO) { return new WestPointStationValve(GO); };
 
     void OnActivate(Player* pPlayer)
     {
@@ -360,7 +452,7 @@ public:
         if (quest_entry->GetMobCount(0) != 0)
             return;
 
-        Creature* Twonky = sEAS.SpawnCreature(pPlayer, 25830, 4117.513672f, 5089.670898f, -1.506265f, 2.043593f, 0);
+        Creature* Twonky = pPlayer->GetMapMgr()->CreateAndSpawnCreature(25830, 4117.513672f, 5089.670898f, -1.506265f, 2.043593f);
         if (Twonky->isAlive())
             _gameobject->SetState(GO_STATE_OPEN);
         else
@@ -373,8 +465,8 @@ class NorthPointStationValve : public GameObjectAIScript
 {
 public:
 
-    ADD_GAMEOBJECT_FACTORY_FUNCTION(NorthPointStationValve);
     NorthPointStationValve(GameObject* goinstance) : GameObjectAIScript(goinstance) {};
+    static GameObjectAIScript* Create(GameObject* GO) { return new NorthPointStationValve(GO); };
 
     void OnActivate(Player* pPlayer)
     {
@@ -388,7 +480,7 @@ public:
         if (quest_entry->GetMobCount(1) != 0)
             return;
 
-        Creature* Ed210 = sEAS.SpawnCreature(pPlayer, 25831, 4218.529785f, 4802.284668f, -12.975346f, 5.833142f, 0);
+        Creature* Ed210 = pPlayer->GetMapMgr()->CreateAndSpawnCreature(25831, 4218.529785f, 4802.284668f, -12.975346f, 5.833142f);
         if (Ed210->isAlive())
             _gameobject->SetState(GO_STATE_OPEN);
         else
@@ -401,8 +493,8 @@ class FizzcrankPumpingStationValve : public GameObjectAIScript
 {
 public:
 
-    ADD_GAMEOBJECT_FACTORY_FUNCTION(FizzcrankPumpingStationValve);
     FizzcrankPumpingStationValve(GameObject* goinstance) : GameObjectAIScript(goinstance) {};
+    static GameObjectAIScript* Create(GameObject* GO) { return new FizzcrankPumpingStationValve(GO); };
 
     void OnActivate(Player* pPlayer)
     {
@@ -416,7 +508,7 @@ public:
         if (quest_entry->GetMobCount(2) != 0)
             return;
 
-        Creature* MaxBlasto = sEAS.SpawnCreature(pPlayer, 25832, 4029.974609f, 4890.195313f, -12.775084f, 1.081481f, 0);
+        Creature* MaxBlasto = pPlayer->GetMapMgr()->CreateAndSpawnCreature(25832, 4029.974609f, 4890.195313f, -12.775084f, 1.081481f);
         if (MaxBlasto->isAlive())
             _gameobject->SetState(GO_STATE_OPEN);
         else
@@ -429,8 +521,8 @@ class SouthPointStationValve : public GameObjectAIScript
 {
 public:
 
-    ADD_GAMEOBJECT_FACTORY_FUNCTION(SouthPointStationValve);
     SouthPointStationValve(GameObject* goinstance) : GameObjectAIScript(goinstance) {};
+    static GameObjectAIScript* Create(GameObject* GO) { return new SouthPointStationValve(GO); };
 
     void OnActivate(Player* pPlayer)
     {
@@ -444,7 +536,7 @@ public:
         if (quest_entry->GetMobCount(3) != 0)
             return;
 
-        Creature* TheGrinder = sEAS.SpawnCreature(pPlayer, 25833, 3787.021484f, 4821.941895f, -12.967110f, 5.097224f, 0);
+        Creature* TheGrinder = pPlayer->GetMapMgr()->CreateAndSpawnCreature(25833, 3787.021484f, 4821.941895f, -12.967110f, 5.097224f);
         if (TheGrinder->isAlive())
             _gameobject->SetState(GO_STATE_OPEN);
         else
@@ -459,8 +551,8 @@ class TheGearmastersManual : public GameObjectAIScript
 {
 public:
 
-    ADD_GAMEOBJECT_FACTORY_FUNCTION(TheGearmastersManual);
     TheGearmastersManual(GameObject* goinstance) : GameObjectAIScript(goinstance) {};
+    static GameObjectAIScript* Create(GameObject* GO) { return new TheGearmastersManual(GO); };
 
     void OnActivate(Player* pPlayer)
     {
@@ -478,7 +570,7 @@ public:
             quest_entry->UpdatePlayerFields();
         }
 
-        Creature* GearmasterMechazod = sEAS.SpawnCreature(pPlayer, 25834, 4006.289551f, 4848.437500f, 25.957747f, 2.459837f, 0);
+        Creature* GearmasterMechazod = pPlayer->GetMapMgr()->CreateAndSpawnCreature(25834, 4006.289551f, 4848.437500f, 25.957747f, 2.459837f);
         GearmasterMechazod->SetTargetGUID(pPlayer->GetGUID());
         if (GearmasterMechazod->isAlive())
             _gameobject->SetState(GO_STATE_OPEN);
@@ -550,96 +642,69 @@ protected:
 // Hunt Is On (Quest: 11794)
 const uint32 questHuntIsOn = 11794;
 
-class SaltyJohnGossip : public GossipScript
+class SaltyJohnGossip : public Arcemu::Gossip::Script
 {
 public:
 
-    void GossipHello(Object* pObject, Player* pPlayer)
+    void OnHello(Object* pObject, Player* pPlayer)
     {
-        GossipMenu* Menu;
-        objmgr.CreateGossipMenuForPlayer(&Menu, pObject->GetGUID(), 12435, pPlayer);
-        if (sEAS.GetQuest(pPlayer, questHuntIsOn) && pPlayer->HasAura(46078))
-            Menu->AddItem(GOSSIP_ICON_CHAT, pPlayer->GetSession()->LocalizedGossipOption(603), 1);
-
-        Menu->SendTo(pPlayer);
+        if (pPlayer->HasQuest(questHuntIsOn) && pPlayer->HasAura(46078))
+        {
+            Arcemu::Gossip::Menu menu(pObject->GetGUID(), 12435, pPlayer->GetSession()->language);
+            menu.AddItem(GOSSIP_ICON_CHAT, pPlayer->GetSession()->LocalizedGossipOption(603), 1);
+            menu.Send(pPlayer);
+        }
     }
 
-    void GossipSelectOption(Object* pObject, Player*  pPlayer, uint32 Id, uint32 IntId, const char* Code)
+    void OnSelectOption(Object* pObject, Player*  pPlayer, uint32 Id, const char* Code, uint32 gossipId)
     {
-        switch (IntId)
-        {
-            case 1:
-            {
-                Creature* SaltyJohn = static_cast<Creature*>(pObject);
-                SaltyJohn->SetFaction(14);
-                SaltyJohn->SendChatMessage(12, 0, "I suppose this is it.. then? I won't go down quietly!");
-            }
-            break;
-            default:
-                break;
-        }
+        Creature* SaltyJohn = static_cast<Creature*>(pObject);
+        SaltyJohn->SetFaction(14);
+        SaltyJohn->SendChatMessage(12, 0, "I suppose this is it.. then? I won't go down quietly!");
     }
 };
 
-class TomHeggerGossip : public GossipScript
+class TomHeggerGossip : public Arcemu::Gossip::Script
 {
 public:
 
-    void GossipHello(Object* pObject, Player* pPlayer)
+    void OnHello(Object* pObject, Player* pPlayer)
     {
-        GossipMenu* Menu;
-        objmgr.CreateGossipMenuForPlayer(&Menu, pObject->GetGUID(), 12435, pPlayer);
-        if (sEAS.GetQuest(pPlayer, questHuntIsOn) && pPlayer->HasAura(46078)) // Has quest and has used the item.
-            Menu->AddItem(GOSSIP_ICON_CHAT, pPlayer->GetSession()->LocalizedGossipOption(604), 1);
-
-        Menu->SendTo(pPlayer);
+        if (pPlayer->HasQuest(questHuntIsOn) && pPlayer->HasAura(46078))
+        {
+            Arcemu::Gossip::Menu menu(pObject->GetGUID(), 12435, pPlayer->GetSession()->language);
+            menu.AddItem(GOSSIP_ICON_CHAT, pPlayer->GetSession()->LocalizedGossipOption(604), 1);
+            menu.Send(pPlayer);
+        }
     }
 
-    void GossipSelectOption(Object* pObject, Player*  pPlayer, uint32 Id, uint32 IntId, const char* Code)
+    void OnSelectOption(Object* pObject, Player*  pPlayer, uint32 Id, const char* Code, uint32 gossipId)
     {
-        switch (IntId)
-        {
-            case 1:
-            {
-                Creature* TomHegger = static_cast<Creature*>(pObject);
-                TomHegger->SetFaction(14);
-                TomHegger->SendChatMessage(12, 0, "You don't know who you're messing with, ! Death beckons!");
-            }
-            break;
-            default:
-                break;
-        }
+        Creature* TomHegger = static_cast<Creature*>(pObject);
+        TomHegger->SetFaction(14);
+        TomHegger->SendChatMessage(12, 0, "You don't know who you're messing with, ! Death beckons!");
     }
 };
 
-class GuardMitchGossip : public GossipScript
+class GuardMitchGossip : public Arcemu::Gossip::Script
 {
 public:
 
-    void GossipHello(Object* pObject, Player* pPlayer)
+    void OnHello(Object* pObject, Player* pPlayer)
     {
-        GossipMenu* Menu;
-        objmgr.CreateGossipMenuForPlayer(&Menu, pObject->GetGUID(), 12435, pPlayer);
-        if (sEAS.GetQuest(pPlayer, questHuntIsOn) && pPlayer->HasAura(46078))
-            Menu->AddItem(GOSSIP_ICON_CHAT, pPlayer->GetSession()->LocalizedGossipOption(605), 1);
-
-        Menu->SendTo(pPlayer);
+        if (pPlayer->HasQuest(questHuntIsOn) && pPlayer->HasAura(46078))
+        {
+            Arcemu::Gossip::Menu menu(pObject->GetGUID(), 12435, pPlayer->GetSession()->language);
+            menu.AddItem(GOSSIP_ICON_CHAT, pPlayer->GetSession()->LocalizedGossipOption(605), 1);
+            menu.Send(pPlayer);
+        }
     }
 
-    void GossipSelectOption(Object* pObject, Player*  pPlayer, uint32 Id, uint32 IntId, const char* Code)
+    void OnSelectOption(Object* pObject, Player*  pPlayer, uint32 Id, const char* Code, uint32 gossipId)
     {
-        switch (IntId)
-        {
-            case 1:
-            {
-                Creature* GuardMitch = static_cast<Creature*>(pObject);
-                GuardMitch->SetFaction(14);
-                GuardMitch->SendChatMessage(12, 0, "Finally! This charade is over... Arthas give me strength!");
-            }
-            break;
-            default:
-                break;
-        }
+        Creature* GuardMitch = static_cast<Creature*>(pObject);
+        GuardMitch->SetFaction(14);
+        GuardMitch->SendChatMessage(12, 0, "Finally! This charade is over... Arthas give me strength!");
     }
 };
 
@@ -663,8 +728,13 @@ bool PlaceCart(uint32 i, Spell* pSpell)
             pCreature->CastSpell(pCreature, 46800, true);
         }
 
-        if (sEAS.GetQuest(pPlayer, 11897))
-            sEAS.KillMobForQuest(pPlayer, 11897, 2);
+        uint32 i = 2;
+        if (qle->GetMobCount(i) < qle->GetQuest()->required_mob_or_go_count[i])
+        {
+            qle->SetMobCount(i, qle->GetMobCount(i) + 1);
+            qle->SendUpdateAddKill(i);
+            qle->UpdatePlayerFields();
+        }
     }
 
     if (pCreature->GetEntry() == 26249)
@@ -676,8 +746,13 @@ bool PlaceCart(uint32 i, Spell* pSpell)
             pCreature->CastSpell(pCreature, 46800, true);
         }
 
-        if (sEAS.GetQuest(pPlayer, 11897))
-            sEAS.KillMobForQuest(pPlayer, 11897, 1);
+        uint32 i = 1;
+        if (qle->GetMobCount(i) < qle->GetQuest()->required_mob_or_go_count[i])
+        {
+            qle->SetMobCount(i, qle->GetMobCount(i) + 1);
+            qle->SendUpdateAddKill(i);
+            qle->UpdatePlayerFields();
+        }
     }
 
     return true;
@@ -720,10 +795,10 @@ void SetupBoreanTundra(ScriptMgr* mgr)
 
     // Mechagnomes
     // Fizzcrank Fullthrottle
-    mgr->register_gossip_script(NPC_FIZZCRANK, new FizzcrankGossip);
+    mgr->register_creature_gossip(NPC_FIZZCRANK, new FizzcrankGossip());
 
     // Surristrasz
-    mgr->register_gossip_script(NPC_SURRISTRASZ, new SurristraszGossip);
+    mgr->register_creature_gossip(NPC_SURRISTRASZ, new SurristraszGossip());
 
     // Quest: Lefty Loosey, Righty Tighty ID: 11788
     mgr->register_gameobject_script(187984, &WestPointStationValve::Create);
@@ -736,9 +811,9 @@ void SetupBoreanTundra(ScriptMgr* mgr)
     mgr->register_creature_script(25834, &GearmasterMechazodAI::Create);
 
     // Hunt Is On
-    mgr->register_gossip_script(25248, new SaltyJohnGossip);
-    mgr->register_gossip_script(25827, new TomHeggerGossip);
-    mgr->register_gossip_script(25828, new GuardMitchGossip);
+    mgr->register_creature_gossip(25248, new SaltyJohnGossip());
+    mgr->register_creature_gossip(25827, new TomHeggerGossip());
+    mgr->register_creature_gossip(25828, new GuardMitchGossip());
 
     // Quest: Plug the Sinkholes
     mgr->register_dummy_spell(46797, &PlaceCart);

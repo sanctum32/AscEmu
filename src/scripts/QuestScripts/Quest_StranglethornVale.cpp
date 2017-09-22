@@ -19,54 +19,33 @@
  */
 
 #include "Setup.h"
-#include "Management/Gossip/GossipMenu.hpp"
 
-class StrFever : public GossipScript
+class StrFever : public Arcemu::Gossip::Script
 {
 public:
-    void GossipHello(Object* pObject, Player* plr)
+    void OnHello(Object* pObject, Player* plr)
     {
-        if (!plr)
-            return;
-
-        GossipMenu* Menu;
-        Creature* doctor = static_cast<Creature*>(pObject);
-        if (doctor == NULL)
-            return;
-
-        objmgr.CreateGossipMenuForPlayer(&Menu, pObject->GetGUID(), 1, plr);
+        Arcemu::Gossip::Menu menu(pObject->GetGUID(), 1, plr->GetSession()->language);
         if (plr->HasQuest(348) && plr->GetItemInterface()->GetItemCount(2799, 0) && !plr->GetItemInterface()->GetItemCount(2797, 0))
-            Menu->AddItem(GOSSIP_ICON_CHAT, plr->GetSession()->LocalizedGossipOption(494), 1);     // I'm ready, Summon Him!
+            menu.AddItem(GOSSIP_ICON_CHAT, plr->GetSession()->LocalizedGossipOption(494), 1);     // I'm ready, Summon Him!
 
-        Menu->SendTo(plr);
+        menu.Send(plr);
     }
 
-    void GossipSelectOption(Object* pObject, Player* plr, uint32 Id, uint32 IntId, const char* EnteredCode)
+    void OnSelectOption(Object* pObject, Player* plr, uint32 Id, const char* Code, uint32 gossipId)
     {
-        if (!plr)
-            return;
-
         Creature* doctor = static_cast<Creature*>(pObject);
-        if (doctor == NULL)
+
+        plr->GetItemInterface()->RemoveItemAmt(2799, 1);
+        doctor->CastSpell(doctor, sSpellCustomizations.GetSpellInfo(12380), true);
+        if (!plr || !plr->GetMapMgr() || !plr->GetMapMgr()->GetInterface())
             return;
 
-        switch (IntId)
+        Creature* firstenemy = plr->GetMapMgr()->CreateAndSpawnCreature(1511, -13770.5f, -6.79f, 42.8f, 5.7f);
+        if (firstenemy != nullptr)
         {
-            case 0:
-                GossipHello(pObject, plr);
-                break;
-
-            case 1:
-            {
-                plr->GetItemInterface()->RemoveItemAmt(2799, 1);
-                doctor->CastSpell(doctor, sSpellCustomizations.GetSpellInfo(12380), true);
-                if (!plr || !plr->GetMapMgr() || !plr->GetMapMgr()->GetInterface())
-                    return;
-                Creature* firstenemy = sEAS.SpawnCreature(plr, 1511, -13770.5f, -6.79f, 42.8f, 5.7f, 0);
-                firstenemy->GetAIInterface()->MoveTo(-13727.8f, -26.2f, 46.15f);
-                firstenemy->Despawn(10 * 60 * 1000, 0);
-            }
-            break;
+            firstenemy->GetAIInterface()->MoveTo(-13727.8f, -26.2f, 46.15f);
+            firstenemy->Despawn(10 * 60 * 1000, 0);
         }
     }
 };
@@ -82,20 +61,26 @@ public:
         if (mKiller->IsPlayer())
         {
             Player* mPlayer = static_cast<Player*>(mKiller);
-            Creature* beka1 = sEAS.SpawnCreature(mPlayer, 1516, -13770.5f, -6.79f, 42.8f, 5.7f, 0);
-            beka1->GetAIInterface()->MoveTo(-13727.8f, -26.2f, 46.15f);
-            beka1->SetOrientation(4.07f);
-            beka1->Despawn(10 * 60 * 1000, 0);
+            Creature* beka1 =mPlayer->GetMapMgr()->CreateAndSpawnCreature(1516, -13770.5f, -6.79f, 42.8f, 5.7f);
+            if (beka1 != nullptr)
+            {
+                beka1->GetAIInterface()->MoveTo(-13727.8f, -26.2f, 46.15f);
+                beka1->SetOrientation(4.07f);
+                beka1->Despawn(10 * 60 * 1000, 0);
+            }
         }
         else
         {
             Player* mPlayer = _unit->GetMapMgr()->GetInterface()->GetPlayerNearestCoords(_unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ());
             if (mPlayer)
             {
-                Creature* beka1 = sEAS.SpawnCreature(mPlayer, 1516, -13770.5f, -6.79f, 42.8f, 5.7f, 0);
-                beka1->GetAIInterface()->MoveTo(-13727.8f, -26.2f, 46.15f);
-                beka1->SetOrientation(4.07f);
-                beka1->Despawn(10 * 60 * 1000, 0);
+                Creature* beka1 = mPlayer->GetMapMgr()->CreateAndSpawnCreature(1516, -13770.5f, -6.79f, 42.8f, 5.7f);
+                if (beka1 != nullptr)
+                {
+                    beka1->GetAIInterface()->MoveTo(-13727.8f, -26.2f, 46.15f);
+                    beka1->SetOrientation(4.07f);
+                    beka1->Despawn(10 * 60 * 1000, 0);
+                }
             }
         }
     }
@@ -112,20 +97,26 @@ public:
         if (mKiller->IsPlayer())
         {
             Player* mPlayer = static_cast<Player*>(mKiller);
-            Creature* beka1 = sEAS.SpawnCreature(mPlayer, 1514, -13770.5f, -6.79f, 42.8f, 5.7f, 0);
-            beka1->GetAIInterface()->MoveTo(-13727.8f, -26.2f, 46.15f);
-            beka1->SetOrientation(4.07f);
-            beka1->Despawn(10 * 60 * 1000, 0);
+            Creature* beka1 = mPlayer->GetMapMgr()->CreateAndSpawnCreature(1514, -13770.5f, -6.79f, 42.8f, 5.7f);
+            if (beka1 != nullptr)
+            {
+                beka1->GetAIInterface()->MoveTo(-13727.8f, -26.2f, 46.15f);
+                beka1->SetOrientation(4.07f);
+                beka1->Despawn(10 * 60 * 1000, 0);
+            }
         }
         else
         {
             Player* mPlayer = _unit->GetMapMgr()->GetInterface()->GetPlayerNearestCoords(_unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ());
             if (mPlayer)
             {
-                Creature* beka1 = sEAS.SpawnCreature(mPlayer, 1514, -13770.5f, -6.79f, 42.8f, 5.7f, 0);
-                beka1->GetAIInterface()->MoveTo(-13727.8f, -26.2f, 46.15f);
-                beka1->SetOrientation(4.07f);
-                beka1->Despawn(10 * 60 * 1000, 0);
+                Creature* beka1 = mPlayer->GetMapMgr()->CreateAndSpawnCreature(1514, -13770.5f, -6.79f, 42.8f, 5.7f);
+                if (beka1 != nullptr)
+                {
+                    beka1->GetAIInterface()->MoveTo(-13727.8f, -26.2f, 46.15f);
+                    beka1->SetOrientation(4.07f);
+                    beka1->Despawn(10 * 60 * 1000, 0);
+                }
             }
         }
     }
@@ -263,26 +254,34 @@ class FacingNegolash : public QuestScript
 {
     void OnQuestComplete(Player* pPlayer, QuestLogEntry* qLogEntry)
     {
-        GameObject* obj = NULL;
+        GameObject* obj = nullptr;
 
-        for (uint8 i = 0; i < 9; i++)
+        for (uint8 i = 0; i < 9; ++i)
         {
-            obj = sEAS.SpawnGameobject(pPlayer, GO_MEAT, MeatSpawnPoints[i].x, MeatSpawnPoints[i].y, MeatSpawnPoints[i].z, MeatSpawnPoints[i].o, 1, 0, 0, 0, 0);
-            sEAS.GameobjectDelete(obj, 2 * 60 * 1000);
-        }
-        for (uint8 i = 0; i < 5; i++)
-        {
-            obj = sEAS.SpawnGameobject(pPlayer, GO_BOTTLE, BottleSpawnPoints[i].x, BottleSpawnPoints[i].y, BottleSpawnPoints[i].z, BottleSpawnPoints[i].o, 1, 0, 0, 0, 0);
-            sEAS.GameobjectDelete(obj, 2 * 60 * 1000);
-        }
-        for (uint8 i = 0; i < 3; i++)
-        {
-            obj = sEAS.SpawnGameobject(pPlayer, GO_BREAD, BreadSpawnPoints[i].x, BreadSpawnPoints[i].y, BreadSpawnPoints[i].z, BreadSpawnPoints[i].o, 1, 0, 0, 0, 0);
-            sEAS.GameobjectDelete(obj, 2 * 60 * 1000);
+            obj = pPlayer->GetMapMgr()->CreateAndSpawnGameObject(GO_MEAT, MeatSpawnPoints[i].x, MeatSpawnPoints[i].y, MeatSpawnPoints[i].z, MeatSpawnPoints[i].o, 1);
+            if (obj != nullptr)
+                obj->Despawn(2 * 60 * 1000, 0);
         }
 
-        Creature* Negolash = sEAS.SpawnCreature(pPlayer, 1494, -14657.400391f, 155.115997f, 4.081050f, 0.353429f);
-        Negolash->GetAIInterface()->MoveTo(-14647.526367f, 143.710052f, 1.164550f);
+        for (uint8 i = 0; i < 5; ++i)
+        {
+            obj = pPlayer->GetMapMgr()->CreateAndSpawnGameObject(GO_BOTTLE, BottleSpawnPoints[i].x, BottleSpawnPoints[i].y, BottleSpawnPoints[i].z, BottleSpawnPoints[i].o, 1);
+            if (obj != nullptr)
+                obj->Despawn(2 * 60 * 1000, 0);
+        }
+
+        for (uint8 i = 0; i < 3; ++i)
+        {
+            obj = pPlayer->GetMapMgr()->CreateAndSpawnGameObject(GO_BREAD, BreadSpawnPoints[i].x, BreadSpawnPoints[i].y, BreadSpawnPoints[i].z, BreadSpawnPoints[i].o, 1);
+            if (obj != nullptr)
+                obj->Despawn(2 * 60 * 1000, 0);
+        }
+
+        Creature* Negolash = pPlayer->GetMapMgr()->CreateAndSpawnCreature(1494, -14657.400391f, 155.115997f, 4.081050f, 0.353429f);
+        if (Negolash != nullptr)
+        {
+            Negolash->GetAIInterface()->MoveTo(-14647.526367f, 143.710052f, 1.164550f);
+        }
     }
 };
 
@@ -304,8 +303,9 @@ public:
 
 void SetupStranglethornVale(ScriptMgr* mgr)
 {
-    GossipScript* gossip1 = new StrFever();
-    mgr->register_gossip_script(1449, gossip1);
+    Arcemu::Gossip::Script* gossip1 = new StrFever();
+    mgr->register_creature_gossip(1449, gossip1);
+
     mgr->register_creature_script(1511, &Beka::Create);
     mgr->register_creature_script(1516, &Beka1::Create);
     mgr->register_quest_script(584, new BloodscalpClanHeads());

@@ -20,7 +20,6 @@
  */
 
 #include "StdAfx.h"
-#include "Management/Gossip/GossipMenu.hpp"
 #include "Management/Item.h"
 #include "Management/Container.h"
 #include "Management/ItemInterface.h"
@@ -1459,20 +1458,17 @@ void WorldSession::HandleListInventoryOpcode(WorldPacket& recv_data)
         SendInventoryList(unit);
     else
     {
-        GossipMenu* pMenu;
-        objmgr.CreateGossipMenuForPlayer(&pMenu, unit->GetGUID(), vendor->cannotbuyattextid, _player);
-        pMenu->SendTo(_player);
+        Arcemu::Gossip::Menu::SendSimpleMenu(unit->GetGUID(), vendor->cannotbuyattextid, _player);
     }
 }
 
 void WorldSession::SendInventoryList(Creature* unit)
 {
-
     if (!unit->HasItems())
     {
         sChatHandler.BlueSystemMessage(_player->GetSession(), "No sell template found. Report this to database's devs: %d (%s)", unit->GetEntry(), unit->GetCreatureProperties()->Name.c_str());
         LOG_ERROR("'%s' discovered that a creature with entry %u (%s) has no sell template.", GetPlayer()->GetName(), unit->GetEntry(), unit->GetCreatureProperties()->Name.c_str());
-        GetPlayer()->Gossip_Complete(); // cebernic: don't get a hang for the NPC
+        Arcemu::Gossip::Menu::Complete(GetPlayer());
         return;
     }
 

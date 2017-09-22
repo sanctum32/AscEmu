@@ -20,7 +20,6 @@
  */
 
 #include "Setup.h"
-#include "Management/Gossip/GossipMenu.hpp"
 
 class Flayer : public CreatureAIScript
 {
@@ -40,14 +39,13 @@ public:
 
 };
 
-class Darrowshire_Spirit : public GossipScript
+class Darrowshire_Spirit : public Arcemu::Gossip::Script
 {
 public:
 
-    void GossipHello(Object* pObject, Player* plr)
+    void OnHello(Object* pObject, Player* plr)
     {
         QuestLogEntry* en = plr->GetQuestLogForEntry(5211);
-
         if (en && en->GetMobCount(0) < en->GetQuest()->required_mob_or_go_count[0])
         {
             uint32 newcount = en->GetMobCount(0) + 1;
@@ -57,20 +55,13 @@ public:
             en->UpdatePlayerFields();
         }
 
-        GossipMenu* Menu;
-        objmgr.CreateGossipMenuForPlayer(&Menu, pObject->GetGUID(), 3873, plr);
-
-        Menu->SendTo(plr);
-
-        if (!pObject->IsCreature())
-            return;
+        Arcemu::Gossip::Menu::SendSimpleMenu(pObject->GetGUID(), 3873, plr);
 
         Creature* Spirit = static_cast<Creature*>(pObject);
 
         Spirit->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
         Spirit->Despawn(4000, 0);
     }
-
 };
 
 class ArajTheSummoner : public CreatureAIScript
@@ -84,17 +75,18 @@ public:
         if (!mKiller->IsPlayer())
             return;
 
-        GameObject* go = sEAS.SpawnGameobject(static_cast<Player*>(mKiller), 177241, _unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), _unit->GetOrientation(), 1, 0, 0, 0, 0);
-        sEAS.GameobjectDelete(go, 60000);
+        GameObject* go = mKiller->GetMapMgr()->CreateAndSpawnGameObject(177241, _unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), _unit->GetOrientation(), 1);
+        if (go != nullptr)
+            go->Despawn(60 * 1000, 0);
     }
 };
 
 
 void SetupEasternPlaguelands(ScriptMgr* mgr)
 {
-    GossipScript* gs = new Darrowshire_Spirit();
+    Arcemu::Gossip::Script* gs = new Darrowshire_Spirit();
+    mgr->register_creature_gossip(11064, gs);
 
-    mgr->register_gossip_script(11064, gs);
     mgr->register_creature_script(8532, &Flayer::Create);
     mgr->register_creature_script(8531, &Flayer::Create);
     mgr->register_creature_script(8530, &Flayer::Create);
