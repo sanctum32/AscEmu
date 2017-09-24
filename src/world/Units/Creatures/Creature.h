@@ -29,8 +29,6 @@
 #include "Objects/Object.h"
 #include "Management/Group.h"
 
-class GossipScript;
-
 SERVER_DECL bool Rand(float chance);
 SERVER_DECL bool Rand(uint32 chance);
 SERVER_DECL bool Rand(int32 chance);
@@ -371,6 +369,32 @@ class SERVER_DECL Creature : public Unit
     private:
 
         uint32 m_Creature_type;
+
+        // old EasyFunctions.h
+    public:
+
+        void DeleteWaypoints()
+        {
+            if (m_custom_waypoint_map == nullptr)
+                return;
+
+            Movement::WayPointMap::iterator i = m_custom_waypoint_map->begin();
+            for (; i != m_custom_waypoint_map->end(); ++i)
+            {
+                if ((*i) != nullptr)
+                    delete(*i);
+            }
+
+            m_custom_waypoint_map->clear();
+        }
+
+        void CreateCustomWaypointMap()
+        {
+            if (m_custom_waypoint_map == nullptr)
+                m_custom_waypoint_map = new Movement::WayPointMap;
+            else
+                DeleteWaypoints();
+        }
 };
 
 #endif // _WOWSERVER_CREATURE_H

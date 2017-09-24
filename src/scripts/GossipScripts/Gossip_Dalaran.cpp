@@ -1,33 +1,16 @@
-/**
- * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
- * Copyright (C) 2009-2012 ArcEmu Team <http://www.arcemu.org/>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- */
- 
+/*
+Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+This file is released under the MIT license. See README-MIT for more information.
+*/
+
 #include "Setup.h"
 #include "Objects/GameObject.h"
-#include "Server/Packets/Opcode.h"
-#include "Server/WorldSession.h"
 
 enum UnorderedEntrys
 {
-    GO_DEDICATION_OF_HONOR  = 202443,
-    GT_DEDICATION_OF_HONOR  = 15921,    // "Dedicated to those that fell to the Scourge during the war in the frozen wastes."
-    GI_SEE_FALL_LICH_KING   = 351       // "See the fall of the Lich King."
-
+    GO_DEDICATION_OF_HONOR = 202443,
+    GT_DEDICATION_OF_HONOR = 15921,    // "Dedicated to those that fell to the Scourge during the war in the frozen wastes."
+    GI_SEE_FALL_LICH_KING = 351        // "See the fall of the Lich King."
 };
 
 class DedicationOfHonorGossip : public Arcemu::Gossip::Script
@@ -39,28 +22,27 @@ public:
         Arcemu::Gossip::Menu::SendQuickMenu(object->GetGUID(), GT_DEDICATION_OF_HONOR, player, 1, GOSSIP_ICON_CHAT, player->GetSession()->LocalizedGossipOption(GI_SEE_FALL_LICH_KING));
     }
 
-    void OnSelectOption(Object* object, Player* player, uint32 Id, const char* enteredcode, uint32 gossipId)
+    void OnSelectOption(Object* object, Player* player, uint32_t id, const char* enteredCode, uint32_t gossipId)
     {
-#if VERSION_STRING > TBC
-        uint32 video_id = 16;
-        player->GetSession()->OutPacket(SMSG_TRIGGER_MOVIE, sizeof(uint32), &video_id);
+        player->sendMovie(16);
         Arcemu::Gossip::Menu::Complete(player);
-#endif
     }
 };
 
- class DedicationOfHonorAI : public GameObjectAIScript
+class DedicationOfHonorAI : public GameObjectAIScript
 {
-    public:
-        DedicationOfHonorAI(GameObject* go) : GameObjectAIScript(go) {}
-        static GameObjectAIScript* Create(GameObject* GO) { return new DedicationOfHonorAI(GO); };
+public:
 
-        void OnActivate(Player* player)
-        {
-            DedicationOfHonorGossip gossip;
-            gossip.OnHello(_gameobject, player);
-        }
+    DedicationOfHonorAI(GameObject* go) : GameObjectAIScript(go) {}
+    static GameObjectAIScript* Create(GameObject* GO) { return new DedicationOfHonorAI(GO); };
+
+    void OnActivate(Player* player)
+    {
+        DedicationOfHonorGossip gossip;
+        gossip.OnHello(_gameobject, player);
+    }
 };
+
 
 void SetupDalaranGossip(ScriptMgr* mgr)
 {

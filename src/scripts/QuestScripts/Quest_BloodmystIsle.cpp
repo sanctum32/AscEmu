@@ -49,14 +49,7 @@ public:
 
     void OnSelectOption(Object* pObject, Player* plr, uint32 Id, const char* EnteredCode, uint32 gossipId)
     {
-        QuestLogEntry* en = plr->GetQuestLogForEntry(9663);
-        if (en && en->GetMobCount(0) < en->GetQuest()->required_mob_or_go_count[0])
-        {
-            en->SetMobCount(0, en->GetMobCount(0) + 1);
-            en->SendUpdateAddKill(0);
-            en->UpdatePlayerFields();
-            return;
-        }
+        plr->AddQuestKill(9663, 0, 0);
     }
 };
 
@@ -75,14 +68,7 @@ public:
 
     void OnSelectOption(Object* pObject, Player* plr, uint32 Id, const char* EnteredCode, uint32 gossipId)
     {
-        QuestLogEntry* en = plr->GetQuestLogForEntry(9663);
-        if (en && en->GetMobCount(1) < en->GetQuest()->required_mob_or_go_count[1])
-        {
-            en->SetMobCount(1, en->GetMobCount(1) + 1);
-            en->SendUpdateAddKill(1);
-            en->UpdatePlayerFields();
-            return;
-        }
+        plr->AddQuestKill(9663, 1, 0);
     }
 };
 
@@ -101,14 +87,7 @@ public:
 
     void OnSelectOption(Object* pObject, Player* plr, uint32 Id, const char* EnteredCode, uint32 gossipId)
     {
-        QuestLogEntry* en = plr->GetQuestLogForEntry(9663);
-        if (en && en->GetMobCount(2) < en->GetQuest()->required_mob_or_go_count[2])
-        {
-            en->SetMobCount(2, en->GetMobCount(2) + 1);
-            en->SendUpdateAddKill(2);
-            en->UpdatePlayerFields();
-            return;
-        }
+        plr->AddQuestKill(9663, 2, 0);
     }
 };
 
@@ -121,23 +100,11 @@ public:
 
     void OnActivate(Player* pPlayer)
     {
-        QuestLogEntry* qle = pPlayer->GetQuestLogForEntry(9667);
-        if (qle == NULL)
-            return;
-
-        if (qle->GetMobCount(0) < qle->GetQuest()->required_mob_or_go_count[0])
-        {
-            qle->SetMobCount(0, qle->GetMobCount(0) + 1);
-            qle->SendUpdateAddKill(0);
-            qle->UpdatePlayerFields();
-        }
+        pPlayer->AddQuestKill(9667, 0, 0);
 
         Creature* princess = pPlayer->GetMapMgr()->GetInterface()->GetCreatureNearestCoords(pPlayer->GetPositionX(), pPlayer->GetPositionY(), pPlayer->GetPositionZ(), 17682);
-        if (!princess)
-            return;
-
-        princess->Despawn(1000, 6 * 60 * 1000);
-        return;
+        if (princess != nullptr)
+            princess->Despawn(1000, 6 * 60 * 1000);
     }
 };
 
@@ -205,13 +172,14 @@ public:
             return;
 
         // M4ksiu: I don't think the method is correct, but it can stay the way it was until someone gives proper infos
-        QuestLogEntry* Quest = QuestHolder->GetQuestLogForEntry(9670);
+        QuestLogEntry* qle = QuestHolder->GetQuestLogForEntry(9670);
+        LocationVector pos = _unit->GetPosition();
         Creature* RandomCreature = NULL;
-        if (Quest == NULL)
+        if (qle == nullptr)
         {
             // Creatures from Bloodmyst Isle
             uint32 Id[51] = { 17681, 17887, 17550, 17323, 17338, 17341, 17333, 17340, 17353, 17320, 17339, 17337, 17715, 17322, 17494, 17654, 17342, 17328, 17331, 17325, 17321, 17330, 17522, 17329, 17524, 17327, 17661, 17352, 17334, 17326, 17324, 17673, 17336, 17346, 17589, 17609, 17608, 17345, 17527, 17344, 17347, 17525, 17713, 17523, 17348, 17606, 17604, 17607, 17610, 17358, 17588 };
-            RandomCreature = _unit->GetMapMgr()->GetInterface()->SpawnCreature(Id[RandomUInt(50)], _unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), _unit->GetOrientation(), true, false, 0, 0);
+            RandomCreature = _unit->GetMapMgr()->GetInterface()->SpawnCreature(Id[RandomUInt(50)], pos.x, pos.y, pos.z, pos.o, true, false, 0, 0);
             if (RandomCreature != NULL)
             {
                 RandomCreature->m_noRespawn = true;
@@ -223,16 +191,14 @@ public:
         else
         {
             uint32 Id[8] = { 17681, 17321, 17330, 17522, 17673, 17336, 17346, 17589 };
-            RandomCreature = _unit->GetMapMgr()->GetInterface()->SpawnCreature(Id[RandomUInt(7)], _unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), _unit->GetOrientation(), true, false, 0, 0);
+            RandomCreature = _unit->GetMapMgr()->GetInterface()->SpawnCreature(Id[RandomUInt(7)], pos.x, pos.y, pos.z, pos.o, true, false, 0, 0);
             if (RandomCreature != NULL)
             {
                 RandomCreature->m_noRespawn = true;
                 RandomCreature->Despawn(60000, 0);
-                if (RandomCreature->GetEntry() == 17681 && Quest->GetMobCount(0) < Quest->GetQuest()->required_mob_or_go_count[0])
+                if (RandomCreature->GetEntry() == 17681)
                 {
-                    Quest->SetMobCount(0, Quest->GetMobCount(0) + 1);
-                    Quest->SendUpdateAddKill(0);
-                    Quest->UpdatePlayerFields();
+                    QuestHolder->AddQuestKill(9670, 0, 0);
                 }
             }
         }

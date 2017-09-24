@@ -12104,14 +12104,6 @@ void Player::SetKnownTitle(RankTitles title, bool set)
     m_session->SendPacket(&data);
 }
 
-void Player::SendTriggerMovie(uint32 movieID)
-{
-#if VERSION_STRING > TBC
-    if (m_session)
-        m_session->OutPacket(SMSG_TRIGGER_MOVIE, 4, &movieID);
-#endif
-}
-
 uint32 Player::GetInitialFactionId()
 {
 
@@ -14123,11 +14115,11 @@ void Player::AddQuestKill(uint32 questid, uint8 reqid, uint32 delay)
         return;
     }
 
-    auto quest_entry = GetQuestLogForEntry(questid);
+    QuestLogEntry* quest_entry = GetQuestLogForEntry(questid);
     if (quest_entry == nullptr)
         return;
 
-    auto quest = quest_entry->GetQuest();
+    QuestProperties const* quest = quest_entry->GetQuest();
 
     if (quest_entry->GetMobCount(reqid) >= quest->required_mob_or_go_count[reqid])
         return;
