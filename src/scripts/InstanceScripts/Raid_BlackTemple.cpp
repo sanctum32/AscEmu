@@ -897,20 +897,20 @@ class IllidariArchonAI : public MoonScriptCreatureAI
             if (mIsShadowPriest && _unit->getUInt32Value(UNIT_FIELD_HEALTH) <= 2500 && pDeath->mEnabled)
             {
                 Spell* pCurrentSpell = _unit->GetCurrentSpell();
-                if (pCurrentSpell != NULL && pCurrentSpell->pSpellId == pDeath->mInfo->Id)
+                if (pCurrentSpell != NULL && pCurrentSpell->pSpellId == pDeath->mInfo->getId())
                 {
                     pCurrentSpell->cancel();
                 }
                 if (!mQueuedSpells.empty())
                     for (SpellDescList::iterator itr = mQueuedSpells.begin(); itr != mQueuedSpells.end(); ++itr)
                     {
-                        if ((*itr)->mInfo->Id == pDeath->mInfo->Id)
+                        if ((*itr)->mInfo->getId() == pDeath->mInfo->getId())
                             itr = mQueuedSpells.erase(itr);
                     }
                 if (!mScheduledSpells.empty())
                     for (SpellDescList::iterator itr = mScheduledSpells.begin(); itr != mScheduledSpells.end(); ++itr)
                     {
-                        if ((*itr)->mInfo->Id == pDeath->mInfo->Id)
+                        if ((*itr)->mInfo->getId() == pDeath->mInfo->getId())
                             itr = mScheduledSpells.erase(itr);
                     }
 
@@ -6822,7 +6822,9 @@ void SpellFunc_FlameOfAzzinothCharge(SpellDesc* pThis, MoonScriptCreatureAI* pCr
 
 void SetupBlackTemple(ScriptMgr* mgr)
 {
+#ifndef UseNewMapScriptsProject
     mgr->register_instance_script(MAP_BLACK_TEMPLE, &BlackTempleScript::Create);
+#endif
     //////////////////////////////////////////////////////////////////////////////////////////
     ///////// Mobs
     mgr->register_creature_script(CN_DRAGON_TURTLE, &DragonTurtleAI::Create);

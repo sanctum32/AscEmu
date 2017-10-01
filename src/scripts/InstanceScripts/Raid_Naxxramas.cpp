@@ -40,10 +40,11 @@ class NaxxramasScript : public MoonInstanceScript
             {
                 case 16998: // Kel thuzads cat
                     {
-                        KelThuzad = GetCreatureBySqlId(CN_KELTHUZAD);
+                        /* getCreatureBySpawnId not entry!
+                        KelThuzad = getCreatureBySpawnId(CN_KELTHUZAD);
                         if (KelThuzad && KelThuzad->isAlive())
                             KelThuzad->SendChatMessage(CHAT_MSG_MONSTER_YELL, LANG_UNIVERSAL, "No!!! A curse upon you, interlopers! The armies of the Lich King will hunt you down. You will not escape your fate...");
-                        KelThuzad = NULL;
+                        KelThuzad = NULL;*/
                     }
                     break;
                 case CN_PATCHWERK:
@@ -2746,7 +2747,9 @@ void PatchwerkAI::AIUpdate()
 
 void SetupNaxxramas(ScriptMgr* pScriptMgr)
 {
+#ifndef UseNewMapScriptsProject
     pScriptMgr->register_instance_script(MAP_NAXXRAMAS, &NaxxramasScript::Create);
+#endif
     /////////////////////////////////////////////////////////////////////////////////
     ////// The Arachnid Quarter
     // ---- Trash ----

@@ -305,7 +305,7 @@ class LordMarrowgarAI : public MoonScriptBossAI
 
             // examplecode.... remove me as soon as possible.
             //IceCrownCitadelScript* pInstance = (IceCrownCitadelScript*)_unit->GetMapMgr()->GetScript();
-            //pInstance->SendUnitEncounter(0, _unit);
+            //pInstance->sendUnitEncounter(0, _unit);
         }
 
         void BoneSpike()
@@ -472,6 +472,7 @@ class BoneSpikeAI : public MoonScriptBossAI
 
 void SetupICC(ScriptMgr* mgr)
 {
+#ifndef UseNewMapScriptsProject
     //Instance
     mgr->register_instance_script(MAP_ICECROWNCITADEL, &IceCrownCitadelScript::Create);
 
@@ -499,4 +500,5 @@ void SetupICC(ScriptMgr* mgr)
 
     //Misc
     mgr->register_creature_script(CN_BONE_SPIKE, &BoneSpikeAI::Create);
+#endif
 }

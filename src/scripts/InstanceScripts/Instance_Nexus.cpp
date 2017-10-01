@@ -635,20 +635,21 @@ class NexusScript : public MoonInstanceScript
             {
                 GameObject* pSphere = NULL;
 
+                /* getCreatureBySpawnId not entry!
                 switch (pIndex)
                 {
                     case NEXUS_ANOMALUS:
-                        pSphere = GetGameObjectBySqlId(ANOMALUS_CS);
+                        pSphere = getGameObjectBySpawnId(ANOMALUS_CS);
                         break;
                     case NEXUS_TELESTRA:
-                        pSphere = GetGameObjectBySqlId(TELESTRA_CS);
+                        pSphere = getGameObjectBySpawnId(TELESTRA_CS);
                         break;
                     case NEXUS_ORMOROK:
-                        pSphere = GetGameObjectBySqlId(ORMOROK_CS);
+                        pSphere = getGameObjectBySpawnId(ORMOROK_CS);
                         break;
                     default:
                         return;
-                };
+                };*/
 
                 if (pSphere != NULL)
                     pSphere->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_UNCLICKABLE);
@@ -796,5 +797,7 @@ void SetupNexus(ScriptMgr* mgr)
     // Keristrasza Encounter
     mgr->register_creature_script(CN_KERISTRASZA, &KeristraszaAI::Create);
 
+#ifndef UseNewMapScriptsProject
     mgr->register_instance_script(MAP_NEXUS, &NexusScript::Create);
+#endif
 }

@@ -479,6 +479,25 @@ class SERVER_DECL QuestScript
 //////////////////////////////////////////////////////////////////////////////////////////
 /// Instanced class created for each instance of the map, holds all scriptable exports
 //////////////////////////////////////////////////////////////////////////////////////////
+#include "Map/WorldCreator.h"
+
+//#define UseNewMapScriptsProject
+
+enum EncounterStates
+{
+    NotStarted = 0,
+    InProgress = 1,
+    Finished = 2,
+    Performed = 3,
+    PreProgress = 4,
+    InvalidState = 0xff
+};
+
+typedef std::map<uint32_t, uint32_t> InstanceDataMap;
+
+typedef std::set<Creature*> CreatureSet;
+typedef std::set<GameObject*> GameObjectSet;
+
 class SERVER_DECL InstanceScript
 {
     public:
@@ -522,7 +541,46 @@ class SERVER_DECL InstanceScript
         // Something to return Instance's MapMgr
         MapMgr* GetInstance() { return mInstance; };
 
+        // MIT start
+        //////////////////////////////////////////////////////////////////////////////////////////
+        // data
+
+        void addData(uint32_t data, uint32_t state = NotStarted);
+        void setData(uint32_t data, uint32_t state);
+        uint32_t getData(uint32_t data);
+        bool isDataStateFinished(uint32_t data);
+
+        //used for debug
+        std::string getDataStateString(uint32_t bossEntry);
+
+        //////////////////////////////////////////////////////////////////////////////////////////
+        // encounters
+
+        void generateBossDataState();
+        void sendUnitEncounter(uint32_t type, Unit* unit = nullptr, uint8_t value_a = 0, uint8_t value_b = 0);
+
+        //used for debug
+        void displayDataStateList(Player* player);
+
+        //////////////////////////////////////////////////////////////////////////////////////////
+        // misc
+
+        Creature* spawnCreature(uint32_t entry, float posX, float posY, float posZ, float posO, uint32_t factionId = 0);
+        Creature* getCreatureBySpawnId(uint32_t entry);
+        CreatureSet getCreatureSetForEntry(uint32_t entry, bool debug = false, Player* player = nullptr);
+        CreatureSet getCreatureSetForEntries(std::vector<uint32_t> entryVector);
+
+        GameObject* getGameObjectBySpawnId(uint32_t entry);
+        GameObject* getClosestGameObjectForPosition(uint32 entry, float posX, float posY, float posZ);
+        GameObjectSet getGameObjectsSetForEntry(uint32_t entry);
+
+        float getRangeToObjectForPosition(Object* object, float posX, float posY, float posZ);
+
     protected:
+
+        InstanceDataMap mInstanceData;
+
+        //MIT end
 
         MapMgr* mInstance;
 };

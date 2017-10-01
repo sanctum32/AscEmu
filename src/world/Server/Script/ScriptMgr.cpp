@@ -226,16 +226,16 @@ void ScriptMgr::DumpUnimplementedSpells()
         if (!sp->HasEffect(SPELL_EFFECT_DUMMY) && !sp->HasEffect(SPELL_EFFECT_SCRIPT_EFFECT) && !sp->HasEffect(SPELL_EFFECT_SEND_EVENT))
             continue;
 
-        HandleDummySpellMap::iterator sitr = _spells.find(sp->Id);
+        HandleDummySpellMap::iterator sitr = _spells.find(sp->getId());
         if (sitr != _spells.end())
             continue;
 
-        HandleScriptEffectMap::iterator seitr = SpellScriptEffects.find(sp->Id);
+        HandleScriptEffectMap::iterator seitr = SpellScriptEffects.find(sp->getId());
         if (seitr != SpellScriptEffects.end())
             continue;
 
         std::stringstream ss;
-        ss << sp->Id;
+        ss << sp->getId();
         ss << std::endl;
 
         of.write(ss.str().c_str(), ss.str().length());
@@ -263,12 +263,12 @@ void ScriptMgr::DumpUnimplementedSpells()
         if (!sp->appliesAreaAura(SPELL_AURA_DUMMY))
             continue;
 
-        HandleDummyAuraMap::iterator ditr = _auras.find(sp->Id);
+        HandleDummyAuraMap::iterator ditr = _auras.find(sp->getId());
         if (ditr != _auras.end())
             continue;
 
         std::stringstream ss;
-        ss << sp->Id;
+        ss << sp->getId();
         ss << std::endl;
 
         of2.write(ss.str().c_str(), ss.str().length());
@@ -608,6 +608,268 @@ void InstanceScript::RemoveUpdateEvent()
 {
     sEventMgr.RemoveEvents(mInstance, EVENT_SCRIPT_UPDATE_EVENT);
 };
+
+// MIT start
+//////////////////////////////////////////////////////////////////////////////////////////
+// data
+
+void InstanceScript::addData(uint32_t data, uint32_t state /*= NotStarted*/)
+{
+    auto Iter = mInstanceData.find(data);
+    if (Iter == mInstanceData.end())
+        mInstanceData.insert(std::pair<uint32_t, uint32_t>(data, state));
+};
+
+void InstanceScript::setData(uint32_t data, uint32_t state)
+{
+    auto Iter = mInstanceData.find(data);
+    if (Iter != mInstanceData.end())
+        Iter->second = state;
+};
+
+uint32_t InstanceScript::getData(uint32_t data)
+{
+    auto Iter = mInstanceData.find(data);
+    if (Iter != mInstanceData.end())
+        return Iter->second;
+
+    return InvalidState;
+};
+
+bool InstanceScript::isDataStateFinished(uint32_t data)
+{
+    return getData(data) == Finished;
+}
+
+//used for debug
+std::string InstanceScript::getDataStateString(uint32_t bossEntry)
+{
+    uint32_t eState = NotStarted;
+
+    auto it = mInstanceData.find(bossEntry);
+    if (it != mInstanceData.end())
+        eState = it->second;
+
+    switch (eState)
+    {
+        case NotStarted:
+            return "Not started";
+        case InProgress:
+            return "In Progress";
+        case Finished:
+            return "Finished";
+        case Performed:
+            return "Performed";
+        case PreProgress:
+            return "PreProgress";
+        default:
+            return "Invalid";
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// encounters
+void InstanceScript::generateBossDataState()
+{
+    InstanceBossInfoMap* bossInfoMap = objmgr.m_InstanceBossInfoMap[mInstance->GetMapId()];
+    for (const auto& encounter : *bossInfoMap)
+    {
+        CreatureProperties const* creature = sMySQLStore.getCreatureProperties(encounter.second->creatureid);
+        if (creature == nullptr)
+            LOG_ERROR("Your instance_boss table includes invalid data for boss entry %u!", encounter.second->creatureid);
+        else
+            mInstanceData.insert(std::pair<uint32_t, uint32_t>(encounter.second->creatureid, NotStarted));
+    }
+
+    for (const auto& killedNpc : mInstance->pInstance->m_killedNpcs)
+    {
+        InstanceBossInfoMap::const_iterator bossInfo = bossInfoMap->find((killedNpc));
+        if (bossInfo != bossInfoMap->end())
+            setData(bossInfo->first, Finished);
+    }
+}
+
+void InstanceScript::sendUnitEncounter(uint32_t type, Unit* unit, uint8_t value_a, uint8_t value_b)
+{
+    WorldPacket data(SMSG_UPDATE_INSTANCE_ENCOUNTER_UNIT, 16);
+    data << uint32(type);
+
+    if (type == 0 || type == 1 || type == 2)        // engage, disengage, priority upd.
+    {
+        if (unit)
+        {
+            data << unit->GetNewGUID();
+            data << uint8(value_a);
+        }
+    }
+    else if (type == 3 || type == 4 || type == 6)   // add timer, objectives on, objectives off
+    {
+        data << uint8(value_a);
+    }
+    else if (type == 5)                             // objectives upd.
+    {
+        data << uint8(value_a);
+        data << uint8(value_b);
+    }
+
+    // 7 sort encounters
+
+    MapMgr* instance = GetInstance();
+    instance->SendPacketToAllPlayers(&data);
+}
+
+void InstanceScript::displayDataStateList(Player* player)
+{
+    player->BroadcastMessage("=== DataState for instance %s ===", mInstance->GetMapInfo()->name.c_str());
+
+    for (const auto& encounter : mInstanceData)
+    {
+        CreatureProperties const* creature = sMySQLStore.getCreatureProperties(encounter.first);
+        if (creature != nullptr)
+        {
+            player->BroadcastMessage("  Boss '%s' (%u) - %s", creature->Name.c_str(), encounter.first, getDataStateString(encounter.first).c_str());
+        }
+        else
+        {
+            GameObjectProperties const* gameobject = sMySQLStore.getGameObjectProperties(encounter.first);
+            if (gameobject != nullptr)
+                player->BroadcastMessage("  Object '%s' (%u) - %s", gameobject->name.c_str(), encounter.first, getDataStateString(encounter.first).c_str());
+            else
+                player->BroadcastMessage("  MiscData %u - %s", encounter.first, getDataStateString(encounter.first).c_str());
+        }
+    }
+}
+
+Creature* InstanceScript::spawnCreature(uint32_t entry, float posX, float posY, float posZ, float posO, uint32_t factionId /* = 0*/)
+{
+    CreatureProperties const* creatureProperties = sMySQLStore.getCreatureProperties(entry);
+    if (creatureProperties == nullptr)
+    {
+        LOG_ERROR("tried to create a invalid creature with entry %u!", entry);
+        return nullptr;
+    }
+
+    Creature* creature = mInstance->GetInterface()->SpawnCreature(entry, posX, posY, posZ, posO, true, true, 0, 0);
+    if (creature == nullptr)
+        return nullptr;
+
+    if (factionId != 0)
+        creature->SetFaction(factionId);
+    else
+        creature->SetFaction(creatureProperties->Faction);
+
+    return creature;
+}
+
+Creature* InstanceScript::getCreatureBySpawnId(uint32_t entry)
+{
+    return mInstance->GetSqlIdCreature(entry);
+};
+
+CreatureSet InstanceScript::getCreatureSetForEntry(uint32_t entry, bool debug /*= false*/, Player* player /*= nullptr*/)
+{
+    CreatureSet creatureSet;
+    uint32_t countCreatures = 0;
+    for (auto creature : mInstance->CreatureStorage)
+    {
+        if (creature != nullptr)
+        {
+
+            if (creature->GetEntry() == entry)
+            {
+                creatureSet.insert(creature);
+                ++countCreatures;
+            }
+        }
+    }
+
+    if (debug == true)
+    {
+        if (player != nullptr)
+            player->BroadcastMessage("%u Creatures with entry %u found.", countCreatures, entry);
+    }
+
+    return creatureSet;
+}
+
+CreatureSet InstanceScript::getCreatureSetForEntries(std::vector<uint32_t> entryVector)
+{
+    CreatureSet creatureSet;
+    for (auto creature : mInstance->CreatureStorage)
+    {
+        if (creature != nullptr)
+        {
+            for (auto entry : entryVector)
+            {
+                if (creature->GetEntry() == entry)
+                    creatureSet.insert(creature);
+            }
+        }
+    }
+
+    return creatureSet;
+}
+
+GameObject* InstanceScript::getGameObjectBySpawnId(uint32_t entry)
+{
+    return mInstance->GetSqlIdGameObject(entry);
+};
+
+GameObject* InstanceScript::getClosestGameObjectForPosition(uint32 entry, float posX, float posY, float posZ)
+{
+    GameObjectSet gameObjectSet = getGameObjectsSetForEntry(entry);
+
+    if (gameObjectSet.size() == 0)
+        return nullptr;
+
+    if (gameObjectSet.size() == 1)
+        return *(gameObjectSet.begin());
+
+    float distance = 99999;
+    float nearestDistance = 99999;
+
+    for (auto gameobject : gameObjectSet)
+    {
+        distance = getRangeToObjectForPosition(gameobject, posX, posY, posZ);
+        if (distance < nearestDistance)
+        {
+            nearestDistance = distance;
+            return gameobject;
+        }
+    }
+
+    return nullptr;
+};
+
+GameObjectSet InstanceScript::getGameObjectsSetForEntry(uint32_t entry)
+{
+    GameObjectSet gameobjectSet;
+    for (auto gameobject : mInstance->GOStorage)
+    {
+        if (gameobject != nullptr)
+        {
+            if (gameobject->GetEntry() == entry)
+                gameobjectSet.insert(gameobject);
+        }
+    }
+
+    return gameobjectSet;
+}
+
+float InstanceScript::getRangeToObjectForPosition(Object* object, float posX, float posY, float posZ)
+{
+    if (object == nullptr)
+        return 0.0f;
+
+    LocationVector pos = object->GetPosition();
+    float dX = pos.x - posX;
+    float dY = pos.y - posY;
+    float dZ = pos.z - posZ;
+
+    return sqrtf(dX * dX + dY * dY + dZ * dZ);
+};
+
+//MIT end
 
 /* Hook Stuff */
 void ScriptMgr::register_hook(ServerHookEvents event, void* function_pointer)
