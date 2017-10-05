@@ -136,7 +136,7 @@ void MoonScriptCreatureAI::MoveTo(Unit* pUnit, RangeStatusPair pRangeStatus)
 void MoonScriptCreatureAI::MoveTo(float pX, float pY, float pZ, bool pRun)
 {
     if (pRun)
-        _unit->GetAIInterface()->SetRun();
+        _unit->GetAIInterface()->setSplineRun();
 
     _unit->GetAIInterface()->MoveTo(pX, pY, pZ);
 };
@@ -153,15 +153,15 @@ void MoonScriptCreatureAI::StopMovement()
 
 void MoonScriptCreatureAI::SetFlyMode(bool pValue)
 {
-    if (pValue && !_unit->GetAIInterface()->Flying())
+    if (pValue && !_unit->GetAIInterface()->isFlying())
     {
         _unit->setMoveHover(true);
-        _unit->GetAIInterface()->StopFlying();
+        _unit->GetAIInterface()->unsetSplineFlying();
     }
-    else if (!pValue && _unit->GetAIInterface()->Flying())
+    else if (!pValue && _unit->GetAIInterface()->isFlying())
     {
         _unit->setMoveHover(false);
-        _unit->GetAIInterface()->SetFly();
+        _unit->GetAIInterface()->setSplineFlying();
     }
 }
 
@@ -996,14 +996,14 @@ void MoonScriptCreatureAI::ForceWaypointMove(uint32 pWaypointId)
 
 void MoonScriptCreatureAI::SetWaypointToMove(uint32 pWaypointId)
 {
-    _unit->GetAIInterface()->setWaypointToMove(pWaypointId);
+    _unit->GetAIInterface()->setWayPointToMove(pWaypointId);
 }
 
 void MoonScriptCreatureAI::StopWaypointMovement()
 {
     SetBehavior(Behavior_Default);
     _unit->GetAIInterface()->setAiState(AI_STATE_SCRIPTIDLE);
-    SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
+    SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_NONE);
     SetWaypointToMove(0);
 }
 
@@ -1015,17 +1015,17 @@ void MoonScriptCreatureAI::SetWaypointMoveType(Movement::WaypointMovementScript 
 
 uint32 MoonScriptCreatureAI::GetCurrentWaypoint()
 {
-    return _unit->GetAIInterface()->getCurrentWaypoint();
+    return _unit->GetAIInterface()->getCurrentWayPointId();
 }
 
 size_t MoonScriptCreatureAI::GetWaypointCount()
 {
-    return _unit->GetAIInterface()->GetWayPointsCount();
+    return _unit->GetAIInterface()->getWayPointsCount();
 }
 
 bool MoonScriptCreatureAI::HasWaypoints()
 {
-    return _unit->GetAIInterface()->hasWaypoints();
+    return _unit->GetAIInterface()->hasWayPoints();
 }
 
 void MoonScriptCreatureAI::OnCombatStart(Unit* pTarget)

@@ -2008,7 +2008,7 @@ class AlarAI : public CreatureAIScript
             // Additional Settings
 
             _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_FORWARDTHENSTOP);
-            _unit->GetAIInterface()->SetFly();
+            _unit->GetAIInterface()->setSplineFlying();
 
             FlameQuills = false;
             Meteor = false;
@@ -2017,11 +2017,11 @@ class AlarAI : public CreatureAIScript
             timer = lasttime = 0;
             _unit->GetAIInterface()->setOutOfCombatRange(200000);
 
-            _unit->GetAIInterface()->SetFly();
+            _unit->GetAIInterface()->setSplineFlying();
             _unit->GetAIInterface()->StopMovement(0);
             _unit->GetAIInterface()->setAiState(AI_STATE_SCRIPTMOVE);
             _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
-            _unit->GetAIInterface()->setWaypointToMove(1);
+            _unit->GetAIInterface()->setWayPointToMove(1);
             Flying = true;
             CastTime();
 
@@ -2089,7 +2089,7 @@ class AlarAI : public CreatureAIScript
 
             _unit->GetAIInterface()->WipeTargetList();
             _unit->GetAIInterface()->WipeHateList();
-            _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
+            _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
             _unit->GetAIInterface()->m_canMove = true;
             Flying = false;
             lasttime = timer;
@@ -2169,7 +2169,7 @@ class AlarAI : public CreatureAIScript
                     _unit->CastSpellAoF(LocationVector(fly[4].x, fly[4].y, fly[4].z), spells[1].info, spells[1].instant);
                     _unit->GetAIInterface()->m_canMove = true;
                     _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
-                    _unit->GetAIInterface()->setWaypointToMove(NextWP);
+                    _unit->GetAIInterface()->setWayPointToMove(NextWP);
                     FlameQuills = false;
                     Flying = true;
                     lasttime = timer;
@@ -2187,7 +2187,7 @@ class AlarAI : public CreatureAIScript
 
                 _unit->GetAIInterface()->setAiState(AI_STATE_SCRIPTMOVE);
                 _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
-                _unit->GetAIInterface()->setWaypointToMove(NextWP);
+                _unit->GetAIInterface()->setWayPointToMove(NextWP);
                 // ugly code, trows compile error if left just null, this should do it ~ azolex
                 uint32 nullfix = 0;
                 _unit->GetAIInterface()->setNextTarget(nullfix);
@@ -2275,7 +2275,7 @@ class AlarAI : public CreatureAIScript
             _unit->GetAIInterface()->setAiState(AI_STATE_ATTACKING);//STATE_IDLE
             NextWP = wp;
             Flying = false;
-            _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
+            _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
             _unit->GetAIInterface()->m_canMove = false;
             lasttime = timer;
         }
@@ -2289,7 +2289,7 @@ class AlarAI : public CreatureAIScript
                 else NextWP = iWaypointId % 5 + 1;
                 _unit->GetAIInterface()->setAiState(AI_STATE_SCRIPTMOVE);
                 _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
-                _unit->GetAIInterface()->setWaypointToMove(NextWP);
+                _unit->GetAIInterface()->setWayPointToMove(NextWP);
             }
 
             switch (iWaypointId)
@@ -2323,7 +2323,7 @@ class AlarAI : public CreatureAIScript
                             FlameQuills = true;
                             QuillsCount = 0;
                             Flying = false;
-                            _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
+                            _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
                             _unit->GetAIInterface()->m_canMove = false;
                             NextWP = 6;
                             lasttime = timer;
@@ -3047,7 +3047,7 @@ class KaelThasAI : public MoonScriptBossAI
             }
 
             SetCanEnterCombat(true);
-            SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
+            SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_NONE);
             SetCanMove(true);
 
             // Other spells

@@ -2832,7 +2832,7 @@ bool Carcass(uint32 i, Spell* pSpell) // Becoming a Shadoweave Tailor
     if (pQuest != nullptr && pQuest->GetMobCount(0) < pQuest->GetQuest()->required_mob_or_go_count[0])
     {
         NetherDrake->CastSpell(NetherDrake, sSpellCustomizations.GetSpellInfo(38502), true);
-        NetherDrake->GetAIInterface()->SetFly();
+        NetherDrake->GetAIInterface()->setSplineFlying();
         NetherDrake->GetAIInterface()->MoveTo(pos.x, pos.y + 2, pos.z);
 
         pPlayer->AddQuestKill(10804, 0, 0);
@@ -2863,7 +2863,7 @@ bool ForceofNeltharakuSpell(uint32 i, Spell* pSpell) // Becoming a Shadoweave Ta
 
             pPlayer->AddQuestKill(10854, 0, 0);
             pTarget->setMoveRoot(false);
-            pTarget->GetAIInterface()->setWaypointToMove(0);
+            pTarget->GetAIInterface()->setWayPointToMove(0);
         }
     }
     return true;

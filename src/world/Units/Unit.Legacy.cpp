@@ -5595,31 +5595,19 @@ void Unit::EmoteExpire()
 
 void Unit::MoveToWaypoint(uint32 wp_id)
 {
-    if (this->m_useAI && this->GetAIInterface() != NULL)
+    if (this->m_useAI && this->GetAIInterface() != nullptr)
     {
-        AIInterface* ai = this->GetAIInterface();
-        Movement::WayPoint* wp = ai->getWayPoint(wp_id);
-        if (!wp)
+        AIInterface* aiInterface = this->GetAIInterface();
+        Movement::WayPoint* wayPoint = aiInterface->getWayPoint(wp_id);
+        if (wayPoint != nullptr)
         {
-            LOG_ERROR("WARNING: Invalid WP specified in MoveToWaypoint.");
-            return;
-        }
-
-        if (ai->useNewWaypointGenerator())
-        {
-            ai->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
-            ai->m_currentWaypoint = wp_id;
+            aiInterface->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
+            aiInterface->setWayPointToMove(wp_id);
         }
         else
         {
-            ai->m_currentWaypoint = wp_id;
-
-            if (wp->flags != 0)
-            {
-                ai->SetRun();
-            }
-
-            ai->MoveTo(wp->x, wp->y, wp->z);
+            LOG_ERROR("Invalid waypoint specified.");
+            return;
         }
     }
 }
@@ -8546,7 +8534,7 @@ void Unit::HandleKnockback(Object* caster, float horizontal, float vertical)
 
     float destx, desty, destz;
     if (GetPoint(angle, horizontal, destx, desty, destz, true))
-        GetAIInterface()->MoveKnockback(destx, desty, destz, horizontal, vertical);
+        GetAIInterface()->splineMoveKnockback(destx, desty, destz, horizontal, vertical);
 }
 
 void Unit::BuildPetSpellList(WorldPacket& data)

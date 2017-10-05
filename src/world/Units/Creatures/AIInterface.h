@@ -51,8 +51,8 @@
 #define CREATURE_DAZE_MIN_LEVEL 6
 #endif
 
-/// this is required so creature will not try to reposition itself to obtain perfect combat range. Not using this might lead to exploits
-#define DISTANCE_TO_SMALL_TO_WALK 2.0f
+// not try to reposition creature to obtain perfect combat range
+const float minWalkDistance = 2.0f;
 
 //!!! it is in seconds and not Milliseconds
 #define MOB_SPELLCAST_GLOBAL_COOLDOWN 2 //there are individual cooldown and global ones. Global cooldown stops mob from casting 1 instant spell on you per second
@@ -144,19 +144,19 @@ enum AI_SpellTargetType
 
 enum AiState
 {
-    AI_STATE_IDLE,
-    AI_STATE_ATTACKING,
-    AI_STATE_CASTING,
-    AI_STATE_FLEEING,
-    AI_STATE_FOLLOWING,
-    AI_STATE_EVADE,
-    AI_STATE_MOVEWP,
-    AI_STATE_FEAR,
-    AI_STATE_UNFEARED,
-    AI_STATE_WANDER,
-    AI_STATE_STOPPED,
-    AI_STATE_SCRIPTMOVE,
-    AI_STATE_SCRIPTIDLE
+    AI_STATE_IDLE       = 0,
+    AI_STATE_ATTACKING  = 1,
+    AI_STATE_CASTING    = 2,
+    AI_STATE_FLEEING    = 3,
+    AI_STATE_FOLLOWING  = 4,
+    AI_STATE_EVADE      = 5,
+    AI_STATE_MOVEWP     = 6,
+    AI_STATE_FEAR       = 7,
+    AI_STATE_UNFEARED   = 8,
+    AI_STATE_WANDER     = 9,
+    AI_STATE_STOPPED    = 10,
+    AI_STATE_SCRIPTMOVE = 11,
+    AI_STATE_SCRIPTIDLE = 12
 };
 
 enum MovementState
@@ -206,15 +206,20 @@ typedef std::unordered_map<uint64, int32> TargetMap;
 typedef std::set<Unit*> AssistTargetSet;
 typedef std::map<uint32, AI_Spell*> SpellMap;
 
+
 //MIT start
 class SERVER_DECL AIInterface : public IUpdatable
 {
+    public:
+
+        AIInterface();
+        virtual ~AIInterface();
+
     //////////////////////////////////////////////////////////////////////////////////////////
-    // Waypoint functions
+    // Waypoint / movement functions
     private:
 
         Movement::WaypointMovementScript mWaypointScriptType;
-        bool mUseNewWaypointGenerator;
         int32_t mNextPoint;
         bool mWaitTimerSetOnWP;
 
@@ -224,15 +229,90 @@ class SERVER_DECL AIInterface : public IUpdatable
         Movement::WaypointMovementScript getWaypointScriptType();
         bool isWaypointScriptType(Movement::WaypointMovementScript wp_script);
 
-        void setUseNewWaypointGenerator(bool set);
-        bool useNewWaypointGenerator();
-
         void setupAndMoveToNextWaypoint();
         void generateWaypointScriptCircle();
         void generateWaypointScriptRandom();
         void generateWaypointScriptForwad();
         void generateWaypointScriptWantedWP();
         void generateWaypointScriptPatrol();
+
+        void setFormationMovement();
+        void setFearRandomMovement();
+        void setPetFollowMovement();
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Waypoint functions
+    private:
+
+        Movement::WayPointMap* mWayPointMap;
+        bool mWaypointMapIsLoadedFromDB;
+        uint32 mCurrentWaypoint;
+        bool mMoveWaypointsBackwards;
+
+        bool mShowWayPoints;
+        bool mShowWayPointsBackwards;
+
+    public:
+
+        // \note wp may point to free'd memory after calling this, use bool addWayPointUnsafe(WayPoint* wp) instead to manually handle possible errors.
+        void addWayPoint(Movement::WayPoint* waypoint);
+        // caller delete wp if it wasn't added.
+        bool addWayPointUnsafe(Movement::WayPoint* waypoint);
+
+        Movement::WayPoint* getWayPoint(uint32_t waypointId);
+        
+        bool saveWayPoints();
+        void deleteWayPointById(uint32_t waypointId);
+        void deleteAllWayPoints();
+
+        bool hasWayPoints();
+        uint32_t getCurrentWayPointId();
+        void changeWayPointId(uint32_t oldWaypointId, uint32_t newWaypointId);
+        size_t getWayPointsCount();
+
+        void setWayPointToMove(uint32_t waypointId);
+
+        bool activateShowWayPoints(Player* player, bool showBackwards);
+        void activateShowWayPointsBackwards(bool set);
+        bool isShowWayPointsActive();
+        bool isShowWayPointsBackwardsActive();
+        bool hideWayPoints(Player* player);
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Spline functions
+    private:
+
+        uint32_t mWalkMode;
+
+        //\note First element in the spline (m_currentMoveSpline[0]) is always the position the creature started moving from. 
+        //      Index is always set to 1 when movement is started, as index 0 is referenced for first move.
+        uint32_t mSplinePriority;
+
+    public:
+
+        void setWalkMode(uint32_t mode);
+        bool hasWalkMode(uint32_t mode) const;
+        uint32_t getWalkMode() const;
+
+        void setSplineFlying() const;
+        bool isFlying();
+        void unsetSplineFlying();
+
+        void setSplineSprint();
+        void setSplineRun();
+        void setSplineWalk();
+
+        void unsetSpline();
+
+        void splineMoveKnockback(float x, float y, float z, float horizontal, float vertical);
+        void splineMoveJump(float x, float y, float z, float o = 0, float speedZ = 5.0f, bool hugearc = false);
+        void splineMoveFalling(float x, float y, float z, float o = 0);
+
+        void splineMoveCharge(Unit* targetUnit, float distance = 3.0f);
+
+        void generateSplinePathToTarget(Unit* targetUnit, float distance);
+        void sendSplineMoveToPoint(LocationVector pos);
+        bool generateAndSendSplinePath(float x, float y, float z);
 
     //////////////////////////////////////////////////////////////////////////////////////////
     // AI Script functions
@@ -250,19 +330,29 @@ class SERVER_DECL AIInterface : public IUpdatable
     // AI State functions
     private:
 
-        AiState mAiState;
+        uint32_t mAiState;
 
     public:
 
-        void setAiState(AiState ai_state) { mAiState = ai_state; }
+        void setAiState(uint32_t ai_state) { mAiState = ai_state; }
+        void removeAiState(uint32_t ai_state) { mAiState &= ~ai_state; }
         uint32_t getAiState() { return mAiState; }
-        bool isAiState(AiState ai_state) { return ai_state == mAiState; }
+        bool isAiState(uint32_t ai_state) { return ai_state == mAiState; }
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Creature State functions
+    private:
+
+        CreatureState mCreatureState;
+
+    public:
+
+        void setCreatureState(CreatureState newState) { mCreatureState = newState; }
+        bool isCreatureState(CreatureState newState) { return mCreatureState == newState; }
+        CreatureState getCreatureState() { return mCreatureState; }
 
 // MIT end
     public:
-
-        AIInterface();
-        virtual ~AIInterface();
 
         // Misc
         void Init(Unit* un, AiScriptTypes at, Movement::WaypointMovementScript mt);
@@ -290,7 +380,6 @@ class SERVER_DECL AIInterface : public IUpdatable
         Unit* getUnitToFear();
         uint64 getUnitToFearGUID() { return m_UnitToFear; }
         Creature* getFormationLinkTarget();
-        void setCreatureState(CreatureState state) { m_creatureState = state; }
 
 
 
@@ -330,8 +419,6 @@ class SERVER_DECL AIInterface : public IUpdatable
         SpellCastTargets setSpellTargets(SpellInfo* spellInfo, Unit* target) const;
         AI_Spell* getSpell();
         void addSpellToList(AI_Spell* sp);
-        ///\todo don't use this until i finish it !!
-        /// void CancelSpellCast();
 
         /// Event Handler
         void HandleEvent(uint32 event, Unit* pUnit, uint32 misc1);
@@ -361,49 +448,7 @@ class SERVER_DECL AIInterface : public IUpdatable
 
         void _UpdateTotem(uint32 p_time);
 
-        // Movement
-        void SendMoveToPacket();
-        //void SendMoveToSplinesPacket(std::list<Waypoint> wp, bool run);
-        bool MoveTo(float x, float y, float z);
-        void UpdateSpeeds();
-
-        //Move flag updating
-    bool Flying() const;
-    void SetFly() const;
-    void SetSprint();
-    void SetRun();
-    void SetWalk();
-
-    void SetWalkMode(uint32 mode);
-    bool HasWalkMode(uint32 mode) const;
-    uint32 GetWalkMode() const;
-
-    void StopFlying();
-
-        //Movement::Spline::MoveSpline m_spline;
-        uint32 m_walkMode;
-
-        void UpdateMove();
-        void SendCurrentMove(Player* plyr/*uint64 guid*/);
-        bool StopMovement(uint32 time);
-        uint32 getCurrentWaypoint() { return m_currentWaypoint; }
-        void changeWayPointID(uint32 oldwpid, uint32 newwpid);
-        /// \note Adds a WayPoint, handling possible errors occurred when adding it. Pay attention: wp may point to free'd memory after calling this, use bool addWayPoint(WayPoint* wp) instead to manually handle possible errors.
-        void addWayPoint(Movement::WayPoint* wp);
-        /// returns true if the WayPoint was added, false otherwise. The caller MUST delete wp if it wasn't added.
-        bool addWayPointUnsafe(Movement::WayPoint* wp);
-        bool saveWayPoints();
-        bool showWayPoints(Player* pPlayer, bool Backwards);
-        bool hideWayPoints(Player* pPlayer);
-        Movement::WayPoint* getWayPoint(uint32 wpid);
-        void deleteWayPoint(uint32 wpid);
-        void deleteWaypoints();
-        inline bool hasWaypoints() { return m_waypoints != NULL; }
-        //inline void setMoveType(uint32 movetype) { m_moveType = movetype; }
-
-        //inline uint32 getMoveType() { return m_moveType; }
-        void setWaypointToMove(uint32 id) { m_currentWaypoint = id; }
-        bool IsFlying();
+        
 
         // Calculation
         float _CalcAggroRange(Unit* target);
@@ -417,26 +462,13 @@ class SERVER_DECL AIInterface : public IUpdatable
 
         void CheckTarget(Unit* target);
 
-
-        // Movement
         bool m_canMove;
-        bool m_WayPointsShowing;
-        bool m_WayPointsShowBackwards;
-        uint32 m_currentWaypoint;
-        bool m_moveBackward;
 
         //visibility
         uint32 faction_visibility;
 
         bool onGameobject;
-        CreatureState m_creatureState;
-        size_t GetWayPointsCount()
-        {
-            if (m_waypoints && !m_waypoints->empty())
-                return m_waypoints->size() - 1;    /* ignore 0 */
-            else
-                return 0;
-        }
+
         bool m_canFlee;
         bool m_canCallForHelp;
         bool m_canRangedAttack;
@@ -487,7 +519,7 @@ class SERVER_DECL AIInterface : public IUpdatable
 
         /// deletes the old waypoint map as default. In case m_custom_waypoint_map is used, just call SetWaypointMap(NULL): this will delete m_custom_waypoint_map too.
         void SetWaypointMap(Movement::WayPointMap* m, bool delete_old_map = true);
-        inline Movement::WayPointMap* GetWaypointMap() { return m_waypoints; }
+        inline Movement::WayPointMap* GetWaypointMap() { return mWayPointMap; }
         void LoadWaypointMapFromDB(uint32 spawnid);
         bool m_isGuard;
         bool m_isNeutralGuard;
@@ -504,16 +536,6 @@ class SERVER_DECL AIInterface : public IUpdatable
         void _UpdateTargets();
         void _UpdateMovement(uint32 p_time);
         void _UpdateTimer(uint32 p_time);
-        void AddSpline(float x, float y, float z);
-        bool Move(float & x, float & y, float & z);
-        void OnMoveCompleted();
-
-        void MoveEvadeReturn();
-
-        bool CreatePath(float x, float y, float z,  bool onlytest = false);
-        dtStatus findSmoothPath(const float* startPos, const float* endPos, const dtPolyRef* polyPath, const uint32 polyPathSize, float* smoothPath, int* smoothPathSize, bool & usedOffmesh, const uint32 maxSmoothPathSize, dtNavMesh* mesh, dtNavMeshQuery* query, dtQueryFilter & filter);
-        bool getSteerTarget(const float* startPos, const float* endPos, const float minTargetDist, const dtPolyRef* path, const uint32 pathSize, float* steerPos, unsigned char & steerPosFlag, dtPolyRef & steerPosRef, dtNavMeshQuery* query);
-        uint32 fixupCorridor(dtPolyRef* path, const uint32 npath, const uint32 maxPath, const dtPolyRef* visited, const uint32 nvisited);
 
         bool m_updateAssist;
         bool m_updateTargets;
@@ -559,20 +581,34 @@ class SERVER_DECL AIInterface : public IUpdatable
         float m_last_target_x;
         float m_last_target_y;
 
+    public:
+        
+        bool MoveTo(float x, float y, float z);
+        bool MoveDone() const;
 
-        /**
-        Splines
-        \note First element in the spline (m_currentMoveSpline[0]) is always the position the creature started moving from. Index is always set to 1 when movement is started, as index 0 is referenced for first move.
-        */
-        //std::vector<::Movement::Spline::SplinePoint> m_currentMoveSpline;
-        //::Movement::Spline::MoveSpline m_moveSpline;
-        //uint32 m_currentMoveSplineIndex;
-        //uint32 m_currentSplineUpdateCounter;
-        //float m_currentSplineFinalOrientation;
-        //float m_splinetrajectoryVertical;
-        //uint32 m_splinetrajectoryTime;
-        //uint32 m_currentSplineTotalMoveTime;
-        uint32 m_splinePriority;
+        void SendCurrentMove(Player* plyr/*uint64 guid*/);
+        void SendMoveToPacket();
+        bool StopMovement(uint32 time);
+
+        void AddSpline(float x, float y, float z);
+
+        void UpdateSpeeds();
+
+        void UpdateMovementSpline();
+
+        void OnMoveCompleted();
+
+        void MoveEvadeReturn();
+
+        bool CreatePath(float x, float y, float z, bool onlytest = false);
+        dtStatus findSmoothPath(const float* startPos, const float* endPos, const dtPolyRef* polyPath, const uint32 polyPathSize, float* smoothPath, int* smoothPathSize, bool & usedOffmesh, const uint32 maxSmoothPathSize, dtNavMesh* mesh, dtNavMeshQuery* query, dtQueryFilter & filter);
+        bool getSteerTarget(const float* startPos, const float* endPos, const float minTargetDist, const dtPolyRef* path, const uint32 pathSize, float* steerPos, unsigned char & steerPosFlag, dtPolyRef & steerPosRef, dtNavMeshQuery* query);
+        uint32 fixupCorridor(dtPolyRef* path, const uint32 npath, const uint32 maxPath, const dtPolyRef* visited, const uint32 nvisited);
+
+        //Path creation helpers
+        bool CanCreatePath(float x, float y, float z) { return CreatePath(x, y, z, true); }
+
+    protected:
 
         //Return position after attacking a mob
         float m_returnX;
@@ -585,7 +621,6 @@ class SERVER_DECL AIInterface : public IUpdatable
 
         float m_lastFollowX;
         float m_lastFollowY;
-        //typedef std::map<uint32, WayPoint*> WayPointMap;
 
         uint64 m_UnitToFollow;
         uint64 m_UnitToFollow_backup;   /// used unly when forcing creature to wander (blind spell) so when effect wears off we can follow our master again (guardian)
@@ -602,12 +637,7 @@ class SERVER_DECL AIInterface : public IUpdatable
         uint32 m_guardTimer;
         int32 m_currentHighestThreat;
         std::list<spawn_timed_emotes*>::iterator next_timed_emote;
-        uint32 timed_emote_expire;
-    private:
-
-        /// specifies if m_waypoints was loaded from DB, so shared between other AIInterface instances.
-        bool m_waypointsLoadedFromDB;
-        Movement::WayPointMap* m_waypoints;
+        uint32 timed_emote_expire;       
 
     public:
 
@@ -616,14 +646,7 @@ class SERVER_DECL AIInterface : public IUpdatable
 
         void WipeCurrentTarget();
 
-        void UpdateMovementSpline();
-    bool MoveDone() const;
-        bool CanCreatePath(float x, float y, float z) { return CreatePath(x, y, z, true); }
-        void MoveKnockback(float x, float y, float z, float horizontal, float vertical);
-        void MoveJump(float x, float y, float z, float o = 0, float speedZ = 5.0f, bool hugearc = false);
-        void MoveTeleport(float x, float y, float z, float o = 0);
-        void MoveFalling(float x, float y, float z, float o = 0);
-        bool MoveCharge(float x, float y, float z);
+        
 
         void SetCreatureProtoDifficulty(uint32 entry);
         uint8 GetDifficultyType();

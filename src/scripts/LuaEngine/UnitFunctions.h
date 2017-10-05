@@ -900,7 +900,7 @@ class LuaUnit
     static int DeleteAllWaypoints(lua_State* L, Unit* ptr)
     {
         if (ptr != NULL && ptr->IsCreature())
-            ptr->GetAIInterface()->deleteWaypoints();
+            ptr->GetAIInterface()->deleteAllWayPoints();
         return 0;
     }
 
@@ -911,7 +911,7 @@ class LuaUnit
         if (id)
         {
             ptr->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
-            ptr->GetAIInterface()->setWaypointToMove(id);
+            ptr->GetAIInterface()->setWayPointToMove(id);
         }
         return 0;
     }
@@ -2007,7 +2007,7 @@ class LuaUnit
 
         ptr->setMoveHover(true);
         ptr->GetAIInterface()->disable_melee = true;
-        ptr->GetAIInterface()->SetFly();
+        ptr->GetAIInterface()->setSplineFlying();
         ptr->Emote(EMOTE_ONESHOT_LIFTOFF);
         return 0;
     }
@@ -2018,7 +2018,7 @@ class LuaUnit
             return 0;
 
         ptr->setMoveHover(false);
-        ptr->GetAIInterface()->StopFlying();
+        ptr->GetAIInterface()->unsetSplineFlying();
         ptr->GetAIInterface()->disable_melee = false;
         ptr->Emote(EMOTE_ONESHOT_LAND);
         return 0;
@@ -2375,7 +2375,7 @@ class LuaUnit
     {
         if (ptr && ptr->IsCreature())
         {
-            if (ptr->GetAIInterface()->m_creatureState == MOVING)
+            if (ptr->GetAIInterface()->isCreatureState(MOVING))
                 lua_pushboolean(L, 1);
             else
                 lua_pushboolean(L, 0);
@@ -2416,10 +2416,10 @@ class LuaUnit
         return 0;
     }
 
-    static int IsFlying(lua_State* L, Unit* ptr)
+    static int isFlying(lua_State* L, Unit* ptr)
     {
         TEST_UNIT()
-            if (ptr->GetAIInterface()->IsFlying())
+            if (ptr->GetAIInterface()->isFlying())
                 lua_pushboolean(L, 1);
             else
                 lua_pushboolean(L, 0);
@@ -3458,9 +3458,9 @@ class LuaUnit
         TEST_UNIT()
             bool enabled = CHECK_BOOL(L, 1);
         if (enabled)
-            ptr->GetAIInterface()->SetFly();
+            ptr->GetAIInterface()->setSplineFlying();
         else
-            ptr->GetAIInterface()->StopFlying();
+            ptr->GetAIInterface()->unsetSplineFlying();
         return 0;
     }
 
@@ -4071,7 +4071,7 @@ class LuaUnit
         TEST_UNIT()
         uint32 wp = static_cast<uint32>(luaL_checkinteger(L, 1));
         if (wp)
-            static_cast<Creature*>(ptr)->GetAIInterface()->deleteWayPoint(wp);
+            static_cast<Creature*>(ptr)->GetAIInterface()->deleteWayPointById(wp);
         return 0;
     }
 
@@ -5552,15 +5552,15 @@ class LuaUnit
         int movetype = static_cast<int>(luaL_checkinteger(L, 1)); //0: walk, 1: run, 2: fly.
         if (movetype == 2)
         {
-            ptr->GetAIInterface()->SetFly();
+            ptr->GetAIInterface()->setSplineFlying();
         }
         else if (movetype == 1)
         {
-            ptr->GetAIInterface()->SetRun();
+            ptr->GetAIInterface()->setSplineRun();
         }
         else
         {
-            ptr->GetAIInterface()->SetWalk();
+            ptr->GetAIInterface()->setSplineWalk();
         }
         return 0;
     }
@@ -5867,7 +5867,7 @@ class LuaUnit
     static int GetCurrentWaypoint(lua_State* L, Unit* ptr)
     {
         TEST_UNIT()
-            RET_NUMBER(ptr->GetAIInterface()->getCurrentWaypoint());
+            RET_NUMBER(ptr->GetAIInterface()->getCurrentWayPointId());
     }
     static int DisableMelee(lua_State* L, Unit* ptr)
     {
@@ -6048,7 +6048,7 @@ class LuaUnit
     static int GetNumWaypoints(lua_State* L, Unit* ptr)
     {
         TEST_UNIT();
-        RET_NUMBER(static_cast<lua_Number>(ptr->GetAIInterface()->GetWayPointsCount()));
+        RET_NUMBER(static_cast<lua_Number>(ptr->GetAIInterface()->getWayPointsCount()));
         return 1;
     }
     static int GetMovementType(lua_State* L, Unit* ptr)

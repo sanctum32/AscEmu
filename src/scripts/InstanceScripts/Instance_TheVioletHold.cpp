@@ -446,7 +446,6 @@ class VHCreatureAI : public MoonScriptCreatureAI
         VHCreatureAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
             //this->CreateWaypoint(1, 0, 0, VH_DOOR_ATTACK_POSITION);
-            //_unit->GetAIInterface()->setMoveType(MOVEMENTTYPE_FORWARDTHENSTOP);
             //this->SetWaypointToMove(1);
             //this->MoveTo(VH_DOOR_ATTACK_POSITION.x, VH_DOOR_ATTACK_POSITION.y, VH_DOOR_ATTACK_POSITION.z, true);
             //_unit->GetAIInterface()->UpdateMove();
@@ -456,7 +455,6 @@ class VHCreatureAI : public MoonScriptCreatureAI
             }
             _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_FORWARDTHENSTOP);
             _unit->SendChatMessage(CHAT_MSG_MONSTER_SAY, LANG_UNIVERSAL, "I am alive!");
-            _unit->GetAIInterface()->UpdateMove();
         }
 
         void OnReachWP(uint32 iWaypointId, bool bForwards)

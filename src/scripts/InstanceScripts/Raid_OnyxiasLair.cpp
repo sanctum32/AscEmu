@@ -38,7 +38,7 @@ class OnyxiaAI : public CreatureAIScript
             m_whelpCooldown = 7;
             m_aoeFearCooldown = 30;
             m_fCastCount = 5;
-            _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
+            _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
             _unit->GetAIInterface()->addWayPoint(CreateWaypoint(1, 2000, Movement::WP_MOVE_TYPE_RUN));
             _unit->GetAIInterface()->addWayPoint(CreateWaypoint(2, 0, Movement::WP_MOVE_TYPE_FLY));
             _unit->GetAIInterface()->addWayPoint(CreateWaypoint(3, 0, Movement::WP_MOVE_TYPE_FLY));
@@ -74,7 +74,7 @@ class OnyxiaAI : public CreatureAIScript
             m_phase = 1;
             m_eFlamesCooldown = 1;
             m_whelpCooldown = 7;
-            _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
+            _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
             _unit->SetStandState(STANDSTATE_STAND);
             _unit->SendScriptTextChatMessage(1725);     //How fortuitous, usually I must leave my lair to feed!
             if (m_useSpell)
@@ -89,11 +89,11 @@ class OnyxiaAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
-            _unit->GetAIInterface()->setWaypointToMove(0);
+            _unit->GetAIInterface()->setWayPointToMove(0);
             _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             _unit->GetAIInterface()->SetAllowedToEnterCombat(true);
-            _unit->GetAIInterface()->StopFlying();
+            _unit->GetAIInterface()->unsetSplineFlying();
             _unit->GetAIInterface()->m_canMove = true;
             _unit->SetStandState(STANDSTATE_SLEEP);
             /*if (_unit->m_pacified > 0)
@@ -123,14 +123,14 @@ class OnyxiaAI : public CreatureAIScript
                 case 1:
                     {
                         _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
-                        _unit->GetAIInterface()->setWaypointToMove(2);
+                        _unit->GetAIInterface()->setWayPointToMove(2);
                         Fly();
                     }
                     break;
                 case 2:
                     {
                         _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
-                        _unit->GetAIInterface()->setWaypointToMove(3);
+                        _unit->GetAIInterface()->setWayPointToMove(3);
                     }
                     break;
                 case 3:
@@ -140,8 +140,8 @@ class OnyxiaAI : public CreatureAIScript
                         _unit->GetAIInterface()->setCurrentAgent(AGENT_SPELL);
                         //_unit->m_pacified--;
                         _unit->GetAIInterface()->setAiState(AI_STATE_SCRIPTIDLE);
-                        _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
-                        _unit->GetAIInterface()->setWaypointToMove(0);
+                        _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
+                        _unit->GetAIInterface()->setWayPointToMove(0);
 
                         _unit->setMoveHover(true);
                         m_currentWP = 3;
@@ -152,8 +152,8 @@ class OnyxiaAI : public CreatureAIScript
                         _unit->GetAIInterface()->SetAllowedToEnterCombat(true);
                         _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
                         _unit->GetAIInterface()->setAiState(AI_STATE_SCRIPTIDLE);
-                        _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
-                        _unit->GetAIInterface()->setWaypointToMove(0);
+                        _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
+                        _unit->GetAIInterface()->setWayPointToMove(0);
                         /*_unit->m_pacified--;
                         if (_unit->m_pacified > 0)
                             _unit->m_pacified--;*/
@@ -166,8 +166,8 @@ class OnyxiaAI : public CreatureAIScript
                         _unit->GetAIInterface()->m_canMove = false;
                         _unit->GetAIInterface()->SetAllowedToEnterCombat(true);
                         _unit->GetAIInterface()->setAiState(AI_STATE_SCRIPTIDLE);
-                        _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
-                        _unit->GetAIInterface()->setWaypointToMove(0);
+                        _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
+                        _unit->GetAIInterface()->setWayPointToMove(0);
 
                         _unit->setMoveHover(true);
                         //_unit->m_pacified--;
@@ -216,7 +216,7 @@ class OnyxiaAI : public CreatureAIScript
                 _unit->GetAIInterface()->StopMovement(0);
                 _unit->GetAIInterface()->setAiState(AI_STATE_SCRIPTMOVE);
                 _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
-                _unit->GetAIInterface()->setWaypointToMove(1);
+                _unit->GetAIInterface()->setWayPointToMove(1);
 
                 return;
             }
@@ -238,7 +238,7 @@ class OnyxiaAI : public CreatureAIScript
                 _unit->GetAIInterface()->StopMovement(0);
                 _unit->GetAIInterface()->setAiState(AI_STATE_SCRIPTMOVE);
                 _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
-                _unit->GetAIInterface()->setWaypointToMove(8);
+                _unit->GetAIInterface()->setWayPointToMove(8);
 
                 return;
             }
@@ -265,7 +265,7 @@ class OnyxiaAI : public CreatureAIScript
                     //_unit->m_pacified++;
                     _unit->GetAIInterface()->setAiState(AI_STATE_SCRIPTMOVE);
                     _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
-                    _unit->GetAIInterface()->setWaypointToMove(m_currentWP);
+                    _unit->GetAIInterface()->setWayPointToMove(m_currentWP);
                     m_fCastCount = 5;
                 }
                 else if (val > 1000)//Move right
@@ -279,7 +279,7 @@ class OnyxiaAI : public CreatureAIScript
                     //_unit->m_pacified++;
                     _unit->GetAIInterface()->setAiState(AI_STATE_SCRIPTMOVE);
                     _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
-                    _unit->GetAIInterface()->setWaypointToMove(m_currentWP);
+                    _unit->GetAIInterface()->setWayPointToMove(m_currentWP);
                     m_fCastCount = 5;
                 }
                 else if (val < 350)
@@ -391,7 +391,7 @@ class OnyxiaAI : public CreatureAIScript
             _unit->Emote(EMOTE_ONESHOT_LIFTOFF);
             //Do we need hover really? Check it :D
             //_unit->SetHover(true);
-            _unit->GetAIInterface()->SetFly();
+            _unit->GetAIInterface()->setSplineFlying();
         }
 
         void Land()
@@ -399,7 +399,7 @@ class OnyxiaAI : public CreatureAIScript
             _unit->Emote(EMOTE_ONESHOT_LAND);
             //Do we need hover really? Check it :D
             //_unit->SetHover(false);
-            _unit->GetAIInterface()->StopFlying();
+            _unit->GetAIInterface()->unsetSplineFlying();
         }
 
         void SpellCast(uint32 val)

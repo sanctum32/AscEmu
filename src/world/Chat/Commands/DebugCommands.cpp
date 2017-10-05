@@ -9,6 +9,48 @@ This file is released under the MIT license. See README-MIT for more information
 #include "Spell/SpellFailure.h"
 #include "Server/ServerState.h"
 
+bool ChatHandler::HandleAiChargeCommand(const char* /*args*/, WorldSession* session)
+{
+    Unit* selected_unit = GetSelectedUnit(session);
+    if (selected_unit == nullptr)
+        return true;
+
+    selected_unit->GetAIInterface()->splineMoveCharge(session->GetPlayer());
+}
+
+bool ChatHandler::HandleAiKnockbackCommand(const char* /*args*/, WorldSession* session)
+{
+    Unit* selected_unit = GetSelectedUnit(session);
+    if (selected_unit == nullptr)
+        return true;
+
+    LocationVector pos = session->GetPlayer()->GetPosition();
+
+    selected_unit->GetAIInterface()->splineMoveKnockback(pos.x, pos.y, pos.z, 10.0f, 5.f);
+}
+
+bool ChatHandler::HandleAiJumpCommand(const char* /*args*/, WorldSession* session)
+{
+    Unit* selected_unit = GetSelectedUnit(session);
+    if (selected_unit == nullptr)
+        return true;
+
+    LocationVector pos = session->GetPlayer()->GetPosition();
+
+    selected_unit->GetAIInterface()->splineMoveJump(pos.x, pos.y, pos.z, 0, 5.0f, false);
+}
+
+bool ChatHandler::HandleAiFallingCommand(const char* /*args*/, WorldSession* session)
+{
+    Unit* selected_unit = GetSelectedUnit(session);
+    if (selected_unit == nullptr)
+        return true;
+
+    LocationVector pos = session->GetPlayer()->GetPosition();
+
+    selected_unit->GetAIInterface()->splineMoveFalling(pos.x, pos.y, pos.z);
+}
+
 bool ChatHandler::HandleDebugDumpState(const char* /*args*/, WorldSession* session)
 {
     auto state = ServerState::instance();
@@ -27,15 +69,15 @@ bool ChatHandler::HandleDebugMoveInfo(const char* /*args*/, WorldSession* m_sess
     bool in_front_of_creature = m_session->GetPlayer()->isInFront(selected_unit);
     float distance_to_creature = m_session->GetPlayer()->CalcDistance(selected_unit);
 
-    uint32 creature_state = selected_unit->GetAIInterface()->m_creatureState;
+    uint32 creature_state = selected_unit->GetAIInterface()->getCreatureState();
     uint32 ai_state = selected_unit->GetAIInterface()->getAiState();
     uint32 ai_type = selected_unit->GetAIInterface()->getAiScriptType();
     uint32 ai_agent = selected_unit->GetAIInterface()->getCurrentAgent();
 
-    uint32 current_wp = selected_unit->GetAIInterface()->getCurrentWaypoint();
+    uint32 current_wp = selected_unit->GetAIInterface()->getCurrentWayPointId();
     uint32 wp_script_type = selected_unit->GetAIInterface()->getWaypointScriptType();
 
-    uint32 walk_mode = selected_unit->GetAIInterface()->GetWalkMode();
+    uint32 walk_mode = selected_unit->GetAIInterface()->getWalkMode();
 
     uint32 attackerscount = static_cast<uint32>(selected_unit->GetAIInterface()->getAITargetsCount());
 

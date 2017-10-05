@@ -2773,6 +2773,7 @@ void Spell::SpellEffectLeap(uint32 i) // Leap
 {
     if (unitTarget == nullptr)
         return;
+
     float radius = GetRadius(i);
     unitTarget->RemoveAurasByInterruptFlag(AURA_INTERRUPT_ON_ANY_DAMAGE_TAKEN);
 
@@ -2788,7 +2789,7 @@ void Spell::SpellEffectLeap(uint32 i) // Leap
         if (playerTarget != nullptr)
             playerTarget->SafeTeleport(playerTarget->GetMapId(), playerTarget->GetInstanceID(), LocationVector(destx, desty, destz, playerTarget->GetOrientation()));
         else if (unitTarget != nullptr)
-            unitTarget->GetAIInterface()->MoveTeleport(destx, desty, destz, unitTarget->GetOrientation());
+            unitTarget->GetAIInterface()->splineMoveJump(destx, desty, destz, unitTarget->GetOrientation());
     }
     else
     {
@@ -4614,34 +4615,10 @@ void Spell::SpellEffectSkinning(uint32 i)
 
 void Spell::SpellEffectCharge(uint32 i)
 {
-    if (unitTarget == NULL || !unitTarget->isAlive())
+    if (unitTarget == nullptr || !unitTarget->isAlive())
         return;
 
-    //\todo Zyres: Check for MovementFlag instead of m_rooted?
-    if (u_caster->IsStunned() || u_caster->isRooted() || u_caster->IsPacified() || u_caster->IsFeared())
-        return;
-
-    float x, y, z;
-    float rad = unitTarget->GetBoundingRadius() - u_caster->GetBoundingRadius();
-
-    float dx = m_caster->GetPositionX() - unitTarget->GetPositionX();
-    float dy = m_caster->GetPositionY() - unitTarget->GetPositionY();
-    if (dx == 0.0f || dy == 0.0f)
-        return;
-    float alpha = atanf(dy / dx);
-    if (dx < 0)
-        alpha += M_PI_FLOAT;
-
-    x = rad * cosf(alpha) + unitTarget->GetPositionX();
-    y = rad * sinf(alpha) + unitTarget->GetPositionY();
-    z = unitTarget->GetPositionZ();
-
-    if (!u_caster->GetAIInterface()->MoveCharge(x, y, z))
-    {
-        //failed
-        SendInterrupted(SPELL_FAILED_NOPATH);
-        SendCastResult(SPELL_FAILED_NOPATH);
-    }
+    u_caster->GetAIInterface()->splineMoveCharge(unitTarget, u_caster->GetBoundingRadius());
 }
 
 void Spell::SpellEffectKnockBack(uint32 i)

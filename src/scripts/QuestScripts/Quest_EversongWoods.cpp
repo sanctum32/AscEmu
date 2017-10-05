@@ -89,7 +89,7 @@ public:
     ADD_CREATURE_FACTORY_FUNCTION(ProspectorAnvilward);
     ProspectorAnvilward(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        pCreature->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
+        pCreature->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
     }
 
     void OnReachWP(uint32 iWaypointId, bool bForwards)
@@ -100,13 +100,11 @@ public:
             _unit->GetAIInterface()->SetAllowedToEnterCombat(true);
             _unit->Despawn(10 * 60 * 1000, 1000); //if failed allow other players to do quest from beggining
             _unit->SendChatMessage(CHAT_MSG_MONSTER_YELL, LANG_UNIVERSAL, ANVILWARD_SAY_2);
-            //Zyres: This did not exist!
-            //_unit->GetAIInterface()->setMoveType(Movement::WP_MOVE_TYPE_RUN);
             _unit->GetAIInterface()->getNextTarget();
         }
         if (iWaypointId == 10)
         {
-            _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
+            _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
         }
     }
 };

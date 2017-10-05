@@ -720,7 +720,7 @@ public:
                 pCreature->GetAIInterface()->StopMovement(0);
                 pCreature->GetAIInterface()->setAiState(AI_STATE_SCRIPTMOVE);
                 pCreature->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_FORWARDTHENSTOP);
-                pCreature->GetAIInterface()->setWaypointToMove(0);
+                pCreature->GetAIInterface()->setWayPointToMove(0);
                 pCreature->setUInt32Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_NONE);
                 pCreature->PlaySoundToSet(9357);
                 WayStartBBW[pCreature->GetInstanceID()] = 2;
@@ -778,7 +778,7 @@ public:
         _unit->GetAIInterface()->addWayPoint(CreateWaypoint(3, 0, 0));
         _unit->GetAIInterface()->addWayPoint(CreateWaypoint(4, 0, 0));
 
-        _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
+        _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
         _unit->GetAIInterface()->SetAllowedToEnterCombat(false);
         _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
         _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
@@ -805,7 +805,7 @@ public:
         switch (iWaypointId)
         {
             case 0:
-                _unit->GetAIInterface()->setWaypointToMove(1);
+                _unit->GetAIInterface()->setWayPointToMove(1);
                 WayStartBBW[_unit->GetInstanceID()] = 3;
                 break;
             case 1:
@@ -3615,7 +3615,7 @@ public:
         spells[4].perctrigger = 0.0f;
         spells[4].attackstoptimer = 1000;
 
-        _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
+        _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
 
         for (uint8 i = 1; i < 5; i++)
         {
@@ -3641,11 +3641,11 @@ public:
 
     void OnCombatStop(Unit* mTarget)
     {
-        _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_DONTMOVEWP);
+        _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
         _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
         _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
         _unit->GetAIInterface()->SetAllowedToEnterCombat(true);
-        _unit->GetAIInterface()->StopFlying();
+        _unit->GetAIInterface()->unsetSplineFlying();
         _unit->GetAIInterface()->m_canMove = true;
         RemoveAIUpdateEvent();
     }
@@ -3697,7 +3697,7 @@ public:
             {
                 //move to the next waypoint
                 _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
-                _unit->GetAIInterface()->setWaypointToMove(iWaypointId + 1);
+                _unit->GetAIInterface()->setWayPointToMove(iWaypointId + 1);
             }
             break;
         };
@@ -3719,7 +3719,7 @@ public:
             _unit->GetAIInterface()->StopMovement(0);
             _unit->GetAIInterface()->setAiState(AI_STATE_SCRIPTMOVE);
             _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
-            _unit->GetAIInterface()->setWaypointToMove(2);
+            _unit->GetAIInterface()->setWayPointToMove(2);
             m_phase++;
             return;
         }
@@ -3780,7 +3780,7 @@ public:
             _unit->GetAIInterface()->StopMovement(0);
             _unit->GetAIInterface()->setAiState(AI_STATE_SCRIPTMOVE);
             _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
-            _unit->GetAIInterface()->setWaypointToMove(1);
+            _unit->GetAIInterface()->setWayPointToMove(1);
             Fly();
             m_FlyPhaseTimer = 17;
             m_phase++;
@@ -3835,7 +3835,7 @@ public:
 
         _unit->setMoveHover(true);
 
-        _unit->GetAIInterface()->SetFly();
+        _unit->GetAIInterface()->setSplineFlying();
     }
 
     void Land()
@@ -3844,7 +3844,7 @@ public:
 
         _unit->setMoveHover(false);
 
-        _unit->GetAIInterface()->StopFlying();
+        _unit->GetAIInterface()->unsetSplineFlying();
     }
 
     void ResetCastTime()
