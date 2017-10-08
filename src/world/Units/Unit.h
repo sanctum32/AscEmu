@@ -122,7 +122,6 @@ struct ReflectSpellSchool
     uint32 charges;
     int32 school;
     int32 chance;
-    int32 require_aura_hash;
     bool infront;
 };
 
@@ -292,8 +291,27 @@ public:
     //////////////////////////////////////////////////////////////////////////////////////////
     // Aura
     Aura* getAuraWithId(uint32_t spell_id);
+    Aura* getAuraWithId(uint32_t* auraId);
+    Aura* getAuraWithIdForGuid(uint32_t* auraId, uint64 guid);
+
     Aura* getAuraWithIdForGuid(uint32_t spell_id, uint64_t target_guid);
     Aura* getAuraWithAuraEffect(uint32_t aura_effect);
+
+    bool hasAurasWithId(uint32_t auraId);
+    bool hasAurasWithId(uint32_t* auraId);
+
+    uint32_t getAuraCountForId(uint32_t auraId);
+
+    void removeAllAurasById(uint32_t auraId);
+    void removeAllAurasById(uint32_t* auraId);
+    void removeAllAurasByIdForGuid(uint32_t auraId, uint64_t guid);
+    uint32_t removeAllAurasByIdReturnCount(uint32_t auraId);
+
+    uint64_t getSingleTargetGuidForAura(uint32_t spellId);
+    uint64_t getSingleTargetGuidForAura(uint32_t* spellIds, uint32_t* index);
+
+    void setSingleTargetGuidForAura(uint32_t spellId, uint64_t guid);
+    void removeSingleTargetGuidForAura(uint32_t spellId);
 
 
     // Do not alter anything below this line
@@ -425,13 +443,10 @@ public:
     bool HasAuraVisual(uint32 visualid);            //not spell id!!!
     bool HasBuff(uint32 spelllid);                  //this does not check passive auras & it was visible auras
     bool HasBuff(uint32 spelllid, uint64 guid);     //this does not check passive auras & it was visible auras
-    bool HasVisialPosAurasOfNameHashWithCaster(uint32 namehash, Unit* caster);
     bool HasAuraWithMechanics(uint32 mechanic);     //this checks passive auras too
     bool HasAurasOfBuffType(uint32 buff_type, const uint64 & guid, uint32 skip);
-    int  HasAurasWithNameHash(uint32 name_hash);
     bool HasAuraWithName(uint32 name);
     uint32 GetAuraCountWithName(uint32 name);
-    uint32 FindAuraCountByHash(uint32 HashName, uint32 maxcount = 0);
     uint32 GetAuraCountWithDispelType(uint32 dispel_type, uint64 guid);
     Aura * GetAuraWithSlot(uint32 slot);
     void AddAura(Aura* aur);
@@ -439,7 +454,6 @@ public:
     bool RemoveAura(uint32 spellId);
     bool RemoveAura(uint32 spellId, uint64 guid);
     bool RemoveAuraByItemGUID(uint32 spellId, uint64 guid);
-    bool RemoveAuraByNameHash(uint32 namehash);     //required to remove weaker instances of a spell
     bool RemoveAuras(uint32* SpellIds);
     bool RemoveAurasByHeal();
 
@@ -474,33 +488,18 @@ public:
     //! Remove all auras
     void RemoveAllAuras();
     void RemoveAllNonPersistentAuras();
-    bool RemoveAllAuras(uint32 spellId, uint64 guid);           //remove stacked auras but only if they come from the same caster. Shaman purge If GUID = 0 then removes all auras with this spellid
     void RemoveAllAuraType(uint32 auratype);                    //ex:to remove morph spells
-    void RemoveAllAuraFromSelfType2(uint32 auratype, uint32 butskip_hash);      //ex:to remove morph spells
-    uint32 RemoveAllAuraByNameHash(uint32 namehash);            //required to remove weaker instances of a spell
-    uint32 RemoveAllAuraById(uint32 Id);                        // DuKJIoHuyC: Remove an aura by it's id
     bool RemoveAllAurasByMechanic(uint32 MechanicType, uint32 MaxDispel, bool HostileOnly);       // Removes all (de)buffs on unit of a specific mechanic type.
     void RemoveAllMovementImpairing();
     void RemoveAllAurasByRequiredShapeShift(uint32 mask);
 
     void RemoveNegativeAuras();
     // Temporary remove all auras
-    // Find auras
-    Aura* FindAuraByNameHash(uint32 namehash);
-    Aura* FindAuraByNameHash(uint32 namehash, uint64 guid);
-    Aura* FindAura(uint32* spellId);
 
     bool SetAurDuration(uint32 spellId, Unit* caster, uint32 duration);
     bool SetAurDuration(uint32 spellId, uint32 duration);
     void DropAurasOnDeath();
     bool IsControlledByPlayer();
-
-    // Auras that can affect only one target at a time
-    uint64 GetCurrentUnitForSingleTargetAura(SpellInfo* spell);
-    uint64 GetCurrentUnitForSingleTargetAura(uint32* name_hashes, uint32* index);
-    void SetCurrentUnitForSingleTargetAura(SpellInfo* spell, uint64 guid);
-    void RemoveCurrentUnitForSingleTargetAura(SpellInfo* spell);
-    void RemoveCurrentUnitForSingleTargetAura(uint32 name_hash);
 
     // ProcTrigger
     std::list<SpellProc*> m_procSpells;

@@ -18,7 +18,6 @@
  */
 
 #include "Setup.h"
-#include "Spell/SpellNameHashes.h"
 #include "Spell/SpellAuras.h"
 #include "Server/Script/ScriptMgr.h"
 #include <Spell/Definitions/SpellMechanics.h>
@@ -161,28 +160,30 @@ bool ExplosiveShot(uint32 i, Aura* a, bool apply)
 class HasNameHash : public AuraCondition
 {
 public:
-    bool operator()(Aura *aura) {
-        uint32 namehash = aura->GetSpellInfo()->custom_NameHash;
+    bool operator()(Aura *aura)
+    {
+        uint32 spellId = aura->GetSpellInfo()->getId();
 
-        if (std::find(hashes.begin(), hashes.end(), namehash) != hashes.end())
+        if (std::find(spellIds.begin(), spellIds.end(), spellId) != spellIds.end())
             return true;
         else
             return false;
     }
 
-    void AddHashToCheck(uint32 hash) {
-        hashes.push_back(hash);
+    void AddSpellIdToCheck(uint32 hash)
+    {
+        spellIds.push_back(hash);
     }
 
 private:
-    std::vector< uint32 > hashes;
+    std::vector< uint32 > spellIds;
 };
 
 class ChimeraShotAction : public AuraAction
 {
 public:
     void operator()(Aura *a) {
-        uint32 namehash = a->GetSpellInfo()->custom_NameHash;
+        uint32 spellId = a->GetSpellInfo()->getId();
 
         Unit *caster = a->GetUnitCaster();
         Unit *target = a->GetTarget();
@@ -192,21 +193,70 @@ public:
 
         a->Refresh();
 
-        switch (namehash)
+        switch (spellId)
         {
-            case SPELL_HASH_SCORPID_STING:
+            // SPELL_HASH_SCORPID_STING:
+            case 3043:
+            case 18545:
+            case 52604:
                 caster->CastSpell(target, 53359, true);
                 break;
 
-            case SPELL_HASH_WYVERN_STING:
+            // SPELL_HASH_WYVERN_STING:
+            case 19386:
+            case 24131:
+            case 24132:
+            case 24133:
+            case 24134:
+            case 24135:
+            case 24335:
+            case 24336:
+            case 26180:
+            case 26233:
+            case 26748:
+            case 27068:
+            case 27069:
+            case 41186:
+            case 49009:
+            case 49010:
+            case 49011:
+            case 49012:
+            case 65877:
+            case 65878:
                 caster->CastSpell(target, 53366, true);
                 break;
 
-            case SPELL_HASH_SERPENT_STING:
+            // SPELL_HASH_SERPENT_STING:
+            case 1978:
+            case 13549:
+            case 13550:
+            case 13551:
+            case 13552:
+            case 13553:
+            case 13554:
+            case 13555:
+            case 25295:
+            case 27016:
+            case 31975:
+            case 35511:
+            case 36984:
+            case 38859:
+            case 38914:
+            case 39182:
+            case 49000:
+            case 49001:
                 caster->CastSpell(target, 53353, true);
                 break;
 
-            case SPELL_HASH_VIPER_STING:
+            // SPELL_HASH_VIPER_STING:
+            case 3034:
+            case 31407:
+            case 37551:
+            case 39413:
+            case 65881:
+            case 67991:
+            case 67992:
+            case 67993:
                 caster->CastSpell(target, 53358, true);
                 break;
         }
@@ -219,10 +269,62 @@ bool ChimeraShot(uint32 i, Spell *spell) {
     HasNameHash condition;
     ChimeraShotAction action;
 
-    condition.AddHashToCheck(SPELL_HASH_SCORPID_STING);
-    condition.AddHashToCheck(SPELL_HASH_WYVERN_STING);
-    condition.AddHashToCheck(SPELL_HASH_SERPENT_STING);
-    condition.AddHashToCheck(SPELL_HASH_VIPER_STING);
+    //SPELL_HASH_SCORPID_STING
+    condition.AddSpellIdToCheck(3043);
+    condition.AddSpellIdToCheck(18545);
+    condition.AddSpellIdToCheck(52604);
+
+    //SPELL_HASH_WYVERN_STING
+    condition.AddSpellIdToCheck(19386);
+    condition.AddSpellIdToCheck(24131);
+    condition.AddSpellIdToCheck(24132);
+    condition.AddSpellIdToCheck(24133);
+    condition.AddSpellIdToCheck(24134);
+    condition.AddSpellIdToCheck(24135);
+    condition.AddSpellIdToCheck(24335);
+    condition.AddSpellIdToCheck(24336);
+    condition.AddSpellIdToCheck(26180);
+    condition.AddSpellIdToCheck(26233);
+    condition.AddSpellIdToCheck(26748);
+    condition.AddSpellIdToCheck(27068);
+    condition.AddSpellIdToCheck(27069);
+    condition.AddSpellIdToCheck(41186);
+    condition.AddSpellIdToCheck(49009);
+    condition.AddSpellIdToCheck(49010);
+    condition.AddSpellIdToCheck(49011);
+    condition.AddSpellIdToCheck(49012);
+    condition.AddSpellIdToCheck(65877);
+    condition.AddSpellIdToCheck(65878);
+
+    //SPELL_HASH_SERPENT_STING
+    condition.AddSpellIdToCheck(1978);
+    condition.AddSpellIdToCheck(13549);
+    condition.AddSpellIdToCheck(13550);
+    condition.AddSpellIdToCheck(13551);
+    condition.AddSpellIdToCheck(13552);
+    condition.AddSpellIdToCheck(13553);
+    condition.AddSpellIdToCheck(13554);
+    condition.AddSpellIdToCheck(13555);
+    condition.AddSpellIdToCheck(25295);
+    condition.AddSpellIdToCheck(27016);
+    condition.AddSpellIdToCheck(31975);
+    condition.AddSpellIdToCheck(35511);
+    condition.AddSpellIdToCheck(36984);
+    condition.AddSpellIdToCheck(38859);
+    condition.AddSpellIdToCheck(38914);
+    condition.AddSpellIdToCheck(39182);
+    condition.AddSpellIdToCheck(49000);
+    condition.AddSpellIdToCheck(49001);
+
+    //SPELL_HASH_VIPER_STING
+    condition.AddSpellIdToCheck(3034);
+    condition.AddSpellIdToCheck(31407);
+    condition.AddSpellIdToCheck(37551);
+    condition.AddSpellIdToCheck(39413);
+    condition.AddSpellIdToCheck(65881);
+    condition.AddSpellIdToCheck(67991);
+    condition.AddSpellIdToCheck(67992);
+    condition.AddSpellIdToCheck(67993);
 
     target->AuraActionIf(&action, &condition);
 

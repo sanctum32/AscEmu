@@ -33,7 +33,6 @@
 #include "VMapFactory.h"
 #include "Server/Packets/Handlers/HonorHandler.h"
 #include "Storage/WorldStrings.h"
-#include "Spell/SpellNameHashes.h"
 #include "Management/TaxiMgr.h"
 #include "Management/WeatherMgr.h"
 #include "Management/ItemInterface.h"
@@ -4152,7 +4151,7 @@ void Player::OnPushToWorld()
         m_taxiMapChangeNode = 0;
     }
 
-    if (flying_aura && ((m_mapId != 530) && (m_mapId != 571 || !HasSpellwithNameHash(SPELL_HASH_COLD_WEATHER_FLYING) && getDeathState() == ALIVE)))
+    if (flying_aura && ((m_mapId != 530) && (m_mapId != 571 || !HasSpell(54197) && getDeathState() == ALIVE)))
         // can only fly in outlands or northrend (northrend requires cold weather flying)
     {
         RemoveAura(flying_aura);
@@ -6501,20 +6500,6 @@ bool Player::HasSpell(uint32 spell)
     return mSpells.find(spell) != mSpells.end();
 }
 
-bool Player::HasSpellwithNameHash(uint32 hash)
-{
-    SpellSet::iterator it, iter;
-    for (iter = mSpells.begin(); iter != mSpells.end();)
-    {
-        it = iter++;
-        uint32 SpellID = *it;
-        SpellInfo* e = sSpellCustomizations.GetSpellInfo(SpellID);
-        if (e->custom_NameHash == hash)
-            return true;
-    }
-    return false;
-}
-
 bool Player::HasDeletedSpell(uint32 spell)
 {
     return (mDeletedSpells.count(spell) > 0);
@@ -8737,7 +8722,7 @@ bool Player::SafeTeleport(uint32 MapID, uint32 InstanceID, const LocationVector 
     if (m_UnderwaterState & UNDERWATERSTATE_UNDERWATER)
         m_UnderwaterState &= ~UNDERWATERSTATE_UNDERWATER;
 
-    if (flying_aura && ((m_mapId != 530) && (m_mapId != 571 || !HasSpellwithNameHash(SPELL_HASH_COLD_WEATHER_FLYING) && getDeathState() == ALIVE)))
+    if (flying_aura && ((m_mapId != 530) && (m_mapId != 571 || !HasSpell(54197) && getDeathState() == ALIVE)))
         // can only fly in outlands or northrend (northrend requires cold weather flying)
     {
         RemoveAura(flying_aura);
@@ -8826,7 +8811,7 @@ bool Player::SafeTeleport(uint32 MapID, uint32 InstanceID, const LocationVector 
     if (m_UnderwaterState & UNDERWATERSTATE_UNDERWATER)
         m_UnderwaterState &= ~UNDERWATERSTATE_UNDERWATER;
 
-    if (flying_aura && ((m_mapId != 530) && (m_mapId != 571 || !HasSpellwithNameHash(SPELL_HASH_COLD_WEATHER_FLYING) && getDeathState() == ALIVE)))
+    if (flying_aura && ((m_mapId != 530) && (m_mapId != 571 || !HasSpell(54197) && getDeathState() == ALIVE)))
         // can only fly in outlands or northrend (northrend requires cold weather flying)
     {
         RemoveAura(flying_aura);
@@ -8907,7 +8892,7 @@ void Player::SafeTeleport(MapMgr* mgr, const LocationVector & vec)
 
     SpeedCheatDelay(10000);
 
-    if (flying_aura && ((m_mapId != 530) && (m_mapId != 571 || !HasSpellwithNameHash(SPELL_HASH_COLD_WEATHER_FLYING) && getDeathState() == ALIVE)))
+    if (flying_aura && ((m_mapId != 530) && (m_mapId != 571 || !HasSpell(54197) && getDeathState() == ALIVE)))
         // can only fly in outlands or northrend (northrend requires cold weather flying)
     {
         RemoveAura(flying_aura);
@@ -11130,14 +11115,14 @@ void Player::EventSummonPet(Pet* new_pet)
         SpellInfo* spellInfo = sSpellCustomizations.GetSpellInfo(SpellID);
         if (spellInfo->custom_c_is_flags & SPELL_FLAG_IS_CASTED_ON_PET_SUMMON_PET_OWNER)
         {
-            this->RemoveAllAuras(SpellID, this->GetGUID());   //this is required since unit::addaura does not check for talent stacking
+            this->removeAllAurasByIdForGuid(SpellID, this->GetGUID());   //this is required since unit::addaura does not check for talent stacking
             SpellCastTargets targets(this->GetGUID());
             Spell* spell = sSpellFactoryMgr.NewSpell(this, spellInfo, true, NULL);    //we cast it as a proc spell, maybe we should not !
             spell->prepare(&targets);
         }
         if (spellInfo->custom_c_is_flags & SPELL_FLAG_IS_CASTED_ON_PET_SUMMON_ON_PET)
         {
-            this->RemoveAllAuras(SpellID, this->GetGUID());   //this is required since unit::addaura does not check for talent stacking
+            this->removeAllAurasByIdForGuid(SpellID, this->GetGUID());   //this is required since unit::addaura does not check for talent stacking
             SpellCastTargets targets(new_pet->GetGUID());
             Spell* spell = sSpellFactoryMgr.NewSpell(this, spellInfo, true, NULL);    //we cast it as a proc spell, maybe we should not !
             spell->prepare(&targets);

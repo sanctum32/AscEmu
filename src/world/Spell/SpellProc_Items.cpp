@@ -21,7 +21,6 @@
 
 #include "StdAfx.h"
 #include "Management/Item.h"
-#include "Spell/SpellNameHashes.h"
 #include "Management/ItemInterface.h"
 #include "SpellProc.h"
 #include "Units/Unit.h"
@@ -29,7 +28,9 @@
 
 class TwinBladesOfAzzinothSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(TwinBladesOfAzzinothSpellProc);
+public:
+
+    static SpellProc* Create() { return new TwinBladesOfAzzinothSpellProc(); }
 
     void Init(Object* obj)
     {
@@ -51,5 +52,12 @@ class TwinBladesOfAzzinothSpellProc : public SpellProc
 
 void SpellProcMgr::SetupItems()
 {
-    AddByNameHash(SPELL_HASH_THE_TWIN_BLADES_OF_AZZINOTH, &TwinBladesOfAzzinothSpellProc::Create);
+    uint32 mindNumbingPoison[] =
+    {
+        //SPELL_HASH_THE_TWIN_BLADES_OF_AZZINOTH
+        41434,
+        41435,
+        0
+    };
+    AddById(mindNumbingPoison, &TwinBladesOfAzzinothSpellProc::Create);
 }

@@ -20,7 +20,6 @@
  */
 
 #include "StdAfx.h"
-#include "Spell/SpellNameHashes.h"
 #include "Map/MapMgr.h"
 #include "Objects/Faction.h"
 #include "Spell/SpellMgr.h"
@@ -39,7 +38,7 @@ class FirestarterTalent : public Spell
     {
         if (p_caster != NULL && target != NULL && p_caster->HasAura(54741)) // Cronicman: Player has "Firestarter" aura so we remove it AFTER casting Flamestrike.
         {
-            p_caster->RemoveAllAuraById(54741);
+            p_caster->removeAllAurasById(54741);
         }
     }
 };
@@ -52,7 +51,7 @@ class MissileBarrage : public Spell
     {
         if (p_caster != NULL && target != NULL && p_caster->HasAura(44401)) // Player has "Missile Barrage" aura so we remove it AFTER casting arcane missles.
         {
-            p_caster->RemoveAllAuraById(44401);
+            p_caster->removeAllAurasById(44401);
         }
     }
 };
@@ -297,8 +296,16 @@ class BloodStrikeSpell : public Spell
         if (p_caster == NULL || i != 1)
             return;
 
-        Aura* aur = p_caster->FindAuraByNameHash(SPELL_HASH_SUDDEN_DOOM);
+        uint32 suddenDoom[] =
+        {
+            //SPELL_HASH_SUDDEN_DOOM
+            49018,
+            49529,
+            49530,
+            0
+        };
 
+        Aura* aur = p_caster->getAuraWithId(suddenDoom);
         if (aur == NULL)
             return;
 
@@ -460,8 +467,16 @@ class HeartStrikeSpell : public Spell
         if (p_caster == NULL || i != 1)
             return;
 
-        Aura* aur = p_caster->FindAuraByNameHash(SPELL_HASH_SUDDEN_DOOM);
+        uint32 suddenDoom[] =
+        {
+            //SPELL_HASH_SUDDEN_DOOM
+            49018,
+            49529,
+            49530,
+            0
+        };
 
+        Aura* aur = p_caster->getAuraWithId(suddenDoom);
         if (aur == NULL)
             return;
 
@@ -530,7 +545,7 @@ void SpellFactoryMgr::SetupSpellClassScripts()
 
     //////////////////////////////////////////////////////////////////////////////////////////
     // Druid
-    AddSpellByNameHash(SPELL_HASH_INNERVATE, &InnervateSpell::Create);
+    AddSpellById(29166, &InnervateSpell::Create);
 
     //////////////////////////////////////////////////////////////////////////////////////////
     // DeathKnight

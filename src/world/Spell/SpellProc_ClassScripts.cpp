@@ -21,7 +21,6 @@
 
 #include "StdAfx.h"
 #include "Management/Item.h"
-#include "Spell/SpellNameHashes.h"
 #include "Management/ItemInterface.h"
 #include "Units/Players/PlayerClasses.hpp"
 #include "Map/MapMgr.h"
@@ -40,7 +39,9 @@ using ascemu::World::Spell::Helpers::spellModPercentageIntValue;
 // Warrior ProcScripts
 class DamageShieldSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(DamageShieldSpellProc);
+public:
+
+    static SpellProc* Create() { return new DamageShieldSpellProc(); }
 
     bool CanProc(Unit* victim, SpellInfo* CastingSpell)
     {
@@ -66,17 +67,110 @@ class DamageShieldSpellProc : public SpellProc
 
 class JuggernautSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(JuggernautSpellProc);
+public:
+
+    static SpellProc* Create() { return new JuggernautSpellProc(); }
 
     bool CanProc(Unit* victim, SpellInfo* CastingSpell)
     {
         if (CastingSpell == NULL)
             return false;
 
-        if (CastingSpell->custom_NameHash == SPELL_HASH_CHARGE)
-            return true;
-        else
-            return false;
+        switch (CastingSpell->getId())
+        {
+            //SPELL_HASH_CHARGE
+            case 100:
+            case 6178:
+            case 7370:
+            case 11578:
+            case 20508:
+            case 22120:
+            case 22911:
+            case 24023:
+            case 24193:
+            case 24315:
+            case 24408:
+            case 25821:
+            case 25999:
+            case 26184:
+            case 26185:
+            case 26186:
+            case 26202:
+            case 28343:
+            case 29320:
+            case 29847:
+            case 31426:
+            case 31733:
+            case 32323:
+            case 33709:
+            case 34846:
+            case 35412:
+            case 35570:
+            case 35754:
+            case 36058:
+            case 36140:
+            case 36509:
+            case 37511:
+            case 38461:
+            case 39574:
+            case 40602:
+            case 41581:
+            case 42003:
+            case 43519:
+            case 43651:
+            case 43807:
+            case 44357:
+            case 44884:
+            case 49758:
+            case 50582:
+            case 51492:
+            case 51756:
+            case 51842:
+            case 52538:
+            case 52577:
+            case 52856:
+            case 53148:
+            case 54460:
+            case 55317:
+            case 55530:
+            case 57627:
+            case 58619:
+            case 58991:
+            case 59040:
+            case 59611:
+            case 60067:
+            case 61685:
+            case 62563:
+            case 62613:
+            case 62614:
+            case 62874:
+            case 62960:
+            case 62961:
+            case 62977:
+            case 63003:
+            case 63010:
+            case 63661:
+            case 63665:
+            case 64591:
+            case 64719:
+            case 65927:
+            case 66481:
+            case 68282:
+            case 68284:
+            case 68301:
+            case 68307:
+            case 68321:
+            case 68498:
+            case 68501:
+            case 68762:
+            case 68763:
+            case 68764:
+            case 71553:
+            case 74399:
+                return true;
+            default:
+                return false;
+        }
     }
 };
 
@@ -87,7 +181,9 @@ class JuggernautSpellProc : public SpellProc
 // Shaman ProcScripts
 class FrostBrandAttackSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(FrostBrandAttackSpellProc);
+public:
+
+    static SpellProc* Create() { return new FrostBrandAttackSpellProc(); }
 
     void Init(Object* obj)
     {
@@ -103,7 +199,9 @@ class FrostBrandAttackSpellProc : public SpellProc
 
 class EarthShieldSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(EarthShieldSpellProc);
+public:
+
+    static SpellProc* Create() { return new EarthShieldSpellProc(); }
 
     bool DoEffect(Unit* victim, SpellInfo* CastingSpell, uint32 flag, uint32 dmg, uint32 abs, int* dmg_overwrite, uint32 weapon_damage_type)
     {
@@ -128,7 +226,9 @@ class EarthShieldSpellProc : public SpellProc
 
 class FlametongueWeaponSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(FlametongueWeaponSpellProc);
+public:
+
+    static SpellProc* Create() { return new FlametongueWeaponSpellProc(); }
 
     void Init(Object* obj)
     {
@@ -149,10 +249,26 @@ class FlametongueWeaponSpellProc : public SpellProc
         if (enchant != nullptr)
         {
             SpellInfo* sp = sSpellCustomizations.GetSpellInfo(enchant->Enchantment->spell[0]);
-            if (sp != nullptr && sp->custom_NameHash == SPELL_HASH_FLAMETONGUE_WEAPON__PASSIVE_)
+            if (sp != nullptr)
             {
-                wp_speed = item->GetItemProperties()->Delay;
-                damage = (sp->EffectBasePoints[0] + 1) * wp_speed / 100000;
+                switch (sp->getId())
+                {
+                    //SPELL_HASH_FLAMETONGUE_WEAPON__PASSIVE_
+                    case 10400:
+                    case 15567:
+                    case 15568:
+                    case 15569:
+                    case 16311:
+                    case 16312:
+                    case 16313:
+                    case 58784:
+                    case 58791:
+                    case 58792:
+                    {
+                        wp_speed = item->GetItemProperties()->Delay;
+                        damage = (sp->EffectBasePoints[0] + 1) * wp_speed / 100000;
+                    } break;
+                }
             }
         }
     }
@@ -199,7 +315,9 @@ private:
 // Rogue ProcScripts
 class PoisonSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(PoisonSpellProc);
+public:
+
+    static SpellProc* Create() { return new PoisonSpellProc(); }
 
     PoisonSpellProc()
     {
@@ -260,7 +378,9 @@ protected:
 
 class WoundPoisonSpellProc : public PoisonSpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(WoundPoisonSpellProc);
+public:
+
+    static SpellProc* Create() { return new WoundPoisonSpellProc(); }
 
     void Init(Object* obj)
     {
@@ -272,7 +392,9 @@ class WoundPoisonSpellProc : public PoisonSpellProc
 
 class InstantPoisonSpellProc : public PoisonSpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(InstantPoisonSpellProc);
+public:
+
+    static SpellProc* Create() { return new InstantPoisonSpellProc(); }
 
     void Init(Object* obj)
     {
@@ -284,11 +406,25 @@ class InstantPoisonSpellProc : public PoisonSpellProc
 
 class CutToTheChaseSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(CutToTheChaseSpellProc);
+public:
+
+    static SpellProc* Create() { return new CutToTheChaseSpellProc(); }
 
     bool DoEffect(Unit* victim, SpellInfo* CastingSpell, uint32 flag, uint32 dmg, uint32 abs, int* dmg_overwrite, uint32 weapon_damage_type)
     {
-        Aura* aura = mTarget->FindAuraByNameHash(SPELL_HASH_SLICE_AND_DICE);
+        uint32 sliceAndDice[] =
+        {
+            //SPELL_HASH_SLICE_AND_DICE
+            5171,
+            6434,
+            6774,
+            30470,
+            43547,
+            60847,
+            0
+        };
+
+        Aura* aura = mTarget->getAuraWithId(sliceAndDice);
         if (aura)
         {
             // Duration of 5 combo maximum
@@ -309,7 +445,9 @@ class CutToTheChaseSpellProc : public SpellProc
 
 class DeadlyBrewSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(DeadlyBrewSpellProc);
+public:
+
+    static SpellProc* Create() { return new DeadlyBrewSpellProc(); }
 
     bool DoEffect(Unit* victim, SpellInfo* CastingSpell, uint32 flag, uint32 dmg, uint32 abs, int* dmg_overwrite, uint32 weapon_damage_type)
     {
@@ -321,7 +459,9 @@ class DeadlyBrewSpellProc : public SpellProc
 
 class WaylaySpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(WaylaySpellProc);
+public:
+
+    static SpellProc* Create() { return new WaylaySpellProc(); }
 
     void Init(Object* obj)
     {
@@ -334,7 +474,9 @@ class WaylaySpellProc : public SpellProc
 // Priest ProcScripts
 class ImprovedSpiritTapSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(ImprovedSpiritTapSpellProc);
+public:
+
+    static SpellProc* Create() { return new ImprovedSpiritTapSpellProc(); }
 
     void Init(Object* obj)
     {
@@ -346,19 +488,107 @@ class ImprovedSpiritTapSpellProc : public SpellProc
         if (CastingSpell == NULL)
             return 0;
 
-        if (CastingSpell->custom_NameHash == SPELL_HASH_MIND_FLAY)
-            return 50;
-
-        if (CastingSpell->custom_NameHash == SPELL_HASH_MIND_BLAST || CastingSpell->custom_NameHash == SPELL_HASH_SHADOW_WORD__DEATH)
-            return 100;
-
-        return 0;
+        switch (CastingSpell->getId())
+        {
+            //SPELL_HASH_MIND_FLAY
+            case 15407:
+            case 16568:
+            case 17165:
+            case 17311:
+            case 17312:
+            case 17313:
+            case 17314:
+            case 18807:
+            case 22919:
+            case 23953:
+            case 25387:
+            case 26044:
+            case 26143:
+            case 28310:
+            case 29407:
+            case 29570:
+            case 32417:
+            case 35507:
+            case 37276:
+            case 37330:
+            case 37621:
+            case 38243:
+            case 40842:
+            case 42396:
+            case 43512:
+            case 46562:
+            case 48155:
+            case 48156:
+            case 52586:
+            case 54339:
+            case 54805:
+            case 57779:
+            case 57941:
+            case 58381:
+            case 59367:
+            case 59974:
+            case 60006:
+            case 60472:
+            case 65488:
+            case 68042:
+            case 68043:
+            case 68044:
+                return 50;
+            //SPELL_HASH_MIND_BLAST
+            case 8092:
+            case 8102:
+            case 8103:
+            case 8104:
+            case 8105:
+            case 8106:
+            case 10945:
+            case 10946:
+            case 10947:
+            case 13860:
+            case 15587:
+            case 17194:
+            case 17287:
+            case 20830:
+            case 25372:
+            case 25375:
+            case 26048:
+            case 31516:
+            case 37531:
+            case 38259:
+            case 41374:
+            case 48126:
+            case 48127:
+            case 52722:
+            case 58850:
+            case 60447:
+            case 60453:
+            case 60500:
+            case 65492:
+            case 68038:
+            case 68039:
+            case 68040:
+            //SPELL_HASH_SHADOW_WORD__DEATH
+            case 32379:
+            case 32409:
+            case 32996:
+            case 41375:
+            case 47697:
+            case 48157:
+            case 48158:
+            case 51818:
+            case 56920:
+                return 100;
+            default:
+                return 0;
+        }
     }
 };
 
 class SpiritTapSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(SpiritTapSpellProc);
+public:
+
+    static SpellProc* Create() { return new SpiritTapSpellProc(); }
 
     void Init(Object* obj)
     {
@@ -368,7 +598,9 @@ class SpiritTapSpellProc : public SpellProc
 
 class HolyConcentrationSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(HolyConcentrationSpellProc);
+public:
+
+    static SpellProc* Create() { return new HolyConcentrationSpellProc(); }
 
     void Init(Object* obj)
     {
@@ -381,7 +613,9 @@ class HolyConcentrationSpellProc : public SpellProc
 
 class DivineAegisSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(DivineAegisSpellProc);
+public:
+
+    static SpellProc* Create() { return new DivineAegisSpellProc(); }
 
     bool DoEffect(Unit* victim, SpellInfo* CastingSpell, uint32 flag, uint32 dmg, uint32 abs, int* dmg_overwrite, uint32 weapon_damage_type)
     {
@@ -399,7 +633,9 @@ class DivineAegisSpellProc : public SpellProc
 
 class ImprovedDevouringPlagueSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(ImprovedDevouringPlagueSpellProc);
+public:
+
+    static SpellProc* Create() { return new ImprovedDevouringPlagueSpellProc(); }
 
     bool DoEffect(Unit* victim, SpellInfo* CastingSpell, uint32 flag, uint32 dmg, uint32 abs, int* dmg_overwrite, uint32 weapon_damage_type)
     {
@@ -417,7 +653,9 @@ class ImprovedDevouringPlagueSpellProc : public SpellProc
 
 class VampiricEmbraceSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(VampiricEmbraceSpellProc);
+public:
+
+    static SpellProc* Create() { return new VampiricEmbraceSpellProc(); }
 
     bool DoEffect(Unit* victim, SpellInfo* CastingSpell, uint32 flag, uint32 dmg, uint32 abs, int* dmg_overwrite, uint32 weapon_damage_type)
     {
@@ -438,7 +676,9 @@ class VampiricEmbraceSpellProc : public SpellProc
 
 class VampiricTouchEnergizeSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(VampiricTouchEnergizeSpellProc);
+public:
+
+    static SpellProc* Create() { return new VampiricTouchEnergizeSpellProc(); }
 
     void Init(Object* obj)
     {
@@ -448,8 +688,48 @@ class VampiricTouchEnergizeSpellProc : public SpellProc
     bool DoEffect(Unit* victim, SpellInfo* CastingSpell, uint32 flag, uint32 dmg, uint32 abs, int* dmg_overwrite, uint32 weapon_damage_type)
     {
         // Check for Mind Blast hit from this proc caster
-        if (CastingSpell == NULL || CastingSpell->custom_NameHash != SPELL_HASH_MIND_BLAST || mCaster != victim->GetGUID())
+        if (CastingSpell == NULL || mCaster != victim->GetGUID())
             return true;
+
+        switch (CastingSpell->getId())
+        {
+            //SPELL_HASH_MIND_BLAST
+            case 8092:
+            case 8102:
+            case 8103:
+            case 8104:
+            case 8105:
+            case 8106:
+            case 10945:
+            case 10946:
+            case 10947:
+            case 13860:
+            case 15587:
+            case 17194:
+            case 17287:
+            case 20830:
+            case 25372:
+            case 25375:
+            case 26048:
+            case 31516:
+            case 37531:
+            case 38259:
+            case 41374:
+            case 48126:
+            case 48127:
+            case 52722:
+            case 58850:
+            case 60447:
+            case 60453:
+            case 60500:
+            case 65492:
+            case 68038:
+            case 68039:
+            case 68040:
+                break;
+            default:
+                return true;
+        }
 
         // Cast Replenishment
         victim->CastSpell(victim, mReplenishmentSpell, true);
@@ -463,7 +743,9 @@ private:
 
 class VampiricTouchDispelDamageSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(VampiricTouchDispelDamageSpellProc);
+public:
+
+    static SpellProc* Create() { return new VampiricTouchDispelDamageSpellProc(); }
 
     void Init(Object* obj)
     {
@@ -475,8 +757,30 @@ class VampiricTouchDispelDamageSpellProc : public SpellProc
         // For PROC_ON_PRE_DISPELL_AURA_VICTIM, parameter dmg has aur->GetSpellId()
         SpellInfo* sp = sSpellCustomizations.GetSpellInfo(dmg);
 
-        if (CastingSpell == NULL || sp == NULL || sp->custom_NameHash != SPELL_HASH_VAMPIRIC_TOUCH)
+        if (CastingSpell == NULL || sp == NULL)
             return true;
+
+        switch (sp->getId())
+        {
+            //SPELL_HASH_VAMPIRIC_TOUCH
+            case 34914:
+            case 34916:
+            case 34917:
+            case 34919:
+            case 48159:
+            case 48160:
+            case 52723:
+            case 52724:
+            case 60501:
+            case 64085:
+            case 65490:
+            case 68091:
+            case 68092:
+            case 68093:
+                break;
+            default:
+                return true;
+        }
 
         dmg_overwrite[0] = mDispelDmg;
 
@@ -489,7 +793,9 @@ private:
 
 class EmpoweredRenewSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(EmpoweredRenewSpellProc);
+public:
+
+    static SpellProc* Create() { return new EmpoweredRenewSpellProc(); }
 
     bool DoEffect(Unit* victim, SpellInfo* CastingSpell, uint32 flag, uint32 dmg, uint32 abs, int* dmg_overwrite, uint32 weapon_damage_type)
     {
@@ -522,7 +828,9 @@ class EmpoweredRenewSpellProc : public SpellProc
 
 class ImprovedMindBlastSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(ImprovedMindBlastSpellProc);
+public:
+
+    static SpellProc* Create() { return new ImprovedMindBlastSpellProc(); }
 
     bool DoEffect(Unit* victim, SpellInfo* CastingSpell, uint32 flag, uint32 dmg, uint32 abs, int* dmg_overwrite, uint32 weapon_damage_type)
     {
@@ -536,7 +844,9 @@ class ImprovedMindBlastSpellProc : public SpellProc
 
 class BodyAndSoulDummySpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(BodyAndSoulDummySpellProc);
+public:
+
+    static SpellProc* Create() { return new BodyAndSoulDummySpellProc(); }
 
     bool CanProc(Unit* victim, SpellInfo* CastingSpell)
     {
@@ -549,7 +859,9 @@ class BodyAndSoulDummySpellProc : public SpellProc
 
 class BodyAndSoulSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(BodyAndSoulSpellProc);
+public:
+
+    static SpellProc* Create() { return new BodyAndSoulSpellProc(); }
 
     void Init(Object* obj)
     {
@@ -560,7 +872,9 @@ class BodyAndSoulSpellProc : public SpellProc
 
 class MiserySpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(MiserySpellProc);
+public:
+
+    static SpellProc* Create() { return new MiserySpellProc(); }
 
     void Init(Object* obj)
     {
@@ -573,7 +887,9 @@ class MiserySpellProc : public SpellProc
 
 class PrayerOfMendingProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(PrayerOfMendingProc);
+public:
+
+    static SpellProc* Create() { return new PrayerOfMendingProc(); }
 
     bool DoEffect(Unit* victim, SpellInfo* CastingSpell, uint32 flag, uint32 dmg, uint32 abs, int* dmg_overwrite, uint32 weapon_damage_type)
     {
@@ -584,7 +900,7 @@ class PrayerOfMendingProc : public SpellProc
         Unit* caster = static_cast<Player*>(aura->GetCaster());
         if (caster == NULL)
         {
-            mTarget->RemoveAuraByNameHash(mSpell->custom_NameHash);
+            mTarget->removeAllAurasById(mSpell->getId());
             return true;
         }
 
@@ -605,7 +921,7 @@ class PrayerOfMendingProc : public SpellProc
 
         Player* new_plr = grp->GetRandomPlayerInRangeButSkip(plr, 40.0f, plr);
 
-        mTarget->RemoveAllAuraByNameHash(mSpell->custom_NameHash);
+        mTarget->removeAllAurasById(mSpell->getId());
 
         if (new_plr != NULL)
             caster->CastSpell(new_plr, mSpell, value, count - 1, true);
@@ -618,7 +934,9 @@ class PrayerOfMendingProc : public SpellProc
 // Paladin ProcScripts
 class SealOfCommandSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(SealOfCommandSpellProc);
+public:
+
+    static SpellProc* Create() { return new SealOfCommandSpellProc(); }
 
     void Init(Object* obj)
     {
@@ -645,7 +963,9 @@ class SealOfCommandSpellProc : public SpellProc
 
 class EyeForAnEyeSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(EyeForAnEyeSpellProc);
+public:
+
+    static SpellProc* Create() { return new EyeForAnEyeSpellProc(); }
 
     bool DoEffect(Unit* victim, SpellInfo* CastingSpell, uint32 flag, uint32 dmg, uint32 abs, int* dmg_overwrite, uint32 weapon_damage_type)
     {
@@ -670,7 +990,9 @@ class EyeForAnEyeSpellProc : public SpellProc
 
 class GraceOfTheNaaruSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(GraceOfTheNaaruSpellProc);
+public:
+
+    static SpellProc* Create() { return new GraceOfTheNaaruSpellProc(); }
 
     void Init(Object* obj)
     {
@@ -680,7 +1002,9 @@ class GraceOfTheNaaruSpellProc : public SpellProc
 
 class SpiritualAttunementSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(SpiritualAttunementSpellProc);
+public:
+
+    static SpellProc* Create() { return new SpiritualAttunementSpellProc(); }
 
     bool CanProc(Unit* victim, SpellInfo* CastingSpell)
     {
@@ -693,7 +1017,9 @@ class SpiritualAttunementSpellProc : public SpellProc
 
 class PaladinSealsSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(PaladinSealsSpellProc);
+public:
+
+    static SpellProc* Create() { return new PaladinSealsSpellProc(); }
 
     void Init(Object* obj)
     {
@@ -703,11 +1029,13 @@ class PaladinSealsSpellProc : public SpellProc
 
 class SealOfCorruptionSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(SealOfCorruptionSpellProc);
+public:
+
+    static SpellProc* Create() { return new SealOfCorruptionSpellProc(); }
 
     bool CanProc(Unit* victim, SpellInfo* CastingSpell)
     {
-        if (victim == NULL || victim->FindAuraCountByHash(SPELL_HASH_BLOOD_CORRUPTION) < 5)
+        if (victim == NULL || victim->getAuraCountForId(53742) < 5)
             return false;
 
         return true;
@@ -716,11 +1044,13 @@ class SealOfCorruptionSpellProc : public SpellProc
 
 class SealOfVengeanceSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(SealOfVengeanceSpellProc);
+public:
+
+    static SpellProc* Create() { return new SealOfVengeanceSpellProc(); }
 
     bool CanProc(Unit* victim, SpellInfo* CastingSpell)
     {
-        if (victim == NULL || victim->FindAuraCountByHash(SPELL_HASH_HOLY_VENGEANCE) < 5)
+        if (victim == NULL || victim->getAuraCountForId(31803) < 5)
             return false;
 
         return true;
@@ -731,7 +1061,9 @@ class SealOfVengeanceSpellProc : public SpellProc
 // Mage ProcScripts
 class HotStreakSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(HotStreakSpellProc);
+public:
+
+    static SpellProc* Create() { return new HotStreakSpellProc(); }
 
     void Init(Object* obj)
     {
@@ -766,7 +1098,9 @@ private:
 // DeathKnight ProcScripts
 class ButcherySpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(ButcherySpellProc);
+public:
+
+    static SpellProc* Create() { return new ButcherySpellProc(); }
 
     bool DoEffect(Unit* victim, SpellInfo* CastingSpell, uint32 flag, uint32 dmg, uint32 abs, int* dmg_overwrite, uint32 weapon_damage_type)
     {
@@ -778,7 +1112,9 @@ class ButcherySpellProc : public SpellProc
 
 class BladeBarrierSpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(BladeBarrierSpellProc);
+public:
+
+    static SpellProc* Create() { return new BladeBarrierSpellProc(); }
 
     void Init(Object* obj)
     {
@@ -810,7 +1146,9 @@ class BladeBarrierSpellProc : public SpellProc
 
 class DeathRuneMasterySpellProc : public SpellProc
 {
-    SPELL_PROC_FACTORY_FUNCTION(DeathRuneMasterySpellProc);
+public:
+
+    static SpellProc* Create() { return new DeathRuneMasterySpellProc(); }
 
     bool DoEffect(Unit* victim, SpellInfo* CastingSpell, uint32 flag, uint32 dmg, uint32 abs, int* dmg_overwrite, uint32 weapon_damage_type)
     {
@@ -846,58 +1184,329 @@ void SpellProcMgr::SetupSpellProcClassScripts()
 
     //////////////////////////////////////////////////////////////////////////////////////////
     // Shaman
-    AddByNameHash(SPELL_HASH_FROSTBRAND_ATTACK, &FrostBrandAttackSpellProc::Create);
+    // SPELL_HASH_FROSTBRAND_ATTACK
+    uint32 frostbrandAttack[] =
+    {
+        8034,
+        8037,
+        10458,
+        16352,
+        16353,
+        25501,
+        38617,
+        54609,
+        58797,
+        58798,
+        58799,
+        64186,
+        0
+    };
+
+    AddById(frostbrandAttack, &FrostBrandAttackSpellProc::Create);
 
     AddById(10444, &FlametongueWeaponSpellProc::Create);
     AddById(379, &EarthShieldSpellProc::Create);
 
     //////////////////////////////////////////////////////////////////////////////////////////
     // Rogue
-    AddByNameHash(SPELL_HASH_WOUND_POISON_VII, &WoundPoisonSpellProc::Create);
-    AddByNameHash(SPELL_HASH_WOUND_POISON_VI, &WoundPoisonSpellProc::Create);
-    AddByNameHash(SPELL_HASH_WOUND_POISON_V, &WoundPoisonSpellProc::Create);
-    AddByNameHash(SPELL_HASH_WOUND_POISON_IV, &WoundPoisonSpellProc::Create);
-    AddByNameHash(SPELL_HASH_WOUND_POISON_III, &WoundPoisonSpellProc::Create);
-    AddByNameHash(SPELL_HASH_WOUND_POISON_II, &WoundPoisonSpellProc::Create);
-    AddByNameHash(SPELL_HASH_WOUND_POISON, &WoundPoisonSpellProc::Create);
+    uint32 woundPoison[] =
+    {
+        // SPELL_HASH_WOUND_POISON_VII
+        57975,
+        57978,
+        // SPELL_HASH_WOUND_POISON_VI
+        57974,
+        57977,
+        // SPELL_HASH_WOUND_POISON_V
+        27188,
+        27189,
+        // SPELL_HASH_WOUND_POISON_IV
+        13224,
+        13227,
+        // SPELL_HASH_WOUND_POISON_III
+        13223,
+        13226,
+        // SPELL_HASH_WOUND_POISON_II
+        13222,
+        13225,
+        // SPELL_HASH_WOUND_POISON
+        13218,
+        13219,
+        30984,
+        36974,
+        39665,
+        43461,
+        54074,
+        65962,
+        0
+    };
+    AddById(woundPoison, &WoundPoisonSpellProc::Create);
 
-    AddByNameHash(SPELL_HASH_INSTANT_POISON_IX, &InstantPoisonSpellProc::Create);
-    AddByNameHash(SPELL_HASH_INSTANT_POISON_VIII, &InstantPoisonSpellProc::Create);
-    AddByNameHash(SPELL_HASH_INSTANT_POISON_VII, &InstantPoisonSpellProc::Create);
-    AddByNameHash(SPELL_HASH_INSTANT_POISON_VI, &InstantPoisonSpellProc::Create);
-    AddByNameHash(SPELL_HASH_INSTANT_POISON_V, &InstantPoisonSpellProc::Create);
-    AddByNameHash(SPELL_HASH_INSTANT_POISON_IV, &InstantPoisonSpellProc::Create);
-    AddByNameHash(SPELL_HASH_INSTANT_POISON_III, &InstantPoisonSpellProc::Create);
-    AddByNameHash(SPELL_HASH_INSTANT_POISON_II, &InstantPoisonSpellProc::Create);
-    AddByNameHash(SPELL_HASH_INSTANT_POISON, &InstantPoisonSpellProc::Create);
+    uint32 instantPoison[] =
+    {
+        // SPELL_HASH_INSTANT_POISON_IX
+        57965,
+        57968,
+        // SPELL_HASH_INSTANT_POISON_VIII
+        57964,
+        57967,
+        // SPELL_HASH_INSTANT_POISON_VII
+        26890,
+        26891,
+        // SPELL_HASH_INSTANT_POISON_VI
+        11337,
+        11340,
+        // SPELL_HASH_INSTANT_POISON_V
+        11336,
+        11339,
+        // SPELL_HASH_INSTANT_POISON_IV
+        11335,
+        11338,
+        // SPELL_HASH_INSTANT_POISON_III
+        8688,
+        8689,
+        // SPELL_HASH_INSTANT_POISON_II
+        8685,
+        8686,
+        // SPELL_HASH_INSTANT_POISON
+        8679,
+        8680,
+        28428,
+        41189,
+        59242,
+        0
+    };
+    AddById(instantPoison, &InstantPoisonSpellProc::Create);
 
-    AddByNameHash(SPELL_HASH_DEADLY_POISON_IX, &PoisonSpellProc::Create);
-    AddByNameHash(SPELL_HASH_DEADLY_POISON_VIII, &PoisonSpellProc::Create);
-    AddByNameHash(SPELL_HASH_DEADLY_POISON_VII, &PoisonSpellProc::Create);
-    AddByNameHash(SPELL_HASH_DEADLY_POISON_VI, &PoisonSpellProc::Create);
-    AddByNameHash(SPELL_HASH_DEADLY_POISON_V, &PoisonSpellProc::Create);
-    AddByNameHash(SPELL_HASH_DEADLY_POISON_IV, &PoisonSpellProc::Create);
-    AddByNameHash(SPELL_HASH_DEADLY_POISON_III, &PoisonSpellProc::Create);
-    AddByNameHash(SPELL_HASH_DEADLY_POISON_II, &PoisonSpellProc::Create);
-    AddByNameHash(SPELL_HASH_DEADLY_POISON, &PoisonSpellProc::Create);
+    uint32 deadlyPoison[] =
+    {
+        // SPELL_HASH_DEADLY_POISON_IX
+        57970,
+        57973,
+        // SPELL_HASH_DEADLY_POISON_VIII
+        57969,
+        57972,
+        // SPELL_HASH_DEADLY_POISON_VII
+        27186,
+        27187,
+        // SPELL_HASH_DEADLY_POISON_VI
+        26967,
+        26968,
+        // SPELL_HASH_DEADLY_POISON_V
+        25349,
+        25351,
+        // SPELL_HASH_DEADLY_POISON_IV
+        11354,
+        11356,
+        // SPELL_HASH_DEADLY_POISON_III
+        11353,
+        11355,
+        // SPELL_HASH_DEADLY_POISON_II
+        2819,
+        2824,
+        // SPELL_HASH_DEADLY_POISON
+        2818,
+        2823,
+        3583,
+        10022,
+        13582,
+        21787,
+        21788,
+        32970,
+        32971,
+        34616,
+        34655,
+        34657,
+        36872,
+        38519,
+        38520,
+        41191,
+        41192,
+        41485,
+        43580,
+        43581,
+        56145,
+        56149,
+        59479,
+        59482,
+        63755,
+        63756,
+        67710,
+        67711,
+        68315,
+        72329,
+        72330,
+        0
+    };
+    AddById(deadlyPoison, &PoisonSpellProc::Create);
 
-    AddByNameHash(SPELL_HASH_CRIPPLING_POISON, &PoisonSpellProc::Create);
-    AddByNameHash(SPELL_HASH_MIND_NUMBING_POISON, &PoisonSpellProc::Create);
-    AddByNameHash(SPELL_HASH_CUT_TO_THE_CHASE, &CutToTheChaseSpellProc::Create);
-    AddByNameHash(SPELL_HASH_DEADLY_BREW, &DeadlyBrewSpellProc::Create);
-    AddByNameHash(SPELL_HASH_WAYLAY, &WaylaySpellProc::Create);
+    uint32 cripplingPoison[] =
+    {
+        //SPELL_HASH_CRIPPLING_POISON
+        3408,
+        3409,
+        25809,
+        30981,
+        44289,
+        0
+    };
+    AddById(cripplingPoison, &PoisonSpellProc::Create);
+
+    uint32 mindNumbingPoison[] =
+    {
+        //SPELL_HASH_MIND_NUMBING_POISON
+        5760,
+        5761,
+        25810,
+        34615,
+        41190,
+        0
+    };
+    AddById(mindNumbingPoison, &PoisonSpellProc::Create);
+
+    uint32 cutToTheChase[] =
+    {
+        //SPELL_HASH_CUT_TO_THE_CHASE
+        51664,
+        51665,
+        51667,
+        51668,
+        51669,
+        0
+    };
+    AddById(cutToTheChase, &CutToTheChaseSpellProc::Create);
+
+    uint32 deadlyBrew[] =
+    {
+        //SPELL_HASH_DEADLY_BREW
+        51625,
+        51626,
+        0
+    };
+    AddById(deadlyBrew, &DeadlyBrewSpellProc::Create);
+
+    uint32 waylay[] =
+    {
+        //SPELL_HASH_WAYLAY
+        51692,
+        51693,
+        51696,
+        0
+    };
+    AddById(waylay, &WaylaySpellProc::Create);
 
     //////////////////////////////////////////////////////////////////////////////////////////
     // Priest
-    AddByNameHash(SPELL_HASH_IMPROVED_SPIRIT_TAP, &ImprovedSpiritTapSpellProc::Create);
-    AddByNameHash(SPELL_HASH_HOLY_CONCENTRATION, &HolyConcentrationSpellProc::Create);
-    AddByNameHash(SPELL_HASH_DIVINE_AEGIS, &DivineAegisSpellProc::Create);
-    AddByNameHash(SPELL_HASH_IMPROVED_DEVOURING_PLAGUE, &ImprovedDevouringPlagueSpellProc::Create);
-    AddByNameHash(SPELL_HASH_VAMPIRIC_EMBRACE, &VampiricEmbraceSpellProc::Create);
-    AddByNameHash(SPELL_HASH_EMPOWERED_RENEW, &EmpoweredRenewSpellProc::Create);
-    AddByNameHash(SPELL_HASH_MISERY, &MiserySpellProc::Create);
-    AddByNameHash(SPELL_HASH_PRAYER_OF_MENDING, &PrayerOfMendingProc::Create);
-    AddByNameHash(SPELL_HASH_SPIRIT_TAP, &SpiritTapSpellProc::Create);
+    uint32 improvedSpiritTap[] =
+    {
+        //SPELL_HASH_IMPROVED_SPIRIT_TAP
+        15337,
+        15338,
+        49694,
+        59000,
+        0
+    };
+    AddById(improvedSpiritTap, &ImprovedSpiritTapSpellProc::Create);
+
+    uint32 holyConcentration[] =
+    {
+        //SPELL_HASH_HOLY_CONCENTRATION
+        34753,
+        34754,
+        34859,
+        34860,
+        63724,
+        63725,
+        0
+    };
+    AddById(holyConcentration, &HolyConcentrationSpellProc::Create);
+
+    uint32 divineAegis[] =
+    {
+        //SPELL_HASH_DIVINE_AEGIS
+        47509,
+        47511,
+        47515,
+        47753,
+        54704,
+        0
+    };
+    AddById(divineAegis, &DivineAegisSpellProc::Create);
+
+    uint32 improvedDevouringPlague[] =
+    {
+        //SPELL_HASH_IMPROVED_DEVOURING_PLAGUE
+        63625,
+        63626,
+        63627,
+        63675,
+        75999,
+        0
+    };
+    AddById(improvedDevouringPlague, &ImprovedDevouringPlagueSpellProc::Create);
+
+    uint32 vampiricEmbrace[] =
+    {
+        //SPELL_HASH_VAMPIRIC_EMBRACE
+        15286,
+        15290,
+        71269,
+        0
+    };
+    AddById(vampiricEmbrace, &VampiricEmbraceSpellProc::Create);
+
+    uint32 empoweredRenew[] =
+    {
+        //SPELL_HASH_EMPOWERED_RENEW
+        63534,
+        63542,
+        63543,
+        63544,
+        0
+    };
+    AddById(empoweredRenew, &EmpoweredRenewSpellProc::Create);
+
+    uint32 misery[] =
+    {
+        //SPELL_HASH_MISERY
+        33191,
+        33192,
+        33193,
+        33196,
+        33197,
+        33198,
+        0
+    };
+    AddById(misery, &MiserySpellProc::Create);
+
+    uint32 prayerOfMending[] =
+    {
+        //SPELL_HASH_PRAYER_OF_MENDING
+        33076,
+        33110,
+        41635,
+        41637,
+        44583,
+        44586,
+        46045,
+        48110,
+        48111,
+        48112,
+        48113,
+        0
+    };
+    AddById(prayerOfMending, &PrayerOfMendingProc::Create);
+
+    uint32 spiritTap[] =
+    {
+        //SPELL_HASH_SPIRIT_TAP
+        15270,
+        15271,
+        15335,
+        15336,
+        0
+    };
+    AddById(spiritTap, &SpiritTapSpellProc::Create);
 
     AddById(34919, &VampiricTouchEnergizeSpellProc::Create);
     AddById(64085, &VampiricTouchDispelDamageSpellProc::Create);
@@ -909,10 +1518,47 @@ void SpellProcMgr::SetupSpellProcClassScripts()
 
     //////////////////////////////////////////////////////////////////////////////////////////
     // Paladin
-    AddByNameHash(SPELL_HASH_SEAL_OF_COMMAND, &SealOfCommandSpellProc::Create);
-    AddByNameHash(SPELL_HASH_EYE_FOR_AN_EYE, &EyeForAnEyeSpellProc::Create);
-    AddByNameHash(SPELL_HASH_GRACE_OF_THE_NAARU, &GraceOfTheNaaruSpellProc::Create);
-    AddByNameHash(SPELL_HASH_SPIRITUAL_ATTUNEMENT, &SpiritualAttunementSpellProc::Create);
+    uint32 sealOfCommand[] =
+    {
+        //SPELL_HASH_SEAL_OF_COMMAND
+        20375,
+        20424,
+        29385,
+        33127,
+        41469,
+        42058,
+        57769,
+        57770,
+        66004,
+        68020,
+        68021,
+        68022,
+        69403,
+        0
+    };
+    AddById(sealOfCommand, &SealOfCommandSpellProc::Create);
+
+    uint32 eyeForAnEye[] =
+    {
+        //SPELL_HASH_EYE_FOR_AN_EYE
+        9799,
+        25988,
+        25997,
+        0
+    };
+    AddById(eyeForAnEye, &EyeForAnEyeSpellProc::Create);
+
+    AddById(43742, &GraceOfTheNaaruSpellProc::Create);
+
+    uint32 spiritualAttunement[] =
+    {
+        //SPELL_HASH_SPIRITUAL_ATTUNEMENT
+        31785,
+        31786,
+        33776,
+        0
+    };
+    AddById(spiritualAttunement, &SpiritualAttunementSpellProc::Create);
 
     AddById(20167, &PaladinSealsSpellProc::Create);
     AddById(20168, &PaladinSealsSpellProc::Create);
@@ -929,5 +1575,20 @@ void SpellProcMgr::SetupSpellProcClassScripts()
     AddById(50163, &ButcherySpellProc::Create);
     AddById(50806, &DeathRuneMasterySpellProc::Create);
 
-    AddByNameHash(SPELL_HASH_BLADE_BARRIER, &BladeBarrierSpellProc::Create);
+    uint32 bladeBarrier[] =
+    {
+        //SPELL_HASH_BLADE_BARRIER
+        49182,
+        49500,
+        49501,
+        51789,
+        55225,
+        55226,
+        64855,
+        64856,
+        64858,
+        64859,
+        0
+    };
+    AddById(bladeBarrier, &BladeBarrierSpellProc::Create);
 }
