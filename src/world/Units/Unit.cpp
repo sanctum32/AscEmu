@@ -9,6 +9,7 @@ This file is released under the MIT license. See README-MIT for more information
 #include "Players/Player.h"
 #include "Spell/SpellAuras.h"
 #include "Spell/Definitions/DiminishingGroup.h"
+#include "Spell/Customization/SpellCustomizations.hpp"
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Movement
@@ -685,7 +686,7 @@ void Unit::playSpellVisual(uint64_t guid, uint32_t spell_id)
 
 void Unit::applyDiminishingReturnTimer(uint32_t* duration, SpellInfo* spell)
 {
-    uint32_t status = spell->custom_DiminishStatus;
+    uint32_t status = sSpellCustomizations.getDiminishingGroup(spell->getId());
     uint32_t group  = status & 0xFFFF;
     uint32_t PvE    = (status >> 16) & 0xFFFF;
 
@@ -732,7 +733,7 @@ void Unit::applyDiminishingReturnTimer(uint32_t* duration, SpellInfo* spell)
 
 void Unit::removeDiminishingReturnTimer(SpellInfo* spell)
 {
-    uint32_t status = spell->custom_DiminishStatus;
+    uint32_t status = sSpellCustomizations.getDiminishingGroup(spell->getId());
     uint32_t group  = status & 0xFFFF;
     uint32_t pve    = (status >> 16) & 0xFFFF;
     uint32_t aura_group;
@@ -757,7 +758,7 @@ void Unit::removeDiminishingReturnTimer(SpellInfo* spell)
     {
         if (m_auras[x])
         {
-            aura_group = m_auras[x]->GetSpellInfo()->custom_DiminishStatus;
+            aura_group = sSpellCustomizations.getDiminishingGroup(m_auras[x]->GetSpellInfo()->getId());
             if (aura_group == status)
             {
                 m_diminishAuraCount[group]++;

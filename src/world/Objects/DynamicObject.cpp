@@ -171,10 +171,10 @@ void DynamicObject::UpdateTargets()
                 pAura = sSpellFactoryMgr.NewAura(m_spellProto, m_aliveDuration, u_caster, target, true);
                 for (uint8 i = 0; i < 3; ++i)
                 {
-                    if (m_spellProto->Effect[i] == SPELL_EFFECT_PERSISTENT_AREA_AURA)
+                    if (m_spellProto->getEffect(i) == SPELL_EFFECT_PERSISTENT_AREA_AURA)
                     {
-                        pAura->AddMod(m_spellProto->EffectApplyAuraName[i],
-                                      m_spellProto->EffectBasePoints[i] + 1, m_spellProto->EffectMiscValue[i], i);
+                        pAura->AddMod(m_spellProto->getEffectApplyAuraName(i),
+                                      m_spellProto->getEffectBasePoints(i) + 1, m_spellProto->getEffectMiscValue(i), i);
                     }
                 }
                 target->AddAura(pAura);
@@ -251,7 +251,7 @@ void DynamicObject::Remove()
     if (IsInWorld())
         RemoveFromWorld(true);
 
-    if (u_caster != nullptr && m_spellProto->ChannelInterruptFlags != 0)
+    if (u_caster != nullptr && m_spellProto->getChannelInterruptFlags() != 0)
     {
         u_caster->SetChannelSpellTargetGUID(0);
         u_caster->SetChannelSpellId(0);

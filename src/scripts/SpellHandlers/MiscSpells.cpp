@@ -43,7 +43,7 @@ bool FrostWarding(uint32 i, Spell* s)
 
     ReflectSpellSchool* rss = new ReflectSpellSchool;
 
-    rss->chance = s->GetSpellInfo()->procChance;
+    rss->chance = s->GetSpellInfo()->getProcChance();
     rss->spellId = s->GetSpellInfo()->getId();
     rss->school = SCHOOL_FROST;
     rss->infront = false;
@@ -65,7 +65,7 @@ bool MoltenShields(uint32 i, Spell* s)
 
     ReflectSpellSchool* rss = new ReflectSpellSchool;
 
-    rss->chance = s->GetSpellInfo()->EffectBasePoints[0];
+    rss->chance = s->GetSpellInfo()->getEffectBasePoints(0);
     rss->spellId = s->GetSpellInfo()->getId();
     rss->school = SCHOOL_FIRE;
     rss->infront = false;
@@ -202,16 +202,16 @@ bool NorthRendInscriptionResearch(uint32 i, Spell* s)
             if (skill_line_ability->skilline == SKILL_INSCRIPTION && skill_line_ability->next == 0)
             {
                 SpellInfo* se1 = sSpellCustomizations.GetSpellInfo(skill_line_ability->spell);
-                if (se1 && se1->Effect[0] == SPELL_EFFECT_CREATE_ITEM)
+                if (se1 && se1->getEffect(0) == SPELL_EFFECT_CREATE_ITEM)
                 {
-                    ItemProperties const* itm = sMySQLStore.getItemProperties(se1->EffectItemType[0]);
+                    ItemProperties const* itm = sMySQLStore.getItemProperties(se1->getEffectItemType(0));
                     if (itm && (itm->Spells[0].Id != 0))
                     {
                         SpellInfo* se2 = sSpellCustomizations.GetSpellInfo(itm->Spells[0].Id);
-                        if (se2 && se2->Effect[0] == SPELL_EFFECT_USE_GLYPH)
+                        if (se2 && se2->getEffect(0) == SPELL_EFFECT_USE_GLYPH)
                         {
 #if VERSION_STRING > TBC
-                            auto glyph_properties = sGlyphPropertiesStore.LookupEntry(se2->EffectMiscValue[0]);
+                            auto glyph_properties = sGlyphPropertiesStore.LookupEntry(se2->getEffectMiscValue(0));
                             if (glyph_properties)
                             {
                                 if (glyph_properties->Type == glyphType)
@@ -251,7 +251,7 @@ bool DeadlyThrowInterrupt(uint32 i, Aura* a, bool apply)
 
     if (m_target->GetCurrentSpell())
     {
-        school = m_target->GetCurrentSpell()->GetSpellInfo()->School;
+        school = m_target->GetCurrentSpell()->GetSpellInfo()->getSchool();
     }
 
     m_target->InterruptSpell();
@@ -475,7 +475,7 @@ bool TeleportToCoordinates(uint32 i, Spell* s)
     TeleportCoords const* teleport_coord = sMySQLStore.getTeleportCoord(s->GetSpellInfo()->getId());
     if (teleport_coord == nullptr)
     {
-        LogError("Spell %u ( %s ) has a TeleportToCoordinates scripted effect, but has no coordinates to teleport to. ", s->GetSpellInfo()->getId(), s->GetSpellInfo()->Name.c_str());
+        LogError("Spell %u ( %s ) has a TeleportToCoordinates scripted effect, but has no coordinates to teleport to. ", s->GetSpellInfo()->getId(), s->GetSpellInfo()->getName().c_str());
         return true;
     }
 

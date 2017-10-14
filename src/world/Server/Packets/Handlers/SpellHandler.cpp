@@ -149,7 +149,7 @@ void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
         return;
     }
 
-    if (spellInfo->AuraInterruptFlags & AURA_INTERRUPT_ON_STAND_UP && !_player->IsSitting())
+    if (spellInfo->getAuraInterruptFlags() & AURA_INTERRUPT_ON_STAND_UP && !_player->IsSitting())
     {
         if (p_User->CombatStatus.IsInCombat() || p_User->IsMounted())
         {
@@ -172,7 +172,7 @@ void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
     }*/
 
     // cebernic: remove stealth on using item
-    if (!(spellInfo->AuraInterruptFlags & ATTRIBUTESEX_NOT_BREAK_STEALTH))
+    if (!(spellInfo->getAuraInterruptFlags() & ATTRIBUTESEX_NOT_BREAK_STEALTH))
     {
         if (p_User->IsStealth())
             p_User->RemoveAllAuraType(SPELL_AURA_MOD_STEALTH);
@@ -376,10 +376,10 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
         return;
     }
 
-    if (!_player->isAlive() && _player->GetShapeShift() != FORM_SPIRITOFREDEMPTION && !(spellInfo->Attributes & ATTRIBUTES_DEAD_CASTABLE)) //They're dead, not in spirit of redemption and the spell can't be cast while dead.
+    if (!_player->isAlive() && _player->GetShapeShift() != FORM_SPIRITOFREDEMPTION && !(spellInfo->getAttributes() & ATTRIBUTES_DEAD_CASTABLE)) //They're dead, not in spirit of redemption and the spell can't be cast while dead.
         return;
 
-    LogDetail("WORLD: got cast spell packet, spellId - %i (%s), data length = %i", spellId, spellInfo->Name.c_str(), recvPacket.size());
+    LogDetail("WORLD: got cast spell packet, spellId - %i (%s), data length = %i", spellId, spellInfo->getName().c_str(), recvPacket.size());
 
     // Cheat Detection only if player and not from an item
     // this could fuck up things but meh it's needed ALOT of the newbs are using WPE now
@@ -401,9 +401,9 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
     if (GetPlayer()->GetOnMeleeSpell() != spellId)
     {
         //autoshot 75
-        if ((spellInfo->AttributesExB & ATTRIBUTESEXB_ACTIVATE_AUTO_SHOT) /*spellInfo->Attributes == 327698*/)	// auto shot..
+        if ((spellInfo->getAttributesExB() & ATTRIBUTESEXB_ACTIVATE_AUTO_SHOT) /*spellInfo->Attributes == 327698*/)	// auto shot..
         {
-            LogDebugFlag(LF_SPELL, "HandleCastSpellOpcode : Auto Shot-type spell cast (id %u, name %s)" , spellInfo->getId(), spellInfo->Name.c_str());
+            LogDebugFlag(LF_SPELL, "HandleCastSpellOpcode : Auto Shot-type spell cast (id %u, name %s)" , spellInfo->getId(), spellInfo->getName().c_str());
             Item* weapon = GetPlayer()->GetItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_RANGED);
             if (!weapon)
                 return;
@@ -526,10 +526,10 @@ void WorldSession::HandleCancelAuraOpcode(WorldPacket& recvPacket)
 		{
 			if (!aura->IsPositive())
 				return;
-			if (info->Attributes & ATTRIBUTES_NEGATIVE)
+			if (info->getAttributes() & ATTRIBUTES_NEGATIVE)
 				return;
 		}
-        if (!(info->Attributes & static_cast<uint32>(ATTRIBUTES_CANT_CANCEL)))
+        if (!(info->getAttributes() & static_cast<uint32>(ATTRIBUTES_CANT_CANCEL)))
         {
             _player->removeAllAurasById(spellId);
             LOG_DEBUG("Removing all auras with ID: %u", spellId);

@@ -111,8 +111,6 @@ class SERVER_DECL Spell : public EventableObject
         // Checks the caster is ready for cast
         virtual uint8 CanCast(bool);
 
-    bool HasCustomFlag(uint32 flag);
-
     bool hasAttribute(SpellAttributes attribute);
     bool hasAttributeEx(SpellAttributesEx attribute);
     bool hasAttributeExB(SpellAttributesExB attribute);
@@ -481,7 +479,6 @@ class SERVER_DECL Spell : public EventableObject
 
         SpellInfo* m_spellInfo;
         SpellInfo* m_spellInfo_override;   //used by spells that should have dynamic variables in spellentry.
-        static uint32_t getDiminishingGroup(uint32_t id);
         static SpellInfo* checkAndReturnSpellEntry(uint32_t spellid);
 };
 

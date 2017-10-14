@@ -1889,7 +1889,7 @@ void AIInterface::_UpdateCombat(uint32 p_time)
 
                     /* if in range stop moving so we don't interrupt the spell */
                     //do not stop for instant spells
-                    DBC::Structures::SpellCastTimesEntry const* spell_cast_time = sSpellCastTimesStore.LookupEntry(m_nextSpell->spell->CastingTimeIndex);
+                    DBC::Structures::SpellCastTimesEntry const* spell_cast_time = sSpellCastTimesStore.LookupEntry(m_nextSpell->spell->getCastingTimeIndex());
                     if (spell_cast_time && GetCastTime(spell_cast_time) != 0)
                         StopMovement(0);
 
@@ -2135,7 +2135,7 @@ void AIInterface::HealReaction(Unit* caster, Unit* victim, SpellInfo* sp, uint32
         threat = threat / 2; //Paladins only get 50% threat per heal than other classes
 
     if (sp != nullptr)
-        threat += (threat * caster->GetGeneratedThreatModifyer(sp->School) / 100);
+        threat += (threat * caster->GetGeneratedThreatModifyer(sp->getSchool()) / 100);
 
     if (threat < 1)
         threat = 1;
@@ -2637,7 +2637,7 @@ float AIInterface::_CalcAggroRange(Unit* target)
         {
             // If nearby miners weren't spotted already we'll give them a little surprise.
             Spell* sp = target->GetCurrentSpell();
-            if (sp->GetSpellInfo()->Effect[0] == SPELL_EFFECT_OPEN_LOCK && sp->GetSpellInfo()->EffectMiscValue[0] == LOCKTYPE_MINING)
+            if (sp->GetSpellInfo()->getEffect(0) == SPELL_EFFECT_OPEN_LOCK && sp->GetSpellInfo()->getEffectMiscValue(0) == LOCKTYPE_MINING)
             {
                 isMining = true;
             }
@@ -3142,16 +3142,16 @@ AI_Spell* AIInterface::getSpell()
                     if (sp->procChance >= 100 || Rand(sp->procChance))
                     {
                         //focus/mana requirement
-                        switch (sp->spell->powerType)
+                        switch (sp->spell->getPowerType())
                         {
                             case POWER_TYPE_MANA:
                             {
-                                if (m_Unit->GetPower(POWER_TYPE_MANA) < sp->spell->manaCost)
+                                if (m_Unit->GetPower(POWER_TYPE_MANA) < sp->spell->getManaCost())
                                     continue;
                             } break;
                             case POWER_TYPE_FOCUS:
                             {
-                                if (m_Unit->GetPower(POWER_TYPE_FOCUS) < sp->spell->manaCost)
+                                if (m_Unit->GetPower(POWER_TYPE_FOCUS) < sp->spell->getManaCost())
                                     continue;
                             } break;
                         }
@@ -3673,8 +3673,8 @@ uint32 AIInterface::_CalcThreat(uint32 damage, SpellInfo* sp, Unit* Attacker)
 
     if (sp != nullptr)
     {
-        ascemu::World::Spell::Helpers::spellModFlatIntValue(Attacker->SM_FThreat, &mod, sp->SpellGroupType);
-        ascemu::World::Spell::Helpers::spellModPercentageIntValue(Attacker->SM_PThreat, &mod, sp->SpellGroupType);
+        ascemu::World::Spell::Helpers::spellModFlatIntValue(Attacker->SM_FThreat, &mod, sp->getSpellGroupType());
+        ascemu::World::Spell::Helpers::spellModPercentageIntValue(Attacker->SM_PThreat, &mod, sp->getSpellGroupType());
     }
 
     if (Attacker->getClass() == ROGUE)
@@ -3682,7 +3682,7 @@ uint32 AIInterface::_CalcThreat(uint32 damage, SpellInfo* sp, Unit* Attacker)
 
     // modify threat by Buffs
     if (sp != nullptr)
-        mod += (mod * Attacker->GetGeneratedThreatModifyer(sp->School) / 100);
+        mod += (mod * Attacker->GetGeneratedThreatModifyer(sp->getSchool()) / 100);
     else
         mod += (mod * Attacker->GetGeneratedThreatModifyer(0) / 100);
 

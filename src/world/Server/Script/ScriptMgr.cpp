@@ -316,7 +316,7 @@ void ScriptMgr::register_dummy_aura(uint32 entry, exp_handle_dummy_aura callback
     }
 
     if (!sp->appliesAreaAura(SPELL_AURA_DUMMY) && !sp->appliesAreaAura(SPELL_AURA_PERIODIC_TRIGGER_DUMMY))
-        LogDebugFlag(LF_SCRIPT_MGR, "ScriptMgr registered a dummy aura handler for Spell ID: %u (%s), but spell has no dummy aura!", entry, sp->Name.c_str());
+        LogDebugFlag(LF_SCRIPT_MGR, "ScriptMgr registered a dummy aura handler for Spell ID: %u (%s), but spell has no dummy aura!", entry, sp->getName().c_str());
 
     _auras.insert(HandleDummyAuraMap::value_type(entry, callback));
 }
@@ -337,7 +337,7 @@ void ScriptMgr::register_dummy_spell(uint32 entry, exp_handle_dummy_spell callba
     }
 
     if (!sp->HasEffect(SPELL_EFFECT_DUMMY) && !sp->HasEffect(SPELL_EFFECT_SCRIPT_EFFECT) && !sp->HasEffect(SPELL_EFFECT_SEND_EVENT))
-        LogDebugFlag(LF_SCRIPT_MGR, "ScriptMgr registered a dummy handler for Spell ID: %u (%s), but spell has no dummy/script/send event effect!", entry, sp->Name.c_str());
+        LogDebugFlag(LF_SCRIPT_MGR, "ScriptMgr registered a dummy handler for Spell ID: %u (%s), but spell has no dummy/script/send event effect!", entry, sp->getName().c_str());
 
     _spells.insert(HandleDummySpellMap::value_type(entry, callback));
 }
@@ -439,7 +439,7 @@ void ScriptMgr::register_script_effect(uint32 entry, exp_handle_script_effect ca
     }
 
     if (!sp->HasEffect(SPELL_EFFECT_SCRIPT_EFFECT) && !sp->HasEffect(SPELL_EFFECT_SEND_EVENT))
-        LogDebugFlag(LF_SCRIPT_MGR, "ScriptMgr registered a script effect handler for Spell ID: %u (%s), but spell has no scripted effect!", entry, sp->Name.c_str());
+        LogDebugFlag(LF_SCRIPT_MGR, "ScriptMgr registered a script effect handler for Spell ID: %u (%s), but spell has no scripted effect!", entry, sp->getName().c_str());
 
     SpellScriptEffects.insert(std::pair< uint32, exp_handle_script_effect >(entry, callback));
 }
@@ -672,20 +672,23 @@ std::string InstanceScript::getDataStateString(uint32_t bossEntry)
 void InstanceScript::generateBossDataState()
 {
     InstanceBossInfoMap* bossInfoMap = objmgr.m_InstanceBossInfoMap[mInstance->GetMapId()];
-    for (const auto& encounter : *bossInfoMap)
+    if (bossInfoMap != nullptr)
     {
-        CreatureProperties const* creature = sMySQLStore.getCreatureProperties(encounter.second->creatureid);
-        if (creature == nullptr)
-            LOG_ERROR("Your instance_boss table includes invalid data for boss entry %u!", encounter.second->creatureid);
-        else
-            mInstanceData.insert(std::pair<uint32_t, uint32_t>(encounter.second->creatureid, NotStarted));
-    }
+        for (const auto& encounter : *bossInfoMap)
+        {
+            CreatureProperties const* creature = sMySQLStore.getCreatureProperties(encounter.second->creatureid);
+            if (creature == nullptr)
+                LOG_ERROR("Your instance_boss table includes invalid data for boss entry %u!", encounter.second->creatureid);
+            else
+                mInstanceData.insert(std::pair<uint32_t, uint32_t>(encounter.second->creatureid, NotStarted));
+        }
 
-    for (const auto& killedNpc : mInstance->pInstance->m_killedNpcs)
-    {
-        InstanceBossInfoMap::const_iterator bossInfo = bossInfoMap->find((killedNpc));
-        if (bossInfo != bossInfoMap->end())
-            setData(bossInfo->first, Finished);
+        for (const auto& killedNpc : mInstance->pInstance->m_killedNpcs)
+        {
+            InstanceBossInfoMap::const_iterator bossInfo = bossInfoMap->find((killedNpc));
+            if (bossInfo != bossInfoMap->end())
+                setData(bossInfo->first, Finished);
+        }
     }
 }
 

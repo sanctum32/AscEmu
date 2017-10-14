@@ -55,7 +55,7 @@ public:
     {
         Player* plr = static_cast<Player*>(mTarget);
 
-        dmg_overwrite[0] = plr->GetBlockDamageReduction() * (mOrigSpell->EffectBasePoints[0] + 1) / 100;
+        dmg_overwrite[0] = plr->GetBlockDamageReduction() * (mOrigSpell->getEffectBasePoints(0) + 1) / 100;
 
         // plr->GetBlockDamageReduction() returns ZERO if player has no shield equipped
         if (dmg_overwrite[0] == 0)
@@ -205,7 +205,7 @@ public:
 
     bool DoEffect(Unit* victim, SpellInfo* CastingSpell, uint32 flag, uint32 dmg, uint32 abs, int* dmg_overwrite, uint32 weapon_damage_type)
     {
-        int32 value = mOrigSpell->EffectBasePoints[0];
+        int32 value = mOrigSpell->getEffectBasePoints(0);
         dmg_overwrite[0] = value;
 
         return false;
@@ -266,7 +266,7 @@ public:
                     case 58792:
                     {
                         wp_speed = item->GetItemProperties()->Delay;
-                        damage = (sp->EffectBasePoints[0] + 1) * wp_speed / 100000;
+                        damage = (sp->getEffectBasePoints(0) + 1) * wp_speed / 100000;
                     } break;
                 }
             }
@@ -349,7 +349,7 @@ public:
     // Allow proc on ability cast (like eviscerate, envenom, fan of knives, rupture)
     bool CanProcOnTriggered(Unit* victim, SpellInfo* CastingSpell)
     {
-        if (CastingSpell != NULL && (CastingSpell->SpellGroupType[0] & 0x120000 || CastingSpell->SpellGroupType[1] & 0x240008))
+        if (CastingSpell != NULL && (CastingSpell->getSpellGroupType(0) & 0x120000 || CastingSpell->getSpellGroupType(1) & 0x240008))
             return true;
 
         return false;
@@ -430,8 +430,8 @@ public:
             // Duration of 5 combo maximum
             int32 dur = 21 * MSTIME_SECOND;
 
-            spellModFlatIntValue(mTarget->SM_FDur, &dur, aura->GetSpellInfo()->SpellGroupType);
-            spellModPercentageIntValue(mTarget->SM_PDur, &dur, aura->GetSpellInfo()->SpellGroupType);
+            spellModFlatIntValue(mTarget->SM_FDur, &dur, aura->GetSpellInfo()->getSpellGroupType());
+            spellModPercentageIntValue(mTarget->SM_PDur, &dur, aura->GetSpellInfo()->getSpellGroupType());
 
             // Set new aura's duration, reset event timer and set client visual aura
             aura->SetDuration(dur);
@@ -625,7 +625,7 @@ public:
         if (!CastingSpell->HasEffect(SPELL_EFFECT_HEAL))
             return true;
 
-        dmg_overwrite[0] = dmg * (mOrigSpell->EffectBasePoints[0] + 1) / 100;
+        dmg_overwrite[0] = dmg * (mOrigSpell->getEffectBasePoints(0) + 1) / 100;
 
         return false;
     }
@@ -640,12 +640,12 @@ public:
     bool DoEffect(Unit* victim, SpellInfo* CastingSpell, uint32 flag, uint32 dmg, uint32 abs, int* dmg_overwrite, uint32 weapon_damage_type)
     {
         // Get dmg amt for 1 tick
-        dmg = CastingSpell->EffectBasePoints[0] + 1;
+        dmg = CastingSpell->getEffectBasePoints(0) + 1;
 
         // Get total ticks
-        int ticks = GetDuration(sSpellDurationStore.LookupEntry(CastingSpell->DurationIndex)) / CastingSpell->EffectAmplitude[0];
+        int ticks = GetDuration(sSpellDurationStore.LookupEntry(CastingSpell->getDurationIndex())) / CastingSpell->getEffectAmplitude(0);
 
-        dmg_overwrite[0] = dmg * ticks * (mOrigSpell->EffectBasePoints[0] + 1) / 100;
+        dmg_overwrite[0] = dmg * ticks * (mOrigSpell->getEffectBasePoints(0) + 1) / 100;
 
         return false;
     }
@@ -660,7 +660,7 @@ public:
     bool DoEffect(Unit* victim, SpellInfo* CastingSpell, uint32 flag, uint32 dmg, uint32 abs, int* dmg_overwrite, uint32 weapon_damage_type)
     {
         // Only proc for damaging shadow spells
-        if (CastingSpell->School != SCHOOL_SHADOW || !CastingSpell->isDamagingSpell())
+        if (CastingSpell->getSchool() != SCHOOL_SHADOW || !CastingSpell->isDamagingSpell())
             return true;
 
         // Only proc for single target spells
@@ -749,7 +749,7 @@ public:
 
     void Init(Object* obj)
     {
-        mDispelDmg = 8 * (mOrigSpell->EffectBasePoints[1] + 1);
+        mDispelDmg = 8 * (mOrigSpell->getEffectBasePoints(1) + 1);
     }
 
     bool DoEffect(Unit* victim, SpellInfo* CastingSpell, uint32 flag, uint32 dmg, uint32 abs, int* dmg_overwrite, uint32 weapon_damage_type)
@@ -800,13 +800,13 @@ public:
     bool DoEffect(Unit* victim, SpellInfo* CastingSpell, uint32 flag, uint32 dmg, uint32 abs, int* dmg_overwrite, uint32 weapon_damage_type)
     {
         // Get heal amt for 1 tick
-        dmg = CastingSpell->EffectBasePoints[0] + 1;
+        dmg = CastingSpell->getEffectBasePoints(0) + 1;
 
         // Get total ticks
-        int ticks = GetDuration(sSpellDurationStore.LookupEntry(CastingSpell->DurationIndex)) / CastingSpell->EffectAmplitude[0];
+        int ticks = GetDuration(sSpellDurationStore.LookupEntry(CastingSpell->getDurationIndex())) / CastingSpell->getEffectAmplitude(0);
 
         // Total periodic effect is a single tick amount multiplied by number of ticks
-        dmg_overwrite[0] = dmg * ticks * (mOrigSpell->EffectBasePoints[0] + 1) / 100;
+        dmg_overwrite[0] = dmg * ticks * (mOrigSpell->getEffectBasePoints(0) + 1) / 100;
 
         return false;
     }
@@ -835,7 +835,7 @@ public:
     bool DoEffect(Unit* victim, SpellInfo* CastingSpell, uint32 flag, uint32 dmg, uint32 abs, int* dmg_overwrite, uint32 weapon_damage_type)
     {
         // If spell is not Mind Blast (by SpellGroupType) or player is not on shadowform, don't proc
-        if (!(CastingSpell->SpellGroupType[0] & mProcClassMask[0] && mTarget->IsPlayer() && static_cast<Player*>(mTarget)->GetShapeShift() == FORM_SHADOW))
+        if (!(CastingSpell->getSpellGroupType(0) & mProcClassMask[0] && mTarget->IsPlayer() && static_cast<Player*>(mTarget)->GetShapeShift() == FORM_SHADOW))
             return true;
 
         return false;
@@ -977,7 +977,7 @@ public:
         if (CastingSpell != NULL && !(CastingSpell->custom_c_is_flags & SPELL_FLAG_IS_DAMAGING))
             return true;
 
-        dmg_overwrite[0] = dmg * (mOrigSpell->EffectBasePoints[0] + 1) / 100;
+        dmg_overwrite[0] = dmg * (mOrigSpell->getEffectBasePoints(0) + 1) / 100;
 
         int max_dmg = mTarget->GetMaxHealth() / 2;
 
@@ -1104,7 +1104,7 @@ public:
 
     bool DoEffect(Unit* victim, SpellInfo* CastingSpell, uint32 flag, uint32 dmg, uint32 abs, int* dmg_overwrite, uint32 weapon_damage_type)
     {
-        dmg_overwrite[0] = mOrigSpell->EffectBasePoints[0] + 1;
+        dmg_overwrite[0] = mOrigSpell->getEffectBasePoints(0) + 1;
 
         return false;
     }
@@ -1121,9 +1121,9 @@ public:
         mProcFlags = PROC_ON_CAST_SPELL;
 
 #if VERSION_STRING != Cata
-        mProcClassMask[0] = mOrigSpell->EffectSpellClassMask[0][0];
-        mProcClassMask[1] = mOrigSpell->EffectSpellClassMask[0][1];
-        mProcClassMask[2] = mOrigSpell->EffectSpellClassMask[0][2];
+        mProcClassMask[0] = mOrigSpell->getEffectSpellClassMask(0, 0);
+        mProcClassMask[1] = mOrigSpell->getEffectSpellClassMask(0, 1);
+        mProcClassMask[2] = mOrigSpell->getEffectSpellClassMask(0, 2);
 #else
         mProcClassMask[0] = mOrigSpell->EffectSpellClassMask[0];
         mProcClassMask[1] = mOrigSpell->EffectSpellClassMask[1];

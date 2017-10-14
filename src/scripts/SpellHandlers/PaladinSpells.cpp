@@ -31,7 +31,7 @@ bool EyeForAnEye(uint32 i, Aura* pAura, bool apply)
 
     if (apply)
     {
-        target->AddProcTriggerSpell(25997, pAura->GetSpellInfo()->getId(), pAura->m_casterGuid, pAura->GetSpellInfo()->procChance, PROC_ON_CRIT_HIT_VICTIM | PROC_ON_RANGED_CRIT_ATTACK_VICTIM | PROC_ON_SPELL_CRIT_HIT_VICTIM, 0, NULL, NULL);
+        target->AddProcTriggerSpell(25997, pAura->GetSpellInfo()->getId(), pAura->m_casterGuid, pAura->GetSpellInfo()->getProcChance(), PROC_ON_CRIT_HIT_VICTIM | PROC_ON_RANGED_CRIT_ATTACK_VICTIM | PROC_ON_SPELL_CRIT_HIT_VICTIM, 0, NULL, NULL);
     }
     else
     {
@@ -138,7 +138,7 @@ bool SealOfRighteousness(uint32 i, Aura* pAura, bool apply)
     {
         if (apply)
         {
-            target->AddProcTriggerSpell(25742, pAura->GetSpellId(), pAura->m_casterGuid, pAura->GetSpellInfo()->procChance, PROC_ON_MELEE_ATTACK, 0, NULL, NULL);
+            target->AddProcTriggerSpell(25742, pAura->GetSpellId(), pAura->m_casterGuid, pAura->GetSpellInfo()->getProcChance(), PROC_ON_MELEE_ATTACK, 0, NULL, NULL);
         }
         else
         {
@@ -157,8 +157,8 @@ bool SealOfCorruption(uint32 i, Aura* pAura, bool apply)
     {
         if (apply)
         {
-            target->AddProcTriggerSpell(53742, pAura->GetSpellId(), pAura->m_casterGuid, pAura->GetSpellInfo()->procChance, PROC_ON_MELEE_ATTACK, 0, NULL, NULL);
-            target->AddProcTriggerSpell(53739, pAura->GetSpellId(), pAura->m_casterGuid, pAura->GetSpellInfo()->procChance, PROC_ON_MELEE_ATTACK, 0, NULL, NULL);
+            target->AddProcTriggerSpell(53742, pAura->GetSpellId(), pAura->m_casterGuid, pAura->GetSpellInfo()->getProcChance(), PROC_ON_MELEE_ATTACK, 0, NULL, NULL);
+            target->AddProcTriggerSpell(53739, pAura->GetSpellId(), pAura->m_casterGuid, pAura->GetSpellInfo()->getProcChance(), PROC_ON_MELEE_ATTACK, 0, NULL, NULL);
         }
         else
         {
@@ -178,8 +178,8 @@ bool SealOfVengeance(uint32 i, Aura* pAura, bool apply)
     {
         if (apply)
         {
-            target->AddProcTriggerSpell(31803, pAura->GetSpellId(), pAura->m_casterGuid, pAura->GetSpellInfo()->procChance, PROC_ON_MELEE_ATTACK, 0, NULL, NULL);
-            target->AddProcTriggerSpell(42463, pAura->GetSpellId(), pAura->m_casterGuid, pAura->GetSpellInfo()->procChance, PROC_ON_MELEE_ATTACK, 0, NULL, NULL);
+            target->AddProcTriggerSpell(31803, pAura->GetSpellId(), pAura->m_casterGuid, pAura->GetSpellInfo()->getProcChance(), PROC_ON_MELEE_ATTACK, 0, NULL, NULL);
+            target->AddProcTriggerSpell(42463, pAura->GetSpellId(), pAura->m_casterGuid, pAura->GetSpellInfo()->getProcChance(), PROC_ON_MELEE_ATTACK, 0, NULL, NULL);
         }
         else
         {
@@ -268,10 +268,10 @@ bool JudgementLightWisdomJustice(uint32 i, Spell* pSpell)
             id = 20187;
             break;
         case 31801:
-            id = aura->GetSpellInfo()->EffectBasePoints[2];
+            id = aura->GetSpellInfo()->getEffectBasePoints(2);
             break;
         case 53736:
-            id = aura->GetSpellInfo()->EffectBasePoints[2];
+            id = aura->GetSpellInfo()->getEffectBasePoints(2);
             break;
         case 20166:
             id = 54158;
@@ -331,7 +331,7 @@ bool JudgementOfLight(uint32 i, Aura* pAura, bool apply)
 
     if (apply)
     {
-        caster->AddProcTriggerSpell(20267, pAura->GetSpellId(), pAura->m_casterGuid, pAura->GetSpellInfo()->procChance, PROC_ON_MELEE_ATTACK | PROC_TARGET_SELF, 0, NULL, NULL);
+        caster->AddProcTriggerSpell(20267, pAura->GetSpellId(), pAura->m_casterGuid, pAura->GetSpellInfo()->getProcChance(), PROC_ON_MELEE_ATTACK | PROC_TARGET_SELF, 0, NULL, NULL);
     }
     else
     {
@@ -351,7 +351,7 @@ bool JudgementOfWisdom(uint32 i, Aura* pAura, bool apply)
 
     if (apply)
     {
-        caster->AddProcTriggerSpell(20268, pAura->GetSpellId(), pAura->m_casterGuid, pAura->GetSpellInfo()->procChance, PROC_ON_MELEE_ATTACK | PROC_TARGET_SELF, 0, NULL, NULL);
+        caster->AddProcTriggerSpell(20268, pAura->GetSpellId(), pAura->m_casterGuid, pAura->GetSpellInfo()->getProcChance(), PROC_ON_MELEE_ATTACK | PROC_TARGET_SELF, 0, NULL, NULL);
     }
     else
     {
@@ -418,7 +418,7 @@ bool Illumination(uint32 i, Spell* s)
             if (s->p_caster == NULL)
                 return false;
             SpellInfo* sp = s->p_caster->last_heal_spell ? s->p_caster->last_heal_spell : s->GetSpellInfo();
-            s->p_caster->Energize(s->p_caster, 20272, 60 * s->u_caster->GetBaseMana() * sp->ManaCostPercentage / 10000, POWER_TYPE_MANA);
+            s->p_caster->Energize(s->p_caster, 20272, 60 * s->u_caster->GetBaseMana() * sp->getManaCostPercentage() / 10000, POWER_TYPE_MANA);
         }
         break;
 

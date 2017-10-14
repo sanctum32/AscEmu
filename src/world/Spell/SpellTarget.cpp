@@ -28,6 +28,7 @@
 #include "Server/World.Legacy.h"
 #include "Definitions/SpellCastTargetFlags.h"
 #include "Definitions/SpellDidHitResult.h"
+#include "Definitions/SpellEffectTarget.h"
 #include "SpellHelpers.h"
 #include "Units/Creatures/Pet.h"
 
@@ -111,11 +112,11 @@ void Spell::FillTargetMap(uint32 i)
     ARCEMU_ASSERT(m_caster->IsInWorld());
 
     uint32 TargetType = 0;
-    TargetType |= GetTargetType(m_spellInfo->EffectImplicitTargetA[i], i);
+    TargetType |= GetTargetType(m_spellInfo->getEffectImplicitTargetA(i), i);
 
     //never get info from B if it is 0 :P
-    if (m_spellInfo->EffectImplicitTargetB[i] != 0)
-        TargetType |= GetTargetType(m_spellInfo->EffectImplicitTargetB[i], i);
+    if (m_spellInfo->getEffectImplicitTargetB(i) != EFF_TARGET_NONE)
+        TargetType |= GetTargetType(m_spellInfo->getEffectImplicitTargetB(i), i);
 
     if (TargetType & SPELL_TARGET_NOT_IMPLEMENTED)
         return;
@@ -135,7 +136,7 @@ void Spell::FillTargetMap(uint32 i)
     if (TargetType & SPELL_TARGET_OBJECT_SELF)
         AddTarget(i, TargetType, m_caster);
     if (TargetType & (SPELL_TARGET_AREA | SPELL_TARGET_AREA_SELF))  //targetted aoe
-        AddAOETargets(i, TargetType, GetRadius(i), m_spellInfo->MaxTargets);
+        AddAOETargets(i, TargetType, GetRadius(i), m_spellInfo->getMaxTargets());
     ///\todo arcemu, doesn't support summon slots?
     /*if (TargetType & SPELL_TARGET_OBJECT_CURTOTEMS && u_caster != NULL)
         for (uint32 i=1; i<5; ++i) //totem slots are 1, 2, 3, 4
@@ -156,25 +157,25 @@ void Spell::FillTargetMap(uint32 i)
     if ((TargetType & SPELL_TARGET_AREA_PARTY) && !(TargetType & SPELL_TARGET_AREA_RAID))
     {
         if (p_caster == NULL && !m_caster->IsPet() && (!m_caster->IsCreature() || !m_caster->IsTotem()))
-            AddAOETargets(i, TargetType, GetRadius(i), m_spellInfo->MaxTargets); //npcs
+            AddAOETargets(i, TargetType, GetRadius(i), m_spellInfo->getMaxTargets()); //npcs
         else
-            AddPartyTargets(i, TargetType, GetRadius(i), m_spellInfo->MaxTargets); //players/pets/totems
+            AddPartyTargets(i, TargetType, GetRadius(i), m_spellInfo->getMaxTargets()); //players/pets/totems
     }
     if (TargetType & SPELL_TARGET_AREA_RAID)
     {
         if (p_caster == NULL && !m_caster->IsPet() && (!m_caster->IsCreature() || !m_caster->IsTotem()))
-            AddAOETargets(i, TargetType, GetRadius(i), m_spellInfo->MaxTargets); //npcs
+            AddAOETargets(i, TargetType, GetRadius(i), m_spellInfo->getMaxTargets()); //npcs
         else
-            AddRaidTargets(i, TargetType, GetRadius(i), m_spellInfo->MaxTargets, (TargetType & SPELL_TARGET_AREA_PARTY) ? true : false); //players/pets/totems
+            AddRaidTargets(i, TargetType, GetRadius(i), m_spellInfo->getMaxTargets(), (TargetType & SPELL_TARGET_AREA_PARTY) ? true : false); //players/pets/totems
     }
     if (TargetType & SPELL_TARGET_AREA_CHAIN)
-        AddChainTargets(i, TargetType, GetRadius(i), m_spellInfo->MaxTargets);
+        AddChainTargets(i, TargetType, GetRadius(i), m_spellInfo->getMaxTargets());
     //target cone
     if (TargetType & SPELL_TARGET_AREA_CONE)
-        AddConeTargets(i, TargetType, GetRadius(i), m_spellInfo->MaxTargets);
+        AddConeTargets(i, TargetType, GetRadius(i), m_spellInfo->getMaxTargets());
 
     if (TargetType & SPELL_TARGET_OBJECT_SCRIPTED)
-        AddScriptedOrSpellFocusTargets(i, TargetType, GetRadius(i), m_spellInfo->MaxTargets);
+        AddScriptedOrSpellFocusTargets(i, TargetType, GetRadius(i), m_spellInfo->getMaxTargets());
 }
 
 void Spell::AddScriptedOrSpellFocusTargets(uint32 i, uint32 TargetType, float r, uint32 maxtargets)
@@ -188,7 +189,7 @@ void Spell::AddScriptedOrSpellFocusTargets(uint32 i, uint32 TargetType, float r,
 
         GameObject* go = static_cast<GameObject*>(o);
 
-        if (go->GetGameObjectProperties()->raw.parameter_0 == m_spellInfo->RequiresSpellFocus)
+        if (go->GetGameObjectProperties()->raw.parameter_0 == m_spellInfo->getRequiresSpellFocus())
         {
 
             if (!m_caster->isInRange(go, r))
@@ -244,7 +245,7 @@ void Spell::AddChainTargets(uint32 i, uint32 TargetType, float r, uint32 maxtarg
         firstTarget = u_caster;
 
     bool RaidOnly = false;
-    float range = GetMaxRange(sSpellRangeStore.LookupEntry(m_spellInfo->rangeIndex));//this is probably wrong,
+    float range = GetMaxRange(sSpellRangeStore.LookupEntry(m_spellInfo->getRangeIndex()));//this is probably wrong,
     //this is cast distance, not searching distance
     range *= range;
 
@@ -254,12 +255,12 @@ void Spell::AddChainTargets(uint32 i, uint32 TargetType, float r, uint32 maxtarg
     if (casterFrom != NULL && pfirstTargetFrom != NULL && casterFrom->GetGroup() == pfirstTargetFrom->GetGroup())
         RaidOnly = true;
 
-    uint32 jumps = m_spellInfo->EffectChainTarget[i];
+    uint32 jumps = m_spellInfo->getEffectChainTarget(i);
 
     //range
     range /= jumps; //hacky, needs better implementation!
 
-    ascemu::World::Spell::Helpers::spellModFlatIntValue(u_caster->SM_FAdditionalTargets, (int32*)&jumps, m_spellInfo->SpellGroupType);
+    ascemu::World::Spell::Helpers::spellModFlatIntValue(u_caster->SM_FAdditionalTargets, (int32*)&jumps, m_spellInfo->getSpellGroupType());
 
     AddTarget(i, TargetType, firstTarget);
 
@@ -457,7 +458,7 @@ bool Spell::AddTarget(uint32 i, uint32 TargetType, Object* obj)
     }
 
     //final checks, require line of sight unless range/radius is 50000 yards
-    auto spell_range = sSpellRangeStore.LookupEntry(m_spellInfo->rangeIndex);
+    auto spell_range = sSpellRangeStore.LookupEntry(m_spellInfo->getRangeIndex());
     if (spell_range != nullptr)
     {
         if (worldConfig.terrainCollision.isCollisionEnabled && spell_range->maxRange < 50000 && GetRadius(i) < 50000 && !obj->IsItem())
@@ -508,14 +509,14 @@ bool Spell::GenerateTargets(SpellCastTargets* t)
 
     for (uint8 i = 0; i < 3; ++i)
     {
-        if (m_spellInfo->Effect[i] == 0)
+        if (m_spellInfo->getEffect(i) == 0)
             continue;
         uint32 TargetType = 0;
-        TargetType |= GetTargetType(m_spellInfo->EffectImplicitTargetA[i], i);
+        TargetType |= GetTargetType(m_spellInfo->getEffectImplicitTargetA(i), i);
 
         //never get info from B if it is 0 :P
-        if (m_spellInfo->EffectImplicitTargetB[i] != 0)
-            TargetType |= GetTargetType(m_spellInfo->EffectImplicitTargetB[i], i);
+        if (m_spellInfo->getEffectImplicitTargetB(i) != EFF_TARGET_NONE)
+            TargetType |= GetTargetType(m_spellInfo->getEffectImplicitTargetB(i), i);
 
         if (TargetType & (SPELL_TARGET_OBJECT_SELF | SPELL_TARGET_AREA_PARTY | SPELL_TARGET_AREA_RAID))
         {

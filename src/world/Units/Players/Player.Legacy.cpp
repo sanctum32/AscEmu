@@ -1235,7 +1235,7 @@ void Player::Update(unsigned long time_passed)
 
                 for (uint32 x = MAX_POSITIVE_AURAS_EXTEDED_START; x < MAX_POSITIVE_AURAS_EXTEDED_END; x++)
                 {
-                    if (m_auras[x] && m_auras[x]->GetSpellInfo()->Attributes & ATTRIBUTES_ONLY_OUTDOORS)
+                    if (m_auras[x] && m_auras[x]->GetSpellInfo()->getAttributes() & ATTRIBUTES_ONLY_OUTDOORS)
                         RemoveAura(m_auras[x]);
                 }
             }
@@ -1301,7 +1301,7 @@ void Player::_EventAttack(bool offhand)
 {
     if (m_currentSpell)
     {
-        if (m_currentSpell->GetSpellInfo()->ChannelInterruptFlags != 0) // this is a channeled spell - ignore the attack event
+        if (m_currentSpell->GetSpellInfo()->getChannelInterruptFlags() != 0) // this is a channeled spell - ignore the attack event
             return;
         m_currentSpell->cancel();
         setAttackTimer(500, offhand);
@@ -2417,16 +2417,16 @@ void Player::addSpell(uint32 spell_id)
 
 #if VERSION_STRING > TBC
     m_achievementMgr.UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_LEARN_SPELL, spell_id, 1, 0);
-    if (spell->MechanicsType == MECHANIC_MOUNTED) // Mounts
+    if (spell->getMechanicsType() == MECHANIC_MOUNTED) // Mounts
     {
         // miscvalue1==777 for mounts, 778 for pets
         m_achievementMgr.UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_NUMBER_OF_MOUNTS, 777, 0, 0);
     }
-    else if (spell->Effect[0] == SPELL_EFFECT_SUMMON) // Companion pet?
+    else if (spell->getEffect(0) == SPELL_EFFECT_SUMMON) // Companion pet?
     {
         // miscvalue1==777 for mounts, 778 for pets
         // make sure it's a companion pet, not some other summon-type spell
-        if (strncmp(spell->Description.c_str(), "Right Cl", 8) == 0) // "Right Click to summon and dismiss " ...
+        if (strncmp(spell->getDescription().c_str(), "Right Cl", 8) == 0) // "Right Click to summon and dismiss " ...
         {
             m_achievementMgr.UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_NUMBER_OF_MOUNTS, 778, 0, 0);
         }
@@ -2995,40 +2995,40 @@ void Player::_SaveQuestLogEntry(QueryBuffer* buf)
 
 bool Player::canCast(SpellInfo* m_spellInfo)
 {
-    if (m_spellInfo->EquippedItemClass != 0)
+    if (m_spellInfo->getEquippedItemClass() != 0)
     {
         if (this->GetItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_MAINHAND))
         {
-            if ((int32)this->GetItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_MAINHAND)->GetItemProperties()->Class == m_spellInfo->EquippedItemClass)
+            if ((int32)this->GetItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_MAINHAND)->GetItemProperties()->Class == m_spellInfo->getEquippedItemClass())
             {
-                if (m_spellInfo->EquippedItemSubClass != 0)
+                if (m_spellInfo->getEquippedItemSubClass() != 0)
                 {
-                    if (m_spellInfo->EquippedItemSubClass != 173555 && m_spellInfo->EquippedItemSubClass != 96 && m_spellInfo->EquippedItemSubClass != 262156)
+                    if (m_spellInfo->getEquippedItemSubClass() != 173555 && m_spellInfo->getEquippedItemSubClass() != 96 && m_spellInfo->getEquippedItemSubClass() != 262156)
                     {
-                        if (pow(2.0, (this->GetItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_MAINHAND)->GetItemProperties()->SubClass) != m_spellInfo->EquippedItemSubClass))
+                        if (pow(2.0, (this->GetItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_MAINHAND)->GetItemProperties()->SubClass) != m_spellInfo->getEquippedItemSubClass()))
                             return false;
                     }
                 }
             }
         }
-        else if (m_spellInfo->EquippedItemSubClass == 173555)
+        else if (m_spellInfo->getEquippedItemSubClass() == 173555)
             return false;
 
         if (this->GetItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_RANGED))
         {
-            if ((int32)this->GetItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_RANGED)->GetItemProperties()->Class == m_spellInfo->EquippedItemClass)
+            if ((int32)this->GetItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_RANGED)->GetItemProperties()->Class == m_spellInfo->getEquippedItemClass())
             {
-                if (m_spellInfo->EquippedItemSubClass != 0)
+                if (m_spellInfo->getEquippedItemSubClass() != 0)
                 {
-                    if (m_spellInfo->EquippedItemSubClass != 173555 && m_spellInfo->EquippedItemSubClass != 96 && m_spellInfo->EquippedItemSubClass != 262156)
+                    if (m_spellInfo->getEquippedItemSubClass() != 173555 && m_spellInfo->getEquippedItemSubClass() != 96 && m_spellInfo->getEquippedItemSubClass() != 262156)
                     {
-                        if (pow(2.0, (this->GetItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_RANGED)->GetItemProperties()->SubClass) != m_spellInfo->EquippedItemSubClass))                            return false;
+                        if (pow(2.0, (this->GetItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_RANGED)->GetItemProperties()->SubClass) != m_spellInfo->getEquippedItemSubClass()))                            return false;
                     }
                 }
             }
         }
         else if
-            (m_spellInfo->EquippedItemSubClass == 262156)
+            (m_spellInfo->getEquippedItemSubClass() == 262156)
             return false;
 
 
@@ -4630,7 +4630,7 @@ void Player::_ApplyItemMods(Item* item, int16 slot, bool apply, bool justdrokedo
 
             if (item->GetItemProperties()->Spells[k].Trigger == ON_EQUIP)
             {
-                if (spells->RequiredShapeShift)
+                if (spells->getRequiredShapeShift())
                 {
                     AddShapeShiftSpell(spells->getId());
                     continue;
@@ -4660,7 +4660,7 @@ void Player::_ApplyItemMods(Item* item, int16 slot, bool apply, bool justdrokedo
                 SpellInfo* spells = sSpellCustomizations.GetSpellInfo(item->GetItemProperties()->Spells[k].Id);
                 if (spells != nullptr)
                 {
-                    if (spells->RequiredShapeShift)
+                    if (spells->getRequiredShapeShift())
                         RemoveShapeShiftSpell(spells->getId());
                     else
                         RemoveAura(item->GetItemProperties()->Spells[k].Id);
@@ -6289,7 +6289,7 @@ int32 Player::CanShootRangedWeapon(uint32 spellid, Unit* target, bool autoshot)
     if (spell_info == nullptr)
         return -1;
 
-    LogDebugFlag(LF_SPELL, "Canshootwithrangedweapon!?!? spell: [%u] %s" , spell_info->getId() , spell_info->Name.c_str());
+    LogDebugFlag(LF_SPELL, "Canshootwithrangedweapon!?!? spell: [%u] %s" , spell_info->getId() , spell_info->getName().c_str());
 
     // Check if Morphed
     if (polySpell > 0)
@@ -6337,15 +6337,15 @@ int32 Player::CanShootRangedWeapon(uint32 spellid, Unit* target, bool autoshot)
     // Supalosa - The hunter ability Auto Shot is using Shoot range, which is 5 yards shorter.
     // So we'll use 114, which is the correct 35 yard range used by the other Hunter abilities (arcane shot, concussive shot...)
     uint8 fail = 0;
-    uint32 rIndex = autoshot ? 114 : spell_info->rangeIndex;
+    uint32 rIndex = autoshot ? 114 : spell_info->getRangeIndex();
 
     auto spell_range = sSpellRangeStore.LookupEntry(rIndex);
     float minrange = GetMinRange(spell_range);
     float dist = CalcDistance(this, target);
     float maxr = GetMaxRange(spell_range) + 2.52f;
 
-    spellModFlatFloatValue(this->SM_FRange, &maxr, spell_info->SpellGroupType);
-    spellModPercentageFloatValue(this->SM_PRange, &maxr, spell_info->SpellGroupType);
+    spellModFlatFloatValue(this->SM_FRange, &maxr, spell_info->getSpellGroupType());
+    spellModPercentageFloatValue(this->SM_PRange, &maxr, spell_info->getSpellGroupType());
 
     //float bonusRange = 0;
     // another hackfix: bonus range from hunter talent hawk eye: +2/4/6 yard range to ranged weapons
@@ -6715,11 +6715,11 @@ void Player::Reset_Talents()
                 {
                     for (uint8 k = 0; k < 3; ++k)
                     {
-                        if (spellInfo->Effect[k] == SPELL_EFFECT_LEARN_SPELL)
+                        if (spellInfo->getEffect(k) == SPELL_EFFECT_LEARN_SPELL)
                         {
                             // removeSpell(spellInfo->EffectTriggerSpell[k], false, 0, 0);
                             // remove higher ranks of this spell too (like earth shield lvl 1 is talent and the rest is taught from trainer)
-                            spellInfo2 = sSpellCustomizations.GetSpellInfo(spellInfo->EffectTriggerSpell[k]);
+                            spellInfo2 = sSpellCustomizations.GetSpellInfo(spellInfo->getEffectTriggerSpell(k));
                             if (spellInfo2 != NULL)
                             {
                                 removeSpellByHashName(spellInfo2->custom_NameHash);
@@ -7574,7 +7574,7 @@ void Player::ClearCooldownForSpell(uint32 spell_id)
         for (PlayerCooldownMap::iterator itr = m_cooldownMap[i].begin(); itr != m_cooldownMap[i].end();)
         {
             PlayerCooldownMap::iterator itr2 = itr++;
-            if ((i == COOLDOWN_TYPE_CATEGORY && itr2->first == spellInfo->Category) ||
+            if ((i == COOLDOWN_TYPE_CATEGORY && itr2->first == spellInfo->getCategory()) ||
                 (i == COOLDOWN_TYPE_SPELL && itr2->first == spellInfo->getId()))
             {
                 m_cooldownMap[i].erase(itr2);
@@ -9438,9 +9438,9 @@ void Player::CompleteLoading()
             && (info->IsPassive())  // passive
             && !(info->custom_c_is_flags & SPELL_FLAG_IS_EXPIREING_WITH_PET))
         {
-            if (info->RequiredShapeShift)
+            if (info->getRequiredShapeShift())
             {
-                if (!(((uint32)1 << (GetShapeShift() - 1)) & info->RequiredShapeShift))
+                if (!(((uint32)1 << (GetShapeShift() - 1)) & info->getRequiredShapeShift()))
                     continue;
             }
 
@@ -9464,29 +9464,29 @@ void Player::CompleteLoading()
 
         for (uint32 x = 0; x < 3; x++)
         {
-            if (sp->Effect[x] == SPELL_EFFECT_APPLY_AURA)
+            if (sp->getEffect(x) == SPELL_EFFECT_APPLY_AURA)
             {
-                aura->AddMod(sp->EffectApplyAuraName[x], sp->EffectBasePoints[x] + 1, sp->EffectMiscValue[x], x);
+                aura->AddMod(sp->getEffectApplyAuraName(x), sp->getEffectBasePoints(x) + 1, sp->getEffectMiscValue(x), x);
             }
         }
 
-        if (sp->procCharges > 0 && (*i).charges > 0)
+        if (sp->getProcCharges() > 0 && (*i).charges > 0)
         {
             for (uint32 x = 0; x < (*i).charges - 1; x++)
             {
                 Aura* a = sSpellFactoryMgr.NewAura(sp, (*i).dur, this, this, false);
                 this->AddAura(a);
             }
-            if (m_chargeSpells.find(sp->getId()) == m_chargeSpells.end() && !(sp->procFlags & PROC_REMOVEONUSE))
+            if (m_chargeSpells.find(sp->getId()) == m_chargeSpells.end() && !(sp->getProcFlags() & PROC_REMOVEONUSE))
             {
                 SpellCharge charge;
                 if (sp->custom_proc_interval == 0)
                     charge.count = (*i).charges;
                 else
-                    charge.count = sp->procCharges;
+                    charge.count = sp->getProcCharges();
 
                 charge.spellId = sp->getId();
-                charge.ProcFlag = sp->procFlags;
+                charge.ProcFlag = sp->getProcFlags();
                 charge.lastproc = 0;
                 charge.procdiff = 0;
                 m_chargeSpells.insert(std::make_pair(sp->getId(), charge));
@@ -9886,7 +9886,7 @@ void Player::SaveAuras(std::stringstream & ss)
             Aura* aur = m_auras[x];
             for (uint8 i = 0; i < 3; ++i)
             {
-                if (aur->m_spellInfo->Effect[i] == SPELL_EFFECT_APPLY_GROUP_AREA_AURA || aur->m_spellInfo->Effect[i] == SPELL_EFFECT_APPLY_RAID_AREA_AURA || aur->m_spellInfo->Effect[i] == SPELL_EFFECT_ADD_FARSIGHT)
+                if (aur->m_spellInfo->getEffect(i) == SPELL_EFFECT_APPLY_GROUP_AREA_AURA || aur->m_spellInfo->getEffect(i) == SPELL_EFFECT_APPLY_RAID_AREA_AURA || aur->m_spellInfo->getEffect(i) == SPELL_EFFECT_ADD_FARSIGHT)
                 {
                     continue;
                     break;
@@ -9900,7 +9900,7 @@ void Player::SaveAuras(std::stringstream & ss)
                 continue;
 
             //we are going to cast passive spells anyway on login so no need to save auras for them
-            if (aur->IsPassive() && !(aur->GetSpellInfo()->AttributesEx & 1024))
+            if (aur->IsPassive() && !(aur->GetSpellInfo()->getAttributesEx() & ATTRIBUTESEX_NO_INITIAL_AGGRO))
                 continue;
 
             if (charges > 0 && aur->GetSpellId() != m_auras[prevX]->GetSpellId())
@@ -9909,7 +9909,7 @@ void Player::SaveAuras(std::stringstream & ss)
                 charges = 0;
             }
 
-            if (aur->GetSpellInfo()->procCharges == 0)
+            if (aur->GetSpellInfo()->getProcCharges() == 0)
                 ss << aur->GetSpellId() << "," << aur->GetTimeLeft() << "," << aur->IsPositive() << "," << 0 << ",";
             else
                 charges++;
@@ -9933,7 +9933,7 @@ void Player::SetShapeShift(uint8 ss)
     {
         if (m_auras[x] != NULL)
         {
-            uint32 reqss = m_auras[x]->GetSpellInfo()->RequiredShapeShift;
+            uint32 reqss = m_auras[x]->GetSpellInfo()->getRequiredShapeShift();
             if (reqss != 0 && m_auras[x]->IsPositive())
             {
                 if (old_ss > 0
@@ -9951,7 +9951,7 @@ void Player::SetShapeShift(uint8 ss)
 
             if (this->getClass() == DRUID)
             {
-                switch (m_auras[x]->GetSpellInfo()->MechanicsType)
+                switch (m_auras[x]->GetSpellInfo()->getMechanicsType())
                 {
                     case MECHANIC_ROOTED: //Rooted
                     case MECHANIC_ENSNARED: //Movement speed
@@ -9979,9 +9979,9 @@ void Player::SetShapeShift(uint8 ss)
         if (sp == nullptr)
             continue;
 
-        if (sp->custom_apply_on_shapeshift_change || sp->Attributes & 64)        // passive/talent
+        if (sp->custom_apply_on_shapeshift_change || sp->getAttributes() & ATTRIBUTES_PASSIVE)        // passive/talent
         {
-            if (sp->RequiredShapeShift && ((uint32)1 << (ss - 1)) & sp->RequiredShapeShift)
+            if (sp->getRequiredShapeShift() && ((uint32)1 << (ss - 1)) & sp->getRequiredShapeShift())
             {
                 spe = sSpellFactoryMgr.NewSpell(this, sp, true, NULL);
                 spe->prepare(&t);
@@ -10006,7 +10006,7 @@ void Player::SetShapeShift(uint8 ss)
     for (itr = mShapeShiftSpells.begin(); itr != mShapeShiftSpells.end(); ++itr)
     {
         sp = sSpellCustomizations.GetSpellInfo(*itr);
-        if (sp->RequiredShapeShift && ((uint32)1 << (ss - 1)) & sp->RequiredShapeShift)
+        if (sp->getRequiredShapeShift() && ((uint32)1 << (ss - 1)) & sp->getRequiredShapeShift())
         {
             spe = sSpellFactoryMgr.NewSpell(this, sp, true, NULL);
             spe->prepare(&t);
@@ -11151,7 +11151,7 @@ void Player::AddShapeShiftSpell(uint32 id)
     SpellInfo* sp = sSpellCustomizations.GetSpellInfo(id);
     mShapeShiftSpells.insert(id);
 
-    if (sp->RequiredShapeShift && ((uint32)1 << (GetShapeShift() - 1)) & sp->RequiredShapeShift)
+    if (sp->getRequiredShapeShift() && ((uint32)1 << (GetShapeShift() - 1)) & sp->getRequiredShapeShift())
     {
         Spell* spe = sSpellFactoryMgr.NewSpell(this, sp, true, NULL);
         SpellCastTargets t(this->GetGUID());
@@ -11199,9 +11199,9 @@ bool Player::HasSpellWithAuraNameAndBasePoints(uint32 auraname, uint32 basepoint
 
         for (uint8 i = 0; i < 3; ++i)
         {
-            if (sp->Effect[i] == SPELL_EFFECT_APPLY_AURA)
+            if (sp->getEffect(i) == SPELL_EFFECT_APPLY_AURA)
             {
-                if ((sp->EffectApplyAuraName[i] == auraname) && (sp->EffectBasePoints[i] == (basepoints - 1)))
+                if ((sp->getEffectApplyAuraName(i) == auraname) && (sp->getEffectBasePoints(i) == (basepoints - 1)))
                     return true;
             }
         }
@@ -11266,22 +11266,22 @@ void Player::Cooldown_Add(SpellInfo* pSpell, Item* pItemCaster)
     uint32 mstime = Util::getMSTime();
     int32 cool_time;
     uint32 spell_id = pSpell->getId();
-    uint32 category_id = pSpell->Category;
+    uint32 category_id = pSpell->getCategory();
 
-    uint32 spell_category_recovery_time = pSpell->CategoryRecoveryTime;
+    uint32 spell_category_recovery_time = pSpell->getCategoryRecoveryTime();
     if (spell_category_recovery_time > 0 && category_id)
     {
-        spellModFlatIntValue(SM_FCooldownTime, &cool_time, pSpell->SpellGroupType);
-        spellModPercentageIntValue(SM_PCooldownTime, &cool_time, pSpell->SpellGroupType);
+        spellModFlatIntValue(SM_FCooldownTime, &cool_time, pSpell->getSpellGroupType());
+        spellModPercentageIntValue(SM_PCooldownTime, &cool_time, pSpell->getSpellGroupType());
 
         AddCategoryCooldown(category_id, spell_category_recovery_time + mstime, spell_id, pItemCaster ? pItemCaster->GetItemProperties()->ItemId : 0);
     }
 
-    uint32 spell_recovery_t = pSpell->RecoveryTime;
+    uint32 spell_recovery_t = pSpell->getRecoveryTime();
     if (spell_recovery_t > 0)
     {
-        spellModFlatIntValue(SM_FCooldownTime, &cool_time, pSpell->SpellGroupType);
-        spellModPercentageIntValue(SM_PCooldownTime, &cool_time, pSpell->SpellGroupType);
+        spellModFlatIntValue(SM_FCooldownTime, &cool_time, pSpell->getSpellGroupType());
+        spellModPercentageIntValue(SM_PCooldownTime, &cool_time, pSpell->getSpellGroupType());
 
         _Cooldown_Add(COOLDOWN_TYPE_SPELL, spell_id, spell_recovery_t + mstime, spell_id, pItemCaster ? pItemCaster->GetItemProperties()->ItemId : 0);
     }
@@ -11289,25 +11289,25 @@ void Player::Cooldown_Add(SpellInfo* pSpell, Item* pItemCaster)
 
 void Player::Cooldown_AddStart(SpellInfo* pSpell)
 {
-    if (pSpell->StartRecoveryTime == 0)
+    if (pSpell->getStartRecoveryTime() == 0)
         return;
 
     uint32 mstime = Util::getMSTime();
     int32 atime; // = float2int32(float(pSpell->StartRecoveryTime) / SpellHasteRatingBonus);
 
     if (GetCastSpeedMod() >= 1.0f)
-        atime = pSpell->StartRecoveryTime;
+        atime = pSpell->getStartRecoveryTime();
     else
-        atime = float2int32(pSpell->StartRecoveryTime * GetCastSpeedMod());
+        atime = float2int32(pSpell->getStartRecoveryTime() * GetCastSpeedMod());
 
-    spellModFlatIntValue(SM_FGlobalCooldown, &atime, pSpell->SpellGroupType);
-    spellModPercentageIntValue(SM_PGlobalCooldown, &atime, pSpell->SpellGroupType);
+    spellModFlatIntValue(SM_FGlobalCooldown, &atime, pSpell->getSpellGroupType());
+    spellModPercentageIntValue(SM_PGlobalCooldown, &atime, pSpell->getSpellGroupType());
 
     if (atime < 0)
         return;
 
-    if (pSpell->StartRecoveryCategory && pSpell->StartRecoveryCategory != 133)        // if we have a different cool category to the actual spell category - only used by few spells
-        AddCategoryCooldown(pSpell->StartRecoveryCategory, mstime + atime, pSpell->getId(), 0);
+    if (pSpell->getStartRecoveryCategory() && pSpell->getStartRecoveryCategory() != 133)        // if we have a different cool category to the actual spell category - only used by few spells
+        AddCategoryCooldown(pSpell->getStartRecoveryCategory(), mstime + atime, pSpell->getId(), 0);
     //else if (pSpell->Category)                // cooldowns are grouped
     //_Cooldown_Add(COOLDOWN_TYPE_CATEGORY, pSpell->Category, mstime + pSpell->StartRecoveryTime, pSpell->getId(), 0);
     else                                    // no category, so it's a gcd
@@ -11323,9 +11323,9 @@ bool Player::Cooldown_CanCast(SpellInfo* pSpell)
     PlayerCooldownMap::iterator itr;
     uint32 mstime = Util::getMSTime();
 
-    if (pSpell->Category)
+    if (pSpell->getCategory())
     {
-        itr = m_cooldownMap[COOLDOWN_TYPE_CATEGORY].find(pSpell->Category);
+        itr = m_cooldownMap[COOLDOWN_TYPE_CATEGORY].find(pSpell->getCategory());
         if (itr != m_cooldownMap[COOLDOWN_TYPE_CATEGORY].end())
         {
             if (mstime < itr->second.ExpireTime)
@@ -11344,7 +11344,7 @@ bool Player::Cooldown_CanCast(SpellInfo* pSpell)
             m_cooldownMap[COOLDOWN_TYPE_SPELL].erase(itr);
     }
 
-    if (pSpell->StartRecoveryTime && m_globalCooldown && !this->CooldownCheat /* cebernic:GCD also cheat :D */)            /* gcd doesn't affect spells without a cooldown it seems */
+    if (pSpell->getStartRecoveryTime() && m_globalCooldown && !this->CooldownCheat /* cebernic:GCD also cheat :D */)            /* gcd doesn't affect spells without a cooldown it seems */
     {
         if (mstime < m_globalCooldown)
             return false;
@@ -12117,7 +12117,7 @@ void Player::CalcExpertise()
             entry = m_auras[x]->m_spellInfo;
             val = m_auras[x]->GetModAmountByMod();
 
-            if (entry->EquippedItemSubClass != 0)
+            if (entry->getEquippedItemSubClass() != 0)
             {
                 auto item_mainhand = GetItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_MAINHAND);
                 auto item_offhand = GetItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_OFFHAND);
@@ -12125,9 +12125,9 @@ void Player::CalcExpertise()
                 uint32 reqskillOH = 0;
 
                 if (item_mainhand)
-                    reqskillMH = entry->EquippedItemSubClass & (((uint32)1) << item_mainhand->GetItemProperties()->SubClass);
+                    reqskillMH = entry->getEquippedItemSubClass() & (((uint32)1) << item_mainhand->GetItemProperties()->SubClass);
                 if (item_offhand)
-                    reqskillOH = entry->EquippedItemSubClass & (((uint32)1) << item_offhand->GetItemProperties()->SubClass);
+                    reqskillOH = entry->getEquippedItemSubClass() & (((uint32)1) << item_offhand->GetItemProperties()->SubClass);
 
                 if (reqskillMH != 0 || reqskillOH != 0)
                     modifier = +val;
@@ -12488,12 +12488,12 @@ void Player::LearnTalent(uint32 talentid, uint32 rank, bool isPreviewed)
                 }
             }
 
-            if (spellInfo->IsPassive() || ((spellInfo->Effect[0] == SPELL_EFFECT_LEARN_SPELL ||
-                spellInfo->Effect[1] == SPELL_EFFECT_LEARN_SPELL ||
-                spellInfo->Effect[2] == SPELL_EFFECT_LEARN_SPELL)
+            if (spellInfo->IsPassive() || ((spellInfo->getEffect(0) == SPELL_EFFECT_LEARN_SPELL ||
+                spellInfo->getEffect(1) == SPELL_EFFECT_LEARN_SPELL ||
+                spellInfo->getEffect(2) == SPELL_EFFECT_LEARN_SPELL)
                 && ((spellInfo->custom_c_is_flags & SPELL_FLAG_IS_EXPIREING_WITH_PET) == 0 || ((spellInfo->custom_c_is_flags & SPELL_FLAG_IS_EXPIREING_WITH_PET) && GetSummon()))))
             {
-                if (spellInfo->RequiredShapeShift && !((uint32)1 << (GetShapeShift() - 1) & spellInfo->RequiredShapeShift))
+                if (spellInfo->getRequiredShapeShift() && !((uint32)1 << (GetShapeShift() - 1) & spellInfo->getRequiredShapeShift()))
                 {
                     // do nothing
                 }
@@ -12739,10 +12739,10 @@ void Player::SendPreventSchoolCast(uint32 SpellSchool, uint32 unTimeMs)
         }
 
         // Not send cooldown for this spells
-        if (spellInfo->Attributes & ATTRIBUTES_TRIGGER_COOLDOWN)
+        if (spellInfo->getAttributes() & ATTRIBUTES_TRIGGER_COOLDOWN)
             continue;
 
-        if (spellInfo->School == SpellSchool)
+        if (spellInfo->getSchool() == SpellSchool)
         {
             data << uint32(SpellId);
             data << uint32(unTimeMs);                       // in m.secs
@@ -13330,7 +13330,7 @@ void Player::Die(Unit* pAttacker, uint32 damage, uint32 spellid)
 
             for (uint8 i = 0; i < 3; i++)
             {
-                if (spl->GetSpellInfo()->Effect[i] == SPELL_EFFECT_PERSISTENT_AREA_AURA)
+                if (spl->GetSpellInfo()->getEffect(i) == SPELL_EFFECT_PERSISTENT_AREA_AURA)
                 {
                     uint64 guid = GetChannelSpellTargetGUID();
                     DynamicObject* dObj = GetMapMgr()->GetDynamicObject(Arcemu::Util::GUID_LOPART(guid));
@@ -13341,7 +13341,7 @@ void Player::Die(Unit* pAttacker, uint32 damage, uint32 spellid)
                 }
             }
 
-            if (spl->GetSpellInfo()->ChannelInterruptFlags == 48140) spl->cancel();
+            if (spl->GetSpellInfo()->getChannelInterruptFlags() == 48140) spl->cancel();
         }
     }
 

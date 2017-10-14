@@ -1325,15 +1325,15 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type)
                 while (sl != GetPlayer()->mSpells.end())
                 {
                     SpellInfo* sp = sSpellCustomizations.GetSpellInfo(*sl);
-                    if (achievementCriteria->number_of_mounts.unknown == 777 && sp && sp->MechanicsType == MECHANIC_MOUNTED)
+                    if (achievementCriteria->number_of_mounts.unknown == 777 && sp && sp->getMechanicsType() == MECHANIC_MOUNTED)
                     {
                         // mount spell
                         ++nm;
                     }
-                    else if (achievementCriteria->number_of_mounts.unknown == 778 && sp && (sp->Effect[0] == SPELL_EFFECT_SUMMON))
+                    else if (achievementCriteria->number_of_mounts.unknown == 778 && sp && (sp->getEffect(0) == SPELL_EFFECT_SUMMON))
                     {
                         // Companion pet? Make sure it's a companion pet, not some other summon-type spell
-                        if (strncmp(sp->Description.c_str(), "Right Cl", 8) == 0)
+                        if (strncmp(sp->getDescription().c_str(), "Right Cl", 8) == 0)
                         {
                             // "Right Click to summon and dismiss " ...
                             ++nm;

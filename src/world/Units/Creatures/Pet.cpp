@@ -35,6 +35,7 @@
 #include "Spell/Definitions/ProcFlags.h"
 #include <Spell/Definitions/AuraInterruptFlags.h>
 #include "Spell/Definitions/PowerType.h"
+#include "Spell/Definitions/SpellEffectTarget.h"
 #include "Pet.h"
 
 #define WATER_ELEMENTAL         510
@@ -805,29 +806,29 @@ AI_Spell* Pet::CreateAISpell(SpellInfo* info)
     sp->agent = AGENT_SPELL;
     sp->entryId = GetEntry();
     sp->floatMisc1 = 0;
-    sp->maxrange = GetMaxRange(sSpellRangeStore.LookupEntry(info->rangeIndex));
+    sp->maxrange = GetMaxRange(sSpellRangeStore.LookupEntry(info->getRangeIndex()));
     if (sp->maxrange < sqrt(info->custom_base_range_or_radius_sqr))
         sp->maxrange = sqrt(info->custom_base_range_or_radius_sqr);
-    sp->minrange = GetMinRange(sSpellRangeStore.LookupEntry(info->rangeIndex));
+    sp->minrange = GetMinRange(sSpellRangeStore.LookupEntry(info->getRangeIndex()));
     sp->Misc2 = 0;
     sp->procChance = 0;
     sp->spell = info;
     sp->cooldown = objmgr.GetPetSpellCooldown(info->getId());
     if (sp->cooldown == 0)
-        sp->cooldown = info->RecoveryTime;          //still 0 ?
+        sp->cooldown = info->getRecoveryTime();          //still 0 ?
     if (sp->cooldown == 0)
-        sp->cooldown = info->CategoryRecoveryTime;
+        sp->cooldown = info->getCategoryRecoveryTime();
     if (sp->cooldown == 0)
-        sp->cooldown = info->StartRecoveryTime;     //avoid spell spamming
+        sp->cooldown = info->getStartRecoveryTime();     //avoid spell spamming
     if (sp->cooldown == 0)
         sp->cooldown = PET_SPELL_SPAM_COOLDOWN;     //omg, avoid spamming at least
     sp->cooldowntime = 0;
 
     if (/* info->Effect[0] == SPELL_EFFECT_APPLY_AURA || */
-        info->Effect[0] == SPELL_EFFECT_APPLY_GROUP_AREA_AURA
-        || info->Effect[0] == SPELL_EFFECT_APPLY_RAID_AREA_AURA
-        || info->EffectImplicitTargetA[0] == 27     //TARGET_MASTER
-        || info->EffectImplicitTargetA[0] == 57)    //TARGET_SINGLE_FRIEND_2
+        info->getEffect(0) == SPELL_EFFECT_APPLY_GROUP_AREA_AURA
+        || info->getEffect(0) == SPELL_EFFECT_APPLY_RAID_AREA_AURA
+        || info->getEffectImplicitTargetA(0) == EFF_TARGET_PET_MASTER
+        || info->getEffectImplicitTargetA(0) == EFF_TARGET_PARTY_MEMBER)
         sp->spellType = STYPE_BUFF;
     else
         sp->spellType = STYPE_DAMAGE;
@@ -1355,7 +1356,7 @@ void Pet::UpdateSpellList(bool showLearnSpells)
             if ((skill_line_ability->skilline == s || skill_line_ability->skilline == s2) && skill_line_ability->acquireMethod == 2)
             {
                 sp = sSpellCustomizations.GetSpellInfo(skill_line_ability->spell);
-                if (sp && getLevel() >= sp->baseLevel)
+                if (sp && getLevel() >= sp->getBaseLevel())
                 {
                     // Pet is able to learn this spell; now check if it already has it, or a higher rank of it
                     bool addThisSpell = true;
@@ -1495,7 +1496,7 @@ void Pet::AddSpell(SpellInfo* sp, bool learning, bool showLearnSpell)
     }
 
 #if VERSION_STRING > TBC
-    if (showLearnSpell && m_Owner && m_Owner->GetSession() && !(sp->Attributes & ATTRIBUTES_NO_CAST))
+    if (showLearnSpell && m_Owner && m_Owner->GetSession() && !(sp->getAttributes() & ATTRIBUTES_NO_CAST))
     {
         auto id = sp->getId();
         m_Owner->GetSession()->OutPacket(SMSG_PET_LEARNED_SPELL, 2, &id);
@@ -1932,7 +1933,7 @@ void Pet::UpdateAP()
 uint32 Pet::CanLearnSpell(SpellInfo* sp)
 {
     // level requirement
-    if (getLevel() < sp->spellLevel)
+    if (getLevel() < sp->getSpellLevel())
         return SPELL_FAILED_LEVEL_REQUIREMENT;
 
     return 0;
@@ -1966,7 +1967,7 @@ AI_Spell* Pet::HandleAutoCastEvent()
         if ((*itr)->autocast_type == AUTOCAST_EVENT_ATTACK)
         {
             // spells still spammed, I think the cooldowntime is being set incorrectly somewhere else
-            if (chance && (*itr)->spell &&Util::getMSTime() >= (*itr)->cooldowntime && GetPower((*itr)->spell->powerType) >= (*itr)->spell->manaCost)
+            if (chance && (*itr)->spell &&Util::getMSTime() >= (*itr)->cooldowntime && GetPower((*itr)->spell->getPowerType()) >= (*itr)->spell->getManaCost())
             {
                 return *itr;
             }
@@ -2391,7 +2392,7 @@ void Pet::Die(Unit* pAttacker, uint32 damage, uint32 spellid)
 
             for (uint8 i = 0; i < 3; i++)
             {
-                if (spl->GetSpellInfo()->Effect[i] == SPELL_EFFECT_PERSISTENT_AREA_AURA)
+                if (spl->GetSpellInfo()->getEffect(i) == SPELL_EFFECT_PERSISTENT_AREA_AURA)
                 {
                     uint64 guid = GetChannelSpellTargetGUID();
                     DynamicObject* dObj = GetMapMgr()->GetDynamicObject(Arcemu::Util::GUID_LOPART(guid));
@@ -2402,7 +2403,7 @@ void Pet::Die(Unit* pAttacker, uint32 damage, uint32 spellid)
                 }
             }
 
-            if (spl->GetSpellInfo()->ChannelInterruptFlags == 48140) spl->cancel();
+            if (spl->GetSpellInfo()->getChannelInterruptFlags() == 48140) spl->cancel();
         }
     }
 

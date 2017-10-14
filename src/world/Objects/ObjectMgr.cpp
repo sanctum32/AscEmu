@@ -403,7 +403,7 @@ SpellInfo* ObjectMgr::GetNextSpellRank(SpellInfo* sp, uint32 level)
     if (skill_line_ability != nullptr && skill_line_ability->next > 0)
     {
         SpellInfo* sp1 = sSpellCustomizations.GetSpellInfo(skill_line_ability->next);
-        if (sp1 && sp1->baseLevel <= level)   // check level
+        if (sp1 && sp1->getBaseLevel() <= level)   // check level
         {
             return GetNextSpellRank(sp1, level);   // recursive for higher ranks
         }
@@ -1364,28 +1364,26 @@ std::vector<CreatureItem>* ObjectMgr::GetVendorList(uint32 entry)
 void ObjectMgr::LoadAIThreatToSpellId()
 {
     QueryResult* result = WorldDatabase.Query("SELECT * FROM ai_threattospellid");
-
-    if (!result)
+    if (result != nullptr)
     {
-        return;
-    }
-
-    do
-    {
-        Field* fields = result->Fetch();
-        SpellInfo* sp = sSpellCustomizations.GetSpellInfo(fields[0].GetUInt32());
-        if (sp != NULL)
+        do
         {
-            sp->custom_ThreatForSpell = fields[1].GetUInt32();
-            sp->custom_ThreatForSpellCoef = fields[2].GetFloat();
-        }
-        else
-            LogDebugFlag(LF_DB_TABLES, "AIThreatSpell : Cannot apply to spell %u; spell is nonexistent.", fields[0].GetUInt32());
+            Field* fields = result->Fetch();
+            SpellInfo* sp = sSpellCustomizations.GetSpellInfo(fields[0].GetUInt32());
+            if (sp != nullptr)
+            {
+                sp->custom_ThreatForSpell = fields[1].GetInt32();
+                sp->custom_ThreatForSpellCoef = fields[2].GetFloat();
+            }
+            else
+            {
+                LogDebugFlag(LF_DB_TABLES, "AIThreatSpell : Cannot apply to spell %u; spell is nonexistent.", fields[0].GetUInt32());
+            }
 
+        } while (result->NextRow());
+
+        delete result;
     }
-    while (result->NextRow());
-
-    delete result;
 }
 
 void ObjectMgr::LoadSpellEffectsOverride()
@@ -1415,31 +1413,31 @@ void ObjectMgr::LoadSpellEffectsOverride()
                 if (sp != NULL)
                 {
                     if (seo_Disable)
-                        sp->Effect[seo_EffectId] = SPELL_EFFECT_NULL;
+                        sp->setEffect(SPELL_EFFECT_NULL, seo_EffectId);
 
                     if (seo_Effect)
-                        sp->Effect[seo_EffectId] = seo_Effect;
+                        sp->setEffect(seo_Effect, seo_EffectId);
 
                     if (seo_BasePoints)
-                        sp->EffectBasePoints[seo_EffectId] = seo_BasePoints;
+                        sp->setEffectBasePoints(seo_BasePoints, seo_EffectId);
 
                     if (seo_ApplyAuraName)
-                        sp->EffectApplyAuraName[seo_EffectId] = seo_ApplyAuraName;
+                        sp->setEffectApplyAuraName(seo_ApplyAuraName, seo_EffectId);
 
                     //                    if (seo_SpellGroupRelation)
                     //                        sp->EffectSpellGroupRelation[seo_EffectId] = seo_SpellGroupRelation;
 
                     if (seo_MiscValue)
-                        sp->EffectMiscValue[seo_EffectId] = seo_MiscValue;
+                        sp->setEffectMiscValue(seo_MiscValue, seo_EffectId);
 
                     if (seo_TriggerSpell)
-                        sp->EffectTriggerSpell[seo_EffectId] = seo_TriggerSpell;
+                        sp->setEffectTriggerSpell(seo_TriggerSpell, seo_EffectId);
 
                     if (seo_ImplicitTargetA)
-                        sp->EffectImplicitTargetA[seo_EffectId] = seo_ImplicitTargetA;
+                        sp->setEffectImplicitTargetA(seo_ImplicitTargetA, seo_EffectId);
 
                     if (seo_ImplicitTargetB)
-                        sp->EffectImplicitTargetB[seo_EffectId] = seo_ImplicitTargetB;
+                        sp->setEffectImplicitTargetB(seo_ImplicitTargetB, seo_EffectId);
 
                     if (seo_EffectCustomFlag != 0)
                         sp->EffectCustomFlag[seo_Effect] = seo_EffectCustomFlag;
@@ -2007,9 +2005,9 @@ void ObjectMgr::LoadTrainers()
                     {
                         for (uint8 k = 0; k < 3; ++k)
                         {
-                            if (ts.pCastSpell->Effect[k] == SPELL_EFFECT_LEARN_SPELL)
+                            if (ts.pCastSpell->getEffect(k) == SPELL_EFFECT_LEARN_SPELL)
                             {
-                                ts.pCastRealSpell = sSpellCustomizations.GetSpellInfo(ts.pCastSpell->EffectTriggerSpell[k]);
+                                ts.pCastRealSpell = sSpellCustomizations.GetSpellInfo(ts.pCastSpell->getEffectTriggerSpell(k));
                                 if (ts.pCastRealSpell == NULL)
                                 {
                                     LOG_ERROR("Trainer %u contains cast spell %u that is non-teaching", entry, CastSpellID);
@@ -2045,9 +2043,9 @@ void ObjectMgr::LoadTrainers()
                 ts.RequiredLevel = fields2[7].GetUInt32();
                 ts.DeleteSpell = fields2[8].GetUInt32();
                 //IsProfession is true if the TrainerSpell will teach a primary profession
-                if (ts.RequiredSkillLine == 0 && ts.pCastRealSpell != NULL && ts.pCastRealSpell->Effect[1] == SPELL_EFFECT_SKILL)
+                if (ts.RequiredSkillLine == 0 && ts.pCastRealSpell != NULL && ts.pCastRealSpell->getEffect(1) == SPELL_EFFECT_SKILL)
                 {
-                    uint32 skill = ts.pCastRealSpell->EffectMiscValue[1];
+                    uint32 skill = ts.pCastRealSpell->getEffectMiscValue(1);
                     auto skill_line = sSkillLineStore.LookupEntry(skill);
                     ARCEMU_ASSERT(skill_line != NULL);
                     if (skill_line->type == SKILL_TYPE_PROFESSION)
@@ -2390,10 +2388,10 @@ uint32 ObjectMgr::GetPetSpellCooldown(uint32 SpellId)
         return itr->second;
 
     SpellInfo* sp = sSpellCustomizations.GetSpellInfo(SpellId);
-    if (sp->RecoveryTime > sp->CategoryRecoveryTime)
-        return sp->RecoveryTime;
+    if (sp->getRecoveryTime() > sp->getCategoryRecoveryTime())
+        return sp->getRecoveryTime();
     else
-        return sp->CategoryRecoveryTime;
+        return sp->getCategoryRecoveryTime();
 }
 
 void ObjectMgr::SetVendorList(uint32 Entry, std::vector<CreatureItem>* list_)
@@ -3830,8 +3828,8 @@ void ObjectMgr::LoadCreatureAIAgents()
                         continue;
                     }
 
-                    if (sp->spell->Effect[0] == SPELL_EFFECT_LEARN_SPELL || sp->spell->Effect[1] == SPELL_EFFECT_LEARN_SPELL ||
-                        sp->spell->Effect[2] == SPELL_EFFECT_LEARN_SPELL)
+                    if (sp->spell->getEffect(0) == SPELL_EFFECT_LEARN_SPELL || sp->spell->getEffect(1) == SPELL_EFFECT_LEARN_SPELL ||
+                        sp->spell->getEffect(2) == SPELL_EFFECT_LEARN_SPELL)
                     {
                         LogDebugFlag(LF_DB_TABLES, "Teaching spell %u in ai_agent for %u", (unsigned int)fields[6].GetUInt32(), (unsigned int)sp->entryId);
                         delete sp;
@@ -3839,21 +3837,21 @@ void ObjectMgr::LoadCreatureAIAgents()
                         continue;
                     }
 
-                    sp->minrange = GetMinRange(sSpellRangeStore.LookupEntry(sp->spell->rangeIndex));
-                    sp->maxrange = GetMaxRange(sSpellRangeStore.LookupEntry(sp->spell->rangeIndex));
+                    sp->minrange = GetMinRange(sSpellRangeStore.LookupEntry(sp->spell->getRangeIndex()));
+                    sp->maxrange = GetMaxRange(sSpellRangeStore.LookupEntry(sp->spell->getRangeIndex()));
 
                     //omg the poor darling has no clue about making ai_agents
                     if (sp->cooldown == (uint32)-1)
                     {
                         //now this will not be exact cooldown but maybe a bigger one to not make him spam spells to often
                         int cooldown;
-                        auto spell_duration = sSpellDurationStore.LookupEntry(sp->spell->DurationIndex);
+                        auto spell_duration = sSpellDurationStore.LookupEntry(sp->spell->getDurationIndex());
                         int Dur = 0;
                         int Casttime = 0; //most of the time 0
-                        int RecoveryTime = sp->spell->RecoveryTime;
-                        if (sp->spell->DurationIndex)
+                        int RecoveryTime = sp->spell->getRecoveryTime();
+                        if (sp->spell->getDurationIndex())
                             Dur = ::GetDuration(spell_duration);
-                        Casttime = GetCastTime(sSpellCastTimesStore.LookupEntry(sp->spell->CastingTimeIndex));
+                        Casttime = GetCastTime(sSpellCastTimesStore.LookupEntry(sp->spell->getCastingTimeIndex()));
                         cooldown = Dur + Casttime + RecoveryTime;
                         if (cooldown < 0)
                             sp->cooldown = 2000; //huge value that should not loop while adding some timestamp to it
