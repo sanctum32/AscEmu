@@ -33,12 +33,12 @@ public:
     ElizaAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
         mElizaCombatTimer = INVALIDATE_TIMER;
-        SetCanEnterCombat(false);
+        setCanEnterCombat(false);
         AddSpell(ELIZA_FROST_NOVA, Target_Current, 10, 0, 1, 0, 10, true);
         AddSpell(ELIZA_FROSTBOLT, Target_Current, 20, 3, 1);
         mSummonGuard = AddSpell(ELIZA_SUMMON_GUARD, Target_Self, 0, 0, 0);
 
-        Emote("Wait...you are not my husband. But he must have sent you. And you...look..delicious!", Text_Say);
+        sendChatMessage(CHAT_MSG_MONSTER_SAY, 0, "Wait...you are not my husband. But he must have sent you. And you...look..delicious!");
         mElizaCombatTimer = AddTimer(4000);
 
         RegisterAIUpdateEvent(1000);
@@ -49,11 +49,11 @@ public:
         ParentClass::AIUpdate();
         if (IsTimerFinished(mElizaCombatTimer))
         {
-            SetCanEnterCombat(true);
+            setCanEnterCombat(true);
             AggroNearestUnit();
             RemoveTimer(mElizaCombatTimer);
         }
-        if (GetHealthPercent() >= 10 && GetHealthPercent() <= 98 && !IsCasting())
+        if (_getHealthPercent() >= 10 && _getHealthPercent() <= 98 && !IsCasting())
         {
             mElizaGuard = _unit->GetMapMgr()->GetInterface()->GetCreatureNearestCoords(_unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), 1871);
             if (mElizaGuard == NULL)

@@ -411,10 +411,10 @@ class ArugalAI : public MoonScriptCreatureAI
                     GetUnit()->SetInvisFlag(INVIS_FLAG_NORMAL);
                     GetUnit()->CastSpell(GetUnit(), SPELL_ARUGAL_SPAWN, true);
                     ModifyAIUpdateEvent(5500);  // call every step after 5.5 seconds
-                    if (Creature* pVincent = static_cast<Creature*>(ForceCreatureFind(CN_DEATHSTALKER_VINCENT, GetUnit()->GetPositionX(), GetUnit()->GetPositionY(), GetUnit()->GetPositionZ())))
+                    if (Creature* pVincent = getNearestCreature(CN_DEATHSTALKER_VINCENT))
                     {
                         pVincent->GetAIInterface()->AttackReaction(GetUnit(), 1);
-                        pVincent->GetAIInterface()->disable_melee = true;
+                        pVincent->GetAIInterface()->setMeleeDisabled(true);
                     }
                 }break;
                 case 1:
@@ -866,7 +866,7 @@ class SpringvaleAI : public MoonScriptCreatureAI
         void AIUpdate()
         {
             ParentClass::AIUpdate();
-            if (GetHealthPercent() <= 20 && DivineProt->mEnabled)
+            if (_getHealthPercent() <= 20 && DivineProt->mEnabled)
             {
                 CastSpellNowNoScheduling(DivineProt);
                 DivineProt->mEnabled = false;
@@ -948,7 +948,7 @@ class NandosAI : public MoonScriptCreatureAI
         void AIUpdate()
         {
             ParentClass::AIUpdate();
-            if (GetHealthPercent() <= 80)
+            if (_getHealthPercent() <= 80)
             {
                 if (IsTimerFinished(sCallBleakWorg_Timer) && sCallBleakWord->mEnabled)
                 {
@@ -1024,17 +1024,17 @@ class BlindWatcherAI : public MoonScriptCreatureAI
         void AIUpdate()
         {
             ParentClass::AIUpdate();
-            if (GetHealthPercent() <= 75 && !GetUnit()->HasAura(ODO_HOWLING_RAGE1) && mPhase == 0)
+            if (_getHealthPercent() <= 75 && !GetUnit()->HasAura(ODO_HOWLING_RAGE1) && mPhase == 0)
             {
                 CastSpell(HowlingRage1);
                 ++mPhase;
             }
-            else if (GetHealthPercent() <= 45 && !GetUnit()->HasAura(ODO_HOWLING_RAGE2) && mPhase == 1)
+            else if (_getHealthPercent() <= 45 && !GetUnit()->HasAura(ODO_HOWLING_RAGE2) && mPhase == 1)
             {
                 CastSpell(HowlingRage2);
                 ++mPhase;
             }
-            else if (GetHealthPercent() <= 20 && !GetUnit()->HasAura(ODO_HOWLING_RAGE2) && mPhase == 2)
+            else if (_getHealthPercent() <= 20 && !GetUnit()->HasAura(ODO_HOWLING_RAGE2) && mPhase == 2)
             {
                 CastSpell(HowlingRage3);
                 ++mPhase;
@@ -1117,7 +1117,7 @@ class ArugalBossAI : public MoonScriptCreatureAI
         void Reset()
         {
             SetBehavior(Behavior_Spell);
-            GetUnit()->GetAIInterface()->disable_melee = true;
+            GetUnit()->GetAIInterface()->setMeleeDisabled(true);
             GetUnit()->PctPowerRegenModifier[POWER_TYPE_MANA] = originalRegen;
         }
 
@@ -1131,7 +1131,7 @@ class ArugalBossAI : public MoonScriptCreatureAI
             originalRegen = GetUnit()->PctPowerRegenModifier[POWER_TYPE_MANA];
 
             // Do not do melee attacks
-            GetUnit()->GetAIInterface()->disable_melee = true;
+            GetUnit()->GetAIInterface()->setMeleeDisabled(true);
         }
 
         void OnCombatStop(Unit* pEnemy)
@@ -1152,7 +1152,7 @@ class ArugalBossAI : public MoonScriptCreatureAI
                 }break;
                 case 1:
                 {
-                    if (GameObject* pGO = GetNearestGameObject(GO_ARUGAL_FOCUS))
+                    if (GameObject* pGO = getNearestGameObject(GO_ARUGAL_FOCUS))
                     {
                         pGO->SetState(GO_STATE_OPEN);
                     }
@@ -1162,7 +1162,7 @@ class ArugalBossAI : public MoonScriptCreatureAI
                     {
                         if (MoonScriptCreatureAI* voidwalker = SpawnCreature(CN_VOIDWALKER, voidwalkerSpawns[x].x, voidwalkerSpawns[x].y, voidwalkerSpawns[x].z, voidwalkerSpawns[x].o))
                         {
-                            voidwalker->Despawn(4 * 60 * 1000); // Despawn in 4 mins
+                            voidwalker->despawn(4 * 60 * 1000); // Despawn in 4 mins
                             voidwalker->AggroNearestPlayer();
                         }
                     }
@@ -1187,19 +1187,19 @@ class ArugalBossAI : public MoonScriptCreatureAI
                 ++stage;
             }
 
-            if (IsInCombat())
+            if (_isInCombat())
             {
                 // if mana is out - do melee attacks
                 if (GetUnit()->GetManaPct() <= 10 && GetBehavior() == Behavior_Spell)
                 {
                     SetBehavior(Behavior_Melee);
-                    GetUnit()->GetAIInterface()->disable_melee = false;
+                    GetUnit()->GetAIInterface()->setMeleeDisabled(false);
                 }
                 // boss got mana regenerated
                 else
                 {
                     SetBehavior(Behavior_Spell);
-                    GetUnit()->GetAIInterface()->disable_melee = true;
+                    GetUnit()->GetAIInterface()->setMeleeDisabled(true);
                 }
 
                 // Cast void bolt non stop
@@ -1208,14 +1208,14 @@ class ArugalBossAI : public MoonScriptCreatureAI
                     CastSpellNowNoScheduling(sVoidBolt);
                 }
 
-                if (GetHealthPercent() <= 25)
+                if (_getHealthPercent() <= 25)
                 {
                     if (arugalPosition == ARUGAL_LOC_UPPER_LEDGE)
                     {
                         ModifyAIUpdateEvent(aiUpdateOriginal);
                         GetUnit()->CastSpell(GetUnit(), SPELL_SHADOW_PORT_STAIRS, true);
                         arugalPosition = ARUGAL_LOC_STAIRS;
-                        SetCanMove(true);
+                        setRooted(false);
                     }
 
                     if (arugalPosition == ARUGAL_LOC_LEDGE)
@@ -1224,7 +1224,7 @@ class ArugalBossAI : public MoonScriptCreatureAI
                         ModifyAIUpdateEvent(3000);
                         GetUnit()->CastSpell(GetUnit(), SPELL_SHADOW_PORT_UPPER_LEDGE, true);
                         arugalPosition = ARUGAL_LOC_UPPER_LEDGE;
-                        SetCanMove(false);
+                        setRooted(true);
                     }
                 }
             }
@@ -1409,7 +1409,7 @@ class ShadowfangRagetoothAI : public MoonScriptCreatureAI
         {
             ParentClass::AIUpdate();
             // Cast Wild rage at 30% health
-            if (GetHealthPercent() <= 30 && !GetUnit()->HasAura(SPELL_WILD_RAGE) && !sWildRageCasted)
+            if (_getHealthPercent() <= 30 && !GetUnit()->HasAura(SPELL_WILD_RAGE) && !sWildRageCasted)
             {
                 GetUnit()->CastSpell(GetUnit(), SPELL_WILD_RAGE, true);
                 sWildRageCasted = true;
@@ -1508,7 +1508,7 @@ class WorlfguardWorgAI : public MoonScriptCreatureAI
         void AIUpdate()
         {
             ParentClass::AIUpdate();
-            if (GetHealthPercent() <= 15 && GetBehavior() != Behavior_Flee)
+            if (_getHealthPercent() <= 15 && GetBehavior() != Behavior_Flee)
             {
                 SetBehavior(Behavior_Flee);
             }

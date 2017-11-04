@@ -165,7 +165,7 @@ public:
         _unit->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_9);
         _unit->GetAIInterface()->SetAllowedToEnterCombat(false);
         _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
-        _unit->GetAIInterface()->disable_melee = true;
+        _setMeleeDisabled(true);
         _unit->SetEmoteState(EMOTE_ONESHOT_NONE);
         _unit->GetAIInterface()->m_canMove = false;
         i = 1;
@@ -336,7 +336,7 @@ public:
     {
         _unit->SetFaction(35);
 
-        SetCanMove(false);
+        setRooted(true);
         NdGo = nullptr;
 
         plr = _unit->GetMapMgr()->GetInterface()->GetPlayerNearestCoords(_unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ());
@@ -353,7 +353,7 @@ public:
                 }
             }
         }
-        Ogre->MoveTo(_unit);
+        Ogre->moveToUnit(_unit);
         RegisterAIUpdateEvent(1000);
     }
 
@@ -362,25 +362,25 @@ public:
         if (Ogre == nullptr)
             return;
 
-        if (GetRange(Ogre) <= 5)
+        if (getRangeToObject(Ogre->GetUnit()) <= 5)
         {
-            Ogre->SetDisplayWeaponIds(28562, 0);
+            Ogre->_setDisplayWeaponIds(28562, 0);
             Ogre->GetUnit()->SetEmoteState(EMOTE_ONESHOT_EAT_NOSHEATHE);
             Ogre->GetUnit()->SetFaction(35);
             Ogre->GetUnit()->SetStandState(STANDSTATE_SIT);
 
-            NdGo = GetNearestGameObject(184315);
+            NdGo = getNearestGameObject(184315);
             if (NdGo == nullptr)
                 return;
 
             NdGo->Despawn(0, 0);
-            Ogre->Despawn(60 * 1000, 3 * 60 * 1000);
+            Ogre->despawn(60 * 1000, 3 * 60 * 1000);
             if (plr == nullptr)
                 return;
 
             plr->AddQuestKill(10512, 0, 0);
 
-            Despawn(0, 0);
+            despawn(0, 0);
             return;
         }
         ParentClass::AIUpdate();

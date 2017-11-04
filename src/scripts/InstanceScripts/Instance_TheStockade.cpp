@@ -99,13 +99,13 @@ class DeepfuryAI : public MoonScriptBossAI
 
     void AIUpdate()
     {
-        if (GetHealthPercent() <= 15 && GetBehavior() != Behavior_Flee)
+        if (_getHealthPercent() <= 15 && GetBehavior() != Behavior_Flee)
         {
             SetBehavior(Behavior_Flee);
-            SetAllowMelee(false);
-            SetAllowRanged(false);
-            SetAllowSpell(false);
-            MoveTo(float(105.693390), float(-58.426674), float(-34.856178), true);
+            _setMeleeDisabled(false);
+            _setRangedDisabled(true);
+            _setCastDisabled(true);
+            moveTo(float(105.693390), float(-58.426674), float(-34.856178), true);
         }
         ParentClass::AIUpdate();
     }
@@ -123,7 +123,7 @@ class HamhockAI : public MoonScriptCreatureAI
 
     void OnCombatStart(Unit* pTarget)
     {
-        _unit->SendScriptTextChatMessage(8759);
+        sendDBChatMessage(8759);
         ParentClass::OnCombatStart(pTarget);
     }
 };
@@ -141,7 +141,7 @@ class BazilAI : public MoonScriptCreatureAI
     void OnCombatStart(Unit* pTarget)
     {
         _unit->CastSpell(_unit, 674, false); // Dual Wield
-        _unit->SendScriptTextChatMessage(8760);
+        sendDBChatMessage(8760);
         ParentClass::OnCombatStart(pTarget);
     }
 };
@@ -179,7 +179,7 @@ class TargorrTheDreadAI : public MoonScriptCreatureAI
 
     void AIUpdate()
     {
-        if (GetHealthPercent() < 50 && !Enrage)
+        if (_getHealthPercent() < 50 && !Enrage)
         {
             Enrage = true;
             CastSpellNowNoScheduling(Enraged);

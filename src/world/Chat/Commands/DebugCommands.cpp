@@ -55,6 +55,57 @@ bool ChatHandler::HandleAiFallingCommand(const char* /*args*/, WorldSession* ses
     return true;
 }
 
+bool ChatHandler::HandleMoveToSpawnCommand(const char* /*args*/, WorldSession* session)
+{
+    Unit* selected_unit = GetSelectedUnit(session);
+    if (selected_unit == nullptr)
+        return true;
+
+    LocationVector spawnPos = selected_unit->GetSpawnPosition();
+    selected_unit->GetAIInterface()->generateAndSendSplinePath(spawnPos.x, spawnPos.y, spawnPos.z, spawnPos.o);
+    return true;
+}
+
+bool ChatHandler::HandlePositionCommand(const char* /*args*/, WorldSession* session)
+{
+    Creature* selected_unit = GetSelectedCreature(session);
+    if (selected_unit == nullptr)
+        return true;
+
+    LocationVector spawnPos = selected_unit->GetSpawnPosition();
+    LocationVector pos = selected_unit->GetPosition();
+
+    SystemMessage(session, "=== Spawn Position ===");
+    SystemMessage(session, "spawnX: %f", spawnPos.x);
+    SystemMessage(session, "spawnY: %f", spawnPos.y);
+    SystemMessage(session, "spawnZ: %f", spawnPos.z);
+    SystemMessage(session, "spawnO: %f", spawnPos.o);
+    SystemMessage(session, "=== Packet Position ===");
+    SystemMessage(session, "posX: %f", pos.x);
+    SystemMessage(session, "posY: %f", pos.y);
+    SystemMessage(session, "posZ: %f", pos.z);
+    SystemMessage(session, "posO: %f", pos.o);
+    return true;
+}
+
+bool ChatHandler::HandleSetOrientationCommand(const char* args, WorldSession* session)
+{
+    Creature* selected_unit = GetSelectedCreature(session);
+    if (selected_unit == nullptr)
+        return false;
+
+    float orientation = float(atof(args));
+    if (orientation == 0.0f)
+    {
+        SystemMessage(session, "No orientation set, applying yours on npc.");
+        orientation = session->GetPlayer()->GetOrientation();
+    }
+
+    selected_unit->SetOrientation(orientation);
+    SystemMessage(session, "Orientation %f set on npc %s", orientation, selected_unit->GetCreatureProperties()->Name.c_str());
+    return true;
+}
+
 bool ChatHandler::HandleDebugDumpState(const char* /*args*/, WorldSession* session)
 {
     auto state = ServerState::instance();
@@ -172,12 +223,14 @@ bool ChatHandler::HandleDebugFly(const char* /*args*/, WorldSession* m_session)
     if (selected_creature->HasUnitMovementFlag(MOVEFLAG_CAN_FLY))
     {
         GreenSystemMessage(m_session, "Unset Fly for creature %s.", selected_creature->GetCreatureProperties()->Name.c_str());
-        selected_creature->setMoveSwim(false);
+        selected_creature->GetAIInterface()->unsetSplineFlying();
+        selected_creature->setMoveCanFly(false);
     }
     else
     {
         GreenSystemMessage(m_session, "Set Fly for creature %s.", selected_creature->GetCreatureProperties()->Name.c_str());
-        selected_creature->setMoveSwim(true);
+        selected_creature->GetAIInterface()->setSplineFlying();
+        selected_creature->setMoveCanFly(true);
     }
 
     return true;

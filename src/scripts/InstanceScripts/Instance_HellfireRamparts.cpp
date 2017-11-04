@@ -30,7 +30,7 @@ class WatchkeeperGargolmarAI : public MoonScriptBossAI
     MOONSCRIPT_FACTORY_FUNCTION(WatchkeeperGargolmarAI, MoonScriptBossAI);
     WatchkeeperGargolmarAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
     {
-        AddSpell(WATCHKEEPER_SURGE, Target_RandomUnit, 20, 0, 15, 5, 40, false, "Back off, pup!", Text_Yell, 10330);
+        AddSpell(WATCHKEEPER_SURGE, Target_RandomUnit, 20, 0, 15, 5, 40, false, "Back off, pup!", CHAT_MSG_MONSTER_YELL, 10330);
         AddSpell(WATCHKEEPER_OVERPOWER, Target_Current, 10, 0, 5);
         mRetaliation = AddSpell(WATCHKEEPER_RETALIATION, Target_Self, 0, 0, 0);
 
@@ -48,13 +48,13 @@ class WatchkeeperGargolmarAI : public MoonScriptBossAI
         switch (RandomUInt(2))
         {
             case 0:
-                _unit->SendScriptTextChatMessage(4873);     // What have we here?
+                sendDBChatMessage(4873);     // What have we here?
                 break;
             case 1:
-                _unit->SendScriptTextChatMessage(4874);     // This may hurt a little....
+                sendDBChatMessage(4874);     // This may hurt a little....
                 break;
             case 2:
-                _unit->SendScriptTextChatMessage(4875);     // I'm going to enjoy this...
+                sendDBChatMessage(4875);     // I'm going to enjoy this...
                 break;
         }
     }
@@ -64,17 +64,17 @@ class WatchkeeperGargolmarAI : public MoonScriptBossAI
         switch (RandomUInt(1))
         {
             case 0:
-                _unit->SendScriptTextChatMessage(4876);     // Say farewell!
+                sendDBChatMessage(4876);     // Say farewell!
                 break;
             case 1:
-                _unit->SendScriptTextChatMessage(4877);     // Much too easy.
+                sendDBChatMessage(4877);     // Much too easy.
                 break;
         }
     }
 
     void OnDied(Unit* mKiller)
     {
-        _unit->SendScriptTextChatMessage(4878);      // Hahah.. <cough> ..argh!
+        sendDBChatMessage(4878);      // Hahah.. <cough> ..argh!
         ParentClass::OnDied(mKiller);
     }
 
@@ -82,7 +82,7 @@ class WatchkeeperGargolmarAI : public MoonScriptBossAI
     {
         if (_unit->GetHealthPct() <= 40 && !mCalledForHelp)
         {
-            _unit->SendScriptTextChatMessage(4871);      // Heal me, quickly!
+            sendDBChatMessage(4871);      // Heal me, quickly!
             mCalledForHelp = true;
         };
 
@@ -113,19 +113,19 @@ class OmorTheUnscarredAI : public MoonScriptCreatureAI
             SpellDesc* pShield = AddSpell(OMOR_DEMONIC_SHIELD, Target_Self, 30, 0, 25);
             pShield->mEnabled = false;
             SpellDesc* pSummon = AddSpell(OMOR_SUMMON_FIENDISH_HOUND, Target_Self, 8, 1, 20);
-            pSummon->AddEmote("Achor-she-ki! Feast my pet! Eat your fill!", Text_Yell, 10277);
+            pSummon->AddEmote("Achor-she-ki! Feast my pet! Eat your fill!", CHAT_MSG_MONSTER_YELL, 10277);
             AddSpell(OMOR_SHADOW_WHIP, Target_RandomPlayer, 10, 0, 30);
             if (_unit->GetMapMgr()->iInstanceMode != MODE_HEROIC)
             {
                 AddSpell(OMOR_SHADOW_BOLT, Target_RandomPlayer, 8, 3, 15, 10, 60, true);
                 SpellDesc* pAura = AddSpell(OMOR_TREACHEROUS_AURA, Target_RandomPlayer, 8, 2, 35, 0, 60, true);
-                pAura->AddEmote("A-Kreesh!", Text_Yell, 10278);
+                pAura->AddEmote("A-Kreesh!", CHAT_MSG_MONSTER_YELL, 10278);
             }
             else
             {
                 AddSpell(OMOR_SHADOW_BOLT2, Target_RandomPlayer, 8, 3, 15, 10, 60, true);
                 SpellDesc* pAura = AddSpell(OMOR_BANE_OF_TREACHERY, Target_RandomPlayer, 8, 2, 35, 0, 60, true);
-                pAura->AddEmote("A-Kreesh!", Text_Yell, 10278);
+                pAura->AddEmote("A-Kreesh!", CHAT_MSG_MONSTER_YELL, 10278);
             }
         }
 
@@ -134,42 +134,42 @@ class OmorTheUnscarredAI : public MoonScriptCreatureAI
             switch (RandomUInt(2))
             {
                 case 0:
-                    _unit->SendScriptTextChatMessage(4856);     // I will not be defeated!
+                    sendDBChatMessage(4856);     // I will not be defeated!
                     break;
                 case 1:
-                    _unit->SendScriptTextChatMessage(4855);     // You dare stand against ME?
+                    sendDBChatMessage(4855);     // You dare stand against ME?
                     break;
                 case 2:
-                    _unit->SendScriptTextChatMessage(4857);     // Your insolence will be your death!
+                    sendDBChatMessage(4857);     // Your insolence will be your death!
                     break;
             }
             ParentClass::OnCombatStart(pTarget);
-            SetCanMove(false);
+            setRooted(true);
         }
 
         void OnTargetDied(Unit* pKiller)
         {
-            _unit->SendScriptTextChatMessage(4860);     // Die, weakling!
+            sendDBChatMessage(4860);     // Die, weakling!
         }
 
         void OnDied(Unit* pKiller)
         {
-            _unit->SendScriptTextChatMessage(4861);     // It is... not over.
+            sendDBChatMessage(4861);     // It is... not over.
         }
 
         void OnCombatStop(Unit* pTarget)
         {
             ParentClass::OnCombatStop(pTarget);
-            if (IsAlive())
+            if (isAlive())
             {
-                _unit->SendScriptTextChatMessage(4862);     // I am victorious!
+                sendDBChatMessage(4862);     // I am victorious!
             }
         }
 
         void AIUpdate()
         {
             SpellDesc* pShield = FindSpellById(OMOR_DEMONIC_SHIELD);
-            if (GetHealthPercent() <= 20 && pShield != NULL && !pShield->mEnabled)
+            if (_getHealthPercent() <= 20 && pShield != NULL && !pShield->mEnabled)
             {
                 pShield->mEnabled = true;
             }
@@ -177,18 +177,18 @@ class OmorTheUnscarredAI : public MoonScriptCreatureAI
             Unit* pTarget = _unit->GetAIInterface()->getNextTarget();
             if (pTarget != NULL)
             {
-                if (GetRangeToUnit(pTarget) > 10.0f)
+                if (getRangeToObject(pTarget) > 10.0f)
                 {
                     pTarget = GetBestPlayerTarget(TargetFilter_Closest);
                     if (pTarget != NULL)
                     {
-                        if (GetRangeToUnit(pTarget) > 10.0f)
+                        if (getRangeToObject(pTarget) > 10.0f)
                         {
                             pTarget = NULL;
                         }
                         else
                         {
-                            ClearHateList();
+                            _clearHateList();
                             _unit->GetAIInterface()->AttackReaction(pTarget, 500);
                             _unit->GetAIInterface()->setNextTarget(pTarget);
                         }
@@ -210,7 +210,7 @@ class OmorTheUnscarredAI : public MoonScriptCreatureAI
             }
 
             ParentClass::AIUpdate();
-            SetCanMove(false);
+            setRooted(true);
     }
 };
 

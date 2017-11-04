@@ -1615,13 +1615,13 @@ class HydromancerThespiaAI : public CreatureAIScript
             switch (RandomUInt(2))
             {
                 case 0:
-                    _unit->SendScriptTextChatMessage(SAY_HYDROMACER_THESPIA_02);
+                    sendDBChatMessage(SAY_HYDROMACER_THESPIA_02);
                     break;
                 case 1:
-                    _unit->SendScriptTextChatMessage(SAY_HYDROMACER_THESPIA_03);
+                    sendDBChatMessage(SAY_HYDROMACER_THESPIA_03);
                     break;
                 case 2:
-                    _unit->SendScriptTextChatMessage(SAY_HYDROMACER_THESPIA_04);
+                    sendDBChatMessage(SAY_HYDROMACER_THESPIA_04);
                     break;
             }
 
@@ -1635,10 +1635,10 @@ class HydromancerThespiaAI : public CreatureAIScript
                 switch (RandomUInt(1))
                 {
                     case 0:
-                        _unit->SendScriptTextChatMessage(SAY_HYDROMACER_THESPIA_05);
+                        sendDBChatMessage(SAY_HYDROMACER_THESPIA_05);
                         break;
                     case 1:
-                        _unit->SendScriptTextChatMessage(SAY_HYDROMACER_THESPIA_06);
+                        sendDBChatMessage(SAY_HYDROMACER_THESPIA_06);
                         break;
                 }
             }
@@ -1654,7 +1654,7 @@ class HydromancerThespiaAI : public CreatureAIScript
 
         void OnDied(Unit* mKiller)
         {
-            _unit->SendScriptTextChatMessage(SAY_HYDROMACER_THESPIA_07);
+            sendDBChatMessage(SAY_HYDROMACER_THESPIA_07);
             RemoveAIUpdateEvent();
         }
 
@@ -1894,16 +1894,16 @@ class MekgineerSteamriggerAI : public CreatureAIScript
             switch (RandomUInt(3))
             {
                 case 0:
-                    _unit->SendScriptTextChatMessage(SAY_MEKGINEER_STEAMRIGGER_02);
+                    sendDBChatMessage(SAY_MEKGINEER_STEAMRIGGER_02);
                     break;
                 case 1:
-                    _unit->SendScriptTextChatMessage(SAY_MEKGINEER_STEAMRIGGER_03);
+                    sendDBChatMessage(SAY_MEKGINEER_STEAMRIGGER_03);
                     break;
                 case 2:
-                    _unit->SendScriptTextChatMessage(SAY_MEKGINEER_STEAMRIGGER_04);
+                    sendDBChatMessage(SAY_MEKGINEER_STEAMRIGGER_04);
                     break;
                 case 3:
-                    _unit->SendScriptTextChatMessage(SAY_MEKGINEER_STEAMRIGGER_05);
+                    sendDBChatMessage(SAY_MEKGINEER_STEAMRIGGER_05);
                     break;
             }
 
@@ -1917,10 +1917,10 @@ class MekgineerSteamriggerAI : public CreatureAIScript
                 switch (RandomUInt(1))
                 {
                     case 0:
-                        _unit->SendScriptTextChatMessage(SAY_MEKGINEER_STEAMRIGGER_06);
+                        sendDBChatMessage(SAY_MEKGINEER_STEAMRIGGER_06);
                         break;
                     case 1:
-                        _unit->SendScriptTextChatMessage(SAY_MEKGINEER_STEAMRIGGER_07);
+                        sendDBChatMessage(SAY_MEKGINEER_STEAMRIGGER_07);
                         break;
                 }
             }
@@ -1951,7 +1951,7 @@ class MekgineerSteamriggerAI : public CreatureAIScript
 
         void OnDied(Unit* mKiller)
         {
-            _unit->SendScriptTextChatMessage(SAY_MEKGINEER_STEAMRIGGER_09);
+            sendDBChatMessage(SAY_MEKGINEER_STEAMRIGGER_09);
             RemoveAIUpdateEvent();
         }
 
@@ -1997,7 +1997,7 @@ class MekgineerSteamriggerAI : public CreatureAIScript
             uint32 t = (uint32)time(NULL);
             if (t > spells[3].casttime)
             {
-                _unit->SendScriptTextChatMessage(SAY_MEKGINEER_STEAMRIGGER_08);
+                sendDBChatMessage(SAY_MEKGINEER_STEAMRIGGER_08);
 
                 _unit->CastSpell(_unit, spells[3].info, spells[3].instant);
 
@@ -2018,7 +2018,7 @@ class MekgineerSteamriggerAI : public CreatureAIScript
                     }
                 }
 
-                _unit->SendScriptTextChatMessage(SAY_MEKGINEER_STEAMRIGGER_01);
+                sendDBChatMessage(SAY_MEKGINEER_STEAMRIGGER_01);
 
                 GnomeCounter++;
             }
@@ -2166,7 +2166,7 @@ class NagaDistillerAI : public CreatureAIScript
         {
             _unit->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_9);
             _unit->GetAIInterface()->SetAllowedToEnterCombat(false);
-            _unit->GetAIInterface()->disable_melee = true;
+            _setMeleeDisabled(true);
             _unit->GetAIInterface()->m_canMove = false;
         }
 
@@ -2244,20 +2244,20 @@ class WarlordKalitreshAI : public CreatureAIScript
             RagePhase = 0;
 
             GameObject* Gate = NULL;
-            Gate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-95.774361f, -439.608612f, 3.382976f, 183049);
+            Gate = getNearestGameObject(-95.774361f, -439.608612f, 3.382976f, 183049);
             if (Gate)
                 Gate->SetState(GO_STATE_CLOSED);
 
             switch (RandomUInt(2))
             {
                 case 0:
-                    _unit->SendScriptTextChatMessage(SAY_WARLORD_KALITRESH_03);
+                    sendDBChatMessage(SAY_WARLORD_KALITRESH_03);
                     break;
                 case 1:
-                    _unit->SendScriptTextChatMessage(SAY_WARLORD_KALITRESH_04);
+                    sendDBChatMessage(SAY_WARLORD_KALITRESH_04);
                     break;
                 case 2:
-                    _unit->SendScriptTextChatMessage(SAY_WARLORD_KALITRESH_05);
+                    sendDBChatMessage(SAY_WARLORD_KALITRESH_05);
                     break;
             }
 
@@ -2271,10 +2271,10 @@ class WarlordKalitreshAI : public CreatureAIScript
                 switch (RandomUInt(1))
                 {
                     case 0:
-                        _unit->SendScriptTextChatMessage(SAY_WARLORD_KALITRESH_06);
+                        sendDBChatMessage(SAY_WARLORD_KALITRESH_06);
                         break;
                     case 1:
-                        _unit->SendScriptTextChatMessage(SAY_WARLORD_KALITRESH_07);
+                        sendDBChatMessage(SAY_WARLORD_KALITRESH_07);
                         break;
                 }
             }
@@ -2282,8 +2282,7 @@ class WarlordKalitreshAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            GameObject* Gate = NULL;
-            Gate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-95.774361f, -439.608612f, 3.382976f, 183049);
+            GameObject* Gate = getNearestGameObject(-95.774361f, -439.608612f, 3.382976f, 183049);
             if (Gate)
                 Gate->SetState(GO_STATE_OPEN);
 
@@ -2315,7 +2314,7 @@ class WarlordKalitreshAI : public CreatureAIScript
 
         void OnDied(Unit* mKiller)
         {
-            _unit->SendScriptTextChatMessage(SAY_WARLORD_KALITRESH_08);
+            sendDBChatMessage(SAY_WARLORD_KALITRESH_08);
             RemoveAIUpdateEvent();
         }
 
@@ -2367,7 +2366,7 @@ class WarlordKalitreshAI : public CreatureAIScript
                             _unit->GetAIInterface()->StopMovement(0);
                             _unit->GetAIInterface()->setAiState(AI_STATE_SCRIPTIDLE);
                             _unit->GetAIInterface()->m_canMove = false;
-                            _unit->SendScriptTextChatMessage(SAY_WARLORD_KALITRESH_02);
+                            sendDBChatMessage(SAY_WARLORD_KALITRESH_02);
 
                             if (!_unit->getAuraWithId(36453))
                                 _unit->CastSpell(_unit, 31543, true);

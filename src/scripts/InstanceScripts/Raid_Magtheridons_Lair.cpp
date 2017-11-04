@@ -123,25 +123,25 @@ class MagtheridonTriggerAI : public CreatureAIScript
                     switch (RandomUInt(6))
                     {
                         case 1:
-                            _unit->SendScriptTextChatMessage(8740);     // Wretched, meddling insects! Release me, and perhaps I will grant you a merciful death!
+                            sendDBChatMessage(8740);     // Wretched, meddling insects! Release me, and perhaps I will grant you a merciful death!
                             break;
                         case 2:
-                            _unit->SendScriptTextChatMessage(8741);     // Vermin! Leeches! Take my blood and choke on it!
+                            sendDBChatMessage(8741);     // Vermin! Leeches! Take my blood and choke on it!
                             break;
                         case 3:
-                            _unit->SendScriptTextChatMessage(8742);     // Illidan is an arrogant fool! I will crush him and reclaim Outland as my own!
+                            sendDBChatMessage(8742);     // Illidan is an arrogant fool! I will crush him and reclaim Outland as my own!
                             break;
                         case 4:
-                            _unit->SendScriptTextChatMessage(8743);     // Away, you mindless parasites! My blood is my own!
+                            sendDBChatMessage(8743);     // Away, you mindless parasites! My blood is my own!
                             break;
                         case 5:
-                            _unit->SendScriptTextChatMessage(8744);     // How long do you believe your pathetic sorcery can hold me?
+                            sendDBChatMessage(8744);     // How long do you believe your pathetic sorcery can hold me?
                             break;
                         case 6:
-                            _unit->SendScriptTextChatMessage(8745);     // My blood will be the end of you!
+                            sendDBChatMessage(8745);     // My blood will be the end of you!
                             break;
                         default:
-                            _unit->SendScriptTextChatMessage(8746);     // My blood will be the end of you!
+                            sendDBChatMessage(8746);     // My blood will be the end of you!
                     }
                 }
                 // We reset YellTimer to default value to let Pit Lord say something again and again
@@ -300,7 +300,7 @@ class MagtheridonTriggerAI : public CreatureAIScript
                         Magtheridon->RemoveAura(BANISH);
 
                     // If Gate is found we close it
-                    GameObject* Gate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-72.5866f, 1.559f, 0.0f, 183847);
+                    GameObject* Gate = getNearestGameObject(-72.5866f, 1.559f, 0.0f, 183847);
                     if (Gate)
                         Gate->SetState(GO_STATE_CLOSED);
                 }
@@ -386,7 +386,7 @@ class MagtheridonTriggerAI : public CreatureAIScript
                         // If less than half of alive channelers is out of combat we open Magtheridon's gate
                         if (AliveInCombat < AliveChannelers.size() / 2)
                         {
-                            GameObject* Gate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-72.5866f, 1.559f, 0.0f, 183847);
+                            GameObject* Gate = getNearestGameObject(-72.5866f, 1.559f, 0.0f, 183847);
                             if (Gate)
                                 Gate->SetState(GO_STATE_OPEN);
                         }
@@ -1328,7 +1328,7 @@ class MagtheridonAI : public CreatureAIScript
             for (uint8 i = 0; i < nrspells; i++)
                 spells[i].casttime = 0;
 
-            GameObject* Gate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-72.5866f, 1.559f, 0.0f, 183847);
+            GameObject* Gate = getNearestGameObject(-72.5866f, 1.559f, 0.0f, 183847);
             if (Gate)
                 Gate->SetState(GO_STATE_CLOSED);
         }
@@ -1345,23 +1345,23 @@ class MagtheridonAI : public CreatureAIScript
             GameObject* Gate = NULL;
             for (uint8 i = 0; i < 6; i++)
             {
-                Gate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(Columns[i].x, Columns[i].y, Columns[i].z, 184634 + i);
+                Gate = getNearestGameObject(Columns[i].x, Columns[i].y, Columns[i].z, 184634 + i);
                 if (Gate)
                     Gate->SetState(GO_STATE_CLOSED);
             }
 
-            Gate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(0.0f, 0.0f, 0.0f, 184653);
+            Gate = getNearestGameObject(0.0f, 0.0f, 0.0f, 184653);
             if (Gate)
                 Gate->SetState(GO_STATE_CLOSED);
 
-            Gate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-72.5866f, 1.559f, 0.0f, 183847);
+            Gate = getNearestGameObject(-72.5866f, 1.559f, 0.0f, 183847);
             if (Gate)
                 Gate->SetState(GO_STATE_OPEN);
         }
 
         void OnDied(Unit* mKiller)
         {
-            _unit->SendScriptTextChatMessage(8750);     // The Legion... will consume you... all....
+            sendDBChatMessage(8750);     // The Legion... will consume you... all....
 
             RemoveAIUpdateEvent();
         }
@@ -1370,7 +1370,7 @@ class MagtheridonAI : public CreatureAIScript
         {
             if (_unit->GetHealthPct() > 0)
             {
-                _unit->SendScriptTextChatMessage(8751);     // Did you think me weak? Soft? Who is the weak one now?!
+                sendDBChatMessage(8751);     // Did you think me weak? Soft? Who is the weak one now?!
             }
         }
 
@@ -1494,7 +1494,7 @@ class MagtheridonAI : public CreatureAIScript
                 timer_caveIn++;
                 if (timer_caveIn == 2)
                 {
-                    _unit->SendScriptTextChatMessage(8752);     // I will not be taken so easily. Let the walls of this prison tremble... and FALL!!!
+                    sendDBChatMessage(8752);     // I will not be taken so easily. Let the walls of this prison tremble... and FALL!!!
 
                     _unit->GetAIInterface()->StopMovement(2000);
                     _unit->setAttackTimer(2000, false);
@@ -1508,12 +1508,12 @@ class MagtheridonAI : public CreatureAIScript
                     GameObject* Gate = NULL;
                     for (uint8 i = 0; i < 6; i++)
                     {
-                        Gate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(Columns[i].x, Columns[i].y, Columns[i].z, 184634 + i);
+                        Gate = getNearestGameObject(Columns[i].x, Columns[i].y, Columns[i].z, 184634 + i);
                         if (Gate)
                             Gate->SetState(GO_STATE_OPEN);
                     }
 
-                    Gate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(0.0f, 0.0f, 0.0f, 184653);
+                    Gate = getNearestGameObject(0.0f, 0.0f, 0.0f, 184653);
                     if (Gate)
                         Gate->SetState(GO_STATE_OPEN);
                 }

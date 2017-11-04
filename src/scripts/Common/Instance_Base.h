@@ -122,13 +122,9 @@ class MoonInstanceScript : public InstanceScript
 
         // Creature
         Creature* GetCreatureByGuid(uint32 pGuid);
-        Creature* PushCreature(uint32 pEntry, float pX, float pY, float pZ, float pO, uint32 pFaction = 0);
 
         // GameObject
         GameObject* GetGameObjectByGuid(uint32 pGuid);
-        GameObject* FindClosestGameObjectOnMap(uint32 pEntry, float pX, float pY, float pZ);
-        GameObject* SpawnGameObject(uint32 pEntry, float pX, float pY, float pZ, float pO);
-        GameObjectSet FindGameObjectsOnMap(uint32 pEntry);
         void AddGameObjectStateByEntry(uint32 pEntry, GameObjectState pState, bool pUseQuery = false);
 
         // Distance calculation

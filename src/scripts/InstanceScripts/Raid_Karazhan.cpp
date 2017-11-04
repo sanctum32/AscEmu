@@ -77,14 +77,14 @@ class AttumenTheHuntsmanAI : public MoonScriptBossAI
         AddPhaseSpell(2, AddSpell(ATTUMEN_BERSERKER_CHARGE, Target_RandomPlayerNotCurrent, 15, 0, 6, 15, 40, true));
 
         //Emotes
-        AddEmote(Event_OnCombatStart, "Cowards! Wretches!", Text_Yell, 9167);
-        AddEmote(Event_OnCombatStart, "Who dares attack the steed of the Huntsman?", Text_Yell, 9298);
-        AddEmote(Event_OnCombatStart, "Perhaps you would rather test yourselves against a more formidable opponent!", Text_Yell, 9299);
-        AddEmote(Event_OnTargetDied, "It was... inevitable.", Text_Yell, 9169);
-        AddEmote(Event_OnTargetDied, "Another trophy to add to my collection!", Text_Yell, 9300);
-        AddEmote(Event_OnDied, "Always knew... someday I would become... the hunted.", Text_Yell, 9165);
-        AddEmote(Event_OnTaunt, "Such easy sport.", Text_Yell, 9170);
-        AddEmote(Event_OnTaunt, "Amatures! Do not think you can best me! I kill for a living.", Text_Yell, 9304);
+        AddEmote(Event_OnCombatStart, "Cowards! Wretches!", CHAT_MSG_MONSTER_YELL, 9167);
+        AddEmote(Event_OnCombatStart, "Who dares attack the steed of the Huntsman?", CHAT_MSG_MONSTER_YELL, 9298);
+        AddEmote(Event_OnCombatStart, "Perhaps you would rather test yourselves against a more formidable opponent!", CHAT_MSG_MONSTER_YELL, 9299);
+        AddEmote(Event_OnTargetDied, "It was... inevitable.", CHAT_MSG_MONSTER_YELL, 9169);
+        AddEmote(Event_OnTargetDied, "Another trophy to add to my collection!", CHAT_MSG_MONSTER_YELL, 9300);
+        AddEmote(Event_OnDied, "Always knew... someday I would become... the hunted.", CHAT_MSG_MONSTER_YELL, 9165);
+        AddEmote(Event_OnTaunt, "Such easy sport.", CHAT_MSG_MONSTER_YELL, 9170);
+        AddEmote(Event_OnTaunt, "Amatures! Do not think you can best me! I kill for a living.", CHAT_MSG_MONSTER_YELL, 9304);
     }
 
     void OnLoad()
@@ -94,7 +94,7 @@ class AttumenTheHuntsmanAI : public MoonScriptBossAI
 
     void OnCombatStop(Unit* pTarget)
     {
-        Despawn(10000);
+        despawn(10000);
         ParentClass::OnCombatStop(pTarget);
     }
 
@@ -102,16 +102,16 @@ class AttumenTheHuntsmanAI : public MoonScriptBossAI
     {
         if (GetPhase() == 1)
         {
-            if (GetLinkedCreature() && GetLinkedCreature()->IsAlive() && GetHealthPercent() <= 25 && !IsCasting())
+            if (GetLinkedCreature() && GetLinkedCreature()->isAlive() && _getHealthPercent() <= 25 && !IsCasting())
             {
                 SetPhase(2);
-                SetAllowMelee(false);
-                SetAllowSpell(false);
-                Emote("Come Midnight, let's disperse this petty rabble!", Text_Yell, 9168);
+                _setMeleeDisabled(false);
+                _setCastDisabled(true);
+                sendChatMessage(CHAT_MSG_MONSTER_YELL, 9168, "Come Midnight, let's disperse this petty rabble!");
                 MoonScriptBossAI* midnight = static_cast<MoonScriptBossAI*>(GetLinkedCreature());
                 midnight->SetPhase(2);
-                midnight->MoveTo(this);
-                midnight->SetAllowMelee(false);
+                midnight->moveToUnit(_unit);
+                midnight->_setMeleeDisabled(false);
             }
         }
         ParentClass::AIUpdate();
@@ -127,16 +127,16 @@ class MidnightAI : public MoonScriptBossAI
 
     void OnCombatStop(Unit* pTarget)
     {
-        SetAllowMelee(true);
-        SetAllowSpell(true);
+        _setMeleeDisabled(true);
+        _setCastDisabled(false);
         ParentClass::OnCombatStop(pTarget);
     }
 
     void OnTargetDied(Unit* pTarget)
     {
-        if (GetLinkedCreature() && GetLinkedCreature()->IsAlive())
+        if (GetLinkedCreature() && GetLinkedCreature()->isAlive())
         {
-            static_cast<MoonScriptCreatureAI*>(GetLinkedCreature())->Emote("Well done Midnight!", Text_Yell, 9173);
+            static_cast<MoonScriptCreatureAI*>(GetLinkedCreature())->sendChatMessage(CHAT_MSG_MONSTER_YELL, 9173, "Well done Midnight!");
         }
         ParentClass::OnTargetDied(pTarget);
     }
@@ -145,44 +145,45 @@ class MidnightAI : public MoonScriptBossAI
     {
         if (GetPhase() == 1)
         {
-            if (GetLinkedCreature() == NULL && GetHealthPercent() <= 95 && !IsCasting())
+            if (GetLinkedCreature() == NULL && _getHealthPercent() <= 95 && !IsCasting())
             {
-                Emote("Midnight calls for her master!", Text_Emote);
-                CreatureAIScript* attumen = SpawnCreature(CN_ATTUMEN);
+                sendChatMessage(CHAT_MSG_MONSTER_YELL, 0, "Midnight calls for her master!");
+                CreatureAIScript* attumen = SpawnCreature(CN_ATTUMEN, _unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), _unit->GetOrientation(), false);
                 if (attumen != NULL)
                 {
                     SetLinkedCreature(attumen);
                     attumen->SetLinkedCreature(this);
                 }
             }
-            else if (GetLinkedCreature() && GetLinkedCreature()->IsAlive() && GetHealthPercent() <= 25 && !IsCasting())
+            else if (GetLinkedCreature() && GetLinkedCreature()->isAlive() && _getHealthPercent() <= 25 && !IsCasting())
             {
                 SetPhase(2);
                 MoonScriptBossAI* attumen = static_cast<MoonScriptBossAI*>(GetLinkedCreature());
-                MoveTo(attumen);
-                SetAllowMelee(false);
+                moveToUnit(attumen->GetUnit());
+                _setMeleeDisabled(false);
                 attumen->SetPhase(2);
-                attumen->SetAllowMelee(false);
-                attumen->SetAllowSpell(false);
-                attumen->Emote("Come Midnight, let's disperse this petty rabble!", Text_Yell, 9168);
+                attumen->_setMeleeDisabled(false);
+                attumen->_setCastDisabled(true);
+                attumen->sendChatMessage(CHAT_MSG_MONSTER_YELL, 9168, "Come Midnight, let's disperse this petty rabble!");
             }
         }
         else if (GetPhase() == 2)
         {
-            if (GetLinkedCreature() && GetLinkedCreature()->IsAlive())
+            if (GetLinkedCreature() && GetLinkedCreature()->isAlive())
             {
                 MoonScriptBossAI* attumen = static_cast<MoonScriptBossAI*>(GetLinkedCreature());
-                if (GetRange(attumen) <= 15)
+                if (attumen && getRangeToObject(attumen->GetUnit()) <= 15)
                 {
-                    attumen->Regenerate();
-                    attumen->SetDisplayId(16040);
-                    attumen->ClearHateList();
-                    attumen->SetAllowMelee(true);
-                    attumen->SetAllowSpell(true);
-                    Despawn();
+                    attumen->_regenerateHealth();
+                    attumen->_setDisplayId(16040);
+                    attumen->_clearHateList();
+                    attumen->_setMeleeDisabled(true);
+                    attumen->_setCastDisabled(false);
+                    despawn();
                     return;
                 }
-                else MoveTo(attumen);
+                else
+                    moveToUnit(attumen->GetUnit());
             }
         }
         ParentClass::AIUpdate();
@@ -210,19 +211,19 @@ class MoroesAI : public MoonScriptBossAI
         AddPhaseSpell(1, AddSpell(MOROES_GOUGE, Target_Current, 20, 0, 10, 0, 5));
         AddPhaseSpell(1, AddSpell(MOROES_BLIND, Target_ClosestPlayerNotCurrent, 20, 0, 10, 0, 10, true));
         mVanish = AddSpell(MOROES_VANISH, Target_Self, 0, 12, 0);
-        mVanish->AddEmote("Now, where was I? Oh yes...", Text_Yell, 9215);
-        mVanish->AddEmote("You rang?", Text_Yell, 9316);
+        mVanish->AddEmote("Now, where was I? Oh yes...", CHAT_MSG_MONSTER_YELL, 9215);
+        mVanish->AddEmote("You rang?", CHAT_MSG_MONSTER_YELL, 9316);
         mEnrage = AddSpell(MOROES_ENRAGE, Target_Self, 0, 0, 0);
 
         //Phase 2 spells
         mGarrote = AddSpell(MOROES_GARROTE, Target_RandomPlayer, 0, 0, 0);
 
         //Emotes
-        AddEmote(Event_OnCombatStart, "Hm, unannounced visitors. Preparations must be made...", Text_Yell, 9211);
-        AddEmote(Event_OnDied, "How terribly clumsy of me...", Text_Yell, 9213);
-        AddEmote(Event_OnTargetDied, "One more for dinner this evening.", Text_Yell, 9214);
-        AddEmote(Event_OnTargetDied, "Time... Never enough time.", Text_Yell, 9314);
-        AddEmote(Event_OnTargetDied, "I've gone and made a mess.", Text_Yell, 9315);
+        AddEmote(Event_OnCombatStart, "Hm, unannounced visitors. Preparations must be made...", CHAT_MSG_MONSTER_YELL, 9211);
+        AddEmote(Event_OnDied, "How terribly clumsy of me...", CHAT_MSG_MONSTER_YELL, 9213);
+        AddEmote(Event_OnTargetDied, "One more for dinner this evening.", CHAT_MSG_MONSTER_YELL, 9214);
+        AddEmote(Event_OnTargetDied, "Time... Never enough time.", CHAT_MSG_MONSTER_YELL, 9314);
+        AddEmote(Event_OnTargetDied, "I've gone and made a mess.", CHAT_MSG_MONSTER_YELL, 9315);
     }
 
     void OnCombatStart(Unit* pTarget)
@@ -242,7 +243,7 @@ class MoroesAI : public MoonScriptBossAI
     {
         if (GetPhase() == 1)
         {
-            if (mEnrage->mEnabled && GetHealthPercent() <= 30 && !IsCasting())
+            if (mEnrage->mEnabled && _getHealthPercent() <= 30 && !IsCasting())
             {
                 CastSpell(mEnrage);
                 mEnrage->mEnabled = false;
@@ -291,15 +292,15 @@ class MaidenOfVirtueAI : public MoonScriptBossAI
         AddSpell(MAIDENOFVIRTUE_HOLY_FIRE, Target_RandomPlayer, 25, 1, 15, 0, 50);
         AddSpell(MAIDENOFVIRTUE_HOLY_WRATH, Target_RandomPlayer, 25, 0, 20, 0, 100);
         mRepentance = AddSpell(MAIDENOFVIRTUE_REPENTANCE, Target_Self, 25, 0.6f, 30);
-        mRepentance->AddEmote("Cast out your corrupt thoughts.", Text_Yell, 9313);
-        mRepentance->AddEmote("Your impurity must be cleansed.", Text_Yell, 9208);
+        mRepentance->AddEmote("Cast out your corrupt thoughts.", CHAT_MSG_MONSTER_YELL, 9313);
+        mRepentance->AddEmote("Your impurity must be cleansed.", CHAT_MSG_MONSTER_YELL, 9208);
 
         //Emotes
-        AddEmote(Event_OnCombatStart, "Your behavior will not be tolerated.", Text_Yell, 9204);
-        AddEmote(Event_OnTargetDied, "Ah ah ah...", Text_Yell, 9207);
-        AddEmote(Event_OnTargetDied, "This is for the best.", Text_Yell, 9312);
-        AddEmote(Event_OnTargetDied, "Impure thoughts lead to profane actions.", Text_Yell, 9311);
-        AddEmote(Event_OnDied, "Death comes. Will your conscience be clear?", Text_Yell, 9206);
+        AddEmote(Event_OnCombatStart, "Your behavior will not be tolerated.", CHAT_MSG_MONSTER_YELL, 9204);
+        AddEmote(Event_OnTargetDied, "Ah ah ah...", CHAT_MSG_MONSTER_YELL, 9207);
+        AddEmote(Event_OnTargetDied, "This is for the best.", CHAT_MSG_MONSTER_YELL, 9312);
+        AddEmote(Event_OnTargetDied, "Impure thoughts lead to profane actions.", CHAT_MSG_MONSTER_YELL, 9311);
+        AddEmote(Event_OnDied, "Death comes. Will your conscience be clear?", CHAT_MSG_MONSTER_YELL, 9206);
     }
 
     void OnCombatStart(Unit* pTarget)
@@ -373,7 +374,7 @@ public:
 
     void OnCombatStart(Unit* mTarget)
     {
-        _unit->SendScriptTextChatMessage(1993);     // The better to own you with!
+        sendDBChatMessage(1993);     // The better to own you with!
 
         for (uint8 i = 0; i < nrspells; i++)
             spells[i].casttime = 0;
@@ -398,8 +399,8 @@ public:
         _unit->SendChatMessage(CHAT_MSG_MONSTER_YELL, LANG_UNIVERSAL, "Aarrhhh.");
         RemoveAIUpdateEvent();
 
-        GameObject* DoorLeftO = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10917.1445f, -1774.05f, 90.478f, 184279);
-        GameObject* DoorRightO = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10872.195f, -1779.42f, 90.45f, 184278);
+        GameObject* DoorLeftO = getNearestGameObject(-10917.1445f, -1774.05f, 90.478f, 184279);
+        GameObject* DoorRightO = getNearestGameObject(-10872.195f, -1779.42f, 90.45f, 184278);
 
         if (DoorLeftO)
             DoorLeftO->SetState(GO_STATE_OPEN);
@@ -410,7 +411,7 @@ public:
 
     void OnTargetDied(Unit* mTarget)
     {
-        _unit->SendScriptTextChatMessage(1994);     // Mmmm... delicious.
+        sendDBChatMessage(1994);     // Mmmm... delicious.
     }
 
     void AIUpdate()
@@ -564,15 +565,15 @@ public:
     void OnCombatStart(Unit* mTarget)
     {
         CastTime();
-        _unit->SendScriptTextChatMessage(1993);     // The better to own you with!
+        sendDBChatMessage(1993);     // The better to own you with!
         RegisterAIUpdateEvent(1000);
     }
 
     void OnCombatStop(Unit* mTarget)
     {
-        GameObject* DoorLeft = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10917.1445f, -1774.05f, 90.478f, 184279);
-        GameObject* DoorRight = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10872.195f, -1779.42f, 90.45f, 184278);
-        GameObject* Curtain = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10894.17f, -1774.218f, 90.477f, 183932);
+        GameObject* DoorLeft = getNearestGameObject(-10917.1445f, -1774.05f, 90.478f, 184279);
+        GameObject* DoorRight = getNearestGameObject(-10872.195f, -1779.42f, 90.45f, 184278);
+        GameObject* Curtain = getNearestGameObject(-10894.17f, -1774.218f, 90.477f, 183932);
 
         if (DoorLeft)
             DoorLeft->SetState(GO_STATE_CLOSED);
@@ -591,9 +592,9 @@ public:
 
     void OnDied(Unit* mKiller)
     {
-        GameObject* DoorLeft = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10917.1445f, -1774.05f, 90.478f, 184279);
-        GameObject* DoorRight = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10872.195f, -1779.42f, 90.45f, 184278);
-        GameObject* Curtain = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10894.17f, -1774.218f, 90.477f, 183932);
+        GameObject* DoorLeft = getNearestGameObject(-10917.1445f, -1774.05f, 90.478f, 184279);
+        GameObject* DoorRight = getNearestGameObject(-10872.195f, -1779.42f, 90.45f, 184278);
+        GameObject* Curtain = getNearestGameObject(-10894.17f, -1774.218f, 90.477f, 183932);
 
         if (DoorLeft)
             DoorLeft->SetState(GO_STATE_OPEN);
@@ -849,9 +850,9 @@ public:
 
     void cleanStage()
     {
-        GameObject* DoorLeft = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10917.1445f, -1774.05f, 90.478f, 184279);
-        GameObject* DoorRight = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10872.195f, -1779.42f, 90.45f, 184278);
-        GameObject* Curtain = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10894.17f, -1774.218f, 90.477f, 183932);
+        GameObject* DoorLeft = getNearestGameObject(-10917.1445f, -1774.05f, 90.478f, 184279);
+        GameObject* DoorRight = getNearestGameObject(-10872.195f, -1779.42f, 90.45f, 184278);
+        GameObject* Curtain = getNearestGameObject(-10894.17f, -1774.218f, 90.477f, 183932);
 
         if (DoorLeft)
             DoorLeft->SetState(GO_STATE_CLOSED);
@@ -872,11 +873,11 @@ public:
         Creature* Roar = _unit->GetMapMgr()->GetInterface()->GetCreatureNearestCoords(-10891.115f, -1756.4898f, 90.476f, 17546);//Roar
         Creature* Tinman = _unit->GetMapMgr()->GetInterface()->GetCreatureNearestCoords(-10884.501f, -1757.3249f, 90.476f, 17547); //Tinman
 
-        GameObject* House = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10883.0f, -1751.81f, 90.4765f, 183493);
-        GameObject* Tree = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10877.7f, -1763.18f, 90.4771f, 183492);
-        GameObject* Tree2 = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10906.7f, -1750.01f, 90.4765f, 183492);
-        GameObject* Tree3 = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10909.5f, -1761.79f, 90.4773f, 183492);
-        //GameObject* BackDrop = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10890.9f, -1744.06f, 90.4765f, 183491);
+        GameObject* House = getNearestGameObject(-10883.0f, -1751.81f, 90.4765f, 183493);
+        GameObject* Tree = getNearestGameObject(-10877.7f, -1763.18f, 90.4771f, 183492);
+        GameObject* Tree2 = getNearestGameObject(-10906.7f, -1750.01f, 90.4765f, 183492);
+        GameObject* Tree3 = getNearestGameObject(-10909.5f, -1761.79f, 90.4773f, 183492);
+        //GameObject* BackDrop = getNearestGameObject(-10890.9f, -1744.06f, 90.4765f, 183491);
 
         if (Julianne)
             Julianne->Despawn(0, 0);
@@ -912,7 +913,7 @@ public:
     void BarnesSpeakWOZ()
     {
         // Start text
-        _unit->SendScriptTextChatMessage(2011);     // Good evening, ladies and gentleman. Welcome to this evening's presentation!
+        sendDBChatMessage(2011);     // Good evening, ladies and gentleman. Welcome to this evening's presentation!
         // Timed text 1
         _unit->SendTimedScriptTextChatMessage(2008, 7000);  // Tonight, we plumb the depths of the human soul as we join a lost, lonely girl trying desperately, with the help of her loyal companions, to find her way home.
         // Timed text 2
@@ -925,9 +926,9 @@ public:
 
     void EventWOZ()
     {
-        GameObject* DoorLeft = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10917.1445f, -1774.05f, 90.478f, 184279);
-        GameObject* DoorRight = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10872.195f, -1779.42f, 90.45f, 184278);
-        GameObject* Curtain = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10894.17f, -1774.218f, 90.477f, 183932);
+        GameObject* DoorLeft = getNearestGameObject(-10917.1445f, -1774.05f, 90.478f, 184279);
+        GameObject* DoorRight = getNearestGameObject(-10872.195f, -1779.42f, 90.45f, 184278);
+        GameObject* Curtain = getNearestGameObject(-10894.17f, -1774.218f, 90.477f, 183932);
 
         if (DoorLeft)
             DoorLeft->SetState(GO_STATE_CLOSED);
@@ -949,7 +950,7 @@ public:
     void BarnesSpeakRJ()
     {
         // Start text
-        _unit->SendScriptTextChatMessage(2011);                 // Good evening, ladies and gentleman. Welcome to this evening's presentation!
+        sendDBChatMessage(2011);                 // Good evening, ladies and gentleman. Welcome to this evening's presentation!
         // Timed text 1
         _unit->SendTimedScriptTextChatMessage(2016, 6000);      // Tonight we explore a tale of forbidden love!
         // Timed text 2
@@ -962,9 +963,9 @@ public:
 
     void EventRJ()
     {
-        GameObject* DoorLeft = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10917.1445f, -1774.05f, 90.478f, 184279);
-        GameObject* DoorRight = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10872.195f, -1779.42f, 90.45f, 184278);
-        GameObject* Curtain = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10894.17f, -1774.218f, 90.477f, 183932);
+        GameObject* DoorLeft = getNearestGameObject(-10917.1445f, -1774.05f, 90.478f, 184279);
+        GameObject* DoorRight = getNearestGameObject(-10872.195f, -1779.42f, 90.45f, 184278);
+        GameObject* Curtain = getNearestGameObject(-10894.17f, -1774.218f, 90.477f, 183932);
 
         if (DoorLeft)
             DoorLeft->SetState(GO_STATE_CLOSED);
@@ -982,7 +983,7 @@ public:
     void BarnesSpeakRed()
     {
         // Start text
-        _unit->SendScriptTextChatMessage(2011);                 // Good evening, ladies and gentleman. Welcome to this evening's presentation!
+        sendDBChatMessage(2011);                 // Good evening, ladies and gentleman. Welcome to this evening's presentation!
         // Timed text 1
         _unit->SendTimedScriptTextChatMessage(2012, 7000);      // Tonight things are not what they seems for tonight your eyes may not be trusted.
         // Timed text 2
@@ -995,9 +996,9 @@ public:
 
     void EventRed()
     {
-        GameObject* DoorLeft = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10917.1445f, -1774.05f, 90.478f, 184279);
-        GameObject* DoorRight = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10872.195f, -1779.42f, 90.45f, 184278);
-        GameObject* Curtain = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10894.17f, -1774.218f, 90.477f, 183932);
+        GameObject* DoorLeft = getNearestGameObject(-10917.1445f, -1774.05f, 90.478f, 184279);
+        GameObject* DoorRight = getNearestGameObject(-10872.195f, -1779.42f, 90.45f, 184278);
+        GameObject* Curtain = getNearestGameObject(-10894.17f, -1774.218f, 90.477f, 183932);
         /*GameObject* House = _unit->GetMapMgr()->GetInterface()->SpawnGameObject(183493, -10883.0f, -1751.81f, 90.4765f, -1.72788f, false, 0, 0);
         GameObject* Tree = _unit->GetMapMgr()->GetInterface()->SpawnGameObject(183492, -10877.7f, -1763.18f, 90.4771f, -1.6297f, false, 0, 0);
         GameObject* Tree2 = _unit->GetMapMgr()->GetInterface()->SpawnGameObject(183492, -10906.7f, -1750.01f, 90.4765f, -1.69297f, false, 0, 0);
@@ -1086,7 +1087,7 @@ public:
     StageLight(Creature* pCreature) : CreatureAIScript(pCreature)
     {
         _unit->setUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-        _unit->GetAIInterface()->disable_melee = true;
+        _setMeleeDisabled(true);
         _unit->GetAIInterface()->m_canMove = false;
         _unit->m_noRespawn = true;
         _unit->CastSpell(_unit, 34126, true);
@@ -1145,7 +1146,7 @@ public:
 
     void OnCombatStart(Unit* mTarget)
     {
-        _unit->SendScriptTextChatMessage(2062);     // The Menagerie is for guests only.
+        sendDBChatMessage(2062);     // The Menagerie is for guests only.
 
         for (uint8 i = 0; i < nrspells; i++)
             spells[i].casttime = spells[i].cooldown;
@@ -1167,7 +1168,7 @@ public:
 
     void OnDied(Unit* mKiller)
     {
-        _unit->SendScriptTextChatMessage(2069);     // This Curator is no longer op... er... ation... al.
+        sendDBChatMessage(2069);     // This Curator is no longer op... er... ation... al.
         RemoveAIUpdateEvent();
     }
 
@@ -1178,10 +1179,10 @@ public:
             switch (RandomUInt(1))
             {
                 case 0:
-                    _unit->SendScriptTextChatMessage(2067);     // Do not touch the displays.
+                    sendDBChatMessage(2067);     // Do not touch the displays.
                     break;
                 case 1:
-                    _unit->SendScriptTextChatMessage(2068);     // You are not a guest.
+                    sendDBChatMessage(2068);     // You are not a guest.
                     break;
             }
         }
@@ -1195,14 +1196,14 @@ public:
             {
                 _unit->setMoveRoot(true);
                 _unit->setAttackTimer(spells[1].attackstoptimer, false);
-                _unit->SendScriptTextChatMessage(2065);     // Your request cannot be processed.
+                sendDBChatMessage(2065);     // Your request cannot be processed.
                 _unit->CastSpell(_unit, spells[2].info, spells[2].instant);
                 evocation = true;
             }
             else if (!enrage && _unit->GetHealthPct() <= 16)
             {
                 _unit->CastSpell(_unit, spells[3].info, spells[3].instant);
-                _unit->SendScriptTextChatMessage(2066);     // Failure to comply will result in offensive action.
+                sendDBChatMessage(2066);     // Failure to comply will result in offensive action.
                 enrage = true;
             }
             else
@@ -1257,10 +1258,10 @@ public:
         switch (RandomUInt(1))
         {
             case 0:
-                _unit->SendScriptTextChatMessage(2063);     // Gallery rules will be strictly enforced.
+                sendDBChatMessage(2063);     // Gallery rules will be strictly enforced.
                 break;
             case 1:
-                _unit->SendScriptTextChatMessage(2064);     // This curator is equipped for gallery protection.
+                sendDBChatMessage(2064);     // This curator is equipped for gallery protection.
                 break;
         }
 
@@ -1327,7 +1328,7 @@ class AstralFlareAI : public MoonScriptCreatureAI
         AddSpell(ASTRAL_FLARE_PASSIVE, Target_Self, 100, 0, 3);
         AddSpell(ASTRAL_FLARE_VISUAL, Target_Self, 100, 0, 6);
         AddSpell(30235, Target_Current, 20, 0, 0);
-        SetDespawnWhenInactive(true);
+        _setDespawnWhenInactive(true);
         AggroNearestPlayer();
     }
 };
@@ -1481,20 +1482,20 @@ public:
 
         if (HasAtiesh)
         {
-            _unit->SendScriptTextChatMessage(2046);     // Where did you get that?! Did HE send you?!
+            sendDBChatMessage(2046);     // Where did you get that?! Did HE send you?!
         }
         else
         {
             switch (RandomUInt(2))
             {
                 case 0:
-                    _unit->SendScriptTextChatMessage(2031);     // Please, no more. My son... he's gone mad!
+                    sendDBChatMessage(2031);     // Please, no more. My son... he's gone mad!
                     break;
                 case 1:
-                    _unit->SendScriptTextChatMessage(2032);     // I'll not be tortured again!
+                    sendDBChatMessage(2032);     // I'll not be tortured again!
                     break;
                 case 2:
-                    _unit->SendScriptTextChatMessage(2033);     // Who are you? What do you want? Stay away from me!
+                    sendDBChatMessage(2033);     // Who are you? What do you want? Stay away from me!
                     break;
             }
         }
@@ -1512,8 +1513,7 @@ public:
         slow = false;
         LastSuperSpell = RandomUInt(100) % 3;
         // Door closing
-        GameObject* SDoor = NULL;
-        SDoor = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-11190.012f, -1881.016f, 231.95f, 184517);
+        GameObject* SDoor = getNearestGameObject(-11190.012f, -1881.016f, 231.95f, 184517);
         if (SDoor)
         {
             SDoor->SetState(GO_STATE_CLOSED);
@@ -1529,8 +1529,7 @@ public:
         RemoveAIUpdateEvent();
         _unit->setUInt32Value(UNIT_FIELD_POWER1, _unit->GetMaxPower(POWER_TYPE_MANA));
         // Door opening
-        GameObject* SDoor = NULL;
-        SDoor = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-11190.012f, -1881.016f, 231.95f, 184517);
+        GameObject* SDoor = getNearestGameObject(-11190.012f, -1881.016f, 231.95f, 184517);
         if (SDoor)
             SDoor->SetFlags(34);
     }
@@ -1538,12 +1537,11 @@ public:
     void OnDied(Unit* mKiller)
     {
         CastTime();
-        _unit->SendScriptTextChatMessage(2045);     // At last... The nightmare is.. over...
+        sendDBChatMessage(2045);     // At last... The nightmare is.. over...
 
         RemoveAIUpdateEvent();
         // Door opening
-        GameObject* SDoor = NULL;
-        SDoor = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-11190.012f, -1881.016f, 231.95f, 184517);
+        GameObject* SDoor = getNearestGameObject(-11190.012f, -1881.016f, 231.95f, 184517);
         if (SDoor)
             SDoor->SetFlags(34);
     }
@@ -1553,11 +1551,11 @@ public:
         switch (RandomUInt(1))
         {
             case 0:
-                _unit->SendScriptTextChatMessage(2042);     // I want this nightmare to be over!
+                sendDBChatMessage(2042);     // I want this nightmare to be over!
                 break;
 
             case 1:
-                _unit->SendScriptTextChatMessage(2043);     // Torment me no more!
+                sendDBChatMessage(2043);     // Torment me no more!
                 break;
         }
     }
@@ -1602,7 +1600,7 @@ public:
                 _unit->CastSpell(_unit, info_summon_elemental_2, true);
                 _unit->CastSpell(_unit, info_summon_elemental_3, true);
 
-                _unit->SendScriptTextChatMessage(2041);     // I'm not finished yet! No, I have a few more tricks up me sleeve.
+                sendDBChatMessage(2041);     // I'm not finished yet! No, I have a few more tricks up me sleeve.
                 summoned = true;
             }
             else if (_unit->GetManaPct() <= 20 && _unit->GetCurrentSpell() == NULL)
@@ -1610,7 +1608,7 @@ public:
                 if (!m_time_pyroblast)
                 {
                     _unit->GetAIInterface()->WipeHateList();
-                    _unit->SendScriptTextChatMessage(2040);     // Surely you would not deny an old man a replenishing drink? No, no I thought not.
+                    sendDBChatMessage(2040);     // Surely you would not deny an old man a replenishing drink? No, no I thought not.
                     m_time_pyroblast = 10;
                     _unit->CastSpell(_unit, info_mass_polymorph, true);
                     _unit->setAttackTimer(2000, false);
@@ -1648,7 +1646,7 @@ public:
         m_time_special--;
         if (!enraged && !m_time_enrage)
         {
-            _unit->SendScriptTextChatMessage(2044);     // You've wasted enough of my time. Let these games be finished!
+            sendDBChatMessage(2044);     // You've wasted enough of my time. Let these games be finished!
 
             float ERX = 5 * cos(RandomFloat(6.28f)) + (_unit->GetPositionX());
             float ERY = 5 * sin(RandomFloat(6.28f)) + (_unit->GetPositionY());
@@ -1682,10 +1680,10 @@ public:
         switch (RandomUInt(1))
         {
             case 0:
-                _unit->SendScriptTextChatMessage(2034);     // I'll show you this beaten dog still has some teeth!
+                sendDBChatMessage(2034);     // I'll show you this beaten dog still has some teeth!
                 break;
             case 1:
-                _unit->SendScriptTextChatMessage(2035);     // Burn you hellish fiends!
+                sendDBChatMessage(2035);     // Burn you hellish fiends!
                 break;
         }
 
@@ -1727,10 +1725,10 @@ public:
         switch (RandomUInt(1))
         {
             case 0:
-                _unit->SendScriptTextChatMessage(2036);     // I'll freeze you all!
+                sendDBChatMessage(2036);     // I'll freeze you all!
                 break;
             case 1:
-                _unit->SendScriptTextChatMessage(2037);     // Back to the cold dark with you!
+                sendDBChatMessage(2037);     // Back to the cold dark with you!
                 break;
         }
 
@@ -1742,10 +1740,10 @@ public:
         switch (RandomUInt(1))
         {
             case 0:
-                _unit->SendScriptTextChatMessage(2038);     // Yes, yes, my son is quite powerful... but I have powers of my own!
+                sendDBChatMessage(2038);     // Yes, yes, my son is quite powerful... but I have powers of my own!
                 break;
             case 1:
-                _unit->SendScriptTextChatMessage(2039);     // I am not some simple jester! I am Nielas Aran!
+                sendDBChatMessage(2039);     // I am not some simple jester! I am Nielas Aran!
                 break;
         }
 
@@ -2087,7 +2085,7 @@ public:
 
     void OnCombatStart(Unit* mTarget)
     {
-        _unit->SendScriptTextChatMessage(2050);     // Ah, you're just in time. The rituals are about to begin.
+        sendDBChatMessage(2050);     // Ah, you're just in time. The rituals are about to begin.
 
         uint32 t = (uint32)time(NULL);
         for (uint8 i = 0; i < nrspells; i++)
@@ -2111,7 +2109,7 @@ public:
     void OnDied(Unit* mKiller)
     {
         clean();
-        _unit->SendScriptTextChatMessage(2049);     // My life, is yours. Oh great one.
+        sendDBChatMessage(2049);     // My life, is yours. Oh great one.
         RemoveAIUpdateEvent();
     }
 
@@ -2131,10 +2129,10 @@ public:
         switch (RandomUInt(1))
         {
             case 0:
-                _unit->SendScriptTextChatMessage(2047);     // Your blood will anoint my circle.
+                sendDBChatMessage(2047);     // Your blood will anoint my circle.
                 break;
             case 1:
-                _unit->SendScriptTextChatMessage(2048);     // The great one will be pleased.
+                sendDBChatMessage(2048);     // The great one will be pleased.
                 break;
         }
     }
@@ -2176,10 +2174,10 @@ public:
         switch (RandomUInt(1))
         {
             case 0:
-                _unit->SendScriptTextChatMessage(2053);     // Come, you dwellers in the dark. Rally to my call!
+                sendDBChatMessage(2053);     // Come, you dwellers in the dark. Rally to my call!
                 break;
             case 1:
-                _unit->SendScriptTextChatMessage(2054);     // Gather, my pets. There is plenty for all.
+                sendDBChatMessage(2054);     // Gather, my pets. There is plenty for all.
                 break;
         }
 
@@ -2192,10 +2190,10 @@ public:
         switch (RandomUInt(1))
         {
             case 0:
-                _unit->SendScriptTextChatMessage(2051);     // Please, accept this humble offering, oh great one.
+                sendDBChatMessage(2051);     // Please, accept this humble offering, oh great one.
                 break;
             case 1:
-                _unit->SendScriptTextChatMessage(2052);     // Let the sacrifice serve his testament to my fealty.
+                sendDBChatMessage(2052);     // Let the sacrifice serve his testament to my fealty.
                 break;
         }
 
@@ -2642,7 +2640,7 @@ public:
         _unit->setMoveRoot(true);
 
         _unit->setUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_2);
-        _unit->GetAIInterface()->disable_melee = true;
+        _setMeleeDisabled(true);
         _unit->GetAIInterface()->m_canMove = false;
         _unit->m_noRespawn = true;
 
@@ -2787,7 +2785,7 @@ public:
 
     void OnCombatStart(Unit* mTarget)
     {
-        _unit->SendScriptTextChatMessage(2019);     // Madness has brought you here to me. I shall be your undoing.
+        sendDBChatMessage(2019);     // Madness has brought you here to me. I shall be your undoing.
 
         for (uint8 i = 0; i < nrspells; i++)
             spells[i].casttime = 0;
@@ -2802,7 +2800,7 @@ public:
 
         RegisterAIUpdateEvent(1000);
 
-        GameObject* MDoor = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-11018.5f, -1967.92f, 276.652f, 185134);
+        GameObject* MDoor = getNearestGameObject(-11018.5f, -1967.92f, 276.652f, 185134);
         if (MDoor != NULL)
         {
             MDoor->SetState(GO_STATE_CLOSED);
@@ -2835,7 +2833,7 @@ public:
         if (GetLinkedCreature() != NULL)
             GetLinkedCreature()->GetUnit()->Despawn(10000, 0);
 
-        GameObject* MDoor = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-11018.5f, -1967.92f, 276.652f, 185134);
+        GameObject* MDoor = getNearestGameObject(-11018.5f, -1967.92f, 276.652f, 185134);
         // Open door
         if (MDoor != NULL)
             MDoor->SetState(GO_STATE_OPEN);
@@ -2848,7 +2846,7 @@ public:
 
     void OnDied(Unit* mKiller)
     {
-        _unit->SendScriptTextChatMessage(2030);     // I refuse to concede defeat. I am a prince of the Eredar! I am...
+        sendDBChatMessage(2030);     // I refuse to concede defeat. I am a prince of the Eredar! I am...
 
         RemoveAIUpdateEvent();
 
@@ -2861,7 +2859,7 @@ public:
         if (MAxes)
             MAxes->Despawn(1000, 0);
 
-        GameObject* MDoor = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-11018.5f, -1967.92f, 276.652f, 185134);
+        GameObject* MDoor = getNearestGameObject(-11018.5f, -1967.92f, 276.652f, 185134);
         // Open door
         if (MDoor)
             MDoor->SetState(GO_STATE_OPEN);
@@ -2872,13 +2870,13 @@ public:
         switch (RandomUInt(2))
         {
             case 0:
-                _unit->SendScriptTextChatMessage(2027);     // You are, but a plaything, unfit even to amuse.
+                sendDBChatMessage(2027);     // You are, but a plaything, unfit even to amuse.
                 break;
             case 1:
-                _unit->SendScriptTextChatMessage(2026);     // Your greed, your foolishness has brought you to this end.
+                sendDBChatMessage(2026);     // Your greed, your foolishness has brought you to this end.
                 break;
             case 2:
-                _unit->SendScriptTextChatMessage(2025);     // Surely you did not think you could win.
+                sendDBChatMessage(2025);     // Surely you did not think you could win.
                 break;
         }
     }
@@ -2946,7 +2944,7 @@ public:
     {
         if (_unit->GetHealthPct() <= 60 && m_phase == 1)
         {
-            _unit->SendScriptTextChatMessage(2020);     // Time is the fire in which you'll burn!");
+            sendDBChatMessage(2020);     // Time is the fire in which you'll burn!");
 
             uint32 t = (uint32)time(NULL);
             spells[0].casttime = -1;
@@ -2982,7 +2980,7 @@ public:
     {
         if (_unit->GetHealthPct() <= 30 && m_phase == 2)
         {
-            _unit->SendScriptTextChatMessage(2024);     // How can you hope to withstand against such overwhelming power?
+            sendDBChatMessage(2024);     // How can you hope to withstand against such overwhelming power?
 
             uint32 t = (uint32)time(NULL);
 
@@ -3026,10 +3024,10 @@ public:
         switch (RandomUInt(1))
         {
             case 0:
-                _unit->SendScriptTextChatMessage(2029);     // You face not Malchezaar alone, but the legions I command!
+                sendDBChatMessage(2029);     // You face not Malchezaar alone, but the legions I command!
                 break;
             case 1:
-                _unit->SendScriptTextChatMessage(2028);     // All realities, all dimensions are open to me!
+                sendDBChatMessage(2028);     // All realities, all dimensions are open to me!
                 break;
         }
 
@@ -3198,12 +3196,12 @@ public:
 
     void OnLoad()
     {
-        SetCanMove(false);
-        SetCanEnterCombat(false);
+        setRooted(true);
+        setCanEnterCombat(false);
         _unit->setUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
         _unit->m_noRespawn = true;
         RegisterAIUpdateEvent(6000);
-        Despawn(175000, 0);
+        despawn(175000, 0);
         _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(HELLFIRE), true);
         ParentClass::OnLoad();
     };
@@ -3375,7 +3373,7 @@ public:
 
         RegisterAIUpdateEvent(1000);
 
-        GameObject* NDoor = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-11186.2f, -1665.14f, 281.398f, 185521);
+        GameObject* NDoor = getNearestGameObject(-11186.2f, -1665.14f, 281.398f, 185521);
         if (NDoor)
         {
             NDoor->SetState(GO_STATE_CLOSED);
@@ -3391,7 +3389,7 @@ public:
         _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
         RemoveAIUpdateEvent();
 
-        GameObject* NDoor = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-11186.2f, -1665.14f, 281.398f, 185521);
+        GameObject* NDoor = getNearestGameObject(-11186.2f, -1665.14f, 281.398f, 185521);
         if (NDoor)
             NDoor->SetState(GO_STATE_OPEN);
     }
@@ -3400,7 +3398,7 @@ public:
     {
         RemoveAIUpdateEvent();
 
-        GameObject* NDoor = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-11186.2f, -1665.14f, 281.398f, 185521);
+        GameObject* NDoor = getNearestGameObject(-11186.2f, -1665.14f, 281.398f, 185521);
         if (NDoor)
             NDoor->SetState(GO_STATE_OPEN);
     }
@@ -3499,7 +3497,7 @@ public:
         _unit->setMoveRoot(true);
         _unit->DisableAI();
         _unit->setUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_2);
-        _unit->GetAIInterface()->disable_melee = true;
+        _setMeleeDisabled(true);
         _unit->GetAIInterface()->m_canMove = false;
         _unit->m_noRespawn = true;
         _unit->Despawn(30000, 0);
@@ -3996,7 +3994,7 @@ public:
 
     void OnCombatStart(Unit* mTarget)
     {
-        _unit->SendScriptTextChatMessage(1978);     // Oh Tito, we simply must find a way home! The old wizard could be our only hope! Strawman, Roar, Tinhead, will you - wait... oh golly, look we have visitors!
+        sendDBChatMessage(1978);     // Oh Tito, we simply must find a way home! The old wizard could be our only hope! Strawman, Roar, Tinhead, will you - wait... oh golly, look we have visitors!
 
         CastTime();
         RegisterAIUpdateEvent(1000);
@@ -4014,7 +4012,7 @@ public:
 
     void OnDied(Unit* mKiller)
     {
-        _unit->SendScriptTextChatMessage(1975);     // Oh at last, at last I can go home!
+        sendDBChatMessage(1975);     // Oh at last, at last I can go home!
 
         //Check to see if we can spawn The Crone now
         Creature* Dorothee = _unit->GetMapMgr()->GetInterface()->GetCreatureNearestCoords(-10897.650f, -1755.8311f, 90.476f, 17535); //Dorothee
@@ -4058,14 +4056,14 @@ public:
 
         if (titoSpawned && !tito && titoDeadSpeech)
         {
-            _unit->SendScriptTextChatMessage(1977);     // Tito! Oh Tito, no!
+            sendDBChatMessage(1977);     // Tito! Oh Tito, no!
 
             titoDeadSpeech = false;
         }
 
         if (summontito > 20 && !titoSpawned)
         {
-            _unit->SendScriptTextChatMessage(1976);     // Don't let them hurt us Tito! Oh, you won't, will you?
+            sendDBChatMessage(1976);     // Don't let them hurt us Tito! Oh, you won't, will you?
 
             SpawnTito();
             titoSpawned = true;
@@ -4336,7 +4334,7 @@ public:
 
     void OnCombatStart(Unit* mTarget)
     {
-        _unit->SendScriptTextChatMessage(1982);     // Now what should I do with you? I simply can't make up my mind.
+        sendDBChatMessage(1982);     // Now what should I do with you? I simply can't make up my mind.
 
         CastTime();
         RegisterAIUpdateEvent(1000);
@@ -4354,7 +4352,7 @@ public:
 
     void OnDied(Unit* mKiller)
     {
-        _unit->SendScriptTextChatMessage(1983);     // Don't let them make... a mattress outta' me.
+        sendDBChatMessage(1983);     // Don't let them make... a mattress outta' me.
 
         //Check to see if we can spawn The Crone now
         Creature* Dorothee = _unit->GetMapMgr()->GetInterface()->GetCreatureNearestCoords(-10897.650f, -1755.8311f, 90.476f, 17535);    //Dorothee
@@ -4373,7 +4371,7 @@ public:
 
     void OnTargetDied(Unit* mTarget)
     {
-        _unit->SendScriptTextChatMessage(1984);     // I guess I'm not a failure after all!
+        sendDBChatMessage(1984);     // I guess I'm not a failure after all!
     }
 
     void AIUpdate()
@@ -4477,7 +4475,7 @@ public:
 
     void OnCombatStart(Unit* mTarget)
     {
-        _unit->SendScriptTextChatMessage(1985);     // I could really use a heart. Say, can I have yours?
+        sendDBChatMessage(1985);     // I could really use a heart. Say, can I have yours?
 
         CastTime();
         RegisterAIUpdateEvent(1000);
@@ -4495,7 +4493,7 @@ public:
 
     void OnDied(Unit* mKiller)
     {
-        _unit->SendScriptTextChatMessage(1986);     // Back to being an old rust bucket.
+        sendDBChatMessage(1986);     // Back to being an old rust bucket.
 
         //Check to see if we can spawn The Crone now
         Creature* Dorothee = _unit->GetMapMgr()->GetInterface()->GetCreatureNearestCoords(-10897.650f, -1755.8311f, 90.476f, 17535);    //Dorothee
@@ -4514,7 +4512,7 @@ public:
 
     void OnTargetDied(Unit* mTarget)
     {
-        _unit->SendScriptTextChatMessage(1987);     // Guess I'm not so rusty after all.
+        sendDBChatMessage(1987);     // Guess I'm not so rusty after all.
     }
 
     void AIUpdate()
@@ -4592,7 +4590,7 @@ public:
 
     void OnCombatStart(Unit* mTarget)
     {
-        _unit->SendScriptTextChatMessage(1979);     // I'm not afraid a' you! Do you wanna' fight? Huh, do ya'? C'mon! I'll fight ya' with both paws behind my back!
+        sendDBChatMessage(1979);     // I'm not afraid a' you! Do you wanna' fight? Huh, do ya'? C'mon! I'll fight ya' with both paws behind my back!
     }
 
     void OnCombatStop(Unit* mTarget)
@@ -4604,7 +4602,7 @@ public:
 
     void OnDied(Unit* mKiller)
     {
-        _unit->SendScriptTextChatMessage(1980);     // You didn't have to go and do that!
+        sendDBChatMessage(1980);     // You didn't have to go and do that!
 
         //Check to see if we can spawn The Crone now
         Creature* Dorothee = _unit->GetMapMgr()->GetInterface()->GetCreatureNearestCoords(-10897.650f, -1755.8311f, 90.476f, 17535); //Dorothee
@@ -4655,7 +4653,7 @@ public:
 
     void OnCombatStart(Unit* mTarget)
     {
-        _unit->SendScriptTextChatMessage(1989);     // Woe to each and every one of you, my pretties!
+        sendDBChatMessage(1989);     // Woe to each and every one of you, my pretties!
 
         CastTime();
         RegisterAIUpdateEvent(1000);
@@ -4665,9 +4663,9 @@ public:
     {
         if (_unit->GetHealthPct() > 0)
         {
-            GameObject* DoorLeft = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10917.1445f, -1774.05f, 90.478f, 184279);
-            GameObject* DoorRight = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10872.195f, -1779.42f, 90.45f, 184278);
-            GameObject* Curtain = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10894.17f, -1774.218f, 90.477f, 183932);
+            GameObject* DoorLeft = getNearestGameObject(-10917.1445f, -1774.05f, 90.478f, 184279);
+            GameObject* DoorRight = getNearestGameObject(-10872.195f, -1779.42f, 90.45f, 184278);
+            GameObject* Curtain = getNearestGameObject(-10894.17f, -1774.218f, 90.477f, 183932);
 
             if (DoorLeft)
                 DoorLeft->SetState(GO_STATE_CLOSED);
@@ -4689,11 +4687,11 @@ public:
 
     void OnDied(Unit* mKiller)
     {
-        _unit->SendScriptTextChatMessage(1991);     // How could you? What a cruel, cruel world...
+        sendDBChatMessage(1991);     // How could you? What a cruel, cruel world...
 
-        GameObject* DoorLeft = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10917.1445f, -1774.05f, 90.478f, 184279);
-        GameObject* DoorRight = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10872.195f, -1779.42f, 90.45f, 184278);
-        GameObject* Curtain = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10894.17f, -1774.218f, 90.477f, 183932);
+        GameObject* DoorLeft = getNearestGameObject(-10917.1445f, -1774.05f, 90.478f, 184279);
+        GameObject* DoorRight = getNearestGameObject(-10872.195f, -1779.42f, 90.45f, 184278);
+        GameObject* Curtain = getNearestGameObject(-10894.17f, -1774.218f, 90.477f, 183932);
 
         if (DoorLeft)
             DoorLeft->SetState(GO_STATE_OPEN);
@@ -4711,7 +4709,7 @@ public:
 
     void OnTargetDied(Unit* mTarget)
     {
-        _unit->SendScriptTextChatMessage(1992);     // Fixed you, didn't I?
+        sendDBChatMessage(1992);     // Fixed you, didn't I?
     }
 
     void AIUpdate()
@@ -4790,7 +4788,7 @@ public:
     {
         _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(CYCLONE_VISUAL), true);
         _unit->setUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_2);
-        _unit->GetAIInterface()->disable_melee = true;
+        _setMeleeDisabled(true);
         _unit->GetAIInterface()->m_canMove = false;
         _unit->m_noRespawn = true;
     }
@@ -4825,7 +4823,7 @@ const uint32 SP_POISONED_THRUST = 30822;
 const uint32 SP_DARING = 30841;
 
 //\todo play sound on resurection
-//_unit->SendScriptTextChatMessage(2005);     // Thou detestable maw, thou womb of death; I enforce thy rotten jaws to open!
+//sendDBChatMessage(2005);     // Thou detestable maw, thou womb of death; I enforce thy rotten jaws to open!
 
 class RomuloAI : public CreatureAIScript
 {
@@ -4873,7 +4871,7 @@ public:
 
     void OnCombatStart(Unit* mTarget)
     {
-        _unit->SendScriptTextChatMessage(2002);     // Wilt thou provoke me? Then have at thee, boy!
+        sendDBChatMessage(2002);     // Wilt thou provoke me? Then have at thee, boy!
 
         CastTime();
         RegisterAIUpdateEvent(1000);
@@ -4883,9 +4881,9 @@ public:
     {
         if (_unit->GetHealthPct() > 0)
         {
-            GameObject* DoorLeft = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10917.1445f, -1774.05f, 90.478f, 184279);
-            GameObject* DoorRight = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10872.195f, -1779.42f, 90.45f, 184278);
-            GameObject* Curtain = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10894.17f, -1774.218f, 90.477f, 183932);
+            GameObject* DoorLeft = getNearestGameObject(-10917.1445f, -1774.05f, 90.478f, 184279);
+            GameObject* DoorRight = getNearestGameObject(-10872.195f, -1779.42f, 90.45f, 184278);
+            GameObject* Curtain = getNearestGameObject(-10894.17f, -1774.218f, 90.477f, 183932);
 
             if (DoorLeft)
                 DoorLeft->SetState(GO_STATE_CLOSED);
@@ -4909,16 +4907,16 @@ public:
         switch (RandomUInt(1))
         {
             case 0:
-                _unit->SendScriptTextChatMessage(2003);     // Thou smilest... upon the stroke that... murders me.
+                sendDBChatMessage(2003);     // Thou smilest... upon the stroke that... murders me.
                 break;
             case 1:
-                _unit->SendScriptTextChatMessage(2004);     // This day's black fate on more days doth depend. This but begins the woe. Others must end.
+                sendDBChatMessage(2004);     // This day's black fate on more days doth depend. This but begins the woe. Others must end.
                 break;
         }
 
-        GameObject* DoorLeft = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10917.1445f, -1774.05f, 90.478f, 184279);
-        GameObject* DoorRight = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10872.195f, -1779.42f, 90.45f, 184278);
-        GameObject* Curtain = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10894.17f, -1774.218f, 90.477f, 183932);
+        GameObject* DoorLeft = getNearestGameObject(-10917.1445f, -1774.05f, 90.478f, 184279);
+        GameObject* DoorRight = getNearestGameObject(-10872.195f, -1779.42f, 90.45f, 184278);
+        GameObject* Curtain = getNearestGameObject(-10894.17f, -1774.218f, 90.477f, 183932);
 
         if (DoorLeft)
             DoorLeft->SetState(GO_STATE_OPEN);
@@ -4936,7 +4934,7 @@ public:
 
     void OnTargetDied(Unit* mTarget)
     {
-        _unit->SendScriptTextChatMessage(2006);     // How well my comfort is revived by this!
+        sendDBChatMessage(2006);     // How well my comfort is revived by this!
     }
 
     void AIUpdate()
@@ -5011,7 +5009,7 @@ const uint32 SP_BINDING_PASSION = 30890;
 const uint32 SP_DEVOTION = 30887;
 
 //\todo play sound on resurrection
-//_unit->SendScriptTextChatMessage(2000);     // Come, gentle night; and give me back my Romulo!
+//sendDBChatMessage(2000);     // Come, gentle night; and give me back my Romulo!
 
 class JulianneAI : public CreatureAIScript
 {
@@ -5059,7 +5057,7 @@ public:
 
     void OnCombatStart(Unit* mTarget)
     {
-        _unit->SendScriptTextChatMessage(1996);     // What devil art thou, that dost torment me thus?
+        sendDBChatMessage(1996);     // What devil art thou, that dost torment me thus?
 
         CastTime();
         RegisterAIUpdateEvent(1000);
@@ -5069,9 +5067,9 @@ public:
     {
         if (_unit->GetHealthPct() > 0)
         {
-            GameObject* DoorLeft = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10917.1445f, -1774.05f, 90.478f, 184279);
-            GameObject* DoorRight = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10872.195f, -1779.42f, 90.45f, 184278);
-            GameObject* Curtain = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(-10894.17f, -1774.218f, 90.477f, 183932);
+            GameObject* DoorLeft = getNearestGameObject(-10917.1445f, -1774.05f, 90.478f, 184279);
+            GameObject* DoorRight = getNearestGameObject(-10872.195f, -1779.42f, 90.45f, 184278);
+            GameObject* Curtain = getNearestGameObject(-10894.17f, -1774.218f, 90.477f, 183932);
 
             if (DoorLeft)
                 DoorLeft->SetState(GO_STATE_CLOSED);
@@ -5095,10 +5093,10 @@ public:
         switch (RandomUInt(1))
         {
             case 0:
-                _unit->SendScriptTextChatMessage(1998);     // Romulo, I come! Oh... this do I drink to thee!
+                sendDBChatMessage(1998);     // Romulo, I come! Oh... this do I drink to thee!
                 break;
             case 1:
-                _unit->SendScriptTextChatMessage(1997);     // Where is my lord? Where is my Romulo?
+                sendDBChatMessage(1997);     // Where is my lord? Where is my Romulo?
                 break;
         }
 
@@ -5114,7 +5112,7 @@ public:
 
     void OnTargetDied(Unit* mTarget)
     {
-        _unit->SendScriptTextChatMessage(2001);     // Parting is such sweet sorrow.
+        sendDBChatMessage(2001);     // Parting is such sweet sorrow.
     }
 
     void AIUpdate()

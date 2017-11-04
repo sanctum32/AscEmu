@@ -56,7 +56,7 @@ class DruidFangAI : public MoonScriptCreatureAI
 
         void AIUpdate()
         {
-            if (GetHealthPercent() <= 50 && SerpentForm->mEnabled == true)
+            if (_getHealthPercent() <= 50 && SerpentForm->mEnabled == true)
             {
                 CastSpellNowNoScheduling(SerpentForm);
                 SerpentForm->mEnabled = false;
@@ -69,7 +69,7 @@ class DruidFangAI : public MoonScriptCreatureAI
                 DruidsSlumber->mEnabled = true;
             }
 
-            if (GetHealthPercent() <= 5 && HealingTouch->mEnabled == true)
+            if (_getHealthPercent() <= 5 && HealingTouch->mEnabled == true)
             {
                 // Remove Serpent Form
                 RemoveAura(8041);
@@ -102,7 +102,7 @@ class LadyAnacondraAI : public MoonScriptCreatureAI
 
         void OnCombatStart(Unit* pTarget)
         {
-            _unit->SendScriptTextChatMessage(8755);     // None can stand against the Serpent Lords!
+            sendDBChatMessage(8755);     // None can stand against the Serpent Lords!
         }
 };
 
@@ -122,19 +122,19 @@ class LordCobrahnAI : public MoonScriptCreatureAI
 
         void OnCombatStart(Unit* pTarget)
         {
-            _unit->SendScriptTextChatMessage(8756);     // You will never wake the dreamer!
+            sendDBChatMessage(8756);     // You will never wake the dreamer!
         }
 
         void AIUpdate()
         {
-            if (GetHealthPercent() <= 20 && SerpentForm->mEnabled == true)
+            if (_getHealthPercent() <= 20 && SerpentForm->mEnabled == true)
             {
                 CastSpellNowNoScheduling(SerpentForm);
                 SerpentForm->mEnabled = false;
                 // Disable Lightning Bolt
                 LightningBolt->mEnabled = false;
             }
-            else if (GetHealthPercent() <= 20 && SerpentForm->mEnabled == false && !GetUnit()->HasAura(7965))
+            else if (_getHealthPercent() <= 20 && SerpentForm->mEnabled == false && !GetUnit()->HasAura(7965))
             {
                 // Enable Lightning Bolt
                 LightningBolt->mEnabled = true;
@@ -161,7 +161,7 @@ class LordPythasAI : public MoonScriptCreatureAI
 
         void OnCombatStart(Unit* pTarget)
         {
-            _unit->SendScriptTextChatMessage(8757);     // The coils of death... Will crush you!
+            sendDBChatMessage(8757);     // The coils of death... Will crush you!
         }
 };
 
@@ -179,7 +179,7 @@ class LordSerpentisAI : public MoonScriptCreatureAI
 
          void OnCombatStart(Unit* pTarget)
         {
-            _unit->SendScriptTextChatMessage(8758);     // I am the serpent king, i can do anything!
+            sendDBChatMessage(8758);     // I am the serpent king, i can do anything!
         }
 };
 
@@ -206,14 +206,14 @@ class SkumAI : public MoonScriptCreatureAI
 
         void AIUpdate()
         {
-            if (GetHealthPercent() <= 10 && GetBehavior() != Behavior_Flee)
+            if (_getHealthPercent() <= 10 && GetBehavior() != Behavior_Flee)
             {
-                Emote("Skum tries to run away in fear", Text_Emote);
+                sendChatMessage(CHAT_MSG_MONSTER_EMOTE, 0, "Skum tries to run away in fear");
                 SetBehavior(Behavior_Flee);
-                SetAllowMelee(false);
-                SetAllowRanged(false);
-                SetAllowSpell(false);
-                MoveTo(-262.829742f, -299.363159f, -68.293579f, true);
+                _setMeleeDisabled(false);
+                _setRangedDisabled(true);
+                _setCastDisabled(true);
+                moveTo(-262.829742f, -299.363159f, -68.293579f, true);
             }
             ParentClass::AIUpdate();
         }
@@ -352,7 +352,7 @@ class DofNaralexAI : public MoonScriptBossAI
             SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_NONE);
 
             // Awakening Spell
-            Awakening = AddSpell(6271, Target_Self, 0, 0, 0, 0, 0, false, "Step back and be ready!, I'll try to Awake Naralex", Text_Say);
+            Awakening = AddSpell(6271, Target_Self, 0, 0, 0, 0, 0, false, "Step back and be ready!, I'll try to Awake Naralex", CHAT_MSG_MONSTER_SAY);
 
             SpawnTimer = 0;
         }
@@ -400,16 +400,16 @@ class DofNaralexAI : public MoonScriptBossAI
             if (GetPhase() == 5 && (!Mutanus || !Mutanus->GetUnit()->isAlive()))
             {
                 MoonScriptCreatureAI* Naralex = GetNearestCreature(3679);
-                if (Naralex && Naralex->IsAlive())
+                if (Naralex && Naralex->isAlive())
                 {
-                    SetDisplayId(17089);
-                    Naralex->SetDisplayId(17089);
-                    Naralex->Emote("I am awake... at last", Text_Say, 5789);
+                    _setDisplayId(17089);
+                    Naralex->_setDisplayId(17089);
+                    Naralex->sendChatMessage(CHAT_MSG_MONSTER_SAY, 5789, "I am awake... at last");
                     Naralex->GetUnit()->SetStandState(STANDSTATE_STAND);
-                    SetFlyMode(true);
-                    Naralex->SetFlyMode(true);
-                    MoveTo(-6.704030f, 200.308838f, -26.938824f);
-                    Naralex->MoveTo(-6.704030f, 200.308838f, -26.938824f);
+                    setFlyMode(true);
+                    Naralex->setFlyMode(true);
+                    moveTo(-6.704030f, 200.308838f, -26.938824f);
+                    Naralex->moveTo(-6.704030f, 200.308838f, -26.938824f);
                 }
                 SetPhase(6);
             }

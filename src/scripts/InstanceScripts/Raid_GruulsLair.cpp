@@ -100,12 +100,12 @@ class HighKingMaulgarAI : public MoonScriptBossAI
             AddSpell(HIGH_KING_MAULGAR_WHIRLWIND, Target_Self, 7, 15, 25);                    // SpellFunc for range check?
             AddSpell(HIGH_KING_MAULGAR_MIGHTY_BLOW, Target_Current, 7, 0, 20, 0, 5);
             mEnrage = AddSpellFunc(&SpellFunc_Maulgar_Enrage, Target_Self, 0, 0, 0);
-            mEnrage->AddEmote("You will not defeat the hand of Gruul!", Text_Yell, 11368);
-            AddEmote(Event_OnCombatStart, "Gronn are the real power in Outland!", Text_Yell, 11367);
-            AddEmote(Event_OnTargetDied, "You not so tough after all!", Text_Yell, 11373);
-            AddEmote(Event_OnTargetDied, "Maulgar is king!", Text_Yell, 11375);
-            AddEmote(Event_OnTargetDied, "", Text_Emote, 11374);
-            AddEmote(Event_OnDied, "Grull... will crush you!", Text_Yell, 11376);
+            mEnrage->AddEmote("You will not defeat the hand of Gruul!", CHAT_MSG_MONSTER_YELL, 11368);
+            AddEmote(Event_OnCombatStart, "Gronn are the real power in Outland!", CHAT_MSG_MONSTER_YELL, 11367);
+            AddEmote(Event_OnTargetDied, "You not so tough after all!", CHAT_MSG_MONSTER_YELL, 11373);
+            AddEmote(Event_OnTargetDied, "Maulgar is king!", CHAT_MSG_MONSTER_YELL, 11375);
+            AddEmote(Event_OnTargetDied, "", CHAT_MSG_MONSTER_YELL, 11374);
+            AddEmote(Event_OnDied, "Grull... will crush you!", CHAT_MSG_MONSTER_YELL, 11376);
 
             mLastYell = -1;
             mAliveAdds = 0;
@@ -113,14 +113,14 @@ class HighKingMaulgarAI : public MoonScriptBossAI
 
         void OnCombatStart(Unit* pTarget)
         {
-            SetDisplayWeapon(true, true);
+            _setDisplayWeapon(true, true);
             ParentClass::OnCombatStart(pTarget);
 
             mAliveAdds = 0;
             mLastYell = -1;
             for (uint8 i = 0; i < 4; ++i)
             {
-                Unit* pAdd = ForceCreatureFind(Adds[i]);
+                Unit* pAdd = getNearestCreature(Adds[i]);
                 if (pAdd != NULL && pAdd->isAlive())
                 {
                     Unit* pTarget = GetBestPlayerTarget();
@@ -134,16 +134,16 @@ class HighKingMaulgarAI : public MoonScriptBossAI
             }
             if (mAliveAdds > 1)
             {
-                SetCanEnterCombat(false);
+                setCanEnterCombat(false);
                 SetBehavior(Behavior_Spell);
-                SetCanMove(false);
+                setRooted(true);
             }
         }
 
         void OnCombatStop(Unit* pTarget)
         {
             ParentClass::OnCombatStop(pTarget);
-            SetCanEnterCombat(true);
+            setCanEnterCombat(true);
         }
 
         void OnDied(Unit* mKiller)
@@ -162,7 +162,7 @@ class HighKingMaulgarAI : public MoonScriptBossAI
             if (mAliveAdds > 1)
                 return;
 
-            if (GetPhase() == 1 && GetHealthPercent() <= 50)
+            if (GetPhase() == 1 && _getHealthPercent() <= 50)
             {
                 SetPhase(2, mEnrage);
             }
@@ -186,10 +186,10 @@ class HighKingMaulgarAI : public MoonScriptBossAI
                     switch (RandomText)
                     {
                         case 0:
-                            Emote("You not kill next one so easy!", Text_Yell, 11369);
+                            sendChatMessage(CHAT_MSG_MONSTER_YELL, 11369, "You not kill next one so easy!");
                             break;
                         case 1:
-                            Emote("Does not prove anything!", Text_Yell, 11370);
+                            sendChatMessage(CHAT_MSG_MONSTER_YELL, 11370, "Does not prove anything!");
                             break;
                     }
 
@@ -197,10 +197,10 @@ class HighKingMaulgarAI : public MoonScriptBossAI
                 }
                 else if (mAliveAdds == 1)
                 {
-                    Emote("Good, now you fight me!", Text_Yell, 0);
-                    SetCanEnterCombat(true);
+                    sendChatMessage(CHAT_MSG_MONSTER_YELL, 0, "Good, now you fight me!");
+                    setCanEnterCombat(true);
                     SetBehavior(Behavior_Default);
-                    SetCanMove(true);
+                    setRooted(false);
                 }
             }
         }
@@ -216,7 +216,7 @@ void SpellFunc_Maulgar_Enrage(SpellDesc* pThis, MoonScriptCreatureAI* pCreatureA
     if (pMaulgarAI != NULL)
     {
         pMaulgarAI->ApplyAura(HIGH_KING_MAULGAR_FLURRY);
-        pMaulgarAI->SetDisplayWeapon(false, false);
+        pMaulgarAI->_setDisplayWeapon(false, false);
     }
 }
 
@@ -241,17 +241,17 @@ class KigglerTheCrazedAI : public MoonScriptCreatureAI
         {
             ParentClass::OnCombatStart(pTarget);
 
-            if (GetRangeToUnit(pTarget) <= 40.0f)
+            if (getRangeToObject(pTarget) <= 40.0f)
             {
                 SetBehavior(Behavior_Spell);
-                SetCanMove(false);
+                setRooted(true);
             }
         }
 
         void OnDied(Unit* mKiller)
         {
             ParentClass::OnDied(mKiller);
-            Creature* pMaulgar = static_cast<Creature*>(ForceCreatureFind(CN_HIGH_KING_MAULGAR, 143.048996f, 192.725998f, -11.114700f));
+            Creature* pMaulgar = getNearestCreature(143.048996f, 192.725998f, -11.114700f, CN_HIGH_KING_MAULGAR);
             if (pMaulgar != NULL && pMaulgar->isAlive() && pMaulgar->GetScript())
             {
                 HighKingMaulgarAI* pMaulgarAI = static_cast< HighKingMaulgarAI* >(pMaulgar->GetScript());
@@ -266,10 +266,10 @@ class KigglerTheCrazedAI : public MoonScriptCreatureAI
             Unit* pTarget = _unit->GetAIInterface()->getNextTarget();
             if (pTarget != NULL)
             {
-                if (GetRangeToUnit(pTarget) <= 40.0f)
+                if (getRangeToObject(pTarget) <= 40.0f)
                 {
                     SetBehavior(Behavior_Spell);
-                    SetCanMove(false);
+                    setRooted(true);
                 }
             }
         }
@@ -293,7 +293,7 @@ class BlindeyeTheSeerAI : public MoonScriptCreatureAI
         void OnDied(Unit* mKiller)
         {
             ParentClass::OnDied(mKiller);
-            Creature* pMaulgar = static_cast<Creature*>(ForceCreatureFind(CN_HIGH_KING_MAULGAR, 143.048996f, 192.725998f, -11.114700f));
+            Creature* pMaulgar = getNearestCreature(143.048996f, 192.725998f, -11.114700f, CN_HIGH_KING_MAULGAR);
             if (pMaulgar != NULL && pMaulgar->isAlive() && pMaulgar->GetScript())
             {
                 HighKingMaulgarAI* pMaulgarAI = static_cast< HighKingMaulgarAI* >(pMaulgar->GetScript());
@@ -320,7 +320,7 @@ class OlmTheSummonerAI : public MoonScriptCreatureAI
         void OnDied(Unit* mKiller)
         {
             ParentClass::OnDied(mKiller);
-            Creature* pMaulgar = static_cast<Creature*>(ForceCreatureFind(CN_HIGH_KING_MAULGAR, 143.048996f, 192.725998f, -11.114700f));
+            Creature* pMaulgar = getNearestCreature(143.048996f, 192.725998f, -11.114700f, CN_HIGH_KING_MAULGAR);
             if (pMaulgar != NULL && pMaulgar->isAlive() && pMaulgar->GetScript())
             {
                 HighKingMaulgarAI* pMaulgarAI = static_cast< HighKingMaulgarAI* >(pMaulgar->GetScript());
@@ -382,7 +382,7 @@ class KroshFirehandAI : public MoonScriptCreatureAI
                 if (mBlastWaveTimer == -1 || IsTimerFinished(mBlastWaveTimer))
                 {
                     Unit* unit = GetBestUnitTarget(TargetFilter_Closest);
-                    if (unit && GetRangeToUnit(unit) < 15.0f)
+                    if (unit && getRangeToObject(unit) < 15.0f)
                     {
                         CastSpellNowNoScheduling(mBlastWave);
                         if (mBlastWaveTimer == -1)
@@ -407,7 +407,7 @@ class KroshFirehandAI : public MoonScriptCreatureAI
         void OnDied(Unit* mKiller)
         {
             ParentClass::OnDied(mKiller);
-            Creature* pMaulgar = static_cast<Creature*>(ForceCreatureFind(CN_HIGH_KING_MAULGAR, 143.048996f, 192.725998f, -11.114700f));
+            Creature* pMaulgar = getNearestCreature(143.048996f, 192.725998f, -11.114700f, CN_HIGH_KING_MAULGAR);
             if (pMaulgar != NULL && pMaulgar->isAlive() && pMaulgar->GetScript())
             {
                 HighKingMaulgarAI* pMaulgarAI = static_cast< HighKingMaulgarAI* >(pMaulgar->GetScript());
@@ -443,22 +443,22 @@ class GruulTheDragonkillerAI : public MoonScriptCreatureAI
         {
             mHurtfulStrike = AddSpell(GRUUL_THE_DRAGONKILLER_HURTFUL_STRIKE, Target_Current, 0, 0, 0, 0, 8);
             mGroundSlam = AddSpell(GRUUL_THE_DRAGONKILLER_GROUND_SLAM, Target_Self, 0, 1, 0);
-            mGroundSlam->AddEmote("Scurry.", Text_Yell, 11356);
-            mGroundSlam->AddEmote("No escape.", Text_Yell, 11357);
+            mGroundSlam->AddEmote("Scurry.", CHAT_MSG_MONSTER_YELL, 11356);
+            mGroundSlam->AddEmote("No escape.", CHAT_MSG_MONSTER_YELL, 11357);
             mGroundSlam2 = AddSpell(GRUUL_THE_DRAGONKILLER_GROUND_SLAM2, Target_Self, 0, 1, 0);
             mStoned = AddSpellFunc(&SpellFunc_Gruul_Stoned, Target_Self, 0, 2, 0);
             mShatter = AddSpellFunc(&SpellFunc_Gruul_Shatter, Target_Self, 0, 3, 0);
             mShatter2 = AddSpell(GRUUL_THE_DRAGONKILLER_SHATTER, Target_Self, 0, 1, 0);
-            mShatter2->AddEmote("Stay...", Text_Yell, 11358);
-            mShatter2->AddEmote("Beg for life.", Text_Yell, 11359);
+            mShatter2->AddEmote("Stay...", CHAT_MSG_MONSTER_YELL, 11358);
+            mShatter2->AddEmote("Beg for life.", CHAT_MSG_MONSTER_YELL, 11359);
             AddSpell(GRUUL_THE_DRAGONKILLER_REVERBERATION, Target_Self, 4, 0, 30);
             AddSpell(GRUUL_THE_DRAGONKILLER_CAVE_IN, Target_RandomPlayerDestination, 7, 0, 25);
             AddSpellFunc(&SpellFunc_Gruul_GroundSlam, Target_Self, 6, 1, 35);
-            AddEmote(Event_OnCombatStart, "Come and die.", Text_Yell, 11355);
-            AddEmote(Event_OnTargetDied, "No more.", Text_Yell, 11360);
-            AddEmote(Event_OnTargetDied, "Unworthy.", Text_Yell, 11361);
-            AddEmote(Event_OnTargetDied, "Die.", Text_Emote, 11362);
-            AddEmote(Event_OnDied, "", Text_Yell, 11363);
+            AddEmote(Event_OnCombatStart, "Come and die.", CHAT_MSG_MONSTER_YELL, 11355);
+            AddEmote(Event_OnTargetDied, "No more.", CHAT_MSG_MONSTER_YELL, 11360);
+            AddEmote(Event_OnTargetDied, "Unworthy.", CHAT_MSG_MONSTER_YELL, 11361);
+            AddEmote(Event_OnTargetDied, "Die.", CHAT_MSG_MONSTER_EMOTE, 11362);
+            AddEmote(Event_OnDied, "", CHAT_MSG_MONSTER_YELL, 11363);
 
             mGrowthTimer = mHurtfulTimer = -1;
             mGrowthStacks = 0;
@@ -472,7 +472,7 @@ class GruulTheDragonkillerAI : public MoonScriptCreatureAI
             mHurtfulTimer = AddTimer(8000);
             mGrowthStacks = 0;
 
-            GameObject* pGate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(166.897f, 368.226f, 16.9209f, 184662);
+            GameObject* pGate = getNearestGameObject(166.897f, 368.226f, 16.9209f, 184662);
             if (pGate != NULL)
                 pGate->SetState(GO_STATE_CLOSED);
         }
@@ -481,7 +481,7 @@ class GruulTheDragonkillerAI : public MoonScriptCreatureAI
         {
             ParentClass::OnCombatStop(pTarget);
 
-            GameObject* pGate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(166.897f, 368.226f, 16.9209f, 184662);
+            GameObject* pGate = getNearestGameObject(166.897f, 368.226f, 16.9209f, 184662);
             if (pGate != NULL)
                 pGate->SetState(GO_STATE_OPEN);
         }
@@ -490,7 +490,7 @@ class GruulTheDragonkillerAI : public MoonScriptCreatureAI
         {
             ParentClass::OnDied(mKiller);
 
-            GameObject* pGate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(166.897f, 368.226f, 16.9209f, 184662);
+            GameObject* pGate = getNearestGameObject(166.897f, 368.226f, 16.9209f, 184662);
             if (pGate != NULL)
                 pGate->SetState(GO_STATE_OPEN);
         }
@@ -533,7 +533,7 @@ class GruulTheDragonkillerAI : public MoonScriptCreatureAI
 //                            continue;
                             if (pPlayer->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_FEIGN_DEATH))
                                 continue;
-                            if (GetRangeToUnit(pPlayer) > 8.0f)
+                            if (getRangeToObject(pPlayer) > 8.0f)
                                 continue;
                             if (_unit->GetAIInterface()->getThreatByPtr(pPlayer) >= _unit->GetAIInterface()->getThreatByPtr(pCurrentTarget))
                                 continue;

@@ -274,25 +274,25 @@ class NovosTheSummonerAI : public CreatureAIScript
 
         void OnCombatStart(Unit* mTarget)
         {
-            _unit->SendScriptTextChatMessage(SAY_NOVOS_SUMMONER_01);
+            sendDBChatMessage(SAY_NOVOS_SUMMONER_01);
             _unit->CastSpell(_unit, 47346, false);
             //spawn 4 Ritual Crystal
             for (uint8 i = 0; i < 4; i++)
                 SpawnCrystal(i);
             handler_timer = Util::getMSTime() + HANDLER_INTERVAL;
-            _unit->GetAIInterface()->disable_melee = true;
+            _setMeleeDisabled(true);
             phase = 1;
             for (uint8 i = 0; i < 7; i++)
                 _unit->SchoolImmunityList[i] = 1;
-            _unit->SendScriptTextChatMessage(SAY_NOVOS_SUMMONER_05);
-            _unit->SendScriptTextChatMessage(SAY_NOVOS_SUMMONER_06);
+            sendDBChatMessage(SAY_NOVOS_SUMMONER_05);
+            sendDBChatMessage(SAY_NOVOS_SUMMONER_06);
             RegisterAIUpdateEvent(_unit->GetBaseAttackTime(MELEE));
         }
 
         void OnLoad()
         {
             //root him and disable melee for him ;)
-            _unit->GetAIInterface()->disable_melee = true;
+            _setMeleeDisabled(true);
             _unit->setMoveRoot(true);
         }
 
@@ -317,14 +317,14 @@ class NovosTheSummonerAI : public CreatureAIScript
 
         void OnDied(Unit* mKiller)
         {
-            _unit->SendScriptTextChatMessage(SAY_NOVOS_SUMMONER_03);
+            sendDBChatMessage(SAY_NOVOS_SUMMONER_03);
             RemoveAIUpdateEvent();
         }
 
         void OnTargetDied(Unit* mTarget)
         {
             //BUAHAHAHAH
-            _unit->SendScriptTextChatMessage(SAY_NOVOS_SUMMONER_02);
+            sendDBChatMessage(SAY_NOVOS_SUMMONER_02);
         }
 
         void AIUpdate()
@@ -371,7 +371,7 @@ class NovosTheSummonerAI : public CreatureAIScript
                     _unit->InterruptSpell();
                     _unit->RemoveAllAuras();
                     _unit->setMoveRoot(false);
-                    _unit->GetAIInterface()->disable_melee = false;
+                    _setMeleeDisabled(false);
                     phase = 2;
                     for (uint8 i = 0; i < 7; i++)
                         _unit->SchoolImmunityList[i] = 0;
@@ -431,7 +431,7 @@ class NovosTheSummonerAI : public CreatureAIScript
         //type: 1 - normal, 0 - handler
         void SpawnInvader(uint32 type)
         {
-            _unit->SendScriptTextChatMessage(SAY_NOVOS_SUMMONER_04);
+            sendDBChatMessage(SAY_NOVOS_SUMMONER_04);
             //x                y                z
             //-379.101227f    -824.835449f    60.0f
             uint32 mob_entry = 0;

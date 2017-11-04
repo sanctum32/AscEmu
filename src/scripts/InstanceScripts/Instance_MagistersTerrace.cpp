@@ -125,7 +125,7 @@ class SelinFireheartAI : public MoonScriptCreatureAI
     void AIUpdate()
     {
         // 10% of his mana according to wowhead is 3231 which is whats needed to cast FelExplosion
-        if (GetManaPercent() < 10 || FelExplosion->mEnabled == false)
+        if (_getManaPercent() < 10 || FelExplosion->mEnabled == false)
             Mana();
         else if (!IsCasting())// Mana is greater than 10%
             CastFelExplosion();
@@ -154,7 +154,7 @@ class SelinFireheartAI : public MoonScriptCreatureAI
         // Not in range
         if (_unit->GetDistance2dSq(FelCrystal) > 100)
         {
-            MoveTo(FelCrystal->GetPositionX(), FelCrystal->GetPositionY(), FelCrystal->GetPositionZ());
+            moveTo(FelCrystal->GetPositionX(), FelCrystal->GetPositionY(), FelCrystal->GetPositionZ());
             FelCrystal = NULL;
             return;
         }
@@ -173,7 +173,7 @@ class SelinFireheartAI : public MoonScriptCreatureAI
         _unit->setUInt32Value(UNIT_FIELD_POWER1, mana);
 
         // Re-Enable FelExplosion
-        if (GetManaPercent() >= 100)
+        if (_getManaPercent() >= 100)
             PreventActions(true);
 
         FelCrystal = NULL;
@@ -182,10 +182,10 @@ class SelinFireheartAI : public MoonScriptCreatureAI
     void PreventActions(bool Allow)
     {
         FelExplosion->mEnabled = Allow;
-        SetAllowMelee(Allow);
-        SetAllowRanged(Allow);
-        SetAllowSpell(Allow);
-        SetAllowTargeting(Allow);
+        _setMeleeDisabled(!Allow);
+        _setRangedDisabled(!Allow);
+        _setCastDisabled(!Allow);
+        _setTargetingDisabled(Allow);
     }
 
     Unit* FindFelCrystal()
@@ -226,7 +226,7 @@ class VexallusAI : public MoonScriptBossAI
     VexallusAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
     {
         AddPhaseSpell(1, AddSpell(VEXALLUS_CHAIN_LIGHTNING, Target_Current, 19, 0, 8, 0, 0));
-        AddPhaseSpell(1, AddSpell(VEXALLUS_ARCANE_SHOCK, Target_ClosestPlayer, 12, 0, 20, 0, 0, true, "Un...con...tainable.", Text_Yell, 12392));
+        AddPhaseSpell(1, AddSpell(VEXALLUS_ARCANE_SHOCK, Target_ClosestPlayer, 12, 0, 20, 0, 0, true, "Un...con...tainable.", CHAT_MSG_MONSTER_YELL, 12392));
         AddPhaseSpell(2, AddSpell(VEXALLUS_OVERLOAD, Target_Self, 85, 0, 3, 0, 0));
         mPureEnergy = AddSpell(VEXALLUS_SUMMON_PURE_ENERGY, Target_Self, 85, 0, 3);
 
@@ -235,7 +235,7 @@ class VexallusAI : public MoonScriptBossAI
 
     void OnCombatStart(Unit* pTarget)
     {
-        _unit->SendScriptTextChatMessage(3003);     // Drain... life!
+        sendDBChatMessage(3003);     // Drain... life!
 
         SetPhase(1);
         ParentClass::OnCombatStart(pTarget);
@@ -243,23 +243,23 @@ class VexallusAI : public MoonScriptBossAI
 
     void OnTargetDied(Unit* pTarget)
     {
-        _unit->SendScriptTextChatMessage(3006);     // Con...sume.
+        sendDBChatMessage(3006);     // Con...sume.
     }
 
     void AIUpdate()
     {
-        if ((GetHealthPercent() <= 85 && mSummon == 0) ||
-            (GetHealthPercent() <= 70 && mSummon == 1) ||
-            (GetHealthPercent() <= 55 && mSummon == 2) ||
-            (GetHealthPercent() <= 40 && mSummon == 3) ||
-            (GetHealthPercent() <= 25 && mSummon == 4))
+        if ((_getHealthPercent() <= 85 && mSummon == 0) ||
+            (_getHealthPercent() <= 70 && mSummon == 1) ||
+            (_getHealthPercent() <= 55 && mSummon == 2) ||
+            (_getHealthPercent() <= 40 && mSummon == 3) ||
+            (_getHealthPercent() <= 25 && mSummon == 4))
         {
             CastSpell(mPureEnergy);
             ++mSummon;
             //SpawnCreature(CN_PURE_ENERGY, 231, -207, 6, 0, true);
         }
 
-        if (GetHealthPercent() <= 10 && GetPhase() == 1)
+        if (_getHealthPercent() <= 10 && GetPhase() == 1)
             SetPhase(2);
 
 
@@ -289,7 +289,7 @@ class Priestess_DelrissaAI : public MoonScriptBossAI
 
     void OnCombatStart(Unit* pTarget)
     {
-        _unit->SendScriptTextChatMessage(3022);     // Annihilate them.
+        sendDBChatMessage(3022);     // Annihilate them.
         //AggroRandomUnit();    // Want to aggro random unit ? Set it instead of calling premade
         // method that in this case recursively loops this procedure
 
@@ -304,22 +304,22 @@ class Priestess_DelrissaAI : public MoonScriptBossAI
         ++mKilledPlayers;
 
         if (mKilledPlayers == 1)
-            _unit->SendScriptTextChatMessage(3027);     // I call that a good start.
+            sendDBChatMessage(3027);     // I call that a good start.
         else if (mKilledPlayers == 2)
-            _unit->SendScriptTextChatMessage(3028);     // I could have sworn there were more of you...
+            sendDBChatMessage(3028);     // I could have sworn there were more of you...
         else if (mKilledPlayers == 3)
-            _unit->SendScriptTextChatMessage(3029);     // Not really much of a "group" anymore, is it?
+            sendDBChatMessage(3029);     // Not really much of a "group" anymore, is it?
         else if (mKilledPlayers == 4)
-            _unit->SendScriptTextChatMessage(3030);     // One is such a lonely number.
+            sendDBChatMessage(3030);     // One is such a lonely number.
         else if (mKilledPlayers == 5)
-            _unit->SendScriptTextChatMessage(3031);     // It's been a kick, really.
+            sendDBChatMessage(3031);     // It's been a kick, really.
 
         ParentClass::OnTargetDied(pTarget);
     }
 
     void OnCombatStop(Unit* pTarget)
     {
-        _unit->SendScriptTextChatMessage(3031);     // It's been a kick, really.
+        sendDBChatMessage(3031);     // It's been a kick, really.
         mKilledPlayers = 0;
 
         ParentClass::OnCombatStop(pTarget);
@@ -327,14 +327,14 @@ class Priestess_DelrissaAI : public MoonScriptBossAI
 
     void OnDied(Unit* pKiller)
     {
-        _unit->SendScriptTextChatMessage(3032);     // Not what I had... planned.
+        sendDBChatMessage(3032);     // Not what I had... planned.
     }
 
     void AIUpdate()
     {
         if (IsTimerFinished(mClearHateList))
         {
-            ClearHateList();
+            _clearHateList();
             AggroRandomUnit();
             ResetTimer(mClearHateList, 15000);
         };

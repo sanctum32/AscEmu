@@ -72,7 +72,7 @@ bool ChatHandler::HandleNpcAddAgentCommand(const char* args, WorldSession* m_ses
     switch (ai_type)
     {
         case AGENT_MELEE:
-            creature_target->GetAIInterface()->disable_melee = false;
+            creature_target->GetAIInterface()->setMeleeDisabled(false);
             break;
         case AGENT_RANGED:
             creature_target->GetAIInterface()->m_canRangedAttack = true;
@@ -214,7 +214,7 @@ bool ChatHandler::HandleNpcComeCommand(const char* /*args*/, WorldSession* m_ses
         return true;
 
     auto player = m_session->GetPlayer();
-    creature_target->GetAIInterface()->MoveTo(player->GetPositionX(), player->GetPositionY(), player->GetPositionZ());
+    creature_target->GetAIInterface()->MoveTo(player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(), player->GetOrientation());
     sGMLog.writefromsession(m_session, "used .npc come on %s spawn ID: %u", creature_target->GetCreatureProperties()->Name.c_str(), creature_target->spawnid);
     return true;
 }

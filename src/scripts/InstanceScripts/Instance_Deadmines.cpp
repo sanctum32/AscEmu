@@ -96,13 +96,13 @@ static Movement::Location Guards[] =
 //                }break;
 //                case GO_SNEED_DOOR_LEVER:
 //                {
-//                    GameObject* pDoor7 = FindClosestGameObjectOnMap(GO_HEAVY_DOOR, Doors[1].x, Doors[1].y, Doors[1].z);
+//                    GameObject* pDoor7 = getClosestGameObjectForPosition(GO_HEAVY_DOOR, Doors[1].x, Doors[1].y, Doors[1].z);
 //                    if (pDoor7 != NULL)
 //                        pDoor7->SetState(pDoor7->GetState() == State_Inactive ? State_Active : State_Inactive);
 //                }break;
 //                case GO_GILNID_DOOR_LEVER:
 //                {
-//                    GameObject* pDoor8 = FindClosestGameObjectOnMap(GO_HEAVY_DOOR, Doors[0].x, Doors[0].y, Doors[0].z);
+//                    GameObject* pDoor8 = getClosestGameObjectForPosition(GO_HEAVY_DOOR, Doors[0].x, Doors[0].y, Doors[0].z);
 //                    if (pDoor8 != NULL)
 //                        pDoor8->SetState(pDoor8->GetState() == State_Inactive ? State_Active : State_Inactive);
 //                }break;
@@ -124,13 +124,13 @@ static Movement::Location Guards[] =
 //                    break;
 //                case NPC_GILNID:
 //                {
-//                    GameObject* pDoor2 = FindClosestGameObjectOnMap(GO_HEAVY_DOOR, Doors[0].x, Doors[0].y, Doors[0].z);
+//                    GameObject* pDoor2 = getClosestGameObjectForPosition(GO_HEAVY_DOOR, Doors[0].x, Doors[0].y, Doors[0].z);
 //                    if (pDoor2 != NULL)
 //                        pDoor2->SetState(State_Active);
 //                }break;
 //                case NPC_SNEED:
 //                {
-//                    GameObject* pDoor3 = FindClosestGameObjectOnMap(GO_HEAVY_DOOR, Doors[1].x, Doors[1].y, Doors[1].z);
+//                    GameObject* pDoor3 = getClosestGameObjectForPosition(GO_HEAVY_DOOR, Doors[1].x, Doors[1].y, Doors[1].z);
 //                    if (pDoor3 != NULL)
 //                        pDoor3->SetState(State_Active);
 //                }break;
@@ -160,7 +160,7 @@ class RhahkZorAI : public MoonScriptCreatureAI
 
     void OnCombatStart(Unit* pTarget)
     {
-        _unit->SendScriptTextChatMessage(5495);     // VanCleef pay big for you heads!
+        sendDBChatMessage(5495);     // VanCleef pay big for you heads!
 
         std::stringstream ss;
         ss << "Timer Init Value: " << debugTimer.getRealDelta();
@@ -179,15 +179,16 @@ class MrSmiteAI : public MoonScriptBossAI
             AddSpell(SMITE_SLAM, Target_Current, 25, 0.0f, 15, 0.0f, 8.0f, true);
             mStomp = AddSpell(SMITE_STOMP, Target_Self, 0, 0, 0);
             mWaitAtChest = INVALIDATE_TIMER;
-            SetWieldWeapon(true);
+            _setWieldWeapon(true);
         }
 
         void OnCombatStop(Unit* pTarget)
         {
             if (GetPhase() == 4)
                 RemoveAura(SMITES_HAMMER);
-            if (!IsAlive())
-                SetWieldWeapon(false);
+
+            if (!isAlive())
+                _setWieldWeapon(false);
 
             SetPhase(1);
             SwitchWeapons();
@@ -197,14 +198,14 @@ class MrSmiteAI : public MoonScriptBossAI
 
         void AIUpdate()
         {
-            if (GetHealthPercent() <= 66 && GetPhase() == 1)
+            if (_getHealthPercent() <= 66 && GetPhase() == 1)
             {
-                Emote("You landlubbers are tougher than I thought. I'll have to improvise!", Text_Yell, 5778);
+                sendChatMessage(CHAT_MSG_MONSTER_YELL, 5778, "You landlubbers are tougher than I thought. I'll have to improvise!");
                 SetPhase(2, mStomp);
             }
-            else if (GetHealthPercent() <= 33 && GetPhase() == 3)
+            else if (_getHealthPercent() <= 33 && GetPhase() == 3)
             {
-                Emote("D'ah! Now you're making me angry!", Text_Yell, 5779);
+                sendChatMessage(CHAT_MSG_MONSTER_YELL, 5779, "D'ah! Now you're making me angry!");
                 SetPhase(4, mStomp);
             }
 
@@ -226,12 +227,12 @@ class MrSmiteAI : public MoonScriptBossAI
 
         void MoveToChest()
         {
-            if (GetCanEnterCombat())
+            if (canEnterCombat())
                 _unit->GetAIInterface()->SetAllowedToEnterCombat(false);
 
-            StopMovement();
+            stopMovement();
             _unit->GetAIInterface()->setAiState(AI_STATE_SCRIPTMOVE);
-            MoveTo(1.100060f, -780.026367f, 9.811194f);
+            moveTo(1.100060f, -780.026367f, 9.811194f);
         }
 
         void MoveToPlayer()
@@ -264,16 +265,16 @@ class MrSmiteAI : public MoonScriptBossAI
             switch (GetPhase())
             {
                 case 1: // Phase 1 (Default)
-                    SetDisplayWeaponIds(5192, 0);
+                    _setDisplayWeaponIds(5192, 0);
                     _unit->SetBaseAttackTime(MELEE, _unit->GetBaseAttackTime(MELEE));    // 1483 is taken from NCDB creature_proto
                     break;
                 case 2: // Phase 2
-                    SetDisplayWeaponIds(5196, 5196);
+                    _setDisplayWeaponIds(5196, 5196);
                     _unit->SetBaseAttackTime(MELEE, _unit->GetBaseAttackTime(MELEE) / 2);
                     break;
                 case 4: // Phase 4
                     // Is base attack time change needed if we use aura ?
-                    SetDisplayWeaponIds(7230, 0);
+                    _setDisplayWeaponIds(7230, 0);
                     _unit->SetBaseAttackTime(MELEE, _unit->GetBaseAttackTime(MELEE) * 2);
                     ApplyAura(SMITES_HAMMER);
                     break;
@@ -303,7 +304,7 @@ class VanCleefAI : public MoonScriptBossAI
 
     void OnCombatStart(Unit* pTarget)
     {
-        _unit->SendScriptTextChatMessage(7722);     // None may challenge the Brotherhood!
+        sendDBChatMessage(7722);     // None may challenge the Brotherhood!
     }
 
     void OnTargetDied(Unit* pTarget)
@@ -314,32 +315,32 @@ class VanCleefAI : public MoonScriptBossAI
         else if (pTarget->GetTypeFromGUID() == HIGHGUID_TYPE_PET)
             sprintf(msg, "And stay down, %s.", static_cast<Pet*>(pTarget)->GetName().c_str());
 
-        Emote(msg, Text_Yell, 5781);
+        sendChatMessage(CHAT_MSG_MONSTER_YELL, 5781, msg);
         ParentClass::OnTargetDied(pTarget);
     }
 
     void OnDied(Unit* pKiller)
     {
-        _unit->SendScriptTextChatMessage(7727);     // The Brotherhood shall prevail!
+        sendDBChatMessage(7727);     // The Brotherhood shall prevail!
     }
 
     void AIUpdate()
     {
-        if (GetHealthPercent() <= 75 && GetPhase() == 1)
+        if (_getHealthPercent() <= 75 && GetPhase() == 1)
         {
-            _unit->SendScriptTextChatMessage(7723);     // Lapdogs, all of you!
+            sendDBChatMessage(7723);     // Lapdogs, all of you!
             SetPhase(2);
         }
-        else if (GetHealthPercent() <= 50 && GetPhase() == 2)
+        else if (_getHealthPercent() <= 50 && GetPhase() == 2)
         {
-            _unit->SendScriptTextChatMessage(7725);     // Fools! Our cause is righteous!
+            sendDBChatMessage(7725);     // Fools! Our cause is righteous!
 
             for (uint8 x = 0; x < 2; x++)
             {
-                MoonScriptCreatureAI* Guard = SpawnCreature(636);
+                MoonScriptCreatureAI* Guard = SpawnCreature(636, _unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), _unit->GetOrientation(), false);
                 if (Guard != NULL)
                 {
-                    Guard->SetDespawnWhenInactive(true);
+                    Guard->_setDespawnWhenInactive(true);
                     Guard->GetUnit()->m_noRespawn = true;
                 }
             }
@@ -347,9 +348,9 @@ class VanCleefAI : public MoonScriptBossAI
             SetPhase(3);
 
         }
-        else if (GetHealthPercent() <= 25 && GetPhase() == 3)
+        else if (_getHealthPercent() <= 25 && GetPhase() == 3)
         {
-            _unit->SendScriptTextChatMessage(7727);     // The Brotherhood shall prevail!
+            sendDBChatMessage(7727);     // The Brotherhood shall prevail!
             SetPhase(4);
         }
         ParentClass::AIUpdate();

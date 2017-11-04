@@ -35,28 +35,6 @@ public:\
     ADD_CREATURE_FACTORY_FUNCTION(ClassName);\
     typedef ParentClassName ParentClass;
 
-#define AddDefaultAura(pAuraEntry)\
-    RegisterAIUpdateEvent(500);\
-    AddEvent(1001, 500, &EventFunc_ApplyAura, pAuraEntry);
-
-#define MakeUnattackableFor(pTime)\
-    _unit->SetUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_9);\
-    RegisterAIUpdateEvent(pTime);\
-    AddEvent(1002, pTime, &EventFunc_RemoveUnitFieldFlags);
-
-#define MakeUnselectableFor(pTime)\
-    _unit->SetUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);\
-    RegisterAIUpdateEvent(pTime);\
-    AddEvent(1003, pTime, &EventFunc_RemoveUnitFieldFlags);
-
-
-///\todo remove old text types
-enum TextType
-{
-    Text_Say,
-    Text_Yell,
-    Text_Emote
-};
 
 enum EventType
 {
@@ -78,7 +56,7 @@ enum BehaviorType
 
 struct EmoteDesc
 {
-    EmoteDesc(const char* pText, TextType pType, uint32 pSoundId)
+    EmoteDesc(const char* pText, uint8 pType, uint32 pSoundId)
     {
         mText = (pText && strlen(pText) > 0) ? pText : "";
         mType = pType;
@@ -86,7 +64,7 @@ struct EmoteDesc
     }
 
     std::string mText;
-    TextType mType;
+    uint8 mType;
     uint32 mSoundId;
 };
 
@@ -260,11 +238,11 @@ class SpellDesc
     public:
 
         SpellDesc(SpellInfo* pInfo, SpellFunc pFnc, TargetType pTargetType, float pChance, float pCastTime, int32 pCooldown, float pMinRange, float pMaxRange, 
-                  bool pStrictRange, const char* pText, TextType pTextType, uint32 pSoundId, const char* pAnnouncement);
+                  bool pStrictRange, const char* pText, uint8 pTextType, uint32 pSoundId, const char* pAnnouncement);
 
         virtual ~SpellDesc();
 
-        EmoteDesc* AddEmote(const char* pText, TextType pType = Text_Yell, uint32 pSoundId = 0);
+        EmoteDesc* AddEmote(const char* pText, uint8 pType = CHAT_MSG_MONSTER_YELL, uint32 pSoundId = 0);
 
         void TriggerCooldown(uint32 pCurrentTime = 0);
         void AddAnnouncement(const char* pText);
@@ -301,55 +279,16 @@ class MoonScriptCreatureAI : public CreatureAIScript
         virtual ~MoonScriptCreatureAI();
 
         //Movement
-        bool GetCanMove();
-        void SetCanMove(bool pCanMove);
-        void MoveTo(MoonScriptCreatureAI* pCreature, RangeStatusPair pRangeStatus = std::make_pair(RangeStatus_TooFar, 0.0f));
         void MoveTo(Unit* pUnit, RangeStatusPair pRangeStatus = std::make_pair(RangeStatus_TooFar, 0.0f));
-        void MoveTo(float pX, float pY, float pZ, bool pRun = true);
-        void MoveToSpawnOrigin();
-        void StopMovement();
-        void SetFlyMode(bool pValue);
-
-        //Attack and Combat State
-        bool GetCanEnterCombat();
-        void SetCanEnterCombat(bool pCanEnterCombat);
-        bool IsInCombat();
-        void DelayNextAttack(int32 pMilliseconds);
-        void SetDespawnWhenInactive(bool pValue);
 
         //Behavior
         void SetBehavior(BehaviorType pBehavior);
         BehaviorType GetBehavior();
-        void SetAllowMelee(bool pAllow);
-        bool GetAllowMelee();
-        void SetAllowRanged(bool pAllow);
-        bool GetAllowRanged();
-        void SetAllowSpell(bool pAllow);
-        bool GetAllowSpell();
-        void SetAllowTargeting(bool pAllow);
-        bool GetAllowTargeting();
-        void AggroNearestUnit(int pInitialThreat = 1);
-        void AggroRandomUnit(int pInitialThreat = 1);
-        void AggroNearestPlayer(int pInitialThreat = 1);
-        void AggroRandomPlayer(int pInitialThreat = 1);
-
-        //Status
-        void ClearHateList();
-        void WipeHateList();
-        int32 GetHealthPercent();
-        int32 GetManaPercent();
-        void Regenerate();
-        void SetScale(float pScale);
-        float GetScale();
-        void SetDisplayId(uint32 pDisplayId);
-        void SetWieldWeapon(bool pValue);
-        void SetDisplayWeapon(bool pMainHand, bool pOffHand);
-        void SetDisplayWeaponIds(uint32 pItem1Id, uint32 pItem2Id);
-
-        //Environment
-        float GetRange(MoonScriptCreatureAI* pCreature);
-        float GetRangeToUnit(Unit* pUnit);
-        float GetRangeToObject(Object* pObject);
+        
+        void AggroNearestUnit(uint32 pInitialThreat = 1);
+        void AggroRandomUnit(uint32 pInitialThreat = 1);
+        void AggroNearestPlayer(uint32 pInitialThreat = 1);
+        void AggroRandomPlayer(uint32 pInitialThreat = 1);
 
         //Instances
         bool IsHeroic();
@@ -358,18 +297,13 @@ class MoonScriptCreatureAI : public CreatureAIScript
 
         void CastOnAllInrangePlayers(uint32 pSpellId, bool pTriggered = false);
         void CastOnInrangePlayers(float pDistanceMin, float pDistanceMax, uint32 pSpellId, bool pTriggered = false);
-        Player* GetNearestPlayer();
-        GameObject* GetNearestGameObject(uint32 pGameObjectId = 0);
+
         MoonScriptCreatureAI* GetNearestCreature(uint32 pCreatureId = 0);
-        MoonScriptCreatureAI* SpawnCreature(uint32 pCreatureId, bool pForceSameFaction = false);
         MoonScriptCreatureAI* SpawnCreature(uint32 pCreatureId, float pX, float pY, float pZ, float pO = 0, bool pForceSameFaction = false, uint32 pPhase = 1);
-        Unit* ForceCreatureFind(uint32 pCreatureId);
-        Unit* ForceCreatureFind(uint32 pCreatureId, float pX, float pY, float pZ);
-        void Despawn(uint32 pDelay = 0, uint32 pRespawnTime = 0);
 
         //Spells
-        SpellDesc* AddSpell(uint32 pSpellId, TargetType pTargetType, float pChance, float pCastTime, int32 pCooldown, float pMinRange = 0, float pMaxRange = 0, bool pStrictRange = false, const char* pText = NULL, TextType pTextType = Text_Yell, uint32 pSoundId = 0, const char* pAnnouncement = NULL);
-        SpellDesc* AddSpellFunc(SpellFunc pFnc, TargetType pTargetType, float pChance, float pCastTime, int32 pCooldown, float pMinRange = 0, float pMaxRange = 0, bool pStrictRange = false, const char* pText = NULL, TextType pTextType = Text_Yell, uint32 pSoundId = 0, const char* pAnnouncement = NULL);
+        SpellDesc* AddSpell(uint32 pSpellId, TargetType pTargetType, float pChance, float pCastTime, int32 pCooldown, float pMinRange = 0, float pMaxRange = 0, bool pStrictRange = false, const char* pText = NULL, uint8 pTextType = CHAT_MSG_MONSTER_YELL, uint32 pSoundId = 0, const char* pAnnouncement = NULL);
+        SpellDesc* AddSpellFunc(SpellFunc pFnc, TargetType pTargetType, float pChance, float pCastTime, int32 pCooldown, float pMinRange = 0, float pMaxRange = 0, bool pStrictRange = false, const char* pText = NULL, uint8 pTextType = CHAT_MSG_MONSTER_YELL, uint32 pSoundId = 0, const char* pAnnouncement = NULL);
         void CastSpell(SpellDesc* pSpell);
         void CastSpellNowNoScheduling(SpellDesc* pSpell);
         SpellDesc* FindSpellById(uint32 pSpellId);
@@ -383,13 +317,10 @@ class MoonScriptCreatureAI : public CreatureAIScript
         void CancelAllCooldowns();
 
         //Emotes
-        EmoteDesc* AddEmote(EventType pEventType, const char* pText, TextType pType, uint32 pSoundId = 0);
+        EmoteDesc* AddEmote(EventType pEventType, const char* pText, uint8 pType, uint32 pSoundId = 0);
         EmoteDesc* AddEmote(EventType pEventType, uint32_t scripttext);
-        void RemoveEmote(EventType pEventType, EmoteDesc* pEmote);
         void RemoveAllEmotes(EventType pEventType);
-        void Emote(EmoteDesc* pEmote);
-        void Emote(const char* pText, TextType pType = Text_Yell, uint32 pSoundId = 0);
-        void Emote(uint32_t scripttext);
+
         void Announce(const char* pText);
 
         //Timers and Events
@@ -474,7 +405,6 @@ class MoonScriptCreatureAI : public CreatureAIScript
         uint32 mEventCount;
         uint32 mAIUpdateFrequency;
         uint32 mBaseAttackTime;
-        bool mDespawnWhenInactive;
         EventArray mEvents;
 };
 

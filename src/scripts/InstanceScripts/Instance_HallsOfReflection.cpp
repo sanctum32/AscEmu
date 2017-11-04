@@ -87,12 +87,12 @@ class HallsOfReflectionScript : public MoonInstanceScript
             {
                 if (pPlayer->GetTeam() == TEAM_ALLIANCE)
                 {
-                    PushCreature(CN_JAINA_PROUDMOORE, 5266.77f, 1953.52f, 707.69f, 0.74f, 35);
-                    PushCreature(CN_ARCHMAGE_KORELN, 5264.26f, 1953.36f, 707.69f, 0.74f, 35);
+                    spawnCreature(CN_JAINA_PROUDMOORE, 5266.77f, 1953.52f, 707.69f, 0.74f, 35);
+                    spawnCreature(CN_ARCHMAGE_KORELN, 5264.26f, 1953.36f, 707.69f, 0.74f, 35);
                 }
                 else // TEAM_HORDE
                 {
-                    PushCreature(CN_SYLVANAS_WINDRUNNER, 5266.77f, 1953.52f, 707.69f, 0.74f, 35);
+                    spawnCreature(CN_SYLVANAS_WINDRUNNER, 5266.77f, 1953.52f, 707.69f, 0.74f, 35);
                 }
                 mSpawnsCreated = true;
             }
@@ -110,10 +110,10 @@ class JainaAI : public MoonScriptCreatureAI
 
         void StartInstance()
         {
-            MoveTo(5302.581f, 1994.510f, 707.694f);
+            moveTo(5302.581f, 1994.510f, 707.694f);
             SpawnCreature(37225, 5307.37f, 2000.80f, 709.341f, 4.03f);
             SpawnCreature(37226, 5355.244f, 2052.96f, 707.695f, 3.94f);
-            Emote("Frostmourne! the blade that destroyed our kingdom..", Text_Yell, 16633);
+            sendChatMessage(CHAT_MSG_MONSTER_YELL, 16633, "Frostmourne! the blade that destroyed our kingdom..");
             RegisterAIUpdateEvent(172000);
             InstanceRealStart();
         }
@@ -223,15 +223,15 @@ class Marwyn : public MoonScriptBossAI
             if (IsHeroic() == false) // NORMAL MODE
             {
                 AddSpell(N_SPELL_OBLITERATE, Target_Current, 45, 0, 30); // Timer may be off on this.
-                AddSpell(N_SPELL_WELL, Target_RandomPlayer, 60, 0, 13, 0, 0, false, "Your flesh has decayed before your very eyes!", Text_Yell, 16739);
-                AddSpell(N_SPELL_CORRUPTFLESH, Target_Current, 40, 0, 20, 0, 0, false, "Waste away into nothingness!", Text_Yell, 16740);
+                AddSpell(N_SPELL_WELL, Target_RandomPlayer, 60, 0, 13, 0, 0, false, "Your flesh has decayed before your very eyes!", CHAT_MSG_MONSTER_YELL, 16739);
+                AddSpell(N_SPELL_CORRUPTFLESH, Target_Current, 40, 0, 20, 0, 0, false, "Waste away into nothingness!", CHAT_MSG_MONSTER_YELL, 16740);
                 AddSpell(N_SPELL_SHARED, Target_RandomPlayer, 45, 0, 20);
             }
             else // HEROIC MODE
             {
                 AddSpell(H_SPELL_OBLITERATE, Target_Current, 45, 0, 30); // Timer may be off on this.
-                AddSpell(H_SPELL_WELL, Target_RandomPlayer, 60, 0, 13, 0, 0, false, "Your flesh has decayed before your very eyes!", Text_Yell, 16739);
-                AddSpell(H_SPELL_CORRUPTFLESH, Target_Current, 40, 0, 20, 0, 0, false, "Waste away into nothingness!", Text_Yell, 16740);
+                AddSpell(H_SPELL_WELL, Target_RandomPlayer, 60, 0, 13, 0, 0, false, "Your flesh has decayed before your very eyes!", CHAT_MSG_MONSTER_YELL, 16739);
+                AddSpell(H_SPELL_CORRUPTFLESH, Target_Current, 40, 0, 20, 0, 0, false, "Waste away into nothingness!", CHAT_MSG_MONSTER_YELL, 16740);
                 AddSpell(H_SPELL_SHARED, Target_RandomPlayer, 45, 0, 20);
             }
         }
@@ -242,13 +242,13 @@ class Marwyn : public MoonScriptBossAI
             {
                 _unit->SetMaxHealth(903227); // SET HP CAUSE ARCEMU DONT SUPPORT HEROIC MODES!
                 _unit->SetHealth(903227); //SET HP CAUSE ARCEMU DONT SUPPORT HEROIC MODES!
-                SetDisplayWeaponIds(51010, 51010); // Just incase DB doesn't have them correctly.
+                _setDisplayWeaponIds(51010, 51010); // Just incase DB doesn't have them correctly.
             }
         }
 
         void OnCombatStart(Unit* pKiller)
         {
-            _unit->SendScriptTextChatMessage(4105);     // Death is all that you will find here!
+            sendDBChatMessage(4105);     // Death is all that you will find here!
 
             if (mInstance)
                 mInstance->SetInstanceData(Data_EncounterState, _unit->GetEntry(), State_InProgress);
@@ -260,10 +260,10 @@ class Marwyn : public MoonScriptBossAI
             switch (RandomUInt(1))
             {
                 case 0:
-                    _unit->SendScriptTextChatMessage(5254);     // I saw the same look in his eyes when he died. Terenas could hardly believe it.
+                    sendDBChatMessage(5254);     // I saw the same look in his eyes when he died. Terenas could hardly believe it.
                     break;
                 case 1:
-                    _unit->SendScriptTextChatMessage(5255);     // Choke on your suffering!
+                    sendDBChatMessage(5255);     // Choke on your suffering!
                     break;
             }
         }
@@ -277,7 +277,7 @@ class Marwyn : public MoonScriptBossAI
 
         void OnDied(Unit* pKiller)
         {
-            _unit->SendScriptTextChatMessage(5256);      // Yes... Run... Run to meet your destiny... Its bitter, cold embrace, awaits you.
+            sendDBChatMessage(5256);      // Yes... Run... Run to meet your destiny... Its bitter, cold embrace, awaits you.
 
             if (mInstance)
                 mInstance->SetInstanceData(Data_EncounterState, _unit->GetEntry(), State_Finished);
@@ -314,7 +314,7 @@ class Falric : public MoonScriptBossAI
 
         void OnCombatStart(Unit* pKiller)
         {
-            _unit->SendScriptTextChatMessage(4084);      // Men, women, and children... None were spared the master's wrath. Your death will be no different.
+            sendDBChatMessage(4084);      // Men, women, and children... None were spared the master's wrath. Your death will be no different.
 
             if (mInstance)
                 mInstance->SetInstanceData(Data_EncounterState, _unit->GetEntry(), State_InProgress);
@@ -326,10 +326,10 @@ class Falric : public MoonScriptBossAI
             switch (RandomUInt(1))
             {
                 case 0:
-                    _unit->SendScriptTextChatMessage(4086);     // The children of Stratholme fought with more ferocity!
+                    sendDBChatMessage(4086);     // The children of Stratholme fought with more ferocity!
                     break;
                 case 1:
-                    _unit->SendScriptTextChatMessage(4085);     // Sniveling maggot!
+                    sendDBChatMessage(4085);     // Sniveling maggot!
                     break;
             }
         }
@@ -343,7 +343,7 @@ class Falric : public MoonScriptBossAI
 
         void OnDied(Unit* pKiller)
         {
-            _unit->SendScriptTextChatMessage(4087);     // Marwyn, finish them...
+            sendDBChatMessage(4087);     // Marwyn, finish them...
 
             if (mInstance)
                 mInstance->SetInstanceData(Data_EncounterState, _unit->GetEntry(), State_Finished);
@@ -352,19 +352,19 @@ class Falric : public MoonScriptBossAI
 
         void AIUpdate(Player* Plr)
         {
-            if (GetPhase() == 1 && GetHealthPercent() <= 66)
+            if (GetPhase() == 1 && _getHealthPercent() <= 66)
             {
                 _unit->CastSpell(Plr, 72395, true);
                 SetPhase(2);
             }
 
-            if (GetPhase() == 2 && GetHealthPercent() <= 33)
+            if (GetPhase() == 2 && _getHealthPercent() <= 33)
             {
                 _unit->CastSpell(Plr, 72396, true);
                 SetPhase(3);
             }
 
-            if (GetPhase() == 3 && GetHealthPercent() <= 11)
+            if (GetPhase() == 3 && _getHealthPercent() <= 11)
             {
                 _unit->CastSpell(Plr, 72397, true);
                 SetPhase(4);

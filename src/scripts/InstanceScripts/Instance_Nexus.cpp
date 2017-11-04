@@ -48,7 +48,7 @@ class AnomalusAI : public MoonScriptBossAI
 
         void OnCombatStart(Unit* mTarget)
         {
-            _unit->SendScriptTextChatMessage(4317);     // Chaos beckons.
+            sendDBChatMessage(4317);     // Chaos beckons.
             mSummon = 0;
             mRift = false;
             mSummonTimer = AddTimer(IsHeroic() ? 14000 : 18000);   // check heroic
@@ -61,7 +61,7 @@ class AnomalusAI : public MoonScriptBossAI
 
         void AIUpdate()
         {
-            if ((GetHealthPercent() <= 50 && mSummon == 0))
+            if ((_getHealthPercent() <= 50 && mSummon == 0))
                 mSummon += 1;
 
             if (mSummon == 1)
@@ -73,7 +73,7 @@ class AnomalusAI : public MoonScriptBossAI
                 ResetTimer(mSummonTimer, IsHeroic() ? 14000 : 18000);
             };
 
-            if (mRift == true && (GetLinkedCreature() == NULL || !GetLinkedCreature()->IsAlive()))
+            if (mRift == true && (GetLinkedCreature() == NULL || !GetLinkedCreature()->isAlive()))
             {
                 RemoveAura(47748);
                 mRift = false;
@@ -85,7 +85,7 @@ class AnomalusAI : public MoonScriptBossAI
         void SummonRift(bool bToCharge)
         {
             if (!bToCharge)
-                _unit->SendScriptTextChatMessage(4319);     // Reality... unwoven.
+                sendDBChatMessage(4319);     // Reality... unwoven.
 
             Announce("Anomalus opens a Chaotic Rift!");
             //we are linked with CN_CHAOTIC_RIFT.
@@ -100,10 +100,10 @@ class AnomalusAI : public MoonScriptBossAI
         void ChargeRift()
         {
             SummonRift(true);
-            _unit->SendScriptTextChatMessage(4320);     // Indestructible.
+            sendDBChatMessage(4320);     // Indestructible.
             Announce("Anomalus shields himself and diverts his power to the rifts!");
             ApplyAura(47748);   // me immune
-            SetCanMove(false);
+            setRooted(true);
 
             mRift = true;
             mSummon += 1;
@@ -111,7 +111,7 @@ class AnomalusAI : public MoonScriptBossAI
 
         void OnDied(Unit* pKiller)
         {
-            _unit->SendScriptTextChatMessage(4318);     // Of course.
+            sendDBChatMessage(4318);     // Of course.
 
             if (mInstance)
                 mInstance->SetInstanceData(Data_EncounterState, NEXUS_ANOMALUS, State_Finished);
@@ -155,19 +155,19 @@ class ChaoticRiftAI : public MoonScriptBossAI
         void OnLoad()
         {
             ApplyAura(CHAOTIC_RIFT_AURA);
-            Despawn(40000, 0);
+            despawn(40000, 0);
             ParentClass::OnLoad();
         };
 
         void OnDied(Unit* mKiller)
         {
-            Despawn(2000, 0);
+            despawn(2000, 0);
             ParentClass::OnDied(mKiller);
         };
 
         void OnCombatStop(Unit* pTarget)
         {
-            Despawn(2000, 0);
+            despawn(2000, 0);
             ParentClass::OnCombatStop(pTarget);
         };
 };
@@ -181,13 +181,13 @@ class CraziedManaWrathAI : public MoonScriptBossAI
 
         void OnCombatStop(Unit* pTarget)
         {
-            Despawn(2000, 0);
+            despawn(2000, 0);
             ParentClass::OnCombatStop(pTarget);
         };
 
         void OnDied(Unit* mKiller)
         {
-            Despawn(2000, 0);
+            despawn(2000, 0);
             ParentClass::OnDied(mKiller);
         };
 };
@@ -236,23 +236,23 @@ class TelestraBossAI : public MoonScriptBossAI
 
         void AIUpdate()
         {
-            if (GetPhase() == 1 && GetHealthPercent() <= (mPhaseRepeat * 25))
+            if (GetPhase() == 1 && _getHealthPercent() <= (mPhaseRepeat * 25))
             {
                 switch (RandomUInt(1))
                 {
                     case 0:
-                        _unit->SendScriptTextChatMessage(4330);      // There's plenty of me to go around.
+                        sendDBChatMessage(4330);      // There's plenty of me to go around.
                         break;
                     case 1:
-                        _unit->SendScriptTextChatMessage(4331);      // I'll give you more than you can handle!
+                        sendDBChatMessage(4331);      // I'll give you more than you can handle!
                         break;
                 }
 
                 SetPhase(2);
-                SetCanMove(false);
-                SetAllowRanged(false);
-                SetAllowSpell(false);
-                SetAllowTargeting(false);
+                setRooted(true);
+                _setRangedDisabled(true);
+                _setCastDisabled(true);
+                _setTargetingDisabled(true);
                 ApplyAura(60191);
 
                 for (uint8 i = 0; i < 3; ++i)
@@ -279,9 +279,10 @@ class TelestraBossAI : public MoonScriptBossAI
                 if (mAddCount != 0)
                     return;
 
-                Emote("Now to finish the job!", Text_Yell, 13323);
+                sendChatMessage(CHAT_MSG_MONSTER_YELL, 13323, "Now to finish the job!");
+
                 RemoveAura(60191);
-                SetCanMove(true);
+                setRooted(false);
                 mPhaseRepeat = 1;
                 SetPhase(mHeroic ? 1 : 3);   //3 disables p2
             };
@@ -291,7 +292,7 @@ class TelestraBossAI : public MoonScriptBossAI
 
         void OnCombatStart(Unit* pTarget)
         {
-            _unit->SendScriptTextChatMessage(4326);      // You know what they say about curiosity....
+            sendDBChatMessage(4326);      // You know what they say about curiosity....
 
             if (mInstance)
                 mInstance->SetInstanceData(Data_EncounterState, NEXUS_TELESTRA, State_InProgress);
@@ -301,7 +302,7 @@ class TelestraBossAI : public MoonScriptBossAI
 
         void OnTargetDied(Unit* pTarget)
         {
-            _unit->SendScriptTextChatMessage(4327);      // Death becomes you.
+            sendDBChatMessage(4327);      // Death becomes you.
         }
 
         void OnCombatStop(Unit* pTarget)
@@ -323,7 +324,7 @@ class TelestraBossAI : public MoonScriptBossAI
 
         void OnDied(Unit* pKiller)
         {
-            _unit->SendScriptTextChatMessage(4328);      // Damn the... luck.
+            sendDBChatMessage(4328);      // Damn the... luck.
 
             for (uint8 i = 0; i < 3; ++i)
             {
@@ -438,21 +439,21 @@ class OrmorokAI : public MoonScriptBossAI
 
         AddSpell(SPELL_REFLECTION, Target_Self, 35, 2.0f, 15);
         mCrystalSpikes = AddSpell(CRYSTAL_SPIKES, Target_Self, 25, 0, 12);
-        mCrystalSpikes->AddEmote("Bleed!", Text_Yell, 13332);
+        mCrystalSpikes->AddEmote("Bleed!", CHAT_MSG_MONSTER_YELL, 13332);
 
         mEnraged = false;
     };
 
     void OnCombatStart(Unit* pTarget)
     {
-        _unit->SendScriptTextChatMessage(1943);     // Noo!
+        sendDBChatMessage(1943);     // Noo!
         mEnraged = false;
         ParentClass::OnCombatStart(pTarget);
     };
 
     void AIUpdate()
     {
-        if (GetHealthPercent() <= 25 && mEnraged == false)
+        if (_getHealthPercent() <= 25 && mEnraged == false)
         {
             ApplyAura(FRENZY);
             Announce("Ormorok the Tree-Shaper goes into a frenzy!");
@@ -464,7 +465,7 @@ class OrmorokAI : public MoonScriptBossAI
 
     void OnDied(Unit* pKiller)
     {
-        _unit->SendScriptTextChatMessage(1944);     // Aaggh!
+        sendDBChatMessage(1944);     // Aaggh!
 
         if (mInstance)
             mInstance->SetInstanceData(Data_EncounterState, NEXUS_ORMOROK, State_Finished);
@@ -490,11 +491,11 @@ class CrystalSpikeAI : public MoonScriptBossAI
 
     void OnLoad()
     {
-        SetCanEnterCombat(false);
-        SetCanMove(false);
+        setCanEnterCombat(false);
+        setRooted(true);
         _unit->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
 
-        Despawn(4500, 0);
+        despawn(4500, 0);
         RegisterAIUpdateEvent(500);
 
         ParentClass::OnLoad();
@@ -544,10 +545,10 @@ class KeristraszaAI : public MoonScriptBossAI
         AddSpell(TAIL_SWEEP, Target_Self, 40, 0, 8);
 
         mCrystalize = AddSpell(CRYSTALLIZE, Target_Self, 25, 0, 22);
-        mCrystalize->AddEmote("Stay. Enjoy your final moments.", Text_Yell, 13451);
+        mCrystalize->AddEmote("Stay. Enjoy your final moments.", CHAT_MSG_MONSTER_YELL, 13451);
 
         mEnraged = false;
-        SetCanEnterCombat(false);
+        setCanEnterCombat(false);
     }
 
     void OnLoad()
@@ -558,22 +559,22 @@ class KeristraszaAI : public MoonScriptBossAI
 
     void OnCombatStart(Unit* pTarget)
     {
-        _unit->SendScriptTextChatMessage(4321);     // Preserve? Why? There's no truth in it. No no no... only in the taking! I see that now!
+        sendDBChatMessage(4321);     // Preserve? Why? There's no truth in it. No no no... only in the taking! I see that now!
     }
 
     void OnTargetDied(Unit* pTarget)
     {
-        _unit->SendScriptTextChatMessage(4322);     // Now we've come to the truth! 
+        sendDBChatMessage(4322);     // Now we've come to the truth! 
     }
 
     void OnDied(Unit* pKiller)
     {
-        _unit->SendScriptTextChatMessage(4324);     // Dragonqueen... Life-Binder... preserve... me.
+        sendDBChatMessage(4324);     // Dragonqueen... Life-Binder... preserve... me.
     }
 
     void AIUpdate()
     {
-        if (mEnraged == false && GetHealthPercent() <= 25)
+        if (mEnraged == false && _getHealthPercent() <= 25)
         {
             ApplyAura(ENRAGE);
             mEnraged = true;
@@ -582,7 +583,7 @@ class KeristraszaAI : public MoonScriptBossAI
 
     void Release()
     {
-        SetCanEnterCombat(true);
+        setCanEnterCombat(true);
         RemoveAura(47543);
         ApplyAura(INTENSE_COLD);
     }
@@ -750,12 +751,12 @@ class NexusScript : public MoonInstanceScript
                 if (player->GetTeam() == TEAM_ALLIANCE)
                 {
                     for (uint8 i = 0; i < 18; i++)
-                        PushCreature(TrashHordeSpawns[i].entry, TrashHordeSpawns[i].x, TrashHordeSpawns[i].y, TrashHordeSpawns[i].z, TrashHordeSpawns[i].o, TrashHordeSpawns[i].faction);
+                        spawnCreature(TrashHordeSpawns[i].entry, TrashHordeSpawns[i].x, TrashHordeSpawns[i].y, TrashHordeSpawns[i].z, TrashHordeSpawns[i].o, TrashHordeSpawns[i].faction);
                 }
                 else
                 {
                     for (uint8 i = 0; i < 18; i++)
-                        PushCreature(TrashAllySpawns[i].entry, TrashAllySpawns[i].x, TrashAllySpawns[i].y, TrashAllySpawns[i].z, TrashAllySpawns[i].o, TrashAllySpawns[i].faction);
+                        spawnCreature(TrashAllySpawns[i].entry, TrashAllySpawns[i].x, TrashAllySpawns[i].y, TrashAllySpawns[i].z, TrashAllySpawns[i].o, TrashAllySpawns[i].faction);
                 }
 
                 // difficulty spawns
@@ -764,10 +765,10 @@ class NexusScript : public MoonInstanceScript
                     switch (player->GetTeam())
                     {
                         case TEAM_ALLIANCE:
-                            PushCreature(CN_HORDE_COMMANDER, 425.39f, 185.82f, -35.01f, -1.57f, 14);
+                            spawnCreature(CN_HORDE_COMMANDER, 425.39f, 185.82f, -35.01f, -1.57f, 14);
                             break;
                         case TEAM_HORDE:
-                            PushCreature(CN_ALLIANCE_COMMANDER, 425.39f, 185.82f, -35.01f, -1.57f, 14);
+                            spawnCreature(CN_ALLIANCE_COMMANDER, 425.39f, 185.82f, -35.01f, -1.57f, 14);
                             break;
                     }
                 }
@@ -776,10 +777,10 @@ class NexusScript : public MoonInstanceScript
                     switch (player->GetTeam())
                     {
                         case TEAM_ALLIANCE:
-                            PushCreature(H_CN_HORDE_COMMANDER, 425.39f, 185.82f, -35.01f, -1.57f, 14);
+                            spawnCreature(H_CN_HORDE_COMMANDER, 425.39f, 185.82f, -35.01f, -1.57f, 14);
                             break;
                         case TEAM_HORDE:
-                            PushCreature(H_CN_ALLIANCE_COMMANDER, 425.39f, 185.82f, -35.01f, -1.57f, 14);
+                            spawnCreature(H_CN_ALLIANCE_COMMANDER, 425.39f, 185.82f, -35.01f, -1.57f, 14);
                             break;
                     }
                 }

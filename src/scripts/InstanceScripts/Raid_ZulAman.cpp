@@ -33,21 +33,21 @@ class NalorakkAI : public MoonScriptBossAI
         {
             AddPhaseSpell(1, AddSpell(NALORAKK_BRUTAL_SWIPE, Target_Current, 2, 0, 35));
             AddPhaseSpell(1, AddSpell(NALORAKK_MANGLE, Target_Current, 12, 0, 20));
-            AddPhaseSpell(1, AddSpell(NALORAKK_SURGE, Target_RandomPlayer, 8, 0, 20, 0.0f, 45.0f, true, "I bring da pain!", Text_Yell, 12071));
+            AddPhaseSpell(1, AddSpell(NALORAKK_SURGE, Target_RandomPlayer, 8, 0, 20, 0.0f, 45.0f, true, "I bring da pain!", CHAT_MSG_MONSTER_YELL, 12071));
 
             AddPhaseSpell(2, AddSpell(NALORAKK_LACERATING_SLASH, Target_Current, 12, 0, 20));
             AddPhaseSpell(2, AddSpell(NALORAKK_REND_FLESH, Target_Current, 12, 0, 12));
             AddPhaseSpell(2, AddSpell(NALORAKK_DEAFENING_ROAR, Target_RandomPlayer, 11, 0, 12));
 
-            SetEnrageInfo(AddSpell(NALORAKK_BERSERK, Target_Self, 0, 0, 600, 0, 0, false, "You had your chance, now it be too late!", Text_Yell, 12074), 600000);
+            SetEnrageInfo(AddSpell(NALORAKK_BERSERK, Target_Self, 0, 0, 600, 0, 0, false, "You had your chance, now it be too late!", CHAT_MSG_MONSTER_YELL, 12074), 600000);
 
-            AddEmote(Event_OnCombatStart, "You be dead soon enough!", Text_Yell, 12070);
-            AddEmote(Event_OnTargetDied, "Da Amani gonna rule again!", Text_Yell, 12076);
-            AddEmote(Event_OnTargetDied, "Now whatchoo got to say?", Text_Yell, 12075);
-            AddEmote(Event_OnDied, "I... be waitin' on da udda side....", Text_Yell, 12077);
+            AddEmote(Event_OnCombatStart, "You be dead soon enough!", CHAT_MSG_MONSTER_YELL, 12070);
+            AddEmote(Event_OnTargetDied, "Da Amani gonna rule again!", CHAT_MSG_MONSTER_YELL, 12076);
+            AddEmote(Event_OnTargetDied, "Now whatchoo got to say?", CHAT_MSG_MONSTER_YELL, 12075);
+            AddEmote(Event_OnDied, "I... be waitin' on da udda side....", CHAT_MSG_MONSTER_YELL, 12077);
 
             // Bear Form
-            Morph = AddSpell(42377, Target_Self, 0, 0, 0, 0, 0, false, "You call on da beast, you gonna get more dan you bargain for!", Text_Yell, 12072);
+            Morph = AddSpell(42377, Target_Self, 0, 0, 0, 0, 0, false, "You call on da beast, you gonna get more dan you bargain for!", CHAT_MSG_MONSTER_YELL, 12072);
             MorphTimer = 0;
         }
 
@@ -62,7 +62,7 @@ class NalorakkAI : public MoonScriptBossAI
         void OnCombatStop(Unit* pTarget)
         {
             // On leaving combat he changes back to a troll
-            SetDisplayId(21631);
+            _setDisplayId(21631);
 
             ParentClass::OnCombatStop(pTarget);
         }
@@ -70,7 +70,7 @@ class NalorakkAI : public MoonScriptBossAI
         void OnDied(Unit* pKiller)
         {
             // On death he changes back to a troll
-            SetDisplayId(21631);
+            _setDisplayId(21631);
 
             ParentClass::OnDied(pKiller);
         }
@@ -84,7 +84,7 @@ class NalorakkAI : public MoonScriptBossAI
             {
                 SetPhase(2, Morph);
                 // Morph into a bear since the spell doesnt work
-                SetDisplayId(21635);
+                _setDisplayId(21635);
                 // 20 Seconds until switch to Troll Form
                 ResetTimer(MorphTimer, 20000);
             }
@@ -95,12 +95,12 @@ class NalorakkAI : public MoonScriptBossAI
                 // Remove Bear Form
                 RemoveAura(42377);
                 // Transform back into a Troll
-                SetDisplayId(21631);
+                _setDisplayId(21631);
                 SetPhase(1);
                 // 45 Seconds until switch to Bear Form
                 ResetTimer(MorphTimer, 45000);
 
-                Emote("Make way for Nalorakk!", Text_Yell, 12073);
+                sendChatMessage(CHAT_MSG_MONSTER_YELL, 12073, "Make way for Nalorakk!");
             }
         }
 
@@ -119,10 +119,10 @@ class AkilzonAI : public MoonScriptBossAI
             AddSpell(AKILZON_GUST_OF_WIND, Target_Current, 0, 0, 0);
             AddSpell(AKILZON_ELECTRICAL_STORM, Target_Self, 1, 0, 0);
 
-            AddEmote(Event_OnCombatStart, "I be da predator! You da prey!", Text_Yell, 12013);
-            AddEmote(Event_OnTargetDied, "Stop your cryin'!", Text_Yell, 12018);
-            AddEmote(Event_OnTargetDied, "Ya got nothin'!", Text_Yell, 12017);
-            AddEmote(Event_OnDied, "You can't... kill... me spirit!", Text_Yell, 12019);
+            AddEmote(Event_OnCombatStart, "I be da predator! You da prey!", CHAT_MSG_MONSTER_YELL, 12013);
+            AddEmote(Event_OnTargetDied, "Stop your cryin'!", CHAT_MSG_MONSTER_YELL, 12018);
+            AddEmote(Event_OnTargetDied, "Ya got nothin'!", CHAT_MSG_MONSTER_YELL, 12017);
+            AddEmote(Event_OnDied, "You can't... kill... me spirit!", CHAT_MSG_MONSTER_YELL, 12019);
 
             mSummonTime = 0;
         }
@@ -150,11 +150,11 @@ class AkilzonAI : public MoonScriptBossAI
                     if (Eagle)
                     {
                         Eagle->AggroNearestUnit();
-                        Eagle->SetDespawnWhenInactive(true);
+                        Eagle->_setDespawnWhenInactive(true);
                     }
                 }
                 Eagle = NULL;
-                Emote("Feed, me bruddahs!", Text_Yell, 12019);
+                sendChatMessage(CHAT_MSG_MONSTER_YELL, 12019, "Feed, me bruddahs!");
                 // Restart the timer
                 ResetTimer(mSummonTime, 120000);
             }
@@ -181,23 +181,23 @@ class HalazziAI : public MoonScriptBossAI
         MOONSCRIPT_FACTORY_FUNCTION(HalazziAI, MoonScriptBossAI);
         HalazziAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
         {
-            AddPhaseSpell(1, AddSpell(HALAZZI_SABER_LASH, Target_Destination, 0.5, 0, 0, 0, 0, false, "Me gonna carve ya now!", Text_Yell, 12023));
+            AddPhaseSpell(1, AddSpell(HALAZZI_SABER_LASH, Target_Destination, 0.5, 0, 0, 0, 0, false, "Me gonna carve ya now!", CHAT_MSG_MONSTER_YELL, 12023));
 
             AddPhaseSpell(2, AddSpell(HALAZZI_FLAME_SHOCK, Target_Current, 12, 0, 0));
             AddPhaseSpell(2, AddSpell(HALAZZI_EARTH_SHOCK, Target_Current, 12, 0, 0));
 
-            AddPhaseSpell(3, AddSpell(HALAZZI_SABER_LASH, Target_Destination, 0.5, 0, 0, 0, 0, false, "You gonna leave in pieces!", Text_Yell, 12024));
+            AddPhaseSpell(3, AddSpell(HALAZZI_SABER_LASH, Target_Destination, 0.5, 0, 0, 0, 0, false, "You gonna leave in pieces!", CHAT_MSG_MONSTER_YELL, 12024));
             AddPhaseSpell(3, AddSpell(HALAZZI_FLAME_SHOCK, Target_Current, 18, 0, 0));
             AddPhaseSpell(3, AddSpell(HALAZZI_EARTH_SHOCK, Target_Current, 18, 0, 0));
             AddPhaseSpell(3, AddSpell(HALAZZI_ENRAGE, Target_Self, 100, 0, 60));
 
             // Transfigure: 4k aoe damage
-            Transfigure = AddSpell(44054, Target_Self, 0, 0, 0, 0, 0, false, "I fight wit' untamed spirit...", Text_Yell, 12021);
+            Transfigure = AddSpell(44054, Target_Self, 0, 0, 0, 0, 0, false, "I fight wit' untamed spirit...", CHAT_MSG_MONSTER_YELL, 12021);
 
-            AddEmote(Event_OnCombatStart, "Get on your knees and bow to da fang and claw!", Text_Yell, 12020);
-            AddEmote(Event_OnTargetDied, "You cant fight da power...", Text_Yell, 12026);
-            AddEmote(Event_OnTargetDied, "You all gonna fail...", Text_Yell, 12027);
-            AddEmote(Event_OnDied, "Chaga... choka'jinn.", Text_Yell, 12028);
+            AddEmote(Event_OnCombatStart, "Get on your knees and bow to da fang and claw!", CHAT_MSG_MONSTER_YELL, 12020);
+            AddEmote(Event_OnTargetDied, "You cant fight da power...", CHAT_MSG_MONSTER_YELL, 12026);
+            AddEmote(Event_OnTargetDied, "You all gonna fail...", CHAT_MSG_MONSTER_YELL, 12027);
+            AddEmote(Event_OnDied, "Chaga... choka'jinn.", CHAT_MSG_MONSTER_YELL, 12028);
             mLynx = NULL;
 
             mTotemTimer = 0;
@@ -226,15 +226,15 @@ class HalazziAI : public MoonScriptBossAI
         void AIUpdate()
         {
             // Every 25% Halazzi calls on the lynx
-            if (!mLynx && GetHealthPercent() <= (100 - SplitCount * 25))
+            if (!mLynx && _getHealthPercent() <= (100 - SplitCount * 25))
                 Split();
 
             // Lynx OR Halazzi is at 20% HP Merge them together again
-            if (mLynx && (mLynx->GetHealthPct() <= 20 || GetHealthPercent() <= 20))
+            if (mLynx && (mLynx->GetHealthPct() <= 20 || _getHealthPercent() <= 20))
                 Merge();
 
             // At <25% Phase 3 begins
-            if (GetHealthPercent() < 25 && GetPhase() == 1)
+            if (_getHealthPercent() < 25 && GetPhase() == 1)
             {
                 ResetTimer(mTotemTimer, 30000);
                 SetPhase(3);
@@ -248,7 +248,7 @@ class HalazziAI : public MoonScriptBossAI
                     Totem = SpawnCreature(CN_TOTEM, (_unit->GetPositionX() + RandomFloat(3) - 3), (_unit->GetPositionY() + RandomFloat(3) - 3), _unit->GetPositionZ(), 0, true);
                     if (Totem)
                     {
-                        Totem->Despawn(60000); // Despawn in 60 seconds
+                        Totem->despawn(60000); // Despawn in 60 seconds
                         Totem->AggroNearestPlayer();
                         Totem = NULL;
                     }
@@ -268,7 +268,7 @@ class HalazziAI : public MoonScriptBossAI
         void Split()
         {
             CurrentHealth = GetUnit()->getUInt32Value(UNIT_FIELD_HEALTH);
-            SetDisplayId(24144);
+            _setDisplayId(24144);
             _unit->SetHealth(240000);
             _unit->setUInt32Value(UNIT_FIELD_MAXHEALTH, 240000);
 
@@ -288,14 +288,14 @@ class HalazziAI : public MoonScriptBossAI
             {
                 mLynx->Despawn(0, 0);
                 mLynx = NULL;
-                Emote("Spirit, come back to me!", Text_Yell, 12022);
+                sendChatMessage(CHAT_MSG_MONSTER_YELL, 12022, "Spirit, come back to me!");
             }
 
             if (CurrentHealth)
                 _unit->SetHealth(CurrentHealth);
             if (MaxHealth)
                 _unit->setUInt32Value(UNIT_FIELD_MAXHEALTH, MaxHealth);
-            SetDisplayId(21632);
+            _setDisplayId(21632);
 
             SplitCount++;
             SetPhase(1);

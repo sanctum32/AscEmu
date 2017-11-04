@@ -332,11 +332,85 @@ class SERVER_DECL CreatureAIScript
         virtual void OnEmote(Player* /*pPlayer*/, EmoteType /*Emote*/) {}
         virtual void StringFunctionCall(int) {}
 
+        virtual void OnEnterVehicle() {}
+        virtual void OnExitVehicle() {}
+        virtual void OnFirstPassengerEntered(Unit* /*passenger*/) {}
+        virtual void OnVehicleFull() {}
+        virtual void OnLastPassengerLeft(Unit* /*passenger*/) {}
+
+        // MIT start
+        //////////////////////////////////////////////////////////////////////////////////////////
+        // player
+        Player* getNearestPlayer();
+
+        //////////////////////////////////////////////////////////////////////////////////////////
+        // creature
+        Creature* getNearestCreature(uint32_t entry);
+        Creature* getNearestCreature(float posX, float posY, float posZ, uint32_t entry);
+
+        float getRangeToObject(Object* object);
+
+        Creature* spawnCreature(uint32_t entry, float posX, float posY, float posZ, float posO, uint32_t factionId = 0);
+        void despawn(uint32_t delay = 2000, uint32_t respawnTime = 0);
+
+        bool isAlive();
+
+        void setRooted(bool set);
+        bool isRooted();
+
+        void setFlyMode(bool fly);
+
+        void moveTo(float posX, float posY, float posZ, bool setRun = true);
+        void moveToUnit(Unit* unit);
+        void moveToSpawn();
+        void stopMovement();
+
+        // combat setup
+        bool canEnterCombat();
+        void setCanEnterCombat(bool enterCombat);
+        bool _isInCombat();
+        void _delayNextAttack(int32_t milliseconds);
+        void _setDespawnWhenInactive(bool setDespawnWhenInactive);
+        bool _isDespawnWhenInactiveSet();
+
+        void _setMeleeDisabled(bool disable);
+        bool _isMeleeDisabled();
+        void _setRangedDisabled(bool disable);
+        bool _isRangedDisabled();
+        void _setCastDisabled(bool disable);
+        bool _isCastDisabled();
+        void _setTargetingDisabled(bool disable);
+        bool _isTargetingDisabled();
+
+        void _clearHateList();
+        void _wipeHateList();
+        int32_t _getHealthPercent();
+        int32_t _getManaPercent();
+        void _regenerateHealth();
+
+        // appearance
+        void _setScale(float scale);
+        float _getScale();
+        void _setDisplayId(uint32_t displayId);
+        void _setWieldWeapon(bool setWieldWeapon);
+        void _setDisplayWeapon(bool setMainHand, bool setOffHand);
+        void _setDisplayWeaponIds(uint32_t itemId1, uint32_t itemId2);
+
+        //////////////////////////////////////////////////////////////////////////////////////////
+        // gameobject
+        GameObject* getNearestGameObject(uint32_t entry);
+        GameObject* getNearestGameObject(float posX, float posY, float posZ, uint32_t entry);
+
+        //////////////////////////////////////////////////////////////////////////////////////////
+        // chat message
+        void sendChatMessage(uint8_t type, uint32_t soundId, std::string text);
+        void sendDBChatMessage(uint32_t textId);
+
+        // MIT end
+
         void RegisterAIUpdateEvent(uint32 frequency);
         void ModifyAIUpdateEvent(uint32 newfrequency);
         void RemoveAIUpdateEvent();
-
-        bool IsAlive();
 
         virtual void Destroy() { delete this; }
         Creature* GetUnit() { return _unit; }
@@ -345,53 +419,11 @@ class SERVER_DECL CreatureAIScript
         void SetLinkedCreature(CreatureAIScript* creatureAI);
         void LinkedCreatureDeleted();
 
-        //////////////////////////////////////////////////////////////////////////////////////////
-        // Vehicle passenger hooks
-        //////////////////////////////////////////////////////////////////////////////////////////
-
-        //////////////////////////////////////////////////////////////////////////////////////////
-        /// Called when this passenger enters a vehicle
-        ///
-        /// \param none   \return none
-        //////////////////////////////////////////////////////////////////////////////////////////
-        virtual void OnEnterVehicle(){}
-
-
-        //////////////////////////////////////////////////////////////////////////////////////////
-        /// Called when this passenger leaves the vehicle
-        ///
-        /// \param none   \return none
-        //////////////////////////////////////////////////////////////////////////////////////////
-        virtual void OnExitVehicle(){}
-
-        //////////////////////////////////////////////////////////////////////////////////////////
-        // Vehicle Hooks
-        //////////////////////////////////////////////////////////////////////////////////////////
-
-        //////////////////////////////////////////////////////////////////////////////////////////
-        /// Called when the first passenger enters
-        /// \param Unit* passenger  -  The passenger who entered
-        /// \return none
-        //////////////////////////////////////////////////////////////////////////////////////////
-        virtual void OnFirstPassengerEntered(Unit* /*passenger*/) {}
-
-        //////////////////////////////////////////////////////////////////////////////////////////
-        /// Called when there are no more free seats
-        /// \param none
-        /// \return none
-        //////////////////////////////////////////////////////////////////////////////////////////
-        virtual void OnVehicleFull() {}
-
-        //////////////////////////////////////////////////////////////////////////////////////////
-        /// Called when the last passenger leaves
-        /// \param Unit* passenger  - The passenger who left
-        /// \return none
-        //////////////////////////////////////////////////////////////////////////////////////////
-        virtual void OnLastPassengerLeft(Unit* /*passenger*/) {}
-
     protected:
 
         Creature* _unit;
+
+        bool mDespawnWhenInactive;
 
     private:
 
@@ -570,8 +602,9 @@ class SERVER_DECL InstanceScript
         CreatureSet getCreatureSetForEntry(uint32_t entry, bool debug = false, Player* player = nullptr);
         CreatureSet getCreatureSetForEntries(std::vector<uint32_t> entryVector);
 
+        GameObject* spawnGameObject(uint32_t entry, float posX, float posY, float posZ, float posO, bool addToWorld = true, uint32_t misc1 = 0, uint32_t phase = 0);
         GameObject* getGameObjectBySpawnId(uint32_t entry);
-        GameObject* getClosestGameObjectForPosition(uint32 entry, float posX, float posY, float posZ);
+        GameObject* getClosestGameObjectForPosition(uint32_t entry, float posX, float posY, float posZ);
         GameObjectSet getGameObjectsSetForEntry(uint32_t entry);
 
         float getRangeToObjectForPosition(Object* object, float posX, float posY, float posZ);

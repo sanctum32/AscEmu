@@ -35,7 +35,7 @@ class LadySarevessAI : public MoonScriptCreatureAI
 
         void OnCombatStart(Unit* pTarget)
         {
-            _unit->SendScriptTextChatMessage(7912);     // You should not be here! Slay them!
+            sendDBChatMessage(7912);     // You should not be here! Slay them!
         }
 };
 
@@ -49,7 +49,7 @@ class BaronAquanisAI : public MoonScriptCreatureAI
             // Frostbolt
             AddSpell(15043, Target_Current, 20, 3, 0);
             AggroNearestPlayer();
-            SetDespawnWhenInactive(true);
+            _setDespawnWhenInactive(true);
         }
 };
 
@@ -87,18 +87,18 @@ class KelrisAI : public MoonScriptCreatureAI
         MOONSCRIPT_FACTORY_FUNCTION(KelrisAI, MoonScriptCreatureAI);
         KelrisAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
-            AddSpell(8399, Target_RandomPlayer, 12, 1.3f, 0, 0, 0, false, "Sleep...", Text_Yell, 5804);    // Sleep
+            AddSpell(8399, Target_RandomPlayer, 12, 1.3f, 0, 0, 0, false, "Sleep...", CHAT_MSG_MONSTER_YELL, 5804);    // Sleep
             AddSpell(15587, Target_Current, 16, 1.5f, 0);    // Mind Blast
         }
 
         void OnCombatStart(Unit* pTarget)
         {
-            _unit->SendScriptTextChatMessage(3966);     // Who dares disturb my meditation?
+            sendDBChatMessage(3966);     // Who dares disturb my meditation?
         }
 
         void OnTargetDied(Unit* pTarget)
         {
-            _unit->SendScriptTextChatMessage(3968);     // Dust to dust.
+            sendDBChatMessage(3968);     // Dust to dust.
         }
 };
 

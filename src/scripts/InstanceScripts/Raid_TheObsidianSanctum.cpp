@@ -108,16 +108,16 @@ void SpellFunc_FlameTsunami(SpellDesc* pThis, MoonScriptCreatureAI* pCreatureAI,
         switch (RandomUInt(3))
         {
             case 0:
-                pCreatureAI->Emote("Such flammable little insects....", Text_Yell, 14100);
+                pCreatureAI->sendChatMessage(CHAT_MSG_MONSTER_YELL, 14100, "Such flammable little insects....");
                 break;
             case 1:
-                pCreatureAI->Emote("Your charred bones will litter the floor!", Text_Yell, 14101);
+                pCreatureAI->sendChatMessage(CHAT_MSG_MONSTER_YELL, 14101, "Your charred bones will litter the floor!");
                 break;
             case 2:
-                pCreatureAI->Emote("How much heat can you take?", Text_Yell, 14102);
+                pCreatureAI->sendChatMessage(CHAT_MSG_MONSTER_YELL, 14102, "How much heat can you take?");
                 break;
             case 3:
-                pCreatureAI->Emote("All will be reduced to ash!", Text_Yell, 14103);
+                pCreatureAI->sendChatMessage(CHAT_MSG_MONSTER_YELL, 14103, "All will be reduced to ash!");
                 break;
         }
 
@@ -167,16 +167,16 @@ class SartharionAI : public MoonScriptBossAI
             AddSpell(SARTHARION_CLEAVE, Target_Current, 24, 0, 8);
 
             SpellDesc* mFlame = AddSpell(HeroicInt(56908, 58956), Target_Self, 18, 2, 16);
-            mFlame->AddEmote("Burn, you miserable wretches!", Text_Yell, 14098);
+            mFlame->AddEmote("Burn, you miserable wretches!", CHAT_MSG_MONSTER_YELL, 14098);
 
             AddSpell(HeroicInt(56910, 58957), Target_Self, 40, 0, 12);
             mFlameTsunami = AddSpellFunc(&SpellFunc_FlameTsunami, Target_Self, 99, 0, 25);
             mSummonLava = AddSpellFunc(&SpellFunc_LavaSpawn, Target_RandomUnitNotCurrent, 25, 0, 8);
 
-            AddEmote(Event_OnTargetDied, "You will make a fine meal for the hatchlings.", Text_Yell, 14094);
-            AddEmote(Event_OnTargetDied, "You are at a grave disadvantage!", Text_Yell, 14096);
-            AddEmote(Event_OnTargetDied, "This is why we call you lesser beings.", Text_Yell, 14097);
-            AddEmote(Event_OnCombatStart, "It is my charge to watch over these eggs. I will see you burn before any harm comes to them!", Text_Yell, 14093);
+            AddEmote(Event_OnTargetDied, "You will make a fine meal for the hatchlings.", CHAT_MSG_MONSTER_YELL, 14094);
+            AddEmote(Event_OnTargetDied, "You are at a grave disadvantage!", CHAT_MSG_MONSTER_YELL, 14096);
+            AddEmote(Event_OnTargetDied, "This is why we call you lesser beings.", CHAT_MSG_MONSTER_YELL, 14097);
+            AddEmote(Event_OnCombatStart, "It is my charge to watch over these eggs. I will see you burn before any harm comes to them!", CHAT_MSG_MONSTER_YELL, 14093);
 
             for (uint8 i = 0; i < OS_DATA_END - 1; i++)
             {
@@ -200,7 +200,7 @@ class SartharionAI : public MoonScriptBossAI
                 mDrakeTimer = AddTimer(30000);
                 ApplyAura(SARTHARION_AURA);
                 RemoveAuraOnPlayers(SARTHARION_AURA);   // unproper hackfix
-                Regenerate();// Lets heal him as aura increase his hp for 25%
+                _regenerateHealth();// Lets heal him as aura increase his hp for 25%
             };
 
             ParentClass::OnCombatStart(pTarget);
@@ -223,7 +223,7 @@ class SartharionAI : public MoonScriptBossAI
                 };
             };
 
-            if (GetHealthPercent() <= 10 && m_bEnraged == false)   // enrage phase
+            if (_getHealthPercent() <= 10 && m_bEnraged == false)   // enrage phase
             {
                 for (uint8 i = 0; i < 3; ++i)
                     CastSpellNowNoScheduling(mSummonLava);
@@ -257,7 +257,7 @@ class SartharionAI : public MoonScriptBossAI
         {
             if (m_cDrakes[DRAKE_TENEBRON] != NULL && m_cDrakes[DRAKE_TENEBRON]->isAlive())
             {
-                _unit->SendScriptTextChatMessage(3982);     //Tenebron!The eggs are yours to protect as well!
+                sendDBChatMessage(3982);     //Tenebron!The eggs are yours to protect as well!
                 m_cDrakes[DRAKE_TENEBRON]->GetAIInterface()->MoveTo(3254.606689f, 531.867859f, 66.898163f);
                 m_cDrakes[DRAKE_TENEBRON]->SetOrientation(4.215994f);
             };
@@ -268,7 +268,7 @@ class SartharionAI : public MoonScriptBossAI
         {
             if (m_cDrakes[DRAKE_SHADRON] != NULL && m_cDrakes[DRAKE_SHADRON]->isAlive())
             {
-                _unit->SendScriptTextChatMessage(3981);     //Shadron! Come to me! All is at risk!
+                sendDBChatMessage(3981);     //Shadron! Come to me! All is at risk!
                 m_cDrakes[DRAKE_SHADRON]->GetAIInterface()->MoveTo(3254.606689f, 531.867859f, 66.898163f);
                 m_cDrakes[DRAKE_SHADRON]->SetOrientation(4.215994f);
             };
@@ -279,7 +279,7 @@ class SartharionAI : public MoonScriptBossAI
         {
             if (m_cDrakes[DRAKE_VESPERON] != NULL && m_cDrakes[DRAKE_VESPERON]->isAlive())
             {
-                _unit->SendScriptTextChatMessage(3983);     //Vesperon, the clutch is in danger! Assist me!
+                sendDBChatMessage(3983);     //Vesperon, the clutch is in danger! Assist me!
                 m_cDrakes[DRAKE_VESPERON]->GetAIInterface()->MoveTo(3254.606689f, 531.867859f, 66.898163f);
                 m_cDrakes[DRAKE_VESPERON]->SetOrientation(4.215994f);
             };
@@ -288,7 +288,7 @@ class SartharionAI : public MoonScriptBossAI
 
         void OnDied(Unit* pKiller)
         {
-            _unit->SendScriptTextChatMessage(3984);         //Such is the price... of failure...
+            sendDBChatMessage(3984);         //Such is the price... of failure...
 
             RemoveAIUpdateEvent();
             ParentClass::OnDied(pKiller);
@@ -314,10 +314,10 @@ class TsunamiAI : public MoonScriptBossAI
         void OnLoad()
         {
             RegisterAIUpdateEvent(1000);
-            SetFlyMode(true);
-            SetCanEnterCombat(false);
+            setFlyMode(true);
+            setCanEnterCombat(false);
             _unit->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-            Despawn(11500, 0);
+            despawn(11500, 0);
 
             ParentClass::OnLoad();
         };
@@ -342,8 +342,8 @@ class CyclonAI : public MoonScriptBossAI
 
         void OnLoad()
         {
-            SetCanMove(false);
-            SetCanEnterCombat(false);
+            setRooted(true);
+            setCanEnterCombat(false);
             _unit->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
             ApplyAura(CYCLON_SPELL);
             ApplyAura(CYCLON_AURA);
@@ -368,12 +368,12 @@ class LavaBlazeAI : public MoonScriptBossAI
 
         void OnCombatStop(Unit* pTarget)
         {
-            Despawn(1000, 0);
+            despawn(1000, 0);
         };
 
         void OnDied(Unit* pKiller)
         {
-            Despawn(1000, 0);
+            despawn(1000, 0);
         };
 
 };

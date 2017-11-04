@@ -194,15 +194,15 @@ WebWrapAI::WebWrapAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
 
 void WebWrapAI::OnCombatStart(Unit* pTarget)
 {
-    SetAllowMelee(false);
-    SetCanMove(false);
-    StopMovement();
+    _setMeleeDisabled(false);
+    setRooted(true);
+    stopMovement();
 };
 
 void WebWrapAI::OnCombatStop(Unit* pTarget)
 {
-    SetAllowMelee(true);
-    SetCanMove(true);
+    _setMeleeDisabled(true);
+    setRooted(false);
 };
 
 void WebWrapAI::OnDied(Unit* pKiller)
@@ -231,7 +231,7 @@ void WebWrapAI::AIUpdate()
         {
             mPlayerGuid = 0;
             RemoveAIUpdateEvent();
-            Despawn(1);
+            despawn(1);
         }
     };
 };
@@ -308,11 +308,11 @@ void MaexxnaAI::AIUpdate()
         MoonScriptCreatureAI* Spiderling = NULL;
         for (uint8 i = 0; i < 8; ++i)
         {
-            Spiderling = SpawnCreature(CN_MAEXXNA_SPIDERLING);
+            Spiderling = SpawnCreature(CN_MAEXXNA_SPIDERLING, _unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), _unit->GetOrientation(), false);
             if (Spiderling != NULL)
             {
                 Spiderling->GetUnit()->m_noRespawn = true;
-                Spiderling->SetDespawnWhenInactive(true);
+                Spiderling->_setDespawnWhenInactive(true);
                 Spiderling->AggroRandomPlayer(1000);
             };
         };
@@ -322,7 +322,7 @@ void MaexxnaAI::AIUpdate()
 
     if (!IsCasting())
     {
-        if (!mHasEnraged && GetHealthPercent() <= 30)
+        if (!mHasEnraged && _getHealthPercent() <= 30)
         {
             if (IsHeroic())
                 ApplyAura(MAEXXNA_FRENZY_HEROIC);
@@ -413,11 +413,11 @@ void NaxxramasWorshipperAI::OnDied(Unit* pKiller)
     ParentClass::OnDied(pKiller);
     if (mGrandWidow != NULL)   //&& !IsHeroic())
     {
-        if (GetRange(static_cast< MoonScriptCreatureAI* >(mGrandWidow)) <= 15.0f)
+        if (getRangeToObject(mGrandWidow->GetUnit()) <= 15.0f)
         {
             for (std::set< NaxxramasWorshipperAI* >::iterator Iter = mGrandWidow->mWorshippers.begin(); Iter != mGrandWidow->mWorshippers.end(); ++Iter)
             {
-                if (!(*Iter)->IsAlive())
+                if (!(*Iter)->isAlive())
                     continue;
 
                 // Must check if it does not crash if creature is already casting
@@ -609,14 +609,14 @@ GrandWidowFaerlinaAI::GrandWidowFaerlinaAI(Creature* pCreature) : MoonScriptBoss
         AddSpell(GRAND_WIDOW_RAIN_OF_FIRE_NORMAL, Target_RandomPlayerDestination, 7, 0, 10, 0, 40);
     };
 
-    Emote("Your old lives, your mortal desires, mean nothing. You are acolytes of the master now, and you will serve the cause without question! The greatest glory is to die in the master's service!", Text_Yell, 8799);
-    AddEmote(Event_OnCombatStart, "Slay them in the master's name!", Text_Yell, 8794);
-    AddEmote(Event_OnTargetDied, "You have failed!", Text_Yell, 8800);
-    AddEmote(Event_OnTargetDied, "Pathetic wretch!", Text_Yell, 8801);
-    AddEmote(Event_OnDied, "The master... will avenge me!", Text_Yell, 8798);
-    mFrenzy->AddEmote("You cannot hide from me!", Text_Yell, 8795);
-    mFrenzy->AddEmote("Kneel before me, worm!", Text_Yell, 8796);
-    mFrenzy->AddEmote("Run while you still can!", Text_Yell, 8797);
+    sendChatMessage(CHAT_MSG_MONSTER_YELL, 8799, "Your old lives, your mortal desires, mean nothing. You are acolytes of the master now, and you will serve the cause without question! The greatest glory is to die in the master's service!");
+    AddEmote(Event_OnCombatStart, "Slay them in the master's name!", CHAT_MSG_MONSTER_YELL, 8794);
+    AddEmote(Event_OnTargetDied, "You have failed!", CHAT_MSG_MONSTER_YELL, 8800);
+    AddEmote(Event_OnTargetDied, "Pathetic wretch!", CHAT_MSG_MONSTER_YELL, 8801);
+    AddEmote(Event_OnDied, "The master... will avenge me!", CHAT_MSG_MONSTER_YELL, 8798);
+    mFrenzy->AddEmote("You cannot hide from me!", CHAT_MSG_MONSTER_YELL, 8795);
+    mFrenzy->AddEmote("Kneel before me, worm!", CHAT_MSG_MONSTER_YELL, 8796);
+    mFrenzy->AddEmote("Run while you still can!", CHAT_MSG_MONSTER_YELL, 8797);
     mPoisonVolleyBoltTimer = mFrenzyTimer = INVALIDATE_TIMER;
 };
 
@@ -626,7 +626,7 @@ void GrandWidowFaerlinaAI::OnCombatStart(Unit* pTarget)
     mPoisonVolleyBoltTimer = AddTimer(15000);
     mFrenzyTimer = AddTimer(60000 + RandomUInt(20) * 1000);
 
-    GameObject* WebGate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(3318.65f, -3695.85f, 259.094f, 181235);
+    GameObject* WebGate = getNearestGameObject(3318.65f, -3695.85f, 259.094f, 181235);
     if (WebGate != NULL)
         WebGate->SetState(GO_STATE_CLOSED);
 
@@ -646,15 +646,15 @@ void GrandWidowFaerlinaAI::OnCombatStop(Unit* pTarget)
     ParentClass::OnCombatStop(pTarget);
     mPoisonVolleyBoltTimer = mFrenzyTimer = INVALIDATE_TIMER;
 
-    GameObject* WebGate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(3318.65f, -3695.85f, 259.094f, 181235);
+    GameObject* WebGate = getNearestGameObject(3318.65f, -3695.85f, 259.094f, 181235);
     if (WebGate != NULL)
         WebGate->SetState(GO_STATE_OPEN);
 
     for (std::set< NaxxramasWorshipperAI* >::iterator Iter = mWorshippers.begin(); Iter != mWorshippers.end(); ++Iter)
     {
         (*Iter)->mGrandWidow = NULL;
-        if (IsAlive())
-            (*Iter)->Despawn();
+        if (isAlive())
+            (*Iter)->despawn();
     };
 
     mWorshippers.clear();
@@ -662,13 +662,13 @@ void GrandWidowFaerlinaAI::OnCombatStop(Unit* pTarget)
     for (std::set< NaxxramasFollowerAI* >::iterator Iter = mFollowers.begin(); Iter != mFollowers.end(); ++Iter)
     {
         (*Iter)->mGrandWidow = NULL;
-        if (IsAlive())
-            (*Iter)->Despawn();
+        if (isAlive())
+            (*Iter)->despawn();
     };
 
     mFollowers.clear();
 
-    if (IsAlive())
+    if (isAlive())
     {
         MoonScriptCreatureAI* AddAI = NULL;
         for (uint8 i = 0; i < 4; ++i)
@@ -722,7 +722,7 @@ void GrandWidowFaerlinaAI::Destroy()
     for (std::set< NaxxramasWorshipperAI* >::iterator Iter = mWorshippers.begin(); Iter != mWorshippers.end(); ++Iter)
     {
         (*Iter)->mGrandWidow = NULL;
-        (*Iter)->Despawn();
+        (*Iter)->despawn();
     };
 
     mWorshippers.clear();
@@ -730,7 +730,7 @@ void GrandWidowFaerlinaAI::Destroy()
     for (std::set< NaxxramasFollowerAI* >::iterator Iter = mFollowers.begin(); Iter != mFollowers.end(); ++Iter)
     {
         (*Iter)->mGrandWidow = NULL;
-        (*Iter)->Despawn();
+        (*Iter)->despawn();
     };
 
     mFollowers.clear();
@@ -760,7 +760,7 @@ void CryptGuardAI::OnCombatStart(Unit* pTarget)
 
 void CryptGuardAI::AIUpdate()
 {
-    if (!mEnraged && GetHealthPercent() <= 50 && !IsCasting())
+    if (!mEnraged && _getHealthPercent() <= 50 && !IsCasting())
     {
         ApplyAura(CRYPT_GUARD_FRENZY);
         mEnraged = true;
@@ -833,15 +833,15 @@ AnubRekhanAI::AnubRekhanAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
 
     AddSpellFunc(&SpellFunc_AnubRekhanCorpseScarabsPlayer, Target_Self, 8, 0, 20);
     AddSpellFunc(&SpellFunc_AnubRekhanCorpseScarabsCryptGuard, Target_Self, 8, 0, 20);
-    Emote("Ahh... welcome to my parlor.", Text_Yell, 8788);
-    AddEmote(Event_OnCombatStart, "Just a little taste...", Text_Yell, 8785);
-    AddEmote(Event_OnCombatStart, "There is no way out.", Text_Yell, 8786);
-    AddEmote(Event_OnCombatStart, "Yes, run! It makes the blood pump faster!", Text_Yell, 8787);
-    AddEmote(Event_OnTargetDied, "Shhh... it will all be over soon.", Text_Yell, 8789);
-    AddEmote(Event_OnTaunt, "I hear little hearts beating. Yesss... beating faster now. Soon the beating will stop.", Text_Yell, 8790);
-    AddEmote(Event_OnTaunt, "Where to go? What to do? So many choices that all end in pain, end in death.", Text_Yell, 8791);
-    AddEmote(Event_OnTaunt, "Which one shall I eat first? So difficult to choose. They all smell so delicious...", Text_Yell, 8792);
-    AddEmote(Event_OnTaunt, "Closer now... tasty morsels. I've been too long without food. Without blood to drink.", Text_Yell, 8793);
+    sendChatMessage(CHAT_MSG_MONSTER_YELL, 8788, "Ahh... welcome to my parlor.");
+    AddEmote(Event_OnCombatStart, "Just a little taste...", CHAT_MSG_MONSTER_YELL, 8785);
+    AddEmote(Event_OnCombatStart, "There is no way out.", CHAT_MSG_MONSTER_YELL, 8786);
+    AddEmote(Event_OnCombatStart, "Yes, run! It makes the blood pump faster!", CHAT_MSG_MONSTER_YELL, 8787);
+    AddEmote(Event_OnTargetDied, "Shhh... it will all be over soon.", CHAT_MSG_MONSTER_YELL, 8789);
+    AddEmote(Event_OnTaunt, "I hear little hearts beating. Yesss... beating faster now. Soon the beating will stop.", CHAT_MSG_MONSTER_YELL, 8790);
+    AddEmote(Event_OnTaunt, "Where to go? What to do? So many choices that all end in pain, end in death.", CHAT_MSG_MONSTER_YELL, 8791);
+    AddEmote(Event_OnTaunt, "Which one shall I eat first? So difficult to choose. They all smell so delicious...", CHAT_MSG_MONSTER_YELL, 8792);
+    AddEmote(Event_OnTaunt, "Closer now... tasty morsels. I've been too long without food. Without blood to drink.", CHAT_MSG_MONSTER_YELL, 8793);
     SetEnrageInfo(AddSpell(ANUBREKHAN_BERSERK, Target_Self, 0, 0, 0), 600000);
     mLocustSwarmTimer = mCryptSpawnTimer = INVALIDATE_TIMER;
 };
@@ -870,8 +870,8 @@ void AnubRekhanAI::OnCombatStop(Unit* pTarget)
     for (std::set< CryptGuardAI* >::iterator Iter = mCryptGuards.begin(); Iter != mCryptGuards.end(); ++Iter)
     {
         (*Iter)->mAnubRekhanAI = NULL;
-        if (IsAlive())
-            (*Iter)->Despawn();
+        if (isAlive())
+            (*Iter)->despawn();
     };
 
     mCryptGuards.clear();
@@ -879,13 +879,13 @@ void AnubRekhanAI::OnCombatStop(Unit* pTarget)
     for (std::set< CorpseScarabAI* >::iterator Iter = mScarabs.begin(); Iter != mScarabs.end(); ++Iter)
     {
         (*Iter)->mAnubRekhanAI = NULL;
-        if (IsAlive())
-            (*Iter)->Despawn();
+        if (isAlive())
+            (*Iter)->despawn();
     };
 
     mScarabs.clear();
 
-    if (IsHeroic() && IsAlive())
+    if (IsHeroic() && isAlive())
     {
         CryptGuardAI* CryptAI = NULL;
         for (uint8 i = 0; i < 2; ++i)
@@ -942,7 +942,7 @@ void AnubRekhanAI::Destroy()
     for (std::set< CryptGuardAI* >::iterator Iter = mCryptGuards.begin(); Iter != mCryptGuards.end(); ++Iter)
     {
         (*Iter)->mAnubRekhanAI = NULL;
-        (*Iter)->Despawn();
+        (*Iter)->despawn();
     };
 
     mCryptGuards.clear();
@@ -950,7 +950,7 @@ void AnubRekhanAI::Destroy()
     for (std::set< CorpseScarabAI* >::iterator Iter = mScarabs.begin(); Iter != mScarabs.end(); ++Iter)
     {
         (*Iter)->mAnubRekhanAI = NULL;
-        (*Iter)->Despawn();
+        (*Iter)->despawn();
     };
 
     mScarabs.clear();
@@ -1106,7 +1106,7 @@ void InfectiousGhoulAI::OnCombatStart(Unit* pTarget)
 
 void InfectiousGhoulAI::AIUpdate()
 {
-    if (!mEnraged && !IsCasting() && GetHealthPercent() <= 50)
+    if (!mEnraged && !IsCasting() && _getHealthPercent() <= 50)
     {
         if (IsHeroic())
             ApplyAura(INFECTIOUS_GHOUL_FRENZY_HEROIC);
@@ -1148,13 +1148,13 @@ void StoneskinGargoyleAI::AIUpdate()
     else if (_unit->GetEmoteState() == EMOTE_STATE_SUBMERGED)
         _unit->SetEmoteState(EMOTE_ONESHOT_NONE);
 
-    if (!IsCasting() && GetHealthPercent() <= 30)
+    if (!IsCasting() && _getHealthPercent() <= 30)
     {
         CastSpellNowNoScheduling(mStoneskin);
         _unit->SetEmoteState(EMOTE_STATE_SUBMERGED_NEW);
         SetBehavior(Behavior_Spell);
-        SetCanMove(false);
-        StopMovement();
+        setRooted(true);
+        stopMovement();
         return;
     };
 
@@ -1207,8 +1207,8 @@ void EyeStalkerAI::OnCombatStart(Unit* pTarget)
 {
     ParentClass::OnCombatStart(pTarget);
     SetBehavior(Behavior_Spell);
-    SetCanMove(false);
-    StopMovement();
+    setRooted(true);
+    stopMovement();
 };
 
 void EyeStalkerAI::AIUpdate()
@@ -1220,10 +1220,10 @@ void EyeStalkerAI::AIUpdate()
         if (IsHeroic())
             MaxRange = 35.0f;
 
-        if (GetRangeToUnit(CurrentTarget) > MaxRange)
+        if (getRangeToObject(CurrentTarget) > MaxRange)
         {
             Unit* NewTarget = GetBestUnitTarget(TargetFilter_Closest);
-            if (NewTarget != NULL && GetRangeToUnit(NewTarget) <= MaxRange)
+            if (NewTarget != NULL && getRangeToObject(NewTarget) <= MaxRange)
             {
                 _unit->GetAIInterface()->setNextTarget(NewTarget);
                 _unit->GetAIInterface()->AttackReaction(NewTarget, 200);
@@ -1237,8 +1237,8 @@ void EyeStalkerAI::AIUpdate()
 
     // Meh, reset it in case something went wrong
     SetBehavior(Behavior_Spell);
-    SetCanMove(false);
-    StopMovement();
+    setRooted(true);
+    stopMovement();
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -1263,12 +1263,12 @@ NothThePlaguebringerAI::NothThePlaguebringerAI(Creature* pCreature) : MoonScript
     mBlinkTimer = mSkeletonTimer = mPhaseSwitchTimer = INVALIDATE_TIMER;
     mPhaseCounter = 0;
 
-    AddEmote(Event_OnCombatStart, "Glory to the master!", Text_Yell, 8845);
-    AddEmote(Event_OnCombatStart, "Your life is forfeit.", Text_Yell, 8846);
-    AddEmote(Event_OnCombatStart, "Die, trespasser!", Text_Yell, 8847);
-    AddEmote(Event_OnDied, "I will serve the master... in death.", Text_Yell, 8848);
-    AddEmote(Event_OnTargetDied, "My task is done!", Text_Yell, 8849);
-    AddEmote(Event_OnTargetDied, "Breathe no more.", Text_Yell, 8850);
+    AddEmote(Event_OnCombatStart, "Glory to the master!", CHAT_MSG_MONSTER_YELL, 8845);
+    AddEmote(Event_OnCombatStart, "Your life is forfeit.", CHAT_MSG_MONSTER_YELL, 8846);
+    AddEmote(Event_OnCombatStart, "Die, trespasser!", CHAT_MSG_MONSTER_YELL, 8847);
+    AddEmote(Event_OnDied, "I will serve the master... in death.", CHAT_MSG_MONSTER_YELL, 8848);
+    AddEmote(Event_OnTargetDied, "My task is done!", CHAT_MSG_MONSTER_YELL, 8849);
+    AddEmote(Event_OnTargetDied, "Breathe no more.", CHAT_MSG_MONSTER_YELL, 8850);
 };
 
 void NothThePlaguebringerAI::OnCombatStart(Unit* pTarget)
@@ -1283,11 +1283,11 @@ void NothThePlaguebringerAI::OnCombatStart(Unit* pTarget)
 
     if (_unit->GetMapMgr() != NULL && _unit->GetMapMgr()->GetInterface() != NULL)
     {
-        GameObject* Gate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(2740.689209f, -3489.697266f, 262.117767f, 181200);
+        GameObject* Gate = getNearestGameObject(2740.689209f, -3489.697266f, 262.117767f, 181200);
         if (Gate != NULL)
             Gate->SetState(GO_STATE_CLOSED);
 
-        Gate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(2683.670654f, -3556.429688f, 261.823334f, 181201);
+        Gate = getNearestGameObject(2683.670654f, -3556.429688f, 261.823334f, 181201);
         if (Gate != NULL)
             Gate->SetState(GO_STATE_CLOSED);
     };
@@ -1298,11 +1298,11 @@ void NothThePlaguebringerAI::OnCombatStop(Unit* pTarget)
     ParentClass::OnCombatStop(pTarget);
     if (_unit->GetMapMgr() != NULL && _unit->GetMapMgr()->GetInterface() != NULL)
     {
-        GameObject* Gate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(2740.689209f, -3489.697266f, 262.117767f, 181200);
+        GameObject* Gate = getNearestGameObject(2740.689209f, -3489.697266f, 262.117767f, 181200);
         if (Gate != NULL)
             Gate->SetState(GO_STATE_OPEN);
 
-        Gate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(2683.670654f, -3556.429688f, 261.823334f, 181201);
+        Gate = getNearestGameObject(2683.670654f, -3556.429688f, 261.823334f, 181201);
         if (Gate != NULL)
             Gate->SetState(GO_STATE_OPEN);
     };
@@ -1310,7 +1310,7 @@ void NothThePlaguebringerAI::OnCombatStop(Unit* pTarget)
     for (std::set< PlaguedWarriorAI* >::iterator Iter = mWarriors.begin(); Iter != mWarriors.end(); ++Iter)
     {
         (*Iter)->mNothAI = NULL;
-        (*Iter)->Despawn();
+        (*Iter)->despawn();
     };
 
     mWarriors.clear();
@@ -1318,7 +1318,7 @@ void NothThePlaguebringerAI::OnCombatStop(Unit* pTarget)
     for (std::set< PlaguedChampionAI* >::iterator Iter = mChampions.begin(); Iter != mChampions.end(); ++Iter)
     {
         (*Iter)->mNothAI = NULL;
-        (*Iter)->Despawn();
+        (*Iter)->despawn();
     };
 
     mChampions.clear();
@@ -1326,7 +1326,7 @@ void NothThePlaguebringerAI::OnCombatStop(Unit* pTarget)
     for (std::set< PlaguedGuardianAI* >::iterator Iter = mGuardians.begin(); Iter != mGuardians.end(); ++Iter)
     {
         (*Iter)->mNothAI = NULL;
-        (*Iter)->Despawn();
+        (*Iter)->despawn();
     };
 
     mGuardians.clear();
@@ -1401,7 +1401,7 @@ void NothThePlaguebringerAI::AIUpdate()
                 PosTaken[Id] = true;
             };
 
-            Emote("Rise, my soldiers! Rise and fight once more!", Text_Yell, 8851);
+            sendChatMessage(CHAT_MSG_MONSTER_YELL, 8851, "Rise, my soldiers! Rise and fight once more!");
             ResetTimer(mSkeletonTimer, 30000);
             PosTaken[Id] = true;
         };
@@ -1499,8 +1499,8 @@ void NothThePlaguebringerAI::AIUpdate()
     if (GetPhase() == 2)
     {
         SetBehavior(Behavior_Spell);
-        SetCanMove(false);
-        StopMovement();
+        setRooted(true);
+        stopMovement();
     };
 };
 
@@ -1509,7 +1509,7 @@ void NothThePlaguebringerAI::Destroy()
     for (std::set< PlaguedWarriorAI* >::iterator Iter = mWarriors.begin(); Iter != mWarriors.end(); ++Iter)
     {
         (*Iter)->mNothAI = NULL;
-        (*Iter)->Despawn();
+        (*Iter)->despawn();
     };
 
     mWarriors.clear();
@@ -1517,7 +1517,7 @@ void NothThePlaguebringerAI::Destroy()
     for (std::set< PlaguedChampionAI* >::iterator Iter = mChampions.begin(); Iter != mChampions.end(); ++Iter)
     {
         (*Iter)->mNothAI = NULL;
-        (*Iter)->Despawn();
+        (*Iter)->despawn();
     };
 
     mChampions.clear();
@@ -1525,7 +1525,7 @@ void NothThePlaguebringerAI::Destroy()
     for (std::set< PlaguedGuardianAI* >::iterator Iter = mGuardians.begin(); Iter != mGuardians.end(); ++Iter)
     {
         (*Iter)->mNothAI = NULL;
-        (*Iter)->Despawn();
+        (*Iter)->despawn();
     };
 
     mGuardians.clear();
@@ -1542,8 +1542,8 @@ void SpellFunc_NothToBalconyPhaseSwitch(SpellDesc* pThis, MoonScriptCreatureAI* 
         Noth->ApplyAura(NOTH_THE_PLAGUEBRINGER_BLINK_HEROIC);
         Noth->GetUnit()->SetPosition(2631.051025f, -3529.595703f, 274.037811f, 0.109163f);
         Noth->SetBehavior(Behavior_Spell);
-        Noth->SetCanMove(false);
-        Noth->StopMovement();
+        Noth->setRooted(true);
+        Noth->stopMovement();
     };
 };
 
@@ -1553,7 +1553,7 @@ void SpellFunc_NothFromBalconyPhaseSwitch(SpellDesc* pThis, MoonScriptCreatureAI
     if (Noth != NULL)
     {
         Noth->SetBehavior(Behavior_Default);
-        Noth->SetCanMove(true);
+        Noth->setRooted(false);
         Noth->ApplyAura(NOTH_THE_PLAGUEBRINGER_BLINK_HEROIC);
         Noth->GetUnit()->SetPosition(2684.620850f, -3502.447266f, 261.314880f, 0.098174f);
 
@@ -1585,7 +1585,7 @@ void SpellFunc_NothBlink(SpellDesc* pThis, MoonScriptCreatureAI* pCreatureAI, Un
         float NewX = Noth->GetUnit()->GetPositionX() + 20.0f * cosf(Angle);
         float NewY = Noth->GetUnit()->GetPositionY() + 20.0f * sinf(Angle);
         Noth->GetUnit()->SetPosition(NewX, NewY, Noth->GetUnit()->GetPositionZ(), Angle);
-        Noth->ClearHateList();
+        Noth->_clearHateList();
         if (pTarget != NULL)
             Noth->GetUnit()->GetAIInterface()->AttackReaction(pTarget, 500);
 
@@ -1681,15 +1681,15 @@ HeiganTheUncleanAI::HeiganTheUncleanAI(Creature* pCreature) : MoonScriptBossAI(p
 
     AddPhaseSpell(2, AddSpell(HEIGAN_THE_UNCLEAN_PLAGUE_CLOUD_DAMAGE, Target_Self, 100, 0, 2));
 
-    AddEmote(Event_OnCombatStart, "You are mine now!", Text_Yell, 8825);
-    AddEmote(Event_OnCombatStart, "I see you...", Text_Yell, 8826);
-    AddEmote(Event_OnCombatStart, "You... are next!", Text_Yell, 8827);
-    AddEmote(Event_OnDied, "Arghhaahhhhh!", Text_Yell, 8828);
-    AddEmote(Event_OnTargetDied, "Close your eyes. Sleep.", Text_Yell, 8829);
-    AddEmote(Event_OnTaunt, "The races of the world will perish... it is only a matter of time.", Text_Yell, 8830);
-    AddEmote(Event_OnTaunt, "I see endless suffering... I see torment... I see rage... I see everything.", Text_Yell, 8831);
-    AddEmote(Event_OnTaunt, "Soon... the world will tremble.", Text_Yell, 8832);
-    AddEmote(Event_OnTaunt, "Hungry worms will feast on your rotting flesh.", Text_Yell, 8834);
+    AddEmote(Event_OnCombatStart, "You are mine now!", CHAT_MSG_MONSTER_YELL, 8825);
+    AddEmote(Event_OnCombatStart, "I see you...", CHAT_MSG_MONSTER_YELL, 8826);
+    AddEmote(Event_OnCombatStart, "You... are next!", CHAT_MSG_MONSTER_YELL, 8827);
+    AddEmote(Event_OnDied, "Arghhaahhhhh!", CHAT_MSG_MONSTER_YELL, 8828);
+    AddEmote(Event_OnTargetDied, "Close your eyes. Sleep.", CHAT_MSG_MONSTER_YELL, 8829);
+    AddEmote(Event_OnTaunt, "The races of the world will perish... it is only a matter of time.", CHAT_MSG_MONSTER_YELL, 8830);
+    AddEmote(Event_OnTaunt, "I see endless suffering... I see torment... I see rage... I see everything.", CHAT_MSG_MONSTER_YELL, 8831);
+    AddEmote(Event_OnTaunt, "Soon... the world will tremble.", CHAT_MSG_MONSTER_YELL, 8832);
+    AddEmote(Event_OnTaunt, "Hungry worms will feast on your rotting flesh.", CHAT_MSG_MONSTER_YELL, 8834);
     mPhaseSwitchTimer = mEruptionTimer = INVALIDATE_TIMER;
     mEruptionPhase = 3;
     mClockWiseEruption = true;
@@ -1748,11 +1748,11 @@ void HeiganTheUncleanAI::OnCombatStart(Unit* pTarget)
 
     if (_unit->GetMapMgr() != NULL && _unit->GetMapMgr()->GetInterface() != NULL)
     {
-        GameObject* Gate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(2790.709961f, -3708.669922f, 276.584991f, 181202);
+        GameObject* Gate = getNearestGameObject(2790.709961f, -3708.669922f, 276.584991f, 181202);
         if (Gate != NULL)
             Gate->SetState(GO_STATE_CLOSED);
 
-        Gate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(2771.718506f, -3739.965820f, 273.616211f, 181203);
+        Gate = getNearestGameObject(2771.718506f, -3739.965820f, 273.616211f, 181203);
         if (Gate != NULL)
             Gate->SetState(GO_STATE_CLOSED);
 
@@ -1792,11 +1792,11 @@ void HeiganTheUncleanAI::OnCombatStop(Unit* pTarget)
     SetTargetToChannel(NULL, 0);
     if (_unit->GetMapMgr() != NULL && _unit->GetMapMgr()->GetInterface() != NULL)
     {
-        GameObject* Gate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(2790.709961f, -3708.669922f, 276.584991f, 181202);
+        GameObject* Gate = getNearestGameObject(2790.709961f, -3708.669922f, 276.584991f, 181202);
         if (Gate != NULL)
             Gate->SetState(GO_STATE_OPEN);
 
-        Gate = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(2771.718506f, -3739.965820f, 273.616211f, 181203);
+        Gate = getNearestGameObject(2771.718506f, -3739.965820f, 273.616211f, 181203);
         if (Gate != NULL)
             Gate->SetState(GO_STATE_OPEN);
     };
@@ -1811,12 +1811,12 @@ void HeiganTheUncleanAI::AIUpdate()
         if (!IsCasting() && IsTimerFinished(mPhaseSwitchTimer))
         {
             ApplyAura(HEIGAN_THE_UNCLEAN_TELEPORT);
-            Emote("The end is uppon you!", Text_Yell, 8833);
+            sendChatMessage(CHAT_MSG_MONSTER_YELL, 8833, "The end is uppon you!");
             _unit->SetPosition(2794.235596f, -3707.067627f, 276.545746f, 2.407245f);
             SetTargetToChannel(_unit, HEIGAN_THE_UNCLEAN_PLAGUE_CLOUD_CHANNEL);
             SetBehavior(Behavior_Spell);
-            SetCanMove(false);
-            StopMovement();
+            setRooted(true);
+            stopMovement();
             SetPhase(2);
             mEruptionPhase = 3;
             ResetTimer(mPhaseSwitchTimer, 45000);
@@ -1833,7 +1833,7 @@ void HeiganTheUncleanAI::AIUpdate()
         {
             SetTargetToChannel(NULL, 0);
             SetBehavior(Behavior_Default);
-            SetCanMove(true);
+            setRooted(false);
             SetPhase(1);
             ResetTimer(mPhaseSwitchTimer, 90000);
             return;
@@ -1847,8 +1847,8 @@ void HeiganTheUncleanAI::AIUpdate()
     if (GetPhase() == 2)
     {
         SetBehavior(Behavior_Spell);
-        SetCanMove(false);
-        StopMovement();
+        setRooted(true);
+        stopMovement();
     };
 };
 
@@ -1941,7 +1941,7 @@ void LoathebAI::OnCombatStop(Unit* pTarget)
     for (std::set< SporeAI* >::iterator Iter = mSpores.begin(); Iter != mSpores.end(); ++Iter)
     {
         (*Iter)->mLoathebAI = NULL;
-        (*Iter)->Despawn();
+        (*Iter)->despawn();
     };
 
     mSpores.clear();
@@ -2054,7 +2054,7 @@ void LoathebAI::Destroy()
     for (std::set< SporeAI* >::iterator Iter = mSpores.begin(); Iter != mSpores.end(); ++Iter)
     {
         (*Iter)->mLoathebAI = NULL;
-        (*Iter)->Despawn();
+        (*Iter)->despawn();
     };
 
     mSpores.clear();
@@ -2066,7 +2066,7 @@ void LoathebAI::Destroy()
 ////// Spore
 SporeAI::SporeAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
 {
-    Despawn(90000);
+    despawn(90000);
 
     mLoathebAI = NULL;
 };
@@ -2155,18 +2155,18 @@ ShadeOfNaxxramasAI::ShadeOfNaxxramasAI(Creature* pCreature) : MoonScriptCreature
 
 void ShadeOfNaxxramasAI::OnDied(Unit* pKiller)
 {
-    MoonScriptCreatureAI* Ghost = SpawnCreature(CN_GHOST_OF_NAXXRAMAS, true);
+    MoonScriptCreatureAI* Ghost = SpawnCreature(CN_GHOST_OF_NAXXRAMAS, _unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), _unit->GetOrientation(), true);
     if (Ghost != NULL)
     {
         Ghost->GetUnit()->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_2);
-        Ghost->SetDespawnWhenInactive(true);
+        Ghost->_setDespawnWhenInactive(true);
         Ghost->AggroNearestPlayer(200);
     };
 
     for (std::set< PortalOfShadowsAI* >::iterator Iter = mPortals.begin(); Iter != mPortals.end(); ++Iter)
     {
         (*Iter)->mShadeAI = NULL;
-        (*Iter)->Despawn();
+        (*Iter)->despawn();
     };
 
     mPortals.clear();
@@ -2177,7 +2177,7 @@ void ShadeOfNaxxramasAI::Destroy()
     for (std::set< PortalOfShadowsAI* >::iterator Iter = mPortals.begin(); Iter != mPortals.end(); ++Iter)
     {
         (*Iter)->mShadeAI = NULL;
-        (*Iter)->Despawn();
+        (*Iter)->despawn();
     };
 
     mPortals.clear();
@@ -2199,7 +2199,7 @@ PortalOfShadowsAI::PortalOfShadowsAI(Creature* pCreature) : MoonScriptCreatureAI
     if (_unit->GetSummonedByGUID() != 0 && _unit->GetMapMgr() != NULL && _unit->GetMapMgr()->GetInterface() != NULL)
     {
         //mShadeAI = static_cast< ShadeOfNaxxramasAI* >(GetNearestCreature(CN_SHADE_OF_NAXXRAMAS));
-        Unit* UnitPtr = ForceCreatureFind(CN_SHADE_OF_NAXXRAMAS);
+        Unit* UnitPtr = getNearestCreature(CN_SHADE_OF_NAXXRAMAS);
         if (UnitPtr != NULL)
         {
             mShadeAI = static_cast< ShadeOfNaxxramasAI* >(static_cast<Creature*>(UnitPtr)->GetScript());
@@ -2212,15 +2212,15 @@ PortalOfShadowsAI::PortalOfShadowsAI(Creature* pCreature) : MoonScriptCreatureAI
 void PortalOfShadowsAI::OnCombatStart(Unit* pTarget)
 {
     SetBehavior(Behavior_Spell);
-    SetCanMove(false);
-    StopMovement();
+    setRooted(true);
+    stopMovement();
 };
 
 void PortalOfShadowsAI::OnCombatStop(Unit* pTarget)
 {
     CancelAllSpells();
     CancelAllTimers();
-    SetCanMove(true);
+    setRooted(false);
     SetBehavior(Behavior_Default);
 };
 
@@ -2230,11 +2230,11 @@ void PortalOfShadowsAI::AIUpdate()
     {
         if (IsTimerFinished(mSpawnTimer))
         {
-            MoonScriptCreatureAI* Ghost = SpawnCreature(CN_GHOST_OF_NAXXRAMAS, true);
+            MoonScriptCreatureAI* Ghost = SpawnCreature(CN_GHOST_OF_NAXXRAMAS, _unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), _unit->GetOrientation(), true);
             if (Ghost != NULL)
             {
                 Ghost->GetUnit()->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_2);
-                Ghost->SetDespawnWhenInactive(true);
+                Ghost->_setDespawnWhenInactive(true);
                 Ghost->AggroNearestPlayer(200);
             };
 
@@ -2244,14 +2244,14 @@ void PortalOfShadowsAI::AIUpdate()
     else
     {
         RemoveAIUpdateEvent();
-        Despawn();
+        despawn();
         return;
     };
 
     ParentClass::AIUpdate();
     SetBehavior(Behavior_Spell);
-    SetCanMove(false);
-    StopMovement();
+    setRooted(true);
+    stopMovement();
 };
 
 void PortalOfShadowsAI::Destroy()
@@ -2332,11 +2332,11 @@ void DeathKnightCavalierAI::OnCombatStop(Unit* pTarget)
     ParentClass::OnCombatStop(pTarget);
     if (mChargerAI != NULL)
     {
-        if (IsAlive() && _unit->GetMount() == 0)
+        if (isAlive() && _unit->GetMount() == 0)
             _unit->setUInt32Value(UNIT_FIELD_MOUNTDISPLAYID , 25278);
 
         mChargerAI->mDeathKnightAI = NULL;
-        mChargerAI->Despawn();
+        mChargerAI->despawn();
         mChargerAI = NULL;
     };
 
@@ -2362,7 +2362,7 @@ void DeathKnightCavalierAI::Destroy()
     if (mChargerAI != NULL)
     {
         mChargerAI->mDeathKnightAI = NULL;
-        mChargerAI->Despawn();
+        mChargerAI->despawn();
         mChargerAI = NULL;
     };
 
@@ -2392,13 +2392,13 @@ void DeathchargerSteedAI::OnCombatStop(Unit* pTarget)
     ParentClass::OnCombatStop(pTarget);
     if (mDeathKnightAI != NULL)
     {
-        if (mDeathKnightAI->IsInCombat())
+        if (mDeathKnightAI->_isInCombat())
             AggroNearestUnit(200);
         else
         {
             mDeathKnightAI->mChargerAI = NULL;
             mDeathKnightAI = NULL;
-            Despawn(1);
+            despawn(1);
         };
     };
 };
@@ -2450,7 +2450,7 @@ void DarkTouchedWarriorAI::AIUpdate()
 {
     if (!IsCasting() && IsTimerFinished(mResetHateTimer))
     {
-        ClearHateList();
+        _clearHateList();
         mResetHateTimer = AddTimer(8000 + RandomUInt(7) * 1000);
     };
 
@@ -2537,7 +2537,7 @@ void PatchworkGolemAI::OnCombatStart(Unit* pTarget)
 void PatchworkGolemAI::OnCombatStop(Unit* pTarget)
 {
     ParentClass::OnCombatStop(pTarget);
-    if (IsAlive())
+    if (isAlive())
     {
         if (IsHeroic())
             ApplyAura(PATCHWORK_GOLEM_DISEASE_CLOUD_HEROIC);
@@ -2634,15 +2634,15 @@ LightningTotemAI::LightningTotemAI(Creature* pCreature) : MoonScriptCreatureAI(p
         AddSpell(LIGHTNING_TOTEM_SHOCK_NORMAL, Target_Self, 100, 0.5, 2);
 
     _unit->m_noRespawn = true;
-    Despawn(60000);
+    despawn(60000);
 };
 
 void LightningTotemAI::OnCombatStart(Unit* pTarget)
 {
     ParentClass::OnCombatStart(pTarget);
     SetBehavior(Behavior_Spell);
-    SetCanMove(false);
-    StopMovement();
+    setRooted(true);
+    stopMovement();
 };
 
 void LightningTotemAI::AIUpdate()
@@ -2651,8 +2651,8 @@ void LightningTotemAI::AIUpdate()
 
     // Meh, reset it in case something went wrong
     SetBehavior(Behavior_Spell);
-    SetCanMove(false);
-    StopMovement();
+    setRooted(true);
+    stopMovement();
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -2726,16 +2726,16 @@ PatchwerkAI::PatchwerkAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
     AddSpellFunc(&SpellFunc_PatchwerkHatefulStrike, Target_Self, 50, 0, 3);
     SetEnrageInfo(AddSpell(PATCHWERK_BERSERK, Target_Self, 0, 0, 0), 360000);
 
-    AddEmote(Event_OnCombatStart, "Patchwerk want to play.", Text_Yell, 8909);
-    AddEmote(Event_OnCombatStart, "Kel'Thuzad make Patchwerk his avatar of war!", Text_Yell, 8910);
-    AddEmote(Event_OnTargetDied, "No more play?", Text_Yell, 8911);
-    AddEmote(Event_OnDied, "What happened to... Patch...", Text_Yell, 8912);
+    AddEmote(Event_OnCombatStart, "Patchwerk want to play.", CHAT_MSG_MONSTER_YELL, 8909);
+    AddEmote(Event_OnCombatStart, "Kel'Thuzad make Patchwerk his avatar of war!", CHAT_MSG_MONSTER_YELL, 8910);
+    AddEmote(Event_OnTargetDied, "No more play?", CHAT_MSG_MONSTER_YELL, 8911);
+    AddEmote(Event_OnDied, "What happened to... Patch...", CHAT_MSG_MONSTER_YELL, 8912);
     mEnraged = false;
 };
 
 void PatchwerkAI::AIUpdate()
 {
-    if (mEnraged == false && GetHealthPercent() <= 5)
+    if (mEnraged == false && _getHealthPercent() <= 5)
     {
         ApplyAura(PATCHWERK_FRENZY);
         GetUnit()->SendChatMessage(CHAT_MSG_RAID_BOSS_EMOTE, LANG_UNIVERSAL, "Patchwerk goes into a frenzy!");

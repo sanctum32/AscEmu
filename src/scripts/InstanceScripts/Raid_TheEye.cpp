@@ -389,7 +389,7 @@ class AstromancerAI : public MoonScriptCreatureAI
                 if (mArcaneBurstTimer == -1 || IsTimerFinished(mArcaneBurstTimer))
                 {
                     Unit* unit = GetBestUnitTarget(TargetFilter_Closest);
-                    if (unit && GetRangeToUnit(unit) <= 10.0f)
+                    if (unit && getRangeToObject(unit) <= 10.0f)
                     {
                         CastSpellNowNoScheduling(mArcaneBurst);
                         if (mArcaneBurstTimer == -1)
@@ -1643,19 +1643,19 @@ class VoidReaverAI : public MoonScriptBossAI
             SpellDesc* pPounding = AddSpell(VOID_REAVER_POUNDING, Target_Self, 100, 0, 12);
             if (pPounding != NULL)
             {
-                pPounding->AddEmote("Alternative measure commencing...", Text_Yell, 11218);
-                pPounding->AddEmote("Calculating force parameters...", Text_Yell, 11219);
+                pPounding->AddEmote("Alternative measure commencing...", CHAT_MSG_MONSTER_YELL, 11218);
+                pPounding->AddEmote("Calculating force parameters...", CHAT_MSG_MONSTER_YELL, 11219);
             }
 
             mArcaneOrb = AddSpell(VOID_REAVER_ARCANE_ORB_TRIGGER, Target_RandomPlayerDestination, 100, 0, 3);
             AddSpell(VOID_REAVER_KNOCK_AWAY, Target_Current, 100, 0, 20, 0, 12);    // 12 is experimental value
             SetEnrageInfo(AddSpell(VOID_REAVER_ENRAGE, Target_Self, 0, 0, 0), 600000);
 
-            AddEmote(Event_OnCombatStart, "Alert, you are marked for extermination!", Text_Yell, 11213);
-            AddEmote(Event_OnTargetDied, "Extermination, successful.", Text_Yell, 11215);
-            AddEmote(Event_OnTargetDied, "Imbecile life form, no longer functional.", Text_Yell, 11216);
-            AddEmote(Event_OnTargetDied, "Threat neutralized.", Text_Yell, 11217);
-            AddEmote(Event_OnDied, "Systems... shutting... down...", Text_Yell, 11214);
+            AddEmote(Event_OnCombatStart, "Alert, you are marked for extermination!", CHAT_MSG_MONSTER_YELL, 11213);
+            AddEmote(Event_OnTargetDied, "Extermination, successful.", CHAT_MSG_MONSTER_YELL, 11215);
+            AddEmote(Event_OnTargetDied, "Imbecile life form, no longer functional.", CHAT_MSG_MONSTER_YELL, 11216);
+            AddEmote(Event_OnTargetDied, "Threat neutralized.", CHAT_MSG_MONSTER_YELL, 11217);
+            AddEmote(Event_OnDied, "Systems... shutting... down...", CHAT_MSG_MONSTER_YELL, 11214);
 
             mArcaneOrbTimer = INVALIDATE_TIMER;
         }
@@ -1726,8 +1726,8 @@ class HighAstromancerSolarianAI : public MoonScriptBossAI
             AddPhaseSpell(1, AddSpell(SOLARIAN_WRATH_OF_THE_ASTROMANCER, Target_RandomPlayerNotCurrent, 20, 0, 6, 0, 50000));
             AddPhaseSpell(1, AddSpell(SOLARIAN_BLINDING_LIGHT, Target_Self, 20, 0, 20, 0, 50));
             mDisappear = AddSpellFunc(&SpellFunc_Solarian_Disappear, Target_Self, 0, 22, 0);
-            mDisappear->AddEmote("You are hopelessly outmatched!", Text_Yell, 11139);
-            mDisappear->AddEmote("I will crush your delusions of grandeur!", Text_Yell, 11140);
+            mDisappear->AddEmote("You are hopelessly outmatched!", CHAT_MSG_MONSTER_YELL, 11139);
+            mDisappear->AddEmote("I will crush your delusions of grandeur!", CHAT_MSG_MONSTER_YELL, 11140);
 
             //Phase 2 spells
             mReappear = AddSpellFunc(&SpellFunc_Solarian_Reappear, Target_Self, 0, 0, 0);
@@ -1736,15 +1736,15 @@ class HighAstromancerSolarianAI : public MoonScriptBossAI
             AddPhaseSpell(3, AddSpell(SOLARIAN_VOID_BOLT, Target_Current, 100, 3, 10, 0, 100));
             AddPhaseSpell(3, AddSpell(SOLARIAN_PSYCHIC_SCREAM, Target_Self, 10, 0, 0));
             mVoidForm = AddSpell(SOLARIAN_SOLARIANS_TRANSFORM, Target_Self, 0, 0, 0);
-            mVoidForm->AddEmote("Enough of this! Now I call upon the fury of the cosmos itself.", Text_Yell);
-            mVoidForm->AddEmote("I become ONE... with the VOID!", Text_Yell);
+            mVoidForm->AddEmote("Enough of this! Now I call upon the fury of the cosmos itself.", CHAT_MSG_MONSTER_YELL);
+            mVoidForm->AddEmote("I become ONE... with the VOID!", CHAT_MSG_MONSTER_YELL);
 
             //Emotes
-            AddEmote(Event_OnCombatStart, "Tal anu'men no sin'dorei!", Text_Yell, 11134);
-            AddEmote(Event_OnDied, "The warmth of the sun... awaits.", Text_Yell, 11135);
-            AddEmote(Event_OnTargetDied, "Your soul belongs to the Abyss!", Text_Yell, 11136);
-            AddEmote(Event_OnTargetDied, "By the blood of the Highborne!", Text_Yell, 11137);
-            AddEmote(Event_OnTargetDied, "For the Sunwell!", Text_Yell, 11138);
+            AddEmote(Event_OnCombatStart, "Tal anu'men no sin'dorei!", CHAT_MSG_MONSTER_YELL, 11134);
+            AddEmote(Event_OnDied, "The warmth of the sun... awaits.", CHAT_MSG_MONSTER_YELL, 11135);
+            AddEmote(Event_OnTargetDied, "Your soul belongs to the Abyss!", CHAT_MSG_MONSTER_YELL, 11136);
+            AddEmote(Event_OnTargetDied, "By the blood of the Highborne!", CHAT_MSG_MONSTER_YELL, 11137);
+            AddEmote(Event_OnTargetDied, "For the Sunwell!", CHAT_MSG_MONSTER_YELL, 11138);
         }
 
         void OnCombatStart(Unit* pTarget)
@@ -1757,7 +1757,7 @@ class HighAstromancerSolarianAI : public MoonScriptBossAI
         {
             if (GetPhase() == 1)
             {
-                if (GetHealthPercent() <= 20 && !IsCasting())
+                if (_getHealthPercent() <= 20 && !IsCasting())
                 {
                     SetPhase(3, mVoidForm);
                     CancelAllTimers();
@@ -1826,13 +1826,13 @@ void SpellFunc_Solarian_Disappear(SpellDesc* pThis, MoonScriptCreatureAI* pCreat
         //Spawn spot lights, and despawn them after 26sec X(400,460) Y(-340,-400)
         Solarian->mSpawnPositions[0][0] = 400 + RandomFloat(60);
         Solarian->mSpawnPositions[0][1] = -400 + RandomFloat(60);
-        Solarian->SpawnCreature(CN_SOLARIUM_SPOT_LIGHT, Solarian->mSpawnPositions[0][0], Solarian->mSpawnPositions[0][1], 17)->Despawn(26000);
+        Solarian->SpawnCreature(CN_SOLARIUM_SPOT_LIGHT, Solarian->mSpawnPositions[0][0], Solarian->mSpawnPositions[0][1], 17)->despawn(26000);
         Solarian->mSpawnPositions[1][0] = 400 + RandomFloat(60);
         Solarian->mSpawnPositions[1][1] = -400 + RandomFloat(60);
-        Solarian->SpawnCreature(CN_SOLARIUM_SPOT_LIGHT, Solarian->mSpawnPositions[1][0], Solarian->mSpawnPositions[1][1], 17)->Despawn(26000);
+        Solarian->SpawnCreature(CN_SOLARIUM_SPOT_LIGHT, Solarian->mSpawnPositions[1][0], Solarian->mSpawnPositions[1][1], 17)->despawn(26000);
         Solarian->mSpawnPositions[2][0] = 400 + RandomFloat(60);
         Solarian->mSpawnPositions[2][1] = -400 + RandomFloat(60);
-        Solarian->SpawnCreature(CN_SOLARIUM_SPOT_LIGHT, Solarian->mSpawnPositions[2][0], Solarian->mSpawnPositions[2][1], 17)->Despawn(26000);
+        Solarian->SpawnCreature(CN_SOLARIUM_SPOT_LIGHT, Solarian->mSpawnPositions[2][0], Solarian->mSpawnPositions[2][1], 17)->despawn(26000);
     }
 }
 
@@ -1855,7 +1855,7 @@ class SolariumAgentAI : public MoonScriptCreatureAI
         MOONSCRIPT_FACTORY_FUNCTION(SolariumAgentAI, MoonScriptCreatureAI);
         SolariumAgentAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
-            SetDespawnWhenInactive(true);    //despawn creature if it gets out of combat or dead
+            _setDespawnWhenInactive(true);    //despawn creature if it gets out of combat or dead
         }
 
         void OnLoad()
@@ -1871,7 +1871,7 @@ class SolariumPriestAI : public MoonScriptCreatureAI
         {
             AddSpell(SOLARIUMPRIEST_GREATER_HEAL, Target_WoundedFriendly, 20, 2, 0, 0, 40);
             AddSpell(SOLARIUMPRIEST_HOLY_SMITE, Target_Current, 80, 2.5f, 0, 0, 40);
-            SetDespawnWhenInactive(true);    //despawn creature if it gets out of combat or dead
+            _setDespawnWhenInactive(true);    //despawn creature if it gets out of combat or dead
         }
 
         void OnLoad()
@@ -1883,7 +1883,10 @@ class SolariumPriestAI : public MoonScriptCreatureAI
 class SolariumSpotLight : public MoonScriptCreatureAI
 {
         MOONSCRIPT_FACTORY_FUNCTION(SolariumSpotLight, MoonScriptCreatureAI);
-        SolariumSpotLight(Creature* pCreature) : MoonScriptCreatureAI(pCreature) { SetCanEnterCombat(false); }
+        SolariumSpotLight(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
+        {
+            setCanEnterCombat(false);
+        }
 };
 
 // Al'ar AI
@@ -2575,9 +2578,9 @@ class DarkenerAI : public MoonScriptCreatureAI
         {
             AddSpell(DARKENER_PSYCHIC_BLOW, Target_Current, 10, 0, 20);
             AddSpell(DARKENER_SILENCE, Target_Current, 10, 0, 15);
-            AddEmote(Event_OnCombatStart, "Prepare yourselves!", Text_Yell, 11203);
-            AddEmote(Event_OnDied, "Forgive me, my prince! I have... failed.", Text_Yell, 11204);
-            SetCanEnterCombat(false);
+            AddEmote(Event_OnCombatStart, "Prepare yourselves!", CHAT_MSG_MONSTER_YELL, 11203);
+            AddEmote(Event_OnDied, "Forgive me, my prince! I have... failed.", CHAT_MSG_MONSTER_YELL, 11204);
+            setCanEnterCombat(false);
             mCurrentTarget = NULL;
             mGazeSwitchTimer = 0;
         }
@@ -2585,7 +2588,7 @@ class DarkenerAI : public MoonScriptCreatureAI
         void OnCombatStart(Unit* mTarget)
         {
             ParentClass::OnCombatStart(mTarget);
-            SetCanEnterCombat(true);
+            setCanEnterCombat(true);
             SwitchTarget();
 
             mGazeSwitchTimer = AddTimer((RandomUInt(4) + 8) * 1000);
@@ -2596,9 +2599,9 @@ class DarkenerAI : public MoonScriptCreatureAI
             ParentClass::OnCombatStop(mTarget);
             mCurrentTarget = NULL;
 
-            if (IsAlive())
+            if (isAlive())
             {
-                SetCanEnterCombat(false);
+                setCanEnterCombat(false);
             }
         }
 
@@ -2635,7 +2638,7 @@ class DarkenerAI : public MoonScriptCreatureAI
                 return true;
             }
 
-            WipeHateList();
+            _wipeHateList();
             return false;
         }
 
@@ -2654,24 +2657,24 @@ class SanguinarAI : public MoonScriptCreatureAI
         SanguinarAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
             AddSpell(SANGUINAR_BELLOWING, Target_Self, 100, 0, 30);
-            AddEmote(Event_OnCombatStart, "Blood for blood!", Text_Yell, 11152);
-            AddEmote(Event_OnDied, "NO! I will... not.", Text_Yell, 11153);
-            SetCanEnterCombat(false);
+            AddEmote(Event_OnCombatStart, "Blood for blood!", CHAT_MSG_MONSTER_YELL, 11152);
+            AddEmote(Event_OnDied, "NO! I will... not.", CHAT_MSG_MONSTER_YELL, 11153);
+            setCanEnterCombat(false);
         }
 
         void OnCombatStart(Unit* mTarget)
         {
             ParentClass::OnCombatStart(mTarget);
-            SetCanEnterCombat(true);
+            setCanEnterCombat(true);
         }
 
         void OnCombatStop(Unit* mTarget)
         {
             ParentClass::OnCombatStop(mTarget);
 
-            if (IsAlive())
+            if (isAlive())
             {
-                SetCanEnterCombat(false);
+                setCanEnterCombat(false);
             }
         }
 };
@@ -2691,20 +2694,20 @@ class CapernianAI : public MoonScriptCreatureAI
             AddSpell(CAPERNIAN_CONFLAGRATION, Target_RandomPlayer, 7, 0, 10, 0, 30, true);
             AddSpell(CAPERNIAN_FIREBALL, Target_Current, 73, 2, 0);
             mArcaneBurst = AddSpell(CAPERNIAN_ARCANE_BURST, Target_Self, 0, 1, 15);
-            AddEmote(Event_OnCombatStart, "The sin'dorei reign supreme!", Text_Yell, 11117);
-            AddEmote(Event_OnDied, "This is not over!", Text_Yell, 11118);
-            SetCanEnterCombat(false);
+            AddEmote(Event_OnCombatStart, "The sin'dorei reign supreme!", CHAT_MSG_MONSTER_YELL, 11117);
+            AddEmote(Event_OnDied, "This is not over!", CHAT_MSG_MONSTER_YELL, 11118);
+            setCanEnterCombat(false);
         }
 
         void OnCombatStart(Unit* mTarget)
         {
             ParentClass::OnCombatStart(mTarget);
-            SetCanEnterCombat(true);
+            setCanEnterCombat(true);
 
-            if (GetRangeToUnit(mTarget) <= 30.0f)
+            if (getRangeToObject(mTarget) <= 30.0f)
             {
                 SetBehavior(Behavior_Spell);
-                SetCanMove(false);
+                setRooted(true);
             }
         }
 
@@ -2712,30 +2715,30 @@ class CapernianAI : public MoonScriptCreatureAI
         {
             ParentClass::OnCombatStop(mTarget);
 
-            if (IsAlive())
+            if (isAlive())
             {
-                SetCanEnterCombat(false);
+                setCanEnterCombat(false);
             }
         }
 
         void AIUpdate()
         {
             SetBehavior(Behavior_Default);
-            SetCanMove(true);
+            setRooted(false);
             Unit* pClosestTarget = GetBestPlayerTarget(TargetFilter_Closest);
-            if (pClosestTarget != NULL && GetRangeToUnit(pClosestTarget) <= 6.0f)
+            if (pClosestTarget != NULL && getRangeToObject(pClosestTarget) <= 6.0f)
             {
                 CastSpellNowNoScheduling(mArcaneBurst);
             }
 
             Unit* pTarget = _unit->GetAIInterface()->getNextTarget();
-            if (pTarget != NULL && GetRangeToUnit(pTarget) <= 30.0f)
+            if (pTarget != NULL && getRangeToObject(pTarget) <= 30.0f)
             {
                 ParentClass::AIUpdate();
                 if (GetBehavior() != Behavior_Spell)
                 {
                     SetBehavior(Behavior_Spell);
-                    SetCanMove(false);
+                    setRooted(true);
                 }
             }
         }
@@ -2756,24 +2759,24 @@ class TelonicusAI : public MoonScriptCreatureAI
         {
             AddSpell(TELONICUS_BOMB, Target_RandomPlayerDestination, 10, 1.5f, 15, 0, 30);
             AddSpell(TELONICUS_REMOTE_TOY, Target_RandomPlayer, 10, 0, 15, 0, 30);
-            AddEmote(Event_OnCombatStart, "Anar'alah belore!", Text_Yell, 11157);
-            AddEmote(Event_OnDied, "More perlis... await.", Text_Yell, 11158);            // not sure
-            SetCanEnterCombat(false);
+            AddEmote(Event_OnCombatStart, "Anar'alah belore!", CHAT_MSG_MONSTER_YELL, 11157);
+            AddEmote(Event_OnDied, "More perlis... await.", CHAT_MSG_MONSTER_YELL, 11158);            // not sure
+            setCanEnterCombat(false);
         }
 
         void OnCombatStart(Unit* mTarget)
         {
             ParentClass::OnCombatStart(mTarget);
-            SetCanEnterCombat(true);
+            setCanEnterCombat(true);
         }
 
         void OnCombatStop(Unit* mTarget)
         {
             ParentClass::OnCombatStop(mTarget);
 
-            if (IsAlive())
+            if (isAlive())
             {
-                SetCanEnterCombat(false);
+                setCanEnterCombat(false);
             }
         }
 };
@@ -2791,9 +2794,9 @@ class FlameStrikeAI : public MoonScriptCreatureAI
         {
             ApplyAura(FLAME_STRIKE_TRIGGER_FLAME_STRIKE_EFFECT);
             RegisterAIUpdateEvent(5000);
-            SetCanEnterCombat(false);
-            SetAllowMelee(false);
-            SetCanMove(false);
+            setCanEnterCombat(false);
+            _setMeleeDisabled(false);
+            setRooted(true);
             _unit->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
         }
 
@@ -2801,7 +2804,7 @@ class FlameStrikeAI : public MoonScriptCreatureAI
         {
             ParentClass::OnDied(mKiller);
             RemoveAura(FLAME_STRIKE_TRIGGER_FLAME_STRIKE_EFFECT);
-            Despawn(500);
+            despawn(500);
         }
 
         void AIUpdate()
@@ -2809,7 +2812,7 @@ class FlameStrikeAI : public MoonScriptCreatureAI
             _unit->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_2);
             ApplyAura(FLAME_STRIKE_TRIGGER_FLAME_STRIKE);
             RemoveAIUpdateEvent();
-            Despawn(8500);
+            despawn(8500);
         }
 };
 
@@ -2849,7 +2852,7 @@ class PhoenixAI : public MoonScriptCreatureAI
             }
             else
             {
-                Despawn(1, 0);
+                despawn(1, 0);
             }
         }
 
@@ -2857,8 +2860,8 @@ class PhoenixAI : public MoonScriptCreatureAI
         {
             ParentClass::OnDied(mKiller);
             ApplyAura(PHOENIX_REBIRTH);
-            SpawnCreature(21364);
-            Despawn(500);
+            SpawnCreature(21364, _unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), _unit->GetOrientation(), false);
+            despawn(500);
         }
 
         void AIUpdate()
@@ -2873,8 +2876,8 @@ class PhoenixAI : public MoonScriptCreatureAI
             }
             else if (CurrentHP <= PercMaxHP)
             {
-                SpawnCreature(21364);
-                Despawn(500);
+                SpawnCreature(21364, _unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), _unit->GetOrientation(), false);
+                despawn(500);
                 return;
             }
 
@@ -2894,21 +2897,21 @@ class PhoenixEggAI : public MoonScriptCreatureAI
         PhoenixEggAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
             RegisterAIUpdateEvent(15000);
-            SetCanEnterCombat(false);
-            SetAllowMelee(false);
-            SetCanMove(false);
+            setCanEnterCombat(false);
+            _setMeleeDisabled(false);
+            setRooted(true);
         }
 
         void OnDied(Unit* mKiller)
         {
             ParentClass::OnDied(mKiller);
-            Despawn(500);
+            despawn(500);
         }
 
         void AIUpdate()
         {
-            SpawnCreature(CN_PHOENIX);
-            Despawn(0);
+            SpawnCreature(CN_PHOENIX, _unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), _unit->GetOrientation(), false);
+            despawn(0);
         }
 };
 
@@ -2946,7 +2949,7 @@ class WeaponsAI : public MoonScriptCreatureAI
             }
             else
             {
-                Despawn(1);
+                despawn(1);
             }
         }
 };
@@ -3046,13 +3049,13 @@ class KaelThasAI : public MoonScriptBossAI
                 AddWaypoint(CreateWaypoint(1, 0, Waypoints[i]));
             }
 
-            SetCanEnterCombat(true);
+            setCanEnterCombat(true);
             SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_NONE);
-            SetCanMove(true);
+            setRooted(false);
 
             // Other spells
             mSummonWeapons = AddSpell(KAELTHAS_SUMMON_WEAPONS, Target_Self, 0, 3, 0);
-            mSummonWeapons->AddEmote("As you see, I have many weapons in my arsenal...", Text_Yell, 11261);
+            mSummonWeapons->AddEmote("As you see, I have many weapons in my arsenal...", CHAT_MSG_MONSTER_YELL, 11261);
 
             // Common spells
             mArcaneDisruption = AddSpell(KAELTHAS_ARCANE_DISRUPTION, Target_Self, 0, 0, 0);
@@ -3064,22 +3067,22 @@ class KaelThasAI : public MoonScriptBossAI
             // 1st phase
             mPyroblast = AddSpell(KAELTHAS_PYROBLAST, Target_Current, 0, 4, 0);
             SpellDesc* mMindControl = AddPhaseSpell(7, AddSpell(KAELTHAS_MIND_CONTROL, Target_Self, 100, 0, 30));
-            mMindControl->AddEmote("Obey me.", Text_Yell, 11268);
-            mMindControl->AddEmote("Bow to my will.", Text_Yell, 11269);
+            mMindControl->AddEmote("Obey me.", CHAT_MSG_MONSTER_YELL, 11268);
+            mMindControl->AddEmote("Bow to my will.", CHAT_MSG_MONSTER_YELL, 11269);
             mFlameStrike = AddSpell(KAELTHAS_FLAME_STRIKE_SUMMON, Target_RandomPlayerNotCurrent, 0, 0, 0);
             mFlameStrikeFunc = AddSpellFunc(&SpellFunc_KaelThasFlameStrike, Target_RandomPlayerNotCurrent, 0, 0, 0);
             mPhoenix = AddSpell(KAELTHAS_PHOENIX, Target_Self, 0, 0, 0);
-            mPhoenix->AddEmote("Anara'nel belore!", Text_Yell, 11267);
-            mPhoenix->AddEmote("By the power of the sun!", Text_Yell, 11266);
+            mPhoenix->AddEmote("Anara'nel belore!", CHAT_MSG_MONSTER_YELL, 11267);
+            mPhoenix->AddEmote("By the power of the sun!", CHAT_MSG_MONSTER_YELL, 11266);
 
             // After powering up + Nether Vapor + Additional spells
             mNetherBeam = AddPhaseSpell(8, AddSpell(KAELTHAS_NETHER_BEAM, Target_RandomPlayer, 0, 0, 0));
 
-            AddEmote(Event_OnCombatStart, "Energy. Power. My people are addicted to it. Their dependence made manifest after the Sunwell was destroyed. Welcome to the future...a pity you're too late to stop it. No one can stop me now. Selama ashal'anore.", Text_Yell, 11256);
-            AddEmote(Event_OnTargetDied, "You will not prevail.", Text_Yell, 11270);
-            AddEmote(Event_OnTargetDied, "You gambled...and lost.", Text_Yell, 11271);
-            AddEmote(Event_OnTargetDied, "This was child's play.", Text_Yell, 11272);
-            AddEmote(Event_OnDied, "For...Quel...thalas!", Text_Yell, 11274);
+            AddEmote(Event_OnCombatStart, "Energy. Power. My people are addicted to it. Their dependence made manifest after the Sunwell was destroyed. Welcome to the future...a pity you're too late to stop it. No one can stop me now. Selama ashal'anore.", CHAT_MSG_MONSTER_YELL, 11256);
+            AddEmote(Event_OnTargetDied, "You will not prevail.", CHAT_MSG_MONSTER_YELL, 11270);
+            AddEmote(Event_OnTargetDied, "You gambled...and lost.", CHAT_MSG_MONSTER_YELL, 11271);
+            AddEmote(Event_OnTargetDied, "This was child's play.", CHAT_MSG_MONSTER_YELL, 11272);
+            AddEmote(Event_OnDied, "For...Quel...thalas!", CHAT_MSG_MONSTER_YELL, 11274);
             mAIUpdateFrequency = 30000;
 
             mArcaneDisruptionTimer = 0;
@@ -3091,7 +3094,7 @@ class KaelThasAI : public MoonScriptBossAI
 
             for (uint8 i = 0; i < 4; ++i)
             {
-                Creature* pCreature = static_cast<Creature*>(ForceCreatureFind(Advisors[i].addition, Advisors[i].x, Advisors[i].y, Advisors[i].z));
+                Creature* pCreature = getNearestCreature(Advisors[i].x, Advisors[i].y, Advisors[i].z, Advisors[i].addition);
                 if (pCreature != NULL)
                 {
                     pCreature->Despawn(0, 0);
@@ -3108,11 +3111,11 @@ class KaelThasAI : public MoonScriptBossAI
             SetAIUpdateFreq(24000);
             ParentClass::OnCombatStart(mTarget);
             SetBehavior(Behavior_Spell);
-            SetCanMove(false);
+            setRooted(true);
 
             for (uint8 i = 0; i < 2; ++i)
             {
-                GameObject* pGameobject = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(Gates[i].x, Gates[i].y, Gates[i].z, Gates[i].addition);
+                GameObject* pGameobject = getNearestGameObject(Gates[i].x, Gates[i].y, Gates[i].z, Gates[i].addition);
                 if (pGameobject != NULL && pGameobject->GetState() == 0)
                 {
                     pGameobject->SetState(GO_STATE_CLOSED);
@@ -3126,15 +3129,15 @@ class KaelThasAI : public MoonScriptBossAI
 
         void OnCombatStop(Unit* mTarget)
         {
-            SetCanMove(true);
+            setRooted(false);
             ParentClass::OnCombatStop(mTarget);
             _unit->setUInt64Value(UNIT_FIELD_FLAGS, 0);
 
-            if (IsAlive())
+            if (isAlive())
             {
                 for (uint8 i = 0; i < 4; ++i)
                 {
-                    Creature* pCreature = static_cast<Creature*>(ForceCreatureFind(Advisors[i].addition, Advisors[i].x, Advisors[i].y, Advisors[i].z));
+                    Creature* pCreature = getNearestCreature(Advisors[i].x, Advisors[i].y, Advisors[i].z, Advisors[i].addition);
                     if (pCreature != NULL)
                     {
                         pCreature->Despawn(0, 0);
@@ -3146,7 +3149,7 @@ class KaelThasAI : public MoonScriptBossAI
 
             for (uint8 i = 0; i < 2; ++i)
             {
-                GameObject* pGameobject = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(Gates[i].x, Gates[i].y, Gates[i].z, Gates[i].addition);
+                GameObject* pGameobject = getNearestGameObject(Gates[i].x, Gates[i].y, Gates[i].z, Gates[i].addition);
                 if (pGameobject != NULL && pGameobject->GetState() == 1)
                 {
                     pGameobject->SetState(GO_STATE_OPEN);
@@ -3159,19 +3162,19 @@ class KaelThasAI : public MoonScriptBossAI
             switch (GetPhase())
             {
                 case 1:
-                    Emote("Let us see how your nerves hold up against the Darkener, Thaladred.", Text_Yell, 11259);
+                    sendChatMessage(CHAT_MSG_MONSTER_YELL, 11259, "Let us see how your nerves hold up against the Darkener, Thaladred.");
                     SetAIUpdateFreq(5000);
                     break;
                 case 2:
-                    Emote("You have persevered against some of my best advisors. But none can withstand the might of the Bloodhammer. Behold, Lord Sanguinar.", Text_Yell, 11260);
+                    sendChatMessage(CHAT_MSG_MONSTER_YELL, 11260, "You have persevered against some of my best advisors. But none can withstand the might of the Bloodhammer. Behold, Lord Sanguinar.");
                     SetAIUpdateFreq(12000);
                     break;
                 case 3:
-                    Emote("Capernian will see to it that your stay here is a short one.", Text_Yell, 11257);
+                    sendChatMessage(CHAT_MSG_MONSTER_YELL, 11257, "Capernian will see to it that your stay here is a short one.");
                     SetAIUpdateFreq(5000);
                     break;
                 case 4:
-                    Emote("Well done. You have proven worthy to test your skills against my Master Engineer, Telonicus.", Text_Yell, 11258);
+                    sendChatMessage(CHAT_MSG_MONSTER_YELL, 11258, "Well done. You have proven worthy to test your skills against my Master Engineer, Telonicus.");
                     SetAIUpdateFreq(8000);
                     break;
             }
@@ -3217,7 +3220,7 @@ class KaelThasAI : public MoonScriptBossAI
             if (GetPhase() < 5)
             {
                 uint32 i = GetPhase() > 0 ? GetPhase() - 1 : 0;
-                Creature* pCreature = static_cast<Creature*>(ForceCreatureFind(Advisors[i].addition, Advisors[i].x, Advisors[i].y, Advisors[i].z));
+                Creature* pCreature = getNearestCreature(Advisors[i].x, Advisors[i].y, Advisors[i].z, Advisors[i].addition);
                 if (pCreature == NULL || (!pCreature->isAlive() && mAdvisorPhase != PHASE_ADV_FIGHT))
                 {
                     LocationExtra pCoords;
@@ -3272,7 +3275,7 @@ class KaelThasAI : public MoonScriptBossAI
                         if (mAdvCoords.size() <= (size_t)i)
                             break;
 
-                        Creature* pCreature = static_cast<Creature*>(ForceCreatureFind(mAdvCoords[i].addition, mAdvCoords[i].x, mAdvCoords[i].y, mAdvCoords[i].z));
+                        Creature* pCreature = getNearestCreature(mAdvCoords[i].x, mAdvCoords[i].y, mAdvCoords[i].z, mAdvCoords[i].addition);
                         if (pCreature != NULL && !pCreature->isAlive())
                         {
                             pCreature->Despawn(0, 0);
@@ -3296,7 +3299,7 @@ class KaelThasAI : public MoonScriptBossAI
                         }
                     }
 
-                    Emote("Perhaps I underestimated you. It would be unfair to make you fight all four Advisors at once, but...fair treatment was never shown to my people. I'm just returning the favor.", Text_Yell, 11262);
+                    sendChatMessage(CHAT_MSG_MONSTER_YELL, 11262, "Perhaps I underestimated you. It would be unfair to make you fight all four Advisors at once, but...fair treatment was never shown to my people. I'm just returning the favor.");
                     ResetTimer(mEventTimer, 180000);
                     SetPhase(6);
                     mAdvCoords.clear();
@@ -3304,7 +3307,7 @@ class KaelThasAI : public MoonScriptBossAI
 
                 ParentClass::AIUpdate();
                 SetBehavior(Behavior_Spell);
-                SetCanMove(false);
+                setRooted(true);
             }
             if (GetPhase() == 6)
             {
@@ -3314,15 +3317,15 @@ class KaelThasAI : public MoonScriptBossAI
                     mArcaneDisruptionTimer = AddTimer(20000);
                     mShockBarrierTimer = AddTimer(60000);
                     mFlameStrikeTimer = AddTimer(40000);
-                    SetCanEnterCombat(true);
+                    setCanEnterCombat(true);
                     SetBehavior(Behavior_Default);
-                    SetCanMove(true);
+                    setRooted(false);
                     SetPhase(7);
                 }
                 else
                 {
                     SetBehavior(Behavior_Spell);
-                    SetCanMove(false);
+                    setRooted(true);
                 }
 
                 return;
@@ -3334,7 +3337,7 @@ class KaelThasAI : public MoonScriptBossAI
                     if (GetBehavior() == Behavior_Spell)
                     {
                         SetBehavior(Behavior_Default);
-                        SetCanMove(true);
+                        setRooted(false);
                     }
                     if (IsTimerFinished(mShockBarrierTimer))
                     {
@@ -3355,7 +3358,7 @@ class KaelThasAI : public MoonScriptBossAI
                 {
                     CastSpellNowNoScheduling(mPyroblast);
                     SetBehavior(Behavior_Spell);
-                    SetCanMove(false);
+                    setRooted(true);
                 }
                 else if (IsTimerFinished(mPhoenixTimer))        // it spawns on caster's place, but should in 20y from him
                 {
@@ -3417,7 +3420,7 @@ void SpellFunc_KaelThasFlameStrike(SpellDesc* pThis, MoonScriptCreatureAI* pCrea
         if (pTarget != NULL)
         {
             KaelThas->GetUnit()->CastSpell(pTarget, KAELTHAS_FLAME_STRIKE_SUMMON, true);
-            Creature* pFriendlyTrigger = static_cast<Creature*>(KaelThas->ForceCreatureFind(CN_FLAME_STRIKE_TRIGGER));
+            Creature* pFriendlyTrigger = static_cast<Creature*>(KaelThas->getNearestCreature(CN_FLAME_STRIKE_TRIGGER));
             if (pFriendlyTrigger != NULL && pFriendlyTrigger->IsPet())
             {
                 pFriendlyTrigger->Despawn(0, 0);

@@ -319,7 +319,7 @@ class TheVioletHoldScript : public MoonInstanceScript
 //                {
 //                    TheVioletHoldScript* pInstance = (TheVioletHoldScript*)_unit->GetMapMgr()->GetScript();
 //                    pInstance->SetInstanceData(Data_EncounterState, MAP_VIOLET_HOLD, State_InProgress);
-//                    GameObject* pVioletHoldDoor = pInstance->FindClosestGameObjectOnMap(GO_PRISON_SEAL, 1822.59f, 803.93f, 44.36f);
+//                    GameObject* pVioletHoldDoor = pInstance->getClosestGameObjectForPosition(GO_PRISON_SEAL, 1822.59f, 803.93f, 44.36f);
 //                    if (pVioletHoldDoor != NULL)
 //                        pVioletHoldDoor->SetState(GO_STATE_CLOSED);
 //                }break;
@@ -531,7 +531,7 @@ class VHCreatureAI : public MoonScriptCreatureAI
                     {
                         if (!m_spells[i].instant)
                         {
-                            this->StopMovement();
+                            this->stopMovement();
                         }
 
                         m_spells[i].casttime = m_spells[i].cooldown;

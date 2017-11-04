@@ -48,7 +48,7 @@ class ZerekethAI : public MoonScriptBossAI
 
         void OnCombatStart(Unit* mTarget)
         {
-            _unit->SendScriptTextChatMessage(5496);     // Life energy to... consume.
+            sendDBChatMessage(5496);     // Life energy to... consume.
 
             VoidTimer = AddTimer((RandomUInt(10) + 30) * 1000);
             SpeechTimer = AddTimer((RandomUInt(10) + 40) * 1000);
@@ -61,17 +61,17 @@ class ZerekethAI : public MoonScriptBossAI
             switch (RandomUInt(1))
             {
                 case 0:
-                    _unit->SendScriptTextChatMessage(5497);     // This vessel is empty.
+                    sendDBChatMessage(5497);     // This vessel is empty.
                     break;
                 case 1:
-                    _unit->SendScriptTextChatMessage(5498);     // No... more... life.
+                    sendDBChatMessage(5498);     // No... more... life.
                     break;
             }
         }
 
         void OnDied(Unit* mKiller)
         {
-            _unit->SendScriptTextChatMessage(5501);     // The Void... beckons.
+            sendDBChatMessage(5501);     // The Void... beckons.
 
             //despawn voids
             Creature* creature = NULL;
@@ -98,10 +98,10 @@ class ZerekethAI : public MoonScriptBossAI
             switch (RandomUInt(1))
             {
                 case 0:
-                    _unit->SendScriptTextChatMessage(SAY_ZEREKETH_01);
+                    sendDBChatMessage(SAY_ZEREKETH_01);
                     break;
                 case 1:
-                    _unit->SendScriptTextChatMessage(SAY_ZEREKETH_02);
+                    sendDBChatMessage(SAY_ZEREKETH_02);
                     break;
             }
             ResetTimer(SpeechTimer, (RandomUInt(10) + 40) * 1000);
@@ -140,11 +140,11 @@ class ZerekethAI : public MoonScriptBossAI
             VoidZone->GetUnit()->m_noRespawn = true;
             if (!VoidZone->GetUnit()->IsInWorld())
             {
-                VoidZone->Despawn();
+                VoidZone->despawn();
                 return;
             }
             random_target = NULL;
-            VoidZone->Despawn(60000, 0);
+            VoidZone->despawn(60000, 0);
         }
 
         void AIUpdate()
@@ -171,9 +171,9 @@ class VoidZoneARC : public MoonScriptCreatureAI
         MOONSCRIPT_FACTORY_FUNCTION(VoidZoneARC, MoonScriptCreatureAI);
         VoidZoneARC(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
-            StopMovement();
-            SetCanMove(false);
-            SetCanEnterCombat(false);
+            stopMovement();
+            setRooted(true);
+            setCanEnterCombat(false);
             RegisterAIUpdateEvent(1000);
         }
 
@@ -202,12 +202,12 @@ class DalliahTheDoomsayerAI : public MoonScriptBossAI
             AddSpell(GIFT_OF_THE_DOOMSAYER, Target_Current, 8.0f, 0.0f, -1);
 
             SpellDesc* WhirlTemp = AddSpell(WHIRLWIND, Target_Self, 15.0f, 0.0f, -1);
-            WhirlTemp->AddEmote("Reap the Whirlwind!", Text_Yell, 11089);
-            WhirlTemp->AddEmote("I'll cut you to peices!", Text_Yell, 11090);
+            WhirlTemp->AddEmote("Reap the Whirlwind!", CHAT_MSG_MONSTER_YELL, 11089);
+            WhirlTemp->AddEmote("I'll cut you to peices!", CHAT_MSG_MONSTER_YELL, 11090);
 
             SpellDesc* HealTemp = AddSpell(HEAL, Target_Self, 8.0f, 0, -1);
-            HealTemp->AddEmote("That is much better.", Text_Yell, 11091);
-            HealTemp->AddEmote("Ah, just what I needed.", Text_Yell, 11092);
+            HealTemp->AddEmote("That is much better.", CHAT_MSG_MONSTER_YELL, 11091);
+            HealTemp->AddEmote("Ah, just what I needed.", CHAT_MSG_MONSTER_YELL, 11092);
 
             if (IsHeroic())
                 AddSpell(SHADOW_WAVE, Target_Current, 8.0f, 0, -1);
@@ -216,7 +216,7 @@ class DalliahTheDoomsayerAI : public MoonScriptBossAI
 
         void OnEnterCombat(Unit* mKiller)
         {
-            _unit->SendScriptTextChatMessage(7368);     // It is unwise to anger me!
+            sendDBChatMessage(7368);     // It is unwise to anger me!
         }
 
         void OnTargetDied(Unit* mKiller)
@@ -224,20 +224,19 @@ class DalliahTheDoomsayerAI : public MoonScriptBossAI
             switch (RandomUInt(1))
             {
                 case 0:
-                    _unit->SendScriptTextChatMessage(7369);     // Completely ineffective.  Just like someone else I know.
+                    sendDBChatMessage(7369);     // Completely ineffective.  Just like someone else I know.
                     break;
                 case 1:
-                    _unit->SendScriptTextChatMessage(7370);     // You chose the wrong opponent.
+                    sendDBChatMessage(7370);     // You chose the wrong opponent.
                     break;
             }
         }
 
         void OnDied(Unit* mKiller)
         {
-            _unit->SendScriptTextChatMessage(7375);     // Now I'm really angry.
+            sendDBChatMessage(7375);     // Now I'm really angry.
 
-            GameObject* door2 = NULL;
-            door2 = GetNearestGameObject(184319);
+            GameObject* door2 = getNearestGameObject(184319);
             if (door2 != NULL)
                 door2->SetState(GO_STATE_OPEN);
 
@@ -267,7 +266,7 @@ class WrathScryerSoccothratesAI : public MoonScriptBossAI
 
         void OnCombatStart(Unit* mKiller)
         {
-            _unit->SendScriptTextChatMessage(7365);     // At last, a target for my frustrations!
+            sendDBChatMessage(7365);     // At last, a target for my frustrations!
         }
 
         void OnTargetDied(Unit* mKiller)
@@ -275,20 +274,19 @@ class WrathScryerSoccothratesAI : public MoonScriptBossAI
             switch (RandomUInt(1))
             {
                 case 0:
-                    _unit->SendScriptTextChatMessage(7364);     // Yes, that was quite satisfying.
+                    sendDBChatMessage(7364);     // Yes, that was quite satisfying.
                     break;
                 case 1:
-                    _unit->SendScriptTextChatMessage(8753);     // Ha! Much better!
+                    sendDBChatMessage(8753);     // Ha! Much better!
                     break;
             }
         }
 
         void OnDied(Unit* mKiller)
         {
-            _unit->SendScriptTextChatMessage(7380);     // Knew this was... the only way out.
+            sendDBChatMessage(7380);     // Knew this was... the only way out.
 
-            GameObject* door1 = NULL;
-            door1 = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(199.969f, 118.5837f, 22.379f, 184318);
+            GameObject* door1 = getNearestGameObject(199.969f, 118.5837f, 22.379f, 184318);
             if (door1 != NULL)
                 door1->SetState(GO_STATE_OPEN);
 
@@ -312,17 +310,17 @@ class HarbringerSkyrissAI : public MoonScriptBossAI
             AddSpell(MIND_REND, Target_Current, 15.0f, 0, -1);
 
             SpellDesc* Fear = AddSpell(FEAR, Target_Current, 8.0f, 0, -1);
-            Fear->AddEmote("Flee in terror!", Text_Yell, 11129);
-            Fear->AddEmote("I will show you horrors undreamed of.", Text_Yell, 11130);
+            Fear->AddEmote("Flee in terror!", CHAT_MSG_MONSTER_YELL, 11129);
+            Fear->AddEmote("I will show you horrors undreamed of.", CHAT_MSG_MONSTER_YELL, 11130);
 
             SpellDesc* Domination = AddSpell(DOMINATION, Target_Current, 6.0f, 0, -1);
-            Domination->AddEmote("You will do my bidding, weakling.", Text_Yell, 11127);
-            Domination->AddEmote("Your will is no longer your own.", Text_Yell, 11128);
+            Domination->AddEmote("You will do my bidding, weakling.", CHAT_MSG_MONSTER_YELL, 11127);
+            Domination->AddEmote("Your will is no longer your own.", CHAT_MSG_MONSTER_YELL, 11128);
 
-            Illusion66 = AddSpell(SUMMON_ILLUSION_66, Target_Self, 0, 0, -1, 0, 0, false, "", Text_Yell, 11131);
+            Illusion66 = AddSpell(SUMMON_ILLUSION_66, Target_Self, 0, 0, -1, 0, 0, false, "", CHAT_MSG_MONSTER_YELL, 11131);
             Illusion66->mEnabled = false;
 
-            Illusion33 = AddSpell(SUMMON_ILLUSION_33, Target_Self, 0, 0, -1, 0, 0, false, "", Text_Yell, 11131);
+            Illusion33 = AddSpell(SUMMON_ILLUSION_33, Target_Self, 0, 0, -1, 0, 0, false, "", CHAT_MSG_MONSTER_YELL, 11131);
             Illusion33->mEnabled = false;
 
             IllusionCount = 0;
@@ -330,7 +328,7 @@ class HarbringerSkyrissAI : public MoonScriptBossAI
 
         void OnCombatStart(Unit* mTarget)
         {
-            _unit->SendScriptTextChatMessage(5034);     // Bear witness to the agent of your demise!
+            sendDBChatMessage(5034);     // Bear witness to the agent of your demise!
 
             IllusionCount = 0;
             ParentClass::OnCombatStart(mTarget);
@@ -341,27 +339,27 @@ class HarbringerSkyrissAI : public MoonScriptBossAI
             switch (RandomUInt(1))
             {
                 case 0:
-                    _unit->SendScriptTextChatMessage(5035);     // Your fate is written.
+                    sendDBChatMessage(5035);     // Your fate is written.
                     break;
                 case 1:
-                    _unit->SendScriptTextChatMessage(5036);     // The chaos I have sown here is but a taste....
+                    sendDBChatMessage(5036);     // The chaos I have sown here is but a taste....
                     break;
             }
         }
 
         void OnDied(Unit* mKiller)
         {
-            _unit->SendScriptTextChatMessage(5042);     // I am merely one of... infinite multitudes.
+            sendDBChatMessage(5042);     // I am merely one of... infinite multitudes.
         }
 
         void AIUpdate()
         {
-            if (GetHealthPercent() <= 66 && IllusionCount == 0)
+            if (_getHealthPercent() <= 66 && IllusionCount == 0)
             {
                 IllusionCount = 1;
                 CastSpell(Illusion66);
             }
-            else if (GetHealthPercent() <= 33 && IllusionCount == 1)
+            else if (_getHealthPercent() <= 33 && IllusionCount == 1)
             {
                 IllusionCount = 2;
                 CastSpell(Illusion33);
@@ -384,7 +382,7 @@ class WardenMellicharAI : public MoonScriptBossAI
         MOONSCRIPT_FACTORY_FUNCTION(WardenMellicharAI, MoonScriptBossAI);
         WardenMellicharAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
         {
-            SetCanMove(false);
+            setRooted(true);
             Phase_Timer = -1;
             SetPhase(0);
             Spawncounter = 0;
@@ -406,17 +404,17 @@ class WardenMellicharAI : public MoonScriptBossAI
         {
             SetPhase(0);
             Phasepart = 0;
-            SetCanMove(false);
+            setRooted(true);
             Phase_Timer = AddTimer(55000);
 
-            SetCanEnterCombat(false);
+            setCanEnterCombat(false);
             _unit->SetEmoteState(EMOTE_ONESHOT_READY1H); // to be replaced for the standstate
 
-            shield = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(445.786f, -169.263f, 43.0466f, 184802);
+            shield = getNearestGameObject(445.786f, -169.263f, 43.0466f, 184802);
             if (shield)
                 shield->SetState(GO_STATE_CLOSED);
 
-            _unit->SendScriptTextChatMessage(SAY_MELLICHAR_01);
+            sendDBChatMessage(SAY_MELLICHAR_01);
             _unit->SendTimedScriptTextChatMessage(SAY_MELLICHAR_02, 27000);
 
             ParentClass::OnCombatStart(mTarget);
@@ -430,10 +428,10 @@ class WardenMellicharAI : public MoonScriptBossAI
 
         void AIUpdate()
         {
-            SetCanEnterCombat(false);
-            SetCanMove(false);
-            SetAllowMelee(false);
-            SetAllowSpell(false);
+            setCanEnterCombat(false);
+            setRooted(true);
+            _setMeleeDisabled(true);
+            _setCastDisabled(true);
 
             // ORB ONE
             if (IsTimerFinished(Phase_Timer) && GetPhase() == 0)
@@ -441,7 +439,7 @@ class WardenMellicharAI : public MoonScriptBossAI
                 if (Phasepart == 0)
                 {
                     Spawncounter = 0;
-                    orb1 = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(482.929f, -151.114f, 43.654f, 183961);
+                    orb1 = getNearestGameObject(482.929f, -151.114f, 43.654f, 183961);
                     if (orb1)
                         orb1->SetState(GO_STATE_OPEN);
 
@@ -465,12 +463,12 @@ class WardenMellicharAI : public MoonScriptBossAI
                     if (!NPC_orb1 && NPC_ID_Spawn != 0 && Spawncounter == 0)
                     {
                         ++Spawncounter;
-                        NPC_orb1 = SpawnCreature(NPC_ID_Spawn, 475.672f, -147.086f, 42.567f, 3.184015f);
+                        NPC_orb1 = spawnCreature(NPC_ID_Spawn, 475.672f, -147.086f, 42.567f, 3.184015f);
                         return;
                     }
-                    else if (NPC_orb1 && !NPC_orb1->IsAlive())
+                    else if (NPC_orb1 && !NPC_orb1->isAlive())
                     {
-                        _unit->SendScriptTextChatMessage(SAY_MELLICHAR_03);
+                        sendDBChatMessage(SAY_MELLICHAR_03);
                         SetPhase(1);
                         Phasepart = 0;
                         ResetTimer(Phase_Timer, 6000);
@@ -491,7 +489,7 @@ class WardenMellicharAI : public MoonScriptBossAI
                 if (Phasepart == 0)
                 {
                     Spawncounter = 0;
-                    orb2 = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(409.062f, -152.161f, 43.653f, 183963);
+                    orb2 = getNearestGameObject(409.062f, -152.161f, 43.653f, 183963);
                     if (orb2)
                         orb2->SetState(GO_STATE_OPEN);
 
@@ -505,12 +503,12 @@ class WardenMellicharAI : public MoonScriptBossAI
                     if (!NPC_orb2 && Spawncounter == 0)
                     {
                         ++Spawncounter;
-                        NPC_orb2 = SpawnCreature(CN_MILLHOUSE_MANASTORM, 413.192f, -148.586f, 42.569f, 0.024347f);
+                        NPC_orb2 = spawnCreature(CN_MILLHOUSE_MANASTORM, 413.192f, -148.586f, 42.569f, 0.024347f);
                         return;
                     }
-                    else if (NPC_orb2 && NPC_orb2->IsAlive())
+                    else if (NPC_orb2 && NPC_orb2->isAlive())
                     {
-                        Creature* millhouse = static_cast<Creature*>(ForceCreatureFind(CN_MILLHOUSE_MANASTORM));
+                        Creature* millhouse = getNearestCreature(CN_MILLHOUSE_MANASTORM);
                         if (millhouse)
                         {
                             millhouse->SendTimedScriptTextChatMessage(SAY_MILLHOUS_01, 2000);
@@ -540,7 +538,7 @@ class WardenMellicharAI : public MoonScriptBossAI
                 if (Phasepart == 0)
                 {
                     Spawncounter = 0;
-                    orb3 = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(415.167f, -174.338f, 43.654f, 183964);
+                    orb3 = getNearestGameObject(415.167f, -174.338f, 43.654f, 183964);
                     if (orb3)
                         orb3->SetState(GO_STATE_OPEN);
 
@@ -566,18 +564,18 @@ class WardenMellicharAI : public MoonScriptBossAI
                         /// \todo investigate.... saying "1"... really?
                         _unit->SendChatMessage(CHAT_MSG_MONSTER_YELL, LANG_UNIVERSAL, "1");
                         ++Spawncounter;
-                        NPC_orb3 = SpawnCreature(NPC_ID_Spawn, 420.050f, -173.500f, 42.580f, 6.110f);
+                        NPC_orb3 = spawnCreature(NPC_ID_Spawn, 420.050f, -173.500f, 42.580f, 6.110f);
                         return;
                     }
                     else if (!NPC_orb3)
                     {
                         /// \todo investigate.... saying "2"... really?
                         _unit->SendChatMessage(CHAT_MSG_MONSTER_YELL, LANG_UNIVERSAL, "2");
-                        NPC_orb3 = GetNearestCreature(NPC_ID_Spawn);
+                        NPC_orb3 = getNearestCreature(NPC_ID_Spawn);
                     }
-                    else if (NPC_orb3 && !NPC_orb3->IsAlive())
+                    else if (NPC_orb3 && !NPC_orb3->isAlive())
                     {
-                        _unit->SendScriptTextChatMessage(SAY_MELLICHAR_05);
+                        sendDBChatMessage(SAY_MELLICHAR_05);
                         SetPhase(3);
                         Phasepart = 0;
                         ResetTimer(Phase_Timer, 8000);
@@ -598,7 +596,7 @@ class WardenMellicharAI : public MoonScriptBossAI
                 if (Phasepart == 0)
                 {
                     Spawncounter = 0;
-                    orb4 = _unit->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(476.422f, -174.517f, 42.748f, 183962);
+                    orb4 = getNearestGameObject(476.422f, -174.517f, 42.748f, 183962);
                     if (orb4)
                         orb4->SetState(GO_STATE_OPEN);
 
@@ -622,16 +620,16 @@ class WardenMellicharAI : public MoonScriptBossAI
                     if (!NPC_orb4 && NPC_ID_Spawn != 0 && Spawncounter == 0)
                     {
                         ++Spawncounter;
-                        NPC_orb4 = SpawnCreature(NPC_ID_Spawn, 471.153f, -174.715f, 42.589f, 3.097f);
+                        NPC_orb4 = spawnCreature(NPC_ID_Spawn, 471.153f, -174.715f, 42.589f, 3.097f);
                         return;
                     }
                     else if (!NPC_orb4)
                     {
-                        NPC_orb4 = GetNearestCreature(NPC_ID_Spawn);
+                        NPC_orb4 = getNearestCreature(NPC_ID_Spawn);
                     }
-                    else if (NPC_orb4 && !NPC_orb4->IsAlive())
+                    else if (NPC_orb4 && !NPC_orb4->isAlive())
                     {
-                        _unit->SendScriptTextChatMessage(SAY_MELLICHAR_06);
+                        sendDBChatMessage(SAY_MELLICHAR_06);
                         SetPhase(4);
                         Phasepart = 0;
                         ResetTimer(Phase_Timer, 6000);
@@ -650,16 +648,16 @@ class WardenMellicharAI : public MoonScriptBossAI
             {}
 
             ParentClass::AIUpdate();
-            SetCanMove(false);
-            SetAllowMelee(false);
-            SetAllowSpell(false);
+            setRooted(true);
+            _setMeleeDisabled(true);
+            _setCastDisabled(true);
         }
 
         void Reset_Event()
         {
-            SetCanMove(true);
-            SetAllowMelee(true);
-            SetAllowSpell(true);
+            setRooted(false);
+            _setMeleeDisabled(false);
+            _setCastDisabled(false);
             _unit->SetStandState(STANDSTATE_KNEEL);
 
             if (shield)
@@ -679,31 +677,31 @@ class WardenMellicharAI : public MoonScriptBossAI
 
             if (NPC_orb1)
             {
-                NPC_orb1->Despawn(0);
+                NPC_orb1->Despawn(0, 0);
                 NPC_orb1 = NULL;
             }
 
             if (NPC_orb2)
             {
-                NPC_orb2->Despawn(0);
+                NPC_orb2->Despawn(0, 0);
                 NPC_orb2 = NULL;
             }
 
             if (NPC_orb3)
             {
-                NPC_orb3->Despawn(0);
+                NPC_orb3->Despawn(0, 0);
                 NPC_orb3 = NULL;
             }
 
             if (NPC_orb4)
             {
-                NPC_orb4->Despawn(0);
+                NPC_orb4->Despawn(0, 0);
                 NPC_orb4 = NULL;
             }
 
             if (NPC_orb5)
             {
-                NPC_orb5->Despawn(0);
+                NPC_orb5->Despawn(0, 0);
                 NPC_orb5 = NULL;
             }
 
@@ -716,11 +714,11 @@ class WardenMellicharAI : public MoonScriptBossAI
         uint32 Spawncounter;
         int32 Phase_Timer;
 
-        MoonScriptCreatureAI* NPC_orb1;
-        MoonScriptCreatureAI* NPC_orb2;
-        MoonScriptCreatureAI* NPC_orb3;
-        MoonScriptCreatureAI* NPC_orb4;
-        MoonScriptCreatureAI* NPC_orb5;
+        Creature* NPC_orb1;
+        Creature* NPC_orb2;
+        Creature* NPC_orb3;
+        Creature* NPC_orb4;
+        Creature* NPC_orb5;
         GameObject* shield;
         GameObject* orb1;
         GameObject* orb2;

@@ -77,11 +77,13 @@ AIInterface::AIInterface()
     m_formationFollowAngle(0.0f),
     m_formationLinkSqlId(0),
     timed_emotes(nullptr),
-    disable_combat(false),
-    disable_melee(false),
-    disable_ranged(false),
-    disable_spell(false),
-    disable_targeting(false),
+
+    mIsCombatDisabled(false),
+    mIsMeleeDisabled(false),
+    mIsRangedDisabled(false),
+    mIsCastDisabled(false),
+    mIsTargetingDisabled(false),
+
     waiting_for_cooldown(false),
     next_spell_time(0),
     m_isGuard(false),
@@ -552,6 +554,14 @@ void AIInterface::generateWaypointScriptPatrol()
     }
 }
 
+void AIInterface::updateOrientation()
+{
+    if (MoveDone())
+    {
+        setFacing(m_Unit->GetOrientation());
+    }
+}
+
 void AIInterface::setFormationMovement()
 {
     if (m_formationLinkSqlId != 0)
@@ -965,6 +975,15 @@ bool AIInterface::hideWayPoints(Player* player)
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Spline functions
+void AIInterface::setFacing(float orientation)
+{
+    m_Unit->m_movementManager.m_spline.SetFacing(orientation);
+
+    LocationVector pos = LocationVector(m_Unit->GetPositionX(), m_Unit->GetPositionY(), m_Unit->GetPositionZ(), orientation);
+
+    sendSplineMoveToPoint(pos);
+}
+
 void AIInterface::setWalkMode(uint32_t mode)
 {
     mWalkMode = mode;
@@ -1186,7 +1205,7 @@ void AIInterface::sendSplineMoveToPoint(LocationVector pos)
     m_Unit->SetPosition(pos.x, pos.y, pos.z, pos.o);
 }
 
-bool AIInterface::generateAndSendSplinePath(float x, float y, float z)
+bool AIInterface::generateAndSendSplinePath(float x, float y, float z, float o /*= 0.0f*/)
 {
     if (mSplinePriority > SPLINE_PRIORITY_MOVEMENT)
         return false;
@@ -1217,13 +1236,13 @@ bool AIInterface::generateAndSendSplinePath(float x, float y, float z)
         }
         else
         {
-            sendSplineMoveToPoint(LocationVector(x, y, z, 0));
+            sendSplineMoveToPoint(LocationVector(x, y, z, o));
             return true;
         }
     }
     else
     {
-        sendSplineMoveToPoint(LocationVector(x, y, z, 0));
+        sendSplineMoveToPoint(LocationVector(x, y, z, o));
         return true;
     }
 
@@ -1442,7 +1461,7 @@ void AIInterface::_UpdateTimer(uint32 p_time)
 
 void AIInterface::_UpdateTargets()
 {
-    if (m_Unit->IsPlayer() || (!isAiScriptType(AI_SCRIPT_PET) && disable_targeting))
+    if (m_Unit->IsPlayer() || (!isAiScriptType(AI_SCRIPT_PET) && mIsTargetingDisabled))
         return;
 
     if (static_cast<Creature*>(m_Unit)->GetCreatureProperties()->Type == UNIT_TYPE_CRITTER && static_cast<Creature*>(m_Unit)->GetType() != CREATURE_TYPE_GUARDIAN)
@@ -1515,7 +1534,7 @@ void AIInterface::_UpdateTargets()
 
         LockAITargets(false);
 
-        if (disable_combat)
+        if (isCombatDisabled())
             return;
 
         if (m_aiTargets.size() == 0
@@ -1544,7 +1563,7 @@ void AIInterface::_UpdateTargets()
                     AttackReaction(target, 1, 0);
             }
         }
-        else if (m_aiTargets.size() == 0 && ((isAiScriptType(AI_SCRIPT_PET) && (m_Unit->IsPet() && static_cast< Pet* >(m_Unit)->GetPetState() == PET_STATE_AGGRESSIVE)) || (!m_Unit->IsPet() && disable_melee == false)))
+        else if (m_aiTargets.size() == 0 && ((isAiScriptType(AI_SCRIPT_PET) && (m_Unit->IsPet() && static_cast< Pet* >(m_Unit)->GetPetState() == PET_STATE_AGGRESSIVE)) || (!m_Unit->IsPet() && mIsMeleeDisabled == false)))
         {
             Unit* target = FindTarget();
             if (target)
@@ -1568,7 +1587,7 @@ void AIInterface::_UpdateTargets()
 /// Updates Combat Status of m_Unit
 void AIInterface::_UpdateCombat(uint32 p_time)
 {
-    if (!isAiScriptType(AI_SCRIPT_PET) && disable_combat)
+    if (!isAiScriptType(AI_SCRIPT_PET) && isCombatDisabled())
         return;
 
     //just make sure we are not hitting self.
@@ -1722,13 +1741,13 @@ void AIInterface::_UpdateCombat(uint32 p_time)
             }
         }
 
-        if (this->disable_melee && agent == AGENT_MELEE)
+        if (this->isMeleeDisabled() && agent == AGENT_MELEE)
             agent = AGENT_NULL;
 
-        if (this->disable_ranged && agent == AGENT_RANGED)
+        if (this->isRangedDisabled() && agent == AGENT_RANGED)
             agent = AGENT_NULL;
 
-        if (this->disable_spell && agent == AGENT_SPELL)
+        if (this->isCastDisabled() && agent == AGENT_SPELL)
             agent = AGENT_NULL;
 
         switch (agent)
@@ -2055,7 +2074,7 @@ void AIInterface::SetUnitToFollowBackup(Unit* un)
 
 void AIInterface::AttackReaction(Unit* pUnit, uint32 damage_dealt, uint32 spellId)
 {
-    if (isAiState(AI_STATE_EVADE) || !pUnit || !pUnit->isAlive() || m_Unit->IsDead() || (m_Unit == pUnit) || isAiScriptType(AI_SCRIPT_PASSIVE) || disable_combat)
+    if (isAiState(AI_STATE_EVADE) || !pUnit || !pUnit->isAlive() || m_Unit->IsDead() || (m_Unit == pUnit) || isAiScriptType(AI_SCRIPT_PASSIVE) || isCombatDisabled())
         return;
 
     if (worldConfig.terrainCollision.isCollisionEnabled && pUnit->IsPlayer())
@@ -2838,7 +2857,7 @@ bool AIInterface::StopMovement(uint32 time)
     return true;
 }
 
-bool AIInterface::MoveTo(float x, float y, float z)
+bool AIInterface::MoveTo(float x, float y, float z, float o /*= 0.0f*/)
 {
     if (!m_canMove || m_Unit->IsStunned())
     {
@@ -2846,7 +2865,7 @@ bool AIInterface::MoveTo(float x, float y, float z)
         return false;
     }
 
-    if (!generateAndSendSplinePath(x, y, z))
+    if (!generateAndSendSplinePath(x, y, z, o))
         return false;
 
     if (!isCreatureState(MOVING))
@@ -2980,8 +2999,6 @@ void AIInterface::_UpdateMovement(uint32 p_time)
             {
                 switch (m_Unit->GetAIInterface()->getWaypointScriptType())
                 {
-                    case Movement::WP_MOVEMENT_SCRIPT_NONE:
-                        break;
                     case Movement::WP_MOVEMENT_SCRIPT_CIRCLEWP:
                         generateWaypointScriptCircle();
                         break;
@@ -2998,8 +3015,9 @@ void AIInterface::_UpdateMovement(uint32 p_time)
                         generateWaypointScriptPatrol();
                         break;
                     default:
-                        LOG_DEBUG("WaypointGenerator is called for invalid type %u", getWaypointScriptType());
-                        break;
+                    {
+                        updateOrientation();
+                    } break;
                 }
             }
             else
@@ -3025,7 +3043,7 @@ void AIInterface::_UpdateMovement(uint32 p_time)
 void AIInterface::CastSpell(Unit* caster, SpellInfo* spellInfo, SpellCastTargets targets)
 {
     ARCEMU_ASSERT(spellInfo != NULL);
-    if (!isAiScriptType(AI_SCRIPT_PET) && disable_spell)
+    if (!isAiScriptType(AI_SCRIPT_PET) && isCastDisabled())
         return;
 
     // Stop movement while casting.
