@@ -117,7 +117,7 @@ class HydrossTheUnstableAI : public CreatureAIScript
             _unit->SchoolImmunityList[SCHOOL_FROST] = 1;
             _unit->SchoolImmunityList[SCHOOL_NATURE] = 0;
 
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -512,7 +512,7 @@ class LurkerAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -687,7 +687,7 @@ class LeotherasAI : public CreatureAIScript
             }
 
             SwitchToHumanForm();
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -786,7 +786,7 @@ class LeotherasAI : public CreatureAIScript
                     if (!SwitchTimer)
                     {
                         //switch to AGENT_SPELL
-                        _unit->GetAIInterface()->setCurrentAgent(AGENT_SPELL);
+                        setAIAgent(AGENT_SPELL);
                         sendDBChatMessage(4773);     // Be gone trifling elf. I'm in control now
                         SwitchToDemonForm();
                         Phase = 1;
@@ -883,7 +883,7 @@ class LeotherasAI : public CreatureAIScript
                 SwitchTimer--;
                 if (!SwitchTimer)
                 {
-                    _unit->GetAIInterface()->setCurrentAgent(AGENT_MELEE);
+                    setAIAgent(AGENT_MELEE);
                     SwitchToHumanForm();
                     Phase = 0;
                     WhirlwindTimer = 10 + RandomUInt(5);
@@ -992,7 +992,7 @@ class GreyheartSpellbinderAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
 
             RemoveAIUpdateEvent();
@@ -1147,7 +1147,7 @@ class ShadowofLeotherasAI : public CreatureAIScript
 
         void OnCombatStart(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_SPELL);
+            setAIAgent(AGENT_SPELL);
             RegisterAIUpdateEvent(1000);
         }
 
@@ -1218,7 +1218,7 @@ class KarathressAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -1523,7 +1523,7 @@ class MorogrimAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
 
             RemoveAIUpdateEvent();
@@ -1895,7 +1895,7 @@ class VashjAI : public CreatureAIScript
             _unit->RemoveAura(VASHJ_SHIELD);
             _unit->GetAIInterface()->SetAllowedToEnterCombat(true);
             _unit->GetAIInterface()->m_canMove = true;
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -2288,7 +2288,7 @@ class TaintedElementalAI : public CreatureAIScript
 
         void OnCombatStart(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_SPELL);
+            setAIAgent(AGENT_SPELL);
             RegisterAIUpdateEvent(_unit->GetBaseAttackTime(MELEE));
         }
 
@@ -2323,10 +2323,10 @@ class TaintedElementalAI : public CreatureAIScript
             {
                 delete spell_poison_spit;
                 spell_poison_spit = NULL;
-            };
+            }
 
             delete this;
-        };
+        }
 
     private:
         AI_Spell* spell_poison_spit;
@@ -2460,7 +2460,7 @@ class ToxicSporeBatAI : public CreatureAIScript
             _unit->GetAIInterface()->setAiState(AI_STATE_SCRIPTMOVE);
             _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
             _unit->GetAIInterface()->setWayPointToMove(1);
-            //_unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            //setAIAgent(AGENT_NULL);
             //_unit->GetAIInterface()->SetAIState(STATE_IDLE);
             //RemoveAIUpdateEvent();
         }
@@ -2522,8 +2522,8 @@ class ToxicSporeBatAI : public CreatureAIScript
                     default:
                         {
                             Phase = 0;
-                        };
-                };
+                        }
+                }
             }
             //float val = RandomFloat(100.0f);
             //SpellCast(val);
@@ -2963,18 +2963,19 @@ class CoilfangStriderAI : public MoonScriptCreatureAI
 };
 
 // Serpentshrine Cavern Instance Script
-class SerpentshrineCavern : public MoonInstanceScript
+class SerpentshrineCavern : public InstanceScript
 {
     public:
         // Console & Bridge parts
         uint32 mBridgePart[3];
 
-        MOONSCRIPT_INSTANCE_FACTORY_FUNCTION(SerpentshrineCavern, MoonInstanceScript);
-        SerpentshrineCavern(MapMgr* pMapMgr) : MoonInstanceScript(pMapMgr)
+        SerpentshrineCavern(MapMgr* pMapMgr) : InstanceScript(pMapMgr)
         {
             for (uint8 i = 0; i < 3; ++i)
                 mBridgePart[i] = 0;
         }
+
+        static InstanceScript* Create(MapMgr* pMapMgr) { return new SerpentshrineCavern(pMapMgr); }
 
         void OnGameObjectPushToWorld(GameObject* pGameObject)
         {
@@ -2990,7 +2991,7 @@ class SerpentshrineCavern : public MoonInstanceScript
                     mBridgePart[2] = pGameObject->GetLowGUID();
                     break;
             }
-        };
+        }
 
         void OnGameObjectActivate(GameObject* pGameObject, Player* pPlayer)
         {
@@ -3004,7 +3005,7 @@ class SerpentshrineCavern : public MoonInstanceScript
                 pBridgePart = GetGameObjectByGuid(mBridgePart[i]);
                 if (pBridgePart != NULL)
                     pBridgePart->SetState(GO_STATE_OPEN);
-            };
+            }
 
 
             pGameObject->SetState(GO_STATE_OPEN);

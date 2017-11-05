@@ -39,7 +39,7 @@ public:
         mSummonGuard = AddSpell(ELIZA_SUMMON_GUARD, Target_Self, 0, 0, 0);
 
         sendChatMessage(CHAT_MSG_MONSTER_SAY, 0, "Wait...you are not my husband. But he must have sent you. And you...look..delicious!");
-        mElizaCombatTimer = AddTimer(4000);
+        mElizaCombatTimer = _addTimer(4000);
 
         RegisterAIUpdateEvent(1000);
         mElizaGuard = NULL;
@@ -47,13 +47,13 @@ public:
     void AIUpdate()
     {
         ParentClass::AIUpdate();
-        if (IsTimerFinished(mElizaCombatTimer))
+        if (_isTimerFinished(mElizaCombatTimer))
         {
             setCanEnterCombat(true);
             AggroNearestUnit();
-            RemoveTimer(mElizaCombatTimer);
+            _removeTimer(mElizaCombatTimer);
         }
-        if (_getHealthPercent() >= 10 && _getHealthPercent() <= 98 && !IsCasting())
+        if (_getHealthPercent() >= 10 && _getHealthPercent() <= 98 && !_isCasting())
         {
             mElizaGuard = _unit->GetMapMgr()->GetInterface()->GetCreatureNearestCoords(_unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), 1871);
             if (mElizaGuard == NULL)
@@ -63,7 +63,7 @@ public:
         }
     }
 
-    int32 mElizaCombatTimer;
+    uint32 mElizaCombatTimer;
     SpellDesc*  mSummonGuard;
     Creature* mElizaGuard;
 };

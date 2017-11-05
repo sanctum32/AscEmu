@@ -25,61 +25,14 @@
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //Magister's Terrace
-class InstanceMagistersTerraceScript : public MoonInstanceScript
+class InstanceMagistersTerraceScript : public InstanceScript
 {
     public:
 
-        MOONSCRIPT_INSTANCE_FACTORY_FUNCTION(InstanceMagistersTerraceScript, MoonInstanceScript);
-        InstanceMagistersTerraceScript(MapMgr* pMapMgr) : MoonInstanceScript(pMapMgr)
-        {
-            // Way to select bosses
-            BuildEncounterMap();
-            if (mEncounters.size() == 0)
-                return;
+        InstanceMagistersTerraceScript(MapMgr* pMapMgr) : InstanceScript(pMapMgr)
+        {}
 
-            for (EncounterMap::iterator Iter = mEncounters.begin(); Iter != mEncounters.end(); ++Iter)
-            {
-                if ((*Iter).second.mState != State_Finished)
-                    continue;
-            }
-        }
-
-        void OnGameObjectPushToWorld(GameObject* pGameObject) { }
-
-        void SetInstanceData(uint32 pType, uint32 pIndex, uint32 pData)
-        {
-            if (pType != Data_EncounterState || pIndex == 0)
-                return;
-
-            EncounterMap::iterator Iter = mEncounters.find(pIndex);
-            if (Iter == mEncounters.end())
-                return;
-
-            (*Iter).second.mState = (EncounterState)pData;
-        }
-
-        uint32 GetInstanceData(uint32 pType, uint32 pIndex)
-        {
-            if (pType != Data_EncounterState || pIndex == 0)
-                return 0;
-
-            EncounterMap::iterator Iter = mEncounters.find(pIndex);
-            if (Iter == mEncounters.end())
-                return 0;
-
-            return (*Iter).second.mState;
-        }
-
-        void OnCreatureDeath(Creature* pCreature, Unit* pUnit)
-        {
-            EncounterMap::iterator Iter = mEncounters.find(pCreature->GetEntry());
-            if (Iter == mEncounters.end())
-                return;
-
-            (*Iter).second.mState = State_Finished;
-
-            return;
-        }
+        static InstanceScript* Create(MapMgr* pMapMgr) { return new InstanceMagistersTerraceScript(pMapMgr); }
 };
 
 // Selin Firehart Encounter
@@ -100,7 +53,7 @@ class SelinFireheartAI : public MoonScriptCreatureAI
     {
         AddSpell(SF_DRAINLIFE, Target_RandomPlayer, 8, 0, 35);
 
-        if (_unit->GetMapMgr()->iInstanceMode == MODE_HEROIC)
+        if (_isHeroic())
             AddSpell(SF_DRAINMANA, Target_RandomPlayer, 8, 0, 35);
 
         ManaRage = sSpellCustomizations.GetSpellInfo(FC_MANARAGE);
@@ -127,7 +80,7 @@ class SelinFireheartAI : public MoonScriptCreatureAI
         // 10% of his mana according to wowhead is 3231 which is whats needed to cast FelExplosion
         if (_getManaPercent() < 10 || FelExplosion->mEnabled == false)
             Mana();
-        else if (!IsCasting())// Mana is greater than 10%
+        else if (!_isCasting())// Mana is greater than 10%
             CastFelExplosion();
 
         ParentClass::AIUpdate();
@@ -283,9 +236,9 @@ class Priestess_DelrissaAI : public MoonScriptBossAI
         AddSpell(PRIESTESS_DELRISSA_POWERWORD_SHIELD, Target_RandomFriendly, 32, 0, 15, 0, 40);
         AddSpell(PRIESTESS_DELRISSA_RENEW, Target_RandomFriendly, 30, 0, 18, 0, 40);
 
-        mClearHateList = AddTimer(15000);
+        mClearHateList = _addTimer(15000);
         mKilledPlayers = 0;
-    };
+    }
 
     void OnCombatStart(Unit* pTarget)
     {
@@ -294,7 +247,7 @@ class Priestess_DelrissaAI : public MoonScriptBossAI
         // method that in this case recursively loops this procedure
 
         ParentClass::OnCombatStart(pTarget);
-    };
+    }
 
     void OnTargetDied(Unit* pTarget)
     {
@@ -332,15 +285,15 @@ class Priestess_DelrissaAI : public MoonScriptBossAI
 
     void AIUpdate()
     {
-        if (IsTimerFinished(mClearHateList))
+        if (_isTimerFinished(mClearHateList))
         {
             _clearHateList();
             AggroRandomUnit();
-            ResetTimer(mClearHateList, 15000);
-        };
+            _resetTimer(mClearHateList, 15000);
+        }
 
         ParentClass::AIUpdate();
-    };
+    }
 
     protected:
 

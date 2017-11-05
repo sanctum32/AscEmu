@@ -40,12 +40,11 @@ static Movement::Location Guards[] =
     { -89.6744f, -694.063f, 8.43202f, 0 }  //Parrot
 };
 
-//class DeadminesInstanceScript : public MoonInstanceScript
+//class DeadminesInstanceScript : public InstanceScript
 //{
 //    public:
 //
-//        MOONSCRIPT_INSTANCE_FACTORY_FUNCTION(DeadminesInstanceScript, MoonInstanceScript);
-//        DeadminesInstanceScript(MapMgr* pMapMgr) : MoonInstanceScript(pMapMgr)
+//        DeadminesInstanceScript(MapMgr* pMapMgr) : InstanceScript(pMapMgr)
 //        {
 //            mFactoryDoor_GUID = 0;
 //            mDefiasCannon_GUID = 0;
@@ -54,6 +53,8 @@ static Movement::Location Guards[] =
 //            mIronCladDoor_GUID = 0;
 //            InstanceEncounter = 0;
 //        }
+//
+//        static InstanceScript* Create(MapMgr* pMapMgr) { return new DeadminesInstanceScript(pMapMgr); }
 //
 //        void OnGameObjectPushToWorld(GameObject* pGameObject)
 //        {
@@ -85,26 +86,26 @@ static Movement::Location Guards[] =
 //                {
 //                    GameObject* pDoor5 = GetGameObjectByGuid(mFactoryDoor_GUID);
 //                    if (pDoor5 != NULL)
-//                        pDoor5->SetState(pDoor5->GetState() == State_Inactive ? State_Active : State_Inactive);
+//                        pDoor5->SetState(pDoor5->GetState() == GO_STATE_CLOSED ? GO_STATE_OPEN  : GO_STATE_CLOSED);
 //                }break;
 //                case GO_IRONCLAD_LEVER:
 //                {
 //                    GameObject* pDoor6 = GetGameObjectByGuid(mFactoryDoor_GUID);
 //                    //Door can be opened by lever if state isn't 2
 //                    if (pDoor6 != NULL && pDoor6->GetState() != 2)
-//                        pDoor6->SetState(pDoor6->GetState() == State_Inactive ? State_Active : State_Inactive);
+//                        pDoor6->SetState(pDoor6->GetState() == GO_STATE_CLOSED ? GO_STATE_OPEN  : GO_STATE_CLOSED);
 //                }break;
 //                case GO_SNEED_DOOR_LEVER:
 //                {
 //                    GameObject* pDoor7 = getClosestGameObjectForPosition(GO_HEAVY_DOOR, Doors[1].x, Doors[1].y, Doors[1].z);
 //                    if (pDoor7 != NULL)
-//                        pDoor7->SetState(pDoor7->GetState() == State_Inactive ? State_Active : State_Inactive);
+//                        pDoor7->SetState(pDoor7->GetState() == GO_STATE_CLOSED ? GO_STATE_OPEN  : GO_STATE_CLOSED);
 //                }break;
 //                case GO_GILNID_DOOR_LEVER:
 //                {
 //                    GameObject* pDoor8 = getClosestGameObjectForPosition(GO_HEAVY_DOOR, Doors[0].x, Doors[0].y, Doors[0].z);
 //                    if (pDoor8 != NULL)
-//                        pDoor8->SetState(pDoor8->GetState() == State_Inactive ? State_Active : State_Inactive);
+//                        pDoor8->SetState(pDoor8->GetState() == GO_STATE_CLOSED ? GO_STATE_OPEN  : GO_STATE_CLOSED);
 //                }break;
 //            }
 //        }
@@ -117,7 +118,7 @@ static Movement::Location Guards[] =
 //                {
 //                    GameObject* pDoor1 = GetGameObjectByGuid(mFactoryDoor_GUID);
 //                    if (pDoor1 != NULL)
-//                        pDoor1->SetState(State_Active);
+//                        pDoor1->SetState(GO_STATE_OPEN );
 //                }break;
 //                case NPC_SNEEDS_SHREDDER:
 //                    SpawnCreature(NPC_SNEED, pCreature->GetPositionX(), pCreature->GetPositionY(), pCreature->GetPositionZ(), pCreature->GetOrientation());
@@ -126,13 +127,13 @@ static Movement::Location Guards[] =
 //                {
 //                    GameObject* pDoor2 = getClosestGameObjectForPosition(GO_HEAVY_DOOR, Doors[0].x, Doors[0].y, Doors[0].z);
 //                    if (pDoor2 != NULL)
-//                        pDoor2->SetState(State_Active);
+//                        pDoor2->SetState(GO_STATE_OPEN );
 //                }break;
 //                case NPC_SNEED:
 //                {
 //                    GameObject* pDoor3 = getClosestGameObjectForPosition(GO_HEAVY_DOOR, Doors[1].x, Doors[1].y, Doors[1].z);
 //                    if (pDoor3 != NULL)
-//                        pDoor3->SetState(State_Active);
+//                        pDoor3->SetState(GO_STATE_OPEN );
 //                }break;
 //            }
 //        }
@@ -185,14 +186,14 @@ class MrSmiteAI : public MoonScriptBossAI
         void OnCombatStop(Unit* pTarget)
         {
             if (GetPhase() == 4)
-                RemoveAura(SMITES_HAMMER);
+                _removeAura(SMITES_HAMMER);
 
             if (!isAlive())
                 _setWieldWeapon(false);
 
             SetPhase(1);
             SwitchWeapons();
-            RemoveTimer(mWaitAtChest);
+            _removeTimer(mWaitAtChest);
             ParentClass::OnCombatStop(pTarget);
         }
 
@@ -219,7 +220,7 @@ class MrSmiteAI : public MoonScriptBossAI
                 }
             }
 
-            if (IsTimerFinished(mWaitAtChest))
+            if (_isTimerFinished(mWaitAtChest))
                 MoveToPlayer();
 
             ParentClass::AIUpdate();
@@ -276,20 +277,20 @@ class MrSmiteAI : public MoonScriptBossAI
                     // Is base attack time change needed if we use aura ?
                     _setDisplayWeaponIds(7230, 0);
                     _unit->SetBaseAttackTime(MELEE, _unit->GetBaseAttackTime(MELEE) * 2);
-                    ApplyAura(SMITES_HAMMER);
+                    _applyAura(SMITES_HAMMER);
                     break;
             }
 
             // Wait at the chest for 4.5seconds -- Still needs work
             _unit->setAttackTimer(4500, false);
-            mWaitAtChest = AddTimer(4500);
+            mWaitAtChest = _addTimer(4500);
             SetPhase(GetPhase() + 1);
         }
 
     protected:
 
         SpellDesc* mStomp;
-        int mWaitAtChest;
+        uint32 mWaitAtChest;
 };
 
 

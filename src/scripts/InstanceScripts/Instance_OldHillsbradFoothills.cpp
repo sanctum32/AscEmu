@@ -89,7 +89,7 @@ static Movement::Location ThrallWP1[] = // pre 2nd boss
 const uint32 MAX_THRALLWP1 = 27;
 
 
-//class OldHilsbradInstance : public MoonInstanceScript
+//class OldHilsbradInstance : public InstanceScript
 //{
 //private:
 //
@@ -98,14 +98,15 @@ const uint32 MAX_THRALLWP1 = 27;
 //
 //public:
 //
-//    MOONSCRIPT_INSTANCE_FACTORY_FUNCTION(OldHilsbradInstance, MoonInstanceScript);
-//    OldHilsbradInstance(MapMgr* pMapMgr) : MoonInstanceScript(pMapMgr)
+//    OldHilsbradInstance(MapMgr* pMapMgr) : InstanceScript(pMapMgr)
 //    {
 //        m_numBarrel = 0;
 //
 //        for (uint8 i = 0; i < OHF_END; ++i)
 //            m_phaseData[i] = OHF_DATA_NOT_STARTED;
-//    };
+//    }
+//
+//    static InstanceScript* Create(MapMgr* pMapMgr) { return new OldHilsbradInstance(pMapMgr); }
 //
 //    void OnPlayerEnter(Player* pPlayer)
 //    {
@@ -113,7 +114,7 @@ const uint32 MAX_THRALLWP1 = 27;
 //            pPlayer->CastSpell(pPlayer, 35482, true);   // Human Male illusion
 //        else
 //            pPlayer->CastSpell(pPlayer, 35483, true);   // Human Female illusion
-//    };
+//    }
 //
 //    void SetData(uint32 pIndex, uint32 pData)
 //    {
@@ -124,7 +125,7 @@ const uint32 MAX_THRALLWP1 = 27;
 //            mInstance->GetWorldStatesHandler().SetWorldStateForZone(2367, 0, WORLDSTATE_OLD_HILLSBRAD_BARRELS, 0);
 //
 //        m_phaseData[pIndex] = pData;
-//    };
+//    }
 //
 //    uint32 GetData(uint32 pIndex)
 //    {
@@ -132,7 +133,7 @@ const uint32 MAX_THRALLWP1 = 27;
 //            return 0;
 //
 //        return m_phaseData[pIndex];
-//    };
+//    }
 //
 //    void OnGameObjectActivate(GameObject* pGameObject, Player* pPlayer)
 //    {
@@ -158,7 +159,7 @@ const uint32 MAX_THRALLWP1 = 27;
 //            qle->SetMobCount(0, qle->GetMobCount(0) + 1);
 //            qle->SendUpdateAddKill(0);
 //            qle->UpdatePlayerFields();
-//        };
+//        }
 //
 //        for (uint8 i = 0; i < 21; ++i)
 //        {
@@ -248,7 +249,7 @@ const uint32 MAX_THRALLWP1 = 27;
 //    LieutenantDrakeAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
 //    {
 //        pInstance = dynamic_cast<OldHilsbradInstance*>(GetInstanceScript());
-//    };
+//    }
 //
 //    void OnCombatStart(Unit* pTarget)
 //    {
@@ -256,7 +257,7 @@ const uint32 MAX_THRALLWP1 = 27;
 //            pInstance->SetData(OHF_PHASE_2, OHF_DATA_IN_PROGRESS);
 //
 //        ParentClass::OnCombatStart(pTarget);
-//    };
+//    }
 //
 //    void OnCombatStop(Unit* pTarget)
 //    {
@@ -264,7 +265,7 @@ const uint32 MAX_THRALLWP1 = 27;
 //            pInstance->SetData(OHF_PHASE_2, OHF_DATA_PERFORMED);
 //
 //        ParentClass::OnCombatStop(pTarget);
-//    };
+//    }
 //};
 //
 //class ThrallAI : public MoonScriptCreatureAI // this will be replaced with escortAI

@@ -522,7 +522,7 @@ bool ScriptMgr::CallScriptedItem(Item* pItem, Player* pPlayer)
 /* CreatureAI Stuff */
 CreatureAIScript::CreatureAIScript(Creature* creature) : _unit(creature), linkedCreatureAI(nullptr), mDespawnWhenInactive(false)
 {
-
+    mCreatureTimerIds.clear();
 }
 
 CreatureAIScript::~CreatureAIScript()
@@ -587,6 +587,17 @@ bool CreatureAIScript::isAlive()
     return _unit->isAlive();
 }
 
+void CreatureAIScript::setAIAgent(AI_Agent agent)
+{
+    if (agent <= AGENT_CALLFORHELP)
+        _unit->GetAIInterface()->setCurrentAgent(agent);
+}
+
+uint8_t CreatureAIScript::getAIAgent()
+{
+    return _unit->GetAIInterface()->getCurrentAgent();
+}
+
 void CreatureAIScript::setRooted(bool set)
 {
     _unit->setMoveRoot(set);
@@ -635,6 +646,103 @@ void CreatureAIScript::stopMovement()
 {
     _unit->GetAIInterface()->StopMovement(0);
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// wp movement
+
+Movement::WayPoint* CreatureAIScript::CreateWaypoint(int pId, uint32 pWaittime, uint32 pMoveFlag, Movement::Location pCoords)
+{
+    Movement::WayPoint* wp = _unit->CreateWaypointStruct();
+    wp->id = pId;
+    wp->x = pCoords.x;
+    wp->y = pCoords.y;
+    wp->z = pCoords.z;
+    wp->o = pCoords.o;
+    wp->waittime = pWaittime;
+    wp->flags = pMoveFlag;
+    wp->forwardemoteoneshot = false;
+    wp->forwardemoteid = 0;
+    wp->backwardemoteoneshot = false;
+    wp->backwardemoteid = 0;
+    wp->forwardskinid = 0;
+    wp->backwardskinid = 0;
+    return wp;
+}
+
+Movement::WayPoint* CreatureAIScript::CreateWaypoint(int pId, uint32 pWaittime, Movement::LocationWithFlag wp_info)
+{
+    Movement::WayPoint* wp = _unit->CreateWaypointStruct();
+    wp->id = pId;
+    wp->x = wp_info.wp_location.x;
+    wp->y = wp_info.wp_location.y;
+    wp->z = wp_info.wp_location.z;
+    wp->o = wp_info.wp_location.o;
+    wp->waittime = pWaittime;
+    wp->flags = wp_info.wp_flag;
+    wp->forwardemoteoneshot = false;
+    wp->forwardemoteid = 0;
+    wp->backwardemoteoneshot = false;
+    wp->backwardemoteid = 0;
+    wp->forwardskinid = 0;
+    wp->backwardskinid = 0;
+    return wp;
+}
+
+void CreatureAIScript::AddWaypoint(Movement::WayPoint* pWayPoint)
+{
+    _unit->GetAIInterface()->addWayPoint(pWayPoint);
+}
+
+void CreatureAIScript::ForceWaypointMove(uint32 pWaypointId)
+{
+    if (canEnterCombat())
+        _unit->GetAIInterface()->SetAllowedToEnterCombat(false);
+
+    if (isRooted())
+        setRooted(false);
+
+    stopMovement();
+    _unit->GetAIInterface()->setAiState(AI_STATE_SCRIPTMOVE);
+    SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
+    SetWaypointToMove(pWaypointId);
+}
+
+void CreatureAIScript::SetWaypointToMove(uint32 pWaypointId)
+{
+    _unit->GetAIInterface()->setWayPointToMove(pWaypointId);
+}
+
+void CreatureAIScript::StopWaypointMovement()
+{
+    setAIAgent(AGENT_NULL);
+    _unit->GetAIInterface()->setAiState(AI_STATE_SCRIPTIDLE);
+    SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_NONE);
+    SetWaypointToMove(0);
+}
+
+void CreatureAIScript::SetWaypointMoveType(Movement::WaypointMovementScript wp_move_script_type)
+{
+    _unit->GetAIInterface()->setWaypointScriptType(wp_move_script_type);
+
+}
+
+uint32 CreatureAIScript::GetCurrentWaypoint()
+{
+    return _unit->GetAIInterface()->getCurrentWayPointId();
+}
+
+size_t CreatureAIScript::GetWaypointCount()
+{
+    return _unit->GetAIInterface()->getWayPointsCount();
+}
+
+bool CreatureAIScript::HasWaypoints()
+{
+    return _unit->GetAIInterface()->hasWayPoints();
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// combat setup
 
 bool CreatureAIScript::canEnterCombat()
 {
@@ -734,6 +842,82 @@ void CreatureAIScript::_regenerateHealth()
     _unit->RegeneratePower(false);
 }
 
+bool CreatureAIScript::_isCasting()
+{
+    return _unit->IsCasting();
+}
+
+bool CreatureAIScript::_isHeroic()
+{
+    MapMgr* mapMgr = _unit->GetMapMgr();
+    if (mapMgr == nullptr || mapMgr->iInstanceMode != MODE_HEROIC)
+        return false;
+
+    return true;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// timers
+
+uint32 CreatureAIScript::_addTimer(uint32_t durationInMs)
+{
+    if (InstanceScript* inScript = getInstanceScript())
+    {
+        uint32_t timerId = inScript->addTimer(durationInMs);
+        mCreatureTimerIds.push_back(timerId);
+
+        return timerId;
+    }
+
+    return 0;
+}
+
+uint32_t CreatureAIScript::_getTimeForTimer(uint32_t timerId)
+{
+    if (InstanceScript* inScript = getInstanceScript())
+        return inScript->getTimeForTimer(timerId);
+
+    return 0;
+}
+
+void CreatureAIScript::_removeTimer(uint32_t& timerId)
+{
+    if (InstanceScript* inScript = getInstanceScript())
+    {
+        uint32_t timerId = timerId;
+        inScript->removeTimer(timerId);
+        if (timerId == 0)
+            mCreatureTimerIds.remove(timerId);
+    }
+}
+
+void CreatureAIScript::_resetTimer(uint32_t timerId, uint32_t durationInMs)
+{
+    if (InstanceScript* inScript = getInstanceScript())
+        inScript->resetTimer(timerId, durationInMs);
+}
+
+bool CreatureAIScript::_isTimerFinished(uint32_t timerId)
+{
+    if (InstanceScript* inScript = getInstanceScript())
+        return inScript->isTimerFinished(timerId);
+
+    return false;
+}
+
+void CreatureAIScript::_cancelAllTimers()
+{
+    for (auto& timer : mCreatureTimerIds)
+        _removeTimer(timer);
+
+    mCreatureTimerIds.clear();
+
+    LOG_DEBUG("all cleared!");
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// appearance
+
 void CreatureAIScript::_setScale(float scale)
 {
     _unit->setFloatValue(OBJECT_FIELD_SCALE_X, scale);
@@ -773,7 +957,57 @@ void CreatureAIScript::_setDisplayWeaponIds(uint32_t itemId1, uint32_t itemId2)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
+// spell
+
+void CreatureAIScript::_applyAura(uint32_t spellId)
+{
+    _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(spellId), true);
+}
+
+void CreatureAIScript::_removeAura(uint32_t spellId)
+{
+    _unit->RemoveAura(spellId);
+}
+
+void CreatureAIScript::_removeAllAuras()
+{
+    _unit->RemoveAllAuras();
+}
+
+void CreatureAIScript::_removeAuraOnPlayers(uint32_t spellId)
+{
+    for (auto object : *_unit->GetInRangePlayerSet())
+    {
+        if (object != nullptr)
+            static_cast<Player*>(object)->RemoveAura(spellId);
+    }
+}
+
+void CreatureAIScript::_castOnInrangePlayers(uint32_t spellId, bool triggered)
+{
+    for (auto object : *_unit->GetInRangePlayerSet())
+    {
+        if (object != nullptr)
+            _unit->CastSpell(static_cast<Player*>(object), spellId, triggered);
+    }
+}
+
+void CreatureAIScript::_castOnInrangePlayersWithinDist(float minDistance, float maxDistance, uint32_t spellId, bool triggered)
+{
+    for (auto object : *_unit->GetInRangePlayerSet())
+    {
+        if (object != nullptr)
+        {
+            float distanceToPlayer = object->GetDistance2dSq(this->GetUnit());
+            if (distanceToPlayer >= minDistance && distanceToPlayer <= maxDistance)
+                _unit->CastSpell(static_cast<Player*>(object), spellId, triggered);
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
 // gameobject
+
 GameObject* CreatureAIScript::getNearestGameObject(uint32_t entry)
 {
     return getNearestGameObject(_unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), entry);
@@ -786,6 +1020,7 @@ GameObject* CreatureAIScript::getNearestGameObject(float posX, float posY, float
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // chat message
+
 void CreatureAIScript::sendChatMessage(uint8_t type, uint32_t soundId, std::string text)
 {
     if (text.empty() == false)
@@ -798,6 +1033,15 @@ void CreatureAIScript::sendChatMessage(uint8_t type, uint32_t soundId, std::stri
 void CreatureAIScript::sendDBChatMessage(uint32_t textId)
 {
     _unit->SendScriptTextChatMessage(textId);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// instance
+
+InstanceScript* CreatureAIScript::getInstanceScript()
+{
+    MapMgr* mapMgr = _unit->GetMapMgr();
+    return (mapMgr) ? mapMgr->GetScript() : nullptr;
 }
 
 void CreatureAIScript::RegisterAIUpdateEvent(uint32 frequency)
@@ -855,22 +1099,11 @@ void GameObjectAIScript::RegisterAIUpdateEvent(uint32 frequency)
 
 /* InstanceAI Stuff */
 
-InstanceScript::InstanceScript(MapMgr* pMapMgr) : mInstance(pMapMgr)
+InstanceScript::InstanceScript(MapMgr* pMapMgr) : mInstance(pMapMgr), mSpawnsCreated(false), mTimerCount(0), mUpdateFrequency(defaultUpdateFrequency)
 {
-};
-
-void InstanceScript::RegisterUpdateEvent(uint32 pFrequency)
-{
-    sEventMgr.AddEvent(mInstance, &MapMgr::CallScriptUpdate, EVENT_SCRIPT_UPDATE_EVENT, pFrequency, 0, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
-};
-void InstanceScript::ModifyUpdateEvent(uint32 pNewFrequency)
-{
-    sEventMgr.ModifyEventTimeAndTimeLeft(mInstance, EVENT_SCRIPT_UPDATE_EVENT, pNewFrequency);
-};
-void InstanceScript::RemoveUpdateEvent()
-{
-    sEventMgr.RemoveEvents(mInstance, EVENT_SCRIPT_UPDATE_EVENT);
-};
+    generateBossDataState();
+    registerUpdateEvent();
+}
 
 // MIT start
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -881,14 +1114,18 @@ void InstanceScript::addData(uint32_t data, uint32_t state /*= NotStarted*/)
     auto Iter = mInstanceData.find(data);
     if (Iter == mInstanceData.end())
         mInstanceData.insert(std::pair<uint32_t, uint32_t>(data, state));
-};
+    else
+        LOG_DEBUG("tried to set state for entry %u. The entry is already available with a state!", data);
+}
 
 void InstanceScript::setData(uint32_t data, uint32_t state)
 {
     auto Iter = mInstanceData.find(data);
     if (Iter != mInstanceData.end())
         Iter->second = state;
-};
+    else
+        LOG_DEBUG("tried to set state for entry %u on map %u. The entry is not defined in table instance_bosses or manually to handle states!", data, mInstance->GetMapId());
+}
 
 uint32_t InstanceScript::getData(uint32_t data)
 {
@@ -897,7 +1134,7 @@ uint32_t InstanceScript::getData(uint32_t data)
         return Iter->second;
 
     return InvalidState;
-};
+}
 
 bool InstanceScript::isDataStateFinished(uint32_t data)
 {
@@ -953,6 +1190,8 @@ void InstanceScript::generateBossDataState()
                 setData(bossInfo->first, Finished);
         }
     }
+
+    LOG_DEBUG("Boss State generated for map %u.", mInstance->GetMapId());
 }
 
 void InstanceScript::sendUnitEncounter(uint32_t type, Unit* unit, uint8_t value_a, uint8_t value_b)
@@ -1006,6 +1245,156 @@ void InstanceScript::displayDataStateList(Player* player)
     }
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////
+// timers
+
+uint32_t InstanceScript::addTimer(uint32_t durationInMs)
+{
+    uint32_t timerId = ++mTimerCount;
+    mTimers.push_back(std::make_pair(timerId, durationInMs));
+
+    return timerId;
+}
+
+uint32_t InstanceScript::getTimeForTimer(uint32_t timerId)
+{
+    for (const auto& intTimer : mTimers)
+    {
+        if (intTimer.first == timerId)
+            return intTimer.second;
+    }
+
+    return 0;
+}
+
+void InstanceScript::removeTimer(uint32_t& timerId)
+{
+    for (InstanceTimerArray::iterator intTimer = mTimers.begin(); intTimer != mTimers.end(); ++intTimer)
+    {
+        if (intTimer->first == timerId)
+        {
+            mTimers.erase(intTimer);
+            timerId = 0;
+            break;
+        }
+    }
+}
+
+void InstanceScript::resetTimer(uint32_t timerId, uint32_t durationInMs)
+{
+    for (auto& intTimer : mTimers)
+    {
+        if (intTimer.first == timerId)
+            intTimer.second = durationInMs;
+    }
+}
+
+bool InstanceScript::isTimerFinished(uint32_t timerId)
+{
+    for (const auto& intTimer : mTimers)
+    {
+        if (intTimer.first == timerId)
+            return intTimer.second == 0;
+    }
+
+    return false;
+}
+
+void InstanceScript::cancelAllTimers()
+{
+    mTimers.clear();
+    mTimerCount = 0;
+}
+
+void InstanceScript::updateTimers()
+{
+    for (auto& TimerIter : mTimers)
+    {
+        if (TimerIter.second > 0)
+        {
+            int leftTime = TimerIter.second - getUpdateFrequency();
+            if (leftTime > 0)
+                TimerIter.second -= getUpdateFrequency();
+            else
+                TimerIter.second = 0;
+        }
+    }
+}
+
+void InstanceScript::displayTimerList(Player* player)
+{
+    player->BroadcastMessage("=== Timers for instance %s ===", mInstance->GetMapInfo()->name.c_str());
+
+    if (mTimers.empty())
+    {
+        player->BroadcastMessage("  No Timers set!");
+    }
+    else
+    {
+        for (const auto& intTimer : mTimers)
+            player->BroadcastMessage("  Timer %u - %i", intTimer.first, intTimer.second);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// instance update
+
+void InstanceScript::registerUpdateEvent()
+{
+    sEventMgr.AddEvent(mInstance, &MapMgr::CallScriptUpdate, EVENT_SCRIPT_UPDATE_EVENT, getUpdateFrequency(), 0, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+}
+
+void InstanceScript::modifyUpdateEvent(uint32_t frequencyInMs)
+{
+    if (getUpdateFrequency() != frequencyInMs)
+    {
+        setUpdateFrequency(frequencyInMs);
+        sEventMgr.ModifyEventTimeAndTimeLeft(mInstance, EVENT_SCRIPT_UPDATE_EVENT, getUpdateFrequency());
+    }
+}
+
+void InstanceScript::removeUpdateEvent()
+{
+    sEventMgr.RemoveEvents(mInstance, EVENT_SCRIPT_UPDATE_EVENT);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// misc
+
+void InstanceScript::setCellForcedStates(float xMin, float xMax, float yMin, float yMax, bool forceActive /*true*/)
+{
+    if (xMin == xMax || yMin == yMax)
+        return;
+
+    float Y = yMin;
+    while (xMin < xMax)
+    {
+        while (yMin < yMax)
+        {
+            MapCell* CurrentCell = mInstance->GetCellByCoords(xMin, yMin);
+            if (forceActive && CurrentCell == nullptr)
+            {
+                CurrentCell = mInstance->CreateByCoords(xMin, yMin);
+                if (CurrentCell != nullptr)
+                    CurrentCell->Init(mInstance->GetPosX(xMin), mInstance->GetPosY(yMin), mInstance);
+            }
+
+            if (CurrentCell != nullptr)
+            {
+                if (forceActive)
+                    mInstance->AddForcedCell(CurrentCell);
+                else
+                    mInstance->RemoveForcedCell(CurrentCell);
+            }
+
+            yMin += 40.0f;
+        }
+
+        yMin = Y;
+        xMin += 40.0f;
+    }
+}
+
 Creature* InstanceScript::spawnCreature(uint32_t entry, float posX, float posY, float posZ, float posO, uint32_t factionId /* = 0*/)
 {
     CreatureProperties const* creatureProperties = sMySQLStore.getCreatureProperties(entry);
@@ -1030,7 +1419,12 @@ Creature* InstanceScript::spawnCreature(uint32_t entry, float posX, float posY, 
 Creature* InstanceScript::getCreatureBySpawnId(uint32_t entry)
 {
     return mInstance->GetSqlIdCreature(entry);
-};
+}
+
+Creature* InstanceScript::GetCreatureByGuid(uint32_t guid)
+{
+    return mInstance->GetCreature(guid);
+}
 
 CreatureSet InstanceScript::getCreatureSetForEntry(uint32_t entry, bool debug /*= false*/, Player* player /*= nullptr*/)
 {
@@ -1085,7 +1479,12 @@ GameObject* InstanceScript::spawnGameObject(uint32_t entry, float posX, float po
 GameObject* InstanceScript::getGameObjectBySpawnId(uint32_t entry)
 {
     return mInstance->GetSqlIdGameObject(entry);
-};
+}
+
+GameObject* InstanceScript::GetGameObjectByGuid(uint32_t guid)
+{
+    return mInstance->GetGameObject(guid);
+}
 
 GameObject* InstanceScript::getClosestGameObjectForPosition(uint32_t entry, float posX, float posY, float posZ)
 {
@@ -1114,7 +1513,7 @@ GameObject* InstanceScript::getClosestGameObjectForPosition(uint32_t entry, floa
     }
 
     return nullptr;
-};
+}
 
 GameObjectSet InstanceScript::getGameObjectsSetForEntry(uint32_t entry)
 {
@@ -1142,7 +1541,24 @@ float InstanceScript::getRangeToObjectForPosition(Object* object, float posX, fl
     float dZ = pos.z - posZ;
 
     return sqrtf(dX * dX + dY * dY + dZ * dZ);
-};
+}
+
+void InstanceScript::setGameObjectStateForEntry(uint32_t entry, uint8_t state)
+{
+    if (entry == 0)
+        return;
+
+    GameObjectSet gameObjectSet = getGameObjectsSetForEntry(entry);
+
+    if (gameObjectSet.size() == 0)
+        return;
+
+    for (auto gameobject : gameObjectSet)
+    {
+        if (gameobject != nullptr)
+            gameobject->SetState(state);
+    }
+}
 
 //MIT end
 

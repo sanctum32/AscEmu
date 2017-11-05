@@ -44,98 +44,73 @@ enum IceCrown_Encounters
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //IceCrownCitadel Instance
-class IceCrownCitadelScript : public MoonInstanceScript
+class IceCrownCitadelScript : public InstanceScript
 {
-    friend class ICCTeleporterAI; // Friendship forever ;-)
-
     public:
 
-        MOONSCRIPT_INSTANCE_FACTORY_FUNCTION(IceCrownCitadelScript, MoonInstanceScript);
-        IceCrownCitadelScript(MapMgr* pMapMgr) : MoonInstanceScript(pMapMgr)
+        IceCrownCitadelScript(MapMgr* pMapMgr) : InstanceScript(pMapMgr)
         {
-            // Way to select bosses
-            BuildEncounterMap();
-            if (mEncounters.size() == 0)
-                return;
-
-            for (EncounterMap::iterator Iter = mEncounters.begin(); Iter != mEncounters.end(); ++Iter)
+            if (getData(CN_LORD_MARROWGAR) == Finished)
             {
-                if ((*Iter).second.mState != State_Finished)
-                    continue;
+                setGameObjectStateForEntry(GO_MARROWGAR_ICEWALL_1, GO_STATE_CLOSED);    // Icewall 1
+                setGameObjectStateForEntry(GO_MARROWGAR_ICEWALL_2, GO_STATE_CLOSED);    // Icewall 2
+                setGameObjectStateForEntry(GO_MARROWGAR_DOOR, GO_STATE_CLOSED);         // Door
+            }
 
-                switch ((*Iter).first)
-                {
-                    case CN_LORD_MARROWGAR:
-                        AddGameObjectStateByEntry(GO_MARROWGAR_ICEWALL_1, State_Inactive);    // Icewall 1
-                        AddGameObjectStateByEntry(GO_MARROWGAR_ICEWALL_2, State_Inactive);    // Icewall 2
-                        AddGameObjectStateByEntry(GO_MARROWGAR_DOOR, State_Inactive);         // Door
-                        break;
-                    default:
-                        continue;
-                };
-            };
+            //test timers
+            addTimer(75000);
+            addTimer(5000);
+            addTimer(35000);
+        }
+
+        static InstanceScript* Create(MapMgr* pMapMgr) { return new IceCrownCitadelScript(pMapMgr); }
+
+        void UpdateEvent()
+        {
+            LOG_DEBUG("called.");
         }
 
         void OnGameObjectPushToWorld(GameObject* pGameObject)
         {
             // Gos which are not visible by killing a boss needs a second check...
-            if (GetInstanceData(Data_EncounterState, CN_LORD_MARROWGAR) == State_Finished)
+            if (getData(CN_LORD_MARROWGAR) == Finished)
             {
-                AddGameObjectStateByEntry(GO_MARROWGAR_ICEWALL_1, State_Active);    // Icewall 1
-                AddGameObjectStateByEntry(GO_MARROWGAR_ICEWALL_2, State_Active);    // Icewall 2
-                AddGameObjectStateByEntry(GO_MARROWGAR_DOOR, State_Active);         // Door
+                setGameObjectStateForEntry(GO_MARROWGAR_ICEWALL_1, GO_STATE_OPEN);    // Icewall 1
+                setGameObjectStateForEntry(GO_MARROWGAR_ICEWALL_2, GO_STATE_OPEN);    // Icewall 2
+                setGameObjectStateForEntry(GO_MARROWGAR_DOOR, GO_STATE_OPEN);         // Door
+            }
+
+            switch (pGameObject->GetEntry())
+            {
+                case GO_TELE_1:
+                case GO_TELE_2:
+                case GO_TELE_3:
+                case GO_TELE_4:
+                case GO_TELE_5:
+                {
+                    pGameObject->SetFlags(0);
+                } break;
             }
         }
 
-        void SetInstanceData(uint32 pType, uint32 pIndex, uint32 pData)
-        {
-            if (pType != Data_EncounterState || pIndex == 0)
-                return;
-
-            EncounterMap::iterator Iter = mEncounters.find(pIndex);
-            if (Iter == mEncounters.end())
-                return;
-
-            (*Iter).second.mState = (EncounterState)pData;
-        };
-
-        uint32 GetInstanceData(uint32 pType, uint32 pIndex)
-        {
-            if (pType != Data_EncounterState || pIndex == 0)
-                return 0;
-
-            EncounterMap::iterator Iter = mEncounters.find(pIndex);
-            if (Iter == mEncounters.end())
-                return 0;
-
-            return (*Iter).second.mState;
-        };
-
         void OnCreatureDeath(Creature* pCreature, Unit* pUnit)
         {
-            EncounterMap::iterator Iter = mEncounters.find(pCreature->GetEntry());
-            if (Iter == mEncounters.end())
-                return;
-
-            (*Iter).second.mState = State_Finished;
-
             switch (pCreature->GetEntry())
             {
                 case CN_LORD_MARROWGAR:
                 {
-                    AddGameObjectStateByEntry(GO_MARROWGAR_ICEWALL_1, State_Active);    // Icewall 1
-                    AddGameObjectStateByEntry(GO_MARROWGAR_ICEWALL_2, State_Active);    // Icewall 2
-                    AddGameObjectStateByEntry(GO_MARROWGAR_DOOR, State_Active);         // Door
+                    setGameObjectStateForEntry(GO_MARROWGAR_ICEWALL_1, GO_STATE_OPEN);    // Icewall 1
+                    setGameObjectStateForEntry(GO_MARROWGAR_ICEWALL_2, GO_STATE_OPEN);    // Icewall 2
+                    setGameObjectStateForEntry(GO_MARROWGAR_DOOR, GO_STATE_OPEN);         // Door
                 }break;
                 default:
                     break;
             }
-            return;
         }
 
         void OnPlayerEnter(Player* player)
         {
-            if (!mSpawnsCreated)
+            if (!spawnsCreated())
             {
                 // setup only the npcs with the correct team...
                 switch (player->GetTeam())
@@ -150,7 +125,7 @@ class IceCrownCitadelScript : public MoonInstanceScript
                         break;
                 }
 
-                mSpawnsCreated = true;
+                setSpawnsCreated();
             }
         }
 
@@ -163,26 +138,26 @@ class ICCTeleporterGossip : public Arcemu::Gossip::Script
 public:
     void OnHello(Object* object, Player* player)
     {
-        IceCrownCitadelScript* pInstance = (IceCrownCitadelScript*)player->GetMapMgr()->GetScript();
+        InstanceScript* pInstance = player->GetMapMgr()->GetScript();
         if (!pInstance)
             return;
 
         Arcemu::Gossip::Menu menu(object->GetGUID(), 15221, player->GetSession()->language);
         menu.AddItem(GOSSIP_ICON_CHAT, player->GetSession()->LocalizedGossipOption(515), 0);     // Teleport to Light's Hammer.
 
-        if (pInstance->GetInstanceData(Data_EncounterState, CN_LORD_MARROWGAR) == State_Finished)
+        if (pInstance->getData(CN_LORD_MARROWGAR) == Finished)
             menu.AddItem(GOSSIP_ICON_CHAT, player->GetSession()->LocalizedGossipOption(516), 1);      // Teleport to Oratory of The Damned.
 
-        if (pInstance->GetInstanceData(Data_EncounterState, CN_LADY_DEATHWHISPER) == State_Finished)
+        if (pInstance->getData(CN_LADY_DEATHWHISPER) == Finished)
             menu.AddItem(GOSSIP_ICON_CHAT, player->GetSession()->LocalizedGossipOption(517), 2);      // Teleport to Rampart of Skulls.
 
         // GunshipBattle has to be finished...
         //menu.AddItem(GOSSIP_ICON_CHAT, player->GetSession()->LocalizedGossipOption(518), 3);        // Teleport to Deathbringer's Rise.
 
-        if (pInstance->GetInstanceData(Data_EncounterState, CN_VALITHRIA_DREAMWALKER) == State_Finished)
+        if (pInstance->getData(CN_VALITHRIA_DREAMWALKER) == Finished)
             menu.AddItem(GOSSIP_ICON_CHAT, player->GetSession()->LocalizedGossipOption(519), 4);      // Teleport to the Upper Spire.
 
-        if (pInstance->GetInstanceData(Data_EncounterState, CN_COLDFLAME) == State_Finished)
+        if (pInstance->getData(CN_COLDFLAME) == Finished)
             menu.AddItem(GOSSIP_ICON_CHAT, player->GetSession()->LocalizedGossipOption(520), 5);      // Teleport to Sindragosa's Lair.
 
         menu.Send(player);
@@ -281,6 +256,11 @@ class LordMarrowgarAI : public MoonScriptBossAI
             spells[3].cooldown = 20;
             spells[3].perctrigger = 50.0f;
             spells[3].attackstoptimer = 12000;
+
+            /* Testcode - remove me please
+            exampleTimer1 = 0;
+            exampleTimer2 = 0;
+            exampleTimer3 = 0;*/
         }
 
         void AIUpdate()
@@ -303,9 +283,15 @@ class LordMarrowgarAI : public MoonScriptBossAI
             sendDBChatMessage(923);      // The Scourge will wash over this world as a swarm of death and destruction!
             RegisterAIUpdateEvent(60000);
 
-            // examplecode.... remove me as soon as possible.
-            //IceCrownCitadelScript* pInstance = (IceCrownCitadelScript*)_unit->GetMapMgr()->GetScript();
-            //pInstance->sendUnitEncounter(0, _unit);
+            /* Testcode - remove me please
+            exampleTimer1 = _addTimer(30000);
+            exampleTimer2 = _addTimer(120000);
+
+            if (pTarget->IsPlayer())
+            {
+                static_cast<Player*>(pTarget)->BroadcastMessage("Morrowgar Timer 1 = %u", _getTimeForTimer(exampleTimer1));
+                static_cast<Player*>(pTarget)->BroadcastMessage("Morrowgar Timer 2 = %u", _getTimeForTimer(exampleTimer2));
+            }*/
         }
 
         void BoneSpike()
@@ -375,6 +361,9 @@ class LordMarrowgarAI : public MoonScriptBossAI
         void OnDied(Unit* pTarget)
         {
             sendDBChatMessage(930);      // I see... Only darkness.
+
+            /* Testcode - remove me please
+            _cancelAllTimers();*/
         }
 
         void SpellCast(float val)
@@ -419,12 +408,20 @@ class LordMarrowgarAI : public MoonScriptBossAI
 
                 RemoveAIUpdateEvent();
                 RegisterAIUpdateEvent(50000);
+
+                /* Testcode - remove me please
+                exampleTimer3 = _addTimer(50000);*/
             }
         }
 
     protected:
 
         uint8 nrspells;
+
+        /* Testcode - remove me please
+        uint32_t exampleTimer1;
+        uint32_t exampleTimer2;
+        uint32_t exampleTimer3;*/
 };
 
 const uint32 IMPALED = 69065;

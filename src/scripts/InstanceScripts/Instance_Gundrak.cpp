@@ -27,15 +27,9 @@
 /////////////////////////////////////////////////////////////////////////////////
 /// Gundrak Instance Script
 // Status: Finished
-class GundrakScript : public MoonInstanceScript
+class GundrakScript : public InstanceScript
 {
     public:
-        uint32        mSkadranGUID;
-        uint32        mColossusGUID;
-        uint32        mMoorabiGUID;
-        uint32        mEckGUID;
-        uint32        mGalDarahGUID;
-
         uint32        mSladranAltarGUID;
         uint32        mSladranStatueGUID;
         uint32        mColossusAltarGUID;
@@ -54,15 +48,8 @@ class GundrakScript : public MoonInstanceScript
 
         uint8        mStatueCount;
 
-        MOONSCRIPT_INSTANCE_FACTORY_FUNCTION(GundrakScript, MoonInstanceScript);
-        GundrakScript(MapMgr* pMapMgr) : MoonInstanceScript(pMapMgr)
+        GundrakScript(MapMgr* pMapMgr) : InstanceScript(pMapMgr)
         {
-            mSkadranGUID = 0;
-            mColossusGUID = 0;
-            mMoorabiGUID = 0;
-            mEckGUID = 0;
-            mGalDarahGUID = 0;
-
             mSladranAltarGUID = 0;
             mSladranStatueGUID = 0;
             mColossusAltarGUID = 0;
@@ -80,47 +67,9 @@ class GundrakScript : public MoonInstanceScript
             mDoor2GUID = 0;
 
             mStatueCount = 0;
-        };
+        }
 
-        void OnCreaturePushToWorld(Creature* pCreature)
-        {
-            switch (pCreature->GetEntry())
-            {
-                case CN_SLADRAN:
-                {
-                    mSkadranGUID = pCreature->GetLowGUID();
-                    mEncounters.insert(EncounterMap::value_type(CN_SLADRAN, BossData(0, mSkadranGUID)));
-                }
-                break;
-                case CN_MOORABI:
-                {
-                    mMoorabiGUID = pCreature->GetLowGUID();
-                    mEncounters.insert(EncounterMap::value_type(CN_MOORABI, BossData(0, mMoorabiGUID)));
-                }
-                break;
-                case CN_GAL_DARAH:
-                {
-                    mGalDarahGUID = pCreature->GetLowGUID();
-                    mEncounters.insert(EncounterMap::value_type(CN_GAL_DARAH, BossData(0, mGalDarahGUID)));
-                }
-                break;
-                case CN_DRAKKARI_COLOSSUS:
-                {
-                    mColossusGUID = pCreature->GetLowGUID();
-                    mEncounters.insert(EncounterMap::value_type(CN_DRAKKARI_COLOSSUS, BossData(0, mColossusGUID)));
-                }
-                break;
-                case CN_ECK:
-                {
-                    if (mInstance->iInstanceMode == MODE_HEROIC)
-                    {
-                        mEckGUID = pCreature->GetLowGUID();
-                        mEncounters.insert(EncounterMap::value_type(CN_ECK, BossData(0, mEckGUID)));
-                    };
-                }
-                break;
-            };
-        };
+        static InstanceScript* Create(MapMgr* pMapMgr) { return new GundrakScript(pMapMgr); }
 
         void OnGameObjectPushToWorld(GameObject* pGameObject)
         {
@@ -197,7 +146,7 @@ class GundrakScript : public MoonInstanceScript
                     mCombatDoorsGUID = pGameObject->GetLowGUID();
                     break;
             }
-        };
+        }
 
         void OnGameObjectActivate(GameObject* pGameObject, Player* pPlayer)
         {
@@ -233,7 +182,7 @@ class GundrakScript : public MoonInstanceScript
                     mStatueCount++;
                 }
                 break;
-            };
+            }
 
             if (mStatueCount < 3)
                 return;
@@ -244,67 +193,16 @@ class GundrakScript : public MoonInstanceScript
                 pTrapDoors->SetState(pTrapDoors->GetState() == 1 ? 0 : 1);
             if (pCoilision)
                 pCoilision->SetState(pCoilision->GetState() == 1 ? 0 : 1);
-        };
-
-        void SetInstanceData(uint32 pType, uint32 pIndex, uint32 pData)
-        {
-            if (pType != Data_EncounterState || pIndex == 0)
-                return;
-
-            EncounterMap::iterator Iter = mEncounters.find(pIndex);
-            if (Iter == mEncounters.end())
-                return;
-
-            (*Iter).second.mState = (EncounterState)pData;
-
-            if (pIndex != CN_GAL_DARAH)
-                return;
-
-            GameObject* pDoors = GetGameObjectByGuid(mCombatDoorsGUID);
-            if (!pDoors)
-                return;
-
-            switch (pData)
-            {
-                case State_InProgress:
-                    pDoors->SetState(pDoors->GetState() == 1 ? 0 : 1);
-                    break;
-                case State_NotStarted:
-                case State_Performed:
-                case State_Finished:
-                    pDoors->SetState(pDoors->GetState() == 1 ? 0 : 1);
-                    break;
-            }
-        };
-
-        uint32 GetInstanceData(uint32 pType, uint32 pIndex)
-        {
-            if (pType != Data_EncounterState || pIndex == 0)
-                return 0;
-
-            EncounterMap::iterator Iter = mEncounters.find(pIndex);
-            if (Iter == mEncounters.end())
-                return 0;
-
-            return (*Iter).second.mState;
-        };
+        }
 
         void OnCreatureDeath(Creature* pVictim, Unit* pKiller)
         {
-            EncounterMap::iterator Iter = mEncounters.find(pVictim->GetEntry());
-            if (Iter == mEncounters.end())
-                return;
-
-            (*Iter).second.mState = State_Finished;
-
             GameObject* pDoors = NULL;
             GameObject* pAltar = NULL;
             switch (pVictim->GetEntry())
             {
                 case CN_MOORABI:
                 {
-                    SetInstanceData(Data_EncounterState, CN_MOORABI, State_Finished);
-
                     pAltar = GetGameObjectByGuid(mMoorabiAltarGUID);
                     if (pAltar)
                         pAltar->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_UNCLICKABLE);
@@ -319,7 +217,6 @@ class GundrakScript : public MoonInstanceScript
                 break;
                 case CN_GAL_DARAH:
                 {
-                    SetInstanceData(Data_EncounterState, CN_GAL_DARAH, State_Finished);
                     pDoors = GetGameObjectByGuid(mDoor1GUID);
                     if (pDoors)
                         pDoors->SetState(GO_STATE_OPEN);
@@ -331,7 +228,6 @@ class GundrakScript : public MoonInstanceScript
                 break;
                 case CN_SLADRAN:
                 {
-                    SetInstanceData(Data_EncounterState, CN_SLADRAN, State_Finished);
                     pAltar = GetGameObjectByGuid(mSladranAltarGUID);
                     if (pAltar)
                         pAltar->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_UNCLICKABLE);
@@ -339,19 +235,13 @@ class GundrakScript : public MoonInstanceScript
                 break;
                 case CN_DRAKKARI_COLOSSUS:
                 {
-                    SetInstanceData(Data_EncounterState, CN_DRAKKARI_COLOSSUS, State_Finished);
                     pAltar = GetGameObjectByGuid(mColossusAltarGUID);
                     if (pAltar)
                         pAltar->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_UNCLICKABLE);
                 }
                 break;
-                case CN_ECK:
-                {
-                    SetInstanceData(Data_EncounterState, CN_ECK, State_Finished);
-                }
-                break;
-            };
-        };
+            }
+        }
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -362,20 +252,33 @@ class SladranAI : public MoonScriptCreatureAI
     MOONSCRIPT_FACTORY_FUNCTION(SladranAI, MoonScriptCreatureAI);
     SladranAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
-        mInstance = GetInstanceScript();
+        mInstance = getInstanceScript();
 
-        SpellDesc* sdPoisonNova = AddSpell(HeroicInt(55081, 59842), Target_Self, 10, 3.5f, 16);
-        sdPoisonNova->AddAnnouncement("Slad'ran begins to cast Poison Nova!");
+        SpellDesc* sdPoisonNova = nullptr;
+        if (_isHeroic())
+        {
+            AddSpell(59840, Target_Current, 25, 0, 6);
+            AddSpell(59839, Target_RandomPlayerNotCurrent, 18, 1.5f, 8);
 
-        AddSpell(HeroicInt(48287, 59840), Target_Current, 25, 0, 6);
-        AddSpell(HeroicInt(54970, 59839), Target_RandomPlayerNotCurrent, 18, 1.5f, 8);
+            sdPoisonNova = AddSpell(59842, Target_Self, 10, 3.5f, 16);
+        }
+        else
+        {
+            AddSpell(48287, Target_Current, 25, 0, 6);
+            AddSpell(54970, Target_RandomPlayerNotCurrent, 18, 1.5f, 8);
+
+            sdPoisonNova = AddSpell(55081, Target_Self, 10, 3.5f, 16);
+        }
+
+        if (sdPoisonNova != nullptr)
+            sdPoisonNova->AddAnnouncement("Slad'ran begins to cast Poison Nova!");
     }
 
     void OnCombatStart(Unit* pTarget)
     {
         sendDBChatMessage(8754);     // Drakkari gonna kill anybody who trespass on these lands!
         if (mInstance)
-            mInstance->SetInstanceData(Data_EncounterState, _unit->GetEntry(), State_InProgress);
+            mInstance->setData(_unit->GetEntry(), InProgress);
 
         ParentClass::OnCombatStart(pTarget);
     }
@@ -399,7 +302,7 @@ class SladranAI : public MoonScriptCreatureAI
     void OnCombatStop(Unit* pTarget)
     {
         if (mInstance)
-            mInstance->SetInstanceData(Data_EncounterState, _unit->GetEntry(), State_Performed);
+            mInstance->setData(_unit->GetEntry(), Performed);
 
         ParentClass::OnCombatStop(pTarget);
     }
@@ -409,7 +312,7 @@ class SladranAI : public MoonScriptCreatureAI
         sendDBChatMessage(4220);     // I sssee now... Ssscourge wasss not... our greatessst enemy....
     }
 
-    MoonInstanceScript* mInstance;
+    InstanceScript* mInstance;
 };
 
 
@@ -421,9 +324,12 @@ class GalDarahAI : public MoonScriptCreatureAI
     MOONSCRIPT_FACTORY_FUNCTION(GalDarahAI, MoonScriptCreatureAI);
     GalDarahAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
-        mInstance = GetInstanceScript();
+        mInstance = getInstanceScript();
 
-        AddSpell(HeroicInt(55250, 59824), Target_Self, 20, 0, 12);
+        if (_isHeroic())
+            AddSpell(59824, Target_Self, 20, 0, 12);
+        else
+            AddSpell(55250, Target_Self, 20, 0, 12);
     }
 
     void OnCombatStart(Unit* pTarget)
@@ -431,7 +337,7 @@ class GalDarahAI : public MoonScriptCreatureAI
         sendDBChatMessage(4199);     // I'm gonna spill your guts, mon!
 
         if (mInstance)
-            mInstance->SetInstanceData(Data_EncounterState, _unit->GetEntry(), State_InProgress);
+            mInstance->setData(_unit->GetEntry(), InProgress);
 
         ParentClass::OnCombatStart(pTarget);
     }
@@ -455,7 +361,7 @@ class GalDarahAI : public MoonScriptCreatureAI
     void OnCombatStop(Unit* pTarget)
     {
         if (mInstance)
-            mInstance->SetInstanceData(Data_EncounterState, _unit->GetEntry(), State_Performed);
+            mInstance->setData(_unit->GetEntry(), Performed);
 
         ParentClass::OnCombatStop(pTarget);
     }
@@ -465,7 +371,7 @@ class GalDarahAI : public MoonScriptCreatureAI
         sendDBChatMessage(4203);     // Even the mighty... can fall.
     }
 
-    MoonInstanceScript* mInstance;
+    InstanceScript* mInstance;
 };
 
 

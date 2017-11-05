@@ -23,67 +23,20 @@
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //Halls of Reflection
-class HallsOfReflectionScript : public MoonInstanceScript
+class HallsOfReflectionScript : public InstanceScript
 {
     public:
 
-        ADD_INSTANCE_FACTORY_FUNCTION(HallsOfReflectionScript)
-        HallsOfReflectionScript(MapMgr* pMapMgr) : MoonInstanceScript(pMapMgr)
-        {
-            // Way to select bosses
-            BuildEncounterMap();
-            if (mEncounters.size() == 0)
-                return;
+        HallsOfReflectionScript(MapMgr* pMapMgr) : InstanceScript(pMapMgr)
+        {}
 
-            for (EncounterMap::iterator Iter = mEncounters.begin(); Iter != mEncounters.end(); ++Iter)
-            {
-                if ((*Iter).second.mState != State_Finished)
-                    continue;
-            }
-        }
-
-        void OnGameObjectPushToWorld(GameObject* pGameObject) { }
-
-        void SetInstanceData(uint32 pType, uint32 pIndex, uint32 pData)
-        {
-            if (pType != Data_EncounterState || pIndex == 0)
-                return;
-
-            EncounterMap::iterator Iter = mEncounters.find(pIndex);
-            if (Iter == mEncounters.end())
-                return;
-
-            (*Iter).second.mState = (EncounterState)pData;
-        }
-
-        uint32 GetInstanceData(uint32 pType, uint32 pIndex)
-        {
-            if (pType != Data_EncounterState || pIndex == 0)
-                return 0;
-
-            EncounterMap::iterator Iter = mEncounters.find(pIndex);
-            if (Iter == mEncounters.end())
-                return 0;
-
-            return (*Iter).second.mState;
-        }
-
-        void OnCreatureDeath(Creature* pCreature, Unit* pUnit)
-        {
-            EncounterMap::iterator Iter = mEncounters.find(pCreature->GetEntry());
-            if (Iter == mEncounters.end())
-                return;
-
-            (*Iter).second.mState = State_Finished;
-
-            return;
-        }
+        static InstanceScript* Create(MapMgr* pMapMgr) { return new HallsOfReflectionScript(pMapMgr); }
 
         void OnPlayerEnter(Player* pPlayer)
         {
             // Fixes a bug where you enter the instance and you run so far and teleports you out, changed DB coords still not working so this is a solution.
             pPlayer->SafeTeleport(MAP_HALLSOFREFLECTION, pPlayer->GetInstanceID(), 5260.970f, 1956.850f, 707.692f, 1.08f);
-            if (!mSpawnsCreated)
+            if (!spawnsCreated())
             {
                 if (pPlayer->GetTeam() == TEAM_ALLIANCE)
                 {
@@ -94,7 +47,8 @@ class HallsOfReflectionScript : public MoonInstanceScript
                 {
                     spawnCreature(CN_SYLVANAS_WINDRUNNER, 5266.77f, 1953.52f, 707.69f, 0.74f, 35);
                 }
-                mSpawnsCreated = true;
+
+                setSpawnsCreated();
             }
         }
 };
@@ -218,9 +172,9 @@ class Marwyn : public MoonScriptBossAI
         MOONSCRIPT_FACTORY_FUNCTION(Marwyn, MoonScriptBossAI);
         Marwyn(Creature* pCreature) : MoonScriptBossAI(pCreature)
         {
-            mInstance = GetInstanceScript();
+            mInstance = getInstanceScript();
 
-            if (IsHeroic() == false) // NORMAL MODE
+            if (_isHeroic() == false) // NORMAL MODE
             {
                 AddSpell(N_SPELL_OBLITERATE, Target_Current, 45, 0, 30); // Timer may be off on this.
                 AddSpell(N_SPELL_WELL, Target_RandomPlayer, 60, 0, 13, 0, 0, false, "Your flesh has decayed before your very eyes!", CHAT_MSG_MONSTER_YELL, 16739);
@@ -238,7 +192,7 @@ class Marwyn : public MoonScriptBossAI
 
         void OnLoad()
         {
-            if (IsHeroic() == true) // HEROIC MODE
+            if (_isHeroic() == true) // HEROIC MODE
             {
                 _unit->SetMaxHealth(903227); // SET HP CAUSE ARCEMU DONT SUPPORT HEROIC MODES!
                 _unit->SetHealth(903227); //SET HP CAUSE ARCEMU DONT SUPPORT HEROIC MODES!
@@ -251,7 +205,7 @@ class Marwyn : public MoonScriptBossAI
             sendDBChatMessage(4105);     // Death is all that you will find here!
 
             if (mInstance)
-                mInstance->SetInstanceData(Data_EncounterState, _unit->GetEntry(), State_InProgress);
+                mInstance->setData(_unit->GetEntry(), InProgress);
             ParentClass::OnCombatStart(pKiller);
         }
 
@@ -271,7 +225,7 @@ class Marwyn : public MoonScriptBossAI
         void OnCombatStop(Unit* Target)
         {
             if (mInstance)
-                mInstance->SetInstanceData(Data_EncounterState, _unit->GetEntry(), State_Performed);
+                mInstance->setData(_unit->GetEntry(), Performed);
             ParentClass::OnCombatStop(Target);
         }
 
@@ -280,10 +234,12 @@ class Marwyn : public MoonScriptBossAI
             sendDBChatMessage(5256);      // Yes... Run... Run to meet your destiny... Its bitter, cold embrace, awaits you.
 
             if (mInstance)
-                mInstance->SetInstanceData(Data_EncounterState, _unit->GetEntry(), State_Finished);
+                mInstance->setData(_unit->GetEntry(), Finished);
             ParentClass::OnDied(pKiller);
         }
-        MoonInstanceScript* mInstance;
+
+    private:
+        InstanceScript* mInstance;
 };
 
 
@@ -295,9 +251,9 @@ class Falric : public MoonScriptBossAI
         MOONSCRIPT_FACTORY_FUNCTION(Falric, MoonScriptBossAI);
         Falric(Creature* pCreature) : MoonScriptBossAI(pCreature)
         {
-            mInstance = GetInstanceScript();
+            mInstance = getInstanceScript();
 
-            if (IsHeroic() == false) // NORMAL MODE
+            if (_isHeroic() == false) // NORMAL MODE
             {
                 AddSpell(N_SPELL_QSTRIKE, Target_Current, 45, 0, 23);
                 AddSpell(N_SPELL_IMPEND, Target_Current, 60, 0, 9);
@@ -317,7 +273,7 @@ class Falric : public MoonScriptBossAI
             sendDBChatMessage(4084);      // Men, women, and children... None were spared the master's wrath. Your death will be no different.
 
             if (mInstance)
-                mInstance->SetInstanceData(Data_EncounterState, _unit->GetEntry(), State_InProgress);
+                mInstance->setData(_unit->GetEntry(), InProgress);
             ParentClass::OnCombatStart(pKiller);
         }
 
@@ -337,7 +293,7 @@ class Falric : public MoonScriptBossAI
         void OnCombatStop(Unit* Target)
         {
             if (mInstance)
-                mInstance->SetInstanceData(Data_EncounterState, _unit->GetEntry(), State_Performed);
+                mInstance->setData(_unit->GetEntry(), Performed);
             ParentClass::OnCombatStop(Target);
         }
 
@@ -346,7 +302,7 @@ class Falric : public MoonScriptBossAI
             sendDBChatMessage(4087);     // Marwyn, finish them...
 
             if (mInstance)
-                mInstance->SetInstanceData(Data_EncounterState, _unit->GetEntry(), State_Finished);
+                mInstance->setData(_unit->GetEntry(), Finished);
             ParentClass::OnDied(pKiller);
         }
 
@@ -371,7 +327,9 @@ class Falric : public MoonScriptBossAI
             }
 
         }
-        MoonInstanceScript* mInstance;
+
+    private:
+        InstanceScript* mInstance;
 };
 
 void SetupHallsOfReflection(ScriptMgr* mgr)

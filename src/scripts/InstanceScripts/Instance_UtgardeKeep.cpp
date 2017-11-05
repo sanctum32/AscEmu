@@ -51,7 +51,7 @@ struct ForgeMasterData
     uint32 mAnvil;
 };
 
-class UtgardeKeepScript : public MoonInstanceScript
+class UtgardeKeepScript : public InstanceScript
 {
     public:
         uint32        mKelesethGUID;
@@ -65,8 +65,7 @@ class UtgardeKeepScript : public MoonInstanceScript
 
         uint8        mUtgardeData[UTGARDE_DATA_END];
 
-        MOONSCRIPT_INSTANCE_FACTORY_FUNCTION(UtgardeKeepScript, MoonInstanceScript);
-        UtgardeKeepScript(MapMgr* pMapMgr) : MoonInstanceScript(pMapMgr)
+        UtgardeKeepScript(MapMgr* pMapMgr) : InstanceScript(pMapMgr)
         {
             mKelesethGUID = 0;
             mSkarvaldGUID = 0;
@@ -89,7 +88,9 @@ class UtgardeKeepScript : public MoonInstanceScript
             {
                 mUtgardeData[i] = 0;
             }
-        };
+        }
+
+        static InstanceScript* Create(MapMgr* pMapMgr) { return new UtgardeKeepScript(pMapMgr); }
 
         void OnCreaturePushToWorld(Creature* pCreature)
         {
@@ -108,7 +109,7 @@ class UtgardeKeepScript : public MoonInstanceScript
                     mIngvarGUID = pCreature->GetLowGUID();
                     break;
             }
-        };
+        }
 
         void OnGameObjectPushToWorld(GameObject* pGameObject)
         {
@@ -151,9 +152,9 @@ class UtgardeKeepScript : public MoonInstanceScript
                     mIngvarDoors[1] = pGameObject->GetLowGUID();
                     break;
             }
-        };
+        }
 
-        void SetInstanceData(uint32 pType, uint32 pIndex, uint32 pData)
+        void SetLocaleInstanceData(uint32 pType, uint32 pIndex, uint32 pData)
         {
             switch (pIndex)
             {
@@ -166,7 +167,7 @@ class UtgardeKeepScript : public MoonInstanceScript
                 {
                     mUtgardeData[UTGARDE_INGVAR] = pData;
 
-                    if (pData == State_Finished)
+                    if (pData == Finished)
                     {
                         GameObject* pGO = nullptr;
                         for (uint8 i = 0; i < 2; ++i)
@@ -180,7 +181,7 @@ class UtgardeKeepScript : public MoonInstanceScript
                     }
                 } break;
             }
-        };
+        }
 
         void HandleForge()
         {
@@ -202,7 +203,7 @@ class UtgardeKeepScript : public MoonInstanceScript
             {
                 pGO->SetState(pGO->GetState() == 1 ? 0 : 1);
             }
-        };
+        }
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -212,20 +213,20 @@ class DragonflayerForgeMasterAI : public MoonScriptCreatureAI
         MOONSCRIPT_FACTORY_FUNCTION(DragonflayerForgeMasterAI, MoonScriptCreatureAI);
         DragonflayerForgeMasterAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
-            mInstance = GetInstanceScript();
+            pInstance = (UtgardeKeepScript*)_unit->GetMapMgr()->GetScript();
 
             AddSpell(DRAGONFLAYER_FORGE_MASTER_BURNING_BRAND, Target_Current, 8, 0, 40, 0, 30);
         }
 
         void OnDied(Unit* pKiller)
         {
-            if (mInstance)
-                mInstance->SetInstanceData(Data_UnspecifiedType, UTGARDE_FORGE_MASTER, 0);
+            if (pInstance)
+                pInstance->SetLocaleInstanceData(0, UTGARDE_FORGE_MASTER, 0);
 
             ParentClass::OnDied(pKiller);
         };
 
-        MoonInstanceScript* mInstance;
+        UtgardeKeepScript* pInstance;
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -443,17 +444,17 @@ class SkarvaldTheConstructorAI : public MoonScriptCreatureAI
         {
             sendDBChatMessage(4471);     // Dalronn! See if you can muster the nerve to join my attack!
             pDalronn = GetNearestCreature(CN_DALRONN);
-            mReplyTimer = AddTimer(2500);
+            mReplyTimer = _addTimer(2500);
 
             ParentClass::OnCombatStart(pTarget);
         };
 
         void AIUpdate()
         {
-            if (IsTimerFinished(mReplyTimer) && pDalronn != NULL)
+            if (_isTimerFinished(mReplyTimer) && pDalronn != NULL)
             {
                 pDalronn->sendChatMessage(CHAT_MSG_MONSTER_YELL, 13199, "By all means, don't assess the situation, you halfwit! Just jump into the fray!");
-                RemoveTimer(mReplyTimer);
+                _removeTimer(mReplyTimer);
             };
 
             ParentClass::AIUpdate();
@@ -503,7 +504,7 @@ class SkarvaldTheConstructorAI : public MoonScriptCreatureAI
         };
 
     private:
-        int32 mReplyTimer;
+        uint32 mReplyTimer;
         MoonScriptCreatureAI* pDalronn;
         MoonScriptCreatureAI* pDalronnGhost;
 };
@@ -514,17 +515,17 @@ class DalronnTheControllerAI : public MoonScriptCreatureAI
         MOONSCRIPT_FACTORY_FUNCTION(DalronnTheControllerAI, MoonScriptCreatureAI);
         DalronnTheControllerAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
-            if (IsHeroic())
+            if (_isHeroic())
             {
                 AddSpell(SHADOW_BOLT_HC, Target_RandomPlayer, 85, 2, 3);
                 AddSpell(DEBILITATE, Target_RandomPlayer, 25, 0, 12);
-                mSummonTimer = AddTimer(15000);
+                mSummonTimer = _addTimer(15000);
             }
             else
             {
                 AddSpell(SHADOW_BOLT, Target_RandomPlayer, 35, 2, 8);
                 AddSpell(DEBILITATE, Target_RandomPlayer, 25, 0, 12);
-                mSummonTimer = AddTimer(15000);
+                mSummonTimer = _addTimer(15000);
             }
             pSkarvald = NULL;
             pSkarvaldGhost = NULL;
@@ -539,11 +540,11 @@ class DalronnTheControllerAI : public MoonScriptCreatureAI
 
         void AIUpdate()
         {
-            if (IsTimerFinished(mSummonTimer))
+            if (_isTimerFinished(mSummonTimer))
             {
                 SpawnCreature(SKELETON_ADD, _unit->GetPositionX() + 6, _unit->GetPositionY() + 4, _unit->GetPositionZ(), 0, true);
                 SpawnCreature(SKELETON_ADD, _unit->GetPositionX() - 6, _unit->GetPositionY() + 4, _unit->GetPositionZ(), 0, true);
-                ResetTimer(mSummonTimer, 15000);
+                _resetTimer(mSummonTimer, 15000);
             };
 
             ParentClass::AIUpdate();
@@ -624,7 +625,7 @@ class DalronnTheControllerGhostAI : public MoonScriptCreatureAI
         MOONSCRIPT_FACTORY_FUNCTION(DalronnTheControllerGhostAI, MoonScriptCreatureAI);
         DalronnTheControllerGhostAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
-            if (IsHeroic())
+            if (_isHeroic())
             {
                 AddSpell(SHADOW_BOLT_HC, Target_RandomPlayer, 85, 2, 3);
                 AddSpell(DEBILITATE, Target_RandomPlayer, 25, 0, 12);
@@ -682,7 +683,7 @@ class PrinceKelesethAI : public MoonScriptCreatureAI
             mFrostTomb = AddSpellFunc(&SpellFunc_KelesethFrostTomb, Target_RandomPlayer, 25, 0, 15, 0, 20);
             mAddSummon = AddSpellFunc(&SpellFunc_KelesethAddSummon, Target_Self, 0, 0, 0);
 
-            if (IsHeroic())
+            if (_isHeroic())
                 mShadowBolt = AddSpell(KELESETH_SHADOW_BOLT_HC, Target_Current, 100, 2, 2);
             else
                 mShadowBolt = AddSpell(KELESETH_SHADOW_BOLT, Target_Current, 100, 2, 2);
@@ -752,11 +753,11 @@ class SkeletonAddAI : public MoonScriptCreatureAI
         MOONSCRIPT_FACTORY_FUNCTION(SkeletonAddAI, MoonScriptCreatureAI);
         SkeletonAddAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
-            if (IsHeroic())
+            if (_isHeroic())
                 AddSpell(DECREPIFY_HC, Target_Current, 8, 0, 40);
             else
                 AddSpell(DECREPIFY, Target_Current, 8, 0, 40);
-        };
+        }
 
         void OnLoad()
         {
@@ -765,17 +766,17 @@ class SkeletonAddAI : public MoonScriptCreatureAI
                 _unit->GetAIInterface()->AttackReaction(pTarget, 50, 0);
 
             ParentClass::OnLoad();
-        };
+        }
 
         void OnCombatStop(Unit* pTarget)
         {
             despawn(1);
-        };
+        }
 
         void OnDied(Unit* pKiller)
         {
             despawn(1);
-        };
+        }
 
 };
 
@@ -796,7 +797,7 @@ void SpellFunc_ShadowAxe(SpellDesc* pThis, MoonScriptCreatureAI* pCreatureAI, Un
 
         pShadowAxe->CastSpell(pShadowAxe, SHADOW_AXE_SPELL, true);
         pShadowAxe->Despawn(10000, 0);
-    };
+    }
 };
 
 class IngvarThePlundererAI : public MoonScriptCreatureAI
@@ -806,7 +807,7 @@ class IngvarThePlundererAI : public MoonScriptCreatureAI
         {
             AddSpell(INGVAR_CLEAVE, Target_Current, 24, 0, 6);
 
-            if (IsHeroic())
+            if (_isHeroic())
             {
                 AddSpell(INGVAR_ENRAGE_HC, Target_Self, 45, 0, 4);
                 AddSpell(INGVAR_SMASH_HC, Target_Self, 25, 3, 18);
@@ -847,12 +848,12 @@ class IngvarUndeadAI : public MoonScriptCreatureAI
         MOONSCRIPT_FACTORY_FUNCTION(IngvarUndeadAI, MoonScriptCreatureAI);
         IngvarUndeadAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
-            mInstance = GetInstanceScript();
+            mInstance = getInstanceScript();
 
             AddSpellFunc(&SpellFunc_ShadowAxe, Target_RandomPlayerNotCurrent, 15, 0, 21);
             AddSpell(INGVAR_DARK_SMASH, Target_Self, 12, 3, 16);
 
-            if (IsHeroic())
+            if (_isHeroic())
             {
                 AddSpell(INGVAR_DREADFUL_ROAR, Target_Self, 25, 2, 10);
                 AddSpell(INGVAR_WOE_STRIKE, Target_ClosestUnit, 18, 0, 16);
@@ -872,12 +873,13 @@ class IngvarUndeadAI : public MoonScriptCreatureAI
             sendDBChatMessage(6986);     // No! I can do... better! I can...
 
             if (mInstance)
-                mInstance->SetInstanceData(Data_EncounterState, _unit->GetEntry(), State_Finished);
+                mInstance->setData(_unit->GetEntry(), Finished);
 
             ParentClass::OnDied(pKiller);
         }
 
-        MoonInstanceScript* mInstance;
+    private:
+        InstanceScript* mInstance;
 };
 
 void SetupUtgardeKeep(ScriptMgr* mgr)

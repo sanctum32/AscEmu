@@ -63,7 +63,7 @@ class CabalAcolyteAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -167,7 +167,7 @@ class CabalDeathswornAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -260,7 +260,7 @@ class CabalFanaticAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -359,7 +359,7 @@ class CabalShadowPriestAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -458,7 +458,7 @@ class CabalSpellbinderAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -557,7 +557,7 @@ class CabalWarlockAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -656,7 +656,7 @@ class CabalZealotAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -792,7 +792,7 @@ class CabalRitualistAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -912,7 +912,7 @@ class FelOverseerAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             HealCooldown = 1;
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -1022,7 +1022,7 @@ class MaliciousInstructorAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -1158,7 +1158,7 @@ class AmbassadorHellmawAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
 
             RemoveAIUpdateEvent();
@@ -1317,7 +1317,7 @@ class BlackheartTheInciterAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -1540,7 +1540,7 @@ class GrandmasterVorpilAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
 
             RemoveAIUpdateEvent();
@@ -1665,7 +1665,7 @@ class MurmurAI : public CreatureAIScript
             spells[3].attackstoptimer = 1000;
             spells[3].cooldown = 5;
 
-            if (_unit->GetMapMgr() != NULL && _unit->GetMapMgr()->iInstanceMode != MODE_HEROIC && _unit->GetHealthPct() >= 41)
+            if (_unit->GetMapMgr() != NULL && !_isHeroic() && _unit->GetHealthPct() >= 41)
             {
                 _unit->SetHealthPct(40);
             }
@@ -1681,7 +1681,7 @@ class MurmurAI : public CreatureAIScript
 
             SonicBoom = false;
 
-            if (_unit->GetMapMgr() != NULL && _unit->GetMapMgr()->iInstanceMode != MODE_HEROIC && _unit->GetHealthPct() >= 41)
+            if (_unit->GetMapMgr() != NULL && !_isHeroic() && _unit->GetHealthPct() >= 41)
             {
                 _unit->SetHealthPct(40);
             }
@@ -1693,10 +1693,10 @@ class MurmurAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
 
-            if (_unit->GetMapMgr() != NULL && _unit->GetMapMgr()->iInstanceMode != MODE_HEROIC && _unit->GetHealthPct() >= 41)
+            if (_unit->GetMapMgr() != NULL && !_isHeroic() && _unit->GetHealthPct() >= 41)
             {
                 _unit->SetHealthPct(40);
             }

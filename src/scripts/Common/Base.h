@@ -28,7 +28,7 @@
 #include <Management/QuestLogEntry.hpp>
 #include "Map/MapScriptInterface.h"
 #include <Spell/Customization/SpellCustomizations.hpp>
-#include "../Common/Instance_Base.h"
+#include "Map/WorldCreatorDefines.hpp"
 
 #define MOONSCRIPT_FACTORY_FUNCTION(ClassName, ParentClassName)\
 public:\
@@ -42,16 +42,6 @@ enum EventType
     Event_OnTargetDied,
     Event_OnDied,
     Event_OnTaunt
-};
-
-enum BehaviorType
-{
-    Behavior_Default,
-    Behavior_Melee,
-    Behavior_Ranged,
-    Behavior_Spell,
-    Behavior_Flee,
-    Behavior_CallForHelp
 };
 
 struct EmoteDesc
@@ -160,8 +150,6 @@ typedef std::vector<SpellDesc*> SpellDescArray;
 typedef std::list<SpellDesc*> SpellDescList;
 typedef std::pair<int32, SpellDesc*> PhaseSpellPair;
 typedef std::vector<PhaseSpellPair> PhaseSpellArray;
-typedef std::pair<int32, int32> TimerPair;
-typedef std::vector<TimerPair> TimerArray;
 typedef std::vector<LootDesc> LootTable;
 typedef std::pair<RangeStatus, float> RangeStatusPair;
 typedef std::vector<EventStruct*> EventArray;
@@ -280,23 +268,11 @@ class MoonScriptCreatureAI : public CreatureAIScript
 
         //Movement
         void MoveTo(Unit* pUnit, RangeStatusPair pRangeStatus = std::make_pair(RangeStatus_TooFar, 0.0f));
-
-        //Behavior
-        void SetBehavior(BehaviorType pBehavior);
-        BehaviorType GetBehavior();
         
         void AggroNearestUnit(uint32 pInitialThreat = 1);
         void AggroRandomUnit(uint32 pInitialThreat = 1);
         void AggroNearestPlayer(uint32 pInitialThreat = 1);
         void AggroRandomPlayer(uint32 pInitialThreat = 1);
-
-        //Instances
-        bool IsHeroic();
-        uint32 HeroicInt(uint32 pNormal, uint32 pHeroic) { return IsHeroic() ? pHeroic : pNormal; }
-        MoonInstanceScript* GetInstanceScript();
-
-        void CastOnAllInrangePlayers(uint32 pSpellId, bool pTriggered = false);
-        void CastOnInrangePlayers(float pDistanceMin, float pDistanceMax, uint32 pSpellId, bool pTriggered = false);
 
         MoonScriptCreatureAI* GetNearestCreature(uint32 pCreatureId = 0);
         MoonScriptCreatureAI* SpawnCreature(uint32 pCreatureId, float pX, float pY, float pZ, float pO = 0, bool pForceSameFaction = false, uint32 pPhase = 1);
@@ -308,11 +284,7 @@ class MoonScriptCreatureAI : public CreatureAIScript
         void CastSpellNowNoScheduling(SpellDesc* pSpell);
         SpellDesc* FindSpellById(uint32 pSpellId);
         SpellDesc* FindSpellByFunc(SpellFunc pFnc);
-        bool IsCasting();
-        void ApplyAura(uint32 pSpellId);
-        void RemoveAura(uint32 pSpellId);
-        void RemoveAuraOnPlayers(uint32 pSpellId);
-        void RemoveAllAuras();
+
         void TriggerCooldownOnAllSpells();
         void CancelAllCooldowns();
 
@@ -323,32 +295,12 @@ class MoonScriptCreatureAI : public CreatureAIScript
 
         void Announce(const char* pText);
 
-        //Timers and Events
-        int32 AddTimer(int32 pDurationMillisec);
-        int32 GetTimer(int32 pTimerId);
-        void RemoveTimer(int32 & pTimerId);
-        void ResetTimer(int32 pTimerId, int32 pDurationMillisec);
-        bool IsTimerFinished(int32 pTimerId);
-        void CancelAllTimers();
-        uint32 GetTimerCount() { return mTimerCount; }
         int32 AddEvent(uint32 pEventId, int32 pTriggerTimer, EventFunc pEvent, int32 pMiscVal = 0, bool pRepeatable = false);
         void ResetEvent(uint32 pEventId, int32 pNewTriggerTimer, bool pRepeatable = false);
         void RemoveEvent(uint32 pEventId);
         void RemoveAllEvents();
         bool HasEvents() { return mEventCount > 0 ? true : false; }
         uint32 GetEventCount() { return mEventCount; }
-
-        //Waypoints
-        Movement::WayPoint* CreateWaypoint(int pId, uint32 pWaittime, uint32 pMoveFlag, Movement::Location pCoords);
-        Movement::WayPoint* CreateWaypoint(int pId, uint32 pWaittime, Movement::LocationWithFlag wp_info);
-        void AddWaypoint(Movement::WayPoint* pWayPoint);
-        void ForceWaypointMove(uint32 pWaypointId);
-        void SetWaypointToMove(uint32 pWaypointId);
-        void StopWaypointMovement();
-        void SetWaypointMoveType(Movement::WaypointMovementScript wp_move_script_type);
-        uint32 GetCurrentWaypoint();
-        size_t GetWaypointCount();
-        bool HasWaypoints();
 
         //Others
         void SetTargetToChannel(Unit* pTarget, uint32 pSpellId);
@@ -399,9 +351,6 @@ class MoonScriptCreatureAI : public CreatureAIScript
         EmoteArray mOnDiedEmotes;
         EmoteArray mOnTauntEmotes;
 
-        TimerArray mTimers;
-        int32 mTimerIdCounter;
-        uint32 mTimerCount;
         uint32 mEventCount;
         uint32 mAIUpdateFrequency;
         uint32 mBaseAttackTime;
@@ -435,7 +384,7 @@ class MoonScriptBossAI : public MoonScriptCreatureAI
         PhaseSpellArray mPhaseSpells;
         SpellDesc* mEnrageSpell;
         int32 mEnrageTimerDuration;
-        int32 mEnrageTimer;
+        uint32_t mEnrageTimer;
 };
 
 

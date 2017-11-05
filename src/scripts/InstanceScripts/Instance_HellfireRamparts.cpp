@@ -34,7 +34,7 @@ class WatchkeeperGargolmarAI : public MoonScriptBossAI
         AddSpell(WATCHKEEPER_OVERPOWER, Target_Current, 10, 0, 5);
         mRetaliation = AddSpell(WATCHKEEPER_RETALIATION, Target_Self, 0, 0, 0);
 
-        if (IsHeroic())
+        if (_isHeroic())
             AddSpell(WATCHKEEPER_MORTAL_WOUND_H, Target_Current, 15, 0, 12);
         else
             AddSpell(WATCHKEEPER_MORTAL_WOUND, Target_Current, 15, 0, 12);
@@ -84,17 +84,17 @@ class WatchkeeperGargolmarAI : public MoonScriptBossAI
         {
             sendDBChatMessage(4871);      // Heal me, quickly!
             mCalledForHelp = true;
-        };
+        }
 
         if (_unit->GetHealthPct() <= 20 && !_retaliation)
         {
             _retaliation = true;
             _unit->setAttackTimer(1500, false);
             CastSpellNowNoScheduling(mRetaliation);
-        };
+        }
 
         ParentClass::AIUpdate();
-    };
+    }
 
     bool mCalledForHelp;
     bool _retaliation;
@@ -115,7 +115,7 @@ class OmorTheUnscarredAI : public MoonScriptCreatureAI
             SpellDesc* pSummon = AddSpell(OMOR_SUMMON_FIENDISH_HOUND, Target_Self, 8, 1, 20);
             pSummon->AddEmote("Achor-she-ki! Feast my pet! Eat your fill!", CHAT_MSG_MONSTER_YELL, 10277);
             AddSpell(OMOR_SHADOW_WHIP, Target_RandomPlayer, 10, 0, 30);
-            if (_unit->GetMapMgr()->iInstanceMode != MODE_HEROIC)
+            if (!_isHeroic())
             {
                 AddSpell(OMOR_SHADOW_BOLT, Target_RandomPlayer, 8, 3, 15, 10, 60, true);
                 SpellDesc* pAura = AddSpell(OMOR_TREACHEROUS_AURA, Target_RandomPlayer, 8, 2, 35, 0, 60, true);

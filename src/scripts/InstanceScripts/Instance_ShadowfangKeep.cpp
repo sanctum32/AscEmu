@@ -12,7 +12,7 @@ This file is released under the MIT license. See README-MIT for more information
 #include "Spell/Definitions/PowerType.h"
 
  /// Instance script for map 33 (Shadowfang Keep)
-class ShadowfangKeepInstance : public MoonInstanceScript
+class ShadowfangKeepInstance : public InstanceScript
 {
         // Gameobjects low guids
         uint32 go_leftCell_GUID;
@@ -37,9 +37,7 @@ class ShadowfangKeepInstance : public MoonInstanceScript
 
     public:
 
-        MOONSCRIPT_INSTANCE_FACTORY_FUNCTION(ShadowfangKeepInstance, MoonInstanceScript);
-        ShadowfangKeepInstance(MapMgr* pMapMgr) :
-            MoonInstanceScript(pMapMgr),
+        ShadowfangKeepInstance(MapMgr* pMapMgr) : InstanceScript(pMapMgr),
 
             // Gameobjects low guids
             go_leftCell_GUID(0),
@@ -60,10 +58,12 @@ class ShadowfangKeepInstance : public MoonInstanceScript
             nandos_summons.clear();
 
             // Set encounters data to State_NotStarted
-            memset(m_encounterData, State_NotStarted, sizeof(m_encounterData));
+            memset(m_encounterData, NotStarted, sizeof(m_encounterData));
         }
 
-        void SetInstanceData(uint32 /*pType*/, uint32 pIndex, uint32 pData)
+        static InstanceScript* Create(MapMgr* pMapMgr) { return new ShadowfangKeepInstance(pMapMgr); }
+
+        void SetLocaleInstanceData(uint32 /*pType*/, uint32 pIndex, uint32 pData)
         {
             if (pIndex >= INDEX_MAX)
                 return;
@@ -72,7 +72,7 @@ class ShadowfangKeepInstance : public MoonInstanceScript
             {
                 case INDEX_VOIDWALKER:
                 {
-                    if (pData == State_InProgress)
+                    if (pData == InProgress)
                     {
                         if (Creature* ArugalSpawn = spawnCreature(CN_ARUGAL_BOSS, ArugalAtFenrusLoc.x, ArugalAtFenrusLoc.y, ArugalAtFenrusLoc.z, ArugalAtFenrusLoc.o))
                         {
@@ -89,7 +89,7 @@ class ShadowfangKeepInstance : public MoonInstanceScript
                 case INDEX_NANDOS:
                 {
                     // Despawn all summons on fail or on boos death
-                    if (pData == State_InvalidState || pData == State_Finished)
+                    if (pData == InvalidState || pData == Finished)
                     {
                         for (std::list<uint32>::iterator itr = nandos_summons.begin(); itr != nandos_summons.end();)
                         {
@@ -102,7 +102,7 @@ class ShadowfangKeepInstance : public MoonInstanceScript
                         // Despawn creatures
                     }
 
-                    if (pData == State_Finished)
+                    if (pData == Finished)
                     {
                         GameObject* pGate = GetGameObjectByGuid(go_arugalsLair_GUID);
                         if (pGate != nullptr && pGate->GetState() == GO_STATE_CLOSED)
@@ -114,7 +114,7 @@ class ShadowfangKeepInstance : public MoonInstanceScript
                 case INDEX_RETHILGORE:
                 {
                     // Add gossip flag to prisoners
-                    if (pData == State_Finished)
+                    if (pData == Finished)
                     {
                         // Set gossip flags for both prisoners and push texts
                         if (Creature* pCreature = GetInstance()->GetCreature(npc_adamant_GUID))
@@ -159,7 +159,7 @@ class ShadowfangKeepInstance : public MoonInstanceScript
                 case INDEX_PRISONER_EVENT:
                 {
                     // Open doors in any case
-                    if (pData == State_Finished || pData == State_Performed)
+                    if (pData == Finished || pData == Performed)
                     {
                         if (GameObject* pGO = GetGameObjectByGuid(go_courtyarDoor_GUID))
                         {
@@ -170,9 +170,9 @@ class ShadowfangKeepInstance : public MoonInstanceScript
                 }break;
                 case INDEX_FENRUS:
                 {
-                    if (pData == State_Finished)
+                    if (pData == Finished)
                     {
-                        SetInstanceData(0, INDEX_VOIDWALKER, State_InProgress);
+                        SetLocaleInstanceData(0, INDEX_VOIDWALKER, InProgress);
                         GameObject* pGate = GetGameObjectByGuid(go_sorcererGate_GUID);
                         if (pGate != nullptr && pGate->GetState() == GO_STATE_CLOSED)
                         {
@@ -195,7 +195,6 @@ class ShadowfangKeepInstance : public MoonInstanceScript
         // Objects handling
         void OnGameObjectPushToWorld(GameObject* pGameObject)
         {
-            ParentClass::OnGameObjectPushToWorld(pGameObject);
             switch (pGameObject->GetEntry())
             {
                 case GO_LEFT_CELL:
@@ -213,7 +212,7 @@ class ShadowfangKeepInstance : public MoonInstanceScript
                 case GO_ARUGALS_LAIR_GATE:
                 {
                     go_arugalsLair_GUID = pGameObject->GetLowGUID();
-                    if (GetInstanceData(0, INDEX_NANDOS) == State_Finished && pGameObject->GetState() == GO_STATE_CLOSED)
+                    if (GetInstanceData(0, INDEX_NANDOS) == Finished && pGameObject->GetState() == GO_STATE_CLOSED)
                     {
                         pGameObject->SetState(GO_STATE_OPEN);
                     }
@@ -221,7 +220,7 @@ class ShadowfangKeepInstance : public MoonInstanceScript
                 case GO_SORCERER_GATE:
                 {
                     go_sorcererGate_GUID = pGameObject->GetLowGUID();
-                    if (GetInstanceData(0, INDEX_FENRUS) == State_Finished && pGameObject->GetState() == GO_STATE_CLOSED)
+                    if (GetInstanceData(0, INDEX_FENRUS) == Finished && pGameObject->GetState() == GO_STATE_CLOSED)
                     {
                         pGameObject->SetState(GO_STATE_OPEN);
                     }
@@ -229,7 +228,7 @@ class ShadowfangKeepInstance : public MoonInstanceScript
                 case GO_LEFT_LEVER:
                 {
                     go_leftCellLever_GUID = pGameObject->GetLowGUID();
-                    if (GetInstanceData(0, INDEX_RETHILGORE) != State_Finished)
+                    if (GetInstanceData(0, INDEX_RETHILGORE) != Finished)
                     {
                         pGameObject->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_NONSELECTABLE);
                     }
@@ -237,7 +236,7 @@ class ShadowfangKeepInstance : public MoonInstanceScript
                 case GO_RIGHT_LEVER:
                 {
                     go_rightCellLever_GUID = pGameObject->GetLowGUID();
-                    if (GetInstanceData(0, INDEX_RETHILGORE) != State_Finished)
+                    if (GetInstanceData(0, INDEX_RETHILGORE) != Finished)
                     {
                         pGameObject->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_NONSELECTABLE);
                     }
@@ -245,7 +244,7 @@ class ShadowfangKeepInstance : public MoonInstanceScript
                 case GO_MIDDLE_LEVER:
                 {
                     go_middleCellLever_GUID = pGameObject->GetLowGUID();
-                    if (GetInstanceData(0, INDEX_RETHILGORE) != State_Finished)
+                    if (GetInstanceData(0, INDEX_RETHILGORE) != Finished)
                     {
                         pGameObject->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_NONSELECTABLE);
                     }
@@ -253,7 +252,7 @@ class ShadowfangKeepInstance : public MoonInstanceScript
                 case GO_COURTYARD_DOOR:
                 {
                     go_courtyarDoor_GUID = pGameObject->GetLowGUID();
-                    if (GetInstanceData(0, INDEX_PRISONER_EVENT) == State_Finished && pGameObject->GetState() == GO_STATE_CLOSED)
+                    if (GetInstanceData(0, INDEX_PRISONER_EVENT) == Finished && pGameObject->GetState() == GO_STATE_CLOSED)
                     {
                         pGameObject->SetState(GO_STATE_OPEN);
                     }
@@ -265,7 +264,6 @@ class ShadowfangKeepInstance : public MoonInstanceScript
 
         void OnGameObjectActivate(GameObject* pGameObject, Player* pPlayer)
         {
-            ParentClass::OnGameObjectActivate(pGameObject, pPlayer);
             switch (pGameObject->GetEntry())
             {
                 case GO_RIGHT_LEVER:
@@ -299,20 +297,19 @@ class ShadowfangKeepInstance : public MoonInstanceScript
 
         void OnCreatureDeath(Creature* pCreature, Unit* pKiller)
         {
-            ParentClass::OnCreatureDeath(pCreature, pKiller);
             switch (pCreature->GetEntry())
             {
                 case CN_NANDOS:
                 {
-                    SetInstanceData(0, INDEX_NANDOS, State_Finished);
+                    SetLocaleInstanceData(0, INDEX_NANDOS, Finished);
                 }break;
                 case CN_RETHILGORE:
                 {
-                    SetInstanceData(0, INDEX_RETHILGORE, State_Finished);
+                    SetLocaleInstanceData(0, INDEX_RETHILGORE, Finished);
                 }break;
                 case CN_FENRUS:
                 {
-                    SetInstanceData(0, INDEX_FENRUS, State_Finished);
+                    SetLocaleInstanceData(0, INDEX_FENRUS, Finished);
                 }break;
                 default:
                     break;
@@ -321,7 +318,6 @@ class ShadowfangKeepInstance : public MoonInstanceScript
 
         void OnCreaturePushToWorld(Creature* pCreature)
         {
-            ParentClass::OnCreaturePushToWorld(pCreature);
             switch (pCreature->GetEntry())
             {
                 case CN_ADAMANT:
@@ -342,7 +338,7 @@ class ShadowfangKeepInstance : public MoonInstanceScript
                 case CN_LUPINE_HORROR:
                 {
                     // Add to nandos summon lists only on his event is started
-                    if (GetInstanceData(0, INDEX_NANDOS) == State_InProgress)
+                    if (GetInstanceData(0, INDEX_NANDOS) == InProgress)
                     {
                         pCreature->Despawn(60 * 4 * 1000, 0);   // Despawn in 4 mins
                         nandos_summons.push_back(GET_LOWGUID_PART(pCreature->GetGUID()));
@@ -351,7 +347,7 @@ class ShadowfangKeepInstance : public MoonInstanceScript
                 case CN_LUPINE_DELUSION:
                 {
                     // Add to nandos summon lists only on his event is started
-                    if (GetInstanceData(0, INDEX_NANDOS) == State_InProgress)
+                    if (GetInstanceData(0, INDEX_NANDOS) == InProgress)
                     {
                         nandos_summons.push_back(GET_LOWGUID_PART(pCreature->GetGUID()));
                     }
@@ -359,7 +355,7 @@ class ShadowfangKeepInstance : public MoonInstanceScript
                 }break;
                 case CN_DEATHSTALKER_VINCENT:
                 {
-                    if (GetInstanceData(0, INDEX_ARUGAL_INTRO) == State_Finished)
+                    if (GetInstanceData(0, INDEX_ARUGAL_INTRO) == Finished)
                     {
                         // Make him look like dead
                         pCreature->SetStandState(STANDSTATE_DEAD);
@@ -392,17 +388,17 @@ class ArugalAI : public MoonScriptCreatureAI
             stage(0)
         {
             SFK_Instance = static_cast<ShadowfangKeepInstance*>(pCreature->GetMapMgr()->GetScript());
-            if (SFK_Instance && SFK_Instance->GetInstanceData(0, INDEX_ARUGAL_INTRO) == State_NotStarted)
+            if (SFK_Instance && SFK_Instance->GetInstanceData(0, INDEX_ARUGAL_INTRO) == NotStarted)
             {
                 RegisterAIUpdateEvent(500);
-                SFK_Instance->SetInstanceData(0, INDEX_ARUGAL_INTRO, State_InProgress);
+                SFK_Instance->SetLocaleInstanceData(0, INDEX_ARUGAL_INTRO, InProgress);
             }
         }
 
         void AIUpdate()
         {
             ParentClass::AIUpdate();
-            if (SFK_Instance && SFK_Instance->GetInstanceData(0, INDEX_ARUGAL_INTRO) == State_InProgress)
+            if (SFK_Instance && SFK_Instance->GetInstanceData(0, INDEX_ARUGAL_INTRO) == InProgress)
             {
                 switch (stage)
                 {
@@ -460,7 +456,7 @@ class ArugalAI : public MoonScriptCreatureAI
                 case 9:
                 {
                     GetUnit()->CastSpell(GetUnit(), SPELL_ARUGAL_SPAWN, true);
-                    SFK_Instance->SetInstanceData(0, INDEX_ARUGAL_INTRO, State_Finished);
+                    SFK_Instance->SetLocaleInstanceData(0, INDEX_ARUGAL_INTRO, Finished);
                     GetUnit()->SetInvisFlag(INVIS_FLAG_TOTAL);
                     RemoveAIUpdateEvent();
                 }break;
@@ -546,8 +542,8 @@ class AdamantAI : public MoonScriptCreatureAI
         void AIUpdate()
         {
             ParentClass::AIUpdate();
-            if (SFK_instance && (SFK_instance->GetInstanceData(0, INDEX_PRISONER_EVENT) == State_InProgress 
-                || SFK_instance->GetInstanceData(0, INDEX_PRISONER_EVENT) == State_Performed))
+            if (SFK_instance && (SFK_instance->GetInstanceData(0, INDEX_PRISONER_EVENT) == InProgress 
+                || SFK_instance->GetInstanceData(0, INDEX_PRISONER_EVENT) == Performed))
             {
                 if (eventStarted)
                 {
@@ -573,7 +569,7 @@ class AdamantAI : public MoonScriptCreatureAI
                         case 3:
                         {
                             GetUnit()->SendScriptTextChatMessage(SAY_ADAMANT_AFTER_OPEN);
-                            SFK_instance->SetInstanceData(0, INDEX_PRISONER_EVENT, State_Performed);
+                            SFK_instance->SetLocaleInstanceData(0, INDEX_PRISONER_EVENT, Performed);
                             ModifyAIUpdateEvent(4000);
                         }break;
                         case 4:
@@ -582,7 +578,7 @@ class AdamantAI : public MoonScriptCreatureAI
                         }break;
                         case 5:
                         {
-                            SFK_instance->SetInstanceData(0, INDEX_PRISONER_EVENT, State_Finished);
+                            SFK_instance->SetLocaleInstanceData(0, INDEX_PRISONER_EVENT, Finished);
                             SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
                             SetWaypointToMove(12);  // Lets run
                             RemoveAIUpdateEvent();
@@ -616,7 +612,7 @@ class AdamantGossip : public Arcemu::Gossip::Script
             Arcemu::Gossip::Menu menu(pObject->GetGUID(), sMySQLStore.getGossipTextIdForNpc(pObject->GetEntry()));
 
             ShadowfangKeepInstance* pInstance = static_cast<ShadowfangKeepInstance*>(pObject->GetMapMgr()->GetScript());
-            if (pInstance != nullptr && pInstance->GetInstanceData(0, INDEX_RETHILGORE) == State_Finished && pInstance->GetInstanceData(0, INDEX_PRISONER_EVENT) == State_NotStarted)
+            if (pInstance != nullptr && pInstance->GetInstanceData(0, INDEX_RETHILGORE) == Finished && pInstance->GetInstanceData(0, INDEX_PRISONER_EVENT) == NotStarted)
             {
                 //TODO: move this to database
                 menu.AddItem(GOSSIP_ICON_CHAT, plr->GetSession()->LocalizedGossipOption(prisonerGossipOptionID), 1);
@@ -638,7 +634,7 @@ class AdamantGossip : public Arcemu::Gossip::Script
                     pPrisoner->GetUnit()->EventAddEmote(EMOTE_ONESHOT_CHEER, 4000);
                     pPrisoner->eventStarted = true;
                     if (ShadowfangKeepInstance* pInstance = static_cast<ShadowfangKeepInstance*>(pObject->GetMapMgr()->GetScript()))
-                        pInstance->SetInstanceData(0, INDEX_PRISONER_EVENT, State_InProgress);
+                        pInstance->SetLocaleInstanceData(0, INDEX_PRISONER_EVENT, InProgress);
                 }
             }
             Arcemu::Gossip::Menu::Complete(plr);
@@ -711,8 +707,8 @@ class AshcrombeAI : public MoonScriptCreatureAI
             ParentClass::AIUpdate();
 
             if (SFK_instance 
-                && (SFK_instance->GetInstanceData(0, INDEX_PRISONER_EVENT) == State_InProgress
-                || SFK_instance->GetInstanceData(0, INDEX_PRISONER_EVENT) == State_Performed))
+                && (SFK_instance->GetInstanceData(0, INDEX_PRISONER_EVENT) == InProgress
+                || SFK_instance->GetInstanceData(0, INDEX_PRISONER_EVENT) == Performed))
             {
                 if (eventStarted)
                 {
@@ -752,7 +748,7 @@ class AshcrombeAI : public MoonScriptCreatureAI
                         {
                             GetUnit()->CastSpell(GetUnit(), SPELL_ASHCROMBE_FIRE, true);
                             GetUnit()->SendScriptTextChatMessage(SAY_ASHCROMBE_VANISH);
-                            SFK_instance->SetInstanceData(0, INDEX_PRISONER_EVENT, State_Finished);
+                            SFK_instance->SetLocaleInstanceData(0, INDEX_PRISONER_EVENT, Finished);
                             RemoveAIUpdateEvent();
                         }break;
                         default:
@@ -793,7 +789,7 @@ class AshcrombeGossip : public Arcemu::Gossip::Script
             Arcemu::Gossip::Menu menu(pObject->GetGUID(), sMySQLStore.getGossipTextIdForNpc(pObject->GetEntry()));
 
             ShadowfangKeepInstance* pInstance = static_cast<ShadowfangKeepInstance*>(pObject->GetMapMgr()->GetScript());
-            if (pInstance != nullptr && pInstance->GetInstanceData(0, INDEX_RETHILGORE) == State_Finished && pInstance->GetInstanceData(0, INDEX_PRISONER_EVENT) == State_NotStarted)
+            if (pInstance != nullptr && pInstance->GetInstanceData(0, INDEX_RETHILGORE) == Finished && pInstance->GetInstanceData(0, INDEX_PRISONER_EVENT) == NotStarted)
             {
                 menu.AddItem(GOSSIP_ICON_CHAT, plr->GetSession()->LocalizedGossipOption(prisonerGossipOptionID), 1);
             }
@@ -814,7 +810,7 @@ class AshcrombeGossip : public Arcemu::Gossip::Script
                     pPrisoner->GetUnit()->Emote(EMOTE_ONESHOT_POINT);
                     pPrisoner->eventStarted = true;
                     if (ShadowfangKeepInstance* pInstance = static_cast<ShadowfangKeepInstance*>(pObject->GetMapMgr()->GetScript()))
-                        pInstance->SetInstanceData(0, INDEX_PRISONER_EVENT, State_InProgress);
+                        pInstance->SetLocaleInstanceData(0, INDEX_PRISONER_EVENT, InProgress);
                 }
             }
             Arcemu::Gossip::Menu::Complete(plr);
@@ -860,7 +856,7 @@ class SpringvaleAI : public MoonScriptCreatureAI
             ParentClass::OnCombatStop(pTarget);
             // Turn aura OFF!
             if (GetUnit()->HasAura(SPELL_DEVO_AURA))
-                RemoveAura(SPELL_DEVO_AURA);
+                _removeAura(SPELL_DEVO_AURA);
         }
 
         void AIUpdate()
@@ -928,11 +924,11 @@ class NandosAI : public MoonScriptCreatureAI
         void OnCombatStart(Unit* mEnemy)
         {
             ParentClass::OnCombatStart(mEnemy);
-            sCallBleakWorg_Timer = AddTimer(RandomUInt(1) ? 33700 : 48800);
-            sCallSlaveringWorg_Timer = AddTimer(RandomUInt(1) ? 45400 : 51700);
-            sCallLupineHorror_Timer = AddTimer(69500);
+            sCallBleakWorg_Timer = _addTimer(RandomUInt(1) ? 33700 : 48800);
+            sCallSlaveringWorg_Timer = _addTimer(RandomUInt(1) ? 45400 : 51700);
+            sCallLupineHorror_Timer = _addTimer(69500);
             if (SFK_instance)
-                SFK_instance->SetInstanceData(0, INDEX_NANDOS, State_InProgress);
+                SFK_instance->SetLocaleInstanceData(0, INDEX_NANDOS, InProgress);
         }
 
         void OnCombatStop(Unit* mEnemy)
@@ -940,7 +936,7 @@ class NandosAI : public MoonScriptCreatureAI
             ParentClass::OnCombatStop(mEnemy);
             // Battle has failed
             if (SFK_instance)
-                SFK_instance->SetInstanceData(0, INDEX_NANDOS, State_InvalidState);
+                SFK_instance->SetLocaleInstanceData(0, INDEX_NANDOS, InvalidState);
 
             Reset();
         }
@@ -950,24 +946,24 @@ class NandosAI : public MoonScriptCreatureAI
             ParentClass::AIUpdate();
             if (_getHealthPercent() <= 80)
             {
-                if (IsTimerFinished(sCallBleakWorg_Timer) && sCallBleakWord->mEnabled)
+                if (_isTimerFinished(sCallBleakWorg_Timer) && sCallBleakWord->mEnabled)
                 {
                     CastSpell(sCallBleakWord);
-                    RemoveTimer(sCallBleakWorg_Timer);
+                    _removeTimer(sCallBleakWorg_Timer);
                     sCallBleakWord->mEnabled = false;
                 }
 
-                if (IsTimerFinished(sCallSlaveringWorg_Timer) && sCallSlaveringWorg->mEnabled)
+                if (_isTimerFinished(sCallSlaveringWorg_Timer) && sCallSlaveringWorg->mEnabled)
                 {
                     CastSpell(sCallSlaveringWorg);
-                    RemoveTimer(sCallSlaveringWorg_Timer);
+                    _removeTimer(sCallSlaveringWorg_Timer);
                     sCallSlaveringWorg->mEnabled = false;
                 }
 
-                if (IsTimerFinished(sCallLupineHorror_Timer) && sCallLupineHorror->mEnabled)
+                if (_isTimerFinished(sCallLupineHorror_Timer) && sCallLupineHorror->mEnabled)
                 {
                     CastSpell(sCallLupineHorror);
-                    RemoveTimer(sCallLupineHorror_Timer);
+                    _removeTimer(sCallLupineHorror_Timer);
                     sCallLupineHorror->mEnabled = false;
                 }
             }
@@ -976,9 +972,9 @@ class NandosAI : public MoonScriptCreatureAI
     protected:
 
         ShadowfangKeepInstance* SFK_instance;
-        int32 sCallBleakWorg_Timer;
-        int32 sCallSlaveringWorg_Timer;
-        int32 sCallLupineHorror_Timer;
+        uint32 sCallBleakWorg_Timer;
+        uint32 sCallSlaveringWorg_Timer;
+        uint32 sCallLupineHorror_Timer;
         SpellDesc* sCallBleakWord;
         SpellDesc* sCallSlaveringWorg;
         SpellDesc* sCallLupineHorror;
@@ -1100,7 +1096,7 @@ class ArugalBossAI : public MoonScriptCreatureAI
             AddEmote(Event_OnCombatStart, YELL_ARUGAL_AGROO);
             AddEmote(Event_OnTargetDied, YELL_ARUGAL_ENEMY_DEATH);
             AddEmote(Event_OnTaunt, YELL_ARUGAL_COMBAT);
-            SetBehavior(Behavior_Spell);
+            setAIAgent(AGENT_SPELL);
 
             aiUpdateOriginal = GetAIUpdateFreq();
             originalRegen = GetUnit()->PctPowerRegenModifier[POWER_TYPE_MANA];
@@ -1116,7 +1112,7 @@ class ArugalBossAI : public MoonScriptCreatureAI
 
         void Reset()
         {
-            SetBehavior(Behavior_Spell);
+            setAIAgent(AGENT_SPELL);
             GetUnit()->GetAIInterface()->setMeleeDisabled(true);
             GetUnit()->PctPowerRegenModifier[POWER_TYPE_MANA] = originalRegen;
         }
@@ -1147,7 +1143,7 @@ class ArugalBossAI : public MoonScriptCreatureAI
                 case 0:
                 {
                     ModifyAIUpdateEvent(6000);
-                    ApplyAura(SPELL_ARUGAL_SPAWN);
+                    _applyAura(SPELL_ARUGAL_SPAWN);
                     GetUnit()->SendScriptTextChatMessage(YELL_ARUGAL_FENRUS);
                 }break;
                 case 1:
@@ -1172,7 +1168,7 @@ class ArugalBossAI : public MoonScriptCreatureAI
 
                     // sanctum32: not sure if it is correct spell id
                     GetUnit()->CastSpell(GetUnit(), SPELL_ASHCROMBE_FIRE, true);
-                    SFK_instance->SetInstanceData(0, INDEX_VOIDWALKER, State_Finished);
+                    SFK_instance->SetLocaleInstanceData(0, INDEX_VOIDWALKER, Finished);
                     RemoveAIUpdateEvent();
                 }break;
             }
@@ -1181,7 +1177,7 @@ class ArugalBossAI : public MoonScriptCreatureAI
         void AIUpdate()
         {
             ParentClass::AIUpdate();
-            if (SFK_instance && SFK_instance->GetInstanceData(0, INDEX_VOIDWALKER) == State_InProgress)
+            if (SFK_instance && SFK_instance->GetInstanceData(0, INDEX_VOIDWALKER) == InProgress)
             {
                 FenrusEvent(stage);
                 ++stage;
@@ -1190,20 +1186,20 @@ class ArugalBossAI : public MoonScriptCreatureAI
             if (_isInCombat())
             {
                 // if mana is out - do melee attacks
-                if (GetUnit()->GetManaPct() <= 10 && GetBehavior() == Behavior_Spell)
+                if (GetUnit()->GetManaPct() <= 10 && getAIAgent() == AGENT_SPELL)
                 {
-                    SetBehavior(Behavior_Melee);
+                    setAIAgent(AGENT_MELEE);
                     GetUnit()->GetAIInterface()->setMeleeDisabled(false);
                 }
                 // boss got mana regenerated
                 else
                 {
-                    SetBehavior(Behavior_Spell);
+                    setAIAgent(AGENT_SPELL);
                     GetUnit()->GetAIInterface()->setMeleeDisabled(true);
                 }
 
                 // Cast void bolt non stop
-                if (GetBehavior() == Behavior_Spell)
+                if (getAIAgent() == AGENT_SPELL)
                 {
                     CastSpellNowNoScheduling(sVoidBolt);
                 }
@@ -1508,9 +1504,9 @@ class WorlfguardWorgAI : public MoonScriptCreatureAI
         void AIUpdate()
         {
             ParentClass::AIUpdate();
-            if (_getHealthPercent() <= 15 && GetBehavior() != Behavior_Flee)
+            if (_getHealthPercent() <= 15 && getAIAgent() != AGENT_FLEE)
             {
-                SetBehavior(Behavior_Flee);
+                setAIAgent(AGENT_FLEE);
             }
         }
 };

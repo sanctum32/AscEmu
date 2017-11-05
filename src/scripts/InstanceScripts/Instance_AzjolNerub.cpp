@@ -30,7 +30,7 @@ class KrikthirAI : public MoonScriptCreatureAI
     MOONSCRIPT_FACTORY_FUNCTION(KrikthirAI, MoonScriptCreatureAI);
     KrikthirAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
-        if (!IsHeroic())
+        if (!_isHeroic())
         {
             AddSpell(KRIKTHIR_CURSEOFFATIGUE, Target_Self, 100, 0, 10);
             AddSpell(KRIKTHIR_MINDFLAY, Target_RandomPlayer, 100, 0, 7, 0, 30);
@@ -48,7 +48,7 @@ class KrikthirAI : public MoonScriptCreatureAI
     {
         if (_unit->GetHealthPct() <= 10 && mEnraged == false)
         {
-            ApplyAura(KRIKTHIR_ENRAGE);
+            _applyAura(KRIKTHIR_ENRAGE);
             mEnraged = true;
         }
 
@@ -93,7 +93,7 @@ class HadronoxAI : public MoonScriptCreatureAI
     MOONSCRIPT_FACTORY_FUNCTION(HadronoxAI, MoonScriptCreatureAI);
     HadronoxAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
-        if (!IsHeroic())
+        if (!_isHeroic())
         {
             AddSpell(HADRONOX_WEBGRAB, Target_RandomPlayer, 22, 0, 14, 0, 0);
             AddSpell(HADRONOX_LEECHPOISON, Target_Self, 14, 0, 25, 0, 20);
@@ -104,10 +104,10 @@ class HadronoxAI : public MoonScriptCreatureAI
             AddSpell(HADRONOX_WEBGRAB_HC, Target_RandomPlayer, 22, 0, 14, 0, 0);
             AddSpell(HADRONOX_LEECHPOISON_HC, Target_Self, 14, 0, 25, 0, 20);
             AddSpell(HADRONOX_ACIDCLOUD_HC, Target_RandomPlayer, 18, 0, 20, 0, 60);
-        };
+        }
 
         AddSpell(HADRONOX_PIERCEARMOR, Target_ClosestPlayer, 20, 0, 5, 0, 0);
-    };
+    }
 
 };
 

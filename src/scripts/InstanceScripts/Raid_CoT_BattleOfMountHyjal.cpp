@@ -50,36 +50,38 @@ enum HyjalType
     HYJAL_TYPE_END
 };
 
-//class MountHyjalScript : public MoonInstanceScript
-//{
-//    public:
-//        MOONSCRIPT_INSTANCE_FACTORY_FUNCTION(MountHyjalScript, MoonInstanceScript);
-//        MountHyjalScript(MapMgr* pMapMgr) : MoonInstanceScript(pMapMgr)
-//        {
-//            InstanceData[HYJAL_TYPE_BASIC][0] = HYJAL_PHASE_NOT_STARTED;
-//        }
-//
-//        void SetInstanceData(uint32 pType, uint32 pIndex, uint32 pData)
-//        {
-//            if (pType >= HYJAL_TYPE_END || pIndex >= 10)
-//                return;
-//
-//            InstanceData[pType][pIndex] = pData;
-//        }
-//
-//        uint32 GetInstanceData(uint32 pType, uint32 pIndex)
-//        {
-//            if (pType >= HYJAL_TYPE_END || pIndex >= 10)
-//                return 0;
-//
-//            return InstanceData[pType][pIndex];
-//        }
-//
-//    private:
-//        uint32 InstanceData[HYJAL_TYPE_END][10]; // Expand this to fit your needs.
-//        // Type 0 = Basic Data;
-//        //   Index 0 = Current Phase;
-//};
+class MountHyjalScript : public InstanceScript
+{
+    public:
+
+        MountHyjalScript(MapMgr* pMapMgr) : InstanceScript(pMapMgr)
+        {
+            InstanceData[HYJAL_TYPE_BASIC][0] = HYJAL_PHASE_NOT_STARTED;
+        }
+
+        static InstanceScript* Create(MapMgr* pMapMgr) { return new MountHyjalScript(pMapMgr); }
+
+        void SetLocaleInstanceData(uint32 pType, uint32 pIndex, uint32 pData)
+        {
+            if (pType >= HYJAL_TYPE_END || pIndex >= 10)
+                return;
+
+            InstanceData[pType][pIndex] = pData;
+        }
+
+        uint32 GetLocaleInstanceData(uint32 pType, uint32 pIndex)
+        {
+            if (pType >= HYJAL_TYPE_END || pIndex >= 10)
+                return 0;
+
+            return InstanceData[pType][pIndex];
+        }
+
+    private:
+        uint32 InstanceData[HYJAL_TYPE_END][10]; // Expand this to fit your needs.
+        // Type 0 = Basic Data;
+        //   Index 0 = Current Phase;
+};
 //Jaina Proudmoore AI & GS
 const uint32 CN_JAINA_PROUDMOORE = 17772;
 
@@ -103,7 +105,7 @@ class JainaProudmooreGS : public Arcemu::Gossip::Script
                 return;
 
             Arcemu::Gossip::Menu menu(pObject->GetGUID(), 2);
-            switch (pObject->GetMapMgr()->GetScript()->GetInstanceData(HYJAL_TYPE_BASIC, 0))
+            switch (static_cast<MountHyjalScript*>(pObject->GetMapMgr()->GetScript())->GetLocaleInstanceData(HYJAL_TYPE_BASIC, 0))
             {
                 case HYJAL_PHASE_NOT_STARTED:
                     menu.AddItem(GOSSIP_ICON_CHAT, plr->GetSession()->LocalizedGossipOption(435), 1);     // We are ready to defend the Alliance base.
@@ -124,7 +126,7 @@ class JainaProudmooreGS : public Arcemu::Gossip::Script
             if (pObject->GetMapMgr()->GetMapId() != MAP_HYJALPAST)//in case someone spawned this NPC in another map
                 return;
 
-            switch (pObject->GetMapMgr()->GetScript()->GetInstanceData(HYJAL_TYPE_BASIC, 0))
+            switch (static_cast<MountHyjalScript*>(pObject->GetMapMgr()->GetScript())->GetLocaleInstanceData(HYJAL_TYPE_BASIC, 0))
             {
                 case HYJAL_PHASE_NOT_STARTED:
                 case HYJAL_PHASE_RAGE_WINTERCHILL_COMPLETE:
@@ -159,7 +161,7 @@ class ThrallGS : public Arcemu::Gossip::Script
                 return;
 
             Arcemu::Gossip::Menu menu(pObject->GetGUID(), 2);
-            switch (pObject->GetMapMgr()->GetScript()->GetInstanceData(HYJAL_TYPE_BASIC, 0))
+            switch (static_cast<MountHyjalScript*>(pObject->GetMapMgr()->GetScript())->GetLocaleInstanceData(HYJAL_TYPE_BASIC, 0))
             {
                 case HYJAL_PHASE_ANETHERON_COMPLETE:
                     menu.AddItem(GOSSIP_ICON_CHAT, plr->GetSession()->LocalizedGossipOption(437), 1);     // We're here to help! The Alliance are overrun.
@@ -177,7 +179,7 @@ class ThrallGS : public Arcemu::Gossip::Script
             if (pObject->GetMapMgr()->GetMapId() != MAP_HYJALPAST)//in case someone spawned this NPC in another map
                 return;
 
-            switch (pObject->GetMapMgr()->GetScript()->GetInstanceData(HYJAL_TYPE_BASIC, 0))
+            switch (static_cast<MountHyjalScript*>(pObject->GetMapMgr()->GetScript())->GetLocaleInstanceData(HYJAL_TYPE_BASIC, 0))
             {
                 case HYJAL_PHASE_ANETHERON_COMPLETE:
                 case HYJAL_PHASE_KAZROGAL_COMPLETE:
@@ -284,7 +286,7 @@ class RageWinterchillAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
 
             RemoveAIUpdateEvent();
@@ -505,7 +507,7 @@ class AnetheronAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
 
             RemoveAIUpdateEvent();
@@ -730,7 +732,7 @@ class KazrogalAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
 
             RemoveAIUpdateEvent();
@@ -971,7 +973,7 @@ class AzgalorAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
 
             RemoveAIUpdateEvent();
@@ -1421,7 +1423,7 @@ class ArchimondeAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
 
             if (Trigger && Trigger->IsInWorld() && _unit->isAlive())
@@ -1444,7 +1446,7 @@ class ArchimondeAI : public CreatureAIScript
 
         void AIUpdate()
         {
-            //_unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            //setAIAgent(AGENT_NULL);
 
             uint32 t = (uint32)time(NULL);
             if (t > spells[3].casttime && _unit->GetCurrentSpell() == NULL)
@@ -1465,7 +1467,7 @@ class ArchimondeAI : public CreatureAIScript
                     {
                         if (FingerOfDeath())
                         {
-                            _unit->GetAIInterface()->setCurrentAgent(AGENT_SPELL);
+                            setAIAgent(AGENT_SPELL);
                             _unit->GetAIInterface()->StopMovement(2000);
 
                             if (_unit->GetCurrentSpell() == NULL)

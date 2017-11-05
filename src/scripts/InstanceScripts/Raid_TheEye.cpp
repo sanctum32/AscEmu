@@ -79,7 +79,7 @@ class AStarScryerAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             CastTime();
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -243,7 +243,7 @@ class StarScryerAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             CastTime();
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -384,18 +384,18 @@ class AstromancerAI : public MoonScriptCreatureAI
 
         void AIUpdate()
         {
-            if (!IsCasting())
+            if (!_isCasting())
             {
-                if (mArcaneBurstTimer == -1 || IsTimerFinished(mArcaneBurstTimer))
+                if (mArcaneBurstTimer == -1 || _isTimerFinished(mArcaneBurstTimer))
                 {
                     Unit* unit = GetBestUnitTarget(TargetFilter_Closest);
                     if (unit && getRangeToObject(unit) <= 10.0f)
                     {
                         CastSpellNowNoScheduling(mArcaneBurst);
                         if (mArcaneBurstTimer == -1)
-                            mArcaneBurstTimer = AddTimer(6000);
+                            mArcaneBurstTimer = _addTimer(6000);
                         else
-                            ResetTimer(mArcaneBurstTimer, 6000);
+                            _resetTimer(mArcaneBurstTimer, 6000);
                         ParentClass::AIUpdate();
                         return;
                     }
@@ -473,7 +473,7 @@ class AstromancerLordAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             CastTime();
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -645,7 +645,7 @@ class BloodVindicatorAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             CastTime();
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -817,7 +817,7 @@ class BloodLegionnareAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             CastTime();
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -989,7 +989,7 @@ class BloodMarshalAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             CastTime();
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -1163,7 +1163,7 @@ class PhoenixHawkAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             CastTime();
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -1335,7 +1335,7 @@ class CrystalSentinelAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             CastTime();
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -1500,7 +1500,7 @@ class CrystalMechanicAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             CastTime();
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -1665,23 +1665,23 @@ class VoidReaverAI : public MoonScriptBossAI
             ParentClass::OnCombatStart(mTarget);
             if (mArcaneOrb != NULL)
             {
-                mArcaneOrbTimer = AddTimer(10000);
+                mArcaneOrbTimer = _addTimer(10000);
                 mArcaneOrb->mEnabled = false;
             }
         }
 
         void AIUpdate()
         {
-            if (mArcaneOrb != NULL && !mArcaneOrb->mEnabled && IsTimerFinished(mArcaneOrbTimer))
+            if (mArcaneOrb != NULL && !mArcaneOrb->mEnabled && _isTimerFinished(mArcaneOrbTimer))
             {
-                RemoveTimer(mArcaneOrbTimer);
+                _removeTimer(mArcaneOrbTimer);
                 mArcaneOrb->mEnabled = true;
             }
 
             ParentClass::AIUpdate();
         }
 
-        int32 mArcaneOrbTimer;
+        uint32 mArcaneOrbTimer;
         SpellDesc* mArcaneOrb;
 };
 
@@ -1749,7 +1749,7 @@ class HighAstromancerSolarianAI : public MoonScriptBossAI
 
         void OnCombatStart(Unit* pTarget)
         {
-            mSplitTimer = AddTimer(50000);    //First split after 50sec
+            mSplitTimer = _addTimer(50000);    //First split after 50sec
             ParentClass::OnCombatStart(pTarget);
         }
 
@@ -1757,27 +1757,27 @@ class HighAstromancerSolarianAI : public MoonScriptBossAI
         {
             if (GetPhase() == 1)
             {
-                if (_getHealthPercent() <= 20 && !IsCasting())
+                if (_getHealthPercent() <= 20 && !_isCasting())
                 {
                     SetPhase(3, mVoidForm);
-                    CancelAllTimers();
+                    _cancelAllTimers();
                 }
-                else if (IsTimerFinished(mSplitTimer) && !IsCasting())
+                else if (_isTimerFinished(mSplitTimer) && !_isCasting())
                 {
                     SetPhase(2, mDisappear);
-                    ResetTimer(mSplitTimer, 90000);        //Next split in 90sec
-                    mAgentsTimer = AddTimer(6000);        //Agents spawns 6sec after the split
-                    mSolarianTimer = AddTimer(22000);    //Solarian with 2 priests spawns 22sec after split
+                    _resetTimer(mSplitTimer, 90000);        //Next split in 90sec
+                    mAgentsTimer = _addTimer(6000);        //Agents spawns 6sec after the split
+                    mSolarianTimer = _addTimer(22000);    //Solarian with 2 priests spawns 22sec after split
                 }
             }
             else if (GetPhase() == 2)
             {
-                if (IsTimerFinished(mSolarianTimer) && !IsCasting())
+                if (_isTimerFinished(mSolarianTimer) && !_isCasting())
                 {
                     SetPhase(1, mReappear);
-                    RemoveTimer(mSolarianTimer);
+                    _removeTimer(mSolarianTimer);
                 }
-                else if (IsTimerFinished(mAgentsTimer) && !IsCasting())
+                else if (_isTimerFinished(mAgentsTimer) && !_isCasting())
                 {
                     for (uint8 SpawnIter = 0; SpawnIter < 4; SpawnIter++)
                     {
@@ -1785,7 +1785,7 @@ class HighAstromancerSolarianAI : public MoonScriptBossAI
                         SpawnCreature(CN_SOLARIUMAGENT, mSpawnPositions[1][0], mSpawnPositions[1][1], 17, 0, true);
                         SpawnCreature(CN_SOLARIUMAGENT, mSpawnPositions[2][0], mSpawnPositions[2][1], 17, 0, true);
                     }
-                    RemoveTimer(mAgentsTimer);
+                    _removeTimer(mAgentsTimer);
                 }
             }
             ParentClass::AIUpdate();
@@ -1795,8 +1795,8 @@ class HighAstromancerSolarianAI : public MoonScriptBossAI
         SpellDesc* mDisappear;
         SpellDesc* mReappear;
         int32 mSplitTimer;
-        int32 mAgentsTimer;
-        int32 mSolarianTimer;
+        uint32 mAgentsTimer;
+        uint32 mSolarianTimer;
         float mSpawnPositions[3][2];
 };
 
@@ -2154,7 +2154,7 @@ class AlarAI : public CreatureAIScript
                 default:
                     {
                         SetPhase(0);
-                    };
+                    }
             }
         }
 
@@ -2184,7 +2184,7 @@ class AlarAI : public CreatureAIScript
                 //_unit->CastSpell(_unit, spells[2].info, spells[2].instant);
                 lasttime = timer + RandomUInt(9);
                 _unit->GetAIInterface()->SetAllowedToEnterCombat(false);
-                _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+                setAIAgent(AGENT_NULL);
                 _unit->GetAIInterface()->StopMovement(0);
                 _unit->GetAIInterface()->m_canMove = true;
 
@@ -2426,7 +2426,7 @@ class EmberAlarAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             CastTime();
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -2526,7 +2526,7 @@ class PatchAlarAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             CastTime();
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -2591,7 +2591,7 @@ class DarkenerAI : public MoonScriptCreatureAI
             setCanEnterCombat(true);
             SwitchTarget();
 
-            mGazeSwitchTimer = AddTimer((RandomUInt(4) + 8) * 1000);
+            mGazeSwitchTimer = _addTimer((RandomUInt(4) + 8) * 1000);
         }
 
         void OnCombatStop(Unit* mTarget)
@@ -2612,9 +2612,9 @@ class DarkenerAI : public MoonScriptCreatureAI
 
         void AIUpdate()
         {
-            if (IsTimerFinished(mGazeSwitchTimer))
+            if (_isTimerFinished(mGazeSwitchTimer))
             {
-                ResetTimer(mGazeSwitchTimer, (RandomUInt(4) + 8) * 1000);
+                _resetTimer(mGazeSwitchTimer, (RandomUInt(4) + 8) * 1000);
                 if (!SwitchTarget())
                     return;
             }
@@ -2706,7 +2706,7 @@ class CapernianAI : public MoonScriptCreatureAI
 
             if (getRangeToObject(mTarget) <= 30.0f)
             {
-                SetBehavior(Behavior_Spell);
+                setAIAgent(AGENT_SPELL);
                 setRooted(true);
             }
         }
@@ -2723,7 +2723,7 @@ class CapernianAI : public MoonScriptCreatureAI
 
         void AIUpdate()
         {
-            SetBehavior(Behavior_Default);
+            setAIAgent(AGENT_NULL);
             setRooted(false);
             Unit* pClosestTarget = GetBestPlayerTarget(TargetFilter_Closest);
             if (pClosestTarget != NULL && getRangeToObject(pClosestTarget) <= 6.0f)
@@ -2735,9 +2735,9 @@ class CapernianAI : public MoonScriptCreatureAI
             if (pTarget != NULL && getRangeToObject(pTarget) <= 30.0f)
             {
                 ParentClass::AIUpdate();
-                if (GetBehavior() != Behavior_Spell)
+                if (getAIAgent() != AGENT_SPELL)
                 {
-                    SetBehavior(Behavior_Spell);
+                    setAIAgent(AGENT_SPELL);
                     setRooted(true);
                 }
             }
@@ -2792,7 +2792,7 @@ class FlameStrikeAI : public MoonScriptCreatureAI
         MOONSCRIPT_FACTORY_FUNCTION(FlameStrikeAI, MoonScriptCreatureAI);
         FlameStrikeAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
-            ApplyAura(FLAME_STRIKE_TRIGGER_FLAME_STRIKE_EFFECT);
+            _applyAura(FLAME_STRIKE_TRIGGER_FLAME_STRIKE_EFFECT);
             RegisterAIUpdateEvent(5000);
             setCanEnterCombat(false);
             _setMeleeDisabled(false);
@@ -2803,14 +2803,14 @@ class FlameStrikeAI : public MoonScriptCreatureAI
         void OnDied(Unit* mKiller)
         {
             ParentClass::OnDied(mKiller);
-            RemoveAura(FLAME_STRIKE_TRIGGER_FLAME_STRIKE_EFFECT);
+            _removeAura(FLAME_STRIKE_TRIGGER_FLAME_STRIKE_EFFECT);
             despawn(500);
         }
 
         void AIUpdate()
         {
             _unit->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_2);
-            ApplyAura(FLAME_STRIKE_TRIGGER_FLAME_STRIKE);
+            _applyAura(FLAME_STRIKE_TRIGGER_FLAME_STRIKE);
             RemoveAIUpdateEvent();
             despawn(8500);
         }
@@ -2834,7 +2834,7 @@ class PhoenixAI : public MoonScriptCreatureAI
                 _unit->GetAIInterface()->AttackReaction(pTarget, 500, 0);
             }
 
-            mBurnTimer = AddTimer(3000);
+            mBurnTimer = _addTimer(3000);
         }
 
         void OnCombatStart(Unit* mTarget) {}
@@ -2859,7 +2859,7 @@ class PhoenixAI : public MoonScriptCreatureAI
         void OnDied(Unit* mKiller)
         {
             ParentClass::OnDied(mKiller);
-            ApplyAura(PHOENIX_REBIRTH);
+            _applyAura(PHOENIX_REBIRTH);
             SpawnCreature(21364, _unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), _unit->GetOrientation(), false);
             despawn(500);
         }
@@ -2868,11 +2868,11 @@ class PhoenixAI : public MoonScriptCreatureAI
         {
             double CurrentHP = (double)_unit->getUInt32Value(UNIT_FIELD_HEALTH);
             double PercMaxHP = (double)_unit->getUInt32Value(UNIT_FIELD_MAXHEALTH) * 0.05;
-            if (CurrentHP > PercMaxHP && IsTimerFinished(mBurnTimer))
+            if (CurrentHP > PercMaxHP && _isTimerFinished(mBurnTimer))
             {
                 _unit->SetHealth((uint32)(CurrentHP - PercMaxHP));
-                ResetTimer(mBurnTimer, 3000);
-                ApplyAura(PHOENIX_BURN);
+                _resetTimer(mBurnTimer, 3000);
+                _applyAura(PHOENIX_BURN);
             }
             else if (CurrentHP <= PercMaxHP)
             {
@@ -3110,7 +3110,7 @@ class KaelThasAI : public MoonScriptBossAI
             _unit->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_9);
             SetAIUpdateFreq(24000);
             ParentClass::OnCombatStart(mTarget);
-            SetBehavior(Behavior_Spell);
+            setAIAgent(AGENT_SPELL);
             setRooted(true);
 
             for (uint8 i = 0; i < 2; ++i)
@@ -3265,10 +3265,10 @@ class KaelThasAI : public MoonScriptBossAI
                     }
 
                     SetAIUpdateFreq(1000);
-                    mEventTimer = AddTimer(125000);
+                    mEventTimer = _addTimer(125000);
                     return;
                 }
-                else if (IsTimerFinished(mEventTimer))
+                else if (_isTimerFinished(mEventTimer))
                 {
                     for (uint8 i = 0; i < 4; ++i)
                     {
@@ -3300,31 +3300,31 @@ class KaelThasAI : public MoonScriptBossAI
                     }
 
                     sendChatMessage(CHAT_MSG_MONSTER_YELL, 11262, "Perhaps I underestimated you. It would be unfair to make you fight all four Advisors at once, but...fair treatment was never shown to my people. I'm just returning the favor.");
-                    ResetTimer(mEventTimer, 180000);
+                    _resetTimer(mEventTimer, 180000);
                     SetPhase(6);
                     mAdvCoords.clear();
                 }
 
                 ParentClass::AIUpdate();
-                SetBehavior(Behavior_Spell);
+                setAIAgent(AGENT_SPELL);
                 setRooted(true);
             }
             if (GetPhase() == 6)
             {
                 ParentClass::AIUpdate();
-                if (IsTimerFinished(mEventTimer))
+                if (_isTimerFinished(mEventTimer))
                 {
-                    mArcaneDisruptionTimer = AddTimer(20000);
-                    mShockBarrierTimer = AddTimer(60000);
-                    mFlameStrikeTimer = AddTimer(40000);
+                    mArcaneDisruptionTimer = _addTimer(20000);
+                    mShockBarrierTimer = _addTimer(60000);
+                    mFlameStrikeTimer = _addTimer(40000);
                     setCanEnterCombat(true);
-                    SetBehavior(Behavior_Default);
+                    setAIAgent(AGENT_NULL);
                     setRooted(false);
                     SetPhase(7);
                 }
                 else
                 {
-                    SetBehavior(Behavior_Spell);
+                    setAIAgent(AGENT_SPELL);
                     setRooted(true);
                 }
 
@@ -3332,24 +3332,24 @@ class KaelThasAI : public MoonScriptBossAI
             }
             if (GetPhase() == 7)
             {
-                if (!IsCasting())
+                if (!_isCasting())
                 {
-                    if (GetBehavior() == Behavior_Spell)
+                    if (getAIAgent() == AGENT_SPELL)
                     {
-                        SetBehavior(Behavior_Default);
+                        setAIAgent(AGENT_NULL);
                         setRooted(false);
                     }
-                    if (IsTimerFinished(mShockBarrierTimer))
+                    if (_isTimerFinished(mShockBarrierTimer))
                     {
                         CastSpellNowNoScheduling(mShockBarrier);
-                        ResetTimer(mShockBarrierTimer, 70000);
+                        _resetTimer(mShockBarrierTimer, 70000);
                     }
-                    else if (IsTimerFinished(mArcaneDisruptionTimer))
+                    else if (_isTimerFinished(mArcaneDisruptionTimer))
                     {
                         CastSpellNowNoScheduling(mArcaneDisruptionFunc);
-                        ResetTimer(mArcaneDisruptionTimer, 30000);
+                        _resetTimer(mArcaneDisruptionTimer, 30000);
                     }
-                    else if (IsTimerFinished(mFlameStrikeTimer))
+                    else if (_isTimerFinished(mFlameStrikeTimer))
                     {
                         CastSpellNowNoScheduling(mFlameStrikeFunc);
                     }
@@ -3357,14 +3357,14 @@ class KaelThasAI : public MoonScriptBossAI
                 if (_unit->HasAura(KAELTHAS_SHOCK_BARRIER))
                 {
                     CastSpellNowNoScheduling(mPyroblast);
-                    SetBehavior(Behavior_Spell);
+                    setAIAgent(AGENT_SPELL);
                     setRooted(true);
                 }
-                else if (IsTimerFinished(mPhoenixTimer))        // it spawns on caster's place, but should in 20y from him
+                else if (_isTimerFinished(mPhoenixTimer))        // it spawns on caster's place, but should in 20y from him
                 {
                     // also it seems to not work (not always)
                     CastSpell(mPhoenix);
-                    RemoveTimer(mPhoenixTimer);
+                    _removeTimer(mPhoenixTimer);
                 }
 
                 ParentClass::AIUpdate();
@@ -3390,7 +3390,7 @@ class KaelThasAI : public MoonScriptBossAI
         int32 mArcaneDisruptionTimer;
         int32 mShockBarrierTimer;
         int32 mFlameStrikeTimer;
-        int32 mPhoenixTimer;
+        uint32 mPhoenixTimer;
         int32 mEventTimer;
 
         std::vector<LocationExtra> mAdvCoords;
@@ -3428,12 +3428,12 @@ void SpellFunc_KaelThasFlameStrike(SpellDesc* pThis, MoonScriptCreatureAI* pCrea
 
             KaelThas->SpawnCreature(CN_FLAME_STRIKE_TRIGGER, pTarget->GetPositionX(), pTarget->GetPositionY(), pTarget->GetPositionZ(), pTarget->GetOrientation());
             uint32 TimerAdd = (3 + RandomUInt(5)) * 1000;
-            KaelThas->mPhoenixTimer = KaelThas->AddTimer(TimerAdd);
-            KaelThas->ResetTimer(KaelThas->mFlameStrikeTimer, TimerAdd + 40000);
+            KaelThas->mPhoenixTimer = KaelThas->_addTimer(TimerAdd);
+            KaelThas->_resetTimer(KaelThas->mFlameStrikeTimer, TimerAdd + 40000);
             return;
         }
 
-        KaelThas->ResetTimer(KaelThas->mFlameStrikeTimer, 40000);
+        KaelThas->_resetTimer(KaelThas->mFlameStrikeTimer, 40000);
     }
 }
 

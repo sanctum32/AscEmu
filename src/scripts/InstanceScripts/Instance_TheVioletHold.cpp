@@ -21,14 +21,14 @@ enum DataIndex
 
 ///////////////////////////////////////////////////////
 //TheVioletHold Instance
-class TheVioletHoldScript : public MoonInstanceScript
+class TheVioletHoldScript : public InstanceScript
 {
     friend class SinclariGossip; // Friendship forever ;-)
 
     private:
 
         uint32 m_phaseData[TVH_END];
-        uint32 m_lastState = State_InvalidState;
+        uint32 m_lastState = InvalidState;
 
         // NotStarted
         int32 S0_SpawnIntroMobsTimer = 0;   // Spawn mobs every 15s
@@ -38,21 +38,19 @@ class TheVioletHoldScript : public MoonInstanceScript
 
     public:
 
-        MOONSCRIPT_INSTANCE_FACTORY_FUNCTION(TheVioletHoldScript, MoonInstanceScript);
-        TheVioletHoldScript(MapMgr* pMapMgr) : MoonInstanceScript(pMapMgr)
+        TheVioletHoldScript(MapMgr* pMapMgr) : InstanceScript(pMapMgr)
         {
             for (uint8 i = 0; i < TVH_END; ++i)
-                m_phaseData[i] = State_NotStarted;
+                m_phaseData[i] = NotStarted;
 
-            this->RegisterUpdateEvent(1000);
+            addData(MAP_VIOLET_HOLD);
         }
+
+        static InstanceScript* Create(MapMgr* pMapMgr) { return new TheVioletHoldScript(pMapMgr); }
 
         void UpdateEvent()
         {
-            // Call original update function to elapse timers
-            MoonInstanceScript::UpdateEvent();
-
-            auto state = GetInstanceData(Data_EncounterState, MAP_VIOLET_HOLD);
+            auto state = getData(MAP_VIOLET_HOLD);
 
             if (state != m_lastState)
             {
@@ -62,17 +60,17 @@ class TheVioletHoldScript : public MoonInstanceScript
 
             switch (state)
             {
-                case State_NotStarted:
+                case NotStarted:
                     S0_ReviveGuards();
                     S0_SpawnIntroMobs();
                     S0_RemoveDeadIntroMobs();
                     break;
-                case State_InProgress:
+                case InProgress:
                     S2_SpawnPortals();
                     break;
-                case State_Finished: printf("State: %s\n", "State_Finished"); break;
-                case State_Performed: printf("State: %s\n", "State_Performed"); break;
-                case State_PreProgress:
+                case Finished: printf("State: %s\n", "State_Finished"); break;
+                case Performed: printf("State: %s\n", "State_Performed"); break;
+                case PreProgress:
                     S1_ActivateCrystalFleeRoom();
                     break;
             }
@@ -107,7 +105,7 @@ class TheVioletHoldScript : public MoonInstanceScript
 
         void S0_SpawnIntroMobs()
         {
-            if (IsTimerFinished(S0_SpawnIntroMobsTimer))
+            if (isTimerFinished(S0_SpawnIntroMobsTimer))
             {
                 S0_SpawnIntroMobsTimer = 0; // This forces a new timer to be started below
             
@@ -117,9 +115,9 @@ class TheVioletHoldScript : public MoonInstanceScript
             }
 
             // Start another 15s timer
-            if (GetTimer(S0_SpawnIntroMobsTimer) <= 0)
+            if (getTimeForTimer(S0_SpawnIntroMobsTimer) <= 0)
             {
-                S0_SpawnIntroMobsTimer = AddTimer(VH_TIMER_SPAWN_INTRO_MOB);
+                S0_SpawnIntroMobsTimer = addTimer(VH_TIMER_SPAWN_INTRO_MOB);
             }
         }
 
@@ -129,11 +127,11 @@ class TheVioletHoldScript : public MoonInstanceScript
 
             if (S1_GuardFleeTimer == -1)
             {
-                S1_GuardFleeTimer = AddTimer(VH_TIMER_GUARD_FLEE_DELAY); // arbitrary time
+                S1_GuardFleeTimer = addTimer(VH_TIMER_GUARD_FLEE_DELAY); // arbitrary time
 
             }
 
-            if (GetTimer(S1_GuardFleeTimer) > 0)
+            if (getTimeForTimer(S1_GuardFleeTimer) > 0)
             {
                 return; // Wait for timer to finish
             }
@@ -211,62 +209,11 @@ class TheVioletHoldScript : public MoonInstanceScript
         {
             switch (pNewState)
             {
-                case State_PreProgress:
+                case PreProgress:
                     DespawnIntroPortals();
                     break;
             }
         }
-
-        void SetInstanceData(uint32 pType, uint32 pIndex, uint32 pData)
-        {
-            if (pType != Data_EncounterState || pIndex == 0)
-                return;
-
-            EncounterMap::iterator Iter = mEncounters.find(pIndex);
-            if (Iter == mEncounters.end())
-                return;
-
-            (*Iter).second.mState = (EncounterState)pData;
-        }
-
-        uint32 GetInstanceData(uint32 pType, uint32 pIndex)
-        {
-            if (pType != Data_EncounterState || pIndex == 0)
-                return 0;
-
-            EncounterMap::iterator Iter = mEncounters.find(pIndex);
-            if (Iter == mEncounters.end())
-                return 0;
-
-            return (*Iter).second.mState;
-        }
-
-        /*
-        void SetData(uint32 pIndex, uint32 pData)
-        {
-            if (pIndex >= TVH_END)
-                return;
-
-            // If Data = MainEvent, set state "PreProgress". Gossip Sinclar 1 + 2
-            if (pIndex == TVH_PHASE_1)
-                mInstance->GetWorldStatesHandler().SetWorldStateForZone(0, AREA_VIOLET_HOLD, WORLDSTATE_VH, State_PreProgress);
-
-            // If Data = second event, set state "InProgress". Gossip Sinclari Case 3
-            if (pIndex == TVH_PHASE_2)
-                mInstance->GetWorldStatesHandler().SetWorldStateForZone(0, AREA_VIOLET_HOLD, WORLDSTATE_VH, State_InProgress);
-
-            m_phaseData[pIndex] = pData;
-        }
-
-        uint32 GetData(uint32 pIndex)
-        {
-            // If Phase = End/finishes, reset the Phases to 0
-            if (pIndex >= TVH_END)
-                return 0;
-
-            return m_phaseData[pIndex];
-        }
-        */
 
         void OnGameObjectActivate(GameObject* pGameObject, Player* pPlayer)
         {
@@ -279,9 +226,9 @@ class TheVioletHoldScript : public MoonInstanceScript
             if (!pInstance)
                 return;
 
-            if (pInstance->GetInstanceData(Data_EncounterState, MAP_VIOLET_HOLD) == State_NotStarted)
+            if (pInstance->getData(MAP_VIOLET_HOLD) == NotStarted)
             {
-                mEncounters.insert(EncounterMap::value_type(MAP_VIOLET_HOLD, State_NotStarted));
+                setData(MAP_VIOLET_HOLD, PreProgress);
             }
 
         }
@@ -290,138 +237,6 @@ class TheVioletHoldScript : public MoonInstanceScript
 #define SINCLARI_SAY_1 "Prison guards, we are leaving! These adventurers are taking over! Go go go!"
 #define SINCLARY_SAY_2 "I'm locking the door. Good luck, and thank you for doing this."
 
-///////////////////////////////////////////////////////
-//Lieutnant Sinclari StartEvent
-//class SinclariAI : public MoonScriptCreatureAI
-//{
-//    public:
-//
-//        MOONSCRIPT_FACTORY_FUNCTION(SinclariAI, MoonScriptCreatureAI);
-//        SinclariAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
-//        {
-//            _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
-//        }
-//
-//        void OnReachWP(uint32 iWaypointId, bool bForwards)
-//        {
-//            switch (iWaypointId)
-//            {
-//                case 2:
-//                {
-//                    this->OnRescuePrisonGuards();
-//                }break;
-//                case 4:
-//                {
-//                    _unit->SendChatMessage(CHAT_MSG_MONSTER_SAY, LANG_UNIVERSAL, SINCLARY_SAY_2);
-//                    _unit->setUInt32Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
-//                }break;
-//                case 5:
-//                {
-//                    TheVioletHoldScript* pInstance = (TheVioletHoldScript*)_unit->GetMapMgr()->GetScript();
-//                    pInstance->SetInstanceData(Data_EncounterState, MAP_VIOLET_HOLD, State_InProgress);
-//                    GameObject* pVioletHoldDoor = pInstance->getClosestGameObjectForPosition(GO_PRISON_SEAL, 1822.59f, 803.93f, 44.36f);
-//                    if (pVioletHoldDoor != NULL)
-//                        pVioletHoldDoor->SetState(GO_STATE_CLOSED);
-//                }break;
-//            }
-//        }
-//
-//        void OnRescuePrisonGuards()
-//        {
-//            _unit->SendChatMessage(CHAT_MSG_MONSTER_SAY, LANG_UNIVERSAL, SINCLARI_SAY_1);
-//            _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_FORWARDTHENSTOP);
-//
-//        }
-//};
-
-
-///////////////////////////////////////////////////////
-//Lieutnant Sinclari Gossip and init events
-//Sinclari Gossip
-//class SinclariGossip : public Arcemu::Gossip::Script
-//{
-//    public:
-//
-//        void OnHello(Object* pObject, Player* pPlayer)
-//        {
-//            TheVioletHoldScript* pInstance = (TheVioletHoldScript*)pPlayer->GetMapMgr()->GetScript();
-//            if (!pInstance)
-//                return;
-//
-//            //Page 1: Textid and first menu item
-//            if (pInstance->GetInstanceData(Data_EncounterState, MAP_VIOLET_HOLD) == State_NotStarted)
-//            {
-//                Arcemu::Gossip::Menu menu(pObject->GetGUID(), SINCLARI_ON_HELLO, 0);
-//                menu.AddItem(GOSSIP_ICON_CHAT, pPlayer->GetSession()->LocalizedGossipOption(SINCLARI_ACTIVATE), 1);
-//                menu.Send(pPlayer);
-//            }
-//
-//            //If VioletHold is started, Sinclari has this item for people who aould join.
-//            if (pInstance->GetInstanceData(Data_EncounterState, MAP_VIOLET_HOLD) == State_InProgress)
-//            {
-//                Arcemu::Gossip::Menu menu(pObject->GetGUID(), SINCLARI_ON_HELLO, 0);
-//                menu.AddItem(GOSSIP_ICON_CHAT, pPlayer->GetSession()->LocalizedGossipOption(SINCLARI_SEND_ME_IN), 3);
-//                menu.Send(pPlayer);
-//            }
-//        }
-//
-//        void OnSelectOption(Object* pObject, Player* pPlayer, uint32 Id, const char* Code, uint32 gossipId)
-//        {
-//            TheVioletHoldScript* pInstance = (TheVioletHoldScript*)pPlayer->GetMapMgr()->GetScript();
-//            if (!pInstance)
-//                return;
-//
-//            if (!pObject->IsCreature())
-//                return;
-//
-//            Creature* pCreature = static_cast<Creature*>(pObject);
-//
-//            switch (Id)
-//            {
-//                case 1:
-//                {
-//                    Arcemu::Gossip::Menu menu(pObject->GetGUID(), SINCLARI_ON_FINISH, 0);
-//                    menu.AddItem(GOSSIP_ICON_CHAT, pPlayer->GetSession()->LocalizedGossipOption(SINCLARI_GET_SAFETY), 2);
-//                    menu.Send(pPlayer);
-//
-//                }break;
-//
-//                case 2:
-//                {
-//                    static_cast<Creature*>(pObject)->setUInt32Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_NONE);
-//                    pCreature->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
-//                    //pCreature->MoveToWaypoint(1);
-//                    //pCreature->GetAIInterface()->StopMovement(10);
-//
-//                    // New Encounter State included
-//                    pInstance->SetInstanceData(Data_EncounterState, MAP_VIOLET_HOLD, State_PreProgress);
-//
-//                }break;
-//
-//                case 3:
-//                {
-//                    Arcemu::Gossip::Menu::Complete(pPlayer);
-//                    pPlayer->SafeTeleport(pPlayer->GetInstanceID(), MAP_VIOLET_HOLD, 1830.531006f, 803.939758f, 44.340508f, 6.281611f);
-//                }break;
-//            }
-//        }
-//};
-
-///////////////////////////////////////////////////////
-//VH Guards
-//class VHGuardsAI : public MoonScriptCreatureAI
-//{
-//    public:
-//
-//        MOONSCRIPT_FACTORY_FUNCTION(VHGuardsAI, MoonScriptCreatureAI);
-//        VHGuardsAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
-//        {
-//            _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
-//        }
-//
-//        //WPs inserted in db.
-//
-//};
 
 //\TODO: Replace spell casting logic for all instances, this is temp
 class VHCreatureAI : public MoonScriptCreatureAI
@@ -500,7 +315,7 @@ class VHCreatureAI : public MoonScriptCreatureAI
         void OnCombatStop(Unit* mTarget)
         {
             PutAllSpellsOnCooldown();
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -738,7 +553,7 @@ class MoraggAI : public MoonScriptBossAI
     MoraggAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
     {
         // Spells
-        if (IsHeroic())
+        if (_isHeroic())
         {
             AddSpell(MORAGG_SPELL_RAY_OF_SUFFERING_H, Target_Current, 100, 0, 0, 0, 45);
             AddSpell(MORAGG_SPELL_RAY_OF_PAIN_H, Target_Current, 100, 0, 0, 0 , 45);

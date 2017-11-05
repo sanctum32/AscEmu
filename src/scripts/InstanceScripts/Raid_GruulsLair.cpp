@@ -135,7 +135,7 @@ class HighKingMaulgarAI : public MoonScriptBossAI
             if (mAliveAdds > 1)
             {
                 setCanEnterCombat(false);
-                SetBehavior(Behavior_Spell);
+                setAIAgent(AGENT_SPELL);
                 setRooted(true);
             }
         }
@@ -199,7 +199,7 @@ class HighKingMaulgarAI : public MoonScriptBossAI
                 {
                     sendChatMessage(CHAT_MSG_MONSTER_YELL, 0, "Good, now you fight me!");
                     setCanEnterCombat(true);
-                    SetBehavior(Behavior_Default);
+                    setAIAgent(AGENT_NULL);
                     setRooted(false);
                 }
             }
@@ -215,7 +215,7 @@ void SpellFunc_Maulgar_Enrage(SpellDesc* pThis, MoonScriptCreatureAI* pCreatureA
     HighKingMaulgarAI* pMaulgarAI = (pCreatureAI != NULL) ? static_cast< HighKingMaulgarAI* >(pCreatureAI) : NULL;
     if (pMaulgarAI != NULL)
     {
-        pMaulgarAI->ApplyAura(HIGH_KING_MAULGAR_FLURRY);
+        pMaulgarAI->_applyAura(HIGH_KING_MAULGAR_FLURRY);
         pMaulgarAI->_setDisplayWeapon(false, false);
     }
 }
@@ -243,7 +243,7 @@ class KigglerTheCrazedAI : public MoonScriptCreatureAI
 
             if (getRangeToObject(pTarget) <= 40.0f)
             {
-                SetBehavior(Behavior_Spell);
+                setAIAgent(AGENT_SPELL);
                 setRooted(true);
             }
         }
@@ -268,7 +268,7 @@ class KigglerTheCrazedAI : public MoonScriptCreatureAI
             {
                 if (getRangeToObject(pTarget) <= 40.0f)
                 {
-                    SetBehavior(Behavior_Spell);
+                    setAIAgent(AGENT_SPELL);
                     setRooted(true);
                 }
             }
@@ -363,7 +363,7 @@ class KroshFirehandAI : public MoonScriptCreatureAI
             AddSpell(GREAT_FIREBALL, Target_Current, 100, 3, 0, 0, 100);
             mSpellShield = AddSpell(SPELLSHIELD, Target_Self, 0, 0, 0);
 
-            mEventTimer = AddTimer(30000);
+            mEventTimer = _addTimer(30000);
             mBlastWaveTimer = -1;
             SetAIUpdateFreq(250);
         }
@@ -377,26 +377,26 @@ class KroshFirehandAI : public MoonScriptCreatureAI
 
         void AIUpdate()
         {
-            if (!IsCasting())
+            if (!_isCasting())
             {
-                if (mBlastWaveTimer == -1 || IsTimerFinished(mBlastWaveTimer))
+                if (mBlastWaveTimer == -1 || _isTimerFinished(mBlastWaveTimer))
                 {
                     Unit* unit = GetBestUnitTarget(TargetFilter_Closest);
                     if (unit && getRangeToObject(unit) < 15.0f)
                     {
                         CastSpellNowNoScheduling(mBlastWave);
                         if (mBlastWaveTimer == -1)
-                            mBlastWaveTimer = AddTimer(6000);
+                            mBlastWaveTimer = _addTimer(6000);
                         else
-                            ResetTimer(mBlastWaveTimer, 6000);
+                            _resetTimer(mBlastWaveTimer, 6000);
                         ParentClass::AIUpdate();
                         return;
                     }
                 }
 
-                if (IsTimerFinished(mEventTimer))
+                if (_isTimerFinished(mEventTimer))
                 {
-                    ResetTimer(mEventTimer, 30000);
+                    _resetTimer(mEventTimer, 30000);
                     CastSpellNowNoScheduling(mSpellShield);
                 }
             }
@@ -468,8 +468,8 @@ class GruulTheDragonkillerAI : public MoonScriptCreatureAI
         {
             ParentClass::OnCombatStart(pTarget);
 
-            mGrowthTimer = AddTimer(30000);
-            mHurtfulTimer = AddTimer(8000);
+            mGrowthTimer = _addTimer(30000);
+            mHurtfulTimer = _addTimer(8000);
             mGrowthStacks = 0;
 
             GameObject* pGate = getNearestGameObject(166.897f, 368.226f, 16.9209f, 184662);
@@ -497,28 +497,28 @@ class GruulTheDragonkillerAI : public MoonScriptCreatureAI
 
         void AIUpdate()
         {
-            if (!IsCasting())
+            if (!_isCasting())
             {
-                if (IsTimerFinished(mGrowthTimer))
+                if (_isTimerFinished(mGrowthTimer))
                 {
                     if (mGrowthStacks == 30)
                     {
-                        RemoveAura(GRUUL_THE_DRAGONKILLER_GROWTH);
+                        _removeAura(GRUUL_THE_DRAGONKILLER_GROWTH);
                         mGrowthStacks = 0;
                     }
                     if (mGrowthStacks != 29)
                     {
-                        ResetTimer(mGrowthTimer, 30000);
+                        _resetTimer(mGrowthTimer, 30000);
                     }
                     else if (mGrowthStacks == 29)
                     {
-                        ResetTimer(mGrowthTimer, 300000);
+                        _resetTimer(mGrowthTimer, 300000);
                     }
 
-                    ApplyAura(GRUUL_THE_DRAGONKILLER_GROWTH);
+                    _applyAura(GRUUL_THE_DRAGONKILLER_GROWTH);
                     ++mGrowthStacks;
                 }
-                else if (IsTimerFinished(mHurtfulTimer))
+                else if (_isTimerFinished(mHurtfulTimer))
                 {
                     Unit* pCurrentTarget = _unit->GetAIInterface()->getNextTarget();
                     if (pCurrentTarget != NULL)
@@ -547,7 +547,7 @@ class GruulTheDragonkillerAI : public MoonScriptCreatureAI
                             _unit->CastSpell(pTarget, GRUUL_THE_DRAGONKILLER_HURTFUL_STRIKE, true);
                     }
 
-                    ResetTimer(mHurtfulTimer, 8000);
+                    _resetTimer(mHurtfulTimer, 8000);
                 }
             }
 

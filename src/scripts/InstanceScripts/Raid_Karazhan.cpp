@@ -102,7 +102,7 @@ class AttumenTheHuntsmanAI : public MoonScriptBossAI
     {
         if (GetPhase() == 1)
         {
-            if (GetLinkedCreature() && GetLinkedCreature()->isAlive() && _getHealthPercent() <= 25 && !IsCasting())
+            if (GetLinkedCreature() && GetLinkedCreature()->isAlive() && _getHealthPercent() <= 25 && !_isCasting())
             {
                 SetPhase(2);
                 _setMeleeDisabled(false);
@@ -145,7 +145,7 @@ class MidnightAI : public MoonScriptBossAI
     {
         if (GetPhase() == 1)
         {
-            if (GetLinkedCreature() == NULL && _getHealthPercent() <= 95 && !IsCasting())
+            if (GetLinkedCreature() == NULL && _getHealthPercent() <= 95 && !_isCasting())
             {
                 sendChatMessage(CHAT_MSG_MONSTER_YELL, 0, "Midnight calls for her master!");
                 CreatureAIScript* attumen = SpawnCreature(CN_ATTUMEN, _unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), _unit->GetOrientation(), false);
@@ -155,7 +155,7 @@ class MidnightAI : public MoonScriptBossAI
                     attumen->SetLinkedCreature(this);
                 }
             }
-            else if (GetLinkedCreature() && GetLinkedCreature()->isAlive() && _getHealthPercent() <= 25 && !IsCasting())
+            else if (GetLinkedCreature() && GetLinkedCreature()->isAlive() && _getHealthPercent() <= 25 && !_isCasting())
             {
                 SetPhase(2);
                 MoonScriptBossAI* attumen = static_cast<MoonScriptBossAI*>(GetLinkedCreature());
@@ -229,13 +229,13 @@ class MoroesAI : public MoonScriptBossAI
     void OnCombatStart(Unit* pTarget)
     {
         mEnrage->mEnabled = true;
-        mVanishTimer = AddTimer(35000);    //First vanish after 35sec
+        mVanishTimer = _addTimer(35000);    //First vanish after 35sec
         ParentClass::OnCombatStart(pTarget);
     }
 
     void OnDied(Unit* pKiller)
     {
-        RemoveAuraOnPlayers(MOROES_GARROTE);
+        _removeAuraOnPlayers(MOROES_GARROTE);
         ParentClass::OnDied(pKiller);
     }
 
@@ -243,25 +243,25 @@ class MoroesAI : public MoonScriptBossAI
     {
         if (GetPhase() == 1)
         {
-            if (mEnrage->mEnabled && _getHealthPercent() <= 30 && !IsCasting())
+            if (mEnrage->mEnabled && _getHealthPercent() <= 30 && !_isCasting())
             {
                 CastSpell(mEnrage);
                 mEnrage->mEnabled = false;
             }
-            else if (IsTimerFinished(mVanishTimer) && !IsCasting())
+            else if (_isTimerFinished(mVanishTimer) && !_isCasting())
             {
                 SetPhase(2, mVanish);
-                mGarroteTimer = AddTimer(12000);
-                ResetTimer(mVanishTimer, 35000);
+                mGarroteTimer = _addTimer(12000);
+                _resetTimer(mVanishTimer, 35000);
             }
         }
         else if (GetPhase() == 2)
         {
-            if (IsTimerFinished(mGarroteTimer) && !IsCasting())
+            if (_isTimerFinished(mGarroteTimer) && !_isCasting())
             {
                 SetPhase(1, mGarrote);
-                RemoveAura(MOROES_VANISH);
-                RemoveTimer(mGarroteTimer);
+                _removeAura(MOROES_VANISH);
+                _removeTimer(mGarroteTimer);
             }
         }
         ParentClass::AIUpdate();
@@ -271,7 +271,7 @@ class MoroesAI : public MoonScriptBossAI
     SpellDesc* mGarrote;
     SpellDesc* mEnrage;
     int32 mVanishTimer;
-    int32 mGarroteTimer;
+    uint32 mGarroteTimer;
 };
 
 /////////////////////////////////////////////////////////////////////
@@ -387,7 +387,7 @@ public:
 
     void OnCombatStop(Unit* mTarget)
     {
-        _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+        setAIAgent(AGENT_NULL);
         _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
         RemoveAIUpdateEvent();
     }
@@ -585,7 +585,7 @@ public:
             Curtain->SetState(GO_STATE_CLOSED);
 
         CastTime();
-        _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+        setAIAgent(AGENT_NULL);
         _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
         RemoveAIUpdateEvent();
     }
@@ -781,7 +781,7 @@ public:
 
         _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
         _unit->GetAIInterface()->SetAllowedToEnterCombat(false);
-        _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+        setAIAgent(AGENT_NULL);
         _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
 
         WayStartBBW[_unit->GetInstanceID()] = 1;
@@ -1161,7 +1161,7 @@ public:
 
     void OnCombatStop(Unit* mTarget)
     {
-        _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+        setAIAgent(AGENT_NULL);
         _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
         RemoveAIUpdateEvent();
     }
@@ -1500,7 +1500,7 @@ public:
             }
         }
 
-        _unit->GetAIInterface()->setCurrentAgent(AGENT_SPELL);
+        setAIAgent(AGENT_SPELL);
         RegisterAIUpdateEvent(1000);
         m_time_enrage = 900;
         m_time_special = (uint32)RandomUInt(5) + 25;
@@ -1524,7 +1524,7 @@ public:
     void OnCombatStop(Unit* mTarget)
     {
         CastTime();
-        _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+        setAIAgent(AGENT_NULL);
         _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
         RemoveAIUpdateEvent();
         _unit->setUInt32Value(UNIT_FIELD_POWER1, _unit->GetMaxPower(POWER_TYPE_MANA));
@@ -1943,7 +1943,7 @@ public:
 
     void OnCombatStop(Unit* mTarget)
     {
-        _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+        setAIAgent(AGENT_NULL);
         _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
         RemoveAIUpdateEvent();
     }
@@ -1988,7 +1988,7 @@ public:
 
     void OnCombatStop(Unit* mTarget)
     {
-        _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+        setAIAgent(AGENT_NULL);
         _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
         _unit->Despawn(10000, 0);
         RemoveAIUpdateEvent();
@@ -2101,7 +2101,7 @@ public:
     void OnCombatStop(Unit* mTarget)
     {
         clean();
-        _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+        setAIAgent(AGENT_NULL);
         _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
         RemoveAIUpdateEvent();
     }
@@ -2318,7 +2318,7 @@ public:
 
     void OnCombatStop(Unit* mTarget)
     {
-        _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+        setAIAgent(AGENT_NULL);
         _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
         RemoveAIUpdateEvent();
     }
@@ -2472,7 +2472,7 @@ public:
 
         if (_unit->GetDistance2dSq(mTarget) <= 1225.0f)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_SPELL);
+            setAIAgent(AGENT_SPELL);
         }
 
         RegisterAIUpdateEvent(_unit->GetBaseAttackTime(MELEE));
@@ -2480,7 +2480,7 @@ public:
 
     void OnCombatStop(Unit* mTarget)
     {
-        _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+        setAIAgent(AGENT_NULL);
         _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
         RemoveAIUpdateEvent();
 
@@ -2495,10 +2495,10 @@ public:
 
     void AIUpdate()
     {
-        _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+        setAIAgent(AGENT_NULL);
         if (_unit->GetAIInterface()->getNextTarget() && _unit->GetDistance2dSq(_unit->GetAIInterface()->getNextTarget()) <= 1225.0f)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_SPELL);
+            setAIAgent(AGENT_SPELL);
             if (_unit->GetCurrentSpell() == NULL && RandomUInt(10) > 2)
             {
                 _unit->setAttackTimer(spells[0].attackstoptimer, false);
@@ -2614,7 +2614,7 @@ public:
 
     void OnCombatStop(Unit* mTarget)
     {
-        _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+        setAIAgent(AGENT_NULL);
         _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
         if (_unit->GetHealthPct() > 0)
             _unit->Despawn(10000, 0);
@@ -2810,7 +2810,7 @@ public:
 
     void OnCombatStop(Unit* mTarget)
     {
-        _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+        setAIAgent(AGENT_NULL);
         _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
         RemoveAIUpdateEvent();
 
@@ -3204,13 +3204,13 @@ public:
         despawn(175000, 0);
         _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(HELLFIRE), true);
         ParentClass::OnLoad();
-    };
+    }
 
     void AIUpdate()
     {
         _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(HELLFIRE), true);
         ParentClass::AIUpdate();
-    };
+    }
 
 };
 
@@ -3293,7 +3293,7 @@ public:
 
     void OnCombatStop(Unit* mTarget)
     {
-        _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+        setAIAgent(AGENT_NULL);
         _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
         RemoveAIUpdateEvent();
     }
@@ -3385,7 +3385,7 @@ public:
     {
         _unit->RemoveAura(NETHERBURN);
 
-        _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+        setAIAgent(AGENT_NULL);
         _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
         RemoveAIUpdateEvent();
 
@@ -3640,7 +3640,7 @@ public:
     void OnCombatStop(Unit* mTarget)
     {
         _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
-        _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+        setAIAgent(AGENT_NULL);
         _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
         _unit->GetAIInterface()->SetAllowedToEnterCombat(true);
         _unit->GetAIInterface()->unsetSplineFlying();
@@ -3698,7 +3698,7 @@ public:
                 _unit->GetAIInterface()->setWayPointToMove(iWaypointId + 1);
             }
             break;
-        };
+        }
     }
 
     void FlyPhase()
@@ -4003,7 +4003,7 @@ public:
     void OnCombatStop(Unit* mTarget)
     {
         CastTime();
-        _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+        setAIAgent(AGENT_NULL);
         _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
         RemoveAIUpdateEvent();
 
@@ -4220,7 +4220,7 @@ public:
     void OnCombatStop(Unit* mTarget)
     {
         CastTime();
-        _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+        setAIAgent(AGENT_NULL);
         _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
         RemoveAIUpdateEvent();
 
@@ -4343,7 +4343,7 @@ public:
     void OnCombatStop(Unit* mTarget)
     {
         CastTime();
-        _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+        setAIAgent(AGENT_NULL);
         _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
         RemoveAIUpdateEvent();
 
@@ -4484,7 +4484,7 @@ public:
     void OnCombatStop(Unit* mTarget)
     {
         CastTime();
-        _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+        setAIAgent(AGENT_NULL);
         _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
         RemoveAIUpdateEvent();
 
@@ -4595,7 +4595,7 @@ public:
 
     void OnCombatStop(Unit* mTarget)
     {
-        _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+        setAIAgent(AGENT_NULL);
         _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
         _unit->Despawn(1, 0);
     }
@@ -4678,7 +4678,7 @@ public:
         }
 
         CastTime();
-        _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+        setAIAgent(AGENT_NULL);
         _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
         RemoveAIUpdateEvent();
 
@@ -4896,7 +4896,7 @@ public:
         }
 
         CastTime();
-        _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+        setAIAgent(AGENT_NULL);
         _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
         RemoveAIUpdateEvent();
         _unit->Despawn(1, 0);
@@ -5082,7 +5082,7 @@ public:
         }
 
         CastTime();
-        _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+        setAIAgent(AGENT_NULL);
         _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
         RemoveAIUpdateEvent();
         _unit->Despawn(1, 0);

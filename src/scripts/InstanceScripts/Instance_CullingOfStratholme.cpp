@@ -29,7 +29,6 @@ class MeathookAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(MeathookAI);
         MeathookAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            heroic = (_unit->GetMapMgr()->iInstanceMode == MODE_HEROIC);
             spells.clear();
 
             ScriptSpell* ConstrictingChains = new ScriptSpell;
@@ -68,7 +67,7 @@ class MeathookAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
             _unit->RemoveAllAuras();
@@ -134,7 +133,7 @@ class MeathookAI : public CreatureAIScript
         void CastScriptSpell(ScriptSpell* spell)
         {
             _unit->setMoveRoot(true);
-            uint32 spellid = heroic ? spell->heroic_spellid : spell->normal_spellid;
+            uint32 spellid = _isHeroic() ? spell->heroic_spellid : spell->normal_spellid;
             Unit* spelltarget = NULL;
             switch (spell->target)
             {
@@ -174,11 +173,10 @@ class MeathookAI : public CreatureAIScript
             spells.clear();
 
             delete this;
-        };
+        }
 
     protected:
 
-        bool heroic;
         std::vector< ScriptSpell* > spells;
 };
 
@@ -191,7 +189,6 @@ class SalramTheFleshcrafterAI : public CreatureAIScript
 
         SalramTheFleshcrafterAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            heroic = (_unit->GetMapMgr()->iInstanceMode == MODE_HEROIC);
             spells.clear();
 
             ScriptSpell* ShadowBolt = new ScriptSpell;
@@ -248,7 +245,7 @@ class SalramTheFleshcrafterAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
             _unit->RemoveAllAuras();
@@ -315,7 +312,7 @@ class SalramTheFleshcrafterAI : public CreatureAIScript
         void CastScriptSpell(ScriptSpell* spell)
         {
             _unit->setMoveRoot(true);
-            uint32 spellid = heroic ? spell->heroic_spellid : spell->normal_spellid;
+            uint32 spellid = _isHeroic() ? spell->heroic_spellid : spell->normal_spellid;
             if (spellid == 0)
                 return;
             Unit* spelltarget = NULL;
@@ -362,11 +359,10 @@ class SalramTheFleshcrafterAI : public CreatureAIScript
             spells.clear();
 
             delete this;
-        };
+        }
 
     protected:
 
-        bool heroic;
         std::vector< ScriptSpell* > spells;
 };
 
@@ -378,7 +374,6 @@ class ChronoLordEpochAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(ChronoLordEpochAI);
         ChronoLordEpochAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            heroic = (_unit->GetMapMgr()->iInstanceMode == MODE_HEROIC);
             spells.clear();
 
             ScriptSpell* WoundingStrike = new ScriptSpell;
@@ -426,7 +421,7 @@ class ChronoLordEpochAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
             _unit->RemoveAllAuras();
@@ -491,7 +486,7 @@ class ChronoLordEpochAI : public CreatureAIScript
         void CastScriptSpell(ScriptSpell* spell)
         {
             _unit->setMoveRoot(true);
-            uint32 spellid = heroic ? spell->heroic_spellid : spell->normal_spellid;
+            uint32 spellid = _isHeroic() ? spell->heroic_spellid : spell->normal_spellid;
             if (spellid == 0)
                 return;
             Unit* spelltarget = NULL;
@@ -533,11 +528,10 @@ class ChronoLordEpochAI : public CreatureAIScript
             spells.clear();
 
             delete this;
-        };
+        }
 
     protected:
 
-        bool heroic;
         std::vector< ScriptSpell* > spells;
 };
 
@@ -549,7 +543,6 @@ class InfiniteCorruptorAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(InfiniteCorruptorAI);
         InfiniteCorruptorAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            heroic = (_unit->GetMapMgr()->iInstanceMode == MODE_HEROIC);
             spells.clear();
             ScriptSpell* VoidStrike = new ScriptSpell;
             VoidStrike->normal_spellid = 60590;
@@ -578,7 +571,7 @@ class InfiniteCorruptorAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
             _unit->RemoveAllAuras();
@@ -628,7 +621,7 @@ class InfiniteCorruptorAI : public CreatureAIScript
         void CastScriptSpell(ScriptSpell* spell)
         {
             _unit->setMoveRoot(true);
-            uint32 spellid = heroic ? spell->heroic_spellid : spell->normal_spellid;
+            uint32 spellid = _isHeroic() ? spell->heroic_spellid : spell->normal_spellid;
             if (spellid == 0)
                 return;
             Unit* spelltarget = NULL;
@@ -665,16 +658,15 @@ class InfiniteCorruptorAI : public CreatureAIScript
             {
                 if (spells[i] != NULL)
                     delete spells[i];
-            };
+            }
 
             spells.clear();
 
             delete this;
-        };
+        }
 
     protected:
 
-        bool heroic;
         std::vector< ScriptSpell* > spells;
 };
 
@@ -686,7 +678,6 @@ class MalganisAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(MalganisAI);
         MalganisAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            heroic = (_unit->GetMapMgr()->iInstanceMode == MODE_HEROIC);
             scene = true;
             spells.clear();
             ScriptSpell* CarrionSwarm = new ScriptSpell;
@@ -734,7 +725,7 @@ class MalganisAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
             _unit->RemoveAllAuras();
@@ -853,7 +844,7 @@ class MalganisAI : public CreatureAIScript
         void CastScriptSpell(ScriptSpell* spell)
         {
             _unit->setMoveRoot(true);
-            uint32 spellid = heroic ? spell->heroic_spellid : spell->normal_spellid;
+            uint32 spellid = _isHeroic() ? spell->heroic_spellid : spell->normal_spellid;
             if (spellid == 0)
                 return;
             Unit* spelltarget = NULL;
@@ -890,16 +881,15 @@ class MalganisAI : public CreatureAIScript
             {
                 if (spells[i] != NULL)
                     delete spells[i];
-            };
+            }
 
             spells.clear();
 
             delete this;
-        };
+        }
 
     protected:
 
-        bool heroic;
         bool scene;
         std::vector< ScriptSpell* > spells;
 };
@@ -1099,7 +1089,7 @@ class ArthasAI : public CreatureAIScript
             _unit->GetAIInterface()->addWayPoint(CreateWaypoint(6, 0, Movement::WP_MOVE_TYPE_RUN));
             _unit->GetAIInterface()->addWayPoint(CreateWaypoint(7, 0, Movement::WP_MOVE_TYPE_RUN));
 
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_SCRIPTIDLE);
             _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
             phase = 0;

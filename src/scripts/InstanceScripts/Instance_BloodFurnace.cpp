@@ -31,7 +31,7 @@ class KelidanTheBreakerAI : public MoonScriptBossAI
     KelidanTheBreakerAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
     {
         //spells
-        if (IsHeroic())
+        if (_isHeroic())
         {
             mShadowBoltVolley = AddSpell(KELIDAN_SHADOW_BOLT_VOLLEY_H, Target_Self, 25, 0, 6);
             mFireNova = AddSpell(KELIDAN_FIRE_NOVA_H, Target_Current, 15, 0, 12);
@@ -55,21 +55,21 @@ class KelidanTheBreakerAI : public MoonScriptBossAI
     {
         sendDBChatMessage(4841);     // Who dares interrupt--What is this; what have you done? You'll ruin everything!
 
-        mBurningNovaTimer = AddTimer(15000);
+        mBurningNovaTimer = _addTimer(15000);
         ParentClass::OnCombatStart(pTarget);
     }
 
     void AIUpdate()
     {
-        if (!IsCasting())
+        if (!_isCasting())
         {
-            if (mBurningNovaTimer == INVALIDATE_TIMER || IsTimerFinished(mBurningNovaTimer))
+            if (mBurningNovaTimer == INVALIDATE_TIMER || _isTimerFinished(mBurningNovaTimer))
             {
-                if (IsHeroic())
+                if (_isHeroic())
                     CastSpell(mVortex);
                 CastSpell(mBurningNova);
 
-                ResetTimer(mBurningNovaTimer, 30000);
+                _resetTimer(mBurningNovaTimer, 30000);
 
                 ParentClass::AIUpdate();
             }

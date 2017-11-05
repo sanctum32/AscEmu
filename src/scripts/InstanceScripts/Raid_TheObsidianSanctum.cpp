@@ -20,16 +20,17 @@
 #include "Setup.h"
 #include "Raid_TheObsidianSanctum.h"
 
-class ObsidianSanctumScript : public MoonInstanceScript
+class ObsidianSanctumScript : public InstanceScript
 {
     public:
         uint32 m_creatureGuid[OS_DATA_END];
 
-        MOONSCRIPT_INSTANCE_FACTORY_FUNCTION(ObsidianSanctumScript, MoonInstanceScript);
-        ObsidianSanctumScript(MapMgr* pMapMgr) : MoonInstanceScript(pMapMgr)
+        ObsidianSanctumScript(MapMgr* pMapMgr) : InstanceScript(pMapMgr)
         {
             memset(m_creatureGuid, 0, sizeof(m_creatureGuid));
         }
+
+        static InstanceScript* Create(MapMgr* pMapMgr) { return new ObsidianSanctumScript(pMapMgr); }
 
         void OnCreaturePushToWorld(Creature* pCreature)
         {
@@ -154,7 +155,7 @@ void SpellFunc_LavaSpawn(SpellDesc* pThis, MoonScriptCreatureAI* pCreatureAI, Un
     {
         uint32 j = RandomUInt(5);
         pCreatureAI->SpawnCreature(CN_LAVA_BLAZE, pTarget->GetPositionX() + j, pTarget->GetPositionY() + j, pTarget->GetPositionZ(), pTarget->GetOrientation(), true);
-    };
+    }
 };
 
 class SartharionAI : public MoonScriptBossAI
@@ -162,14 +163,25 @@ class SartharionAI : public MoonScriptBossAI
         MOONSCRIPT_FACTORY_FUNCTION(SartharionAI, MoonScriptBossAI);
         SartharionAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
         {
-            mInstance = dynamic_cast<ObsidianSanctumScript*>(GetInstanceScript());
+            mInstance = dynamic_cast<ObsidianSanctumScript*>(getInstanceScript());
 
             AddSpell(SARTHARION_CLEAVE, Target_Current, 24, 0, 8);
 
-            SpellDesc* mFlame = AddSpell(HeroicInt(56908, 58956), Target_Self, 18, 2, 16);
-            mFlame->AddEmote("Burn, you miserable wretches!", CHAT_MSG_MONSTER_YELL, 14098);
+            SpellDesc* mFlame = nullptr;
+            if (_isHeroic())
+            {
+                mFlame = AddSpell(58956, Target_Self, 18, 2, 16);
+                AddSpell(58957, Target_Self, 40, 0, 12);
+            }
+            else
+            {
+                mFlame = AddSpell(56908, Target_Self, 18, 2, 16);
+                AddSpell(56910, Target_Self, 40, 0, 12);
+            }
 
-            AddSpell(HeroicInt(56910, 58957), Target_Self, 40, 0, 12);
+            if (mFlame != nullptr)
+                mFlame->AddEmote("Burn, you miserable wretches!", CHAT_MSG_MONSTER_YELL, 14098);
+            
             mFlameTsunami = AddSpellFunc(&SpellFunc_FlameTsunami, Target_Self, 99, 0, 25);
             mSummonLava = AddSpellFunc(&SpellFunc_LavaSpawn, Target_RandomUnitNotCurrent, 25, 0, 8);
 
@@ -187,7 +199,7 @@ class SartharionAI : public MoonScriptBossAI
             mDrakeTimer = 0;
             m_bEnraged = false;
             m_iDrakeCount = 0;
-        };
+        }
 
         void OnCombatStart(Unit* pTarget)
         {
@@ -197,20 +209,20 @@ class SartharionAI : public MoonScriptBossAI
 
             if (m_iDrakeCount >= 1)   //HardMode!
             {
-                mDrakeTimer = AddTimer(30000);
-                ApplyAura(SARTHARION_AURA);
-                RemoveAuraOnPlayers(SARTHARION_AURA);   // unproper hackfix
+                mDrakeTimer = _addTimer(30000);
+                _applyAura(SARTHARION_AURA);
+                _removeAuraOnPlayers(SARTHARION_AURA);   // unproper hackfix
                 _regenerateHealth();// Lets heal him as aura increase his hp for 25%
-            };
+            }
 
             ParentClass::OnCombatStart(pTarget);
-        };
+        }
 
         void AIUpdate()
         {
             if (m_iDrakeCount >= 1)
             {
-                if (IsTimerFinished(mDrakeTimer))
+                if (_isTimerFinished(mDrakeTimer))
                 {
                     if (m_bDrakes[DRAKE_TENEBRON] == true)
                         CallTenebron();
@@ -219,9 +231,9 @@ class SartharionAI : public MoonScriptBossAI
                     else if (m_bDrakes[DRAKE_VESPERON] == true)
                         CallVesperon();
 
-                    ResetTimer(mDrakeTimer, 45000);
-                };
-            };
+                    _resetTimer(mDrakeTimer, 45000);
+                }
+            }
 
             if (_getHealthPercent() <= 10 && m_bEnraged == false)   // enrage phase
             {
@@ -229,10 +241,10 @@ class SartharionAI : public MoonScriptBossAI
                     CastSpellNowNoScheduling(mSummonLava);
 
                 m_bEnraged = true;
-            };
+            }
 
             ParentClass::AIUpdate();
-        };
+        }
 
         void CheckDrakes()
         {
@@ -249,9 +261,9 @@ class SartharionAI : public MoonScriptBossAI
                     m_bDrakes[i] = true;
                     m_iDrakeCount++;
                     mInstance->DoDrakeAura(i);
-                };
-            };
-        };
+                }
+            }
+        }
 
         void CallTenebron()
         {
@@ -260,9 +272,9 @@ class SartharionAI : public MoonScriptBossAI
                 sendDBChatMessage(3982);     //Tenebron!The eggs are yours to protect as well!
                 m_cDrakes[DRAKE_TENEBRON]->GetAIInterface()->MoveTo(3254.606689f, 531.867859f, 66.898163f);
                 m_cDrakes[DRAKE_TENEBRON]->SetOrientation(4.215994f);
-            };
+            }
             m_bDrakes[DRAKE_TENEBRON] = false;
-        };
+        }
 
         void CallShadron()
         {
@@ -271,9 +283,9 @@ class SartharionAI : public MoonScriptBossAI
                 sendDBChatMessage(3981);     //Shadron! Come to me! All is at risk!
                 m_cDrakes[DRAKE_SHADRON]->GetAIInterface()->MoveTo(3254.606689f, 531.867859f, 66.898163f);
                 m_cDrakes[DRAKE_SHADRON]->SetOrientation(4.215994f);
-            };
+            }
             m_bDrakes[DRAKE_SHADRON] = false;
-        };
+        }
 
         void CallVesperon()
         {
@@ -282,9 +294,9 @@ class SartharionAI : public MoonScriptBossAI
                 sendDBChatMessage(3983);     //Vesperon, the clutch is in danger! Assist me!
                 m_cDrakes[DRAKE_VESPERON]->GetAIInterface()->MoveTo(3254.606689f, 531.867859f, 66.898163f);
                 m_cDrakes[DRAKE_VESPERON]->SetOrientation(4.215994f);
-            };
+            }
             m_bDrakes[DRAKE_VESPERON] = false;
-        };
+        }
 
         void OnDied(Unit* pKiller)
         {
@@ -292,7 +304,7 @@ class SartharionAI : public MoonScriptBossAI
 
             RemoveAIUpdateEvent();
             ParentClass::OnDied(pKiller);
-        };
+        }
 
     private:
         bool m_bDrakes[OS_DATA_END - 1];
@@ -320,16 +332,16 @@ class TsunamiAI : public MoonScriptBossAI
             despawn(11500, 0);
 
             ParentClass::OnLoad();
-        };
+        }
 
         void AIUpdate()
         {
-            ApplyAura(TSUNAMI);
-            ApplyAura(TSUNAMI_VISUAL);
+            _applyAura(TSUNAMI);
+            _applyAura(TSUNAMI_VISUAL);
             RegisterAIUpdateEvent(11000);
 
             ParentClass::OnLoad();
-        };
+        }
 
 };
 
@@ -338,18 +350,18 @@ class CyclonAI : public MoonScriptBossAI
     public:
         MOONSCRIPT_FACTORY_FUNCTION(CyclonAI, MoonScriptBossAI);
         CyclonAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
-        {};
+        {}
 
         void OnLoad()
         {
             setRooted(true);
             setCanEnterCombat(false);
             _unit->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-            ApplyAura(CYCLON_SPELL);
-            ApplyAura(CYCLON_AURA);
+            _applyAura(CYCLON_SPELL);
+            _applyAura(CYCLON_AURA);
 
             ParentClass::OnLoad();
-        };
+        }
 
 };
 
@@ -358,23 +370,23 @@ class LavaBlazeAI : public MoonScriptBossAI
     public:
         MOONSCRIPT_FACTORY_FUNCTION(LavaBlazeAI, MoonScriptBossAI);
         LavaBlazeAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
-        {};
+        {}
 
         void OnLoad()
         {
             AggroNearestPlayer(1);
             ParentClass::OnLoad();
-        };
+        }
 
         void OnCombatStop(Unit* pTarget)
         {
             despawn(1000, 0);
-        };
+        }
 
         void OnDied(Unit* pKiller)
         {
             despawn(1000, 0);
-        };
+        }
 
 };
 

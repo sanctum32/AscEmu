@@ -218,7 +218,7 @@ class HerodAI : public MoonScriptCreatureAI
         void OnCombatStop(Unit* pTarget)
         {
             m_bEnraged = false;
-            RemoveAura(SP_HEROD_ENRAGESPELL);
+            _removeAura(SP_HEROD_ENRAGESPELL);
 
             ParentClass::OnCombatStop(pTarget);
         }
@@ -228,7 +228,7 @@ class HerodAI : public MoonScriptCreatureAI
             if (_getHealthPercent() <= 40 && m_bEnraged == false)
             {
                 sendDBChatMessage(2090);     // Light, give me strength!
-                ApplyAura(SP_HEROD_ENRAGESPELL);
+                _applyAura(SP_HEROD_ENRAGESPELL);
             }
 
             ParentClass::AIUpdate();
@@ -305,7 +305,7 @@ class MograineAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -486,7 +486,7 @@ class WhitemaneAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -619,7 +619,7 @@ class FairbanksAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }

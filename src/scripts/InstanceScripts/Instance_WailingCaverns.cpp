@@ -72,7 +72,7 @@ class DruidFangAI : public MoonScriptCreatureAI
             if (_getHealthPercent() <= 5 && HealingTouch->mEnabled == true)
             {
                 // Remove Serpent Form
-                RemoveAura(8041);
+                _removeAura(8041);
                 CastSpellNowNoScheduling(HealingTouch);
                 HealingTouch->mEnabled = false;
             }
@@ -206,10 +206,10 @@ class SkumAI : public MoonScriptCreatureAI
 
         void AIUpdate()
         {
-            if (_getHealthPercent() <= 10 && GetBehavior() != Behavior_Flee)
+            if (_getHealthPercent() <= 10 && getAIAgent() != AGENT_FLEE)
             {
                 sendChatMessage(CHAT_MSG_MONSTER_EMOTE, 0, "Skum tries to run away in fear");
-                SetBehavior(Behavior_Flee);
+                setAIAgent(AGENT_FLEE);
                 _setMeleeDisabled(false);
                 _setRangedDisabled(true);
                 _setCastDisabled(true);
@@ -364,33 +364,33 @@ class DofNaralexAI : public MoonScriptBossAI
             {
                 _unit->Emote(EMOTE_ONESHOT_TALK);
                 SetPhase(2, Awakening);
-                SpawnTimer = AddTimer(100000);
+                SpawnTimer = _addTimer(100000);
             }
             ParentClass::OnReachWP(iWaypointId, bForwards);
         }
 
         void AIUpdate()
         {
-            if (SpawnTimer && IsTimerFinished(SpawnTimer))
+            if (SpawnTimer && _isTimerFinished(SpawnTimer))
             {
                 switch (GetPhase())
                 {
                     case 2:
                     {
                         Moccasin();
-                        ResetTimer(SpawnTimer, 100000);
+                        _resetTimer(SpawnTimer, 100000);
                         SetPhase(3);
                     } break;
                     case 3:
                     {
                         Ectoplasm();
-                        ResetTimer(SpawnTimer, 100000);
+                        _resetTimer(SpawnTimer, 100000);
                         SetPhase(4);
                     } break;
                     case 4:
                     {
                         BMutanus();
-                        ResetTimer(SpawnTimer, 100000);
+                        _resetTimer(SpawnTimer, 100000);
                         SetPhase(5);
                     } break;
                     default:

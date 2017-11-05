@@ -25,61 +25,14 @@
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //Hellfire Citadel: The Shattered Halls
-class InstanceTheShatteredHallsScript : public MoonInstanceScript
+class InstanceTheShatteredHallsScript : public InstanceScript
 {
     public:
 
-        MOONSCRIPT_INSTANCE_FACTORY_FUNCTION(InstanceTheShatteredHallsScript, MoonInstanceScript);
-        InstanceTheShatteredHallsScript(MapMgr* pMapMgr) : MoonInstanceScript(pMapMgr)
-        {
-            // Way to select bosses
-            BuildEncounterMap();
-            if (mEncounters.size() == 0)
-                return;
+        InstanceTheShatteredHallsScript(MapMgr* pMapMgr) : InstanceScript(pMapMgr)
+        {}
 
-            for (EncounterMap::iterator Iter = mEncounters.begin(); Iter != mEncounters.end(); ++Iter)
-            {
-                if ((*Iter).second.mState != State_Finished)
-                    continue;
-            }
-        }
-
-        void OnGameObjectPushToWorld(GameObject* pGameObject) { }
-
-        void SetInstanceData(uint32 pType, uint32 pIndex, uint32 pData)
-        {
-            if (pType != Data_EncounterState || pIndex == 0)
-                return;
-
-            EncounterMap::iterator Iter = mEncounters.find(pIndex);
-            if (Iter == mEncounters.end())
-                return;
-
-            (*Iter).second.mState = (EncounterState)pData;
-        }
-
-        uint32 GetInstanceData(uint32 pType, uint32 pIndex)
-        {
-            if (pType != Data_EncounterState || pIndex == 0)
-                return 0;
-
-            EncounterMap::iterator Iter = mEncounters.find(pIndex);
-            if (Iter == mEncounters.end())
-                return 0;
-
-            return (*Iter).second.mState;
-        }
-
-        void OnCreatureDeath(Creature* pCreature, Unit* pUnit)
-        {
-            EncounterMap::iterator Iter = mEncounters.find(pCreature->GetEntry());
-            if (Iter == mEncounters.end())
-                return;
-
-            (*Iter).second.mState = State_Finished;
-
-            return;
-        }
+        static InstanceScript* Create(MapMgr* pMapMgr) { return new InstanceTheShatteredHallsScript(pMapMgr); }
 };
 
 // FelOrcConvertAI
@@ -122,7 +75,7 @@ class FelOrcConvertAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             CastTime();
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -241,7 +194,7 @@ class ShatteredHandHeathenAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             CastTime();
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -365,7 +318,7 @@ class ShatteredHandLegionnaireAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             CastTime();
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -490,7 +443,7 @@ class ShatteredHandSavageAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             CastTime();
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -627,7 +580,7 @@ class ShadowmoonAcolyteAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             CastTime();
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -757,7 +710,7 @@ class ShatteredHandAssassinAI : public CreatureAIScript
         {
             CastTime();
             _unit->CastSpell(_unit, spells[1].info, spells[1].instant);
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -867,7 +820,7 @@ class ShatteredHandGladiatorAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             CastTime();
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -978,7 +931,7 @@ class ShatteredHandHoundmasterAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             CastTime();
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -1105,7 +1058,7 @@ class ShatteredHandReaverAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             CastTime();
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -1222,7 +1175,7 @@ class ShatteredHandSentryAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             CastTime();
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -1356,7 +1309,7 @@ class ShatteredHandSharpshooterAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -1368,10 +1321,10 @@ class ShatteredHandSharpshooterAI : public CreatureAIScript
 
         void AIUpdate()
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             if (_unit->GetAIInterface()->getNextTarget() && _unit->GetDistance2dSq(_unit->GetAIInterface()->getNextTarget()) <= 900.0f)
             {
-                _unit->GetAIInterface()->setCurrentAgent(AGENT_SPELL);
+                setAIAgent(AGENT_SPELL);
                 if (_unit->GetCurrentSpell() == NULL)
                 {
                     uint32 Chance = RandomUInt(100);
@@ -1457,7 +1410,7 @@ class ShatteredHandBrawlerAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             CastTime();
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -1581,7 +1534,7 @@ class ShadowmoonDarkcasterAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 
@@ -1717,7 +1670,7 @@ class GrandWarlockNethekurseAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
 
             if (Started)
@@ -1738,7 +1691,7 @@ class GrandWarlockNethekurseAI : public CreatureAIScript
                 _unit->SetEmoteState(EMOTE_ONESHOT_NONE);
                 _unit->setUInt64Value(UNIT_FIELD_FLAGS, 0);
 
-                _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+                setAIAgent(AGENT_NULL);
                 _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
                 RemoveAIUpdateEvent();
 
@@ -1956,7 +1909,7 @@ class BloodGuardPorungAI : public CreatureAIScript
         void OnCombatStop(Unit* mTarget)
         {
             CastTime();
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
@@ -2043,7 +1996,7 @@ class WarbringerOmroggAI : public MoonScriptCreatureAI
         void OnCombatStart(Unit* pTarget)
         {
             ParentClass::OnCombatStart(pTarget);
-            mAggroShiftTimer = AddTimer(20000 + RandomUInt(10) * 1000);
+            mAggroShiftTimer = _addTimer(20000 + RandomUInt(10) * 1000);
             mBlastWaveTimer = mSpeechTimer = mSpeechId = INVALIDATE_TIMER;
             mLeftHead = SpawnCreature(19523, _unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), _unit->GetOrientation(), false);
             mRightHead = SpawnCreature(19524, _unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), _unit->GetOrientation(), false);
@@ -2063,17 +2016,17 @@ class WarbringerOmroggAI : public MoonScriptCreatureAI
             {
                 case 0:
                     sendChatMessage(CHAT_MSG_MONSTER_YELL, 10308, "If you nice me let you live.");
-                    mSpeechTimer = AddTimer(4000);
+                    mSpeechTimer = _addTimer(4000);
                     mSpeechId = 1;
                     break;
                 case 1:
                     sendChatMessage(CHAT_MSG_MONSTER_YELL, 10309, "Me hungry!");
-                    mSpeechTimer = AddTimer(2500);
+                    mSpeechTimer = _addTimer(2500);
                     mSpeechId = 2;
                     break;
                 case 2:
                     sendChatMessage(CHAT_MSG_MONSTER_YELL, 10306, "Smash!");
-                    mSpeechTimer = AddTimer(2000);
+                    mSpeechTimer = _addTimer(2000);
                     mSpeechId = 3;
                     break;
             }
@@ -2109,7 +2062,7 @@ class WarbringerOmroggAI : public MoonScriptCreatureAI
                     break;
                 case 1:
                     sendChatMessage(CHAT_MSG_MONSTER_YELL, 10310, "This one die easy!");
-                    mSpeechTimer = AddTimer(3000);
+                    mSpeechTimer = _addTimer(3000);
                     mSpeechId = 0;
                     break;
             }
@@ -2133,10 +2086,10 @@ class WarbringerOmroggAI : public MoonScriptCreatureAI
         {
             ParentClass::AIUpdate();
 
-            if (mSpeechTimer != INVALIDATE_TIMER && IsTimerFinished(mSpeechTimer))
+            if (mSpeechTimer != INVALIDATE_TIMER && _isTimerFinished(mSpeechTimer))
             {
                 bool ResetSpeech = true;
-                RemoveTimer(mSpeechTimer);
+                _removeTimer(mSpeechTimer);
                 if (mLeftHead != NULL && mRightHead != NULL)
                 {
                     switch (mSpeechId)
@@ -2161,7 +2114,7 @@ class WarbringerOmroggAI : public MoonScriptCreatureAI
                             break;
                         case 6:
                             mRightHead->sendChatMessage(CHAT_MSG_MONSTER_YELL, 10314, "That's not funny!");
-                            mSpeechTimer = AddTimer(6000);
+                            mSpeechTimer = _addTimer(6000);
                             mSpeechId = 8;
                             ResetSpeech = false;
                             break;
@@ -2177,15 +2130,15 @@ class WarbringerOmroggAI : public MoonScriptCreatureAI
                 if (ResetSpeech)
                     mSpeechId = -1;
             }
-            else if (IsTimerFinished(mAggroShiftTimer))
+            else if (_isTimerFinished(mAggroShiftTimer))
             {
-                ResetTimer(mAggroShiftTimer, 20000 + RandomUInt(10) * 1000);
+                _resetTimer(mAggroShiftTimer, 20000 + RandomUInt(10) * 1000);
                 ShiftAggro();
             }
 
-            if (mBlastWaveTimer != INVALIDATE_TIMER && IsTimerFinished(mBlastWaveTimer))
+            if (mBlastWaveTimer != INVALIDATE_TIMER && _isTimerFinished(mBlastWaveTimer))
             {
-                RemoveTimer(mBlastWaveTimer);
+                _removeTimer(mBlastWaveTimer);
                 CastSpell(mBlastWave);
             }
         }
@@ -2209,7 +2162,7 @@ class WarbringerOmroggAI : public MoonScriptCreatureAI
                         break;
                     case 1:
                         mLeftHead->sendChatMessage(CHAT_MSG_MONSTER_YELL, 10300, "Me not like this one...");
-                        mSpeechTimer = AddTimer(3000);
+                        mSpeechTimer = _addTimer(3000);
                         mSpeechId = 4;
                         break;
                     case 2:
@@ -2217,7 +2170,7 @@ class WarbringerOmroggAI : public MoonScriptCreatureAI
                         break;
                     case 3:
                         mLeftHead->sendChatMessage(CHAT_MSG_MONSTER_YELL, 10305, "Me get bored.");
-                        mSpeechTimer = AddTimer(3000);
+                        mSpeechTimer = _addTimer(3000);
                         mSpeechId = 5;
                         break;
                     case 4:
@@ -2225,12 +2178,12 @@ class WarbringerOmroggAI : public MoonScriptCreatureAI
                         break;
                     case 5:
                         mLeftHead->sendChatMessage(CHAT_MSG_MONSTER_YELL, 10303, "You stay here. Me go kill someone else!");
-                        mSpeechTimer = AddTimer(4000);
+                        mSpeechTimer = _addTimer(4000);
                         mSpeechId = 6;
                         break;
                     case 6:
                         mLeftHead->sendChatMessage(CHAT_MSG_MONSTER_YELL, 10302, "Me kill someone else!");
-                        mSpeechTimer = AddTimer(3000);
+                        mSpeechTimer = _addTimer(3000);
                         mSpeechId = 7;
                         break;
                 }
@@ -2240,8 +2193,8 @@ class WarbringerOmroggAI : public MoonScriptCreatureAI
         MoonScriptCreatureAI* mLeftHead;
         MoonScriptCreatureAI* mRightHead;
         int32 mAggroShiftTimer;
-        int32 mBlastWaveTimer;
-        int32 mSpeechTimer;
+        uint32 mBlastWaveTimer;
+        uint32 mSpeechTimer;
         int32 mSpeechId;
         SpellDesc* mBlastWave;
 };
@@ -2252,7 +2205,7 @@ void SpellFunc_Warbringer_BurningMaul(SpellDesc* pThis, MoonScriptCreatureAI* pC
     if (Warbringer != NULL)
     {
         Warbringer->CastSpell(Warbringer->mBlastWave);
-        Warbringer->mBlastWaveTimer = Warbringer->AddTimer(RandomUInt(5) + 5);
+        Warbringer->mBlastWaveTimer = Warbringer->_addTimer(RandomUInt(5) + 5);
     }
 }
 
@@ -2355,7 +2308,7 @@ class WarchiefKargathBladefistAI : public CreatureAIScript
 
         void OnCombatStop(Unit* mTarget)
         {
-            _unit->GetAIInterface()->setCurrentAgent(AGENT_NULL);
+            setAIAgent(AGENT_NULL);
             _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }

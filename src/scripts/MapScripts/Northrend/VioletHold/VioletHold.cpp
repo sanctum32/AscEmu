@@ -12,16 +12,10 @@ public:
 
     VioletHold(MapMgr* pMapMgr) : InstanceScript(pMapMgr)
     {
-        generateBossDataState();
         addData(608, NotStarted);
     }
 
     static InstanceScript* Create(MapMgr* pMapMgr) { return new VioletHold(pMapMgr); }
-
-    void OnCreatureDeath(Creature* pCreature, Unit* pUnit)
-    {
-        setData(pCreature->GetEntry(), Finished);
-    }
 
     void OnPlayerEnter(Player* player)
     {

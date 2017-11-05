@@ -18,63 +18,18 @@
 #include "Setup.h"
 #include "Instance_ForgeOfSouls.h"
 
-class InstanceForgeOfSoulsScript : public MoonInstanceScript
+class InstanceForgeOfSoulsScript : public InstanceScript
 {
 public:
 
-	MOONSCRIPT_INSTANCE_FACTORY_FUNCTION(InstanceForgeOfSoulsScript, MoonInstanceScript);
-	InstanceForgeOfSoulsScript(MapMgr* pMapMgr) : MoonInstanceScript(pMapMgr)
-	{
-		// Way to select bosses
-		BuildEncounterMap();
-		if (mEncounters.size() == 0)
-			return;
+	InstanceForgeOfSoulsScript(MapMgr* pMapMgr) : InstanceScript(pMapMgr)
+	{}
 
-		for (EncounterMap::iterator Iter = mEncounters.begin(); Iter != mEncounters.end(); ++Iter)
-		{
-			if ((*Iter).second.mState != State_Finished)
-				continue;
-		}
-	}
-
-	void OnGameObjectPushToWorld(GameObject* pGameObject) { }
-
-	void SetInstanceData(uint32 pType, uint32 pIndex, uint32 pData)
-	{
-		if (pType != Data_EncounterState || pIndex == 0)
-			return;
-
-		EncounterMap::iterator Iter = mEncounters.find(pIndex);
-		if (Iter == mEncounters.end())
-			return;
-
-		(*Iter).second.mState = (EncounterState)pData;
-	}
-
-	uint32 GetInstanceData(uint32 pType, uint32 pIndex)
-	{
-		if (pType != Data_EncounterState || pIndex == 0)
-			return 0;
-
-		EncounterMap::iterator Iter = mEncounters.find(pIndex);
-		if (Iter == mEncounters.end())
-			return 0;
-
-		return (*Iter).second.mState;
-	}
-
-	void OnCreatureDeath(Creature* pCreature, Unit* pUnit)
-	{
-		EncounterMap::iterator Iter = mEncounters.find(pCreature->GetEntry());
-		if (Iter == mEncounters.end())
-			return;
-
-		(*Iter).second.mState = State_Finished;
-	}
+    static InstanceScript* Create(MapMgr* pMapMgr) { return new InstanceForgeOfSoulsScript(pMapMgr); }
 
 	void OnPlayerEnter(Player* player)
 	{
-        if (!mSpawnsCreated)
+        if (!spawnsCreated())
         {
             if (player->GetTeam() == TEAM_ALLIANCE)
             {
@@ -89,9 +44,9 @@ public:
                 spawnCreature(CN_DARK_RANGER_KALIRA, 4902.95f, 2212.69f, 638.73f, 35);
             }
 
-            mSpawnsCreated = true;
+            setSpawnsCreated();
         }
-	};
+	}
 };
 
 void SetupForgeOfSouls(ScriptMgr* mgr)
