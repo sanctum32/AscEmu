@@ -38,15 +38,16 @@ class OnyxiaAI : public CreatureAIScript
             m_whelpCooldown = 7;
             m_aoeFearCooldown = 30;
             m_fCastCount = 5;
-            _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(1, 2000, Movement::WP_MOVE_TYPE_RUN));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(2, 0, Movement::WP_MOVE_TYPE_FLY));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(3, 0, Movement::WP_MOVE_TYPE_FLY));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(4, 0, Movement::WP_MOVE_TYPE_FLY));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(5, 0, Movement::WP_MOVE_TYPE_FLY));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(6, 0, Movement::WP_MOVE_TYPE_FLY));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(7, 0, Movement::WP_MOVE_TYPE_FLY));
-            _unit->GetAIInterface()->addWayPoint(CreateWaypoint(8, 0, Movement::WP_MOVE_TYPE_FLY));
+
+            SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_NONE);
+            AddWaypoint(CreateWaypoint(1, 2000, Movement::WP_MOVE_TYPE_RUN, coords[1]));
+            AddWaypoint(CreateWaypoint(2, 0, Movement::WP_MOVE_TYPE_FLY, coords[2]));
+            AddWaypoint(CreateWaypoint(3, 0, Movement::WP_MOVE_TYPE_FLY, coords[3]));
+            AddWaypoint(CreateWaypoint(4, 0, Movement::WP_MOVE_TYPE_FLY, coords[4]));
+            AddWaypoint(CreateWaypoint(5, 0, Movement::WP_MOVE_TYPE_FLY, coords[5]));
+            AddWaypoint(CreateWaypoint(6, 0, Movement::WP_MOVE_TYPE_FLY, coords[6]));
+            AddWaypoint(CreateWaypoint(7, 0, Movement::WP_MOVE_TYPE_FLY, coords[7]));
+            AddWaypoint(CreateWaypoint(8, 0, Movement::WP_MOVE_TYPE_FLY, coords[8]));
 
             infoFear = sSpellCustomizations.GetSpellInfo(AOE_FEAR);
             infoCleave = sSpellCustomizations.GetSpellInfo(CLEAVE);
@@ -297,20 +298,14 @@ class OnyxiaAI : public CreatureAIScript
                 Creature* cre = NULL;
                 for (uint8 i = 0; i < 6; i++)
                 {
-                    cre = _unit->GetMapMgr()->GetInterface()->SpawnCreature(11262,
-                            whelpCoords[i].x, whelpCoords[i].y,
-                            whelpCoords[i].z, whelpCoords[i].o,
-                            true, false, 0, 0);
+                    cre = spawnCreature(11262, whelpCoords[i].x, whelpCoords[i].y, whelpCoords[i].z, whelpCoords[i].o);
                     if (cre)
                     {
                         cre->GetAIInterface()->MoveTo(14.161f, -177.874f, -85.649f);
                         cre->SetOrientation(0.23f);
                         cre->GetAIInterface()->setOutOfCombatRange(100000);
                     }
-                    cre = _unit->GetMapMgr()->GetInterface()->SpawnCreature(11262,
-                            whelpCoords[5 - i].x, whelpCoords[5 - i].y,
-                            whelpCoords[5 - i].z, whelpCoords[5 - i].o,
-                            true, false, 0, 0);
+                    cre = spawnCreature(11262, whelpCoords[5 - i].x, whelpCoords[5 - i].y, whelpCoords[5 - i].z, whelpCoords[5 - i].o);
                     if (cre)
                     {
                         cre->GetAIInterface()->MoveTo(27.133f, -232.030f, -84.188f);
@@ -339,20 +334,14 @@ class OnyxiaAI : public CreatureAIScript
                 Creature* cre = NULL;
                 for (uint8 i = 0; i < 6; i++)
                 {
-                    cre = _unit->GetMapMgr()->GetInterface()->SpawnCreature(11262,
-                            whelpCoords[i].x, whelpCoords[i].y,
-                            whelpCoords[i].z, whelpCoords[i].o,
-                            true, false, 0, 0);
+                    cre = spawnCreature(11262, whelpCoords[i].x, whelpCoords[i].y, whelpCoords[i].z, whelpCoords[i].o);
                     if (cre)
                     {
                         cre->GetAIInterface()->MoveTo(14.161f, -177.874f, -85.649f);
                         cre->SetOrientation(0.23f);
                         cre->GetAIInterface()->setOutOfCombatRange(100000);
                     }
-                    cre = _unit->GetMapMgr()->GetInterface()->SpawnCreature(11262,
-                            whelpCoords[5 - i].x, whelpCoords[5 - i].y,
-                            whelpCoords[5 - i].z, whelpCoords[5 - i].o,
-                            true, false, 0, 0);
+                    cre = spawnCreature(11262, whelpCoords[5 - i].x, whelpCoords[5 - i].y, whelpCoords[5 - i].z, whelpCoords[5 - i].o);
                     if (cre)
                     {
                         cre->GetAIInterface()->MoveTo(27.133f, -232.030f, -84.188f);
@@ -362,28 +351,6 @@ class OnyxiaAI : public CreatureAIScript
                 }
                 m_whelpCooldown = 300;
             }
-        }
-
-        inline Movement::WayPoint* CreateWaypoint(int id, uint32 waittime, uint32 flags)
-        {
-            //WayPoint* wp = new WayPoint;
-            //WayPoint * wp = _unit->GetMapMgr()->GetInterface()->CreateWaypoint();
-            //WayPoint * wp = sStructFactory.CreateWaypoint();
-            Movement::WayPoint* wp = _unit->CreateWaypointStruct();
-            wp->id = id;
-            wp->x = coords[id].x;
-            wp->y = coords[id].y;
-            wp->z = coords[id].z;
-            wp->o = coords[id].o;
-            wp->waittime = waittime;
-            wp->flags = flags;
-            wp->forwardemoteoneshot = false;
-            wp->forwardemoteid = 0;
-            wp->backwardemoteoneshot = false;
-            wp->backwardemoteid = 0;
-            wp->forwardskinid = 0;
-            wp->backwardskinid = 0;
-            return wp;
         }
 
         void Fly()

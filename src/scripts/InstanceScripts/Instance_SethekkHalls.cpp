@@ -1422,7 +1422,7 @@ class LakkaAI : public MoonScriptCreatureAI
             //WPs
             for (uint8 i = 1; i < 4; ++i)
             {
-                AddWaypoint(CreateWaypoint(i, 0, LakkaWaypoint[i]));
+                AddWaypoint(CreateWaypoint(i, 0, LakkaWaypoint[i].wp_flag, LakkaWaypoint[i].wp_location));
             }
         }
 
@@ -1610,7 +1610,7 @@ class DarkweaverSythAI : public CreatureAIScript
             sendDBChatMessage(SAY_DARKW_SYNTH_07);
 
             GameObject* LakkasCage = getNearestGameObject(-160.813f, 157.043f, 0.194095f, 183051);
-            Creature* mLakka = _unit->GetMapMgr()->GetInterface()->GetCreatureNearestCoords(-160.813f, 157.043f, 0.194095f, 18956);
+            Creature* mLakka = getNearestCreature(-160.813f, 157.043f, 0.194095f, 18956);
 
             if (LakkasCage != NULL)
             {
