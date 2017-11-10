@@ -26,12 +26,12 @@
 
 //////////////////////////////////////////////////////////////////////////////////////////
 ///Anomalus
-class AnomalusAI : public MoonScriptBossAI
+class AnomalusAI : public MoonScriptCreatureAI
 {
     public:
 
-        MOONSCRIPT_FACTORY_FUNCTION(AnomalusAI, MoonScriptBossAI);
-        AnomalusAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+        MOONSCRIPT_FACTORY_FUNCTION(AnomalusAI, MoonScriptCreatureAI);
+        AnomalusAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
             mInstance = getInstanceScript();
 
@@ -87,9 +87,9 @@ class AnomalusAI : public MoonScriptBossAI
             if (!bToCharge)
                 sendDBChatMessage(4319);     // Reality... unwoven.
 
-            Announce("Anomalus opens a Chaotic Rift!");
+            sendAnnouncement("Anomalus opens a Chaotic Rift!");
             //we are linked with CN_CHAOTIC_RIFT.
-            CreatureAIScript* chaoticRift = SpawnCreature(CN_CHAOTIC_RIFT, _unit->GetPositionX() + 13.5f, _unit->GetPositionY(), _unit->GetPositionZ(), _unit->GetOrientation(), false);
+            CreatureAIScript* chaoticRift = SpawnCreature(CN_CHAOTIC_RIFT, getCreature()->GetPositionX() + 13.5f, getCreature()->GetPositionY(), getCreature()->GetPositionZ(), getCreature()->GetOrientation(), false);
             if (chaoticRift != NULL)
             {
                 SetLinkedCreature(chaoticRift);
@@ -101,7 +101,7 @@ class AnomalusAI : public MoonScriptBossAI
         {
             SummonRift(true);
             sendDBChatMessage(4320);     // Indestructible.
-            Announce("Anomalus shields himself and diverts his power to the rifts!");
+            sendAnnouncement("Anomalus shields himself and diverts his power to the rifts!");
             _applyAura(47748);   // me immune
             setRooted(true);
 
@@ -144,14 +144,14 @@ class AnomalusAI : public MoonScriptBossAI
         InstanceScript* mInstance;
 };
 
-class ChaoticRiftAI : public MoonScriptBossAI
+class ChaoticRiftAI : public MoonScriptCreatureAI
 {
     public:
 
-        MOONSCRIPT_FACTORY_FUNCTION(ChaoticRiftAI, MoonScriptBossAI);
-        ChaoticRiftAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+        MOONSCRIPT_FACTORY_FUNCTION(ChaoticRiftAI, MoonScriptCreatureAI);
+        ChaoticRiftAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
-            _unit->GetAIInterface()->SetAllowedToEnterCombat(false);
+            getCreature()->GetAIInterface()->SetAllowedToEnterCombat(false);
             auto spell_mana_wrath = sSpellCustomizations.GetSpellInfo(SUMMON_MANA_WRAITH);
             if (spell_mana_wrath != nullptr)
                 AddSpell(SUMMON_MANA_WRAITH, Target_Self, 30, 0, spell_mana_wrath->getRecoveryTime());
@@ -181,12 +181,12 @@ class ChaoticRiftAI : public MoonScriptBossAI
         }
 };
 
-class CraziedManaWrathAI : public MoonScriptBossAI
+class CraziedManaWrathAI : public MoonScriptCreatureAI
 {
     public:
 
-        MOONSCRIPT_FACTORY_FUNCTION(CraziedManaWrathAI, MoonScriptBossAI);
-        CraziedManaWrathAI(Creature* pCreature) : MoonScriptBossAI(pCreature) {};
+        MOONSCRIPT_FACTORY_FUNCTION(CraziedManaWrathAI, MoonScriptCreatureAI);
+        CraziedManaWrathAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature) {};
 
         void OnCombatStop(Unit* pTarget)
         {
@@ -212,12 +212,12 @@ static Movement::Location FormSpawns[] =
 };
 
 
-class TelestraBossAI : public MoonScriptBossAI
+class TelestraBossAI : public MoonScriptCreatureAI
 {
     public:
 
-        MOONSCRIPT_FACTORY_FUNCTION(TelestraBossAI, MoonScriptBossAI);
-        TelestraBossAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+        MOONSCRIPT_FACTORY_FUNCTION(TelestraBossAI, MoonScriptCreatureAI);
+        TelestraBossAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
             mInstance = getInstanceScript();
 
@@ -367,12 +367,12 @@ class TelestraBossAI : public MoonScriptBossAI
         InstanceScript* mInstance;
 };
 
-class TelestraFireAI : public MoonScriptBossAI
+class TelestraFireAI : public MoonScriptCreatureAI
 {
     public:
 
-        MOONSCRIPT_FACTORY_FUNCTION(TelestraFireAI, MoonScriptBossAI);
-        TelestraFireAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+        MOONSCRIPT_FACTORY_FUNCTION(TelestraFireAI, MoonScriptCreatureAI);
+        TelestraFireAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
             if (_isHeroic())
             {
@@ -393,12 +393,12 @@ class TelestraFireAI : public MoonScriptBossAI
         }
 };
 
-class TelestraFrostAI : public MoonScriptBossAI
+class TelestraFrostAI : public MoonScriptCreatureAI
 {
     public:
 
-        MOONSCRIPT_FACTORY_FUNCTION(TelestraFrostAI, MoonScriptBossAI);
-        TelestraFrostAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+        MOONSCRIPT_FACTORY_FUNCTION(TelestraFrostAI, MoonScriptCreatureAI);
+        TelestraFrostAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
             if (_isHeroic())
             {
@@ -419,12 +419,12 @@ class TelestraFrostAI : public MoonScriptBossAI
         }
 };
 
-class TelestraArcaneAI : public MoonScriptBossAI
+class TelestraArcaneAI : public MoonScriptCreatureAI
 {
     public:
 
-        MOONSCRIPT_FACTORY_FUNCTION(TelestraArcaneAI, MoonScriptBossAI);
-        TelestraArcaneAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+        MOONSCRIPT_FACTORY_FUNCTION(TelestraArcaneAI, MoonScriptCreatureAI);
+        TelestraArcaneAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
             AddSpell(TIME_STOP, Target_Self, 30, 1.5, 30);
             AddSpell(CRITTER, Target_RandomPlayer, 25, 0, 20);
@@ -440,10 +440,10 @@ class TelestraArcaneAI : public MoonScriptBossAI
 
 //////////////////////////////////////////////////////////////////////////////////////////
 /// Ormorok the Tree-Shaper
-class OrmorokAI : public MoonScriptBossAI
+class OrmorokAI : public MoonScriptCreatureAI
 {
-    MOONSCRIPT_FACTORY_FUNCTION(OrmorokAI, MoonScriptBossAI);
-    OrmorokAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+    MOONSCRIPT_FACTORY_FUNCTION(OrmorokAI, MoonScriptCreatureAI);
+    OrmorokAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
         mInstance = getInstanceScript();
 
@@ -471,7 +471,7 @@ class OrmorokAI : public MoonScriptBossAI
         if (_getHealthPercent() <= 25 && mEnraged == false)
         {
             _applyAura(FRENZY);
-            Announce("Ormorok the Tree-Shaper goes into a frenzy!");
+            sendAnnouncement("Ormorok the Tree-Shaper goes into a frenzy!");
             mEnraged = true;
         }
 
@@ -504,10 +504,10 @@ class OrmorokAI : public MoonScriptBossAI
         InstanceScript* mInstance;
 };
 
-class CrystalSpikeAI : public MoonScriptBossAI
+class CrystalSpikeAI : public MoonScriptCreatureAI
 {
-    MOONSCRIPT_FACTORY_FUNCTION(CrystalSpikeAI, MoonScriptBossAI);
-    CrystalSpikeAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+    MOONSCRIPT_FACTORY_FUNCTION(CrystalSpikeAI, MoonScriptCreatureAI);
+    CrystalSpikeAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
         m_part = 0;
     }
@@ -516,7 +516,7 @@ class CrystalSpikeAI : public MoonScriptBossAI
     {
         setCanEnterCombat(false);
         setRooted(true);
-        _unit->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+        getCreature()->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
 
         despawn(4500, 0);
         RegisterAIUpdateEvent(500);
@@ -530,17 +530,17 @@ class CrystalSpikeAI : public MoonScriptBossAI
 
         if (m_part == 1)
         {
-            _unit->CastSpell(_unit, SPELL_CRYSTAL_SPIKE_VISUAL, true);
+            getCreature()->CastSpell(getCreature(), SPELL_CRYSTAL_SPIKE_VISUAL, true);
         }
         else if (m_part == 5)
         {
             if (_isHeroic())
             {
-                _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(SPELL_CRYSTAL_SPIKE_H), true);
+                getCreature()->CastSpell(getCreature(), sSpellCustomizations.GetSpellInfo(SPELL_CRYSTAL_SPIKE_H), true);
             }
             else
             {
-                _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(SPELL_CRYSTAL_SPIKE), true);
+                getCreature()->CastSpell(getCreature(), sSpellCustomizations.GetSpellInfo(SPELL_CRYSTAL_SPIKE), true);
             }
         }
     }
@@ -554,10 +554,10 @@ class CrystalSpikeAI : public MoonScriptBossAI
 //////////////////////////////////////////////////////////////////////////////////////////
 /// Keristrasza
 /// \todo currently unfinished
-class KeristraszaAI : public MoonScriptBossAI
+class KeristraszaAI : public MoonScriptCreatureAI
 {
-    MOONSCRIPT_FACTORY_FUNCTION(KeristraszaAI, MoonScriptBossAI);
-    KeristraszaAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+    MOONSCRIPT_FACTORY_FUNCTION(KeristraszaAI, MoonScriptCreatureAI);
+    KeristraszaAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
         if (_isHeroic())
             AddSpell(CRYSTALFIRE_BREATH_HC, Target_Self, 30, 1, 14);

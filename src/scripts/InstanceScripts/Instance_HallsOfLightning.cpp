@@ -117,10 +117,10 @@ enum GENERAL_STANCES
 
 /////////////////////////////////////////////////////////////////////////////////
 /// General Bjarnrim Script
-class GeneralBjarngrimAI : public MoonScriptBossAI
+class GeneralBjarngrimAI : public MoonScriptCreatureAI
 {
-    MOONSCRIPT_FACTORY_FUNCTION(GeneralBjarngrimAI, MoonScriptBossAI);
-    GeneralBjarngrimAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+    MOONSCRIPT_FACTORY_FUNCTION(GeneralBjarngrimAI, MoonScriptCreatureAI);
+    GeneralBjarngrimAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
         mInstance = getInstanceScript();
         // Battle Stance
@@ -148,7 +148,7 @@ class GeneralBjarngrimAI : public MoonScriptBossAI
         ParentClass::OnCombatStart(pTarget);
 
         if (mInstance)
-            mInstance->setData(_unit->GetEntry(), InProgress);
+            mInstance->setData(getCreature()->GetEntry(), InProgress);
     }
 
     void OnTargetDied(Unit* pTarget)
@@ -167,7 +167,7 @@ class GeneralBjarngrimAI : public MoonScriptBossAI
     void OnCombatStop(Unit* pTarget)
     {
         if (mInstance)
-            mInstance->setData(_unit->GetEntry(), Performed);
+            mInstance->setData(getCreature()->GetEntry(), Performed);
 
         ParentClass::OnCombatStop(pTarget);
     }
@@ -212,21 +212,21 @@ class GeneralBjarngrimAI : public MoonScriptBossAI
                 _applyAura(SPELL_BATTLE_AURA);
                 _applyAura(SPELL_BATTLE_STANCE);
                 sendDBChatMessage(760);      // Defend yourself, for all the good it will do!
-                Announce("General Bjarngrim switches to Battle Stance!");
+                sendAnnouncement("General Bjarngrim switches to Battle Stance!");
                 SetPhase(1);
                 break;
             case STANCE_BERSERKER:
                 _applyAura(SPELL_BERSERKER_AURA);
                 _applyAura(SPELL_BERSERKER_STANCE);
                 sendDBChatMessage(761);      // GRAAAAAH! Behold the fury of iron and steel!
-                Announce("General Bjarngrim switches to Berserker Stance!");
+                sendAnnouncement("General Bjarngrim switches to Berserker Stance!");
                 SetPhase(2);
                 break;
             case STANCE_DEFENSIVE:
                 _applyAura(SPELL_DEFENSIVE_AURA);
                 _applyAura(SPELL_DEFENSIVE_STANCE);
                 sendDBChatMessage(759);      // Give me your worst!
-                Announce("General Bjarngrim switches to Defensive Stance!");
+                sendAnnouncement("General Bjarngrim switches to Defensive Stance!");
                 SetPhase(3);
                 break;
         }
@@ -292,7 +292,7 @@ class Volkhan : public MoonScriptCreatureAI
         ParentClass::OnCombatStart(pTarget);
 
         if (mInstance)
-            mInstance->setData(_unit->GetEntry(), InProgress);
+            mInstance->setData(getCreature()->GetEntry(), InProgress);
     }
 
     void OnTargetDied(Unit* pTarget)
@@ -314,7 +314,7 @@ class Volkhan : public MoonScriptCreatureAI
     void OnCombatStop(Unit* pTarget)
     {
         if (mInstance)
-            mInstance->setData(_unit->GetEntry(), Performed);
+            mInstance->setData(getCreature()->GetEntry(), Performed);
 
         ParentClass::OnCombatStop(pTarget);
     }
@@ -326,7 +326,7 @@ class Volkhan : public MoonScriptCreatureAI
             if (m_bStomp == false)
             {
                 m_bStomp = true;
-                Announce("Volkhan prepares to shatter his Brittle Golems!");
+                sendAnnouncement("Volkhan prepares to shatter his Brittle Golems!");
                 CastSpellNowNoScheduling(mStomp);
                 _resetTimer(mStompTimer, 3000);
             }
@@ -340,7 +340,7 @@ class Volkhan : public MoonScriptCreatureAI
         if (_getHealthPercent() <= (100 - (20 * mPhase)))
         {
             ForceWaypointMove(1);
-            Announce("Volkhan runs to his anvil!");
+            sendAnnouncement("Volkhan runs to his anvil!");
             ++mPhase;
         }
 
@@ -363,18 +363,18 @@ class Volkhan : public MoonScriptCreatureAI
 
             Creature* pAnvil = getNearestCreature(CN_VOLKHANS_ANVIL);
             if (pAnvil)
-                _unit->CastSpell(pAnvil, SPELL_TEMPER, true);
+                getCreature()->CastSpell(pAnvil, SPELL_TEMPER, true);
             else
-                _unit->CastSpell(GetUnit(), SPELL_TEMPER, true);
+                getCreature()->CastSpell(getCreature(), SPELL_TEMPER, true);
 
             setCanEnterCombat(true);
-            _unit->GetAIInterface()->AttackReaction(getNearestPlayer(), 1);   // hackfix
+            getCreature()->GetAIInterface()->AttackReaction(getNearestPlayer(), 1);   // hackfix
         }
     }
 
     void DoStomp()
     {
-        for (std::set< Object* >::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
+        for (std::set< Object* >::iterator itr = getCreature()->GetInRangeSetBegin(); itr != getCreature()->GetInRangeSetEnd(); ++itr)
         {
             if ((*itr) && (*itr)->IsCreature() && (*itr)->GetEntry() == CN_BRITTLE_GOLEM)
             {
@@ -420,7 +420,7 @@ class MoltenGolem : public MoonScriptCreatureAI
 
     void OnDied(Unit* pKiller)
     {
-        spawnCreature(CN_BRITTLE_GOLEM, _unit->GetPosition());
+        spawnCreature(CN_BRITTLE_GOLEM, getCreature()->GetPosition());
         despawn();
     }
 };
@@ -442,8 +442,8 @@ class VolkhansAnvil : public MoonScriptCreatureAI
     MOONSCRIPT_FACTORY_FUNCTION(VolkhansAnvil, MoonScriptCreatureAI);
     VolkhansAnvil(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
-        _unit->GetAIInterface()->SetAllowedToEnterCombat(false);
-        _unit->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+        getCreature()->GetAIInterface()->SetAllowedToEnterCombat(false);
+        getCreature()->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
         setRooted(true);
     }
 
@@ -454,10 +454,10 @@ const uint32 SPELL_SUMMON_SPARK = 52746;
 /////////////////////////////////////////////////////////////////////////////////
 /// Ionar
 // Status: Basic script, missing spark phase
-class IonarAI : public MoonScriptBossAI
+class IonarAI : public MoonScriptCreatureAI
 {
-    MOONSCRIPT_FACTORY_FUNCTION(IonarAI, MoonScriptBossAI);
-    IonarAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+    MOONSCRIPT_FACTORY_FUNCTION(IonarAI, MoonScriptCreatureAI);
+    IonarAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
         mInstance = getInstanceScript();
 
@@ -480,7 +480,7 @@ class IonarAI : public MoonScriptBossAI
         ParentClass::OnCombatStart(pTarget);
 
         if (mInstance)
-            mInstance->setData(_unit->GetEntry(), InProgress);
+            mInstance->setData(getCreature()->GetEntry(), InProgress);
     }
 
     void OnTargetDied(Unit* pTarget)
@@ -504,7 +504,7 @@ class IonarAI : public MoonScriptBossAI
         ParentClass::OnCombatStop(pTarget);
 
         if (mInstance)
-            mInstance->setData(_unit->GetEntry(), Performed);
+            mInstance->setData(getCreature()->GetEntry(), Performed);
     }
 
     void OnDied(Unit* pKiller)
@@ -562,7 +562,7 @@ class LokenAI : public MoonScriptCreatureAI
         _castOnInrangePlayers(PULSING_SHOCKWAVE_AURA);
 
         if (mInstance)
-            mInstance->setData(_unit->GetEntry(), InProgress);
+            mInstance->setData(getCreature()->GetEntry(), InProgress);
     }
 
     void OnCombatStop(Unit* pTarget)
@@ -571,7 +571,7 @@ class LokenAI : public MoonScriptCreatureAI
         ParentClass::OnCombatStop(pTarget);
 
         if (mInstance)
-            mInstance->setData(_unit->GetEntry(), Performed);
+            mInstance->setData(getCreature()->GetEntry(), Performed);
     }
 
     void OnTargetDied(Unit* pTarget)
@@ -615,7 +615,7 @@ class LokenAI : public MoonScriptCreatureAI
                     break;
             }
 
-            Announce("Loken begins to cast Lightning Nova!");
+            sendAnnouncement("Loken begins to cast Lightning Nova!");
             CastSpellNowNoScheduling(mNova);
             _resetTimer(mNovaTimer, TIMER_NOVA + (RandomUInt(8) * 1000));
         }

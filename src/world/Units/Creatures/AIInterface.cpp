@@ -4361,6 +4361,7 @@ void AIInterface::EventEnterCombat(Unit* pUnit, uint32 misc1)
         creature->HandleMonsterSayEvent(MONSTER_SAY_EVENT_ENTER_COMBAT);
 
         CALL_SCRIPT_EVENT(m_Unit, OnCombatStart)(pUnit);
+        CALL_SCRIPT_EVENT(m_Unit, _internalOnCombatStart)();
 
         if (m_Unit->IsCreature())
         {
@@ -4734,6 +4735,8 @@ void AIInterface::EventUnitDied(Unit* pUnit, uint32 misc1)
         static_cast< Creature* >(m_Unit)->HandleMonsterSayEvent(MONSTER_SAY_EVENT_ON_DIED);
 
     CALL_SCRIPT_EVENT(m_Unit, OnDied)(pUnit);
+    CALL_SCRIPT_EVENT(m_Unit, _internalOnDied)();
+
     if (m_Unit->IsCreature())
     {
         CALL_INSTANCE_SCRIPT_EVENT(m_Unit->GetMapMgr(), OnCreatureDeath)(static_cast<Creature*>(m_Unit), pUnit);

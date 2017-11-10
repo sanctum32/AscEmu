@@ -104,7 +104,7 @@ void SpellFunc_FlameTsunami(SpellDesc* pThis, MoonScriptCreatureAI* pCreatureAI,
 {
     if (pCreatureAI != NULL)
     {
-        pCreatureAI->GetUnit()->SendChatMessage(CHAT_MSG_RAID_BOSS_EMOTE, LANG_UNIVERSAL, "The lava surrounding Sartharion churns!");
+        pCreatureAI->getCreature()->SendChatMessage(CHAT_MSG_RAID_BOSS_EMOTE, LANG_UNIVERSAL, "The lava surrounding Sartharion churns!");
 
         switch (RandomUInt(3))
         {
@@ -129,13 +129,13 @@ void SpellFunc_FlameTsunami(SpellDesc* pThis, MoonScriptCreatureAI* pCreatureAI,
             switch (RandomUInt(1))
             {
                 case 0:
-                    Tsunami = pCreatureAI->GetUnit()->GetMapMgr()->GetInterface()->SpawnCreature(CN_FLAME_TSUNAMI, TSUNAMI_SPAWN[i].x, TSUNAMI_SPAWN[i].y, TSUNAMI_SPAWN[i].z, TSUNAMI_SPAWN[i].o, true, true, 0, 0);
+                    Tsunami = pCreatureAI->getCreature()->GetMapMgr()->GetInterface()->SpawnCreature(CN_FLAME_TSUNAMI, TSUNAMI_SPAWN[i].x, TSUNAMI_SPAWN[i].y, TSUNAMI_SPAWN[i].z, TSUNAMI_SPAWN[i].o, true, true, 0, 0);
 
                     if (Tsunami != NULL)
                         Tsunami->GetAIInterface()->MoveTo(TSUNAMI_MOVE[i].x, TSUNAMI_MOVE[i].y, TSUNAMI_MOVE[i].z);
                     break;
                 case 1:
-                    Tsunami = pCreatureAI->GetUnit()->GetMapMgr()->GetInterface()->SpawnCreature(CN_FLAME_TSUNAMI, TSUNAMI_SPAWN[i + 3].x, TSUNAMI_SPAWN[i + 3].y, TSUNAMI_SPAWN[i + 3].z, TSUNAMI_SPAWN[i + 3].o, true, true, 0, 0);
+                    Tsunami = pCreatureAI->getCreature()->GetMapMgr()->GetInterface()->SpawnCreature(CN_FLAME_TSUNAMI, TSUNAMI_SPAWN[i + 3].x, TSUNAMI_SPAWN[i + 3].y, TSUNAMI_SPAWN[i + 3].z, TSUNAMI_SPAWN[i + 3].o, true, true, 0, 0);
 
                     if (Tsunami != NULL)
                         Tsunami->GetAIInterface()->MoveTo(TSUNAMI_MOVE[i + 3].x, TSUNAMI_MOVE[i + 3].y, TSUNAMI_MOVE[i + 3].z);
@@ -158,10 +158,10 @@ void SpellFunc_LavaSpawn(SpellDesc* pThis, MoonScriptCreatureAI* pCreatureAI, Un
     }
 };
 
-class SartharionAI : public MoonScriptBossAI
+class SartharionAI : public MoonScriptCreatureAI
 {
-        MOONSCRIPT_FACTORY_FUNCTION(SartharionAI, MoonScriptBossAI);
-        SartharionAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+        MOONSCRIPT_FACTORY_FUNCTION(SartharionAI, MoonScriptCreatureAI);
+        SartharionAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
             mInstance = dynamic_cast<ObsidianSanctumScript*>(getInstanceScript());
 
@@ -185,10 +185,10 @@ class SartharionAI : public MoonScriptBossAI
             mFlameTsunami = AddSpellFunc(&SpellFunc_FlameTsunami, Target_Self, 99, 0, 25);
             mSummonLava = AddSpellFunc(&SpellFunc_LavaSpawn, Target_RandomUnitNotCurrent, 25, 0, 8);
 
-            AddEmote(Event_OnTargetDied, "You will make a fine meal for the hatchlings.", CHAT_MSG_MONSTER_YELL, 14094);
-            AddEmote(Event_OnTargetDied, "You are at a grave disadvantage!", CHAT_MSG_MONSTER_YELL, 14096);
-            AddEmote(Event_OnTargetDied, "This is why we call you lesser beings.", CHAT_MSG_MONSTER_YELL, 14097);
-            AddEmote(Event_OnCombatStart, "It is my charge to watch over these eggs. I will see you burn before any harm comes to them!", CHAT_MSG_MONSTER_YELL, 14093);
+            addEmoteForEvent(Event_OnTargetDied, 8851);
+            addEmoteForEvent(Event_OnTargetDied, 8852);
+            addEmoteForEvent(Event_OnTargetDied, 8853);
+            addEmoteForEvent(Event_OnCombatStart, 8854);
 
             for (uint8 i = 0; i < OS_DATA_END - 1; i++)
             {
@@ -301,8 +301,6 @@ class SartharionAI : public MoonScriptBossAI
         void OnDied(Unit* pKiller)
         {
             sendDBChatMessage(3984);         //Such is the price... of failure...
-
-            RemoveAIUpdateEvent();
             ParentClass::OnDied(pKiller);
         }
 
@@ -318,17 +316,17 @@ class SartharionAI : public MoonScriptBossAI
         SpellDesc* mFlameTsunami, *mSummonLava;
 };
 
-class TsunamiAI : public MoonScriptBossAI
+class TsunamiAI : public MoonScriptCreatureAI
 {
-        MOONSCRIPT_FACTORY_FUNCTION(TsunamiAI, MoonScriptBossAI);
-        TsunamiAI(Creature* pCreature) : MoonScriptBossAI(pCreature) {};
+        MOONSCRIPT_FACTORY_FUNCTION(TsunamiAI, MoonScriptCreatureAI);
+        TsunamiAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature) {};
 
         void OnLoad()
         {
             RegisterAIUpdateEvent(1000);
             setFlyMode(true);
             setCanEnterCombat(false);
-            _unit->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+            getCreature()->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
             despawn(11500, 0);
 
             ParentClass::OnLoad();
@@ -345,18 +343,18 @@ class TsunamiAI : public MoonScriptBossAI
 
 };
 
-class CyclonAI : public MoonScriptBossAI
+class CyclonAI : public MoonScriptCreatureAI
 {
     public:
-        MOONSCRIPT_FACTORY_FUNCTION(CyclonAI, MoonScriptBossAI);
-        CyclonAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+        MOONSCRIPT_FACTORY_FUNCTION(CyclonAI, MoonScriptCreatureAI);
+        CyclonAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {}
 
         void OnLoad()
         {
             setRooted(true);
             setCanEnterCombat(false);
-            _unit->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+            getCreature()->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
             _applyAura(CYCLON_SPELL);
             _applyAura(CYCLON_AURA);
 
@@ -365,11 +363,11 @@ class CyclonAI : public MoonScriptBossAI
 
 };
 
-class LavaBlazeAI : public MoonScriptBossAI
+class LavaBlazeAI : public MoonScriptCreatureAI
 {
     public:
-        MOONSCRIPT_FACTORY_FUNCTION(LavaBlazeAI, MoonScriptBossAI);
-        LavaBlazeAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+        MOONSCRIPT_FACTORY_FUNCTION(LavaBlazeAI, MoonScriptCreatureAI);
+        LavaBlazeAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {}
 
         void OnLoad()

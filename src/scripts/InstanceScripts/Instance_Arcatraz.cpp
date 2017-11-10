@@ -27,12 +27,12 @@
 // VOID_ZONE 36119    // DBC: 36119; it's not fully functionl without additional core support (for dmg and random place targeting).
 
 // Zereketh the UnboundAI
-class ZerekethAI : public MoonScriptBossAI
+class ZerekethAI : public MoonScriptCreatureAI
 {
     public:
 
-        MOONSCRIPT_FACTORY_FUNCTION(ZerekethAI, MoonScriptBossAI);
-        ZerekethAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+        MOONSCRIPT_FACTORY_FUNCTION(ZerekethAI, MoonScriptCreatureAI);
+        ZerekethAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
             AddSpell(SEED_OF_C, Target_RandomPlayer, 6.0f, 2, 20, 0, 100.0f);
 
@@ -75,7 +75,7 @@ class ZerekethAI : public MoonScriptBossAI
 
             //despawn voids
             Creature* creature = NULL;
-            for (std::set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd();)
+            for (std::set<Object*>::iterator itr = getCreature()->GetInRangeSetBegin(); itr != getCreature()->GetInRangeSetEnd();)
             {
                 Object* obj = *itr;
                 ++itr;
@@ -112,14 +112,14 @@ class ZerekethAI : public MoonScriptBossAI
             _resetTimer(VoidTimer, (RandomUInt(10) + 30) * 1000);
 
             std::vector<Player*> TargetTable;
-            std::set< Object* >::iterator Itr = _unit->GetInRangePlayerSetBegin();
-            for (; Itr != _unit->GetInRangePlayerSetEnd(); ++Itr)
+            std::set< Object* >::iterator Itr = getCreature()->GetInRangePlayerSetBegin();
+            for (; Itr != getCreature()->GetInRangePlayerSetEnd(); ++Itr)
             {
                 Player* RandomTarget = NULL;
                 if (!(*Itr)->IsPlayer())
                     continue;
                 RandomTarget = static_cast< Player* >(*Itr);
-                if (RandomTarget && RandomTarget->isAlive() && isHostile(*Itr, _unit))
+                if (RandomTarget && RandomTarget->isAlive() && isHostile(*Itr, getCreature()))
                     TargetTable.push_back(RandomTarget);
             }
 
@@ -185,7 +185,7 @@ class VoidZoneARC : public MoonScriptCreatureAI
             if (_isHeroic())
                 SpellId = CONSUMPTION_H;
 
-            _unit->CastSpell(_unit, SpellId, true);
+            getCreature()->CastSpell(getCreature(), SpellId, true);
             RemoveAIUpdateEvent();
         }
 };
@@ -193,12 +193,12 @@ class VoidZoneARC : public MoonScriptCreatureAI
 
 // Dalliah the DoomsayerAI
 // sounds missing related to Wrath... (look on script below this one)
-class DalliahTheDoomsayerAI : public MoonScriptBossAI
+class DalliahTheDoomsayerAI : public MoonScriptCreatureAI
 {
     public:
 
-        MOONSCRIPT_FACTORY_FUNCTION(DalliahTheDoomsayerAI, MoonScriptBossAI);
-        DalliahTheDoomsayerAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+        MOONSCRIPT_FACTORY_FUNCTION(DalliahTheDoomsayerAI, MoonScriptCreatureAI);
+        DalliahTheDoomsayerAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
             AddSpell(GIFT_OF_THE_DOOMSAYER, Target_Current, 8.0f, 0.0f, -1);
 
@@ -251,12 +251,12 @@ class DalliahTheDoomsayerAI : public MoonScriptBossAI
 // CHARGE_TARGETING 36038 ?
 // There are more sounds connected with Dalliah and some spells, but I don't know situation in which they are used
 // so haven't added them.
-class WrathScryerSoccothratesAI : public MoonScriptBossAI
+class WrathScryerSoccothratesAI : public MoonScriptCreatureAI
 {
     public:
 
-        MOONSCRIPT_FACTORY_FUNCTION(WrathScryerSoccothratesAI, MoonScriptBossAI);
-        WrathScryerSoccothratesAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+        MOONSCRIPT_FACTORY_FUNCTION(WrathScryerSoccothratesAI, MoonScriptCreatureAI);
+        WrathScryerSoccothratesAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
             AddSpell(IMMOLATION, Target_Self, 10.0f, 0, -1);
             AddSpell(FELFIRE_SHOCK, Target_Current, 8.0f, 0, -1);
@@ -301,12 +301,12 @@ class WrathScryerSoccothratesAI : public MoonScriptBossAI
 // BLINK_VISUAL 36937 ?
 // SIMPLE_TELEPORT 12980 ?
 // Add sounds related to his dialog with mind controlled guy
-class HarbringerSkyrissAI : public MoonScriptBossAI
+class HarbringerSkyrissAI : public MoonScriptCreatureAI
 {
     public:
 
-        MOONSCRIPT_FACTORY_FUNCTION(HarbringerSkyrissAI, MoonScriptBossAI);
-        HarbringerSkyrissAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+        MOONSCRIPT_FACTORY_FUNCTION(HarbringerSkyrissAI, MoonScriptCreatureAI);
+        HarbringerSkyrissAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
             AddSpell(MIND_REND, Target_Current, 15.0f, 0, -1);
 
@@ -377,11 +377,11 @@ class HarbringerSkyrissAI : public MoonScriptBossAI
 
 
 // Warden MellicharAI
-class WardenMellicharAI : public MoonScriptBossAI
+class WardenMellicharAI : public MoonScriptCreatureAI
 {
     public:
-        MOONSCRIPT_FACTORY_FUNCTION(WardenMellicharAI, MoonScriptBossAI);
-        WardenMellicharAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+        MOONSCRIPT_FACTORY_FUNCTION(WardenMellicharAI, MoonScriptCreatureAI);
+        WardenMellicharAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
             setRooted(true);
             Phase_Timer = -1;
@@ -409,14 +409,14 @@ class WardenMellicharAI : public MoonScriptBossAI
             Phase_Timer = _addTimer(55000);
 
             setCanEnterCombat(false);
-            _unit->SetEmoteState(EMOTE_ONESHOT_READY1H); // to be replaced for the standstate
+            getCreature()->SetEmoteState(EMOTE_ONESHOT_READY1H); // to be replaced for the standstate
 
             shield = getNearestGameObject(445.786f, -169.263f, 43.0466f, 184802);
             if (shield)
                 shield->SetState(GO_STATE_CLOSED);
 
             sendDBChatMessage(SAY_MELLICHAR_01);
-            _unit->SendTimedScriptTextChatMessage(SAY_MELLICHAR_02, 27000);
+            getCreature()->SendTimedScriptTextChatMessage(SAY_MELLICHAR_02, 27000);
 
             ParentClass::OnCombatStart(mTarget);
         }
@@ -514,7 +514,7 @@ class WardenMellicharAI : public MoonScriptBossAI
                         {
                             millhouse->SendTimedScriptTextChatMessage(SAY_MILLHOUS_01, 2000);
 
-                            _unit->SendTimedScriptTextChatMessage(SAY_MELLICHAR_04, 13000);
+                            getCreature()->SendTimedScriptTextChatMessage(SAY_MELLICHAR_04, 13000);
 
                             millhouse->SendTimedScriptTextChatMessage(SAY_MILLHOUS_02, 22000);
                         }
@@ -563,7 +563,7 @@ class WardenMellicharAI : public MoonScriptBossAI
                     if (!NPC_orb3 && NPC_ID_Spawn != 0 && Spawncounter == 0)
                     {
                         /// \todo investigate.... saying "1"... really?
-                        _unit->SendChatMessage(CHAT_MSG_MONSTER_YELL, LANG_UNIVERSAL, "1");
+                        getCreature()->SendChatMessage(CHAT_MSG_MONSTER_YELL, LANG_UNIVERSAL, "1");
                         ++Spawncounter;
                         NPC_orb3 = spawnCreature(NPC_ID_Spawn, 420.050f, -173.500f, 42.580f, 6.110f);
                         return;
@@ -571,7 +571,7 @@ class WardenMellicharAI : public MoonScriptBossAI
                     else if (!NPC_orb3)
                     {
                         /// \todo investigate.... saying "2"... really?
-                        _unit->SendChatMessage(CHAT_MSG_MONSTER_YELL, LANG_UNIVERSAL, "2");
+                        getCreature()->SendChatMessage(CHAT_MSG_MONSTER_YELL, LANG_UNIVERSAL, "2");
                         NPC_orb3 = getNearestCreature(NPC_ID_Spawn);
                     }
                     else if (NPC_orb3 && !NPC_orb3->isAlive())
@@ -659,7 +659,7 @@ class WardenMellicharAI : public MoonScriptBossAI
             setRooted(false);
             _setMeleeDisabled(false);
             _setCastDisabled(false);
-            _unit->SetStandState(STANDSTATE_KNEEL);
+            getCreature()->SetStandState(STANDSTATE_KNEEL);
 
             if (shield)
                 shield->SetState(GO_STATE_OPEN);

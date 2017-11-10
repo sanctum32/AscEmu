@@ -74,7 +74,7 @@ class HeadlessHorsemanFireAI : public MoonScriptCreatureAI
     MOONSCRIPT_FACTORY_FUNCTION(HeadlessHorsemanFireAI, MoonScriptCreatureAI);
     HeadlessHorsemanFireAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
-        _unit->CastSpell(_unit, 42971, true);
+        getCreature()->CastSpell(getCreature(), 42971, true);
     }
 };
 
@@ -96,17 +96,17 @@ class ShadeOfTheHorsemanAI : public MoonScriptCreatureAI
     ShadeOfTheHorsemanAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
         setCanEnterCombat(false);
-        _unit->SetMount(22653);
+        getCreature()->SetMount(22653);
         ///Spells
         mSummon = AddSpell(SHADE_OF_THE_HORSEMAN_SUMMON, Target_Self, 0, 0, 0);
 
         //Emotes
-        AddEmote(Event_OnDied, "So eager you are, for my blood to spill. Yet to vanquish me, 'tis my head you must kill!", CHAT_MSG_MONSTER_YELL, 11969);
-        sendChatMessage(CHAT_MSG_MONSTER_YELL, 11966, "Prepare yourselves, the bells have tolled! Shelter your weak, your young, and your old! Each of you shall pay the final sum. Cry for mercy, the reckoning has come!");    //On Spawn?
+        addEmoteForEvent(Event_OnDied, 8802);
+        sendDBChatMessage(8803);    //On Spawn?
 
         WPCount = 0;
 
-        auto area = _unit->GetArea();
+        auto area = getCreature()->GetArea();
         if (area != nullptr)
         {
             switch (area->id)
@@ -127,7 +127,7 @@ class ShadeOfTheHorsemanAI : public MoonScriptCreatureAI
 
     void OnReachWP(uint32 iWaypointId, bool bForwards)
     {
-        auto area = _unit->GetArea();
+        auto area = getCreature()->GetArea();
         auto area_id = area ? area->id : 0;
 
         if (iWaypointId == uint32(WPCount))   // Reached end
@@ -135,12 +135,12 @@ class ShadeOfTheHorsemanAI : public MoonScriptCreatureAI
             StopWaypointMovement();
             if (getNearestCreature(CN_HEADLESS_HORSEMAN_FIRE) == NULL)     // CASE players win
             {
-                sendChatMessage(CHAT_MSG_MONSTER_YELL, 11968, "My flames have died, left not a spark! I shall send you now to the lifeless dark!");
+                sendDBChatMessage(8804);
                 despawn(30000, 0); //Despawn after 30 secs
             }
             else // CASE players lost
             {
-                sendChatMessage(CHAT_MSG_MONSTER_YELL, 11967, "Fire consumes! You've tried and failed. Let there be no doubt, justice prevailed!");
+                sendDBChatMessage(8805);
                 despawn(12000, 0); //Despawn after 12 secs
             }
         }
@@ -152,7 +152,7 @@ class ShadeOfTheHorsemanAI : public MoonScriptCreatureAI
                 {
                     if (iWaypointId == 6)
                     {
-                        _unit->CastSpell(_unit, 42118, true);
+                        getCreature()->CastSpell(getCreature(), 42118, true);
                     }
                 } break;
                 default:
@@ -164,9 +164,9 @@ class ShadeOfTheHorsemanAI : public MoonScriptCreatureAI
 
     void OnDied(Unit* pKiller)
     {
-        GameObject* Pumpkin = pKiller->GetMapMgr()->CreateAndSpawnGameObject(2883, _unit->GetPositionX() + RandomFloat(5.0f), _unit->GetPositionY() + RandomFloat(5.0f), _unit->GetPositionZ(), 0, 1);
+        GameObject* Pumpkin = pKiller->GetMapMgr()->CreateAndSpawnGameObject(2883, getCreature()->GetPositionX() + RandomFloat(5.0f), getCreature()->GetPositionY() + RandomFloat(5.0f), getCreature()->GetPositionZ(), 0, 1);
         if (Pumpkin != nullptr)
-            _unit->CastSpell(Pumpkin->GetGUID(), 42277, true);
+            getCreature()->CastSpell(Pumpkin->GetGUID(), 42277, true);
 
         ParentClass::OnDied(pKiller);
     }
@@ -197,7 +197,7 @@ class HeadlessHorsemanWispInvisAI : public MoonScriptCreatureAI
             mHeadlessHorseman = getNearestCreature(CN_SHADE_OF_THE_HORSEMAN);
             if (mHeadlessHorseman == nullptr)
             {
-                SpawnCreature(CN_SHADE_OF_THE_HORSEMAN, _unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), _unit->GetOrientation());
+                SpawnCreature(CN_SHADE_OF_THE_HORSEMAN, getCreature()->GetPositionX(), getCreature()->GetPositionY(), getCreature()->GetPositionZ(), getCreature()->GetOrientation());
                 SetAIUpdateFreq(4 * 60 * 1000);
             }
         }

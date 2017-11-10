@@ -47,12 +47,12 @@ void SpellFunc_LairBrute_Charge(SpellDesc* pThis, MoonScriptCreatureAI* pCreatur
     LairBruteAI* pBruteAI = (pCreatureAI != NULL) ? static_cast< LairBruteAI* >(pCreatureAI) : NULL;
     if (pBruteAI != NULL)
     {
-        Unit* pCurrentTarget = pBruteAI->GetUnit()->GetAIInterface()->getNextTarget();
+        Unit* pCurrentTarget = pBruteAI->getCreature()->GetAIInterface()->getNextTarget();
         if (pCurrentTarget != NULL && pCurrentTarget != pTarget)
         {
-            pBruteAI->GetUnit()->GetAIInterface()->AttackReaction(pTarget, 500);
-            pBruteAI->GetUnit()->GetAIInterface()->setNextTarget(pTarget);
-            pBruteAI->GetUnit()->GetAIInterface()->RemoveThreatByPtr(pCurrentTarget);
+            pBruteAI->getCreature()->GetAIInterface()->AttackReaction(pTarget, 500);
+            pBruteAI->getCreature()->GetAIInterface()->setNextTarget(pTarget);
+            pBruteAI->getCreature()->GetAIInterface()->RemoveThreatByPtr(pCurrentTarget);
         }
 
         pBruteAI->CastSpell(pBruteAI->mCharge);
@@ -89,10 +89,10 @@ void SpellFunc_Maulgar_Enrage(SpellDesc* pThis, MoonScriptCreatureAI* pCreatureA
 // 4th unit sometimes cannot be found - blame cell system
 uint32 Adds[4] = { 18832, 18834, 18836, 18835 };
 
-class HighKingMaulgarAI : public MoonScriptBossAI
+class HighKingMaulgarAI : public MoonScriptCreatureAI
 {
-        MOONSCRIPT_FACTORY_FUNCTION(HighKingMaulgarAI, MoonScriptBossAI);
-        HighKingMaulgarAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+        MOONSCRIPT_FACTORY_FUNCTION(HighKingMaulgarAI, MoonScriptCreatureAI);
+        HighKingMaulgarAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
             AddPhaseSpell(2, AddSpell(HIGH_KING_MAULGAR_BERSERKER_CHARGE, Target_RandomPlayer, 10, 0, 25, 0, 40));
             AddPhaseSpell(2, AddSpell(HIGH_KING_MAULGAR_INTIMIDATING_ROAR, Target_Current, 7, 0, 20, 0, 5));
@@ -101,11 +101,12 @@ class HighKingMaulgarAI : public MoonScriptBossAI
             AddSpell(HIGH_KING_MAULGAR_MIGHTY_BLOW, Target_Current, 7, 0, 20, 0, 5);
             mEnrage = AddSpellFunc(&SpellFunc_Maulgar_Enrage, Target_Self, 0, 0, 0);
             mEnrage->AddEmote("You will not defeat the hand of Gruul!", CHAT_MSG_MONSTER_YELL, 11368);
-            AddEmote(Event_OnCombatStart, "Gronn are the real power in Outland!", CHAT_MSG_MONSTER_YELL, 11367);
-            AddEmote(Event_OnTargetDied, "You not so tough after all!", CHAT_MSG_MONSTER_YELL, 11373);
-            AddEmote(Event_OnTargetDied, "Maulgar is king!", CHAT_MSG_MONSTER_YELL, 11375);
-            AddEmote(Event_OnTargetDied, "", CHAT_MSG_MONSTER_YELL, 11374);
-            AddEmote(Event_OnDied, "Grull... will crush you!", CHAT_MSG_MONSTER_YELL, 11376);
+
+            addEmoteForEvent(Event_OnCombatStart, 8806);
+            addEmoteForEvent(Event_OnTargetDied, 8807);
+            addEmoteForEvent(Event_OnTargetDied, 8808);
+            addEmoteForEvent(Event_OnTargetDied, 8809);
+            addEmoteForEvent(Event_OnDied, 8810);
 
             mLastYell = -1;
             mAliveAdds = 0;
@@ -263,7 +264,7 @@ class KigglerTheCrazedAI : public MoonScriptCreatureAI
         {
             ParentClass::AIUpdate();
 
-            Unit* pTarget = _unit->GetAIInterface()->getNextTarget();
+            Unit* pTarget = getCreature()->GetAIInterface()->getNextTarget();
             if (pTarget != NULL)
             {
                 if (getRangeToObject(pTarget) <= 40.0f)
@@ -454,11 +455,12 @@ class GruulTheDragonkillerAI : public MoonScriptCreatureAI
             AddSpell(GRUUL_THE_DRAGONKILLER_REVERBERATION, Target_Self, 4, 0, 30);
             AddSpell(GRUUL_THE_DRAGONKILLER_CAVE_IN, Target_RandomPlayerDestination, 7, 0, 25);
             AddSpellFunc(&SpellFunc_Gruul_GroundSlam, Target_Self, 6, 1, 35);
-            AddEmote(Event_OnCombatStart, "Come and die.", CHAT_MSG_MONSTER_YELL, 11355);
-            AddEmote(Event_OnTargetDied, "No more.", CHAT_MSG_MONSTER_YELL, 11360);
-            AddEmote(Event_OnTargetDied, "Unworthy.", CHAT_MSG_MONSTER_YELL, 11361);
-            AddEmote(Event_OnTargetDied, "Die.", CHAT_MSG_MONSTER_EMOTE, 11362);
-            AddEmote(Event_OnDied, "", CHAT_MSG_MONSTER_YELL, 11363);
+
+            addEmoteForEvent(Event_OnCombatStart, 8811);
+            addEmoteForEvent(Event_OnTargetDied, 8812);
+            addEmoteForEvent(Event_OnTargetDied, 8813);
+            addEmoteForEvent(Event_OnTargetDied, 8814);
+            addEmoteForEvent(Event_OnDied, 8815);
 
             mGrowthTimer = mHurtfulTimer = -1;
             mGrowthStacks = 0;
@@ -520,11 +522,11 @@ class GruulTheDragonkillerAI : public MoonScriptCreatureAI
                 }
                 else if (_isTimerFinished(mHurtfulTimer))
                 {
-                    Unit* pCurrentTarget = _unit->GetAIInterface()->getNextTarget();
+                    Unit* pCurrentTarget = getCreature()->GetAIInterface()->getNextTarget();
                     if (pCurrentTarget != NULL)
                     {
                         Unit* pTarget = pCurrentTarget;
-                        for (std::set< Object* >::iterator itr = _unit->GetInRangePlayerSetBegin(); itr != _unit->GetInRangePlayerSetEnd(); ++itr)
+                        for (std::set< Object* >::iterator itr = getCreature()->GetInRangePlayerSetBegin(); itr != getCreature()->GetInRangePlayerSetEnd(); ++itr)
                         {
                             Player* pPlayer = static_cast< Player* >(*itr);
                             if (!pPlayer->isAlive())
@@ -535,7 +537,7 @@ class GruulTheDragonkillerAI : public MoonScriptCreatureAI
                                 continue;
                             if (getRangeToObject(pPlayer) > 8.0f)
                                 continue;
-                            if (_unit->GetAIInterface()->getThreatByPtr(pPlayer) >= _unit->GetAIInterface()->getThreatByPtr(pCurrentTarget))
+                            if (getCreature()->GetAIInterface()->getThreatByPtr(pPlayer) >= getCreature()->GetAIInterface()->getThreatByPtr(pCurrentTarget))
                                 continue;
 
                             pTarget = static_cast<Unit*>(pPlayer);
@@ -544,7 +546,7 @@ class GruulTheDragonkillerAI : public MoonScriptCreatureAI
                         if (pTarget == pCurrentTarget)
                             CastSpellNowNoScheduling(mHurtfulStrike);
                         else
-                            _unit->CastSpell(pTarget, GRUUL_THE_DRAGONKILLER_HURTFUL_STRIKE, true);
+                            getCreature()->CastSpell(pTarget, GRUUL_THE_DRAGONKILLER_HURTFUL_STRIKE, true);
                     }
 
                     _resetTimer(mHurtfulTimer, 8000);
@@ -557,7 +559,7 @@ class GruulTheDragonkillerAI : public MoonScriptCreatureAI
         UnitArray GetInRangePlayers()
         {
             UnitArray TargetArray;
-            for (std::set< Object* >::iterator itr = _unit->GetInRangePlayerSetBegin(); itr != _unit->GetInRangePlayerSetEnd(); ++itr)
+            for (std::set< Object* >::iterator itr = getCreature()->GetInRangePlayerSetBegin(); itr != getCreature()->GetInRangePlayerSetEnd(); ++itr)
             {
                 if (IsValidUnitTarget(*itr, TargetFilter_None))
                 {

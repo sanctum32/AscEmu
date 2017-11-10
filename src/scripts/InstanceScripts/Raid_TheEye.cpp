@@ -63,7 +63,7 @@ class AStarScryerAI : public CreatureAIScript
         void OnCombatStart(Unit* mTarget)
         {
             CastTime();
-            RegisterAIUpdateEvent(_unit->GetBaseAttackTime(MELEE));
+            RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
         }
 
         void CastTime()
@@ -80,14 +80,13 @@ class AStarScryerAI : public CreatureAIScript
         {
             CastTime();
             setAIAgent(AGENT_NULL);
-            _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
+            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
 
         void OnDied(Unit* mKiller)
         {
             CastTime();
-            RemoveAIUpdateEvent();
         }
 
         void AIUpdate()
@@ -98,7 +97,7 @@ class AStarScryerAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (_unit->GetCurrentSpell() == NULL && _unit->GetAIInterface()->getNextTarget())
+            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -108,18 +107,18 @@ class AStarScryerAI : public CreatureAIScript
 
                     if (m_spellcheck[i])
                     {
-                        target = _unit->GetAIInterface()->getNextTarget();
+                        target = getCreature()->GetAIInterface()->getNextTarget();
                         switch (spells[i].targettype)
                         {
                             case TARGET_SELF:
                             case TARGET_VARIOUS:
-                                _unit->CastSpell(_unit, spells[i].info, spells[i].instant);
+                                getCreature()->CastSpell(getCreature(), spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_ATTACKING:
-                                _unit->CastSpell(target, spells[i].info, spells[i].instant);
+                                getCreature()->CastSpell(target, spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_DESTINATION:
-                                _unit->CastSpellAoF(target->GetPosition(), spells[i].info, spells[i].instant);
+                                getCreature()->CastSpellAoF(target->GetPosition(), spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_RANDOM_FRIEND:
                             case TARGET_RANDOM_SINGLE:
@@ -134,7 +133,7 @@ class AStarScryerAI : public CreatureAIScript
                     uint32 t = (uint32)time(NULL);
                     if (val > comulativeperc && val <= (comulativeperc + spells[i].perctrigger) && t > spells[i].casttime)
                     {
-                        _unit->setAttackTimer(spells[i].attackstoptimer, false);
+                        getCreature()->setAttackTimer(spells[i].attackstoptimer, false);
                         spells[i].casttime = t + spells[i].cooldown;
                         m_spellcheck[i] = true;
                     }
@@ -148,25 +147,25 @@ class AStarScryerAI : public CreatureAIScript
             if (!maxdist2cast) maxdist2cast = 100.0f;
             if (!maxhp2cast) maxhp2cast = 100;
 
-            if (_unit->GetCurrentSpell() == NULL && _unit->GetAIInterface()->getNextTarget())
+            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
             {
                 std::vector<Unit*> TargetTable;
-                for (std::set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
+                for (std::set<Object*>::iterator itr = getCreature()->GetInRangeSetBegin(); itr != getCreature()->GetInRangeSetEnd(); ++itr)
                 {
-                    if (((spells[i].targettype == TARGET_RANDOM_FRIEND && isFriendly(_unit, (*itr))) || (spells[i].targettype != TARGET_RANDOM_FRIEND && isHostile(_unit, (*itr)) && (*itr) != _unit)) && (*itr)->IsUnit())  // isAttackable(_unit, (*itr)) &&
+                    if (((spells[i].targettype == TARGET_RANDOM_FRIEND && isFriendly(getCreature(), (*itr))) || (spells[i].targettype != TARGET_RANDOM_FRIEND && isHostile(getCreature(), (*itr)) && (*itr) != getCreature())) && (*itr)->IsUnit())  // isAttackable(_unit, (*itr)) &&
                     {
                         Unit* RandomTarget = NULL;
                         RandomTarget = static_cast<Unit*>(*itr);
 
-                        if (RandomTarget->isAlive() && _unit->GetDistance2dSq(RandomTarget) >= mindist2cast * mindist2cast && _unit->GetDistance2dSq(RandomTarget) <= maxdist2cast * maxdist2cast && ((RandomTarget->GetHealthPct() >= minhp2cast && RandomTarget->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND) || (_unit->GetAIInterface()->getThreatByPtr(RandomTarget) > 0 && isHostile(_unit, RandomTarget))))
+                        if (RandomTarget->isAlive() && getCreature()->GetDistance2dSq(RandomTarget) >= mindist2cast * mindist2cast && getCreature()->GetDistance2dSq(RandomTarget) <= maxdist2cast * maxdist2cast && ((RandomTarget->GetHealthPct() >= minhp2cast && RandomTarget->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND) || (getCreature()->GetAIInterface()->getThreatByPtr(RandomTarget) > 0 && isHostile(getCreature(), RandomTarget))))
                         {
                             TargetTable.push_back(RandomTarget);
                         }
                     }
                 }
 
-                if (_unit->GetHealthPct() >= minhp2cast && _unit->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND)
-                    TargetTable.push_back(_unit);
+                if (getCreature()->GetHealthPct() >= minhp2cast && getCreature()->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND)
+                    TargetTable.push_back(getCreature());
 
                 if (!TargetTable.size())
                     return;
@@ -181,10 +180,10 @@ class AStarScryerAI : public CreatureAIScript
                 {
                     case TARGET_RANDOM_FRIEND:
                     case TARGET_RANDOM_SINGLE:
-                        _unit->CastSpell(random_target, spells[i].info, spells[i].instant);
+                        getCreature()->CastSpell(random_target, spells[i].info, spells[i].instant);
                         break;
                     case TARGET_RANDOM_DESTINATION:
-                        _unit->CastSpellAoF(random_target->GetPosition(), spells[i].info, spells[i].instant);
+                        getCreature()->CastSpellAoF(random_target->GetPosition(), spells[i].info, spells[i].instant);
                         break;
                 }
 
@@ -227,7 +226,7 @@ class StarScryerAI : public CreatureAIScript
         void OnCombatStart(Unit* mTarget)
         {
             CastTime();
-            RegisterAIUpdateEvent(_unit->GetBaseAttackTime(MELEE));
+            RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
         }
 
         void CastTime()
@@ -244,14 +243,13 @@ class StarScryerAI : public CreatureAIScript
         {
             CastTime();
             setAIAgent(AGENT_NULL);
-            _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
+            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
 
         void OnDied(Unit* mKiller)
         {
             CastTime();
-            RemoveAIUpdateEvent();
         }
 
         void AIUpdate()
@@ -262,7 +260,7 @@ class StarScryerAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (_unit->GetCurrentSpell() == NULL && _unit->GetAIInterface()->getNextTarget())
+            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -272,18 +270,18 @@ class StarScryerAI : public CreatureAIScript
 
                     if (m_spellcheck[i])
                     {
-                        target = _unit->GetAIInterface()->getNextTarget();
+                        target = getCreature()->GetAIInterface()->getNextTarget();
                         switch (spells[i].targettype)
                         {
                             case TARGET_SELF:
                             case TARGET_VARIOUS:
-                                _unit->CastSpell(_unit, spells[i].info, spells[i].instant);
+                                getCreature()->CastSpell(getCreature(), spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_ATTACKING:
-                                _unit->CastSpell(target, spells[i].info, spells[i].instant);
+                                getCreature()->CastSpell(target, spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_DESTINATION:
-                                _unit->CastSpellAoF(target->GetPosition(), spells[i].info, spells[i].instant);
+                                getCreature()->CastSpellAoF(target->GetPosition(), spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_RANDOM_FRIEND:
                             case TARGET_RANDOM_SINGLE:
@@ -298,7 +296,7 @@ class StarScryerAI : public CreatureAIScript
                     uint32 t = (uint32)time(NULL);
                     if (val > comulativeperc && val <= (comulativeperc + spells[i].perctrigger) && t > spells[i].casttime)
                     {
-                        _unit->setAttackTimer(spells[i].attackstoptimer, false);
+                        getCreature()->setAttackTimer(spells[i].attackstoptimer, false);
                         spells[i].casttime = t + spells[i].cooldown;
                         m_spellcheck[i] = true;
                     }
@@ -312,25 +310,25 @@ class StarScryerAI : public CreatureAIScript
             if (!maxdist2cast) maxdist2cast = 100.0f;
             if (!maxhp2cast) maxhp2cast = 100;
 
-            if (_unit->GetCurrentSpell() == NULL && _unit->GetAIInterface()->getNextTarget())
+            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
             {
                 std::vector<Unit*> TargetTable;
-                for (std::set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
+                for (std::set<Object*>::iterator itr = getCreature()->GetInRangeSetBegin(); itr != getCreature()->GetInRangeSetEnd(); ++itr)
                 {
-                    if (((spells[i].targettype == TARGET_RANDOM_FRIEND && isFriendly(_unit, (*itr))) || (spells[i].targettype != TARGET_RANDOM_FRIEND && isHostile(_unit, (*itr)) && (*itr) != _unit)) && (*itr)->IsUnit())  // isAttackable(_unit, (*itr)) &&
+                    if (((spells[i].targettype == TARGET_RANDOM_FRIEND && isFriendly(getCreature(), (*itr))) || (spells[i].targettype != TARGET_RANDOM_FRIEND && isHostile(getCreature(), (*itr)) && (*itr) != getCreature())) && (*itr)->IsUnit())  // isAttackable(_unit, (*itr)) &&
                     {
                         Unit* RandomTarget = NULL;
                         RandomTarget = static_cast<Unit*>(*itr);
 
-                        if (RandomTarget->isAlive() && _unit->GetDistance2dSq(RandomTarget) >= mindist2cast * mindist2cast && _unit->GetDistance2dSq(RandomTarget) <= maxdist2cast * maxdist2cast && ((RandomTarget->GetHealthPct() >= minhp2cast && RandomTarget->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND) || (_unit->GetAIInterface()->getThreatByPtr(RandomTarget) > 0 && isHostile(_unit, RandomTarget))))
+                        if (RandomTarget->isAlive() && getCreature()->GetDistance2dSq(RandomTarget) >= mindist2cast * mindist2cast && getCreature()->GetDistance2dSq(RandomTarget) <= maxdist2cast * maxdist2cast && ((RandomTarget->GetHealthPct() >= minhp2cast && RandomTarget->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND) || (getCreature()->GetAIInterface()->getThreatByPtr(RandomTarget) > 0 && isHostile(getCreature(), RandomTarget))))
                         {
                             TargetTable.push_back(RandomTarget);
                         }
                     }
                 }
 
-                if (_unit->GetHealthPct() >= minhp2cast && _unit->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND)
-                    TargetTable.push_back(_unit);
+                if (getCreature()->GetHealthPct() >= minhp2cast && getCreature()->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND)
+                    TargetTable.push_back(getCreature());
 
                 if (!TargetTable.size())
                     return;
@@ -345,10 +343,10 @@ class StarScryerAI : public CreatureAIScript
                 {
                     case TARGET_RANDOM_FRIEND:
                     case TARGET_RANDOM_SINGLE:
-                        _unit->CastSpell(random_target, spells[i].info, spells[i].instant);
+                        getCreature()->CastSpell(random_target, spells[i].info, spells[i].instant);
                         break;
                     case TARGET_RANDOM_DESTINATION:
-                        _unit->CastSpellAoF(random_target->GetPosition(), spells[i].info, spells[i].instant);
+                        getCreature()->CastSpellAoF(random_target->GetPosition(), spells[i].info, spells[i].instant);
                         break;
                 }
 
@@ -457,7 +455,7 @@ class AstromancerLordAI : public CreatureAIScript
         void OnCombatStart(Unit* mTarget)
         {
             CastTime();
-            RegisterAIUpdateEvent(_unit->GetBaseAttackTime(MELEE));
+            RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
         }
 
         void CastTime()
@@ -474,14 +472,13 @@ class AstromancerLordAI : public CreatureAIScript
         {
             CastTime();
             setAIAgent(AGENT_NULL);
-            _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
+            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
 
         void OnDied(Unit* mKiller)
         {
             CastTime();
-            RemoveAIUpdateEvent();
         }
 
         void AIUpdate()
@@ -492,7 +489,7 @@ class AstromancerLordAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (_unit->GetCurrentSpell() == NULL && _unit->GetAIInterface()->getNextTarget())
+            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -502,18 +499,18 @@ class AstromancerLordAI : public CreatureAIScript
 
                     if (m_spellcheck[i])
                     {
-                        target = _unit->GetAIInterface()->getNextTarget();
+                        target = getCreature()->GetAIInterface()->getNextTarget();
                         switch (spells[i].targettype)
                         {
                             case TARGET_SELF:
                             case TARGET_VARIOUS:
-                                _unit->CastSpell(_unit, spells[i].info, spells[i].instant);
+                                getCreature()->CastSpell(getCreature(), spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_ATTACKING:
-                                _unit->CastSpell(target, spells[i].info, spells[i].instant);
+                                getCreature()->CastSpell(target, spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_DESTINATION:
-                                _unit->CastSpellAoF(target->GetPosition(), spells[i].info, spells[i].instant);
+                                getCreature()->CastSpellAoF(target->GetPosition(), spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_RANDOM_FRIEND:
                             case TARGET_RANDOM_SINGLE:
@@ -528,7 +525,7 @@ class AstromancerLordAI : public CreatureAIScript
                     uint32 t = (uint32)time(NULL);
                     if (val > comulativeperc && val <= (comulativeperc + spells[i].perctrigger) && t > spells[i].casttime)
                     {
-                        _unit->setAttackTimer(spells[i].attackstoptimer, false);
+                        getCreature()->setAttackTimer(spells[i].attackstoptimer, false);
                         spells[i].casttime = t + spells[i].cooldown;
                         m_spellcheck[i] = true;
                     }
@@ -542,25 +539,25 @@ class AstromancerLordAI : public CreatureAIScript
             if (!maxdist2cast) maxdist2cast = 100.0f;
             if (!maxhp2cast) maxhp2cast = 100;
 
-            if (_unit->GetCurrentSpell() == NULL && _unit->GetAIInterface()->getNextTarget())
+            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
             {
                 std::vector<Unit*> TargetTable;
-                for (std::set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
+                for (std::set<Object*>::iterator itr = getCreature()->GetInRangeSetBegin(); itr != getCreature()->GetInRangeSetEnd(); ++itr)
                 {
-                    if (((spells[i].targettype == TARGET_RANDOM_FRIEND && isFriendly(_unit, (*itr))) || (spells[i].targettype != TARGET_RANDOM_FRIEND && isHostile(_unit, (*itr)) && (*itr) != _unit)) && (*itr)->IsUnit())  // isAttackable(_unit, (*itr)) &&
+                    if (((spells[i].targettype == TARGET_RANDOM_FRIEND && isFriendly(getCreature(), (*itr))) || (spells[i].targettype != TARGET_RANDOM_FRIEND && isHostile(getCreature(), (*itr)) && (*itr) != getCreature())) && (*itr)->IsUnit())  // isAttackable(_unit, (*itr)) &&
                     {
                         Unit* RandomTarget = NULL;
                         RandomTarget = static_cast<Unit*>(*itr);
 
-                        if (RandomTarget->isAlive() && _unit->GetDistance2dSq(RandomTarget) >= mindist2cast * mindist2cast && _unit->GetDistance2dSq(RandomTarget) <= maxdist2cast * maxdist2cast && ((RandomTarget->GetHealthPct() >= minhp2cast && RandomTarget->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND) || (_unit->GetAIInterface()->getThreatByPtr(RandomTarget) > 0 && isHostile(_unit, RandomTarget))))
+                        if (RandomTarget->isAlive() && getCreature()->GetDistance2dSq(RandomTarget) >= mindist2cast * mindist2cast && getCreature()->GetDistance2dSq(RandomTarget) <= maxdist2cast * maxdist2cast && ((RandomTarget->GetHealthPct() >= minhp2cast && RandomTarget->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND) || (getCreature()->GetAIInterface()->getThreatByPtr(RandomTarget) > 0 && isHostile(getCreature(), RandomTarget))))
                         {
                             TargetTable.push_back(RandomTarget);
                         }
                     }
                 }
 
-                if (_unit->GetHealthPct() >= minhp2cast && _unit->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND)
-                    TargetTable.push_back(_unit);
+                if (getCreature()->GetHealthPct() >= minhp2cast && getCreature()->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND)
+                    TargetTable.push_back(getCreature());
 
                 if (!TargetTable.size())
                     return;
@@ -575,10 +572,10 @@ class AstromancerLordAI : public CreatureAIScript
                 {
                     case TARGET_RANDOM_FRIEND:
                     case TARGET_RANDOM_SINGLE:
-                        _unit->CastSpell(random_target, spells[i].info, spells[i].instant);
+                        getCreature()->CastSpell(random_target, spells[i].info, spells[i].instant);
                         break;
                     case TARGET_RANDOM_DESTINATION:
-                        _unit->CastSpellAoF(random_target->GetPosition(), spells[i].info, spells[i].instant);
+                        getCreature()->CastSpellAoF(random_target->GetPosition(), spells[i].info, spells[i].instant);
                         break;
                 }
 
@@ -629,7 +626,7 @@ class BloodVindicatorAI : public CreatureAIScript
         void OnCombatStart(Unit* mTarget)
         {
             CastTime();
-            RegisterAIUpdateEvent(_unit->GetBaseAttackTime(MELEE));
+            RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
         }
 
         void CastTime()
@@ -646,14 +643,13 @@ class BloodVindicatorAI : public CreatureAIScript
         {
             CastTime();
             setAIAgent(AGENT_NULL);
-            _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
+            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
 
         void OnDied(Unit* mKiller)
         {
             CastTime();
-            RemoveAIUpdateEvent();
         }
 
         void AIUpdate()
@@ -664,7 +660,7 @@ class BloodVindicatorAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (_unit->GetCurrentSpell() == NULL && _unit->GetAIInterface()->getNextTarget())
+            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -674,18 +670,18 @@ class BloodVindicatorAI : public CreatureAIScript
 
                     if (m_spellcheck[i])
                     {
-                        target = _unit->GetAIInterface()->getNextTarget();
+                        target = getCreature()->GetAIInterface()->getNextTarget();
                         switch (spells[i].targettype)
                         {
                             case TARGET_SELF:
                             case TARGET_VARIOUS:
-                                _unit->CastSpell(_unit, spells[i].info, spells[i].instant);
+                                getCreature()->CastSpell(getCreature(), spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_ATTACKING:
-                                _unit->CastSpell(target, spells[i].info, spells[i].instant);
+                                getCreature()->CastSpell(target, spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_DESTINATION:
-                                _unit->CastSpellAoF(target->GetPosition(), spells[i].info, spells[i].instant);
+                                getCreature()->CastSpellAoF(target->GetPosition(), spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_RANDOM_FRIEND:
                             case TARGET_RANDOM_SINGLE:
@@ -700,7 +696,7 @@ class BloodVindicatorAI : public CreatureAIScript
                     uint32 t = (uint32)time(NULL);
                     if (val > comulativeperc && val <= (comulativeperc + spells[i].perctrigger) && t > spells[i].casttime)
                     {
-                        _unit->setAttackTimer(spells[i].attackstoptimer, false);
+                        getCreature()->setAttackTimer(spells[i].attackstoptimer, false);
                         spells[i].casttime = t + spells[i].cooldown;
                         m_spellcheck[i] = true;
                     }
@@ -714,25 +710,25 @@ class BloodVindicatorAI : public CreatureAIScript
             if (!maxdist2cast) maxdist2cast = 100.0f;
             if (!maxhp2cast) maxhp2cast = 100;
 
-            if (_unit->GetCurrentSpell() == NULL && _unit->GetAIInterface()->getNextTarget())
+            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
             {
                 std::vector<Unit*> TargetTable;
-                for (std::set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
+                for (std::set<Object*>::iterator itr = getCreature()->GetInRangeSetBegin(); itr != getCreature()->GetInRangeSetEnd(); ++itr)
                 {
-                    if (((spells[i].targettype == TARGET_RANDOM_FRIEND && isFriendly(_unit, (*itr))) || (spells[i].targettype != TARGET_RANDOM_FRIEND && isHostile(_unit, (*itr)) && (*itr) != _unit)) && (*itr)->IsUnit())  // isAttackable(_unit, (*itr)) &&
+                    if (((spells[i].targettype == TARGET_RANDOM_FRIEND && isFriendly(getCreature(), (*itr))) || (spells[i].targettype != TARGET_RANDOM_FRIEND && isHostile(getCreature(), (*itr)) && (*itr) != getCreature())) && (*itr)->IsUnit())  // isAttackable(_unit, (*itr)) &&
                     {
                         Unit* RandomTarget = NULL;
                         RandomTarget = static_cast<Unit*>(*itr);
 
-                        if (RandomTarget->isAlive() && _unit->GetDistance2dSq(RandomTarget) >= mindist2cast * mindist2cast && _unit->GetDistance2dSq(RandomTarget) <= maxdist2cast * maxdist2cast && ((RandomTarget->GetHealthPct() >= minhp2cast && RandomTarget->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND) || (_unit->GetAIInterface()->getThreatByPtr(RandomTarget) > 0 && isHostile(_unit, RandomTarget))))
+                        if (RandomTarget->isAlive() && getCreature()->GetDistance2dSq(RandomTarget) >= mindist2cast * mindist2cast && getCreature()->GetDistance2dSq(RandomTarget) <= maxdist2cast * maxdist2cast && ((RandomTarget->GetHealthPct() >= minhp2cast && RandomTarget->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND) || (getCreature()->GetAIInterface()->getThreatByPtr(RandomTarget) > 0 && isHostile(getCreature(), RandomTarget))))
                         {
                             TargetTable.push_back(RandomTarget);
                         }
                     }
                 }
 
-                if (_unit->GetHealthPct() >= minhp2cast && _unit->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND)
-                    TargetTable.push_back(_unit);
+                if (getCreature()->GetHealthPct() >= minhp2cast && getCreature()->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND)
+                    TargetTable.push_back(getCreature());
 
                 if (!TargetTable.size())
                     return;
@@ -747,10 +743,10 @@ class BloodVindicatorAI : public CreatureAIScript
                 {
                     case TARGET_RANDOM_FRIEND:
                     case TARGET_RANDOM_SINGLE:
-                        _unit->CastSpell(random_target, spells[i].info, spells[i].instant);
+                        getCreature()->CastSpell(random_target, spells[i].info, spells[i].instant);
                         break;
                     case TARGET_RANDOM_DESTINATION:
-                        _unit->CastSpellAoF(random_target->GetPosition(), spells[i].info, spells[i].instant);
+                        getCreature()->CastSpellAoF(random_target->GetPosition(), spells[i].info, spells[i].instant);
                         break;
                 }
 
@@ -801,7 +797,7 @@ class BloodLegionnareAI : public CreatureAIScript
         void OnCombatStart(Unit* mTarget)
         {
             CastTime();
-            RegisterAIUpdateEvent(_unit->GetBaseAttackTime(MELEE));
+            RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
         }
 
         void CastTime()
@@ -818,14 +814,13 @@ class BloodLegionnareAI : public CreatureAIScript
         {
             CastTime();
             setAIAgent(AGENT_NULL);
-            _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
+            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
 
         void OnDied(Unit* mKiller)
         {
             CastTime();
-            RemoveAIUpdateEvent();
         }
 
         void AIUpdate()
@@ -836,7 +831,7 @@ class BloodLegionnareAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (_unit->GetCurrentSpell() == NULL && _unit->GetAIInterface()->getNextTarget())
+            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -846,18 +841,18 @@ class BloodLegionnareAI : public CreatureAIScript
 
                     if (m_spellcheck[i])
                     {
-                        target = _unit->GetAIInterface()->getNextTarget();
+                        target = getCreature()->GetAIInterface()->getNextTarget();
                         switch (spells[i].targettype)
                         {
                             case TARGET_SELF:
                             case TARGET_VARIOUS:
-                                _unit->CastSpell(_unit, spells[i].info, spells[i].instant);
+                                getCreature()->CastSpell(getCreature(), spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_ATTACKING:
-                                _unit->CastSpell(target, spells[i].info, spells[i].instant);
+                                getCreature()->CastSpell(target, spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_DESTINATION:
-                                _unit->CastSpellAoF(target->GetPosition(), spells[i].info, spells[i].instant);
+                                getCreature()->CastSpellAoF(target->GetPosition(), spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_RANDOM_FRIEND:
                             case TARGET_RANDOM_SINGLE:
@@ -872,7 +867,7 @@ class BloodLegionnareAI : public CreatureAIScript
                     uint32 t = (uint32)time(NULL);
                     if (val > comulativeperc && val <= (comulativeperc + spells[i].perctrigger) && t > spells[i].casttime)
                     {
-                        _unit->setAttackTimer(spells[i].attackstoptimer, false);
+                        getCreature()->setAttackTimer(spells[i].attackstoptimer, false);
                         spells[i].casttime = t + spells[i].cooldown;
                         m_spellcheck[i] = true;
                     }
@@ -886,25 +881,25 @@ class BloodLegionnareAI : public CreatureAIScript
             if (!maxdist2cast) maxdist2cast = 100.0f;
             if (!maxhp2cast) maxhp2cast = 100;
 
-            if (_unit->GetCurrentSpell() == NULL && _unit->GetAIInterface()->getNextTarget())
+            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
             {
                 std::vector<Unit*> TargetTable;
-                for (std::set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
+                for (std::set<Object*>::iterator itr = getCreature()->GetInRangeSetBegin(); itr != getCreature()->GetInRangeSetEnd(); ++itr)
                 {
-                    if (((spells[i].targettype == TARGET_RANDOM_FRIEND && isFriendly(_unit, (*itr))) || (spells[i].targettype != TARGET_RANDOM_FRIEND && isHostile(_unit, (*itr)) && (*itr) != _unit)) && (*itr)->IsUnit())  // isAttackable(_unit, (*itr)) &&
+                    if (((spells[i].targettype == TARGET_RANDOM_FRIEND && isFriendly(getCreature(), (*itr))) || (spells[i].targettype != TARGET_RANDOM_FRIEND && isHostile(getCreature(), (*itr)) && (*itr) != getCreature())) && (*itr)->IsUnit())  // isAttackable(_unit, (*itr)) &&
                     {
                         Unit* RandomTarget = NULL;
                         RandomTarget = static_cast<Unit*>(*itr);
 
-                        if (RandomTarget->isAlive() && _unit->GetDistance2dSq(RandomTarget) >= mindist2cast * mindist2cast && _unit->GetDistance2dSq(RandomTarget) <= maxdist2cast * maxdist2cast && ((RandomTarget->GetHealthPct() >= minhp2cast && RandomTarget->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND) || (_unit->GetAIInterface()->getThreatByPtr(RandomTarget) > 0 && isHostile(_unit, RandomTarget))))
+                        if (RandomTarget->isAlive() && getCreature()->GetDistance2dSq(RandomTarget) >= mindist2cast * mindist2cast && getCreature()->GetDistance2dSq(RandomTarget) <= maxdist2cast * maxdist2cast && ((RandomTarget->GetHealthPct() >= minhp2cast && RandomTarget->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND) || (getCreature()->GetAIInterface()->getThreatByPtr(RandomTarget) > 0 && isHostile(getCreature(), RandomTarget))))
                         {
                             TargetTable.push_back(RandomTarget);
                         }
                     }
                 }
 
-                if (_unit->GetHealthPct() >= minhp2cast && _unit->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND)
-                    TargetTable.push_back(_unit);
+                if (getCreature()->GetHealthPct() >= minhp2cast && getCreature()->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND)
+                    TargetTable.push_back(getCreature());
 
                 if (!TargetTable.size())
                     return;
@@ -919,10 +914,10 @@ class BloodLegionnareAI : public CreatureAIScript
                 {
                     case TARGET_RANDOM_FRIEND:
                     case TARGET_RANDOM_SINGLE:
-                        _unit->CastSpell(random_target, spells[i].info, spells[i].instant);
+                        getCreature()->CastSpell(random_target, spells[i].info, spells[i].instant);
                         break;
                     case TARGET_RANDOM_DESTINATION:
-                        _unit->CastSpellAoF(random_target->GetPosition(), spells[i].info, spells[i].instant);
+                        getCreature()->CastSpellAoF(random_target->GetPosition(), spells[i].info, spells[i].instant);
                         break;
                 }
 
@@ -973,7 +968,7 @@ class BloodMarshalAI : public CreatureAIScript
         void OnCombatStart(Unit* mTarget)
         {
             CastTime();
-            RegisterAIUpdateEvent(_unit->GetBaseAttackTime(MELEE));
+            RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
         }
 
         void CastTime()
@@ -990,14 +985,13 @@ class BloodMarshalAI : public CreatureAIScript
         {
             CastTime();
             setAIAgent(AGENT_NULL);
-            _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
+            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
 
         void OnDied(Unit* mKiller)
         {
             CastTime();
-            RemoveAIUpdateEvent();
         }
 
         void AIUpdate()
@@ -1008,7 +1002,7 @@ class BloodMarshalAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (_unit->GetCurrentSpell() == NULL && _unit->GetAIInterface()->getNextTarget())
+            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -1018,18 +1012,18 @@ class BloodMarshalAI : public CreatureAIScript
 
                     if (m_spellcheck[i])
                     {
-                        target = _unit->GetAIInterface()->getNextTarget();
+                        target = getCreature()->GetAIInterface()->getNextTarget();
                         switch (spells[i].targettype)
                         {
                             case TARGET_SELF:
                             case TARGET_VARIOUS:
-                                _unit->CastSpell(_unit, spells[i].info, spells[i].instant);
+                                getCreature()->CastSpell(getCreature(), spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_ATTACKING:
-                                _unit->CastSpell(target, spells[i].info, spells[i].instant);
+                                getCreature()->CastSpell(target, spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_DESTINATION:
-                                _unit->CastSpellAoF(target->GetPosition(), spells[i].info, spells[i].instant);
+                                getCreature()->CastSpellAoF(target->GetPosition(), spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_RANDOM_FRIEND:
                             case TARGET_RANDOM_SINGLE:
@@ -1044,7 +1038,7 @@ class BloodMarshalAI : public CreatureAIScript
                     uint32 t = (uint32)time(NULL);
                     if (val > comulativeperc && val <= (comulativeperc + spells[i].perctrigger) && t > spells[i].casttime)
                     {
-                        _unit->setAttackTimer(spells[i].attackstoptimer, false);
+                        getCreature()->setAttackTimer(spells[i].attackstoptimer, false);
                         spells[i].casttime = t + spells[i].cooldown;
                         m_spellcheck[i] = true;
                     }
@@ -1058,25 +1052,25 @@ class BloodMarshalAI : public CreatureAIScript
             if (!maxdist2cast) maxdist2cast = 100.0f;
             if (!maxhp2cast) maxhp2cast = 100;
 
-            if (_unit->GetCurrentSpell() == NULL && _unit->GetAIInterface()->getNextTarget())
+            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
             {
                 std::vector<Unit*> TargetTable;
-                for (std::set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
+                for (std::set<Object*>::iterator itr = getCreature()->GetInRangeSetBegin(); itr != getCreature()->GetInRangeSetEnd(); ++itr)
                 {
-                    if (((spells[i].targettype == TARGET_RANDOM_FRIEND && isFriendly(_unit, (*itr))) || (spells[i].targettype != TARGET_RANDOM_FRIEND && isHostile(_unit, (*itr)) && (*itr) != _unit)) && (*itr)->IsUnit())  // isAttackable(_unit, (*itr)) &&
+                    if (((spells[i].targettype == TARGET_RANDOM_FRIEND && isFriendly(getCreature(), (*itr))) || (spells[i].targettype != TARGET_RANDOM_FRIEND && isHostile(getCreature(), (*itr)) && (*itr) != getCreature())) && (*itr)->IsUnit())  // isAttackable(_unit, (*itr)) &&
                     {
                         Unit* RandomTarget = NULL;
                         RandomTarget = static_cast<Unit*>(*itr);
 
-                        if (RandomTarget->isAlive() && _unit->GetDistance2dSq(RandomTarget) >= mindist2cast * mindist2cast && _unit->GetDistance2dSq(RandomTarget) <= maxdist2cast * maxdist2cast && ((RandomTarget->GetHealthPct() >= minhp2cast && RandomTarget->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND) || (_unit->GetAIInterface()->getThreatByPtr(RandomTarget) > 0 && isHostile(_unit, RandomTarget))))
+                        if (RandomTarget->isAlive() && getCreature()->GetDistance2dSq(RandomTarget) >= mindist2cast * mindist2cast && getCreature()->GetDistance2dSq(RandomTarget) <= maxdist2cast * maxdist2cast && ((RandomTarget->GetHealthPct() >= minhp2cast && RandomTarget->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND) || (getCreature()->GetAIInterface()->getThreatByPtr(RandomTarget) > 0 && isHostile(getCreature(), RandomTarget))))
                         {
                             TargetTable.push_back(RandomTarget);
                         }
                     }
                 }
 
-                if (_unit->GetHealthPct() >= minhp2cast && _unit->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND)
-                    TargetTable.push_back(_unit);
+                if (getCreature()->GetHealthPct() >= minhp2cast && getCreature()->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND)
+                    TargetTable.push_back(getCreature());
 
                 if (!TargetTable.size())
                     return;
@@ -1091,10 +1085,10 @@ class BloodMarshalAI : public CreatureAIScript
                 {
                     case TARGET_RANDOM_FRIEND:
                     case TARGET_RANDOM_SINGLE:
-                        _unit->CastSpell(random_target, spells[i].info, spells[i].instant);
+                        getCreature()->CastSpell(random_target, spells[i].info, spells[i].instant);
                         break;
                     case TARGET_RANDOM_DESTINATION:
-                        _unit->CastSpellAoF(random_target->GetPosition(), spells[i].info, spells[i].instant);
+                        getCreature()->CastSpellAoF(random_target->GetPosition(), spells[i].info, spells[i].instant);
                         break;
                 }
 
@@ -1147,7 +1141,7 @@ class PhoenixHawkAI : public CreatureAIScript
         void OnCombatStart(Unit* mTarget)
         {
             CastTime();
-            RegisterAIUpdateEvent(_unit->GetBaseAttackTime(MELEE));
+            RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
         }
 
         void CastTime()
@@ -1164,14 +1158,13 @@ class PhoenixHawkAI : public CreatureAIScript
         {
             CastTime();
             setAIAgent(AGENT_NULL);
-            _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
+            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
 
         void OnDied(Unit* mKiller)
         {
             CastTime();
-            RemoveAIUpdateEvent();
         }
 
         void AIUpdate()
@@ -1182,7 +1175,7 @@ class PhoenixHawkAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (_unit->GetCurrentSpell() == NULL && _unit->GetAIInterface()->getNextTarget())
+            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -1192,18 +1185,18 @@ class PhoenixHawkAI : public CreatureAIScript
 
                     if (m_spellcheck[i])
                     {
-                        target = _unit->GetAIInterface()->getNextTarget();
+                        target = getCreature()->GetAIInterface()->getNextTarget();
                         switch (spells[i].targettype)
                         {
                             case TARGET_SELF:
                             case TARGET_VARIOUS:
-                                _unit->CastSpell(_unit, spells[i].info, spells[i].instant);
+                                getCreature()->CastSpell(getCreature(), spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_ATTACKING:
-                                _unit->CastSpell(target, spells[i].info, spells[i].instant);
+                                getCreature()->CastSpell(target, spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_DESTINATION:
-                                _unit->CastSpellAoF(target->GetPosition(), spells[i].info, spells[i].instant);
+                                getCreature()->CastSpellAoF(target->GetPosition(), spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_RANDOM_FRIEND:
                             case TARGET_RANDOM_SINGLE:
@@ -1218,7 +1211,7 @@ class PhoenixHawkAI : public CreatureAIScript
                     uint32 t = (uint32)time(NULL);
                     if (val > comulativeperc && val <= (comulativeperc + spells[i].perctrigger) && t > spells[i].casttime)
                     {
-                        _unit->setAttackTimer(spells[i].attackstoptimer, false);
+                        getCreature()->setAttackTimer(spells[i].attackstoptimer, false);
                         spells[i].casttime = t + spells[i].cooldown;
                         m_spellcheck[i] = true;
                     }
@@ -1232,25 +1225,25 @@ class PhoenixHawkAI : public CreatureAIScript
             if (!maxdist2cast) maxdist2cast = 100.0f;
             if (!maxhp2cast) maxhp2cast = 100;
 
-            if (_unit->GetCurrentSpell() == NULL && _unit->GetAIInterface()->getNextTarget())
+            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
             {
                 std::vector<Unit*> TargetTable;
-                for (std::set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
+                for (std::set<Object*>::iterator itr = getCreature()->GetInRangeSetBegin(); itr != getCreature()->GetInRangeSetEnd(); ++itr)
                 {
-                    if (((spells[i].targettype == TARGET_RANDOM_FRIEND && isFriendly(_unit, (*itr))) || (spells[i].targettype != TARGET_RANDOM_FRIEND && isHostile(_unit, (*itr)) && (*itr) != _unit)) && (*itr)->IsUnit())  // isAttackable(_unit, (*itr)) &&
+                    if (((spells[i].targettype == TARGET_RANDOM_FRIEND && isFriendly(getCreature(), (*itr))) || (spells[i].targettype != TARGET_RANDOM_FRIEND && isHostile(getCreature(), (*itr)) && (*itr) != getCreature())) && (*itr)->IsUnit())  // isAttackable(_unit, (*itr)) &&
                     {
                         Unit* RandomTarget = NULL;
                         RandomTarget = static_cast<Unit*>(*itr);
 
-                        if (RandomTarget->isAlive() && _unit->GetDistance2dSq(RandomTarget) >= mindist2cast * mindist2cast && _unit->GetDistance2dSq(RandomTarget) <= maxdist2cast * maxdist2cast && ((RandomTarget->GetHealthPct() >= minhp2cast && RandomTarget->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND) || (_unit->GetAIInterface()->getThreatByPtr(RandomTarget) > 0 && isHostile(_unit, RandomTarget))))
+                        if (RandomTarget->isAlive() && getCreature()->GetDistance2dSq(RandomTarget) >= mindist2cast * mindist2cast && getCreature()->GetDistance2dSq(RandomTarget) <= maxdist2cast * maxdist2cast && ((RandomTarget->GetHealthPct() >= minhp2cast && RandomTarget->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND) || (getCreature()->GetAIInterface()->getThreatByPtr(RandomTarget) > 0 && isHostile(getCreature(), RandomTarget))))
                         {
                             TargetTable.push_back(RandomTarget);
                         }
                     }
                 }
 
-                if (_unit->GetHealthPct() >= minhp2cast && _unit->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND)
-                    TargetTable.push_back(_unit);
+                if (getCreature()->GetHealthPct() >= minhp2cast && getCreature()->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND)
+                    TargetTable.push_back(getCreature());
 
                 if (!TargetTable.size())
                     return;
@@ -1265,10 +1258,10 @@ class PhoenixHawkAI : public CreatureAIScript
                 {
                     case TARGET_RANDOM_FRIEND:
                     case TARGET_RANDOM_SINGLE:
-                        _unit->CastSpell(random_target, spells[i].info, spells[i].instant);
+                        getCreature()->CastSpell(random_target, spells[i].info, spells[i].instant);
                         break;
                     case TARGET_RANDOM_DESTINATION:
-                        _unit->CastSpellAoF(random_target->GetPosition(), spells[i].info, spells[i].instant);
+                        getCreature()->CastSpellAoF(random_target->GetPosition(), spells[i].info, spells[i].instant);
                         break;
                 }
 
@@ -1319,7 +1312,7 @@ class CrystalSentinelAI : public CreatureAIScript
         void OnCombatStart(Unit* mTarget)
         {
             CastTime();
-            RegisterAIUpdateEvent(_unit->GetBaseAttackTime(MELEE));
+            RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
         }
 
         void CastTime()
@@ -1336,14 +1329,13 @@ class CrystalSentinelAI : public CreatureAIScript
         {
             CastTime();
             setAIAgent(AGENT_NULL);
-            _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
+            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
 
         void OnDied(Unit* mKiller)
         {
             CastTime();
-            RemoveAIUpdateEvent();
         }
 
         void AIUpdate()
@@ -1354,7 +1346,7 @@ class CrystalSentinelAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (_unit->GetCurrentSpell() == NULL && _unit->GetAIInterface()->getNextTarget())
+            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -1364,18 +1356,18 @@ class CrystalSentinelAI : public CreatureAIScript
 
                     if (m_spellcheck[i])
                     {
-                        target = _unit->GetAIInterface()->getNextTarget();
+                        target = getCreature()->GetAIInterface()->getNextTarget();
                         switch (spells[i].targettype)
                         {
                             case TARGET_SELF:
                             case TARGET_VARIOUS:
-                                _unit->CastSpell(_unit, spells[i].info, spells[i].instant);
+                                getCreature()->CastSpell(getCreature(), spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_ATTACKING:
-                                _unit->CastSpell(target, spells[i].info, spells[i].instant);
+                                getCreature()->CastSpell(target, spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_DESTINATION:
-                                _unit->CastSpellAoF(target->GetPosition(), spells[i].info, spells[i].instant);
+                                getCreature()->CastSpellAoF(target->GetPosition(), spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_RANDOM_FRIEND:
                             case TARGET_RANDOM_SINGLE:
@@ -1390,7 +1382,7 @@ class CrystalSentinelAI : public CreatureAIScript
                     uint32 t = (uint32)time(NULL);
                     if (val > comulativeperc && val <= (comulativeperc + spells[i].perctrigger) && t > spells[i].casttime)
                     {
-                        _unit->setAttackTimer(spells[i].attackstoptimer, false);
+                        getCreature()->setAttackTimer(spells[i].attackstoptimer, false);
                         spells[i].casttime = t + spells[i].cooldown;
                         m_spellcheck[i] = true;
                     }
@@ -1404,25 +1396,25 @@ class CrystalSentinelAI : public CreatureAIScript
             if (!maxdist2cast) maxdist2cast = 100.0f;
             if (!maxhp2cast) maxhp2cast = 100;
 
-            if (_unit->GetCurrentSpell() == NULL && _unit->GetAIInterface()->getNextTarget())
+            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
             {
                 std::vector<Unit*> TargetTable;
-                for (std::set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
+                for (std::set<Object*>::iterator itr = getCreature()->GetInRangeSetBegin(); itr != getCreature()->GetInRangeSetEnd(); ++itr)
                 {
-                    if (((spells[i].targettype == TARGET_RANDOM_FRIEND && isFriendly(_unit, (*itr))) || (spells[i].targettype != TARGET_RANDOM_FRIEND && isHostile(_unit, (*itr)) && (*itr) != _unit)) && (*itr)->IsUnit()) // isAttackable(_unit, (*itr)) &&
+                    if (((spells[i].targettype == TARGET_RANDOM_FRIEND && isFriendly(getCreature(), (*itr))) || (spells[i].targettype != TARGET_RANDOM_FRIEND && isHostile(getCreature(), (*itr)) && (*itr) != getCreature())) && (*itr)->IsUnit()) // isAttackable(_unit, (*itr)) &&
                     {
                         Unit* RandomTarget = NULL;
                         RandomTarget = static_cast<Unit*>(*itr);
 
-                        if (RandomTarget->isAlive() && _unit->GetDistance2dSq(RandomTarget) >= mindist2cast * mindist2cast && _unit->GetDistance2dSq(RandomTarget) <= maxdist2cast * maxdist2cast && ((RandomTarget->GetHealthPct() >= minhp2cast && RandomTarget->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND) || (_unit->GetAIInterface()->getThreatByPtr(RandomTarget) > 0 && isHostile(_unit, RandomTarget))))
+                        if (RandomTarget->isAlive() && getCreature()->GetDistance2dSq(RandomTarget) >= mindist2cast * mindist2cast && getCreature()->GetDistance2dSq(RandomTarget) <= maxdist2cast * maxdist2cast && ((RandomTarget->GetHealthPct() >= minhp2cast && RandomTarget->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND) || (getCreature()->GetAIInterface()->getThreatByPtr(RandomTarget) > 0 && isHostile(getCreature(), RandomTarget))))
                         {
                             TargetTable.push_back(RandomTarget);
                         }
                     }
                 }
 
-                if (_unit->GetHealthPct() >= minhp2cast && _unit->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND)
-                    TargetTable.push_back(_unit);
+                if (getCreature()->GetHealthPct() >= minhp2cast && getCreature()->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND)
+                    TargetTable.push_back(getCreature());
 
                 if (!TargetTable.size())
                     return;
@@ -1437,10 +1429,10 @@ class CrystalSentinelAI : public CreatureAIScript
                 {
                     case TARGET_RANDOM_FRIEND:
                     case TARGET_RANDOM_SINGLE:
-                        _unit->CastSpell(random_target, spells[i].info, spells[i].instant);
+                        getCreature()->CastSpell(random_target, spells[i].info, spells[i].instant);
                         break;
                     case TARGET_RANDOM_DESTINATION:
-                        _unit->CastSpellAoF(random_target->GetPosition(), spells[i].info, spells[i].instant);
+                        getCreature()->CastSpellAoF(random_target->GetPosition(), spells[i].info, spells[i].instant);
                         break;
                 }
 
@@ -1484,7 +1476,7 @@ class CrystalMechanicAI : public CreatureAIScript
         void OnCombatStart(Unit* mTarget)
         {
             CastTime();
-            RegisterAIUpdateEvent(_unit->GetBaseAttackTime(MELEE));
+            RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
         }
 
         void CastTime()
@@ -1501,14 +1493,13 @@ class CrystalMechanicAI : public CreatureAIScript
         {
             CastTime();
             setAIAgent(AGENT_NULL);
-            _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
+            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
 
         void OnDied(Unit* mKiller)
         {
             CastTime();
-            RemoveAIUpdateEvent();
         }
 
         void AIUpdate()
@@ -1519,7 +1510,7 @@ class CrystalMechanicAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (_unit->GetCurrentSpell() == NULL && _unit->GetAIInterface()->getNextTarget())
+            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -1529,18 +1520,18 @@ class CrystalMechanicAI : public CreatureAIScript
 
                     if (m_spellcheck[i])
                     {
-                        target = _unit->GetAIInterface()->getNextTarget();
+                        target = getCreature()->GetAIInterface()->getNextTarget();
                         switch (spells[i].targettype)
                         {
                             case TARGET_SELF:
                             case TARGET_VARIOUS:
-                                _unit->CastSpell(_unit, spells[i].info, spells[i].instant);
+                                getCreature()->CastSpell(getCreature(), spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_ATTACKING:
-                                _unit->CastSpell(target, spells[i].info, spells[i].instant);
+                                getCreature()->CastSpell(target, spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_DESTINATION:
-                                _unit->CastSpellAoF(target->GetPosition(), spells[i].info, spells[i].instant);
+                                getCreature()->CastSpellAoF(target->GetPosition(), spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_RANDOM_FRIEND:
                             case TARGET_RANDOM_SINGLE:
@@ -1555,7 +1546,7 @@ class CrystalMechanicAI : public CreatureAIScript
                     uint32 t = (uint32)time(NULL);
                     if (val > comulativeperc && val <= (comulativeperc + spells[i].perctrigger) && t > spells[i].casttime)
                     {
-                        _unit->setAttackTimer(spells[i].attackstoptimer, false);
+                        getCreature()->setAttackTimer(spells[i].attackstoptimer, false);
                         spells[i].casttime = t + spells[i].cooldown;
                         m_spellcheck[i] = true;
                     }
@@ -1569,25 +1560,25 @@ class CrystalMechanicAI : public CreatureAIScript
             if (!maxdist2cast) maxdist2cast = 100.0f;
             if (!maxhp2cast) maxhp2cast = 100;
 
-            if (_unit->GetCurrentSpell() == NULL && _unit->GetAIInterface()->getNextTarget())
+            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
             {
                 std::vector<Unit*> TargetTable;
-                for (std::set<Object*>::iterator itr = _unit->GetInRangeSetBegin(); itr != _unit->GetInRangeSetEnd(); ++itr)
+                for (std::set<Object*>::iterator itr = getCreature()->GetInRangeSetBegin(); itr != getCreature()->GetInRangeSetEnd(); ++itr)
                 {
-                    if (((spells[i].targettype == TARGET_RANDOM_FRIEND && isFriendly(_unit, (*itr))) || (spells[i].targettype != TARGET_RANDOM_FRIEND && isHostile(_unit, (*itr)) && (*itr) != _unit)) && (*itr)->IsUnit())  // isAttackable(_unit, (*itr)) &&
+                    if (((spells[i].targettype == TARGET_RANDOM_FRIEND && isFriendly(getCreature(), (*itr))) || (spells[i].targettype != TARGET_RANDOM_FRIEND && isHostile(getCreature(), (*itr)) && (*itr) != getCreature())) && (*itr)->IsUnit())  // isAttackable(_unit, (*itr)) &&
                     {
                         Unit* RandomTarget = NULL;
                         RandomTarget = static_cast<Unit*>(*itr);
 
-                        if (RandomTarget->isAlive() && _unit->GetDistance2dSq(RandomTarget) >= mindist2cast * mindist2cast && _unit->GetDistance2dSq(RandomTarget) <= maxdist2cast * maxdist2cast && ((RandomTarget->GetHealthPct() >= minhp2cast && RandomTarget->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND) || (_unit->GetAIInterface()->getThreatByPtr(RandomTarget) > 0 && isHostile(_unit, RandomTarget))))
+                        if (RandomTarget->isAlive() && getCreature()->GetDistance2dSq(RandomTarget) >= mindist2cast * mindist2cast && getCreature()->GetDistance2dSq(RandomTarget) <= maxdist2cast * maxdist2cast && ((RandomTarget->GetHealthPct() >= minhp2cast && RandomTarget->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND) || (getCreature()->GetAIInterface()->getThreatByPtr(RandomTarget) > 0 && isHostile(getCreature(), RandomTarget))))
                         {
                             TargetTable.push_back(RandomTarget);
                         }
                     }
                 }
 
-                if (_unit->GetHealthPct() >= minhp2cast && _unit->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND)
-                    TargetTable.push_back(_unit);
+                if (getCreature()->GetHealthPct() >= minhp2cast && getCreature()->GetHealthPct() <= maxhp2cast && spells[i].targettype == TARGET_RANDOM_FRIEND)
+                    TargetTable.push_back(getCreature());
 
                 if (!TargetTable.size())
                     return;
@@ -1602,10 +1593,10 @@ class CrystalMechanicAI : public CreatureAIScript
                 {
                     case TARGET_RANDOM_FRIEND:
                     case TARGET_RANDOM_SINGLE:
-                        _unit->CastSpell(random_target, spells[i].info, spells[i].instant);
+                        getCreature()->CastSpell(random_target, spells[i].info, spells[i].instant);
                         break;
                     case TARGET_RANDOM_DESTINATION:
-                        _unit->CastSpellAoF(random_target->GetPosition(), spells[i].info, spells[i].instant);
+                        getCreature()->CastSpellAoF(random_target->GetPosition(), spells[i].info, spells[i].instant);
                         break;
                 }
 
@@ -1634,11 +1625,11 @@ const uint32 VOID_REAVER_ARCANE_ORB_TRIGGER = 34172;
 const uint32 VOID_REAVER_KNOCK_AWAY = 25778;
 const uint32 VOID_REAVER_ENRAGE = 27680; // Needs checking (as it can be wrong [or maybe IS wrong])
 
-class VoidReaverAI : public MoonScriptBossAI
+class VoidReaverAI : public MoonScriptCreatureAI
 {
     public:
-        MOONSCRIPT_FACTORY_FUNCTION(VoidReaverAI, MoonScriptBossAI);
-        VoidReaverAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+        MOONSCRIPT_FACTORY_FUNCTION(VoidReaverAI, MoonScriptCreatureAI);
+        VoidReaverAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
             SpellDesc* pPounding = AddSpell(VOID_REAVER_POUNDING, Target_Self, 100, 0, 12);
             if (pPounding != NULL)
@@ -1651,11 +1642,11 @@ class VoidReaverAI : public MoonScriptBossAI
             AddSpell(VOID_REAVER_KNOCK_AWAY, Target_Current, 100, 0, 20, 0, 12);    // 12 is experimental value
             SetEnrageInfo(AddSpell(VOID_REAVER_ENRAGE, Target_Self, 0, 0, 0), 600000);
 
-            AddEmote(Event_OnCombatStart, "Alert, you are marked for extermination!", CHAT_MSG_MONSTER_YELL, 11213);
-            AddEmote(Event_OnTargetDied, "Extermination, successful.", CHAT_MSG_MONSTER_YELL, 11215);
-            AddEmote(Event_OnTargetDied, "Imbecile life form, no longer functional.", CHAT_MSG_MONSTER_YELL, 11216);
-            AddEmote(Event_OnTargetDied, "Threat neutralized.", CHAT_MSG_MONSTER_YELL, 11217);
-            AddEmote(Event_OnDied, "Systems... shutting... down...", CHAT_MSG_MONSTER_YELL, 11214);
+            addEmoteForEvent(Event_OnCombatStart, 8867);
+            addEmoteForEvent(Event_OnTargetDied, 8868);
+            addEmoteForEvent(Event_OnTargetDied, 8869);
+            addEmoteForEvent(Event_OnTargetDied, 8870);
+            addEmoteForEvent(Event_OnDied, 8871);
 
             mArcaneOrbTimer = INVALIDATE_TIMER;
         }
@@ -1713,10 +1704,10 @@ bool Dummy_Solarian_WrathOfTheAstromancer(uint32 pEffectIndex, Spell* pSpell);
 void SpellFunc_Solarian_Disappear(SpellDesc* pThis, MoonScriptCreatureAI* pCreatureAI, Unit* pTarget, TargetType pType);
 void SpellFunc_Solarian_Reappear(SpellDesc* pThis, MoonScriptCreatureAI* pCreatureAI, Unit* pTarget, TargetType pType);
 
-class HighAstromancerSolarianAI : public MoonScriptBossAI
+class HighAstromancerSolarianAI : public MoonScriptCreatureAI
 {
-        MOONSCRIPT_FACTORY_FUNCTION(HighAstromancerSolarianAI, MoonScriptBossAI);
-        HighAstromancerSolarianAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+        MOONSCRIPT_FACTORY_FUNCTION(HighAstromancerSolarianAI, MoonScriptCreatureAI);
+        HighAstromancerSolarianAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
             //Initialize timers
             mSplitTimer = mAgentsTimer = mSolarianTimer = INVALIDATE_TIMER;
@@ -1740,11 +1731,11 @@ class HighAstromancerSolarianAI : public MoonScriptBossAI
             mVoidForm->AddEmote("I become ONE... with the VOID!", CHAT_MSG_MONSTER_YELL);
 
             //Emotes
-            AddEmote(Event_OnCombatStart, "Tal anu'men no sin'dorei!", CHAT_MSG_MONSTER_YELL, 11134);
-            AddEmote(Event_OnDied, "The warmth of the sun... awaits.", CHAT_MSG_MONSTER_YELL, 11135);
-            AddEmote(Event_OnTargetDied, "Your soul belongs to the Abyss!", CHAT_MSG_MONSTER_YELL, 11136);
-            AddEmote(Event_OnTargetDied, "By the blood of the Highborne!", CHAT_MSG_MONSTER_YELL, 11137);
-            AddEmote(Event_OnTargetDied, "For the Sunwell!", CHAT_MSG_MONSTER_YELL, 11138);
+            addEmoteForEvent(Event_OnCombatStart, 8872);
+            addEmoteForEvent(Event_OnDied, 8873);
+            addEmoteForEvent(Event_OnTargetDied, 8874);
+            addEmoteForEvent(Event_OnTargetDied, 8875);
+            addEmoteForEvent(Event_OnTargetDied, 8876);
         }
 
         void OnCombatStart(Unit* pTarget)
@@ -2007,21 +1998,21 @@ class AlarAI : public CreatureAIScript
 
             // Additional Settings
 
-            _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_FORWARDTHENSTOP);
-            _unit->GetAIInterface()->setSplineFlying();
+            getCreature()->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_FORWARDTHENSTOP);
+            getCreature()->GetAIInterface()->setSplineFlying();
 
             FlameQuills = false;
             Meteor = false;
             SetPhase(0);
             nDeath = 0;
             timer = lasttime = 0;
-            _unit->GetAIInterface()->setOutOfCombatRange(200000);
+            getCreature()->GetAIInterface()->setOutOfCombatRange(200000);
 
-            _unit->GetAIInterface()->setSplineFlying();
-            _unit->GetAIInterface()->StopMovement(0);
-            _unit->GetAIInterface()->setAiState(AI_STATE_SCRIPTMOVE);
-            _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
-            _unit->GetAIInterface()->setWayPointToMove(1);
+            getCreature()->GetAIInterface()->setSplineFlying();
+            getCreature()->GetAIInterface()->StopMovement(0);
+            getCreature()->GetAIInterface()->setAiState(AI_STATE_SCRIPTMOVE);
+            getCreature()->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
+            getCreature()->GetAIInterface()->setWayPointToMove(1);
             Flying = true;
             CastTime();
 
@@ -2033,9 +2024,9 @@ class AlarAI : public CreatureAIScript
 
         void OnDamageTaken(Unit* mAttacker, uint32 fAmount)
         {
-            if (!_unit->event_HasEvents())
+            if (!getCreature()->event_HasEvents())
             {
-                RegisterAIUpdateEvent(_unit->GetBaseAttackTime(MELEE));
+                RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
                 ModifyAIUpdateEvent(1000);
                 NextWP = 6;
             }
@@ -2047,7 +2038,7 @@ class AlarAI : public CreatureAIScript
             Meteor = false;
             NextWP = 6;
 
-            RegisterAIUpdateEvent(_unit->GetBaseAttackTime(MELEE));
+            RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
             ModifyAIUpdateEvent(1000);
         }
 
@@ -2060,7 +2051,7 @@ class AlarAI : public CreatureAIScript
         void SetPhase(uint32 ph)
         {
             Phase = ph;
-            _unit->SetBaseMana(Phase);
+            getCreature()->SetBaseMana(Phase);
         }
 
         void OnCombatStop(Unit* mTarget)
@@ -2078,19 +2069,19 @@ class AlarAI : public CreatureAIScript
         {
             //_unit->SetPosition(fly[11].x, fly[11].y, fly[11].z, fly[11].o);
             SetPhase(2);
-            _unit->CastSpell(_unit, spells[6].info, spells[6].instant);
-            _unit->setUInt64Value(UNIT_FIELD_HEALTH, _unit->getUInt32Value(UNIT_FIELD_MAXHEALTH));
-            _unit->setDeathState(ALIVE);
-            _unit->RemoveFlag(UNIT_DYNAMIC_FLAGS, U_DYN_FLAG_TAGGED_BY_OTHER);
-            _unit->SetFlag(UNIT_DYNAMIC_FLAGS, U_DYN_FLAG_LOOTABLE);
+            getCreature()->CastSpell(getCreature(), spells[6].info, spells[6].instant);
+            getCreature()->setUInt64Value(UNIT_FIELD_HEALTH, getCreature()->getUInt32Value(UNIT_FIELD_MAXHEALTH));
+            getCreature()->setDeathState(ALIVE);
+            getCreature()->RemoveFlag(UNIT_DYNAMIC_FLAGS, U_DYN_FLAG_TAGGED_BY_OTHER);
+            getCreature()->SetFlag(UNIT_DYNAMIC_FLAGS, U_DYN_FLAG_LOOTABLE);
             // no idea what this tag means, smth loot/party related
             //_unit->ClearTag();
-            _unit->GetAIInterface()->StopMovement(0); // after respawn monster can move
+            getCreature()->GetAIInterface()->StopMovement(0); // after respawn monster can move
 
-            _unit->GetAIInterface()->WipeTargetList();
-            _unit->GetAIInterface()->WipeHateList();
-            _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
-            _unit->GetAIInterface()->m_canMove = true;
+            getCreature()->GetAIInterface()->WipeTargetList();
+            getCreature()->GetAIInterface()->WipeHateList();
+            getCreature()->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
+            getCreature()->GetAIInterface()->m_canMove = true;
             Flying = false;
             lasttime = timer;
         }
@@ -2103,14 +2094,13 @@ class AlarAI : public CreatureAIScript
             FlameQuills = false;
             Meteor = false;
             CastTime();
-            RemoveAIUpdateEvent();
         }
 
         bool HostileInMeleeRange()
         {
-            for (Object::InRangeSet::iterator i = _unit->GetInRangeSetBegin(); i != _unit->GetInRangeSetEnd(); ++i)
+            for (Object::InRangeSet::iterator i = getCreature()->GetInRangeSetBegin(); i != getCreature()->GetInRangeSetEnd(); ++i)
             {
-                if (isHostile(_unit, (*i)) && _unit->GetDistance2dSq((*i)) < 225)
+                if (isHostile(getCreature(), (*i)) && getCreature()->GetDistance2dSq((*i)) < 225)
                 {
                     return true;
                 }
@@ -2129,7 +2119,7 @@ class AlarAI : public CreatureAIScript
             UPCastTime();
             if (!HostileInMeleeRange() && spells[0].casttime == 0 && !FlameQuills && !Flying)
             {
-                _unit->CastSpell(_unit, spells[0].info, spells[0].instant);
+                getCreature()->CastSpell(getCreature(), spells[0].info, spells[0].instant);
                 spells[0].casttime = spells[0].cooldown;
             }
             if (!Flying) timer++;
@@ -2163,13 +2153,13 @@ class AlarAI : public CreatureAIScript
                 //_unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(34229), true);
                 if (lasttime + 11 == timer)
                 {
-                    _unit->CastSpellAoF(LocationVector(fly[1].x, fly[1].y, fly[1].z), spells[1].info, spells[1].instant);
-                    _unit->CastSpellAoF(LocationVector(fly[2].x, fly[2].y, fly[2].z), spells[1].info, spells[1].instant);
-                    _unit->CastSpellAoF(LocationVector(fly[3].x, fly[3].y, fly[3].z), spells[1].info, spells[1].instant);
-                    _unit->CastSpellAoF(LocationVector(fly[4].x, fly[4].y, fly[4].z), spells[1].info, spells[1].instant);
-                    _unit->GetAIInterface()->m_canMove = true;
-                    _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
-                    _unit->GetAIInterface()->setWayPointToMove(NextWP);
+                    getCreature()->CastSpellAoF(LocationVector(fly[1].x, fly[1].y, fly[1].z), spells[1].info, spells[1].instant);
+                    getCreature()->CastSpellAoF(LocationVector(fly[2].x, fly[2].y, fly[2].z), spells[1].info, spells[1].instant);
+                    getCreature()->CastSpellAoF(LocationVector(fly[3].x, fly[3].y, fly[3].z), spells[1].info, spells[1].instant);
+                    getCreature()->CastSpellAoF(LocationVector(fly[4].x, fly[4].y, fly[4].z), spells[1].info, spells[1].instant);
+                    getCreature()->GetAIInterface()->m_canMove = true;
+                    getCreature()->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
+                    getCreature()->GetAIInterface()->setWayPointToMove(NextWP);
                     FlameQuills = false;
                     Flying = true;
                     lasttime = timer;
@@ -2177,20 +2167,20 @@ class AlarAI : public CreatureAIScript
             }
             else if (lasttime + 35 == timer)
             {
-                spawnCreature(19551, _unit->GetPosition());
+                spawnCreature(19551, getCreature()->GetPosition());
                 //_unit->CastSpell(_unit, spells[2].info, spells[2].instant);
                 lasttime = timer + RandomUInt(9);
-                _unit->GetAIInterface()->SetAllowedToEnterCombat(false);
+                getCreature()->GetAIInterface()->SetAllowedToEnterCombat(false);
                 setAIAgent(AGENT_NULL);
-                _unit->GetAIInterface()->StopMovement(0);
-                _unit->GetAIInterface()->m_canMove = true;
+                getCreature()->GetAIInterface()->StopMovement(0);
+                getCreature()->GetAIInterface()->m_canMove = true;
 
-                _unit->GetAIInterface()->setAiState(AI_STATE_SCRIPTMOVE);
-                _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
-                _unit->GetAIInterface()->setWayPointToMove(NextWP);
+                getCreature()->GetAIInterface()->setAiState(AI_STATE_SCRIPTMOVE);
+                getCreature()->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
+                getCreature()->GetAIInterface()->setWayPointToMove(NextWP);
                 // ugly code, trows compile error if left just null, this should do it ~ azolex
                 uint32 nullfix = 0;
-                _unit->GetAIInterface()->setNextTarget(nullfix);
+                getCreature()->GetAIInterface()->setNextTarget(nullfix);
                 Flying = true;
             }
         }
@@ -2211,7 +2201,7 @@ class AlarAI : public CreatureAIScript
                     {
                         patch->SetDisplayId(16946);
                         patch->SetNativeDisplayId(16946);
-                        patch->SetFaction(_unit->GetFaction());
+                        patch->SetFaction(getCreature()->GetFaction());
                     }
                 }
             }
@@ -2220,17 +2210,17 @@ class AlarAI : public CreatureAIScript
             }
             if (lasttime + 35 == timer)
             {
-                spawnCreature(19551, _unit->GetPosition());
-                spawnCreature(19551, _unit->GetPosition());
+                spawnCreature(19551, getCreature()->GetPosition());
+                spawnCreature(19551, getCreature()->GetPosition());
                 lasttime = timer;
             }
         }
 
         Unit* GetRandomTarget()
         {
-            for (Object::InRangeSet::iterator i = _unit->GetInRangeSetBegin(); i != _unit->GetInRangeSetEnd(); ++i)
+            for (Object::InRangeSet::iterator i = getCreature()->GetInRangeSetBegin(); i != getCreature()->GetInRangeSetEnd(); ++i)
             {
-                if (isHostile(_unit, (*i)) && (*i)->GetInstanceID() == _unit->GetInstanceID())
+                if (isHostile(getCreature(), (*i)) && (*i)->GetInstanceID() == getCreature()->GetInstanceID())
                 {
                     Unit* RandomTarget = static_cast<Unit*>(*i);
 
@@ -2244,27 +2234,27 @@ class AlarAI : public CreatureAIScript
         void CastSpell(int id)
         {
             if (spells[id].casttime > 0) return;
-            if (_unit->GetCurrentSpell() != NULL) return;
+            if (getCreature()->GetCurrentSpell() != NULL) return;
 
             Unit* target = NULL;
-            target = _unit->GetAIInterface()->getNextTarget();
+            target = getCreature()->GetAIInterface()->getNextTarget();
             switch (spells[id].targettype)
             {
                 case TARGET_SELF:
                 case TARGET_VARIOUS:
-                    _unit->CastSpell(_unit, spells[id].info, spells[id].instant);
+                    getCreature()->CastSpell(getCreature(), spells[id].info, spells[id].instant);
                     break;
                 case TARGET_ATTACKING:
-                    _unit->CastSpell(target, spells[id].info, spells[id].instant);
+                    getCreature()->CastSpell(target, spells[id].info, spells[id].instant);
                     break;
                 case TARGET_DESTINATION:
-                    _unit->CastSpellAoF(target->GetPosition(), spells[id].info, spells[id].instant);
+                    getCreature()->CastSpellAoF(target->GetPosition(), spells[id].info, spells[id].instant);
                     break;
                 case TARGET_RANDOM_SINGLE:
                     {
                         target = GetRandomTarget();
                         if (target != NULL)
-                            _unit->CastSpell(target, spells[id].info, spells[id].instant);
+                            getCreature()->CastSpell(target, spells[id].info, spells[id].instant);
                     }
                     break;
             }
@@ -2273,11 +2263,11 @@ class AlarAI : public CreatureAIScript
 
         void SetNextWP(uint32 wp)
         {
-            _unit->GetAIInterface()->setAiState(AI_STATE_ATTACKING);//STATE_IDLE
+            getCreature()->GetAIInterface()->setAiState(AI_STATE_ATTACKING);//STATE_IDLE
             NextWP = wp;
             Flying = false;
-            _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
-            _unit->GetAIInterface()->m_canMove = false;
+            getCreature()->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
+            getCreature()->GetAIInterface()->m_canMove = false;
             lasttime = timer;
         }
 
@@ -2288,9 +2278,9 @@ class AlarAI : public CreatureAIScript
             {
                 if (NextWP == 6) Phase = 1;
                 else NextWP = iWaypointId % 5 + 1;
-                _unit->GetAIInterface()->setAiState(AI_STATE_SCRIPTMOVE);
-                _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
-                _unit->GetAIInterface()->setWayPointToMove(NextWP);
+                getCreature()->GetAIInterface()->setAiState(AI_STATE_SCRIPTMOVE);
+                getCreature()->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_WANTEDWP);
+                getCreature()->GetAIInterface()->setWayPointToMove(NextWP);
             }
 
             switch (iWaypointId)
@@ -2324,12 +2314,12 @@ class AlarAI : public CreatureAIScript
                             FlameQuills = true;
                             QuillsCount = 0;
                             Flying = false;
-                            _unit->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
-                            _unit->GetAIInterface()->m_canMove = false;
+                            getCreature()->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
+                            getCreature()->GetAIInterface()->m_canMove = false;
                             NextWP = 6;
                             lasttime = timer;
                             //_unit->Emote(EMOTE_STATE_WHIRLWIND);
-                            _unit->CastSpell(_unit, sSpellCustomizations.GetSpellInfo(34229), true);
+                            getCreature()->CastSpell(getCreature(), sSpellCustomizations.GetSpellInfo(34229), true);
                         }
 
                         if (Phase == 2)
@@ -2387,7 +2377,7 @@ class EmberAlarAI : public CreatureAIScript
         void OnCombatStart(Unit* mTarget)
         {
             CastTime();
-            RegisterAIUpdateEvent(_unit->GetBaseAttackTime(MELEE));
+            RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
         }
 
         void CastTime()
@@ -2404,18 +2394,18 @@ class EmberAlarAI : public CreatureAIScript
         {
             CastTime();
             setAIAgent(AGENT_NULL);
-            _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
+            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
 
         Unit* GetAlar()
         {
-            for (Object::InRangeSet::iterator i = _unit->GetInRangeSetBegin(); i != _unit->GetInRangeSetEnd(); ++i)
+            for (Object::InRangeSet::iterator i = getCreature()->GetInRangeSetBegin(); i != getCreature()->GetInRangeSetEnd(); ++i)
             {
-                if ((*i)->IsCreature() && _unit->GetDistance2dSq((*i)) < 400000)
+                if ((*i)->IsCreature() && getCreature()->GetDistance2dSq((*i)) < 400000)
                 {
                     Creature* creature = static_cast<Creature*>((*i));
-                    if (creature->GetEntry() == 19514 && (*i)->GetInstanceID() == _unit->GetInstanceID())
+                    if (creature->GetEntry() == 19514 && (*i)->GetInstanceID() == getCreature()->GetInstanceID())
                     {
                         return creature;
                     }
@@ -2427,7 +2417,7 @@ class EmberAlarAI : public CreatureAIScript
         void OnDied(Unit* mKiller)
         {
 
-            _unit->CastSpell(_unit, spells[0].info, spells[0].instant);
+            getCreature()->CastSpell(getCreature(), spells[0].info, spells[0].instant);
             CastTime();
 
             Unit* Alar = NULL;
@@ -2478,16 +2468,16 @@ class PatchAlarAI : public CreatureAIScript
             //_unit->GetAIInterface()->SetAllowedToEnterCombat(false);
             //_unit->GetAIInterface()->SetAIState(STATE_IDLE);
             //_unit->SetUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-            _unit->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_2);
-            _unit->GetAIInterface()->m_canMove = false;
-            _unit->Despawn(120000, 0);
+            getCreature()->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_2);
+            getCreature()->GetAIInterface()->m_canMove = false;
+            getCreature()->Despawn(120000, 0);
         }
 
         void OnCombatStart(Unit* mTarget)
         {
             CastTime();
-            RegisterAIUpdateEvent(_unit->GetBaseAttackTime(MELEE));
-            _unit->CastSpell(_unit, spells[0].info, true);
+            RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
+            getCreature()->CastSpell(getCreature(), spells[0].info, true);
         }
 
         void CastTime()
@@ -2504,7 +2494,7 @@ class PatchAlarAI : public CreatureAIScript
         {
             CastTime();
             setAIAgent(AGENT_NULL);
-            _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
+            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
 
@@ -2555,8 +2545,8 @@ class DarkenerAI : public MoonScriptCreatureAI
         {
             AddSpell(DARKENER_PSYCHIC_BLOW, Target_Current, 10, 0, 20);
             AddSpell(DARKENER_SILENCE, Target_Current, 10, 0, 15);
-            AddEmote(Event_OnCombatStart, "Prepare yourselves!", CHAT_MSG_MONSTER_YELL, 11203);
-            AddEmote(Event_OnDied, "Forgive me, my prince! I have... failed.", CHAT_MSG_MONSTER_YELL, 11204);
+            addEmoteForEvent(Event_OnCombatStart, 8877);
+            addEmoteForEvent(Event_OnDied, 8878);
             setCanEnterCombat(false);
             mCurrentTarget = NULL;
             mGazeSwitchTimer = 0;
@@ -2602,16 +2592,16 @@ class DarkenerAI : public MoonScriptCreatureAI
         bool SwitchTarget()
         {
             mCurrentTarget = GetBestPlayerTarget();
-            if (mCurrentTarget == _unit->GetAIInterface()->getNextTarget())
+            if (mCurrentTarget == getCreature()->GetAIInterface()->getNextTarget())
                 return true;
 
             if (mCurrentTarget != NULL)
             {
-                _unit->GetAIInterface()->modThreatByPtr(mCurrentTarget, 1000000);
+                getCreature()->GetAIInterface()->modThreatByPtr(mCurrentTarget, 1000000);
                 Player* pPlayer = static_cast<Player*>(mCurrentTarget);
                 char msg[256];
-                snprintf((char*)msg, 256, "%s sets eyes on %s", _unit->GetCreatureProperties()->Name.c_str(), pPlayer->GetName());
-                _unit->SendChatMessageAlternateEntry(CN_DARKENER, CHAT_MSG_MONSTER_EMOTE, LANG_UNIVERSAL, msg);
+                snprintf((char*)msg, 256, "%s sets eyes on %s", getCreature()->GetCreatureProperties()->Name.c_str(), pPlayer->GetName());
+                getCreature()->SendChatMessageAlternateEntry(CN_DARKENER, CHAT_MSG_MONSTER_EMOTE, LANG_UNIVERSAL, msg);
                 return true;
             }
 
@@ -2634,8 +2624,8 @@ class SanguinarAI : public MoonScriptCreatureAI
         SanguinarAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
             AddSpell(SANGUINAR_BELLOWING, Target_Self, 100, 0, 30);
-            AddEmote(Event_OnCombatStart, "Blood for blood!", CHAT_MSG_MONSTER_YELL, 11152);
-            AddEmote(Event_OnDied, "NO! I will... not.", CHAT_MSG_MONSTER_YELL, 11153);
+            addEmoteForEvent(Event_OnCombatStart, 8879);
+            addEmoteForEvent(Event_OnDied, 8880);
             setCanEnterCombat(false);
         }
 
@@ -2671,8 +2661,8 @@ class CapernianAI : public MoonScriptCreatureAI
             AddSpell(CAPERNIAN_CONFLAGRATION, Target_RandomPlayer, 7, 0, 10, 0, 30, true);
             AddSpell(CAPERNIAN_FIREBALL, Target_Current, 73, 2, 0);
             mArcaneBurst = AddSpell(CAPERNIAN_ARCANE_BURST, Target_Self, 0, 1, 15);
-            AddEmote(Event_OnCombatStart, "The sin'dorei reign supreme!", CHAT_MSG_MONSTER_YELL, 11117);
-            AddEmote(Event_OnDied, "This is not over!", CHAT_MSG_MONSTER_YELL, 11118);
+            addEmoteForEvent(Event_OnCombatStart, 8881);
+            addEmoteForEvent(Event_OnDied, 8882);
             setCanEnterCombat(false);
         }
 
@@ -2708,7 +2698,7 @@ class CapernianAI : public MoonScriptCreatureAI
                 CastSpellNowNoScheduling(mArcaneBurst);
             }
 
-            Unit* pTarget = _unit->GetAIInterface()->getNextTarget();
+            Unit* pTarget = getCreature()->GetAIInterface()->getNextTarget();
             if (pTarget != NULL && getRangeToObject(pTarget) <= 30.0f)
             {
                 ParentClass::AIUpdate();
@@ -2736,8 +2726,8 @@ class TelonicusAI : public MoonScriptCreatureAI
         {
             AddSpell(TELONICUS_BOMB, Target_RandomPlayerDestination, 10, 1.5f, 15, 0, 30);
             AddSpell(TELONICUS_REMOTE_TOY, Target_RandomPlayer, 10, 0, 15, 0, 30);
-            AddEmote(Event_OnCombatStart, "Anar'alah belore!", CHAT_MSG_MONSTER_YELL, 11157);
-            AddEmote(Event_OnDied, "More perlis... await.", CHAT_MSG_MONSTER_YELL, 11158);            // not sure
+            addEmoteForEvent(Event_OnCombatStart, 8883);
+            addEmoteForEvent(Event_OnDied, 8884);            // not sure
             setCanEnterCombat(false);
         }
 
@@ -2774,7 +2764,7 @@ class FlameStrikeAI : public MoonScriptCreatureAI
             setCanEnterCombat(false);
             _setMeleeDisabled(false);
             setRooted(true);
-            _unit->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+            getCreature()->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
         }
 
         void OnDied(Unit* mKiller)
@@ -2786,7 +2776,7 @@ class FlameStrikeAI : public MoonScriptCreatureAI
 
         void AIUpdate()
         {
-            _unit->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_2);
+            getCreature()->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_2);
             _applyAura(FLAME_STRIKE_TRIGGER_FLAME_STRIKE);
             RemoveAIUpdateEvent();
             despawn(8500);
@@ -2808,7 +2798,7 @@ class PhoenixAI : public MoonScriptCreatureAI
             Unit* pTarget = GetBestPlayerTarget();
             if (pTarget != NULL)
             {
-                _unit->GetAIInterface()->AttackReaction(pTarget, 500, 0);
+                getCreature()->GetAIInterface()->AttackReaction(pTarget, 500, 0);
             }
 
             mBurnTimer = _addTimer(3000);
@@ -2824,7 +2814,7 @@ class PhoenixAI : public MoonScriptCreatureAI
             Unit* pTarget = GetBestPlayerTarget(TargetFilter_Closest);
             if (pTarget != NULL)
             {
-                _unit->GetAIInterface()->AttackReaction(pTarget, 500);
+                getCreature()->GetAIInterface()->AttackReaction(pTarget, 500);
                 ParentClass::OnCombatStart(pTarget);
             }
             else
@@ -2837,23 +2827,23 @@ class PhoenixAI : public MoonScriptCreatureAI
         {
             ParentClass::OnDied(mKiller);
             _applyAura(PHOENIX_REBIRTH);
-            SpawnCreature(21364, _unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), _unit->GetOrientation(), false);
+            SpawnCreature(21364, getCreature()->GetPositionX(), getCreature()->GetPositionY(), getCreature()->GetPositionZ(), getCreature()->GetOrientation(), false);
             despawn(500);
         }
 
         void AIUpdate()
         {
-            double CurrentHP = (double)_unit->getUInt32Value(UNIT_FIELD_HEALTH);
-            double PercMaxHP = (double)_unit->getUInt32Value(UNIT_FIELD_MAXHEALTH) * 0.05;
+            double CurrentHP = (double)getCreature()->getUInt32Value(UNIT_FIELD_HEALTH);
+            double PercMaxHP = (double)getCreature()->getUInt32Value(UNIT_FIELD_MAXHEALTH) * 0.05;
             if (CurrentHP > PercMaxHP && _isTimerFinished(mBurnTimer))
             {
-                _unit->SetHealth((uint32)(CurrentHP - PercMaxHP));
+                getCreature()->SetHealth((uint32)(CurrentHP - PercMaxHP));
                 _resetTimer(mBurnTimer, 3000);
                 _applyAura(PHOENIX_BURN);
             }
             else if (CurrentHP <= PercMaxHP)
             {
-                SpawnCreature(21364, _unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), _unit->GetOrientation(), false);
+                SpawnCreature(21364, getCreature()->GetPositionX(), getCreature()->GetPositionY(), getCreature()->GetPositionZ(), getCreature()->GetOrientation(), false);
                 despawn(500);
                 return;
             }
@@ -2887,7 +2877,7 @@ class PhoenixEggAI : public MoonScriptCreatureAI
 
         void AIUpdate()
         {
-            SpawnCreature(CN_PHOENIX, _unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), _unit->GetOrientation(), false);
+            SpawnCreature(CN_PHOENIX, getCreature()->GetPositionX(), getCreature()->GetPositionY(), getCreature()->GetPositionZ(), getCreature()->GetOrientation(), false);
             despawn(0);
         }
 };
@@ -2908,12 +2898,12 @@ class WeaponsAI : public MoonScriptCreatureAI
         MOONSCRIPT_FACTORY_FUNCTION(WeaponsAI, MoonScriptCreatureAI);
         WeaponsAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
-            _unit->m_noRespawn = true;
+            getCreature()->m_noRespawn = true;
 
             Unit* pTarget = GetBestPlayerTarget();
             if (pTarget != NULL)
             {
-                _unit->GetAIInterface()->AttackReaction(pTarget, 200, 0);
+                getCreature()->GetAIInterface()->AttackReaction(pTarget, 200, 0);
             }
         }
 
@@ -2922,7 +2912,7 @@ class WeaponsAI : public MoonScriptCreatureAI
             Unit* pTarget = GetBestPlayerTarget();
             if (pTarget != NULL)
             {
-                _unit->GetAIInterface()->AttackReaction(pTarget, 500);
+                getCreature()->GetAIInterface()->AttackReaction(pTarget, 500);
             }
             else
             {
@@ -3015,11 +3005,11 @@ enum AdvisorPhase
 void SpellFunc_KaelThasArcaneDisruption(SpellDesc* pThis, MoonScriptCreatureAI* pCreatureAI, Unit* pTarget, TargetType pType);
 void SpellFunc_KaelThasFlameStrike(SpellDesc* pThis, MoonScriptCreatureAI* pCreatureAI, Unit* pTarget, TargetType pType);
 
-class KaelThasAI : public MoonScriptBossAI
+class KaelThasAI : public MoonScriptCreatureAI
 {
     public:
-        MOONSCRIPT_FACTORY_FUNCTION(KaelThasAI, MoonScriptBossAI);
-        KaelThasAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+        MOONSCRIPT_FACTORY_FUNCTION(KaelThasAI, MoonScriptCreatureAI);
+        KaelThasAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
             for (uint8 i = 1; i < 4; ++i)
             {
@@ -3055,11 +3045,11 @@ class KaelThasAI : public MoonScriptBossAI
             // After powering up + Nether Vapor + Additional spells
             mNetherBeam = AddPhaseSpell(8, AddSpell(KAELTHAS_NETHER_BEAM, Target_RandomPlayer, 0, 0, 0));
 
-            AddEmote(Event_OnCombatStart, "Energy. Power. My people are addicted to it. Their dependence made manifest after the Sunwell was destroyed. Welcome to the future...a pity you're too late to stop it. No one can stop me now. Selama ashal'anore.", CHAT_MSG_MONSTER_YELL, 11256);
-            AddEmote(Event_OnTargetDied, "You will not prevail.", CHAT_MSG_MONSTER_YELL, 11270);
-            AddEmote(Event_OnTargetDied, "You gambled...and lost.", CHAT_MSG_MONSTER_YELL, 11271);
-            AddEmote(Event_OnTargetDied, "This was child's play.", CHAT_MSG_MONSTER_YELL, 11272);
-            AddEmote(Event_OnDied, "For...Quel...thalas!", CHAT_MSG_MONSTER_YELL, 11274);
+            addEmoteForEvent(Event_OnCombatStart, 8885);
+            addEmoteForEvent(Event_OnTargetDied, 8886);
+            addEmoteForEvent(Event_OnTargetDied, 8887);
+            addEmoteForEvent(Event_OnTargetDied, 8888);
+            addEmoteForEvent(Event_OnDied, 8889);
             mAIUpdateFrequency = 30000;
 
             mArcaneDisruptionTimer = 0;
@@ -3084,7 +3074,7 @@ class KaelThasAI : public MoonScriptBossAI
 
         void OnCombatStart(Unit* mTarget)
         {
-            _unit->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_9);
+            getCreature()->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_9);
             SetAIUpdateFreq(24000);
             ParentClass::OnCombatStart(mTarget);
             setAIAgent(AGENT_SPELL);
@@ -3108,7 +3098,7 @@ class KaelThasAI : public MoonScriptBossAI
         {
             setRooted(false);
             ParentClass::OnCombatStop(mTarget);
-            _unit->setUInt64Value(UNIT_FIELD_FLAGS, 0);
+            getCreature()->setUInt64Value(UNIT_FIELD_FLAGS, 0);
 
             if (isAlive())
             {
@@ -3261,7 +3251,7 @@ class KaelThasAI : public MoonScriptBossAI
                         MoonScriptCreatureAI* pAI = SpawnCreature(mAdvCoords[i].addition, mAdvCoords[i].x, mAdvCoords[i].y, mAdvCoords[i].z, false);
                         if (pAI != NULL)
                         {
-                            pCreature = pAI->GetUnit();
+                            pCreature = pAI->getCreature();
                         }
                         else continue;
 
@@ -3331,7 +3321,7 @@ class KaelThasAI : public MoonScriptBossAI
                         CastSpellNowNoScheduling(mFlameStrikeFunc);
                     }
                 }
-                if (_unit->HasAura(KAELTHAS_SHOCK_BARRIER))
+                if (getCreature()->HasAura(KAELTHAS_SHOCK_BARRIER))
                 {
                     CastSpellNowNoScheduling(mPyroblast);
                     setAIAgent(AGENT_SPELL);
@@ -3379,12 +3369,12 @@ void SpellFunc_KaelThasArcaneDisruption(SpellDesc* pThis, MoonScriptCreatureAI* 
     if (KaelThas != NULL)
     {
         KaelThas->CastSpellNowNoScheduling(KaelThas->mArcaneDisruption);
-        Unit* pMainTarget = KaelThas->GetUnit()->GetAIInterface()->getNextTarget();
+        Unit* pMainTarget = KaelThas->getCreature()->GetAIInterface()->getNextTarget();
         if (pTarget != NULL && pMainTarget != NULL)
         {
-            KaelThas->GetUnit()->GetAIInterface()->setNextTarget(pTarget);
-            KaelThas->GetUnit()->GetAIInterface()->AttackReaction(pTarget, 1000);
-            KaelThas->GetUnit()->GetAIInterface()->RemoveThreatByPtr(pMainTarget);
+            KaelThas->getCreature()->GetAIInterface()->setNextTarget(pTarget);
+            KaelThas->getCreature()->GetAIInterface()->AttackReaction(pTarget, 1000);
+            KaelThas->getCreature()->GetAIInterface()->RemoveThreatByPtr(pMainTarget);
         }
     }
 }
@@ -3396,7 +3386,7 @@ void SpellFunc_KaelThasFlameStrike(SpellDesc* pThis, MoonScriptCreatureAI* pCrea
     {
         if (pTarget != NULL)
         {
-            KaelThas->GetUnit()->CastSpell(pTarget, KAELTHAS_FLAME_STRIKE_SUMMON, true);
+            KaelThas->getCreature()->CastSpell(pTarget, KAELTHAS_FLAME_STRIKE_SUMMON, true);
             Creature* pFriendlyTrigger = KaelThas->getNearestCreature(CN_FLAME_STRIKE_TRIGGER);
             if (pFriendlyTrigger != NULL && pFriendlyTrigger->IsPet())
             {

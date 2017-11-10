@@ -165,17 +165,17 @@ class RhahkZorAI : public MoonScriptCreatureAI
 
         std::stringstream ss;
         ss << "Timer Init Value: " << debugTimer.getRealDelta();
-        _unit->SendChatMessage(CHAT_MSG_MONSTER_SAY, LANG_UNIVERSAL, ss.str().c_str());
+        getCreature()->SendChatMessage(CHAT_MSG_MONSTER_SAY, LANG_UNIVERSAL, ss.str().c_str());
     }
 };
 
 
-class MrSmiteAI : public MoonScriptBossAI
+class MrSmiteAI : public MoonScriptCreatureAI
 {
     public:
 
-        MOONSCRIPT_FACTORY_FUNCTION(MrSmiteAI, MoonScriptBossAI);
-        MrSmiteAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+        MOONSCRIPT_FACTORY_FUNCTION(MrSmiteAI, MoonScriptCreatureAI);
+        MrSmiteAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
             AddSpell(SMITE_SLAM, Target_Current, 25, 0.0f, 15, 0.0f, 8.0f, true);
             mStomp = AddSpell(SMITE_STOMP, Target_Self, 0, 0, 0);
@@ -214,7 +214,7 @@ class MrSmiteAI : public MoonScriptBossAI
             {
                 if (NearChest())
                     SwitchWeapons();
-                else if (_unit->GetAIInterface()->isAiState(AI_STATE_SCRIPTMOVE) == false)
+                else if (getCreature()->GetAIInterface()->isAiState(AI_STATE_SCRIPTMOVE) == false)
                 {
                     MoveToChest();
                 }
@@ -229,29 +229,29 @@ class MrSmiteAI : public MoonScriptBossAI
         void MoveToChest()
         {
             if (canEnterCombat())
-                _unit->GetAIInterface()->SetAllowedToEnterCombat(false);
+                getCreature()->GetAIInterface()->SetAllowedToEnterCombat(false);
 
             stopMovement();
-            _unit->GetAIInterface()->setAiState(AI_STATE_SCRIPTMOVE);
+            getCreature()->GetAIInterface()->setAiState(AI_STATE_SCRIPTMOVE);
             moveTo(1.100060f, -780.026367f, 9.811194f);
         }
 
         void MoveToPlayer()
         {
-            _unit->GetAIInterface()->SetAllowedToEnterCombat(true);
-            _unit->GetAIInterface()->setAiState(AI_STATE_SCRIPTIDLE);
+            getCreature()->GetAIInterface()->SetAllowedToEnterCombat(true);
+            getCreature()->GetAIInterface()->setAiState(AI_STATE_SCRIPTIDLE);
         }
 
         bool NearChest()
         {
-            if (_unit->GetPositionX() == 1.100060f && _unit->GetPositionY() == -780.026367f)
+            if (getCreature()->GetPositionX() == 1.100060f && getCreature()->GetPositionY() == -780.026367f)
                 return true;
-            else if (_unit->GetAIInterface()->isAiState(AI_STATE_SCRIPTMOVE) == false)
+            else if (getCreature()->GetAIInterface()->isAiState(AI_STATE_SCRIPTMOVE) == false)
             {
                 // Too small distance - let's prevent from blocking
                 float XDiff, YDiff;
-                XDiff = _unit->GetPositionX() - 1.100060f;
-                YDiff = _unit->GetPositionY() + 780.026367f;
+                XDiff = getCreature()->GetPositionX() - 1.100060f;
+                YDiff = getCreature()->GetPositionY() + 780.026367f;
                 float Distance = static_cast<float>(sqrt(XDiff * XDiff + YDiff * YDiff));
                 if (Distance <= 5.0f)
                     return true;
@@ -267,22 +267,22 @@ class MrSmiteAI : public MoonScriptBossAI
             {
                 case 1: // Phase 1 (Default)
                     _setDisplayWeaponIds(5192, 0);
-                    _unit->SetBaseAttackTime(MELEE, _unit->GetBaseAttackTime(MELEE));    // 1483 is taken from NCDB creature_proto
+                    getCreature()->SetBaseAttackTime(MELEE, getCreature()->GetBaseAttackTime(MELEE));    // 1483 is taken from NCDB creature_proto
                     break;
                 case 2: // Phase 2
                     _setDisplayWeaponIds(5196, 5196);
-                    _unit->SetBaseAttackTime(MELEE, _unit->GetBaseAttackTime(MELEE) / 2);
+                    getCreature()->SetBaseAttackTime(MELEE, getCreature()->GetBaseAttackTime(MELEE) / 2);
                     break;
                 case 4: // Phase 4
                     // Is base attack time change needed if we use aura ?
                     _setDisplayWeaponIds(7230, 0);
-                    _unit->SetBaseAttackTime(MELEE, _unit->GetBaseAttackTime(MELEE) * 2);
+                    getCreature()->SetBaseAttackTime(MELEE, getCreature()->GetBaseAttackTime(MELEE) * 2);
                     _applyAura(SMITES_HAMMER);
                     break;
             }
 
             // Wait at the chest for 4.5seconds -- Still needs work
-            _unit->setAttackTimer(4500, false);
+            getCreature()->setAttackTimer(4500, false);
             mWaitAtChest = _addTimer(4500);
             SetPhase(GetPhase() + 1);
         }
@@ -295,10 +295,10 @@ class MrSmiteAI : public MoonScriptBossAI
 
 
 // VanCleef
-class VanCleefAI : public MoonScriptBossAI
+class VanCleefAI : public MoonScriptCreatureAI
 {
-    MOONSCRIPT_FACTORY_FUNCTION(VanCleefAI, MoonScriptBossAI);
-    VanCleefAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+    MOONSCRIPT_FACTORY_FUNCTION(VanCleefAI, MoonScriptCreatureAI);
+    VanCleefAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
         AddSpell(3391, Target_Self, 25, 0, 0);    //Thrash (Gives the caster 2 extra attacks.)
     }
@@ -338,11 +338,11 @@ class VanCleefAI : public MoonScriptBossAI
 
             for (uint8 x = 0; x < 2; x++)
             {
-                MoonScriptCreatureAI* Guard = SpawnCreature(636, _unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), _unit->GetOrientation(), false);
+                MoonScriptCreatureAI* Guard = SpawnCreature(636, getCreature()->GetPositionX(), getCreature()->GetPositionY(), getCreature()->GetPositionZ(), getCreature()->GetOrientation(), false);
                 if (Guard != NULL)
                 {
                     Guard->_setDespawnWhenInactive(true);
-                    Guard->GetUnit()->m_noRespawn = true;
+                    Guard->getCreature()->m_noRespawn = true;
                 }
             }
 

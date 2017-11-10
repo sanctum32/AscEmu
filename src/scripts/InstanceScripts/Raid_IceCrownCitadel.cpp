@@ -215,15 +215,15 @@ const uint32 BONE_SPIKE = 69057;       // Not shure about this
 const uint32 BONE_STORM = 69076;
 const uint32 SOUL_FEAST = 71203;       // Needs a script
 
-class LordMarrowgarAI : public MoonScriptBossAI
+class LordMarrowgarAI : public MoonScriptCreatureAI
 {
     public:
 
         bool m_spellcheck[4];
         SP_AI_Spell spells[4];
 
-        MOONSCRIPT_FACTORY_FUNCTION(LordMarrowgarAI, MoonScriptBossAI);
-        LordMarrowgarAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+        MOONSCRIPT_FACTORY_FUNCTION(LordMarrowgarAI, MoonScriptCreatureAI);
+        LordMarrowgarAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
             sendDBChatMessage(922);      // This is the beginning AND the end, mortals. None may enter the master's sanctum!
 
@@ -310,15 +310,15 @@ class LordMarrowgarAI : public MoonScriptBossAI
             }
 
             std::vector<Player*> TargetTable;
-            std::set<Object*>::iterator itr = _unit->GetInRangePlayerSetBegin();
+            std::set<Object*>::iterator itr = getCreature()->GetInRangePlayerSetBegin();
 
-            for (; itr != _unit->GetInRangePlayerSetEnd(); ++itr)
+            for (; itr != getCreature()->GetInRangePlayerSetEnd(); ++itr)
             {
-                if (isHostile(_unit, (*itr)))
+                if (isHostile(getCreature(), (*itr)))
                 {
                     Player* RandomTarget = NULL;
                     RandomTarget = static_cast<Player*>(*itr);
-                    if (RandomTarget && RandomTarget->isAlive() && isHostile(_unit, RandomTarget))
+                    if (RandomTarget && RandomTarget->isAlive() && isHostile(getCreature(), RandomTarget))
                         TargetTable.push_back(RandomTarget);
                 }
             }
@@ -332,7 +332,7 @@ class LordMarrowgarAI : public MoonScriptBossAI
             if (random_target == nullptr)
                 return;
 
-            _unit->CastSpell(random_target, sSpellCustomizations.GetSpellInfo(BONE_SPIKE), false);
+            getCreature()->CastSpell(random_target, sSpellCustomizations.GetSpellInfo(BONE_SPIKE), false);
 
             TargetTable.clear();
 
@@ -364,7 +364,7 @@ class LordMarrowgarAI : public MoonScriptBossAI
 
         void SpellCast(float val)
         {
-            if (_unit->GetCurrentSpell() == NULL && _unit->GetAIInterface()->getNextTarget())
+            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -375,19 +375,19 @@ class LordMarrowgarAI : public MoonScriptBossAI
 
                     if (m_spellcheck[i])
                     {
-                        target = _unit->GetAIInterface()->getNextTarget();
+                        target = getCreature()->GetAIInterface()->getNextTarget();
                         switch (spells[i].targettype)
                         {
                             case TARGET_SELF:
                             case TARGET_VARIOUS:
-                                _unit->CastSpell(_unit, spells[i].info, spells[i].instant);
+                                getCreature()->CastSpell(getCreature(), spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_RANDOM_SINGLE:
                             case TARGET_ATTACKING:
-                                _unit->CastSpell(target, spells[i].info, spells[i].instant);
+                                getCreature()->CastSpell(target, spells[i].info, spells[i].instant);
                                 break;
                             case TARGET_DESTINATION:
-                                _unit->CastSpellAoF(target->GetPosition(), spells[i].info, spells[i].instant);
+                                getCreature()->CastSpellAoF(target->GetPosition(), spells[i].info, spells[i].instant);
                                 break;
                         }
                         m_spellcheck[i] = false;
@@ -396,7 +396,7 @@ class LordMarrowgarAI : public MoonScriptBossAI
 
                     if (val > comulativeperc && val <= (comulativeperc + spells[i].perctrigger))
                     {
-                        _unit->setAttackTimer(spells[i].attackstoptimer, false);
+                        getCreature()->setAttackTimer(spells[i].attackstoptimer, false);
                         m_spellcheck[i] = true;
                     }
                     comulativeperc += spells[i].perctrigger;
@@ -422,15 +422,15 @@ class LordMarrowgarAI : public MoonScriptBossAI
 
 const uint32 IMPALED = 69065;
 
-class BoneSpikeAI : public MoonScriptBossAI
+class BoneSpikeAI : public MoonScriptCreatureAI
 {
     public:
 
-        MOONSCRIPT_FACTORY_FUNCTION(BoneSpikeAI, MoonScriptBossAI);
-        BoneSpikeAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+        MOONSCRIPT_FACTORY_FUNCTION(BoneSpikeAI, MoonScriptCreatureAI);
+        BoneSpikeAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
-            _unit->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_2);  // On wowhead they said "kill them not just looking at them".
-            _unit->Despawn(8000, 0);
+            getCreature()->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_2);  // On wowhead they said "kill them not just looking at them".
+            getCreature()->Despawn(8000, 0);
         }
 
 };

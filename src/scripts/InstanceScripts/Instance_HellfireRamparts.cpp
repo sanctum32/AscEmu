@@ -25,10 +25,10 @@
 
 // Watchkeeper GargolmarAI
 /// \todo "Do you smell that? Fresh meat has somehow breached our citadel. Be wary of any intruders." should be on some areatrigger
-class WatchkeeperGargolmarAI : public MoonScriptBossAI
+class WatchkeeperGargolmarAI : public MoonScriptCreatureAI
 {
-    MOONSCRIPT_FACTORY_FUNCTION(WatchkeeperGargolmarAI, MoonScriptBossAI);
-    WatchkeeperGargolmarAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+    MOONSCRIPT_FACTORY_FUNCTION(WatchkeeperGargolmarAI, MoonScriptCreatureAI);
+    WatchkeeperGargolmarAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
         AddSpell(WATCHKEEPER_SURGE, Target_RandomUnit, 20, 0, 15, 5, 40, false, "Back off, pup!", CHAT_MSG_MONSTER_YELL, 10330);
         AddSpell(WATCHKEEPER_OVERPOWER, Target_Current, 10, 0, 5);
@@ -80,16 +80,16 @@ class WatchkeeperGargolmarAI : public MoonScriptBossAI
 
     void AIUpdate()
     {
-        if (_unit->GetHealthPct() <= 40 && !mCalledForHelp)
+        if (getCreature()->GetHealthPct() <= 40 && !mCalledForHelp)
         {
             sendDBChatMessage(4871);      // Heal me, quickly!
             mCalledForHelp = true;
         }
 
-        if (_unit->GetHealthPct() <= 20 && !_retaliation)
+        if (getCreature()->GetHealthPct() <= 20 && !_retaliation)
         {
             _retaliation = true;
-            _unit->setAttackTimer(1500, false);
+            getCreature()->setAttackTimer(1500, false);
             CastSpellNowNoScheduling(mRetaliation);
         }
 
@@ -174,7 +174,7 @@ class OmorTheUnscarredAI : public MoonScriptCreatureAI
                 pShield->mEnabled = true;
             }
 
-            Unit* pTarget = _unit->GetAIInterface()->getNextTarget();
+            Unit* pTarget = getCreature()->GetAIInterface()->getNextTarget();
             if (pTarget != NULL)
             {
                 if (getRangeToObject(pTarget) > 10.0f)
@@ -189,8 +189,8 @@ class OmorTheUnscarredAI : public MoonScriptCreatureAI
                         else
                         {
                             _clearHateList();
-                            _unit->GetAIInterface()->AttackReaction(pTarget, 500);
-                            _unit->GetAIInterface()->setNextTarget(pTarget);
+                            getCreature()->GetAIInterface()->AttackReaction(pTarget, 500);
+                            getCreature()->GetAIInterface()->setNextTarget(pTarget);
                         }
                     }
                     else

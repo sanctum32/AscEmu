@@ -53,10 +53,10 @@ class InstancePitOfSaronScript : public InstanceScript
 // BOSSES
 // Forgemaster Garfrost
 
-class ForgemasterGarfrostAI : MoonScriptBossAI
+class ForgemasterGarfrostAI : public MoonScriptCreatureAI
 {
-    MOONSCRIPT_FACTORY_FUNCTION(ForgemasterGarfrostAI, MoonScriptBossAI);
-    ForgemasterGarfrostAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+    MOONSCRIPT_FACTORY_FUNCTION(ForgemasterGarfrostAI, MoonScriptCreatureAI);
+    ForgemasterGarfrostAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
         // Instance Script
         mInstance = getInstanceScript();
@@ -85,10 +85,10 @@ class ForgemasterGarfrostAI : MoonScriptBossAI
         mDeepFreezeTimer = INVALIDATE_TIMER;
 
         // Emotes
-        AddEmote(Event_OnCombatStart, 8761);
-        AddEmote(Event_OnTargetDied, 8762);
-        AddEmote(Event_OnTargetDied, 8763);
-        AddEmote(Event_OnDied, 8764);
+        addEmoteForEvent(Event_OnCombatStart, 8761);
+        addEmoteForEvent(Event_OnTargetDied, 8762);
+        addEmoteForEvent(Event_OnTargetDied, 8763);
+        addEmoteForEvent(Event_OnDied, 8764);
     }
 
     void OnCombatStart(Unit* pTarget)
@@ -100,31 +100,17 @@ class ForgemasterGarfrostAI : MoonScriptBossAI
         mDeepFreezeTimer = _addTimer(10000);
 
         if (mInstance)
-            mInstance->setData(_unit->GetEntry(), InProgress);
-
-        MoonScriptBossAI::OnCombatStart(pTarget);
+            mInstance->setData(getCreature()->GetEntry(), InProgress);
     }
 
     void OnCombatStop(Unit* mTarget)
     {
         // Clear Agent and Ai State
         setAIAgent(AGENT_NULL);
-        _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
+        getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
 
         if (mInstance)
-            mInstance->setData(_unit->GetEntry(), Performed);
-
-        MoonScriptBossAI::OnCombatStop(mTarget);
-    }
-
-    void OnTargetDied(Unit* pTarget)
-    {
-        MoonScriptBossAI::OnTargetDied(pTarget);
-    }
-
-    void OnDied(Unit* mKiller)
-    {
-        RemoveAIUpdateEvent();
+            mInstance->setData(getCreature()->GetEntry(), Performed);
     }
 
     void AIUpdate()
@@ -134,39 +120,39 @@ class ForgemasterGarfrostAI : MoonScriptBossAI
         if (GetPhase() == 1 && _getHealthPercent() <= 66)
         {
             sendDBChatMessage(8765);
-            _unit->CastSpell(_unit, SPELL_STOMP, false);
-            _unit->GetAIInterface()->WipeHateList();
-            _unit->GetAIInterface()->splineMoveJump(JumpCords[0].x, JumpCords[0].y, JumpCords[0].z);
+            getCreature()->CastSpell(getCreature(), SPELL_STOMP, false);
+            getCreature()->GetAIInterface()->WipeHateList();
+            getCreature()->GetAIInterface()->splineMoveJump(JumpCords[0].x, JumpCords[0].y, JumpCords[0].z);
             
             if (GameObject * pObject = getNearestGameObject(401006))	//forgemaster's anvil (TEMP)
-                _unit->SetFacing(_unit->calcRadAngle(_unit->GetPositionX(), _unit->GetPositionY(), pObject->GetPositionX(), pObject->GetPositionY()));
+                getCreature()->SetFacing(getCreature()->calcRadAngle(getCreature()->GetPositionX(), getCreature()->GetPositionY(), pObject->GetPositionX(), pObject->GetPositionY()));
 
             if (_isHeroic())
-                _unit->CastSpell(_unit, H_SPELL_FORGE_BLADE, false);
+                getCreature()->CastSpell(getCreature(), H_SPELL_FORGE_BLADE, false);
             else
-                _unit->CastSpell(_unit, SPELL_FROZEBLADE, false);
+                getCreature()->CastSpell(getCreature(), SPELL_FROZEBLADE, false);
 
-            _unit->SetEquippedItem(MELEE, EQUIP_ID_SWORD);
-            _unit->SetEquippedItem(OFFHAND, 0);
+            getCreature()->SetEquippedItem(MELEE, EQUIP_ID_SWORD);
+            getCreature()->SetEquippedItem(OFFHAND, 0);
             SetPhase(2);
         }
 
         if (GetPhase() == 2 && _getHealthPercent() <= 33)
         {
             sendDBChatMessage(8766);
-            _unit->CastSpell(_unit, SPELL_STOMP, false);
-            _unit->GetAIInterface()->WipeHateList();
-            _unit->GetAIInterface()->splineMoveJump(JumpCords[1].x, JumpCords[1].y, JumpCords[1].z);
+            getCreature()->CastSpell(getCreature(), SPELL_STOMP, false);
+            getCreature()->GetAIInterface()->WipeHateList();
+            getCreature()->GetAIInterface()->splineMoveJump(JumpCords[1].x, JumpCords[1].y, JumpCords[1].z);
 
             if (GameObject * pObject = getNearestGameObject(401006))	//forgemaster's anvil (TEMP)
-                _unit->SetFacing(_unit->calcRadAngle(_unit->GetPositionX(), _unit->GetPositionY(), pObject->GetPositionX(), pObject->GetPositionY()));
+                getCreature()->SetFacing(getCreature()->calcRadAngle(getCreature()->GetPositionX(), getCreature()->GetPositionY(), pObject->GetPositionX(), pObject->GetPositionY()));
             
             if (_isHeroic())
-                _unit->CastSpell(_unit, H_SPELL_FORGE_MACE, false);
+                getCreature()->CastSpell(getCreature(), H_SPELL_FORGE_MACE, false);
             else
-                _unit->CastSpell(_unit, SPELL_FROZEMACE, false);
+                getCreature()->CastSpell(getCreature(), SPELL_FROZEMACE, false);
             
-            _unit->SetEquippedItem(MELEE, EQUIP_ID_MACE);
+            getCreature()->SetEquippedItem(MELEE, EQUIP_ID_MACE);
             SetPhase(3);
         }
 
@@ -218,10 +204,10 @@ class ForgemasterGarfrostAI : MoonScriptBossAI
 
 // Ick and Krick
 
-class IckAI : MoonScriptBossAI
+class IckAI : public MoonScriptCreatureAI
 {
-    MOONSCRIPT_FACTORY_FUNCTION(IckAI, MoonScriptBossAI);
-    IckAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+    MOONSCRIPT_FACTORY_FUNCTION(IckAI, MoonScriptCreatureAI);
+    IckAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
         // Instance Script
         mInstance = getInstanceScript();
@@ -257,11 +243,11 @@ class IckAI : MoonScriptBossAI
 
         // Emotes
         // Krick
-        mKrickAI = SpawnCreature(CN_KRICK, _unit->GetPositionX(), _unit->GetPositionY(), _unit->GetPositionZ(), _unit->GetOrientation(), false);
+        mKrickAI = SpawnCreature(CN_KRICK, getCreature()->GetPositionX(), getCreature()->GetPositionY(), getCreature()->GetPositionZ(), getCreature()->GetOrientation(), false);
 
-        mKrickAI->AddEmote(Event_OnCombatStart, 8767);
-        mKrickAI->AddEmote(Event_OnTargetDied, 8768);
-        mKrickAI->AddEmote(Event_OnTargetDied, 8769);
+        mKrickAI->addEmoteForEvent(Event_OnCombatStart, 8767);
+        mKrickAI->addEmoteForEvent(Event_OnTargetDied, 8768);
+        mKrickAI->addEmoteForEvent(Event_OnTargetDied, 8769);
 
         // Ick Spell Announcements
         mPursue->AddAnnouncement("Ick is chasing you!");
@@ -281,7 +267,7 @@ class IckAI : MoonScriptBossAI
         mShadowBoltTimer = _addTimer(15000);
 
         if (mInstance)
-            mInstance->setData(_unit->GetEntry(), InProgress);
+            mInstance->setData(getCreature()->GetEntry(), InProgress);
 
         ParentClass::OnCombatStart(pTarget);
     }
@@ -289,27 +275,17 @@ class IckAI : MoonScriptBossAI
     void OnCombatStop(Unit* pTarget)
     {
         if (mInstance)
-            mInstance->setData(_unit->GetEntry(), Performed);
+            mInstance->setData(getCreature()->GetEntry(), Performed);
 
         Phase = OUTRO;
 
         ParentClass::OnCombatStop(pTarget);
     }
 
-    void OnTargetDied(Unit* pTarget)
-    {
-        MoonScriptBossAI::OnTargetDied(pTarget);
-    }
-
-    void OnDied(Unit* mKiller)
-    {
-        RemoveAIUpdateEvent();
-    }
-
     void AIUpdate()
     {
         if (Phase == BATTLE)
-            if (!_unit->IsCasting())
+            if (!getCreature()->IsCasting())
                 CastSpells();
 
         ParentClass::AIUpdate();
@@ -389,8 +365,8 @@ class IckAI : MoonScriptBossAI
             if (pTarget != NULL)
             {
                 _clearHateList();
-                _unit->GetAIInterface()->setNextTarget(pTarget);
-                _unit->GetAIInterface()->modThreatByPtr(pTarget, 1000);
+                getCreature()->GetAIInterface()->setNextTarget(pTarget);
+                getCreature()->GetAIInterface()->modThreatByPtr(pTarget, 1000);
                 CastSpellOnTarget(pTarget, TargetGen_Current, mPursue->mInfo, true);
             }
 
@@ -404,11 +380,11 @@ class IckAI : MoonScriptBossAI
             if (mKrickAI)
             {
                 mKrickAI->sendDBChatMessage(8774);
-                mKrickAI->Announce("Krick begins rapidly conjuring explosive mines!");
+                mKrickAI->sendAnnouncement("Krick begins rapidly conjuring explosive mines!");
                 mKrickAI->CastSpell(mExplosionBarageKrick);
             }
             
-            _unit->setMoveRoot(true);
+            getCreature()->setMoveRoot(true);
             CastSpell(mExplosionBarage);
 
             mExplosionBarageEndTimer = _addTimer(20000);
@@ -423,7 +399,7 @@ class IckAI : MoonScriptBossAI
         // Explosive Barage End
         if (_isTimerFinished(mExplosionBarageEndTimer))
         {
-            _unit->setMoveRoot(false);
+            getCreature()->setMoveRoot(false);
             _removeTimer(mExplosionBarageEndTimer);
         }
     }
@@ -449,10 +425,10 @@ class IckAI : MoonScriptBossAI
     BattlePhases Phase;
 };
 
-class KrickAI : MoonScriptBossAI
+class KrickAI : public MoonScriptCreatureAI
 {
-    MOONSCRIPT_FACTORY_FUNCTION(KrickAI, MoonScriptBossAI);
-    KrickAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+    MOONSCRIPT_FACTORY_FUNCTION(KrickAI, MoonScriptCreatureAI);
+    KrickAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
         // Get Instance Script
         mInstance = getInstanceScript();
@@ -497,7 +473,7 @@ class KrickAI : MoonScriptBossAI
 
         if (Phase == BATTLE)
         {
-            if (_unit->HasAura(SPELL_EXPLOSIVE_BARRAGE_KRICK))
+            if (getCreature()->HasAura(SPELL_EXPLOSIVE_BARRAGE_KRICK))
             {
                 if (_isTimerFinished(mBarrageTimer))
                 {
@@ -525,18 +501,18 @@ class KrickAI : MoonScriptBossAI
 
         if (!mOutroTimerStarted)
         {
-            GetUnit()->SetPosition(833.19f, 115.79f, 510.0f, 3.42673f, false);
-            _unit->CastSpell(_unit, SPELL_STRANGULATE, true);
-            _unit->setMoveRoot(true);
+            getCreature()->SetPosition(833.19f, 115.79f, 510.0f, 3.42673f, false);
+            getCreature()->CastSpell(getCreature(), SPELL_STRANGULATE, true);
+            getCreature()->setMoveRoot(true);
             _clearHateList();
 
             setCanEnterCombat(false);
 
             // Clear Hatelist dont allow Combat and root the Unit
-            _unit->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_9);
-            _unit->GetAIInterface()->setAiState(AI_STATE_IDLE);
-            _unit->GetAIInterface()->WipeTargetList();
-            _unit->GetAIInterface()->WipeHateList();
+            getCreature()->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_9);
+            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
+            getCreature()->GetAIInterface()->WipeTargetList();
+            getCreature()->GetAIInterface()->WipeHateList();
 
             if (pTarget->IsTeamHorde())
                 JainaOrSylvanas = SpawnCreature(CN_SYLVANAS_WINDRUNNER, 816.58f, 111.53f, 510.0f, 0.3825f, false);
@@ -598,8 +574,8 @@ class KrickAI : MoonScriptBossAI
                     break;
                 case 9:
                     // tyrannus kills krick
-                    _unit->SetStandState(STANDSTATE_DEAD);
-                    _unit->SetHealth(1);
+                    getCreature()->SetStandState(STANDSTATE_DEAD);
+                    getCreature()->SetHealth(1);
                     sendDBChatMessage(8784); // SAY_TYRANNUS_OUTRO_9
                     _resetTimer(mOutroTimer, 12000);
                     break;
@@ -614,7 +590,7 @@ class KrickAI : MoonScriptBossAI
                     _resetTimer(mOutroTimer, 8000);
                     break;
                 case 11:
-                    _unit->Despawn(1, 0);
+                    getCreature()->Despawn(1, 0);
                     JainaOrSylvanas->despawn(1, 0);
                     _removeTimer(mOutroTimer);
                     break;
@@ -634,18 +610,18 @@ class KrickAI : MoonScriptBossAI
 };
 
 // Barrage Spell Creature
-class BarrageAI : public MoonScriptBossAI
+class BarrageAI : public MoonScriptCreatureAI
 {
     public:
-        MOONSCRIPT_FACTORY_FUNCTION(BarrageAI, MoonScriptBossAI);
-        BarrageAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+        MOONSCRIPT_FACTORY_FUNCTION(BarrageAI, MoonScriptCreatureAI);
+        BarrageAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
         {
-            _unit->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_2);
-            _unit->CastSpell(_unit, SPELL_EXPLODING_ORB, false);
-            _unit->CastSpell(_unit, SPELL_AUTO_GROW, false);
+            getCreature()->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_2);
+            getCreature()->CastSpell(getCreature(), SPELL_EXPLODING_ORB, false);
+            getCreature()->CastSpell(getCreature(), SPELL_AUTO_GROW, false);
 
             // Invisibility Hack
-            _unit->SetDisplayId(11686);
+            getCreature()->SetDisplayId(11686);
 
             // AIUpdate
             RegisterAIUpdateEvent(500);
@@ -653,31 +629,31 @@ class BarrageAI : public MoonScriptBossAI
 
         void AIUpdate()
         {
-            if (_unit->HasAura(SPELL_HASTY_GROW))
+            if (getCreature()->HasAura(SPELL_HASTY_GROW))
             {
-                if (_unit->GetAuraStackCount(SPELL_HASTY_GROW) >= 15)
+                if (getCreature()->GetAuraStackCount(SPELL_HASTY_GROW) >= 15)
                 {
-                    _unit->CastSpell(_unit, SPELL_EXPLOSIVE_BARRAGE_DAMAGE, true);
-                    _unit->Despawn(100, 0);
+                    getCreature()->CastSpell(getCreature(), SPELL_EXPLOSIVE_BARRAGE_DAMAGE, true);
+                    getCreature()->Despawn(100, 0);
                 }
             }
         }
 };
 
-class SylvanasAI : public MoonScriptBossAI
+class SylvanasAI : public MoonScriptCreatureAI
 {
 public:
-    MOONSCRIPT_FACTORY_FUNCTION(SylvanasAI, MoonScriptBossAI);
-    SylvanasAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+    MOONSCRIPT_FACTORY_FUNCTION(SylvanasAI, MoonScriptCreatureAI);
+    SylvanasAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
     }
 };
 
-class JainaAI : public MoonScriptBossAI
+class JainaAI : public MoonScriptCreatureAI
 {
 public:
-    MOONSCRIPT_FACTORY_FUNCTION(JainaAI, MoonScriptBossAI);
-    JainaAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+    MOONSCRIPT_FACTORY_FUNCTION(JainaAI, MoonScriptCreatureAI);
+    JainaAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
     }
 };

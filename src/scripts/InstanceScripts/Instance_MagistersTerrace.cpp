@@ -67,7 +67,7 @@ class SelinFireheartAI : public MoonScriptCreatureAI
             Selin Fireheart starts with 0 mana and drains it from the felcrystals in the room
             \todo  Set it so mana regen is off
             */
-        _unit->setUInt32Value(UNIT_FIELD_POWER1, 0);
+        getCreature()->setUInt32Value(UNIT_FIELD_POWER1, 0);
         ParentClass::OnCombatStart(pTarget);
     }
 
@@ -105,25 +105,25 @@ class SelinFireheartAI : public MoonScriptCreatureAI
         }
 
         // Not in range
-        if (_unit->GetDistance2dSq(FelCrystal) > 100)
+        if (getCreature()->GetDistance2dSq(FelCrystal) > 100)
         {
             moveTo(FelCrystal->GetPositionX(), FelCrystal->GetPositionY(), FelCrystal->GetPositionZ());
             FelCrystal = NULL;
             return;
         }
 
-        _unit->GetAIInterface()->StopMovement(0);
+        getCreature()->GetAIInterface()->StopMovement(0);
 
         if (!FelCrystal->GetCurrentSpell())
-            FelCrystal->CastSpell(_unit, ManaRage, false);
+            FelCrystal->CastSpell(getCreature(), ManaRage, false);
 
         // Mana Rage giving of mana doesnt work so we give 10%(3231) / AIUpdate() Event.
         CastSpellNowNoScheduling(ManaRageTrigger);
-        uint32 mana = _unit->GetPower(POWER_TYPE_MANA) + 3231;
-        if (mana >= _unit->GetMaxPower(POWER_TYPE_MANA))
-            mana = _unit->GetMaxPower(POWER_TYPE_MANA);
+        uint32 mana = getCreature()->GetPower(POWER_TYPE_MANA) + 3231;
+        if (mana >= getCreature()->GetMaxPower(POWER_TYPE_MANA))
+            mana = getCreature()->GetMaxPower(POWER_TYPE_MANA);
 
-        _unit->setUInt32Value(UNIT_FIELD_POWER1, mana);
+        getCreature()->setUInt32Value(UNIT_FIELD_POWER1, mana);
 
         // Re-Enable FelExplosion
         if (_getManaPercent() >= 100)
@@ -150,7 +150,7 @@ class SelinFireheartAI : public MoonScriptCreatureAI
         for (uint8 x = 0; x < 5; x++)
         {
             FC = getNearestCreature(FelCrystals[x].x, FelCrystals[x].y, FelCrystals[x].z, FelCrystals[x].addition);
-            if (!FC || !FC->isAlive() || FC->GetInstanceID() != _unit->GetInstanceID())
+            if (!FC || !FC->isAlive() || FC->GetInstanceID() != getCreature()->GetInstanceID())
                 FC = NULL;
             else
                 break;
@@ -163,7 +163,7 @@ class SelinFireheartAI : public MoonScriptCreatureAI
         CastSpellNowNoScheduling(FelExplosion);
 
         // No Idea why the mana isnt taken when the spell is cast so had to manually take it -_-
-        _unit->setUInt32Value(UNIT_FIELD_POWER1, _unit->GetPower(POWER_TYPE_MANA) - 3231);
+        getCreature()->setUInt32Value(UNIT_FIELD_POWER1, getCreature()->GetPower(POWER_TYPE_MANA) - 3231);
     }
 
     SpellInfo* ManaRage;
@@ -173,10 +173,10 @@ class SelinFireheartAI : public MoonScriptCreatureAI
 
 
 // Vexallus
-class VexallusAI : public MoonScriptBossAI
+class VexallusAI : public MoonScriptCreatureAI
 {
-    MOONSCRIPT_FACTORY_FUNCTION(VexallusAI, MoonScriptBossAI);
-    VexallusAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+    MOONSCRIPT_FACTORY_FUNCTION(VexallusAI, MoonScriptCreatureAI);
+    VexallusAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
         AddPhaseSpell(1, AddSpell(VEXALLUS_CHAIN_LIGHTNING, Target_Current, 19, 0, 8, 0, 0));
         AddPhaseSpell(1, AddSpell(VEXALLUS_ARCANE_SHOCK, Target_ClosestPlayer, 12, 0, 20, 0, 0, true, "Un...con...tainable.", CHAT_MSG_MONSTER_YELL, 12392));
@@ -225,10 +225,10 @@ class VexallusAI : public MoonScriptBossAI
 
 
 //Priestess Delrissa
-class Priestess_DelrissaAI : public MoonScriptBossAI
+class Priestess_DelrissaAI : public MoonScriptCreatureAI
 {
-    MOONSCRIPT_FACTORY_FUNCTION(Priestess_DelrissaAI, MoonScriptBossAI);
-    Priestess_DelrissaAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+    MOONSCRIPT_FACTORY_FUNCTION(Priestess_DelrissaAI, MoonScriptCreatureAI);
+    Priestess_DelrissaAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
         AddSpell(PRIESTESS_DELRISSA_DISPEL_MAGIC, Target_RandomFriendly, 35, 0, 5, 0, 30);
         AddSpell(PRIESTESS_DELRISSA_FLASH_HEAL, Target_RandomFriendly, 40, 1.5, 7, 0, 40);
@@ -303,10 +303,10 @@ class Priestess_DelrissaAI : public MoonScriptBossAI
 
 
 //Kagani Nightstrike
-class KaganiNightstrikeAI : public MoonScriptBossAI
+class KaganiNightstrikeAI : public MoonScriptCreatureAI
 {
-    MOONSCRIPT_FACTORY_FUNCTION(KaganiNightstrikeAI, MoonScriptBossAI);
-    KaganiNightstrikeAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+    MOONSCRIPT_FACTORY_FUNCTION(KaganiNightstrikeAI, MoonScriptCreatureAI);
+    KaganiNightstrikeAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
         AddSpell(KAGANI_KIDNEY_SHOT, Target_Current, 80, 0, 25, 0, 30);
         AddSpell(KAGANI_GOUGE, Target_ClosestPlayer, 20, 0, 18, 0, 30);
@@ -315,10 +315,10 @@ class KaganiNightstrikeAI : public MoonScriptBossAI
 };
 
 //Ellrys Duskhallow
-class EllrysDuskhallowAI : public MoonScriptBossAI
+class EllrysDuskhallowAI : public MoonScriptCreatureAI
 {
-    MOONSCRIPT_FACTORY_FUNCTION(EllrysDuskhallowAI, MoonScriptBossAI);
-    EllrysDuskhallowAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+    MOONSCRIPT_FACTORY_FUNCTION(EllrysDuskhallowAI, MoonScriptCreatureAI);
+    EllrysDuskhallowAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
         AddSpell(ELLRYS_IMMOLATE, Target_Current, 75, 2, 15, 0, 30);
         AddSpell(ELLRYS_SHADOWBOLT, Target_RandomPlayer, 75, 3, 5, 4, 40);
@@ -329,10 +329,10 @@ class EllrysDuskhallowAI : public MoonScriptBossAI
 };
 
 //Eramas Brightblaze
-class EramasBrightblazeAI : public MoonScriptBossAI
+class EramasBrightblazeAI : public MoonScriptCreatureAI
 {
-    MOONSCRIPT_FACTORY_FUNCTION(EramasBrightblazeAI, MoonScriptBossAI);
-    EramasBrightblazeAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+    MOONSCRIPT_FACTORY_FUNCTION(EramasBrightblazeAI, MoonScriptCreatureAI);
+    EramasBrightblazeAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
         AddSpell(ERAMAS_KNOCKDOWN, Target_Current, 25, 0, 5, 0, 5);
         AddSpell(ERAMAS_SNAP_KICK, Target_SecondMostHated, 40, 0, 2, 0, 5);
@@ -341,10 +341,10 @@ class EramasBrightblazeAI : public MoonScriptBossAI
 };
 
 //Yazzai
-class YazzaiAI : public MoonScriptBossAI
+class YazzaiAI : public MoonScriptCreatureAI
 {
-    MOONSCRIPT_FACTORY_FUNCTION(YazzaiAI, MoonScriptBossAI);
-    YazzaiAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+    MOONSCRIPT_FACTORY_FUNCTION(YazzaiAI, MoonScriptCreatureAI);
+    YazzaiAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
         AddSpell(YAZZAI_POLYMORPH, Target_RandomPlayer, 30, 1.5, 16, 0, 30);
         AddSpell(YAZZAI_ICE_BLOCK, Target_Self, 20, 0, 300, 0, 1);
@@ -356,10 +356,10 @@ class YazzaiAI : public MoonScriptBossAI
 };
 
 //Warlord Salaris
-class WarlordSalarisAI : public MoonScriptBossAI
+class WarlordSalarisAI : public MoonScriptCreatureAI
 {
-    MOONSCRIPT_FACTORY_FUNCTION(WarlordSalarisAI, MoonScriptBossAI);
-    WarlordSalarisAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+    MOONSCRIPT_FACTORY_FUNCTION(WarlordSalarisAI, MoonScriptCreatureAI);
+    WarlordSalarisAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
         //AddSpell(uint32 pSpellId, TargetType pTargetType, float pChance, float pCastTime, int32 pCooldown, float pMinRange, float pMaxRange
         AddSpell(SALARIS_INTERCEPT, Target_RandomPlayer, 25, 0, 8, 8, 25);
@@ -373,10 +373,10 @@ class WarlordSalarisAI : public MoonScriptBossAI
 };
 
 //Geraxxas
-class GaraxxasAI : public MoonScriptBossAI
+class GaraxxasAI : public MoonScriptCreatureAI
 {
-    MOONSCRIPT_FACTORY_FUNCTION(GaraxxasAI, MoonScriptBossAI);
-    GaraxxasAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+    MOONSCRIPT_FACTORY_FUNCTION(GaraxxasAI, MoonScriptCreatureAI);
+    GaraxxasAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
         AddSpell(GARAXXAS_AIMED_SHOT, Target_RandomPlayer, 90, 3, 6, 5, 35);
         AddSpell(GARAXXAS_SHOOT, Target_RandomPlayer, 90, 2.5, 5, 5, 30);
@@ -416,10 +416,10 @@ class ZelfanAI : public MoonScriptCreatureAI
 //Trash mobs
 
 //Coilskar Witch
-class CoilskarWitchAI : public MoonScriptBossAI
+class CoilskarWitchAI : public MoonScriptCreatureAI
 {
-    MOONSCRIPT_FACTORY_FUNCTION(CoilskarWitchAI, MoonScriptBossAI);
-    CoilskarWitchAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+    MOONSCRIPT_FACTORY_FUNCTION(CoilskarWitchAI, MoonScriptCreatureAI);
+    CoilskarWitchAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
         AddSpell(COILSKAR_WITCH_FORKED_LIGHTNING, Target_Current, 60, 2, 12, 0, 30);
         AddSpell(COILSKAR_WITCH_FROST_ARROW, Target_RandomPlayer, 15, 0, 16, 0, 40);
@@ -430,10 +430,10 @@ class CoilskarWitchAI : public MoonScriptBossAI
 };
 
 //Sister of Torment
-class SisterOfTormentAI : public MoonScriptBossAI
+class SisterOfTormentAI : public MoonScriptCreatureAI
 {
-    MOONSCRIPT_FACTORY_FUNCTION(SisterOfTormentAI, MoonScriptBossAI);
-    SisterOfTormentAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+    MOONSCRIPT_FACTORY_FUNCTION(SisterOfTormentAI, MoonScriptCreatureAI);
+    SisterOfTormentAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
         AddSpell(SISTER_OF_TORMENT_LASH_OF_PAIN, Target_Current, 60, 0, 8, 0, 5);
         AddSpell(SISTER_OF_TORMENT_DEADLY_EMBRACE, Target_RandomPlayer, 20, 1.5, 16, 0, 20);
@@ -442,10 +442,10 @@ class SisterOfTormentAI : public MoonScriptBossAI
 };
 
 //Sunblade Blood Knight
-class SunbladeBloodKnightAI : public MoonScriptBossAI
+class SunbladeBloodKnightAI : public MoonScriptCreatureAI
 {
-    MOONSCRIPT_FACTORY_FUNCTION(SunbladeBloodKnightAI, MoonScriptBossAI);
-    SunbladeBloodKnightAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+    MOONSCRIPT_FACTORY_FUNCTION(SunbladeBloodKnightAI, MoonScriptCreatureAI);
+    SunbladeBloodKnightAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
         AddSpell(BLOOD_KNIGHT_JUDGEMENT_OF_WRATH, Target_Current, 20, 0, 30, 0, 5);
         AddSpell(BLOOD_KNIGHT_SEAL_OF_WRATH, Target_Self, 99, 0, 30, 0, 0);
@@ -455,10 +455,10 @@ class SunbladeBloodKnightAI : public MoonScriptBossAI
 };
 
 //Sunblade Imp
-class SunbladeImpAI : public MoonScriptBossAI
+class SunbladeImpAI : public MoonScriptCreatureAI
 {
-    MOONSCRIPT_FACTORY_FUNCTION(SunbladeImpAI, MoonScriptBossAI);
-    SunbladeImpAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+    MOONSCRIPT_FACTORY_FUNCTION(SunbladeImpAI, MoonScriptCreatureAI);
+    SunbladeImpAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
         AddSpell(IMP_FIREBOLT, Target_Current, 100, 2, (int32)2.5, 0, 30);
     }
@@ -466,10 +466,10 @@ class SunbladeImpAI : public MoonScriptBossAI
 };
 
 //Sunblade Mage Guard
-class SunbladeMageGuardAI : public MoonScriptBossAI
+class SunbladeMageGuardAI : public MoonScriptCreatureAI
 {
-    MOONSCRIPT_FACTORY_FUNCTION(SunbladeMageGuardAI, MoonScriptBossAI);
-    SunbladeMageGuardAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+    MOONSCRIPT_FACTORY_FUNCTION(SunbladeMageGuardAI, MoonScriptCreatureAI);
+    SunbladeMageGuardAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
         AddSpell(MAGE_GUARD_GLAVE_THROW, Target_Current, 60, 0, 25, 0, 5);
         AddSpell(MAGE_GUARD_MAGIC_DAMPENING_FIELD, Target_RandomPlayer, 20, 1, 35, 0, 20);
@@ -478,10 +478,10 @@ class SunbladeMageGuardAI : public MoonScriptBossAI
 };
 
 //Sunblade Magister
-class SunbladeMagisterAI : public MoonScriptBossAI
+class SunbladeMagisterAI : public MoonScriptCreatureAI
 {
-    MOONSCRIPT_FACTORY_FUNCTION(SunbladeMagisterAI, MoonScriptBossAI);
-    SunbladeMagisterAI(Creature* pCreature) : MoonScriptBossAI(pCreature)
+    MOONSCRIPT_FACTORY_FUNCTION(SunbladeMagisterAI, MoonScriptCreatureAI);
+    SunbladeMagisterAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
     {
         AddSpell(MAGISTER_FROSTBOLT, Target_Current, 65, 2, 4, 0, 30);
         AddSpell(MAGISTER_ARCANE_NOVA, Target_Self, 12, 1.5, 40, 0, 0);

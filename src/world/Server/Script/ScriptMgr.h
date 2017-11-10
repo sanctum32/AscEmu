@@ -340,6 +340,15 @@ class SERVER_DECL CreatureAIScript
 
         // MIT start
         //////////////////////////////////////////////////////////////////////////////////////////
+        // Event default management
+        //\NOTE: These functions are called internal for script events. Do NOT use them in your scripts!
+        void _internalOnDied();
+        void _internalOnTargetDied();
+        void _internalOnCombatStart();
+        void _internalOnCombatStop();
+        void _internalAIUpdate();
+
+        //////////////////////////////////////////////////////////////////////////////////////////
         // player
         Player* getNearestPlayer();
 
@@ -451,6 +460,10 @@ class SERVER_DECL CreatureAIScript
         void _castOnInrangePlayers(uint32_t spellId, bool triggered = false);
         void _castOnInrangePlayersWithinDist(float minDistance, float maxDistance, uint32_t spellId, bool triggered = false);
 
+        void _setTargetToChannel(Unit* target, uint32_t spellId);
+        void _unsetTargetToChannel();
+        Unit* _getTargetToChannel();
+
         //////////////////////////////////////////////////////////////////////////////////////////
         // gameobject
         GameObject* getNearestGameObject(uint32_t entry);
@@ -458,8 +471,35 @@ class SERVER_DECL CreatureAIScript
 
         //////////////////////////////////////////////////////////////////////////////////////////
         // chat message
+
+    private:
+
+        typedef std::vector<uint32_t> definedEmoteVector;
+        definedEmoteVector mEmotesOnCombatStart;
+        definedEmoteVector mEmotesOnTargetDied;
+        definedEmoteVector mEmotesOnDied;
+        definedEmoteVector mEmotesOnTaunt;
+
+    public:
+
         void sendChatMessage(uint8_t type, uint32_t soundId, std::string text);
         void sendDBChatMessage(uint32_t textId);
+
+        void sendRandomDBChatMessage(std::vector<uint32_t> emoteVector);
+
+        void addEmoteForEvent(uint32_t eventType, uint32_t scriptTextId);
+
+        void sendAnnouncement(std::string stringAnnounce);
+
+        //////////////////////////////////////////////////////////////////////////////////////////
+        // basic
+    private:
+
+        Creature* _creature;
+
+    public:
+
+        Creature* getCreature() { return _creature; }
 
         //////////////////////////////////////////////////////////////////////////////////////////
         // instance
@@ -473,15 +513,12 @@ class SERVER_DECL CreatureAIScript
         void RemoveAIUpdateEvent();
 
         virtual void Destroy() { delete this; }
-        Creature* GetUnit() { return _unit; }
 
         CreatureAIScript* GetLinkedCreature() { return linkedCreatureAI; }
         void SetLinkedCreature(CreatureAIScript* creatureAI);
         void LinkedCreatureDeleted();
 
     protected:
-
-        Creature* _unit;
 
         bool mDespawnWhenInactive;
 
