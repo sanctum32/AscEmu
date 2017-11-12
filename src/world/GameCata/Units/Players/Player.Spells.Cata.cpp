@@ -4,7 +4,7 @@ This file is released under the MIT license. See README-MIT for more information
 */
 
 #include "Units/Players/Player.h"
-#include <scripts/Common/Base.h>
+#include "Objects/ObjectMgr.h"
 
 bool Player::isSpellFitByClassAndRace(uint32_t spell_id)
 {

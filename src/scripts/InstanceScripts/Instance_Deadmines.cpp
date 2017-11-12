@@ -148,13 +148,13 @@ static Movement::Location Guards[] =
 //        uint32 InstanceEncounter;
 //};
 
-class RhahkZorAI : public MoonScriptCreatureAI
+class RhahkZorAI : public CreatureAIScript
 {
     // Just for testing
     LazyTimer debugTimer;
 
-    MOONSCRIPT_FACTORY_FUNCTION(RhahkZorAI, MoonScriptCreatureAI);
-    RhahkZorAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature), debugTimer(1500)
+    ADD_CREATURE_FACTORY_FUNCTION(RhahkZorAI);
+    RhahkZorAI(Creature* pCreature) : CreatureAIScript(pCreature), debugTimer(1500)
     {
         AddSpell(6304, Target_Current, 8, 0, 3);    // Rhahk'Zor Slam
     }
@@ -170,12 +170,12 @@ class RhahkZorAI : public MoonScriptCreatureAI
 };
 
 
-class MrSmiteAI : public MoonScriptCreatureAI
+class MrSmiteAI : public CreatureAIScript
 {
     public:
 
-        MOONSCRIPT_FACTORY_FUNCTION(MrSmiteAI, MoonScriptCreatureAI);
-        MrSmiteAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
+        ADD_CREATURE_FACTORY_FUNCTION(MrSmiteAI);
+        MrSmiteAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
             AddSpell(SMITE_SLAM, Target_Current, 25, 0.0f, 15, 0.0f, 8.0f, true);
             mStomp = AddSpell(SMITE_STOMP, Target_Self, 0, 0, 0);
@@ -185,32 +185,26 @@ class MrSmiteAI : public MoonScriptCreatureAI
 
         void OnCombatStop(Unit* pTarget)
         {
-            if (GetPhase() == 4)
+            if (isScriptPhase(4))
                 _removeAura(SMITES_HAMMER);
 
             if (!isAlive())
                 _setWieldWeapon(false);
 
-            SetPhase(1);
+            setScriptPhase(1);
             SwitchWeapons();
             _removeTimer(mWaitAtChest);
-            ParentClass::OnCombatStop(pTarget);
+            
         }
 
         void AIUpdate()
         {
-            if (_getHealthPercent() <= 66 && GetPhase() == 1)
-            {
-                sendChatMessage(CHAT_MSG_MONSTER_YELL, 5778, "You landlubbers are tougher than I thought. I'll have to improvise!");
-                SetPhase(2, mStomp);
-            }
-            else if (_getHealthPercent() <= 33 && GetPhase() == 3)
-            {
-                sendChatMessage(CHAT_MSG_MONSTER_YELL, 5779, "D'ah! Now you're making me angry!");
-                SetPhase(4, mStomp);
-            }
+            if (_getHealthPercent() <= 66 && isScriptPhase(1))
+                setScriptPhase(2);
+            else if (_getHealthPercent() <= 33 && isScriptPhase(3))
+                setScriptPhase(4);
 
-            if (GetPhase() == 2 || GetPhase() == 4)
+            if (isScriptPhase(2) || isScriptPhase(4))
             {
                 if (NearChest())
                     SwitchWeapons();
@@ -223,7 +217,24 @@ class MrSmiteAI : public MoonScriptCreatureAI
             if (_isTimerFinished(mWaitAtChest))
                 MoveToPlayer();
 
-            ParentClass::AIUpdate();
+            
+        }
+
+        void OnScriptPhaseChange(uint32_t phaseId)
+        {
+            switch (phaseId)
+            {
+                case 2:
+                    sendChatMessage(CHAT_MSG_MONSTER_YELL, 5778, "You landlubbers are tougher than I thought. I'll have to improvise!");
+                    CastSpellNowNoScheduling(mStomp);
+                    break;
+                case 4:
+                    sendChatMessage(CHAT_MSG_MONSTER_YELL, 5779, "D'ah! Now you're making me angry!");
+                    CastSpellNowNoScheduling(mStomp);
+                    break;
+                default:
+                    break;
+            }
         }
 
         void MoveToChest()
@@ -263,7 +274,7 @@ class MrSmiteAI : public MoonScriptCreatureAI
         void SwitchWeapons()
         {
             // CREDITS to Skyboat on ascentemu.com/forums  he had some of this info on one of his releases
-            switch (GetPhase())
+            switch (getScriptPhase())
             {
                 case 1: // Phase 1 (Default)
                     _setDisplayWeaponIds(5192, 0);
@@ -284,7 +295,7 @@ class MrSmiteAI : public MoonScriptCreatureAI
             // Wait at the chest for 4.5seconds -- Still needs work
             getCreature()->setAttackTimer(4500, false);
             mWaitAtChest = _addTimer(4500);
-            SetPhase(GetPhase() + 1);
+            setScriptPhase(getScriptPhase() + 1);
         }
 
     protected:
@@ -295,10 +306,10 @@ class MrSmiteAI : public MoonScriptCreatureAI
 
 
 // VanCleef
-class VanCleefAI : public MoonScriptCreatureAI
+class VanCleefAI : public CreatureAIScript
 {
-    MOONSCRIPT_FACTORY_FUNCTION(VanCleefAI, MoonScriptCreatureAI);
-    VanCleefAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
+    ADD_CREATURE_FACTORY_FUNCTION(VanCleefAI);
+    VanCleefAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
         AddSpell(3391, Target_Self, 25, 0, 0);    //Thrash (Gives the caster 2 extra attacks.)
     }
@@ -317,7 +328,7 @@ class VanCleefAI : public MoonScriptCreatureAI
             sprintf(msg, "And stay down, %s.", static_cast<Pet*>(pTarget)->GetName().c_str());
 
         sendChatMessage(CHAT_MSG_MONSTER_YELL, 5781, msg);
-        ParentClass::OnTargetDied(pTarget);
+        
     }
 
     void OnDied(Unit* pKiller)
@@ -327,34 +338,33 @@ class VanCleefAI : public MoonScriptCreatureAI
 
     void AIUpdate()
     {
-        if (_getHealthPercent() <= 75 && GetPhase() == 1)
+        if (_getHealthPercent() <= 75 && isScriptPhase(1))
         {
             sendDBChatMessage(7723);     // Lapdogs, all of you!
-            SetPhase(2);
+            setScriptPhase(2);
         }
-        else if (_getHealthPercent() <= 50 && GetPhase() == 2)
+        else if (_getHealthPercent() <= 50 && isScriptPhase(2))
         {
             sendDBChatMessage(7725);     // Fools! Our cause is righteous!
 
             for (uint8 x = 0; x < 2; x++)
             {
-                MoonScriptCreatureAI* Guard = SpawnCreature(636, getCreature()->GetPositionX(), getCreature()->GetPositionY(), getCreature()->GetPositionZ(), getCreature()->GetOrientation(), false);
-                if (Guard != NULL)
+                Creature* Guard = spawnCreature(636, getCreature()->GetPositionX(), getCreature()->GetPositionY(), getCreature()->GetPositionZ(), getCreature()->GetOrientation());
+                if (Guard != nullptr)
                 {
-                    Guard->_setDespawnWhenInactive(true);
-                    Guard->getCreature()->m_noRespawn = true;
+                    Guard->m_noRespawn = true;
                 }
             }
 
-            SetPhase(3);
+            setScriptPhase(3);
 
         }
-        else if (_getHealthPercent() <= 25 && GetPhase() == 3)
+        else if (_getHealthPercent() <= 25 && isScriptPhase(3))
         {
             sendDBChatMessage(7727);     // The Brotherhood shall prevail!
-            SetPhase(4);
+            setScriptPhase(4);
         }
-        ParentClass::AIUpdate();
+        
     }
 };
 

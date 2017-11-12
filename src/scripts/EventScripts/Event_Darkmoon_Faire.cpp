@@ -208,34 +208,15 @@ public:
     ADD_CREATURE_FACTORY_FUNCTION(Flik_Bark);
     Flik_Bark(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        RegisterAIUpdateEvent(180000);             // Start initial update after: 3mins
-    }
+        RegisterAIUpdateEvent(1000);
 
-    void AIUpdate() override
-    {
-        switch (RandomUInt(3))
-        {
-            case 0:
-                sendDBChatMessage(BARK_FLIK_1);
-                break;
+        addEmoteForEvent(Event_OnIdle, BARK_FLIK_1);
+        addEmoteForEvent(Event_OnIdle, BARK_FLIK_2);
+        addEmoteForEvent(Event_OnIdle, BARK_FLIK_3);
+        addEmoteForEvent(Event_OnIdle, BARK_FLIK_4);
 
-            case 1:
-                sendDBChatMessage(BARK_FLIK_2);
-                break;
-
-            case 2:
-                sendDBChatMessage(BARK_FLIK_3);
-                break;
-
-            case 3:
-                sendDBChatMessage(BARK_FLIK_4);
-                break;
-        }
-
-        uint32 rndTimer;
-        rndTimer = RandomUInt(120, 240);              // Generate a random value between: 2-4mins
-        rndTimer = rndTimer * 1000;                 // Convert to milliseconds
-        ModifyAIUpdateEvent(rndTimer);              // Modify timer to new random value
+        enableOnIdleEmote(true, 180000);
+        setRandomIdleEmoteTime(120000, 240000);
     }
 };
 
@@ -273,34 +254,15 @@ public:
     ADD_CREATURE_FACTORY_FUNCTION(GelvasGrimegate_Bark);
     GelvasGrimegate_Bark(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        RegisterAIUpdateEvent(60000);             // Start initial update after: 1mins
-    }
+        RegisterAIUpdateEvent(1000);
 
-    void AIUpdate() override
-    {
-        switch (RandomUInt(4))
-        {
-            case 0:
-                sendDBChatMessage(BARK_GEVAS_GRIMEGATE_1);
-                break;
+        addEmoteForEvent(Event_OnIdle, BARK_GEVAS_GRIMEGATE_1);
+        addEmoteForEvent(Event_OnIdle, BARK_GEVAS_GRIMEGATE_2);
+        addEmoteForEvent(Event_OnIdle, BARK_GEVAS_GRIMEGATE_3);
+        addEmoteForEvent(Event_OnIdle, BARK_GEVAS_GRIMEGATE_4);
 
-            case 1:
-                sendDBChatMessage(BARK_GEVAS_GRIMEGATE_2);
-                break;
-
-            case 2:
-                sendDBChatMessage(BARK_GEVAS_GRIMEGATE_3);
-                break;
-
-            case 3:
-                sendDBChatMessage(BARK_GEVAS_GRIMEGATE_4);
-                break;
-        }
-
-        uint32 rndTimer;
-        rndTimer = RandomUInt(180, 300);             // Generate a random value between: 3-5mins
-        rndTimer = rndTimer * 1000;             // Convert to milliseconds
-        ModifyAIUpdateEvent(rndTimer);             // Modify timer to new random value
+        enableOnIdleEmote(true, 60000);
+        setRandomIdleEmoteTime(180000, 300000);
     }
 };
 
@@ -312,34 +274,15 @@ public:
     ADD_CREATURE_FACTORY_FUNCTION(Lhara_Bark);
     Lhara_Bark(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        RegisterAIUpdateEvent(90000);             // Start initial update after: 1.5mins
-    }
+        RegisterAIUpdateEvent(1000);
 
-    void AIUpdate() override
-    {
-        switch (RandomUInt(4))
-        {
-            case 0:
-                sendDBChatMessage(BARK_LHARA_1);
-                break;
+        addEmoteForEvent(Event_OnIdle, BARK_LHARA_1);
+        addEmoteForEvent(Event_OnIdle, BARK_LHARA_2);
+        addEmoteForEvent(Event_OnIdle, BARK_LHARA_3);
+        addEmoteForEvent(Event_OnIdle, BARK_LHARA_4);
 
-            case 1:
-                sendDBChatMessage(BARK_LHARA_2);
-                break;
-
-            case 2:
-                sendDBChatMessage(BARK_LHARA_3);
-                break;
-
-            case 3:
-                sendDBChatMessage(BARK_LHARA_4);
-                break;
-        }
-
-        uint32 rndTimer;
-        rndTimer = RandomUInt(240, 360);             // Generate a random value between: 4-6mins
-        rndTimer = rndTimer * 1000;             // Convert to milliseconds
-        ModifyAIUpdateEvent(rndTimer);             // Modify timer to new random value
+        enableOnIdleEmote(true, 90000);
+        setRandomIdleEmoteTime(240000, 360000);
     }
 };
 
@@ -370,17 +313,12 @@ public:
     ADD_CREATURE_FACTORY_FUNCTION(Morja_Bark);
     Morja_Bark(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        RegisterAIUpdateEvent(240000);              // Start initial update after: 4mins
-    }
+        RegisterAIUpdateEvent(1000);
 
-    void AIUpdate() override
-    {
-        sendDBChatMessage(BARK_MORJA_1);
+        addEmoteForEvent(Event_OnIdle, BARK_MORJA_1);
 
-        uint32 rndTimer;
-        rndTimer = RandomUInt(240, 360);              // Generate a random value between: 4-6mins
-        rndTimer = rndTimer * 1000;                 // Convert to milliseconds
-        ModifyAIUpdateEvent(rndTimer);              // Modify timer to new random value
+        enableOnIdleEmote(true, 240000);
+        setRandomIdleEmoteTime(240000, 360000);
     }
 };
 
@@ -459,31 +397,15 @@ public:
     ADD_CREATURE_FACTORY_FUNCTION(ProfessorThaddeusPaleo_Bark);
     ProfessorThaddeusPaleo_Bark(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        RegisterAIUpdateEvent(210000);             // Start initial update after: 3.5mins
-    }
+        RegisterAIUpdateEvent(1000);
 
-    void AIUpdate() override
-    {
-        switch (RandomUInt(3))
-        {
-            case 0:
-                sendDBChatMessage(BARK_PROFESSOR_THADDEUS_PALEO_1);
-                break;
-            case 1:
-                sendDBChatMessage(BARK_PROFESSOR_THADDEUS_PALEO_2);
-                break;
-            case 2:
-                sendDBChatMessage(BARK_PROFESSOR_THADDEUS_PALEO_3);
-                break;
-            case 3:
-                sendDBChatMessage(BARK_PROFESSOR_THADDEUS_PALEO_4);
-                break;
-        }
+        addEmoteForEvent(Event_OnIdle, BARK_PROFESSOR_THADDEUS_PALEO_1);
+        addEmoteForEvent(Event_OnIdle, BARK_PROFESSOR_THADDEUS_PALEO_2);
+        addEmoteForEvent(Event_OnIdle, BARK_PROFESSOR_THADDEUS_PALEO_3);
+        addEmoteForEvent(Event_OnIdle, BARK_PROFESSOR_THADDEUS_PALEO_4);
 
-        uint32 rndTimer;
-        rndTimer = RandomUInt(180, 360);             // Generate a random value between: 3-5mins
-        rndTimer = rndTimer * 1000;             // Convert to milliseconds
-        ModifyAIUpdateEvent(rndTimer);             // Modify timer to new random value
+        enableOnIdleEmote(true, 210000);
+        setRandomIdleEmoteTime(180000, 360000);
     }
 };
 
@@ -692,34 +614,15 @@ public:
     ADD_CREATURE_FACTORY_FUNCTION(Sayge_Bark);
     Sayge_Bark(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        RegisterAIUpdateEvent(135000);             // Start initial update after: 2.25mins
-    }
+        RegisterAIUpdateEvent(1000);
 
-    void AIUpdate() override
-    {
-        switch (RandomUInt(3))
-        {
-            case 0:
-                sendDBChatMessage(BARK_SAYGE_1);
-                break;
+        addEmoteForEvent(Event_OnIdle, BARK_SAYGE_1);
+        addEmoteForEvent(Event_OnIdle, BARK_SAYGE_2);
+        addEmoteForEvent(Event_OnIdle, BARK_SAYGE_3);
+        addEmoteForEvent(Event_OnIdle, BARK_SAYGE_4);
 
-            case 1:
-                sendDBChatMessage(BARK_SAYGE_2);
-                break;
-
-            case 2:
-                sendDBChatMessage(BARK_SAYGE_3);
-                break;
-
-            case 3:
-                sendDBChatMessage(BARK_SAYGE_4);
-                break;
-        }
-
-        uint32 rndTimer;
-        rndTimer = RandomUInt(180, 360);             // Generate a random value between: 3-5mins
-        rndTimer = rndTimer * 1000;             // Convert to milliseconds
-        ModifyAIUpdateEvent(rndTimer);             // Modify timer to new random value
+        enableOnIdleEmote(true, 135000);
+        setRandomIdleEmoteTime(180000, 360000);
     }
 };
 
@@ -806,42 +709,17 @@ public:
     ADD_CREATURE_FACTORY_FUNCTION(SilasDarkmoon_Bark);
     SilasDarkmoon_Bark(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        RegisterAIUpdateEvent(180000);             // Start initial update after: 3mins
-    }
+        RegisterAIUpdateEvent(1000);
 
-    void AIUpdate() override
-    {
-        switch (RandomUInt(5))
-        {
-            case 0:
-                sendDBChatMessage(BARK_SILAS_DARKMOON_1);
-                break;
+        addEmoteForEvent(Event_OnIdle, BARK_SILAS_DARKMOON_1);
+        addEmoteForEvent(Event_OnIdle, BARK_SILAS_DARKMOON_2);
+        addEmoteForEvent(Event_OnIdle, BARK_SILAS_DARKMOON_3);
+        addEmoteForEvent(Event_OnIdle, BARK_SILAS_DARKMOON_4);
+        addEmoteForEvent(Event_OnIdle, BARK_SILAS_DARKMOON_5);
+        addEmoteForEvent(Event_OnIdle, BARK_SILAS_DARKMOON_6);
 
-            case 1:
-                sendDBChatMessage(BARK_SILAS_DARKMOON_2);
-                break;
-
-            case 2:
-                sendDBChatMessage(BARK_SILAS_DARKMOON_3);
-                break;
-
-            case 3:
-                sendDBChatMessage(BARK_SILAS_DARKMOON_4);
-                break;
-
-            case 4:
-                sendDBChatMessage(BARK_SILAS_DARKMOON_5);
-                break;
-
-            case 5:
-                sendDBChatMessage(BARK_SILAS_DARKMOON_6);
-                break;
-        }
-
-        uint32 rndTimer;
-        rndTimer = RandomUInt(240, 360);             // Generate a random value between: 3-5mins
-        rndTimer = rndTimer * 1000;             // Convert to milliseconds
-        ModifyAIUpdateEvent(rndTimer);             // Modify timer to new random value
+        enableOnIdleEmote(true, 180000);
+        setRandomIdleEmoteTime(240000, 360000);
     }
 };
 
@@ -853,38 +731,16 @@ public:
     ADD_CREATURE_FACTORY_FUNCTION(StampThunderhorn_Bark);
     StampThunderhorn_Bark(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        RegisterAIUpdateEvent(180000);             // Start initial update after: 3mins
-    }
+        RegisterAIUpdateEvent(1000);
 
-    void AIUpdate() override
-    {
-        switch (RandomUInt(4))
-        {
-            case 0:
-                sendDBChatMessage(BARK_STAMP_THUNDERHORN_1);
-                break;
+        addEmoteForEvent(Event_OnIdle, BARK_STAMP_THUNDERHORN_1);
+        addEmoteForEvent(Event_OnIdle, BARK_STAMP_THUNDERHORN_2);
+        addEmoteForEvent(Event_OnIdle, BARK_STAMP_THUNDERHORN_3);
+        addEmoteForEvent(Event_OnIdle, BARK_STAMP_THUNDERHORN_4);
+        addEmoteForEvent(Event_OnIdle, BARK_STAMP_THUNDERHORN_5);
 
-            case 1:
-                sendDBChatMessage(BARK_STAMP_THUNDERHORN_2);
-                break;
-
-            case 2:
-                sendDBChatMessage(BARK_STAMP_THUNDERHORN_3);
-                break;
-
-            case 3:
-                sendDBChatMessage(BARK_STAMP_THUNDERHORN_4);
-                break;
-
-            case 4:
-                sendDBChatMessage(BARK_STAMP_THUNDERHORN_5);
-                break;
-        }
-
-        uint32 rndTimer;
-        rndTimer = RandomUInt(180, 360);             // Generate a random value between: 3-5mins
-        rndTimer = rndTimer * 1000;             // Convert to milliseconds
-        ModifyAIUpdateEvent(rndTimer);             // Modify timer to new random value
+        enableOnIdleEmote(true, 180000);
+        setRandomIdleEmoteTime(180000, 360000);
     }
 };
 
@@ -896,34 +752,15 @@ public:
     ADD_CREATURE_FACTORY_FUNCTION(Sylannia_Bark);
     Sylannia_Bark(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        RegisterAIUpdateEvent(120000);             // Start initial update after: 2mins
-    }
+        RegisterAIUpdateEvent(1000);
 
-    void AIUpdate() override
-    {
-        switch (RandomUInt(3))
-        {
-            case 0:
-                sendDBChatMessage(BARK_SYLANNIA_1);
-                break;
+        addEmoteForEvent(Event_OnIdle, BARK_SYLANNIA_1);
+        addEmoteForEvent(Event_OnIdle, BARK_SYLANNIA_2);
+        addEmoteForEvent(Event_OnIdle, BARK_SYLANNIA_3);
+        addEmoteForEvent(Event_OnIdle, BARK_SYLANNIA_4);
 
-            case 1:
-                sendDBChatMessage(BARK_SYLANNIA_2);
-                break;
-
-            case 2:
-                sendDBChatMessage(BARK_SYLANNIA_3);
-                break;
-
-            case 3:
-                sendDBChatMessage(BARK_SYLANNIA_4);
-                break;
-        }
-
-        uint32 rndTimer;
-        rndTimer = RandomUInt(180, 360);             // Generate a random value between: 3-6mins
-        rndTimer = rndTimer * 1000;             // Convert to milliseconds
-        ModifyAIUpdateEvent(rndTimer);             // Modify timer to new random value
+        enableOnIdleEmote(true, 120000);
+        setRandomIdleEmoteTime(180000, 360000);
     }
 };
 

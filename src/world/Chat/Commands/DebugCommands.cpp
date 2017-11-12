@@ -8,7 +8,22 @@ This file is released under the MIT license. See README-MIT for more information
 #include "Server/WorldSession.h"
 #include "Spell/SpellFailure.h"
 #include "Server/ServerState.h"
+#include "Objects/ObjectMgr.h"
 
+bool ChatHandler::HandleSetScriptPhaseCommand(const char* args, WorldSession* session)
+{
+    Creature* selected_unit = GetSelectedCreature(session);
+    if (selected_unit == nullptr)
+        return false;
+
+    uint32_t scriptPhase = uint32_t(atoi(args));
+
+    if (auto creatureScript = selected_unit->GetScript())
+    {
+        creatureScript->setScriptPhase(scriptPhase);
+        SystemMessage(session, "ScriptPhase %u set for Creature %s", scriptPhase, selected_unit->GetCreatureProperties()->Name.c_str());
+    }
+}
 bool ChatHandler::HandleAiChargeCommand(const char* /*args*/, WorldSession* session)
 {
     Unit* selected_unit = GetSelectedUnit(session);

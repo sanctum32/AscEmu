@@ -25,8 +25,12 @@
 #include "Management/ChannelMgr.h"
 #include "Management/Battleground/Battleground.h"
 #include "Map/MapMgr.h"
-#include "../../../../scripts/Common/Base.h"
 #include "Units/Creatures/Pet.h"
+#include "Chat/ChatDefines.hpp"
+#include "Server/Script/ScriptMgr.h"
+#include "Chat/ChatHandler.hpp"
+#include "Units/Players/Player.h"
+#include "Objects/ObjectMgr.h"
 
 extern std::string LogFileName;
 extern bool bLogChat;

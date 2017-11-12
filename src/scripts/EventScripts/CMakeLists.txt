@@ -40,17 +40,16 @@ set(sources
     Event_VayrieTest.cpp
     Event_Zalzanes_Fall.cpp
     Setup.cpp
-    ../Common/Base.cpp
     # Required for linker
     ../../world/Server/LazyTimer.cpp
     ../../world/Server/ServerState.cpp
+    ../../shared/Util.cpp
 )
 
 set(headers
    Event_Darkmoon_Faire.h
    Event_Nights.h
    Setup.h
-   ../Common/Base.h
 )
 
 include_directories(

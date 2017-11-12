@@ -55,11 +55,11 @@ class HallsOfReflectionScript : public InstanceScript
 
 
 //JainaAI
-class JainaAI : public MoonScriptCreatureAI
+class JainaAI : public CreatureAIScript
 {
     public:
-        MOONSCRIPT_FACTORY_FUNCTION(JainaAI, MoonScriptCreatureAI);
-        JainaAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
+        ADD_CREATURE_FACTORY_FUNCTION(JainaAI);
+        JainaAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {}
 
         void StartInstance()
@@ -165,12 +165,12 @@ class Jaina_Gossip : public Arcemu::Gossip::Script
 
 
 //Marwyn
-class Marwyn : public MoonScriptCreatureAI
+class Marwyn : public CreatureAIScript
 {
     public:
 
-        MOONSCRIPT_FACTORY_FUNCTION(Marwyn, MoonScriptCreatureAI);
-        Marwyn(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
+        ADD_CREATURE_FACTORY_FUNCTION(Marwyn);
+        Marwyn(Creature* pCreature) : CreatureAIScript(pCreature)
         {
             mInstance = getInstanceScript();
 
@@ -206,7 +206,7 @@ class Marwyn : public MoonScriptCreatureAI
 
             if (mInstance)
                 mInstance->setData(getCreature()->GetEntry(), InProgress);
-            ParentClass::OnCombatStart(pKiller);
+            
         }
 
         void OnTargetDied(Unit* pTarget)
@@ -226,7 +226,7 @@ class Marwyn : public MoonScriptCreatureAI
         {
             if (mInstance)
                 mInstance->setData(getCreature()->GetEntry(), Performed);
-            ParentClass::OnCombatStop(Target);
+            
         }
 
         void OnDied(Unit* pKiller)
@@ -235,7 +235,7 @@ class Marwyn : public MoonScriptCreatureAI
 
             if (mInstance)
                 mInstance->setData(getCreature()->GetEntry(), Finished);
-            ParentClass::OnDied(pKiller);
+            
         }
 
     private:
@@ -244,12 +244,12 @@ class Marwyn : public MoonScriptCreatureAI
 
 
 //Falric
-class Falric : public MoonScriptCreatureAI
+class Falric : public CreatureAIScript
 {
     public:
 
-        MOONSCRIPT_FACTORY_FUNCTION(Falric, MoonScriptCreatureAI);
-        Falric(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
+        ADD_CREATURE_FACTORY_FUNCTION(Falric);
+        Falric(Creature* pCreature) : CreatureAIScript(pCreature)
         {
             mInstance = getInstanceScript();
 
@@ -274,7 +274,7 @@ class Falric : public MoonScriptCreatureAI
 
             if (mInstance)
                 mInstance->setData(getCreature()->GetEntry(), InProgress);
-            ParentClass::OnCombatStart(pKiller);
+            
         }
 
         void OnTargetDied(Unit* pTarget)
@@ -294,7 +294,7 @@ class Falric : public MoonScriptCreatureAI
         {
             if (mInstance)
                 mInstance->setData(getCreature()->GetEntry(), Performed);
-            ParentClass::OnCombatStop(Target);
+            
         }
 
         void OnDied(Unit* pKiller)
@@ -303,27 +303,27 @@ class Falric : public MoonScriptCreatureAI
 
             if (mInstance)
                 mInstance->setData(getCreature()->GetEntry(), Finished);
-            ParentClass::OnDied(pKiller);
+            
         }
 
         void AIUpdate(Player* Plr)
         {
-            if (GetPhase() == 1 && _getHealthPercent() <= 66)
+            if (isScriptPhase(1) && _getHealthPercent() <= 66)
             {
                 getCreature()->CastSpell(Plr, 72395, true);
-                SetPhase(2);
+                setScriptPhase(2);
             }
 
-            if (GetPhase() == 2 && _getHealthPercent() <= 33)
+            if (isScriptPhase(2) && _getHealthPercent() <= 33)
             {
                 getCreature()->CastSpell(Plr, 72396, true);
-                SetPhase(3);
+                setScriptPhase(3);
             }
 
-            if (GetPhase() == 3 && _getHealthPercent() <= 11)
+            if (isScriptPhase(3) && _getHealthPercent() <= 11)
             {
                 getCreature()->CastSpell(Plr, 72397, true);
-                SetPhase(4);
+                setScriptPhase(4);
             }
 
         }

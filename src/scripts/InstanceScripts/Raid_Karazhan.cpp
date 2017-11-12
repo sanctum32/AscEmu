@@ -64,10 +64,10 @@ const uint32 ATTUMEN_SHADOW_CLEAVE = 29832;
 const uint32 ATTUMEN_BERSERKER_CHARGE = 22886;
 const uint32 ATTUMEN_INTANGIBLE_PRESENCE = 29833;
 
-class AttumenTheHuntsmanAI : public MoonScriptCreatureAI
+class AttumenTheHuntsmanAI : public CreatureAIScript
 {
-    MOONSCRIPT_FACTORY_FUNCTION(AttumenTheHuntsmanAI, MoonScriptCreatureAI);
-    AttumenTheHuntsmanAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
+    ADD_CREATURE_FACTORY_FUNCTION(AttumenTheHuntsmanAI);
+    AttumenTheHuntsmanAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
         //All phase spells
         AddSpell(ATTUMEN_SHADOW_CLEAVE, Target_Current, 15, 0, 6, 0, 5, true);
@@ -95,33 +95,33 @@ class AttumenTheHuntsmanAI : public MoonScriptCreatureAI
     void OnCombatStop(Unit* pTarget)
     {
         despawn(10000);
-        ParentClass::OnCombatStop(pTarget);
+        
     }
 
     void AIUpdate()
     {
-        if (GetPhase() == 1)
+        if (isScriptPhase(1))
         {
             if (GetLinkedCreature() && GetLinkedCreature()->isAlive() && _getHealthPercent() <= 25 && !_isCasting())
             {
-                SetPhase(2);
+                setScriptPhase(2);
                 _setMeleeDisabled(false);
                 _setCastDisabled(true);
                 sendChatMessage(CHAT_MSG_MONSTER_YELL, 9168, "Come Midnight, let's disperse this petty rabble!");
-                MoonScriptCreatureAI* midnight = static_cast<MoonScriptCreatureAI*>(GetLinkedCreature());
-                midnight->SetPhase(2);
+                CreatureAIScript* midnight = static_cast<CreatureAIScript*>(GetLinkedCreature());
+                midnight->setScriptPhase(2);
                 midnight->moveToUnit(getCreature());
                 midnight->_setMeleeDisabled(false);
             }
         }
-        ParentClass::AIUpdate();
+        
     }
 };
 
-class MidnightAI : public MoonScriptCreatureAI
+class MidnightAI : public CreatureAIScript
 {
-    MOONSCRIPT_FACTORY_FUNCTION(MidnightAI, MoonScriptCreatureAI);
-    MidnightAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
+    ADD_CREATURE_FACTORY_FUNCTION(MidnightAI);
+    MidnightAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
     }
 
@@ -129,27 +129,27 @@ class MidnightAI : public MoonScriptCreatureAI
     {
         _setMeleeDisabled(true);
         _setCastDisabled(false);
-        ParentClass::OnCombatStop(pTarget);
+        
     }
 
     void OnTargetDied(Unit* pTarget)
     {
         if (GetLinkedCreature() && GetLinkedCreature()->isAlive())
         {
-            static_cast<MoonScriptCreatureAI*>(GetLinkedCreature())->sendChatMessage(CHAT_MSG_MONSTER_YELL, 9173, "Well done Midnight!");
+            static_cast<CreatureAIScript*>(GetLinkedCreature())->sendChatMessage(CHAT_MSG_MONSTER_YELL, 9173, "Well done Midnight!");
         }
-        ParentClass::OnTargetDied(pTarget);
+        
     }
 
     void AIUpdate()
     {
-        if (GetPhase() == 1)
+        if (isScriptPhase(1))
         {
-            if (GetLinkedCreature() == NULL && _getHealthPercent() <= 95 && !_isCasting())
+            if (GetLinkedCreature() == nullptr && _getHealthPercent() <= 95 && !_isCasting())
             {
                 sendChatMessage(CHAT_MSG_MONSTER_YELL, 0, "Midnight calls for her master!");
-                CreatureAIScript* attumen = SpawnCreature(CN_ATTUMEN, getCreature()->GetPositionX(), getCreature()->GetPositionY(), getCreature()->GetPositionZ(), getCreature()->GetOrientation(), false);
-                if (attumen != NULL)
+                CreatureAIScript* attumen = spawnCreatureAndGetAIScript(CN_ATTUMEN, getCreature()->GetPositionX(), getCreature()->GetPositionY(), getCreature()->GetPositionZ(), getCreature()->GetOrientation());
+                if (attumen != nullptr)
                 {
                     SetLinkedCreature(attumen);
                     attumen->SetLinkedCreature(this);
@@ -157,21 +157,21 @@ class MidnightAI : public MoonScriptCreatureAI
             }
             else if (GetLinkedCreature() && GetLinkedCreature()->isAlive() && _getHealthPercent() <= 25 && !_isCasting())
             {
-                SetPhase(2);
-                MoonScriptCreatureAI* attumen = static_cast<MoonScriptCreatureAI*>(GetLinkedCreature());
+                setScriptPhase(2);
+                CreatureAIScript* attumen = static_cast<CreatureAIScript*>(GetLinkedCreature());
                 moveToUnit(attumen->getCreature());
                 _setMeleeDisabled(false);
-                attumen->SetPhase(2);
+                attumen->setScriptPhase(2);
                 attumen->_setMeleeDisabled(false);
                 attumen->_setCastDisabled(true);
                 attumen->sendChatMessage(CHAT_MSG_MONSTER_YELL, 9168, "Come Midnight, let's disperse this petty rabble!");
             }
         }
-        else if (GetPhase() == 2)
+        else if (isScriptPhase(2))
         {
             if (GetLinkedCreature() && GetLinkedCreature()->isAlive())
             {
-                MoonScriptCreatureAI* attumen = static_cast<MoonScriptCreatureAI*>(GetLinkedCreature());
+                CreatureAIScript* attumen = static_cast<CreatureAIScript*>(GetLinkedCreature());
                 if (attumen && getRangeToObject(attumen->getCreature()) <= 15)
                 {
                     attumen->_regenerateHealth();
@@ -186,7 +186,7 @@ class MidnightAI : public MoonScriptCreatureAI
                     moveToUnit(attumen->getCreature());
             }
         }
-        ParentClass::AIUpdate();
+        
     }
 };
 
@@ -199,10 +199,10 @@ const uint32 MOROES_BLIND = 34654;
 const uint32 MOROES_ENRAGE = 37023;
 const uint32 MOROES_GARROTE = 37066;
 
-class MoroesAI : public MoonScriptCreatureAI
+class MoroesAI : public CreatureAIScript
 {
-    MOONSCRIPT_FACTORY_FUNCTION(MoroesAI, MoonScriptCreatureAI);
-    MoroesAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
+    ADD_CREATURE_FACTORY_FUNCTION(MoroesAI);
+    MoroesAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
         //Initialize timers
         mVanishTimer = mGarroteTimer = INVALIDATE_TIMER;
@@ -230,18 +230,18 @@ class MoroesAI : public MoonScriptCreatureAI
     {
         mEnrage->mEnabled = true;
         mVanishTimer = _addTimer(35000);    //First vanish after 35sec
-        ParentClass::OnCombatStart(pTarget);
+        
     }
 
     void OnDied(Unit* pKiller)
     {
         _removeAuraOnPlayers(MOROES_GARROTE);
-        ParentClass::OnDied(pKiller);
+        
     }
 
     void AIUpdate()
     {
-        if (GetPhase() == 1)
+        if (isScriptPhase(1))
         {
             if (mEnrage->mEnabled && _getHealthPercent() <= 30 && !_isCasting())
             {
@@ -250,21 +250,41 @@ class MoroesAI : public MoonScriptCreatureAI
             }
             else if (_isTimerFinished(mVanishTimer) && !_isCasting())
             {
-                SetPhase(2, mVanish);
-                mGarroteTimer = _addTimer(12000);
-                _resetTimer(mVanishTimer, 35000);
+                setScriptPhase(2);
             }
         }
-        else if (GetPhase() == 2)
+        else if (isScriptPhase(2))
         {
             if (_isTimerFinished(mGarroteTimer) && !_isCasting())
             {
-                SetPhase(1, mGarrote);
-                _removeAura(MOROES_VANISH);
-                _removeTimer(mGarroteTimer);
+                setScriptPhase(1);
             }
         }
-        ParentClass::AIUpdate();
+        
+    }
+
+    void OnScriptPhaseChange(uint32_t phaseId)
+    {
+        switch (phaseId)
+        {
+            case 1:
+            {
+                if (_isTimerFinished(mGarroteTimer))
+                {
+                    CastSpellNowNoScheduling(mGarrote);
+                    _removeAura(MOROES_VANISH);
+                    _removeTimer(mGarroteTimer);
+                }
+
+            } break;
+            case 2:
+                CastSpellNowNoScheduling(mVanish);
+                mGarroteTimer = _addTimer(12000);
+                _resetTimer(mVanishTimer, 35000);
+                break;
+            default:
+                break;
+        }
     }
 
     SpellDesc* mVanish;
@@ -282,10 +302,10 @@ const uint32 MAIDENOFVIRTUE_HOLY_GROUND = 29512;
 const uint32 MAIDENOFVIRTUE_HOLY_FIRE = 29522;
 const uint32 MAIDENOFVIRTUE_HOLY_WRATH = 32445;
 
-class MaidenOfVirtueAI : public MoonScriptCreatureAI
+class MaidenOfVirtueAI : public CreatureAIScript
 {
-    MOONSCRIPT_FACTORY_FUNCTION(MaidenOfVirtueAI, MoonScriptCreatureAI);
-    MaidenOfVirtueAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
+    ADD_CREATURE_FACTORY_FUNCTION(MaidenOfVirtueAI);
+    MaidenOfVirtueAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
         //Spells
         AddSpell(MAIDENOFVIRTUE_HOLY_GROUND, Target_Self, 100, 0, 3);
@@ -306,7 +326,7 @@ class MaidenOfVirtueAI : public MoonScriptCreatureAI
     void OnCombatStart(Unit* pTarget)
     {
         mRepentance->TriggerCooldown();    //No repentance at the beginning of the fight
-        ParentClass::OnCombatStart(pTarget);
+        
     }
 
     SpellDesc* mRepentance;
@@ -1300,10 +1320,10 @@ const uint32 ASTRAL_FLARE_PASSIVE = 30234;
 const uint32 ASTRAL_FLARE_VISUAL = 30237;
 const uint32 ARCING_SEAR = 30235;
 
-class AstralFlareAI : public MoonScriptCreatureAI
+class AstralFlareAI : public CreatureAIScript
 {
-    MOONSCRIPT_FACTORY_FUNCTION(AstralFlareAI, MoonScriptCreatureAI);
-    AstralFlareAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
+    ADD_CREATURE_FACTORY_FUNCTION(AstralFlareAI);
+    AstralFlareAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
         AddSpell(ASTRAL_FLARE_PASSIVE, Target_Self, 100, 0, 3);
         AddSpell(ASTRAL_FLARE_VISUAL, Target_Self, 100, 0, 6);
@@ -2656,14 +2676,14 @@ SPECIAL? - 9223 - 9320
 AXETOSS2? - 9317
 */
 
-class MalchezaarAI : public MoonScriptCreatureAI
+class MalchezaarAI : public CreatureAIScript
 {
 public:
     ADD_CREATURE_FACTORY_FUNCTION(MalchezaarAI);
     bool m_spellcheck[9];
     SP_AI_Spell spells[9];
 
-    MalchezaarAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature)
+    MalchezaarAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
         m_phase = 1;
         nrspells = 5;
@@ -2740,8 +2760,9 @@ public:
         float dumX = -10938.56f;
         float dumY = -2041.26f;
         float dumZ = 305.132f;
-        CreatureAIScript* infernalDummy = SpawnCreature(CN_DUMMY, dumX, dumY, dumZ);
-        if (infernalDummy != NULL)
+
+        CreatureAIScript* infernalDummy = spawnCreatureAndGetAIScript(CN_DUMMY, dumX, dumY, dumZ, 0);
+        if (infernalDummy != nullptr)
         {
             SetLinkedCreature(infernalDummy);
             infernalDummy->SetLinkedCreature(this);
@@ -3157,11 +3178,11 @@ protected:
     uint64 Enfeeble_Health[5];
 };
 
-class NetherInfernalAI : public MoonScriptCreatureAI
+class NetherInfernalAI : public CreatureAIScript
 {
 public:
-    MOONSCRIPT_FACTORY_FUNCTION(NetherInfernalAI, MoonScriptCreatureAI);
-    NetherInfernalAI(Creature* pCreature) : MoonScriptCreatureAI(pCreature) {};
+    ADD_CREATURE_FACTORY_FUNCTION(NetherInfernalAI);
+    NetherInfernalAI(Creature* pCreature) : CreatureAIScript(pCreature) {};
 
     void OnLoad()
     {
@@ -3172,13 +3193,13 @@ public:
         RegisterAIUpdateEvent(6000);
         despawn(175000, 0);
         getCreature()->CastSpell(getCreature(), sSpellCustomizations.GetSpellInfo(HELLFIRE), true);
-        ParentClass::OnLoad();
+        
     }
 
     void AIUpdate()
     {
         getCreature()->CastSpell(getCreature(), sSpellCustomizations.GetSpellInfo(HELLFIRE), true);
-        ParentClass::AIUpdate();
+        
     }
 
 };

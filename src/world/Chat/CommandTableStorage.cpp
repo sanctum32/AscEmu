@@ -349,6 +349,7 @@ void CommandTableStorage::Init()
 
     static ChatCommand debugCommandTable[] =
     {
+        { "setscriptphase",     'z', &ChatHandler::HandleSetScriptPhaseCommand,     "ScriptPhase test",                                         nullptr, 0, 0, 0 },
         { "aicharge",           'z', &ChatHandler::HandleAiChargeCommand,           "AiCharge test",                                            nullptr, 0, 0, 0 },
         { "aiknockback",        'z', &ChatHandler::HandleAiKnockbackCommand,        "AiKnockBack test",                                         nullptr, 0, 0, 0 },
         { "aijump",             'z', &ChatHandler::HandleAiJumpCommand,             "AiJump test",                                              nullptr, 0, 0, 0 },
@@ -567,6 +568,7 @@ void CommandTableStorage::Init()
         { "select",             'n', &ChatHandler::HandleNpcSelectCommand,              "Selects closest NPC",                               nullptr, 0, 0, 0 },
         { "set",                '0', nullptr,                                           "",                                      NPCSetCommandTable, 0, 0, 0 },
         { "spawn",              'n', &ChatHandler::HandleNpcSpawnCommand,               "Spawns NPC of entry <id>",                         nullptr, 0, 0, 0 },
+        { "showtimers",         'm', &ChatHandler::HandleNpcShowTimersCommand,          "Shows timers for selected creature",               nullptr, 0, 0, 0 },
         { "vendoradditem",      'n', &ChatHandler::HandleNpcVendorAddItemCommand,       "Adds item to vendor",                              nullptr, 0, 0, 0 },
         { "vendorremoveitem",   'n', &ChatHandler::HandleNpcVendorRemoveItemCommand,    "Removes item from vendor.",                        nullptr, 0, 0, 0 },
         { "yell",               'n', &ChatHandler::HandleNpcYellCommand,                "Makes selected NPC yell <text>.",                  nullptr, 0, 0, 0 },

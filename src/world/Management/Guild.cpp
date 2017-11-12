@@ -24,9 +24,12 @@
 #include "Management/Item.h"
 #include "Management/ItemInterface.h"
 #include "Server/MainServerDefines.h"
-#include "../../scripts/Common/Base.h"
 #include "WorldConf.h"
 #include "Guild/GuildDefinitions.h"
+#include "Server/WorldSession.h"
+#include "Units/Players/Player.h"
+#include "Objects/ObjectMgr.h"
+#include "Chat/ChatHandler.hpp"
 
 #if VERSION_STRING != Cata
 

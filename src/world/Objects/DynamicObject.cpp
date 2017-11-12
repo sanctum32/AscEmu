@@ -26,9 +26,9 @@
 #include "Spell/SpellMgr.h"
 #include "Spell/SpellAuras.h"
 #include "Spell/Spell.Legacy.h"
-#include "../../scripts/Common/Base.h"
 #include "Spell/Definitions/ProcFlags.h"
 #include "Spell/Definitions/SpellIsFlags.h"
+#include "Objects/ObjectMgr.h"
 
  // MIT Start
 void DynamicObject::Create(Unit* caster, Spell* spell, LocationVector lv, uint32 duration, float radius, uint32 type)
