@@ -43,22 +43,26 @@ class KelidanTheBreakerAI : public CreatureAIScript
         }
 
         mBurningNova = AddSpell(KELIDAN_BURNING_NOVA, Target_Self, 0, 0, 0);
-        mBurningNova->AddEmote("Closer! Come closer... and burn!", CHAT_MSG_MONSTER_YELL);
+        mBurningNova->addEmote("Closer! Come closer... and burn!", CHAT_MSG_MONSTER_YELL);
         mVortex = AddSpell(KELIDAN_FIRE_NOVA, Target_Self, 0, 0, 0);
         AddSpell(KELIDAN_CORRUPTION, Target_Current, 15, 0, 10);
 
         mBurningNovaTimer = INVALIDATE_TIMER;
         SetAIUpdateFreq(800);
+
+        // new
+        addEmoteForEvent(Event_OnCombatStart, 4841);    // Who dares interrupt--What is this; what have you done? You'll ruin everything!
+        addEmoteForEvent(Event_OnTargetDied, 4845);     // Just as you deserve!
+        addEmoteForEvent(Event_OnTargetDied, 4846);     // Your friends will soon be joining you!
+        addEmoteForEvent(Event_OnDied, 4848);           // Good...luck. You'll need it.
     }
 
-    void OnCombatStart(Unit* pTarget)
+    void OnCombatStart(Unit* pTarget) override
     {
-        sendDBChatMessage(4841);     // Who dares interrupt--What is this; what have you done? You'll ruin everything!
-
         mBurningNovaTimer = _addTimer(15000);
     }
 
-    void AIUpdate()
+    void AIUpdate() override
     {
         if (!_isCasting())
         {
@@ -71,24 +75,6 @@ class KelidanTheBreakerAI : public CreatureAIScript
                 _resetTimer(mBurningNovaTimer, 30000);
             }
         }
-    }
-
-    void OnTargetDied(Unit* pTarget)
-    {
-        switch (RandomUInt(1))
-        {
-            case 0:
-                sendDBChatMessage(4845);     // Just as you deserve!
-                break;
-            case 1:
-                sendDBChatMessage(4846);     // Your friends will soon be joining you!
-                break;
-        }
-    }
-
-    void OnDied(Unit* pTarget)
-    {
-        sendDBChatMessage(4848);     // Good...luck. You'll need it.
     }
 
     SpellDesc* mShadowBoltVolley;
@@ -112,13 +98,11 @@ class BroggokAI : public CreatureAIScript
             AddSpell(SLIME_SPRAY, Target_Self, 10.0f, 0, 25);
         }
 
-        void OnDied(Unit* pKiller)
+        void OnDied(Unit* pKiller) override
         {
             GameObject* pDoor = getNearestGameObject(456.157349f, 34.248005f, 9.559463f, GO_BROGGOK);
             if (pDoor)
                 pDoor->SetState(GO_STATE_OPEN);
-
-            CreatureAIScript::OnDied(pKiller);
         }
 };
 
@@ -134,46 +118,22 @@ class TheMakerAI : public CreatureAIScript
             AddSpell(DOMINATION, Target_RandomPlayer, 8.0f, 0, 30);
             AddSpell(ACID_SPRAY, Target_Self, 10.0f, 0, 20);
             AddSpell(THROW_BEAKER, Target_RandomPlayerDestination, 20.0f, 0, 0, 0, 40);
+
+            // new
+            addEmoteForEvent(Event_OnCombatStart, 4849);    // My work must not be interrupted!
+            addEmoteForEvent(Event_OnCombatStart, 4850);    // Perhaps I can find a use for you...
+            addEmoteForEvent(Event_OnCombatStart, 4851);    // Anger...hate... These are tools I can use.
+
+            addEmoteForEvent(Event_OnTargetDied, 4852);     // Let's see what I can make of you!
+            addEmoteForEvent(Event_OnTargetDied, 4853);     // It is pointless to resist.
+            addEmoteForEvent(Event_OnDied, 4854);           // Stay away from... Me!
         }
 
-        void OnCombatStart(Unit* pTarget)
+        void OnDied(Unit* pKiller) override
         {
-            switch (RandomUInt(2))
-            {
-                case 0:
-                    sendDBChatMessage(4849);     // My work must not be interrupted!
-                    break;
-                case 1:
-                    sendDBChatMessage(4850);     // Perhaps I can find a use for you...
-                    break;
-                case 2:
-                    sendDBChatMessage(4851);     // Anger...hate... These are tools I can use.
-                    break;
-            }
-        }
-
-        void OnTargetDied(Unit* pTarget)
-        {
-            switch (RandomUInt(1))
-            {
-                case 0:
-                    sendDBChatMessage(4852);     // Let's see what I can make of you!
-                    break;
-                case 1:
-                    sendDBChatMessage(4853);     // It is pointless to resist.
-                    break;
-            }
-        }
-
-        void OnDied(Unit* pKiller)
-        {
-            sendDBChatMessage(4854);     // Stay away from... Me!
-
             GameObject* pDoor = getNearestGameObject(327.155487f, 149.753418f, 9.559869f, GO_THE_MAKER);
             if (pDoor)
                 pDoor->SetState(GO_STATE_OPEN);
-
-            CreatureAIScript::OnDied(pKiller);
         }
 };
 

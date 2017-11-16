@@ -27,7 +27,6 @@
 // Hmmm... next boss without sounds?
 class SHIRRAKTHEDEADWATCHERAI : public CreatureAIScript
 {
-    public:
         ADD_CREATURE_FACTORY_FUNCTION(SHIRRAKTHEDEADWATCHERAI);
         SP_AI_Spell spells[4];
         bool m_spellcheck[4];
@@ -71,7 +70,7 @@ class SHIRRAKTHEDEADWATCHERAI : public CreatureAIScript
             spells[3].cooldown = 15;
         }
 
-        void OnCombatStart(Unit* mTarget)
+        void OnCombatStart(Unit* mTarget) override
         {
             for (uint8 i = 0; i < nrspells; i++)
                 spells[i].casttime = 0;
@@ -79,14 +78,14 @@ class SHIRRAKTHEDEADWATCHERAI : public CreatureAIScript
             RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
         }
 
-        void OnCombatStop(Unit* mTarget)
+        void OnCombatStop(Unit* mTarget) override
         {
             setAIAgent(AGENT_NULL);
             getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
             RemoveAIUpdateEvent();
         }
 
-        void AIUpdate()
+        void AIUpdate() override
         {
             float val = RandomFloat(100.0f);
             SpellCast(val);
@@ -201,7 +200,6 @@ class SHIRRAKTHEDEADWATCHERAI : public CreatureAIScript
 // Avatar of the MartyredAI
 class AvatarOfTheMartyredAI : public CreatureAIScript
 {
-    public:
         ADD_CREATURE_FACTORY_FUNCTION(AvatarOfTheMartyredAI);
         SP_AI_Spell spells[3];
         bool m_spellcheck[3];
@@ -243,19 +241,19 @@ class AvatarOfTheMartyredAI : public CreatureAIScript
             Appear = true;
         }
 
-        void OnCombatStart(Unit* mTarget)
+        void OnCombatStart(Unit* mTarget) override
         {
             RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
         }
 
-        void OnCombatStop(Unit* mTarget)
+        void OnCombatStop(Unit* mTarget) override
         {
             setAIAgent(AGENT_NULL);
             getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
             //RemoveAIUpdateEvent();
         }
 
-        void AIUpdate()
+        void AIUpdate() override
         {
             if (Appear)
             {
@@ -322,7 +320,6 @@ class AvatarOfTheMartyredAI : public CreatureAIScript
 // Exarch MaladaarAI
 class EXARCHMALADAARAI : public CreatureAIScript
 {
-    public:
         ADD_CREATURE_FACTORY_FUNCTION(EXARCHMALADAARAI);
         SP_AI_Spell spells[4];
         bool m_spellcheck[4];
@@ -372,49 +369,27 @@ class EXARCHMALADAARAI : public CreatureAIScript
             spells[3].cooldown = -1;
 
             Avatar = false;
+
+            // new
+            addEmoteForEvent(Event_OnCombatStart, SAY_MALADAAR_01);
+            addEmoteForEvent(Event_OnCombatStart, SAY_MALADAAR_02);
+            addEmoteForEvent(Event_OnCombatStart, SAY_MALADAAR_03);
+            addEmoteForEvent(Event_OnTargetDied, SAY_MALADAAR_04);
+            addEmoteForEvent(Event_OnTargetDied, SAY_MALADAAR_05);
+            addEmoteForEvent(Event_OnDied, SAY_MALADAAR_06);
         }
 
-        void OnCombatStart(Unit* mTarget)
+        void OnCombatStart(Unit* mTarget) override
         {
             for (uint8 i = 0; i < 4; i++)
                 spells[i].casttime = 0;
 
             Avatar = false;
 
-            switch (RandomUInt(2))
-            {
-                case 0:
-                    sendDBChatMessage(SAY_MALADAAR_01);
-                    break;
-                case 1:
-                    sendDBChatMessage(SAY_MALADAAR_02);
-                    break;
-                case 2:
-                    sendDBChatMessage(SAY_MALADAAR_03);
-                    break;
-            }
-
             RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
         }
 
-        void OnTargetDied(Unit* mTarget)
-        {
-            if (getCreature()->GetHealthPct() > 0)    // Hack to prevent double yelling (OnDied and OnTargetDied when creature is dying)
-            {
-                switch (RandomUInt(1))
-                {
-                    case 0:
-                        sendDBChatMessage(SAY_MALADAAR_04);
-                        break;
-                    case 1:
-                        sendDBChatMessage(SAY_MALADAAR_05);
-                        break;
-                }
-            }
-
-        }
-
-        void OnCombatStop(Unit* mTarget)
+        void OnCombatStop(Unit* mTarget) override
         {
             setAIAgent(AGENT_NULL);
             getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
@@ -424,13 +399,9 @@ class EXARCHMALADAARAI : public CreatureAIScript
             Avatar = false;
         }
 
-        void OnDied(Unit* mKiller)
+        void AIUpdate() override
         {
-            sendDBChatMessage(SAY_MALADAAR_06);
-        }
-
-        void AIUpdate()
-        {
+            // case for scriptphase
             if (getCreature()->GetHealthPct() <= 25 && !Avatar && !getCreature()->IsStunned())
             {
                 sendDBChatMessage(SAY_MALADAAR_07);

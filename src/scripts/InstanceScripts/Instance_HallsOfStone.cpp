@@ -30,7 +30,6 @@ class DarkRuneStormcallerAI : public CreatureAIScript
         AddSpell(STORMCALLER_LIGHTNINGBOLT, Target_RandomPlayer, 60, 3, 6);
         AddSpell(STORMCALLER_SHADOWWORD, Target_RandomPlayer, 16, 0, 12);
     }
-
 };
 
 //Iron Golem Custodian
@@ -42,7 +41,6 @@ class IronGolemCustodianAI : public CreatureAIScript
         AddSpell(CUSTODIAN_CRUSH_ARMOR, Target_Current, 50, 0, 5);
         AddSpell(CUSTODIAN_GROUND_SMASH, Target_ClosestPlayer, 20, 0, 14);
     }
-
 };
 
 //Dark Rune Protector
@@ -54,7 +52,6 @@ class DarkRuneProtectorAI : public CreatureAIScript
         AddSpell(PROTECTOR_CHARGE, Target_RandomPlayerNotCurrent, 20, 0, 14, 10);
         AddSpell(PROTECTOR_CLAVE, Target_Current, 35, 0, 8);
     }
-
 };
 
 //Lesser Air Elemental
@@ -65,7 +62,6 @@ class LesserAirElementalAI : public CreatureAIScript
     {
         AddSpell(ELEMENTAL_LIGHTNING_BOLT, Target_RandomPlayerNotCurrent, 20, 3, 14);
     }
-
 };
 
 //Dark Rune Worker
@@ -77,7 +73,6 @@ class DarkRuneWorkerAI : public CreatureAIScript
         AddSpell(WORKER_ENRAGE, Target_Self, 5, 0, 60, 10);
         AddSpell(WORKER_PIERCE_ARMOR, Target_Current, 35, 0, 45);
     }
-
 };
 
 //Dark Rune Warrior
@@ -89,7 +84,6 @@ class DarkRuneWarriorAI : public CreatureAIScript
         AddSpell(WARRIOR_CLAVE, Target_Current, 15, 0, 8);
         AddSpell(WARRIOR_HEROIC_STRIKE, Target_Current, 35, 0, 12);
     }
-
 };
 
 //Dark Rune Theurgist
@@ -102,7 +96,6 @@ class DarkRuneTheurgistAI : public CreatureAIScript
         AddSpell(THEURGIST_FIREBOLT, Target_RandomPlayer, 40, 3, 6);
         AddSpell(THEURGIST_IRON_MIGHT, Target_Self, 5, 0, 60);
     }
-
 };
 
 //Dark Rune Shaper
@@ -113,7 +106,6 @@ class DarkRuneShaperAI : public CreatureAIScript
     {
         AddSpell(SHAPER_RAY, Target_RandomPlayer, 35, 1.5, 12);
     }
-
 };
 
 //Dark Rune Scholar
@@ -124,7 +116,6 @@ class DarkRuneScholarAI : public CreatureAIScript
     {
         AddSpell(SCHOLAR_SILANCE, Target_RandomPlayerNotCurrent, 35, 2.5, 12);
     }
-
 };
 
 //Dark Rune Giant
@@ -136,7 +127,6 @@ class DarkRuneGiantAI : public CreatureAIScript
         AddSpell(GIANT_FIST, Target_Self, 3, 2, 40);
         AddSpell(GIANT_STOMP, Target_RandomPlayer, 35, 0, 14, 0, 10);
     }
-
 };
 
 //Raging Construct
@@ -148,7 +138,6 @@ class DarkRuneConstructAI : public CreatureAIScript
         AddSpell(RAGING_POTENT_JOLT, Target_Self, 95, 0, 8);
         AddSpell(RAGING_CLAVE, Target_Current, 30, 0, 9, 0, 10);
     }
-
 };
 
 //Lightning Construct
@@ -160,7 +149,6 @@ class DarkLightningConstructAI : public CreatureAIScript
         AddSpell(LIGHTN_ELECTRICAL_OVERLOAD, Target_Self, 5, 1.5, 14);
         AddSpell(LIGHTN_CHAIN_LIGHTNING, Target_Current, 30, 3, 8, 0, 30);
     }
-
 };
 
 //Forged Iron Trogg
@@ -171,7 +159,6 @@ class ForgedIronTroggAI : public CreatureAIScript
     {
         AddSpell(LIGHTN_CHAIN_LIGHTNING, Target_RandomPlayer, 30, 2, 8, 0, 10);
     }
-
 };
 
 //Maiden of Grief
@@ -183,39 +170,20 @@ class MaidenOfGriefAI : public CreatureAIScript
         AddSpell(MAIDEN_STORM_OF_GRIEF, Target_RandomPlayerDestination, 100, 0, 19);
         AddSpell(MAIDEN_PILLAR_OF_WOE, Target_RandomPlayerNotCurrent, 30, 0, 8);
         mShock = AddSpell(MAIDEN_SHOCK_OF_SORROW, Target_Self, 20, 0, 18);
-        mShock->AddEmote("So much lost time... that you'll never get back!", CHAT_MSG_MONSTER_YELL, 13492);
+        mShock->addEmote("So much lost time... that you'll never get back!", CHAT_MSG_MONSTER_YELL, 13492);
+
+        // new
+        addEmoteForEvent(Event_OnCombatStart, 4367);     // You shouldn't have come... now you will die!
+        addEmoteForEvent(Event_OnTargetDied, 4368);     // Why must it be this way?
+        addEmoteForEvent(Event_OnTargetDied, 4369);     // You had it coming!
+        addEmoteForEvent(Event_OnTargetDied, 4370);     // My burden grows heavier...
+        addEmoteForEvent(Event_OnTargetDied, 4371);     // This is your fault!
+        addEmoteForEvent(Event_OnDied, 4372);     // I hope you all rot! I never... wanted... this.
     }
 
-    void OnCombatStart(Unit* pTarget)
+    void OnCombatStart(Unit* pTarget) override
     {
-        sendDBChatMessage(4367);     // You shouldn't have come... now you will die!
-
-        mShock->TriggerCooldown();
-        
-    }
-
-    void OnTargetDied(Unit* pTarget)
-    {
-        switch (RandomUInt(3))
-        {
-            case 0:
-                sendDBChatMessage(4368);     // Why must it be this way?
-                break;
-            case 1:
-                sendDBChatMessage(4369);     // You had it coming!
-                break;
-            case 2:
-                sendDBChatMessage(4370);     // My burden grows heavier...
-                break;
-            case 3:
-                sendDBChatMessage(4371);     // This is your fault!
-                break;
-        }
-    }
-
-    void OnDied(Unit* pTarget)
-    {
-        sendDBChatMessage(4372);     // I hope you all rot! I never... wanted... this.
+        mShock->setTriggerCooldown();
     }
 
     protected:
@@ -235,21 +203,23 @@ class KrystallusAI : public CreatureAIScript
         AddSpell(KRYSTALLUS_BOULDER_TOSS, Target_ClosestPlayer, 35, 1, 4);
         mShatter = AddSpell(KRYSTALLUS_SHATTER, Target_Self, 0, 0, 0);
         mStomp = AddSpell(KRYSTALLUS_STOMP, Target_Self, 0, 0, 0);
-        mShatter->AddEmote("Break.... you....", CHAT_MSG_MONSTER_YELL, 14178);
+        mShatter->addEmote("Break.... you....", CHAT_MSG_MONSTER_YELL, 14178);
 
         mStompTimer = INVALIDATE_TIMER;
         mShatterTimer = INVALIDATE_TIMER;
+
+        // new
+        addEmoteForEvent(Event_OnCombatStart, 4363);      // Crush....
+        addEmoteForEvent(Event_OnTargetDied, 4365);     // Uuuuhhhhhhhhhh......
+        addEmoteForEvent(Event_OnDied, 4364);     //
     }
 
-    void OnCombatStart(Unit* pTarget)
+    void OnCombatStart(Unit* pTarget) override
     {
-        sendDBChatMessage(4363);      // Crush....
-
         mStompTimer = _addTimer(STOMP_TIMER);
-        
     }
 
-    void AIUpdate()
+    void AIUpdate() override
     {
         if (_isTimerFinished(mStompTimer))
         {
@@ -265,16 +235,6 @@ class KrystallusAI : public CreatureAIScript
             setRooted(false);
             _removeTimer(mShatterTimer);
         }
-    }
-
-    void OnTargetDied(Unit* pTarget)
-    {
-        sendDBChatMessage(4365);     // Uuuuhhhhhhhhhh......
-    }
-
-    void OnDied(Unit* pTarget)
-    {
-        sendDBChatMessage(4364);     // 
     }
 
     protected:

@@ -29,8 +29,6 @@
 // Zereketh the UnboundAI
 class ZerekethAI : public CreatureAIScript
 {
-    public:
-
         ADD_CREATURE_FACTORY_FUNCTION(ZerekethAI);
         ZerekethAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
@@ -44,42 +42,29 @@ class ZerekethAI : public CreatureAIScript
             else
                 AddSpell(SHADOW_NOVA_H, Target_Self, 15, 2, 15);
 
+            // new
+            addEmoteForEvent(Event_OnCombatStart, 5496);     // Life energy to... consume.
+            addEmoteForEvent(Event_OnTargetDied, 5497);      // This vessel is empty.
+            addEmoteForEvent(Event_OnTargetDied, 5498);      // No... more... life.
+            addEmoteForEvent(Event_OnDied, 5501);            // The Void... beckons.
         }
 
-        void OnCombatStart(Unit* mTarget)
+        void OnCombatStart(Unit* mTarget) override
         {
-            sendDBChatMessage(5496);     // Life energy to... consume.
-
             VoidTimer = _addTimer((RandomUInt(10) + 30) * 1000);
             SpeechTimer = _addTimer((RandomUInt(10) + 40) * 1000);
         }
 
-        void OnTargetDied(Unit* mKiller)
+        void OnDied(Unit* mKiller) override
         {
-            switch (RandomUInt(1))
-            {
-                case 0:
-                    sendDBChatMessage(5497);     // This vessel is empty.
-                    break;
-                case 1:
-                    sendDBChatMessage(5498);     // No... more... life.
-                    break;
-            }
-        }
-
-        void OnDied(Unit* mKiller)
-        {
-            sendDBChatMessage(5501);     // The Void... beckons.
-
             //despawn voids
-            Creature* creature = NULL;
             for (std::set<Object*>::iterator itr = getCreature()->GetInRangeSetBegin(); itr != getCreature()->GetInRangeSetEnd();)
             {
                 Object* obj = *itr;
                 ++itr;
                 if (obj->IsCreature())
                 {
-                    creature = static_cast<Creature*>(obj);
+                    auto creature = static_cast<Creature*>(obj);
 
                     if (creature->GetCreatureProperties()->Id == 21101 && creature->isAlive())
                     {
@@ -144,7 +129,7 @@ class ZerekethAI : public CreatureAIScript
             VoidZone->Despawn(60000, 0);
         }
 
-        void AIUpdate()
+        void AIUpdate() override
         {
             if (_isTimerFinished(SpeechTimer))
                 Speech();
@@ -161,8 +146,6 @@ class ZerekethAI : public CreatureAIScript
 
 class VoidZoneARC : public CreatureAIScript
 {
-    public:
-
         ADD_CREATURE_FACTORY_FUNCTION(VoidZoneARC);
         VoidZoneARC(Creature* pCreature) : CreatureAIScript(pCreature)
         {
@@ -172,7 +155,7 @@ class VoidZoneARC : public CreatureAIScript
             RegisterAIUpdateEvent(1000);
         }
 
-        void AIUpdate()
+        void AIUpdate() override
         {
             // M4ksiu: I'm not sure if it should be cast once, on start
             uint32 SpellId = CONSUMPTION;
@@ -189,53 +172,35 @@ class VoidZoneARC : public CreatureAIScript
 // sounds missing related to Wrath... (look on script below this one)
 class DalliahTheDoomsayerAI : public CreatureAIScript
 {
-    public:
-
         ADD_CREATURE_FACTORY_FUNCTION(DalliahTheDoomsayerAI);
         DalliahTheDoomsayerAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
             AddSpell(GIFT_OF_THE_DOOMSAYER, Target_Current, 8.0f, 0.0f, -1);
 
             SpellDesc* WhirlTemp = AddSpell(WHIRLWIND, Target_Self, 15.0f, 0.0f, -1);
-            WhirlTemp->AddEmote("Reap the Whirlwind!", CHAT_MSG_MONSTER_YELL, 11089);
-            WhirlTemp->AddEmote("I'll cut you to peices!", CHAT_MSG_MONSTER_YELL, 11090);
+            WhirlTemp->addEmote("Reap the Whirlwind!", CHAT_MSG_MONSTER_YELL, 11089);
+            WhirlTemp->addEmote("I'll cut you to peices!", CHAT_MSG_MONSTER_YELL, 11090);
 
             SpellDesc* HealTemp = AddSpell(HEAL, Target_Self, 8.0f, 0, -1);
-            HealTemp->AddEmote("That is much better.", CHAT_MSG_MONSTER_YELL, 11091);
-            HealTemp->AddEmote("Ah, just what I needed.", CHAT_MSG_MONSTER_YELL, 11092);
+            HealTemp->addEmote("That is much better.", CHAT_MSG_MONSTER_YELL, 11091);
+            HealTemp->addEmote("Ah, just what I needed.", CHAT_MSG_MONSTER_YELL, 11092);
 
             if (_isHeroic())
                 AddSpell(SHADOW_WAVE, Target_Current, 8.0f, 0, -1);
 
+            // new
+            addEmoteForEvent(Event_OnCombatStart, 7368);    // It is unwise to anger me!
+            addEmoteForEvent(Event_OnTargetDied, 7369);     // Completely ineffective.  Just like someone else I know.
+            addEmoteForEvent(Event_OnTargetDied, 7370);     // You chose the wrong opponent.
+            addEmoteForEvent(Event_OnDied, 7375);           // Now I'm really angry.
         }
 
-        void OnEnterCombat(Unit* mKiller)
+        void OnDied(Unit* mKiller) override
         {
-            sendDBChatMessage(7368);     // It is unwise to anger me!
-        }
-
-        void OnTargetDied(Unit* mKiller)
-        {
-            switch (RandomUInt(1))
-            {
-                case 0:
-                    sendDBChatMessage(7369);     // Completely ineffective.  Just like someone else I know.
-                    break;
-                case 1:
-                    sendDBChatMessage(7370);     // You chose the wrong opponent.
-                    break;
-            }
-        }
-
-        void OnDied(Unit* mKiller)
-        {
-            sendDBChatMessage(7375);     // Now I'm really angry.
-
             GameObject* door2 = getNearestGameObject(184319);
             if (door2 != NULL)
                 door2->SetState(GO_STATE_OPEN);
         }
-
 };
 
 // Wrath-Scryer SoccothratesAI
@@ -245,8 +210,6 @@ class DalliahTheDoomsayerAI : public CreatureAIScript
 // so haven't added them.
 class WrathScryerSoccothratesAI : public CreatureAIScript
 {
-    public:
-
         ADD_CREATURE_FACTORY_FUNCTION(WrathScryerSoccothratesAI);
         WrathScryerSoccothratesAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
@@ -255,35 +218,20 @@ class WrathScryerSoccothratesAI : public CreatureAIScript
             AddSpell(FELFIRE_LINE_UP, Target_Self, 8.0f, 0, -1);
             AddSpell(KNOCK_AWAY, Target_Destination, 6.0f, 0, -1);
             AddSpell(CHARGE, Target_Current, 4.0f, 0, -1);
+
+            // new
+            addEmoteForEvent(Event_OnCombatStart, 7365);    // At last, a target for my frustrations!
+            addEmoteForEvent(Event_OnTargetDied, 7364);     // Yes, that was quite satisfying.
+            addEmoteForEvent(Event_OnTargetDied, 8753);     // Ha! Much better!
+            addEmoteForEvent(Event_OnDied, 7380);           // Knew this was... the only way out.
         }
 
-        void OnCombatStart(Unit* mKiller)
+        void OnDied(Unit* mKiller) override
         {
-            sendDBChatMessage(7365);     // At last, a target for my frustrations!
-        }
-
-        void OnTargetDied(Unit* mKiller)
-        {
-            switch (RandomUInt(1))
-            {
-                case 0:
-                    sendDBChatMessage(7364);     // Yes, that was quite satisfying.
-                    break;
-                case 1:
-                    sendDBChatMessage(8753);     // Ha! Much better!
-                    break;
-            }
-        }
-
-        void OnDied(Unit* mKiller)
-        {
-            sendDBChatMessage(7380);     // Knew this was... the only way out.
-
             GameObject* door1 = getNearestGameObject(199.969f, 118.5837f, 22.379f, 184318);
             if (door1 != NULL)
                 door1->SetState(GO_STATE_OPEN);
         }
-
 };
 
 // Harbinger SkyrissAI
@@ -293,20 +241,18 @@ class WrathScryerSoccothratesAI : public CreatureAIScript
 // Add sounds related to his dialog with mind controlled guy
 class HarbringerSkyrissAI : public CreatureAIScript
 {
-    public:
-
         ADD_CREATURE_FACTORY_FUNCTION(HarbringerSkyrissAI);
         HarbringerSkyrissAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
             AddSpell(MIND_REND, Target_Current, 15.0f, 0, -1);
 
             SpellDesc* Fear = AddSpell(FEAR, Target_Current, 8.0f, 0, -1);
-            Fear->AddEmote("Flee in terror!", CHAT_MSG_MONSTER_YELL, 11129);
-            Fear->AddEmote("I will show you horrors undreamed of.", CHAT_MSG_MONSTER_YELL, 11130);
+            Fear->addEmote("Flee in terror!", CHAT_MSG_MONSTER_YELL, 11129);
+            Fear->addEmote("I will show you horrors undreamed of.", CHAT_MSG_MONSTER_YELL, 11130);
 
             SpellDesc* Domination = AddSpell(DOMINATION, Target_Current, 6.0f, 0, -1);
-            Domination->AddEmote("You will do my bidding, weakling.", CHAT_MSG_MONSTER_YELL, 11127);
-            Domination->AddEmote("Your will is no longer your own.", CHAT_MSG_MONSTER_YELL, 11128);
+            Domination->addEmote("You will do my bidding, weakling.", CHAT_MSG_MONSTER_YELL, 11127);
+            Domination->addEmote("Your will is no longer your own.", CHAT_MSG_MONSTER_YELL, 11128);
 
             Illusion66 = AddSpell(SUMMON_ILLUSION_66, Target_Self, 0, 0, -1, 0, 0, false, "", CHAT_MSG_MONSTER_YELL, 11131);
             Illusion66->mEnabled = false;
@@ -315,34 +261,20 @@ class HarbringerSkyrissAI : public CreatureAIScript
             Illusion33->mEnabled = false;
 
             IllusionCount = 0;
+
+            // new
+            addEmoteForEvent(Event_OnCombatStart, 5034);    // Bear witness to the agent of your demise!
+            addEmoteForEvent(Event_OnTargetDied, 5035);     // Your fate is written.
+            addEmoteForEvent(Event_OnTargetDied, 5036);     // The chaos I have sown here is but a taste....
+            addEmoteForEvent(Event_OnDied, 5042);           // I am merely one of... infinite multitudes.
         }
 
-        void OnCombatStart(Unit* mTarget)
+        void OnCombatStart(Unit* mTarget) override
         {
-            sendDBChatMessage(5034);     // Bear witness to the agent of your demise!
-
             IllusionCount = 0;
         }
 
-        void OnTargetDied(Unit* mKiller)
-        {
-            switch (RandomUInt(1))
-            {
-                case 0:
-                    sendDBChatMessage(5035);     // Your fate is written.
-                    break;
-                case 1:
-                    sendDBChatMessage(5036);     // The chaos I have sown here is but a taste....
-                    break;
-            }
-        }
-
-        void OnDied(Unit* mKiller)
-        {
-            sendDBChatMessage(5042);     // I am merely one of... infinite multitudes.
-        }
-
-        void AIUpdate()
+        void AIUpdate() override
         {
             if (_getHealthPercent() <= 66 && IllusionCount == 0)
             {
@@ -367,7 +299,6 @@ class HarbringerSkyrissAI : public CreatureAIScript
 // Warden MellicharAI
 class WardenMellicharAI : public CreatureAIScript
 {
-    public:
         ADD_CREATURE_FACTORY_FUNCTION(WardenMellicharAI);
         WardenMellicharAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
@@ -388,7 +319,7 @@ class WardenMellicharAI : public CreatureAIScript
             NPC_ID_Spawn = 0;
         }
 
-        void OnCombatStart(Unit* mTarget)
+        void OnCombatStart(Unit* mTarget) override
         {
             Phasepart = 0;
             setRooted(true);
@@ -405,12 +336,12 @@ class WardenMellicharAI : public CreatureAIScript
             getCreature()->SendTimedScriptTextChatMessage(SAY_MELLICHAR_02, 27000);
         }
 
-        void OnCombatStop(Unit* mTarget)
+        void OnCombatStop(Unit* mTarget) override
         {
             Reset_Event();
         }
 
-        void AIUpdate()
+        void AIUpdate() override
         {
             setCanEnterCombat(false);
             setRooted(true);
@@ -442,7 +373,7 @@ class WardenMellicharAI : public CreatureAIScript
                     return;
                 }
 
-                else if (Phasepart == 1)
+                if (Phasepart == 1)
                 {
                     if (!NPC_orb1 && NPC_ID_Spawn != 0 && Spawncounter == 0)
                     {
@@ -450,7 +381,8 @@ class WardenMellicharAI : public CreatureAIScript
                         NPC_orb1 = spawnCreature(NPC_ID_Spawn, 475.672f, -147.086f, 42.567f, 3.184015f);
                         return;
                     }
-                    else if (NPC_orb1 && !NPC_orb1->isAlive())
+
+                    if (NPC_orb1 && !NPC_orb1->isAlive())
                     {
                         sendDBChatMessage(SAY_MELLICHAR_03);
                         setScriptPhase(2);
@@ -458,13 +390,7 @@ class WardenMellicharAI : public CreatureAIScript
                         _resetTimer(Phase_Timer, 6000);
                         return;
                     }
-                    else
-                    {
-                        return;
-                    }
-                    return;
                 }
-                //return;
             }
 
             // ORB TWO
@@ -482,7 +408,7 @@ class WardenMellicharAI : public CreatureAIScript
                     return;
                 }
 
-                else if (Phasepart == 1)
+                if (Phasepart == 1)
                 {
                     if (!NPC_orb2 && Spawncounter == 0)
                     {
@@ -490,7 +416,8 @@ class WardenMellicharAI : public CreatureAIScript
                         NPC_orb2 = spawnCreature(CN_MILLHOUSE_MANASTORM, 413.192f, -148.586f, 42.569f, 0.024347f);
                         return;
                     }
-                    else if (NPC_orb2 && NPC_orb2->isAlive())
+
+                    if (NPC_orb2 && NPC_orb2->isAlive())
                     {
                         Creature* millhouse = getNearestCreature(CN_MILLHOUSE_MANASTORM);
                         if (millhouse)
@@ -506,14 +433,7 @@ class WardenMellicharAI : public CreatureAIScript
                         _resetTimer(Phase_Timer, 25000);
                         return;
                     }
-                    else
-                    {
-                        return;
-                    }
-                    return;
-
                 }
-                //return;
             }
 
             // ORB THREE
@@ -541,7 +461,7 @@ class WardenMellicharAI : public CreatureAIScript
                     return;
                 }
 
-                else if (Phasepart == 1)
+                if (Phasepart == 1)
                 {
                     if (!NPC_orb3 && NPC_ID_Spawn != 0 && Spawncounter == 0)
                     {
@@ -551,7 +471,8 @@ class WardenMellicharAI : public CreatureAIScript
                         NPC_orb3 = spawnCreature(NPC_ID_Spawn, 420.050f, -173.500f, 42.580f, 6.110f);
                         return;
                     }
-                    else if (!NPC_orb3)
+
+                    if (!NPC_orb3)
                     {
                         /// \todo investigate.... saying "2"... really?
                         getCreature()->SendChatMessage(CHAT_MSG_MONSTER_YELL, LANG_UNIVERSAL, "2");
@@ -569,9 +490,7 @@ class WardenMellicharAI : public CreatureAIScript
                     {
                         return;
                     }
-                    return;
                 }
-                //return;
             }
 
             // ORB FOUR
@@ -599,7 +518,7 @@ class WardenMellicharAI : public CreatureAIScript
                     return;
                 }
 
-                else if (Phasepart == 1)
+                if (Phasepart == 1)
                 {
                     if (!NPC_orb4 && NPC_ID_Spawn != 0 && Spawncounter == 0)
                     {
@@ -607,7 +526,8 @@ class WardenMellicharAI : public CreatureAIScript
                         NPC_orb4 = spawnCreature(NPC_ID_Spawn, 471.153f, -174.715f, 42.589f, 3.097f);
                         return;
                     }
-                    else if (!NPC_orb4)
+
+                    if (!NPC_orb4)
                     {
                         NPC_orb4 = getNearestCreature(NPC_ID_Spawn);
                     }
@@ -623,13 +543,8 @@ class WardenMellicharAI : public CreatureAIScript
                     {
                         return;
                     }
-                    return;
                 }
-                //return;
             }
-
-            else if (_isTimerFinished(Phase_Timer) && isScriptPhase(4))
-            {}
 
             setRooted(true);
             _setMeleeDisabled(true);
@@ -687,7 +602,6 @@ class WardenMellicharAI : public CreatureAIScript
                 NPC_orb5->Despawn(0, 0);
                 NPC_orb5 = NULL;
             }
-
         }
 
     protected:

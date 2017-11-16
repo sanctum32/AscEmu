@@ -18,24 +18,26 @@
  *
  */
 
-#include "../Common.hpp"
+#ifndef _THREADING_H
+#define _THREADING_H
 
-namespace Arcemu
-{
-    namespace Threading
-    {
-        float AtomicFloat::SetVal(float NewValue)
-        {
-            unsigned long iv = *(reinterpret_cast< unsigned long* >(&NewValue));
-            float ret = *(reinterpret_cast< float* >(Value.SetVal(iv)));
+// We need assertions.
+#include "../Errors.h"
 
-            return ret;
-        }
+// Platform Specific Lock Implementation
+#include "Mutex.h"
 
-        float AtomicFloat::GetVal()
-        {
-            float val = *(reinterpret_cast< float* >(Value.GetVal()));
-            return val;
-        }
-    }
-}
+// Platform Independant Guard
+#include "Guard.h"
+
+// Platform Specific Thread Base
+#include "LegacyThreadBase.h"
+
+// Platform independant locked queue
+#include "LockedQueue.h"
+
+// Thread Pool
+#include "LegacyThreadPool.h"
+
+#endif
+

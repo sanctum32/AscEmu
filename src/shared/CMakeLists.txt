@@ -18,14 +18,12 @@ set(sources
     Network/CircularBuffer.cpp
     Network/Socket.cpp
 
-    Threading/AtomicBoolean.cpp
-    Threading/AtomicCounter.cpp
-    Threading/AtomicFloat.cpp
-    Threading/AtomicULong.cpp
     Threading/ConditionVariable.cpp
     Threading/Mutex.cpp
-    Threading/Threading.h
-    Threading/ThreadPool.cpp
+    Threading/LegacyThreading.h
+	Threading/LegacyThreadPool.cpp
+
+	Threading/AEThread.cpp
 
     ascemu_getopt.cpp
     CrashHandler.cpp
@@ -42,7 +40,7 @@ set(sources
     printStackTrace.cpp
     SysInfo.cpp
     TextFile.cpp
-    Util.cpp
+	Util.cpp
 )
 
 set(headers
@@ -108,19 +106,18 @@ set(headers
 	Network/SocketMgrWin32.h
 	Network/SocketOps.h
 	Network/SocketDefines.h
-	Threading/AtomicBoolean.h
-	Threading/AtomicCounter.h
-	Threading/AtomicFloat.h
-	Threading/AtomicULong.h
 	Threading/ConditionVariable.h
 	Threading/Guard.h
+	Threading/LegacyThreading.h
+	Threading/LegacyThreadPool.h
+	Threading/LegacyThreadBase.h
 	Threading/LockedQueue.h
 	Threading/Mutex.h
 	Threading/Queue.h
 	Threading/RWLock.h
-	Threading/Threading.h
-	Threading/ThreadPool.h
-	Threading/ThreadBase.h
+
+	Threading/AEThread.h
+	Threading/ThreadState.h
 	
 	Common.hpp
 	Log.hpp

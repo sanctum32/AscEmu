@@ -159,7 +159,7 @@ class RhahkZorAI : public CreatureAIScript
         AddSpell(6304, Target_Current, 8, 0, 3);    // Rhahk'Zor Slam
     }
 
-    void OnCombatStart(Unit* pTarget)
+    void OnCombatStart(Unit* pTarget) override
     {
         sendDBChatMessage(5495);     // VanCleef pay big for you heads!
 
@@ -172,8 +172,6 @@ class RhahkZorAI : public CreatureAIScript
 
 class MrSmiteAI : public CreatureAIScript
 {
-    public:
-
         ADD_CREATURE_FACTORY_FUNCTION(MrSmiteAI);
         MrSmiteAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
@@ -183,7 +181,7 @@ class MrSmiteAI : public CreatureAIScript
             _setWieldWeapon(true);
         }
 
-        void OnCombatStop(Unit* pTarget)
+        void OnCombatStop(Unit* pTarget) override
         {
             if (isScriptPhase(4))
                 _removeAura(SMITES_HAMMER);
@@ -197,7 +195,7 @@ class MrSmiteAI : public CreatureAIScript
             
         }
 
-        void AIUpdate()
+        void AIUpdate() override
         {
             if (_getHealthPercent() <= 66 && isScriptPhase(1))
                 setScriptPhase(2);
@@ -220,7 +218,7 @@ class MrSmiteAI : public CreatureAIScript
             
         }
 
-        void OnScriptPhaseChange(uint32_t phaseId)
+        void OnScriptPhaseChange(uint32_t phaseId) override
         {
             switch (phaseId)
             {
@@ -312,14 +310,14 @@ class VanCleefAI : public CreatureAIScript
     VanCleefAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
         AddSpell(3391, Target_Self, 25, 0, 0);    //Thrash (Gives the caster 2 extra attacks.)
+
+        // new
+        addEmoteForEvent(Event_OnCombatStart, 7722);     // None may challenge the Brotherhood!
+        addEmoteForEvent(Event_OnDied, 7727);            // The Brotherhood shall prevail!
     }
 
-    void OnCombatStart(Unit* pTarget)
-    {
-        sendDBChatMessage(7722);     // None may challenge the Brotherhood!
-    }
 
-    void OnTargetDied(Unit* pTarget)
+    void OnTargetDied(Unit* pTarget) override
     {
         char msg[200];
         if (pTarget->IsPlayer())
@@ -331,13 +329,9 @@ class VanCleefAI : public CreatureAIScript
         
     }
 
-    void OnDied(Unit* pKiller)
+    void AIUpdate() override
     {
-        sendDBChatMessage(7727);     // The Brotherhood shall prevail!
-    }
-
-    void AIUpdate()
-    {
+        // case for scriptPhase
         if (_getHealthPercent() <= 75 && isScriptPhase(1))
         {
             sendDBChatMessage(7723);     // Lapdogs, all of you!

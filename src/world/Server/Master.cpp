@@ -52,8 +52,6 @@ SERVER_DECL SessionLog* Player_Log;
 // threads
 extern DayWatcherThread* dw;
 
-extern BroadcastMgr* bcmgr;
-
 ConfigMgr Config;
 
 // DB version
@@ -353,10 +351,6 @@ bool Master::Run(int argc, char** argv)
     LogNotice("DayWatcherThread : Exiting...");
     dw->terminate();
     dw = NULL;
-
-    LogNotice("BroadcastMgr : Exiting...");
-    bcmgr->terminate();
-    bcmgr = nullptr;
 
     ls->Close();
 
@@ -754,8 +748,6 @@ void Master::WritePidFile()
 
 void Master::ShutdownThreadPools(bool listnersockcreate)
 {
-    // Socket loop!
-    time_t curTime;
     uint32 loopcounter = 0;
     auto last_time = Util::TimeNow();
     uint32 next_printout = Util::getMSTime(), next_send = Util::getMSTime();
@@ -779,10 +771,10 @@ void Master::ShutdownThreadPools(bool listnersockcreate)
         }
 
         /* since time() is an expensive system call, we only update it once per server loop */
-        curTime = time(NULL);
+        time_t curTime = time(nullptr);
         if (UNIXTIME != curTime)
         {
-            UNIXTIME = time(NULL);
+            UNIXTIME = time(nullptr);
             g_localTime = *localtime(&curTime);
         }
 
@@ -797,11 +789,11 @@ void Master::ShutdownThreadPools(bool listnersockcreate)
             {
                 if (m_ShutdownTimer > 60000.0f)
                 {
-                    if (!((int)(m_ShutdownTimer) % 60000))
-                    LogNotice("Server : Shutdown in %i minutes.", (int)(m_ShutdownTimer / 60000.0f));
+                    if (!(static_cast<int>(m_ShutdownTimer) % 60000))
+                    LogNotice("Server : Shutdown in %i minutes.", static_cast<int>(m_ShutdownTimer / 60000.0f));
                 }
                 else
-                LogNotice("Server : Shutdown in %i seconds.", (int)(m_ShutdownTimer / 1000.0f));
+                LogNotice("Server : Shutdown in %i seconds.", static_cast<int>(m_ShutdownTimer / 1000.0f));
 
                 next_printout = Util::getMSTime() + 500;
             }
@@ -838,7 +830,7 @@ void Master::ShutdownThreadPools(bool listnersockcreate)
             if (diff >= m_ShutdownTimer)
                 break;
             else
-                m_ShutdownTimer -= diff;
+                m_ShutdownTimer -= static_cast<uint32>(diff);
         }
 
         if (50 > etime)

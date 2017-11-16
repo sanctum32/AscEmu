@@ -29,10 +29,29 @@ void LogonConsole::TranslateRehash(char* str)
         LogDefault("Rehashing config file finished succesfull!");
 }
 
+void LogonConsole::demoTicker(AscEmu::Threading::AEThread& thread) {
+    std::cout << "Thread ticker: " << m_demoCounter << std::endl;
+    ++m_demoCounter;
+}
+
+void LogonConsole::threadDemoCmd(char* str) {
+    std::cout << "Thread Demo init" << std::endl;
+
+    if (m_demoCounter != 0)
+    {
+        std::cout << "Existing thread found, rebooting" << std::endl;
+        m_demoThread->reboot();
+        return;
+    }
+
+    std::function<void(AscEmu::Threading::AEThread&)> f = [this](AscEmu::Threading::AEThread& thread) { this->demoTicker(thread); };
+    m_demoThread = new AscEmu::Threading::AEThread(std::string("DemoThread"), f, std::chrono::milliseconds(100));
+}
+
 void LogonConsole::Kill()
 {
     if (_thread != nullptr)
-        _thread->kill.SetVal(true);
+        _thread->kill = true;
 #ifdef WIN32
     /* write the return keydown/keyup event */
     DWORD dwTmp;
@@ -75,7 +94,7 @@ bool LogonConsoleThread::runThread()
     struct timeval tv;
 #endif
 
-    while (!kill.GetVal())
+    while (!kill)
     {
 #ifndef WIN32
         tv.tv_sec = 1;
@@ -84,7 +103,7 @@ bool LogonConsoleThread::runThread()
         FD_SET(STDIN_FILENO, &fds);
         if(select(1, &fds, NULL, NULL, &tv) <= 0)
         {
-            if(!kill.GetVal()) // timeout
+            if(!kill.load()) // timeout
                 continue;
             else
                 break;
@@ -95,7 +114,7 @@ bool LogonConsoleThread::runThread()
         // Read in single line from "stdin"
         fgets(cmd, 80, stdin);
 
-        if (kill.GetVal())
+        if (kill)
             break;
 
         len = strlen(cmd);
@@ -128,6 +147,7 @@ void LogonConsole::ProcessCmd(char* cmd)
     SCmd cmds[] =
     {
         { "?", &LogonConsole::TranslateHelp },
+        { "z", &LogonConsole::threadDemoCmd },
         { "help", &LogonConsole::TranslateHelp },
         { "account create", &LogonConsole::AccountCreate },
         { "account delete", &LogonConsole::AccountDelete },
@@ -182,7 +202,7 @@ void LogonConsole::TranslateQuit(char* str)
 }
 void LogonConsole::ProcessQuit(int delay)
 {
-    mrunning.SetVal(false);
+    mrunning = false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -412,7 +432,7 @@ void LogonConsole::checkAccountName(std::string name, uint8 type)
 
 LogonConsoleThread::LogonConsoleThread()
 {
-    kill.SetVal(false);
+    kill = false;
 }
 
 LogonConsoleThread::~LogonConsoleThread()

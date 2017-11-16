@@ -301,32 +301,6 @@ class SERVER_DECL ScriptMgr : public Singleton<ScriptMgr>
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Base.h stuff
-
-enum EmoteEventType
-{
-    Event_OnCombatStart = 0,
-    Event_OnTargetDied  = 1,
-    Event_OnDied        = 2,
-    Event_OnTaunt       = 3,
-    Event_OnIdle        = 4     // new not part of db definitions!
-};
-
-struct SERVER_DECL EmoteDesc
-{
-    EmoteDesc(std::string pText, uint8_t pType, uint32_t pSoundId)
-    {
-        mText = (!pText.empty() ? pText : "");
-        mType = pType;
-        mSoundId = pSoundId;
-    }
-
-    std::string mText;
-    uint8_t mType;
-    uint32_t mSoundId;
-};
-
-typedef std::vector<EmoteDesc> EmoteArray;
-
 struct LocationExtra
 {
     float x;
@@ -416,10 +390,10 @@ public:
     TargetType(uint32_t pTargetGen = TargetGen_Self, TargetFilter pTargetFilter = TargetFilter_None, uint32_t pMinTargetNumber = 0, uint32_t pMaxTargetNumber = 0);
     ~TargetType();
 
-    uint32_t            mTargetGenerator;    // Defines what kind of target should we try to find
-    TargetFilter    mTargetFilter;        // Defines filter of target
-    uint32_t            mTargetNumber[2];    // 0: Defines min. number of creature on hatelist (0 - any, 1 - the most hated etc.)
-                                           // 1: Defines max. number of creature on hatelist (0 - any, HateList.size + 1 - the least hated etc.)
+    uint32_t mTargetGenerator;      // Defines what kind of target should we try to find
+    TargetFilter mTargetFilter;     // Defines filter of target
+    uint32_t mTargetNumber[2];      // 0: Defines min. number of creature on hatelist (0 - any, 1 - the most hated etc.)
+                                    // 1: Defines max. number of creature on hatelist (0 - any, HateList.size + 1 - the least hated etc.)
 };
 
 // Pre-made TargetTypes
@@ -462,19 +436,35 @@ public:
     virtual ~SpellDesc();
 
 
+    struct EmoteDesc
+    {
+        EmoteDesc(std::string pText, uint8_t pType, uint32_t pSoundId)
+        {
+            mText = (!pText.empty() ? pText : "");
+            mType = pType;
+            mSoundId = pSoundId;
+        }
 
-    void AddEmote(std::string pText, uint8_t pType = CHAT_MSG_MONSTER_YELL, uint32_t pSoundId = 0);
+        std::string mText;
+        uint8_t mType;
+        uint32_t mSoundId;
+    };
+    typedef std::vector<EmoteDesc> EmoteArray;
 
-    void TriggerCooldown(uint32_t pCurrentTime = 0);
-    void AddAnnouncement(std::string pText);
+    void addEmote(std::string pText, uint8_t pType = CHAT_MSG_MONSTER_YELL, uint32_t pSoundId = 0);
+    void sendRandomEmote(CreatureAIScript* creatureAI);
 
-    SpellInfo* mInfo;              //Spell Entry information (generally you either want a SpellInfo OR a SpellFunc, not both)
+    void setTriggerCooldown(uint32_t pCurrentTime = 0);
+
+    void addAnnouncement(std::string pText);
+
+    SpellInfo* mInfo;               //Spell Entry information (generally you either want a SpellInfo OR a SpellFunc, not both)
     SpellFunc mSpellFunc;           //Spell Function to be executed (generally you either want a SpellInfo OR a SpellFunc, not both)
     TargetType mTargetType;         //Target type (see class above)
 
     float mChance;                  //Percent of the cast of this spell in a total of 100% of the attacks
     float mCastTime;                //Duration of the spell cast (seconds). Zero means the spell is instant cast
-    int32_t mCooldown;                //Spell cooldown (seconds)
+    int32_t mCooldown;              //Spell cooldown (seconds)
 
     float mMinRange;                //Minimum range for spell to be cast
     float mMaxRange;                //Maximum range for spell to be cast
@@ -487,9 +477,182 @@ public:
     std::string mAnnouncement;      //Announce spell cast
 
                                     //Those are not properties, they are data member used by the evaluation system
-    uint32_t mLastCastTime;           //Last time at which the spell casted (used to implement cooldown), set to 0
+    uint32_t mLastCastTime;         //Last time at which the spell casted (used to implement cooldown), set to 0
 };
 
+//\brief: Used originally for SP_AI_Spell targettype and new for CreatureAISpells
+enum
+{
+    TARGET_SELF,
+    TARGET_VARIOUS,
+    TARGET_ATTACKING,
+    TARGET_DESTINATION,
+    TARGET_SOURCE,
+    TARGET_RANDOM_FRIEND,    // doesn't work yet
+    TARGET_RANDOM_SINGLE,
+    TARGET_RANDOM_DESTINATION
+};
+
+#include "Spell/Customization/SpellCustomizations.hpp"
+
+//\brief: created by Zyres 11/13/2017 - This should replace SP_AI_Spell, ScriptSpell and SpellDesc
+class SERVER_DECL CreatureAISpells
+{
+    public:
+        CreatureAISpells(SpellInfo* spellInfo, float castChance, uint32_t targetType, uint32_t duration, uint32_t cooldown, bool forceRemove, bool isTriggered)
+        {
+            mSpellInfo = spellInfo;
+            mCastChance = castChance;
+            mTargetType = targetType;
+            mDuration = duration;
+
+            mDurationTimerId = 0;
+
+            mCooldown = cooldown;
+            mCooldownTimerId = 0;
+            mForceRemoveAura = forceRemove;
+            mIsTriggered = isTriggered;
+
+            mMaxStackCount = 1;
+
+            mMinPositionRangeToCast = 0.0f;
+            mMaxPositionRangeToCast = 100.0f;
+
+            mMinHpRangeToCast = 0.0f;
+            mMaxHpRangeToCast = 100.0f;
+
+            mAttackStopTimer = 0;
+        }
+
+        ~CreatureAISpells()
+        {
+        }
+
+        SpellInfo* mSpellInfo;
+        float mCastChance;
+        uint32_t mTargetType;
+        uint32_t mDuration;
+
+        void setdurationTimer(uint32_t durationTimer)
+        {
+            mDurationTimerId = durationTimer;
+        }
+
+        uint32_t mDurationTimerId;
+
+        void setCooldownTimerId(uint32_t cooldownTimer)
+        {
+            mCooldownTimerId = cooldownTimer;
+        }
+
+        uint32_t mCooldown;
+        uint32_t mCooldownTimerId;
+
+        bool mForceRemoveAura;
+        bool mIsTriggered;
+
+        // non db script messages
+        struct AISpellEmotes
+        {
+            AISpellEmotes(std::string pText, uint8_t pType, uint32_t pSoundId)
+            {
+                mText = (!pText.empty() ? pText : "");
+                mType = pType;
+                mSoundId = pSoundId;
+            }
+
+            std::string mText;
+            uint8_t mType;
+            uint32_t mSoundId;
+        };
+        typedef std::vector<AISpellEmotes> AISpellEmoteArray;
+        AISpellEmoteArray mAISpellEmote;
+
+        void addDBEmote(uint32_t textId);
+        void addEmote(std::string pText, uint8_t pType = CHAT_MSG_MONSTER_YELL, uint32_t pSoundId = 0);
+
+        void sendRandomEmote(CreatureAIScript* creatureAI);
+
+        uint32_t mMaxStackCount;
+
+        void setMaxStackCount(uint32_t stackCount) { mMaxStackCount = stackCount; }
+        uint32_t getMaxStackCount() { return mMaxStackCount; }
+
+        float mMinPositionRangeToCast;
+        float mMaxPositionRangeToCast;
+
+        bool isDistanceInRange(float targetDistance)
+        {
+            if (targetDistance >= mMinPositionRangeToCast && targetDistance <= mMaxPositionRangeToCast)
+                return true;
+
+            return false;
+        }
+        void setMinMaxDistance(float minDistance, float maxDistance)
+        {
+            mMinPositionRangeToCast = minDistance;
+            mMaxPositionRangeToCast = maxDistance;
+        }
+
+        // if it is not a random target type it sets the hp range when the creature can cast this spell
+        // if it is a random target it controles when the spell can be cast based on the target hp
+        float mMinHpRangeToCast;
+        float mMaxHpRangeToCast;
+
+        bool isHpInRange(float targetHp)
+        {
+            if (targetHp >= mMinHpRangeToCast && targetHp <= mMaxHpRangeToCast)
+                return true;
+
+            return false;
+        }
+
+        void setMinMaxHp(float minHp, float maxHp)
+        {
+            mMinHpRangeToCast = minHp;
+            mMaxHpRangeToCast = maxHp;
+        }
+
+        typedef std::vector<uint32_t> ScriptPhaseList;
+        ScriptPhaseList mPhaseList;
+
+        void setAvailableForScriptPhase(std::vector<uint32_t> phaseVector)
+        {
+            for (const auto& phase : phaseVector)
+            {
+                mPhaseList.push_back(phase);
+            }
+        }
+
+        bool isAvailableForScriptPhase(uint32_t scriptPhase)
+        {
+            if (mPhaseList.empty())
+                return true;
+
+            for (const auto& availablePhase : mPhaseList)
+            {
+                if (availablePhase == scriptPhase)
+                    return true;
+            }
+
+            return false;
+        }
+
+        uint32_t mAttackStopTimer;
+
+        void setAttackStopTimer(uint32_t attackStopTime)
+        {
+            mAttackStopTimer = attackStopTime;
+        }
+
+        uint32_t getAttackStopTimer()
+        {
+            return mAttackStopTimer;
+        }
+
+        std::string mAnnouncement;
+        void sendAnnouncement(CreatureAIScript* creatureAI);
+};
 
 class SERVER_DECL CreatureAIScript
 {
@@ -679,7 +842,15 @@ class SERVER_DECL CreatureAIScript
 
         uint32_t mAIUpdateFrequency;
 
+        uint32_t mCustomAIUpdateDelayTimerId;
+        uint32_t mCustomAIUpdateDelay;
     public:
+
+        //new
+        void registerAiUpdateFrequency();
+        void removeAiUpdateFrequency();
+
+        //old stuff
 
         void SetAIUpdateFreq(uint32 pUpdateFreq);
         uint32 GetAIUpdateFreq();
@@ -699,6 +870,51 @@ class SERVER_DECL CreatureAIScript
 
         //////////////////////////////////////////////////////////////////////////////////////////
         // spell
+        //\brief: created by Zyres 11/13/2017 - This should replace AP_AI_Spell and SpellDesc
+
+        typedef std::vector<CreatureAISpells*> CreatureAISpellsArray;
+        CreatureAISpellsArray mCreatureAISpells;
+
+    private:
+
+    public:
+
+        uint32_t mSpellWaitTimerId;
+        bool enableCreatureAISpellSystem;
+
+        //addAISpell(spellID, Chance, TargetType, Duration (s), waitBeforeNextCast (s))
+        CreatureAISpells* addAISpell(uint32_t spellId, float castChance, uint32_t targetType, uint32_t duration = 0, uint32_t cooldown = 0, bool forceRemove = false, bool isTriggered = true)
+        {
+            SpellInfo* spellInfo = sSpellCustomizations.GetSpellInfo(spellId);
+            if (spellInfo != nullptr)
+            {
+                uint32_t spellDuration = duration * 1000;
+                if (spellDuration == 0)
+                    spellDuration = spellInfo->getSpellDuration(nullptr);
+
+                uint32_t spellCooldown = cooldown * 1000;
+                if (spellCooldown == 0)
+                    spellCooldown = spellInfo->getSpellDuration(nullptr);
+
+                CreatureAISpells* newAISpell = new CreatureAISpells(spellInfo, castChance, targetType, spellDuration, spellCooldown, forceRemove, isTriggered);
+
+                mCreatureAISpells.push_back(newAISpell);
+
+                newAISpell->setdurationTimer(_addTimer(spellDuration));
+                newAISpell->setCooldownTimerId(_addTimer(0));
+
+                return newAISpell;
+            }
+            else
+            {
+                LOG_ERROR("tried to add invalid spell with id %u", spellId);
+
+                // assert spellInfo can not be nullptr!
+                ARCEMU_ASSERT(spellInfo != nullptr);
+                return nullptr;
+            }
+        }
+
         void _applyAura(uint32_t spellId);
         void _removeAura(uint32_t spellId);
         void _removeAllAuras();
@@ -711,6 +927,12 @@ class SERVER_DECL CreatureAIScript
         void _unsetTargetToChannel();
         Unit* _getTargetToChannel();
 
+        // only for internal use
+        void newAIUpdateSpellSystem();
+        void castSpellOnRandomTarget(CreatureAISpells* AiSpell);
+
+        void oldAIUpdateSpellSystem();
+
         //////////////////////////////////////////////////////////////////////////////////////////
         // gameobject
         GameObject* getNearestGameObject(uint32_t entry);
@@ -718,6 +940,15 @@ class SERVER_DECL CreatureAIScript
 
         //////////////////////////////////////////////////////////////////////////////////////////
         // chat message
+
+        enum EmoteEventType
+        {
+            Event_OnCombatStart = 0,
+            Event_OnTargetDied = 1,
+            Event_OnDied = 2,
+            Event_OnTaunt = 3,
+            Event_OnIdle = 4     // new not part of db definitions!
+        };
 
     private:
 
@@ -734,7 +965,6 @@ class SERVER_DECL CreatureAIScript
         void sendDBChatMessage(uint32_t textId);
 
         void sendRandomDBChatMessage(std::vector<uint32_t> emoteVector);
-        void sendRandomChatMessage(EmoteArray pEmoteArray);
 
         void addEmoteForEvent(uint32_t eventType, uint32_t scriptTextId);
 
@@ -812,8 +1042,10 @@ class SERVER_DECL CreatureAIScript
         //Spells
         SpellDesc* AddSpell(uint32_t pSpellId, TargetType pTargetType, float pChance, float pCastTime, int32_t pCooldown, float pMinRange = 0, float pMaxRange = 0, bool pStrictRange = false, std::string pText = "", uint8_t pTextType = CHAT_MSG_MONSTER_YELL, uint32_t pSoundId = 0, std::string pAnnouncement = "");
         SpellDesc* AddSpellFunc(SpellFunc pFnc, TargetType pTargetType, float pChance, float pCastTime, int32_t pCooldown, float pMinRange = 0, float pMaxRange = 0, bool pStrictRange = false, std::string pText = "", uint8_t pTextType = CHAT_MSG_MONSTER_YELL, uint32_t pSoundId = 0, std::string pAnnouncement = "");
+        
         void CastSpell(SpellDesc* pSpell);
         void CastSpellNowNoScheduling(SpellDesc* pSpell);
+        
         SpellDesc* FindSpellById(uint32_t pSpellId);
         SpellDesc* FindSpellByFunc(SpellFunc pFnc);
 

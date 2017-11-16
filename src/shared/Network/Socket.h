@@ -81,11 +81,11 @@ class SERVER_DECL Socket
 
         inline bool IsDeleted()
         {
-            return m_deleted.GetVal();
+            return m_deleted;
         }
         inline bool IsConnected()
         {
-            return m_connected.GetVal();
+            return m_connected;
         }
         inline sockaddr_in & GetRemoteStruct() { return m_client; }
 
@@ -108,10 +108,10 @@ class SERVER_DECL Socket
         Mutex m_readMutex;
 
         // we are connected? stop from posting events.
-        Arcemu::Threading::AtomicBoolean m_connected;
+        std::atomic<bool> m_connected;
 
         // We are deleted? Stop us from posting events.
-        Arcemu::Threading::AtomicBoolean m_deleted;
+        std::atomic<bool> m_deleted;
 
         sockaddr_in m_client;
 
@@ -125,16 +125,18 @@ class SERVER_DECL Socket
         inline void DecSendLock() { --m_writeLock; }
         inline bool AcquireSendLock()
         {
-            if(m_writeLock.SetVal(1) != 0)
+
+            if (m_writeLock != 0)
                 return false;
-            else
-                return true;
+
+            m_writeLock = 1;
+            return true;
         }
 
     private:
 
         // Write lock, stops multiple write events from being posted.
-        Arcemu::Threading::AtomicCounter m_writeLock;
+        std::atomic<unsigned long> m_writeLock;
 
         /* Win32 - IOCP Specific Calls */
 #ifdef CONFIG_USE_IOCP
@@ -165,7 +167,7 @@ class SERVER_DECL Socket
         inline bool HasSendLock()
         {
             bool res;
-            res = (m_writeLock.GetVal() != 0);
+            res = (m_writeLock.load() != 0);
             return res;
         }
 #endif
@@ -178,7 +180,7 @@ class SERVER_DECL Socket
         inline bool HasSendLock()
         {
             bool res;
-            res = (m_writeLock.GetVal() != 0);
+            res = (m_writeLock.load() != 0);
             return res;
         }
 #endif

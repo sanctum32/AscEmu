@@ -100,7 +100,7 @@ class HighKingMaulgarAI : public CreatureAIScript
             AddSpell(HIGH_KING_MAULGAR_WHIRLWIND, Target_Self, 7, 15, 25);                    // SpellFunc for range check?
             AddSpell(HIGH_KING_MAULGAR_MIGHTY_BLOW, Target_Current, 7, 0, 20, 0, 5);
             mEnrage = AddSpellFunc(&SpellFunc_Maulgar_Enrage, Target_Self, 0, 0, 0);
-            mEnrage->AddEmote("You will not defeat the hand of Gruul!", CHAT_MSG_MONSTER_YELL, 11368);
+            mEnrage->addEmote("You will not defeat the hand of Gruul!", CHAT_MSG_MONSTER_YELL, 11368);
 
             addEmoteForEvent(Event_OnCombatStart, 8806);
             addEmoteForEvent(Event_OnTargetDied, 8807);
@@ -112,11 +112,10 @@ class HighKingMaulgarAI : public CreatureAIScript
             mAliveAdds = 0;
         }
 
-        void OnCombatStart(Unit* pTarget)
+        void OnCombatStart(Unit* pTarget) override
         {
             _setDisplayWeapon(true, true);
             
-
             mAliveAdds = 0;
             mLastYell = -1;
             for (uint8 i = 0; i < 4; ++i)
@@ -141,16 +140,13 @@ class HighKingMaulgarAI : public CreatureAIScript
             }
         }
 
-        void OnCombatStop(Unit* pTarget)
+        void OnCombatStop(Unit* pTarget) override
         {
-            
             setCanEnterCombat(true);
         }
 
-        void OnDied(Unit* mKiller)
+        void OnDied(Unit* mKiller) override
         {
-            
-
             GameObject* pDoor = mKiller->GetMapMgr()->GetInterface()->GetGameObjectNearestCoords(95.26f, 251.836f, 0.47f, 183817);
             if (pDoor != NULL)
             {
@@ -158,18 +154,16 @@ class HighKingMaulgarAI : public CreatureAIScript
             }
         }
 
-        void AIUpdate()
+        void AIUpdate() override
         {
             if (mAliveAdds > 1)
                 return;
 
             if (isScriptPhase(1) && _getHealthPercent() <= 50)
                 setScriptPhase(2);
-
-            
         }
 
-        void OnScriptPhaseChange(uint32_t phaseId)
+        void OnScriptPhaseChange(uint32_t phaseId) override
         {
             switch (phaseId)
             {
@@ -248,10 +242,8 @@ class KigglerTheCrazedAI : public CreatureAIScript
             AddSpell(KIGGLER_THE_CRAZED_ARCANE_SHOCK, Target_RandomPlayer, 10, 0, 15, 0, 30);
         }
 
-        void OnCombatStart(Unit* pTarget)
+        void OnCombatStart(Unit* pTarget) override
         {
-            
-
             if (getRangeToObject(pTarget) <= 40.0f)
             {
                 setAIAgent(AGENT_SPELL);
@@ -259,9 +251,8 @@ class KigglerTheCrazedAI : public CreatureAIScript
             }
         }
 
-        void OnDied(Unit* mKiller)
+        void OnDied(Unit* mKiller) override
         {
-            
             Creature* pMaulgar = getNearestCreature(143.048996f, 192.725998f, -11.114700f, CN_HIGH_KING_MAULGAR);
             if (pMaulgar != NULL && pMaulgar->isAlive() && pMaulgar->GetScript())
             {
@@ -270,10 +261,8 @@ class KigglerTheCrazedAI : public CreatureAIScript
             }
         }
 
-        void AIUpdate()
+        void AIUpdate() override
         {
-            
-
             Unit* pTarget = getCreature()->GetAIInterface()->getNextTarget();
             if (pTarget != NULL)
             {
@@ -301,9 +290,8 @@ class BlindeyeTheSeerAI : public CreatureAIScript
             AddSpell(BLINDEYE_THE_SEER_HEAL, Target_WoundedFriendly, 8, 1.5, 25);
         }
 
-        void OnDied(Unit* mKiller)
+        void OnDied(Unit* mKiller) override
         {
-            
             Creature* pMaulgar = getNearestCreature(143.048996f, 192.725998f, -11.114700f, CN_HIGH_KING_MAULGAR);
             if (pMaulgar != NULL && pMaulgar->isAlive() && pMaulgar->GetScript())
             {
@@ -328,9 +316,8 @@ class OlmTheSummonerAI : public CreatureAIScript
             AddSpell(OLM_THE_SUMMONER_DARK_DECAY, Target_RandomPlayer, 10, 0, 6);
         }
 
-        void OnDied(Unit* mKiller)
+        void OnDied(Unit* mKiller) override
         {
-            
             Creature* pMaulgar = getNearestCreature(143.048996f, 192.725998f, -11.114700f, CN_HIGH_KING_MAULGAR);
             if (pMaulgar != NULL && pMaulgar->isAlive() && pMaulgar->GetScript())
             {
@@ -379,14 +366,12 @@ class KroshFirehandAI : public CreatureAIScript
             SetAIUpdateFreq(250);
         }
 
-        void OnCombatStart(Unit* pTarget)
+        void OnCombatStart(Unit* pTarget) override
         {
-            CastSpellNowNoScheduling(mSpellShield);
-
-            
+            CastSpellNowNoScheduling(mSpellShield); 
         }
 
-        void AIUpdate()
+        void AIUpdate() override
         {
             if (!_isCasting())
             {
@@ -411,13 +396,10 @@ class KroshFirehandAI : public CreatureAIScript
                     CastSpellNowNoScheduling(mSpellShield);
                 }
             }
-
-            
         }
 
-        void OnDied(Unit* mKiller)
+        void OnDied(Unit* mKiller) override
         {
-            
             Creature* pMaulgar = getNearestCreature(143.048996f, 192.725998f, -11.114700f, CN_HIGH_KING_MAULGAR);
             if (pMaulgar != NULL && pMaulgar->isAlive() && pMaulgar->GetScript())
             {
@@ -454,14 +436,14 @@ class GruulTheDragonkillerAI : public CreatureAIScript
         {
             mHurtfulStrike = AddSpell(GRUUL_THE_DRAGONKILLER_HURTFUL_STRIKE, Target_Current, 0, 0, 0, 0, 8);
             mGroundSlam = AddSpell(GRUUL_THE_DRAGONKILLER_GROUND_SLAM, Target_Self, 0, 1, 0);
-            mGroundSlam->AddEmote("Scurry.", CHAT_MSG_MONSTER_YELL, 11356);
-            mGroundSlam->AddEmote("No escape.", CHAT_MSG_MONSTER_YELL, 11357);
+            mGroundSlam->addEmote("Scurry.", CHAT_MSG_MONSTER_YELL, 11356);
+            mGroundSlam->addEmote("No escape.", CHAT_MSG_MONSTER_YELL, 11357);
             mGroundSlam2 = AddSpell(GRUUL_THE_DRAGONKILLER_GROUND_SLAM2, Target_Self, 0, 1, 0);
             mStoned = AddSpellFunc(&SpellFunc_Gruul_Stoned, Target_Self, 0, 2, 0);
             mShatter = AddSpellFunc(&SpellFunc_Gruul_Shatter, Target_Self, 0, 3, 0);
             mShatter2 = AddSpell(GRUUL_THE_DRAGONKILLER_SHATTER, Target_Self, 0, 1, 0);
-            mShatter2->AddEmote("Stay...", CHAT_MSG_MONSTER_YELL, 11358);
-            mShatter2->AddEmote("Beg for life.", CHAT_MSG_MONSTER_YELL, 11359);
+            mShatter2->addEmote("Stay...", CHAT_MSG_MONSTER_YELL, 11358);
+            mShatter2->addEmote("Beg for life.", CHAT_MSG_MONSTER_YELL, 11359);
             AddSpell(GRUUL_THE_DRAGONKILLER_REVERBERATION, Target_Self, 4, 0, 30);
             AddSpell(GRUUL_THE_DRAGONKILLER_CAVE_IN, Target_RandomPlayerDestination, 7, 0, 25);
             AddSpellFunc(&SpellFunc_Gruul_GroundSlam, Target_Self, 6, 1, 35);
@@ -476,10 +458,8 @@ class GruulTheDragonkillerAI : public CreatureAIScript
             mGrowthStacks = 0;
         }
 
-        void OnCombatStart(Unit* pTarget)
+        void OnCombatStart(Unit* pTarget) override
         {
-            
-
             mGrowthTimer = _addTimer(30000);
             mHurtfulTimer = _addTimer(8000);
             mGrowthStacks = 0;
@@ -489,25 +469,21 @@ class GruulTheDragonkillerAI : public CreatureAIScript
                 pGate->SetState(GO_STATE_CLOSED);
         }
 
-        void OnCombatStop(Unit* pTarget)
+        void OnCombatStop(Unit* pTarget) override
         {
-            
-
             GameObject* pGate = getNearestGameObject(166.897f, 368.226f, 16.9209f, 184662);
             if (pGate != NULL)
                 pGate->SetState(GO_STATE_OPEN);
         }
 
-        void OnDied(Unit* mKiller)
+        void OnDied(Unit* mKiller) override
         {
-            
-
             GameObject* pGate = getNearestGameObject(166.897f, 368.226f, 16.9209f, 184662);
             if (pGate != NULL)
                 pGate->SetState(GO_STATE_OPEN);
         }
 
-        void AIUpdate()
+        void AIUpdate() override
         {
             if (!_isCasting())
             {
@@ -562,8 +538,6 @@ class GruulTheDragonkillerAI : public CreatureAIScript
                     _resetTimer(mHurtfulTimer, 8000);
                 }
             }
-
-            
         }
 
         UnitArray GetInRangePlayers()

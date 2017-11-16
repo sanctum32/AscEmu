@@ -22,6 +22,7 @@
 
 #include "Common.hpp"
 #include "CThreads.h"
+#include <Threading/AEThread.h>
 
 enum checkType
 {
@@ -33,7 +34,7 @@ enum checkType
 class LogonConsoleThread : public ThreadBase
 {
     public:
-    Arcemu::Threading::AtomicBoolean kill;
+    std::atomic<bool> kill;
     LogonConsoleThread();
     ~LogonConsoleThread();
     bool runThread();
@@ -42,6 +43,12 @@ class LogonConsoleThread : public ThreadBase
 class LogonConsole : public Singleton < LogonConsole >
 {
     friend class LogonConsoleThread;
+
+    AscEmu::Threading::AEThread* m_demoThread;
+    int m_demoCounter = 0;
+
+    void demoTicker(AscEmu::Threading::AEThread& thread);
+    void threadDemoCmd(char* str);
 
     public:
 

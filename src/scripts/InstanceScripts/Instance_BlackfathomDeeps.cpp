@@ -24,25 +24,21 @@
 // LadySarevessAI
 class LadySarevessAI : public CreatureAIScript
 {
-    public:
         ADD_CREATURE_FACTORY_FUNCTION(LadySarevessAI);
         LadySarevessAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
             AddSpell(8435, Target_Current, 10, 2, 0);    // Forked Lightning
             AddSpell(865, Target_Self, 15, 0, 25);        // Frost Nova
             AddSpell(246, Target_Current, 15, 0, 10);    // Slow
-        }
 
-        void OnCombatStart(Unit* pTarget)
-        {
-            sendDBChatMessage(7912);     // You should not be here! Slay them!
+            //new
+            addEmoteForEvent(Event_OnCombatStart, 7912);     // You should not be here! Slay them!
         }
 };
 
 // BaronAquanisAI
 class BaronAquanisAI : public CreatureAIScript
 {
-    public:
         ADD_CREATURE_FACTORY_FUNCTION(BaronAquanisAI);
         BaronAquanisAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
@@ -57,7 +53,6 @@ class BaronAquanisAI : public CreatureAIScript
 class FathomStone : public GameObjectAIScript
 {
     public:
-
         FathomStone(GameObject* goinstance) : GameObjectAIScript(goinstance)
         {
             SpawnBaronAquanis = true;
@@ -65,7 +60,7 @@ class FathomStone : public GameObjectAIScript
 
         static GameObjectAIScript* Create(GameObject* GO) { return new FathomStone(GO); }
 
-        void OnActivate(Player* pPlayer)
+        void OnActivate(Player* pPlayer) override
         {
             if (pPlayer->IsTeamHorde() && SpawnBaronAquanis == true) // Horde
             {
@@ -83,29 +78,21 @@ class FathomStone : public GameObjectAIScript
 // KelrisAI
 class KelrisAI : public CreatureAIScript
 {
-    public:
         ADD_CREATURE_FACTORY_FUNCTION(KelrisAI);
         KelrisAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
             AddSpell(8399, Target_RandomPlayer, 12, 1.3f, 0, 0, 0, false, "Sleep...", CHAT_MSG_MONSTER_YELL, 5804);    // Sleep
             AddSpell(15587, Target_Current, 16, 1.5f, 0);    // Mind Blast
-        }
 
-        void OnCombatStart(Unit* pTarget)
-        {
-            sendDBChatMessage(3966);     // Who dares disturb my meditation?
-        }
-
-        void OnTargetDied(Unit* pTarget)
-        {
-            sendDBChatMessage(3968);     // Dust to dust.
+            // new
+            addEmoteForEvent(Event_OnCombatStart, 3966);     // Who dares disturb my meditation?
+            addEmoteForEvent(Event_OnTargetDied, 3968);      // Dust to dust.
         }
 };
 
 // AkumaiAI
 class AkumaiAI : public CreatureAIScript
 {
-    public:
         ADD_CREATURE_FACTORY_FUNCTION(AkumaiAI);
         AkumaiAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
@@ -117,9 +104,7 @@ class AkumaiAI : public CreatureAIScript
 // MorriduneGossip
 class MorriduneGossip : public Arcemu::Gossip::Script
 {
-    public:
-
-        void OnHello(Object* pObject, Player* pPlayer)
+        void OnHello(Object* pObject, Player* pPlayer) override
         {
             Arcemu::Gossip::Menu menu(pObject->GetGUID(), MORRIDUNE_ON_HELLO, 0);
             if (pPlayer->IsTeamAlliance())
@@ -130,7 +115,7 @@ class MorriduneGossip : public Arcemu::Gossip::Script
             menu.Send(pPlayer);
         }
 
-        void OnSelectOption(Object* pObject, Player* pPlayer, uint32 Id, const char* Code, uint32 gossipId)
+        void OnSelectOption(Object* pObject, Player* pPlayer, uint32 Id, const char* Code, uint32 gossipId) override
         {
             switch (Id)
             {
