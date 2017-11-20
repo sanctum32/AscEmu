@@ -119,7 +119,7 @@ class JainaProudmooreGS : public Arcemu::Gossip::Script
             menu.Send(plr);
         }
 
-        void OnSelectOption(Object* pObject, Player* Plr, uint32 Id, const char* Code, uint32_t gossipId) override
+        void OnSelectOption(Object* pObject, Player* /*Plr*/, uint32 /*Id*/, const char* /*Code*/, uint32_t /*gossipId*/) override
         {
             if (pObject->GetMapMgr()->GetMapId() != MAP_HYJALPAST)//in case someone spawned this NPC in another map
                 return;
@@ -170,7 +170,7 @@ class ThrallGS : public Arcemu::Gossip::Script
             menu.Send(plr);
         }
 
-        void OnSelectOption(Object* pObject, Player* Plr, uint32 Id, const char* Code, uint32_t gossipId) override
+        void OnSelectOption(Object* pObject, Player* /*Plr*/, uint32 /*Id*/, const char* /*Code*/, uint32_t /*gossipId*/) override
         {
             if (pObject->GetMapMgr()->GetMapId() != MAP_HYJALPAST)//in case someone spawned this NPC in another map
                 return;
@@ -244,7 +244,7 @@ class RageWinterchillAI : public CreatureAIScript
             spells[3].cooldown = 10;
         }
 
-        void OnCombatStart(Unit* mTarget) override
+        void OnCombatStart(Unit* /*mTarget*/) override
         {
             sendDBChatMessage(1590);     // The Legion's final conquest has begun! Once again the subjugation of this world is within our grasp. Let
 
@@ -254,7 +254,7 @@ class RageWinterchillAI : public CreatureAIScript
             RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
         }
 
-        void OnTargetDied(Unit* mTarget) override
+        void OnTargetDied(Unit* /*mTarget*/) override
         {
             if (getCreature()->GetHealthPct() > 0)
             {
@@ -278,7 +278,7 @@ class RageWinterchillAI : public CreatureAIScript
             }
         }
 
-        void OnCombatStop(Unit* mTarget) override
+        void OnCombatStop(Unit* /*mTarget*/) override
         {
             setAIAgent(AGENT_NULL);
             getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
@@ -286,7 +286,7 @@ class RageWinterchillAI : public CreatureAIScript
             RemoveAIUpdateEvent();
         }
 
-        void OnDied(Unit* mKiller) override
+        void OnDied(Unit* /*mKiller*/) override
         {
             sendDBChatMessage(1583);     // You have won this battle, but not... the...war
         }
@@ -299,7 +299,7 @@ class RageWinterchillAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -349,7 +349,7 @@ class RageWinterchillAI : public CreatureAIScript
             if (!maxdist2cast) maxdist2cast = 100.0f;
             if (!maxhp2cast) maxhp2cast = 100;
 
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 std::vector<Unit*> TargetTable;        // From M4ksiu - Big THX to Capt
                 for (std::set<Object*>::iterator itr = getCreature()->GetInRangeSetBegin(); itr != getCreature()->GetInRangeSetEnd(); ++itr)
@@ -464,7 +464,7 @@ class AnetheronAI : public CreatureAIScript
             spells[4].cooldown = 600;
         }
 
-        void OnCombatStart(Unit* mTarget) override
+        void OnCombatStart(Unit* /*mTarget*/) override
         {
             sendDBChatMessage(1569);     // You are defenders of a doomed world. Flee here and perhaps you will prolong your pathetic lives!
 
@@ -477,7 +477,7 @@ class AnetheronAI : public CreatureAIScript
             RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
         }
 
-        void OnTargetDied(Unit* mTarget) override
+        void OnTargetDied(Unit* /*mTarget*/) override
         {
             if (getCreature()->GetHealthPct() > 0)
             {
@@ -496,7 +496,7 @@ class AnetheronAI : public CreatureAIScript
             }
         }
 
-        void OnCombatStop(Unit* mTarget) override
+        void OnCombatStop(Unit* /*mTarget*/) override
         {
             setAIAgent(AGENT_NULL);
             getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
@@ -504,7 +504,7 @@ class AnetheronAI : public CreatureAIScript
             RemoveAIUpdateEvent();
         }
 
-        void OnDied(Unit* mKiller) override
+        void OnDied(Unit* /*mKiller*/) override
         {
             sendDBChatMessage(1559);     // The clock... is still...ticking.
         }
@@ -526,7 +526,7 @@ class AnetheronAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -586,7 +586,7 @@ class AnetheronAI : public CreatureAIScript
             if (!maxdist2cast) maxdist2cast = 100.0f;
             if (!maxhp2cast) maxhp2cast = 100;
 
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 std::vector<Unit*> TargetTable;        // From M4ksiu - Big THX to Capt
                 for (std::set<Object*>::iterator itr = getCreature()->GetInRangeSetBegin(); itr != getCreature()->GetInRangeSetEnd(); ++itr)
@@ -686,7 +686,7 @@ class KazrogalAI : public CreatureAIScript
             MarkDeto = 0;
         }
 
-        void OnCombatStart(Unit* mTarget) override
+        void OnCombatStart(Unit* /*mTarget*/) override
         {
             sendDBChatMessage(1582);     // Cry for mercy! Your meaningless lives will soon be forfeit.
 
@@ -696,7 +696,7 @@ class KazrogalAI : public CreatureAIScript
             RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
         }
 
-        void OnTargetDied(Unit* mTarget) override
+        void OnTargetDied(Unit* /*mTarget*/) override
         {
             if (getCreature()->GetHealthPct() > 0)
             {
@@ -718,7 +718,7 @@ class KazrogalAI : public CreatureAIScript
             }
         }
 
-        void OnCombatStop(Unit* mTarget) override
+        void OnCombatStop(Unit* /*mTarget*/) override
         {
             setAIAgent(AGENT_NULL);
             getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
@@ -726,7 +726,7 @@ class KazrogalAI : public CreatureAIScript
             RemoveAIUpdateEvent();
         }
 
-        void OnDied(Unit* mKiller) override
+        void OnDied(Unit* /*mKiller*/) override
         {
             ///\todo move this to db
             getCreature()->SendChatMessage(CHAT_MSG_MONSTER_YELL, LANG_UNIVERSAL, "hahahahaa aahaah");
@@ -744,7 +744,7 @@ class KazrogalAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -819,7 +819,7 @@ class KazrogalAI : public CreatureAIScript
             if (!maxdist2cast) maxdist2cast = 100.0f;
             if (!maxhp2cast) maxhp2cast = 100;
 
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 std::vector<Unit*> TargetTable;        // From M4ksiu - Big THX to Capt
                 for (std::set<Object*>::iterator itr = getCreature()->GetInRangeSetBegin(); itr != getCreature()->GetInRangeSetEnd(); ++itr)
@@ -923,7 +923,7 @@ class AzgalorAI : public CreatureAIScript
             spells[3].maxdist2cast = 50.0f;
         }
 
-        void OnCombatStart(Unit* mTarget) override
+        void OnCombatStart(Unit* /*mTarget*/) override
         {
             sendDBChatMessage(1576);     // Abandon all hope! The legion has returned to finish what was begun so many years ago. This time there will be no escape!
 
@@ -936,7 +936,7 @@ class AzgalorAI : public CreatureAIScript
             RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
         }
 
-        void OnTargetDied(Unit* mTarget) override
+        void OnTargetDied(Unit* /*mTarget*/) override
         {
             if (getCreature()->GetHealthPct() > 0)
             {
@@ -955,7 +955,7 @@ class AzgalorAI : public CreatureAIScript
             }
         }
 
-        void OnCombatStop(Unit* mTarget) override
+        void OnCombatStop(Unit* /*mTarget*/) override
         {
             setAIAgent(AGENT_NULL);
             getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
@@ -963,7 +963,7 @@ class AzgalorAI : public CreatureAIScript
             RemoveAIUpdateEvent();
         }
 
-        void OnDied(Unit* mKiller) override
+        void OnDied(Unit* /*mKiller*/) override
         {
             sendDBChatMessage(1570);     // Your time is almost... up!
         }
@@ -985,7 +985,7 @@ class AzgalorAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -1035,7 +1035,7 @@ class AzgalorAI : public CreatureAIScript
             if (!maxdist2cast) maxdist2cast = 100.0f;
             if (!maxhp2cast) maxhp2cast = 100;
 
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 std::vector<Unit*> TargetTable;        // From M4ksiu - Big THX to Capt
                 for (std::set<Object*>::iterator itr = getCreature()->GetInRangeSetBegin(); itr != getCreature()->GetInRangeSetEnd(); ++itr)
@@ -1340,7 +1340,7 @@ class ArchimondeAI : public CreatureAIScript
             }
         }
 
-        void OnCombatStart(Unit* mTarget) override
+        void OnCombatStart(Unit* /*mTarget*/) override
         {
             sendDBChatMessage(1591);     // Your resistance is insignificant.
 
@@ -1382,7 +1382,7 @@ class ArchimondeAI : public CreatureAIScript
                 }
 
                 uint32 t = (uint32)time(NULL);
-                if (mTarget->IsPlayer() && isAlive() && !getCreature()->GetCurrentSpell() && t > spells[6].casttime)
+                if (mTarget->IsPlayer() && isAlive() && !getCreature()->isCastingNonMeleeSpell() && t > spells[6].casttime)
                 {
                     uint32 SpellID = 0;
                     if (mTarget->getClass() == WARRIOR || mTarget->getClass() == ROGUE || mTarget->getClass() == MAGE)
@@ -1399,7 +1399,7 @@ class ArchimondeAI : public CreatureAIScript
             }
         }
 
-        void OnCombatStop(Unit* mTarget) override
+        void OnCombatStop(Unit* /*mTarget*/) override
         {
             setAIAgent(AGENT_NULL);
             getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
@@ -1416,7 +1416,7 @@ class ArchimondeAI : public CreatureAIScript
             RemoveAIUpdateEvent();
         }
 
-        void OnDied(Unit* mKiller) override
+        void OnDied(Unit* /*mKiller*/) override
         {
             sendDBChatMessage(1600);     // No, it cannot be! Nooo!
         }
@@ -1426,14 +1426,14 @@ class ArchimondeAI : public CreatureAIScript
             //setAIAgent(AGENT_NULL);
 
             uint32 t = (uint32)time(NULL);
-            if (t > spells[3].casttime && getCreature()->GetCurrentSpell() == NULL)
+            if (t > spells[3].casttime && !getCreature()->isCastingNonMeleeSpell())
             {
                 getCreature()->CastSpell(getCreature(), spells[3].info, spells[3].instant);
 
                 spells[3].casttime = t + spells[3].cooldown;
             }
 
-            else if (t > spells[5].casttime && getCreature()->GetCurrentSpell() == NULL)
+            else if (t > spells[5].casttime && !getCreature()->isCastingNonMeleeSpell())
             {
                 getCreature()->CastSpell(getCreature(), spells[5].info, spells[5].instant);
 
@@ -1461,7 +1461,7 @@ class ArchimondeAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -1512,7 +1512,7 @@ class ArchimondeAI : public CreatureAIScript
             if (!maxdist2cast) maxdist2cast = 100.0f;
             if (!maxhp2cast) maxhp2cast = 100;
 
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 std::vector<Unit*> TargetTable;        // From M4ksiu - Big THX to Capt
                 for (std::set<Object*>::iterator itr = getCreature()->GetInRangeSetBegin(); itr != getCreature()->GetInRangeSetEnd(); ++itr)

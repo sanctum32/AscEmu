@@ -136,6 +136,7 @@ void GameObject::Update(unsigned long time_passed)
     if (m_deleted)
         return;
 
+    _UpdateSpells(time_passed);
 }
 
 void GameObject::Spawn(MapMgr* m)
@@ -542,7 +543,7 @@ void GameObject_Door::SpecialOpen()
     SetState(GO_STATE_ALTERNATIVE_OPEN);
 }
 
-void GameObject_Door::Use(uint64 GUID)
+void GameObject_Door::Use(uint64 /*GUID*/)
 {
     if (GetState() == GO_STATE_CLOSED)
         Open();

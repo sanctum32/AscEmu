@@ -573,12 +573,12 @@ class ManticronCubeGO : public GameObjectAIScript
                 Magtheridon->GetAIInterface()->StopMovement(3000);
                 Magtheridon->setAttackTimer(3000, false);
 
-                if (Magtheridon->GetCurrentSpell())
-                    Magtheridon->GetCurrentSpell()->cancel();
+                if (Magtheridon->isCastingNonMeleeSpell())
+                    Magtheridon->interruptSpell();
 
                 // We add channeling player aura that does not allow that go to be used again in 1.3 min
-                Aura* aura = sSpellFactoryMgr.NewAura(sSpellCustomizations.GetSpellInfo(MIND_EXHAUSTION), (uint32)78000, Magtheridon, Channeler);
-                Channeler->AddAura(aura);
+                Aura* auraT = sSpellFactoryMgr.NewAura(sSpellCustomizations.GetSpellInfo(MIND_EXHAUSTION), (int32)78000, Magtheridon, Channeler);
+                Channeler->AddAura(auraT);
 
                 MagYell = true;
 
@@ -713,7 +713,7 @@ class HellfireWarderAI : public CreatureAIScript
             spells[6].attackstoptimer = 8;
         }
 
-        void OnCombatStart(Unit* mTarget) override
+        void OnCombatStart(Unit* /*mTarget*/) override
         {
             RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
 
@@ -721,7 +721,7 @@ class HellfireWarderAI : public CreatureAIScript
                 spells[i].casttime = 0;
         }
 
-        void OnCombatStop(Unit* mTarget) override
+        void OnCombatStop(Unit* /*mTarget*/) override
         {
             setAIAgent(AGENT_NULL);
             getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
@@ -736,7 +736,7 @@ class HellfireWarderAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -786,7 +786,7 @@ class HellfireWarderAI : public CreatureAIScript
             if (!maxdist2cast) maxdist2cast = 100.0f;
             if (!maxhp2cast) maxhp2cast = 100;
 
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 std::vector<Unit*> TargetTable;        /* From M4ksiu - Big THX to Capt who helped me with std stuff to make it simple and fully working <3 */
                 /* If anyone wants to use this function, then leave this note!                                         */
@@ -906,7 +906,7 @@ class HellfireChannelerAI : public CreatureAIScript
             getCreature()->GetAIInterface()->SetAllowedToEnterCombat(false);
         }
 
-        void OnCombatStart(Unit* mTarget) override
+        void OnCombatStart(Unit* /*mTarget*/) override
         {
             RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
 
@@ -917,7 +917,7 @@ class HellfireChannelerAI : public CreatureAIScript
                 spells[i].casttime = 0;
         }
 
-        void OnCombatStop(Unit* mTarget) override
+        void OnCombatStop(Unit* /*mTarget*/) override
         {
             setAIAgent(AGENT_NULL);
             getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
@@ -938,13 +938,13 @@ class HellfireChannelerAI : public CreatureAIScript
             }
         }
 
-        void OnDamageTaken(Unit* mAttacker, uint32 fAmount) override
+        void OnDamageTaken(Unit* /*mAttacker*/, uint32 /*fAmount*/) override
         {
             if (!getCreature()->GetAIInterface()->GetAllowedToEnterCombat())
                 getCreature()->GetAIInterface()->SetAllowedToEnterCombat(true);
         }
 
-        void OnDied(Unit* mKiller) override
+        void OnDied(Unit* /*mKiller*/) override
         {
             getCreature()->SetChannelSpellTargetGUID(0);
             getCreature()->SetChannelSpellId(0);
@@ -958,7 +958,7 @@ class HellfireChannelerAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -1011,7 +1011,7 @@ class HellfireChannelerAI : public CreatureAIScript
             if (!maxdist2cast) maxdist2cast = 100.0f;
             if (!maxhp2cast) maxhp2cast = 100;
 
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 std::vector<Unit*> TargetTable;        /* From M4ksiu - Big THX to Capt who helped me with std stuff to make it simple and fully working <3 */
                 /* If anyone wants to use this function, then leave this note!                                         */
@@ -1096,7 +1096,7 @@ class BurningAbyssalAI : public CreatureAIScript
             getCreature()->m_noRespawn = true;
         }
 
-        void OnCombatStart(Unit* mTarget) override
+        void OnCombatStart(Unit* /*mTarget*/) override
         {
             RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
 
@@ -1104,7 +1104,7 @@ class BurningAbyssalAI : public CreatureAIScript
                 spells[i].casttime = 0;
         }
 
-        void OnCombatStop(Unit* mTarget) override
+        void OnCombatStop(Unit* /*mTarget*/) override
         {
             setAIAgent(AGENT_NULL);
             getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
@@ -1119,7 +1119,7 @@ class BurningAbyssalAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -1169,7 +1169,7 @@ class BurningAbyssalAI : public CreatureAIScript
             if (!maxdist2cast) maxdist2cast = 100.0f;
             if (!maxhp2cast) maxhp2cast = 100;
 
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 std::vector<Unit*> TargetTable;        /* From M4ksiu - Big THX to Capt who helped me with std stuff to make it simple and fully working <3 */
                 /* If anyone wants to use this function, then leave this note!                                         */
@@ -1299,7 +1299,7 @@ class MagtheridonAI : public CreatureAIScript
             PhaseSwitch = false;
         }
 
-        void OnCombatStart(Unit* mTarget) override
+        void OnCombatStart(Unit* /*mTarget*/) override
         {
             timer_quake = timer_enrage = timer_blastNova = timer_caveIn = 0;
             PhaseSwitch = false;
@@ -1314,7 +1314,7 @@ class MagtheridonAI : public CreatureAIScript
                 Gate->SetState(GO_STATE_CLOSED);
         }
 
-        void OnCombatStop(Unit* mTarget) override
+        void OnCombatStop(Unit* /*mTarget*/) override
         {
             setAIAgent(AGENT_NULL);
             getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
@@ -1340,12 +1340,12 @@ class MagtheridonAI : public CreatureAIScript
                 Gate->SetState(GO_STATE_OPEN);
         }
 
-        void OnDied(Unit* mKiller) override
+        void OnDied(Unit* /*mKiller*/) override
         {
             sendDBChatMessage(8750);     // The Legion... will consume you... all....
         }
 
-        void OnTargetDied(Unit* mTarget) override
+        void OnTargetDied(Unit* /*mTarget*/) override
         {
             if (getCreature()->GetHealthPct() > 0)
             {
@@ -1398,7 +1398,7 @@ class MagtheridonAI : public CreatureAIScript
             {
                 getCreature()->SendChatMessageAlternateEntry(17257, CHAT_MSG_EMOTE, LANG_UNIVERSAL, " begins to cast Blast Nova!");
             }
-            if (timer_blastNova > 33 && getCreature()->GetCurrentSpell() == NULL && !aura)
+            if (timer_blastNova > 33 && !getCreature()->isCastingNonMeleeSpell() && !aura)
             {
                 getCreature()->GetAIInterface()->StopMovement(3000);
                 getCreature()->setAttackTimer(3000, false);
@@ -1410,7 +1410,7 @@ class MagtheridonAI : public CreatureAIScript
                 return;
             }
 
-            if (timer_enrage > 667 && getCreature()->GetCurrentSpell() == NULL && !aura)
+            if (timer_enrage > 667 && !getCreature()->isCastingNonMeleeSpell() && !aura)
             {
                 getCreature()->CastSpell(getCreature(), sSpellCustomizations.GetSpellInfo(ENRAGE), true);
 
@@ -1456,7 +1456,7 @@ class MagtheridonAI : public CreatureAIScript
             {
                 getCreature()->SendChatMessageAlternateEntry(17257, CHAT_MSG_MONSTER_EMOTE, LANG_UNIVERSAL, " begins to cast Blast Nova!");
             }
-            if (timer_blastNova > 33 && getCreature()->GetCurrentSpell() == NULL && !aura)
+            if (timer_blastNova > 33 && !getCreature()->isCastingNonMeleeSpell() && !aura)
             {
                 getCreature()->GetAIInterface()->StopMovement(3000);
                 getCreature()->setAttackTimer(3000, false);
@@ -1468,7 +1468,7 @@ class MagtheridonAI : public CreatureAIScript
                 return;
             }
 
-            if (timer_caveIn && (timer_caveIn != 1 || (getCreature()->GetCurrentSpell() == NULL && timer_caveIn == 1 && !aura)))
+            if (timer_caveIn && (timer_caveIn != 1 || (!getCreature()->isCastingNonMeleeSpell() && timer_caveIn == 1 && !aura)))
             {
                 timer_caveIn++;
                 if (timer_caveIn == 2)
@@ -1512,7 +1512,7 @@ class MagtheridonAI : public CreatureAIScript
                 }
             }
 
-            if (timer_enrage > 667 && getCreature()->GetCurrentSpell() == NULL && !aura)
+            if (timer_enrage > 667 && !getCreature()->isCastingNonMeleeSpell() && !aura)
             {
                 getCreature()->CastSpell(getCreature(), sSpellCustomizations.GetSpellInfo(ENRAGE), true);
 
@@ -1529,7 +1529,7 @@ class MagtheridonAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -1579,7 +1579,7 @@ class MagtheridonAI : public CreatureAIScript
             if (!maxdist2cast) maxdist2cast = 100.0f;
             if (!maxhp2cast) maxhp2cast = 100;
 
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 std::vector<Unit*> TargetTable;        // From M4ksiu - Big THX to Capt
                 for (std::set<Object*>::iterator itr = getCreature()->GetInRangeSetBegin(); itr != getCreature()->GetInRangeSetEnd(); ++itr)

@@ -1171,7 +1171,7 @@ void Pet::OnRemoveFromWorld()
     }
 }
 
-void Pet::Despawn(uint32 delay, uint32 respawntime)
+void Pet::Despawn(uint32 delay, uint32 /*respawntime*/)
 {
     bool delayed = (delay != 0);
     DelayedRemove(delayed, true, delay);
@@ -2107,7 +2107,7 @@ Group* Pet::GetGroup()
     return NULL;
 }
 
-void Pet::DealDamage(Unit* pVictim, uint32 damage, uint32 targetEvent, uint32 unitEvent, uint32 spellId, bool no_remove_auras)
+void Pet::DealDamage(Unit* pVictim, uint32 damage, uint32 /*targetEvent*/, uint32 /*unitEvent*/, uint32 spellId, bool no_remove_auras)
 {
     if (!pVictim || !pVictim->isAlive() || !pVictim->IsInWorld() || !IsInWorld())
         return;
@@ -2360,7 +2360,7 @@ void Pet::TakeDamage(Unit* pAttacker, uint32 damage, uint32 spellid, bool no_rem
     ModHealth(-1 * static_cast<int32>(damage));
 }
 
-void Pet::Die(Unit* pAttacker, uint32 damage, uint32 spellid)
+void Pet::Die(Unit* pAttacker, uint32 /*damage*/, uint32 spellid)
 {
     //general hook for die
     if (!sHookInterface.OnPreUnitDie(pAttacker, this))
@@ -2385,9 +2385,9 @@ void Pet::Die(Unit* pAttacker, uint32 damage, uint32 spellid)
     if (GetChannelSpellTargetGUID() != 0)
     {
 
-        Spell* spl = GetCurrentSpell();
+        Spell* spl = getCurrentSpell(CURRENT_CHANNELED_SPELL);
 
-        if (spl != NULL)
+        if (spl != nullptr)
         {
 
             for (uint8 i = 0; i < 3; i++)
@@ -2403,7 +2403,7 @@ void Pet::Die(Unit* pAttacker, uint32 damage, uint32 spellid)
                 }
             }
 
-            if (spl->GetSpellInfo()->getChannelInterruptFlags() == 48140) spl->cancel();
+            if (spl->GetSpellInfo()->getChannelInterruptFlags() == 48140) interruptSpellWithSpellType(CURRENT_CHANNELED_SPELL);
         }
     }
 
@@ -2412,10 +2412,14 @@ void Pet::Die(Unit* pAttacker, uint32 damage, uint32 spellid)
     {
         Unit* attacker = static_cast< Unit* >(*itr);
 
-        if (attacker->GetCurrentSpell() != NULL)
+        if (attacker->isCastingNonMeleeSpell())
         {
-            if (attacker->GetCurrentSpell()->m_targets.m_unitTarget == GetGUID())
-                attacker->GetCurrentSpell()->cancel();
+            for (uint8_t i = 0; i < CURRENT_SPELL_MAX; ++i)
+            {
+                Spell* curSpell = attacker->getCurrentSpell(CurrentSpellType(i));
+                if (curSpell != nullptr && curSpell->m_targets.m_unitTarget == GetGUID())
+                    attacker->interruptSpellWithSpellType(CurrentSpellType(i));
+            }
         }
     }
 

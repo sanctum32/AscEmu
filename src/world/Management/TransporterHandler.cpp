@@ -682,13 +682,13 @@ int32 Transporter::GetPeriod()
     return this->m_period;
 }
 
-void Transporter::BuildStartMovePacket(MapMgr* targetMap)
+void Transporter::BuildStartMovePacket(MapMgr* /*targetMap*/)
 {
     SetFlag(GAMEOBJECT_FLAGS, 1);
     SetState(GO_STATE_OPEN);
 }
 
-void Transporter::BuildStopMovePacket(MapMgr* targetMap)
+void Transporter::BuildStopMovePacket(MapMgr* /*targetMap*/)
 {
     RemoveFlag(GAMEOBJECT_FLAGS, 1);
     SetState(GO_STATE_CLOSED);
@@ -753,7 +753,7 @@ uint32 Transporter::AddNPCPassenger(uint32 tguid, uint32 entry, float x, float y
     return tguid;
 }
 
-Creature* Transporter::AddNPCPassengerInInstance(uint32 entry, float x, float y, float z, float o, uint32 anim)
+Creature* Transporter::AddNPCPassengerInInstance(uint32 entry, float x, float y, float z, float o, uint32 /*anim*/)
 {
     MapMgr* map = GetMapMgr();
 

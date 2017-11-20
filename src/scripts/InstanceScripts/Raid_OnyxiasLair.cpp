@@ -69,7 +69,7 @@ class OnyxiaAI : public CreatureAIScript
             m_currentWP = 0;
         }
 
-        void OnCombatStart(Unit* mTarget) override
+        void OnCombatStart(Unit* /*mTarget*/) override
         {
             m_phase = 1;
             m_eFlamesCooldown = 1;
@@ -86,7 +86,7 @@ class OnyxiaAI : public CreatureAIScript
             m_Cleave = false;
         }
 
-        void OnCombatStop(Unit* mTarget) override
+        void OnCombatStop(Unit* /*mTarget*/) override
         {
             getCreature()->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
             getCreature()->GetAIInterface()->setWayPointToMove(0);
@@ -102,14 +102,14 @@ class OnyxiaAI : public CreatureAIScript
                 RemoveAIUpdateEvent();
         }
 
-        void OnDied(Unit* mKiller) override
+        void OnDied(Unit* /*mKiller*/) override
         {
             m_phase = 1;
             m_eFlamesCooldown = 1;
             m_whelpCooldown = 7;
         }
 
-        void OnReachWP(uint32 iWaypointId, bool bForwards) override
+        void OnReachWP(uint32 iWaypointId, bool /*bForwards*/) override
         {
             switch (iWaypointId)
             {
@@ -201,8 +201,8 @@ class OnyxiaAI : public CreatureAIScript
             {
                 m_phase = 2;
                 getCreature()->SetCastSpeedMod(0.01f);
-                if (getCreature()->GetCurrentSpell() != NULL)
-                    getCreature()->GetCurrentSpell()->cancel();
+                if (getCreature()->isCastingNonMeleeSpell())
+                    getCreature()->interruptSpell();
 
                 getCreature()->GetAIInterface()->SetAllowedToEnterCombat(false);
                 //_unit->m_pacified++;
@@ -223,8 +223,8 @@ class OnyxiaAI : public CreatureAIScript
             {
                 m_phase = 3;
                 getCreature()->SetCastSpeedMod(1.0f);
-                if (getCreature()->GetCurrentSpell() != NULL)
-                    getCreature()->GetCurrentSpell()->cancel();
+                if (getCreature()->isCastingNonMeleeSpell())
+                    getCreature()->interruptSpell();
                 getCreature()->GetAIInterface()->m_canMove = true;
                 getCreature()->GetAIInterface()->SetAllowedToEnterCombat(false);
                 //_unit->m_pacified++;
@@ -363,7 +363,7 @@ class OnyxiaAI : public CreatureAIScript
 
         void SpellCast(uint32 val)
         {
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())//_unit->getAttackTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())//_unit->getAttackTarget())
             {
                 if (m_fBreath)
                 {

@@ -181,7 +181,7 @@ class MaidenOfGriefAI : public CreatureAIScript
         addEmoteForEvent(Event_OnDied, 4372);     // I hope you all rot! I never... wanted... this.
     }
 
-    void OnCombatStart(Unit* pTarget) override
+    void OnCombatStart(Unit* /*pTarget*/) override
     {
         mShock->setTriggerCooldown();
     }
@@ -205,8 +205,8 @@ class KrystallusAI : public CreatureAIScript
         mStomp = AddSpell(KRYSTALLUS_STOMP, Target_Self, 0, 0, 0);
         mShatter->addEmote("Break.... you....", CHAT_MSG_MONSTER_YELL, 14178);
 
-        mStompTimer = INVALIDATE_TIMER;
-        mShatterTimer = INVALIDATE_TIMER;
+        mStompTimer = 0;
+        mShatterTimer = 0;
 
         // new
         addEmoteForEvent(Event_OnCombatStart, 4363);      // Crush....
@@ -214,7 +214,7 @@ class KrystallusAI : public CreatureAIScript
         addEmoteForEvent(Event_OnDied, 4364);     //
     }
 
-    void OnCombatStart(Unit* pTarget) override
+    void OnCombatStart(Unit* /*pTarget*/) override
     {
         mStompTimer = _addTimer(STOMP_TIMER);
     }

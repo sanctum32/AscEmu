@@ -130,7 +130,7 @@ uint32 QuestMgr::PlayerMeetsReqs(Player* plr, QuestProperties const* qst, bool s
     return status;
 }
 
-uint32 QuestMgr::CalcQuestStatus(Object* quest_giver, Player* plr, QuestProperties const* qst, uint8 type, bool skiplevelcheck)
+uint32 QuestMgr::CalcQuestStatus(Object* /*quest_giver*/, Player* plr, QuestProperties const* qst, uint8 type, bool skiplevelcheck)
 {
     auto quest_log_entry = plr->GetQuestLogForEntry(qst->id);
 
@@ -326,7 +326,7 @@ uint32 QuestMgr::ActiveQuestsCount(Object* quest_giver, Player* plr)
 }
 
 #if VERSION_STRING != Cata
-void QuestMgr::BuildOfferReward(WorldPacket* data, QuestProperties const* qst, Object* qst_giver, uint32 menutype, uint32 language, Player* plr)
+void QuestMgr::BuildOfferReward(WorldPacket* data, QuestProperties const* qst, Object* qst_giver, uint32 /*menutype*/, uint32 language, Player* plr)
 {
     MySQLStructure::LocalesQuest const* lq = (language > 0) ? sMySQLStore.getLocalizedQuest(qst->id, language) : nullptr;
     ItemProperties const* it;
@@ -425,7 +425,7 @@ void QuestMgr::BuildOfferReward(WorldPacket* data, QuestProperties const* qst, O
 #endif
 
 #if VERSION_STRING != Cata
-void QuestMgr::BuildQuestDetails(WorldPacket* data, QuestProperties const* qst, Object* qst_giver, uint32 menutype, uint32 language, Player* plr)
+void QuestMgr::BuildQuestDetails(WorldPacket* data, QuestProperties const* qst, Object* qst_giver, uint32 /*menutype*/, uint32 language, Player* plr)
 {
     MySQLStructure::LocalesQuest const* lq = (language > 0) ? sMySQLStore.getLocalizedQuest(qst->id, language) : nullptr;
     std::map<uint32, uint8>::const_iterator itr;
@@ -1114,7 +1114,7 @@ void QuestMgr::GiveQuestRewardReputation(Player* plr, QuestProperties const* qst
     }
 }
 
-void QuestMgr::OnQuestAccepted(Player* plr, QuestProperties const* qst, Object* qst_giver)
+void QuestMgr::OnQuestAccepted(Player* /*plr*/, QuestProperties const* /*qst*/, Object* /*qst_giver*/)
 {}
 
 void QuestMgr::OnQuestFinished(Player* plr, QuestProperties const* qst, Object* qst_giver, uint32 reward_slot)
@@ -1677,7 +1677,7 @@ uint32 QuestMgr::GenerateQuestXP(Player* plr, QuestProperties const* qst)
     }
 }
 
-uint32 QuestMgr::GenerateRewardMoney(Player* plr, QuestProperties const* qst)
+uint32 QuestMgr::GenerateRewardMoney(Player* /*plr*/, QuestProperties const* qst)
 {
     return qst->reward_money;
 }
@@ -2445,18 +2445,18 @@ void QuestMgr::BuildQuestPOIResponse(WorldPacket& data, uint32 questid)
             data << uint32(questid);
             data << uint32(POI->size());
 
-            for (QuestPOIVector::const_iterator itr = POI->begin(); itr != POI->end(); ++itr)
+            for (QuestPOIVector::const_iterator iterator = POI->begin(); iterator != POI->end(); ++iterator)
             {
-                data << uint32(itr->PoiId);
-                data << int32(itr->ObjectiveIndex);
-                data << uint32(itr->MapId);
-                data << uint32(itr->MapAreaId);
-                data << uint32(itr->FloorId);
-                data << uint32(itr->Unk3);
-                data << uint32(itr->Unk4);
-                data << uint32(itr->points.size());
+                data << uint32(iterator->PoiId);
+                data << int32(iterator->ObjectiveIndex);
+                data << uint32(iterator->MapId);
+                data << uint32(iterator->MapAreaId);
+                data << uint32(iterator->FloorId);
+                data << uint32(iterator->Unk3);
+                data << uint32(iterator->Unk4);
+                data << uint32(iterator->points.size());
 
-                for (std::vector< QuestPOIPoint >::const_iterator itr2 = itr->points.begin(); itr2 != itr->points.end(); ++itr2)
+                for (std::vector< QuestPOIPoint >::const_iterator itr2 = iterator->points.begin(); itr2 != iterator->points.end(); ++itr2)
                 {
                     data << int32(itr2->x);
                     data << int32(itr2->y);

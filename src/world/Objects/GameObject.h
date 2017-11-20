@@ -25,7 +25,7 @@
 #include "Management/QuestMgr.h"
 #include "Map/Map.h"
 
-enum GameObject_State
+enum GameObject_State : uint8_t
 {
     GO_STATE_OPEN               = 0,
     GO_STATE_CLOSED             = 1,
@@ -67,7 +67,6 @@ enum GameObjectOverrides
 typedef std::unordered_map<QuestProperties const*, uint32 > GameObjectGOMap;
 typedef std::unordered_map<QuestProperties const*, std::map<uint32, uint32> > GameObjectItemMap;
 
-#pragma pack(push,1)
 struct GameObjectProperties
 {
     uint32 entry;
@@ -79,7 +78,7 @@ struct GameObjectProperties
     std::string Unkstr;
 
     // different data fields for GO-types
-    /// \todo add different structure for go types.
+    // \todo add different structure for go types.
     union
     {
         // 0 GAMEOBJECT_TYPE_DOOR
@@ -322,13 +321,12 @@ struct GameObjectProperties
     GameObjectGOMap goMap;
     GameObjectItemMap itemMap;
 };
-#pragma pack(pop)
 
 enum GameObjectBytes
 {
     GAMEOBJECT_BYTES_STATE          = 0,
     GAMEOBJECT_BYTES_TYPE_ID        = 1,
-    GAMEOBJECT_BYTES_UNK            = 2,        ///\todo unknown atm
+    GAMEOBJECT_BYTES_UNK            = 2,        //\todo unknown atm
     GAMEOBJECT_BYTES_ANIMPROGRESS   = 3,
 };
 
@@ -392,7 +390,7 @@ class SERVER_DECL GameObject : public Object
 
         virtual bool IsLootable() { return false; }
 
-        virtual void Use(uint64 GUID) {}
+        virtual void Use(uint64 /*GUID*/) {}
         void CastSpell(uint64 TargetGUID, SpellInfo* sp);
         void CastSpell(uint64 TargetGUID, uint32 SpellID);
 

@@ -38,7 +38,7 @@
 #include "GameCata/Management/GuildMgr.h"
 #endif
 
-void WorldSession::HandleRepopRequestOpcode(WorldPacket& recv_data)
+void WorldSession::HandleRepopRequestOpcode(WorldPacket& /*recvData*/)
 {
     CHECK_INWORLD_RETURN
 
@@ -75,8 +75,8 @@ void WorldSession::HandleAutostoreLootItemOpcode(WorldPacket& recv_data)
     Item* add;
     Loot* pLoot = NULL;
 
-    if (_player->IsCasting())
-        _player->InterruptSpell();
+    _player->interruptSpell();
+
     GameObject* pGO = NULL;
     Creature* pCreature = NULL;
     Item *lootSrcItem = NULL;
@@ -287,7 +287,7 @@ void WorldSession::HandleAutostoreLootItemOpcode(WorldPacket& recv_data)
     }
 }
 
-void WorldSession::HandleLootMoneyOpcode(WorldPacket& recv_data)
+void WorldSession::HandleLootMoneyOpcode(WorldPacket& /*recv_data*/)
 {
     CHECK_INWORLD_RETURN
 
@@ -296,8 +296,7 @@ void WorldSession::HandleLootMoneyOpcode(WorldPacket& recv_data)
     if (!lootguid)
         return;   // dunno why this happens
 
-    if (_player->IsCasting())
-        _player->InterruptSpell();
+    _player->interruptSpell();
 
     WorldPacket pkt;
     Unit* pt = 0;
@@ -451,8 +450,7 @@ void WorldSession::HandleLootOpcode(WorldPacket& recv_data)
     if (_player->IsStealth())    // Check if the player is stealthed
         _player->RemoveStealth(); // cebernic:RemoveStealth on looting. Blizzlike
 
-    if (_player->IsCasting())    // Check if the player is casting
-        _player->InterruptSpell(); // Cancel spell casting
+    _player->interruptSpell(); // Cancel spell casting (no need to check is casting, the function does it)
 
     if (_player->IsInvisible())    // Check if the player is invisible for what ever reason
         _player->RemoveInvisibility(); // Remove all invisibility
@@ -963,7 +961,7 @@ void WorldSession::HandleWhoIsOpcode(WorldPacket& recv_data)
     LogDebugFlag(LF_OPCODE, "Received WHOIS command from player %s for character %s", GetPlayer()->GetName(), charname.c_str());
 }
 
-void WorldSession::HandleLogoutRequestOpcode(WorldPacket& recv_data)
+void WorldSession::HandleLogoutRequestOpcode(WorldPacket& /*recv_data*/)
 {
     CHECK_INWORLD_RETURN
 
@@ -1032,7 +1030,7 @@ void WorldSession::HandleLogoutRequestOpcode(WorldPacket& recv_data)
     */
 }
 
-void WorldSession::HandlePlayerLogoutOpcode(WorldPacket& recv_data)
+void WorldSession::HandlePlayerLogoutOpcode(WorldPacket& /*recv_data*/)
 {
     CHECK_INWORLD_RETURN
 
@@ -1048,7 +1046,7 @@ void WorldSession::HandlePlayerLogoutOpcode(WorldPacket& recv_data)
     }
 }
 
-void WorldSession::HandleLogoutCancelOpcode(WorldPacket& recv_data)
+void WorldSession::HandleLogoutCancelOpcode(WorldPacket& /*recv_data*/)
 {
     CHECK_INWORLD_RETURN
 
@@ -1451,7 +1449,7 @@ void WorldSession::HandleSetWatchedFactionIndexOpcode(WorldPacket & recvPacket)
     GetPlayer()->setUInt32Value(PLAYER_FIELD_WATCHED_FACTION_INDEX, factionid);
 }
 
-void WorldSession::HandleTogglePVPOpcode(WorldPacket& recv_data)
+void WorldSession::HandleTogglePVPOpcode(WorldPacket& /*recv_data*/)
 {
     CHECK_INWORLD_RETURN
 
@@ -1675,7 +1673,6 @@ void WorldSession::HandleGameObjectUse(WorldPacket& recv_data)
         {
             spellInfo = sSpellCustomizations.GetSpellInfo(OPEN_CHEST);
             spell = sSpellFactoryMgr.NewSpell(plyr, spellInfo, true, NULL);
-            _player->m_currentSpell = spell;
             targets.m_unitTarget = obj->GetGUID();
             spell->prepare(&targets);
         }
@@ -1756,7 +1753,8 @@ void WorldSession::HandleGameObjectUse(WorldPacket& recv_data)
                 plyr->GetSession()->OutPacket(SMSG_FISH_NOT_HOOKED);
             }
 
-            auto spell = plyr->GetCurrentSpell();
+            // Fishing is channeled spell
+            auto spell = plyr->getCurrentSpell(CURRENT_CHANNELED_SPELL);
             if (spell != nullptr)
             {
                 if (success)
@@ -2030,7 +2028,7 @@ void WorldSession::HandleTutorialFlag(WorldPacket& recv_data)
     LOG_DEBUG("Received Tutorial Flag Set {%u}.", iFlag);
 }
 
-void WorldSession::HandleTutorialClear(WorldPacket& recv_data)
+void WorldSession::HandleTutorialClear(WorldPacket& /*recv_data*/)
 {
     CHECK_INWORLD_RETURN
 
@@ -2038,7 +2036,7 @@ void WorldSession::HandleTutorialClear(WorldPacket& recv_data)
         GetPlayer()->SetTutorialInt(iI, 0xFFFFFFFF);
 }
 
-void WorldSession::HandleTutorialReset(WorldPacket& recv_data)
+void WorldSession::HandleTutorialReset(WorldPacket& /*recv_data*/)
 {
     CHECK_INWORLD_RETURN
 
@@ -2297,7 +2295,7 @@ void WorldSession::HandleAcknowledgementOpcodes(WorldPacket& recv_data)
 }
 #endif
 
-void WorldSession::HandleSelfResurrectOpcode(WorldPacket& recv_data)
+void WorldSession::HandleSelfResurrectOpcode(WorldPacket& /*recv_data*/)
 {
     CHECK_INWORLD_RETURN
 
@@ -2667,7 +2665,7 @@ void WorldSession::HandleOpenItemOpcode(WorldPacket& recv_data)
     _player->SendLoot(pItem->GetGUID(), LOOT_DISENCHANTING, _player->GetMapId());
 }
 
-void WorldSession::HandleCompleteCinematic(WorldPacket& recv_data)
+void WorldSession::HandleCompleteCinematic(WorldPacket& /*recv_data*/)
 {
     CHECK_INWORLD_RETURN
 
@@ -2676,21 +2674,21 @@ void WorldSession::HandleCompleteCinematic(WorldPacket& recv_data)
     _player->camControle = false;
 }
 
-void WorldSession::HandleNextCinematic(WorldPacket& recv_data)
+void WorldSession::HandleNextCinematic(WorldPacket& /*recv_data*/)
 {
     CHECK_INWORLD_RETURN
     _player->camControle = true;
     _player->SetPosition(float(_player->GetPositionX() + 0.01), float(_player->GetPositionY() + 0.01), float(_player->GetPositionZ() + 0.01), _player->GetOrientation());
 }
 
-void WorldSession::HandleResetInstanceOpcode(WorldPacket& recv_data)
+void WorldSession::HandleResetInstanceOpcode(WorldPacket& /*recv_data*/)
 {
     CHECK_INWORLD_RETURN
 
         sInstanceMgr.ResetSavedInstances(_player);
 }
 
-void WorldSession::HandleToggleCloakOpcode(WorldPacket& recv_data)
+void WorldSession::HandleToggleCloakOpcode(WorldPacket& /*recv_data*/)
 {
     CHECK_INWORLD_RETURN
 
@@ -2700,7 +2698,7 @@ void WorldSession::HandleToggleCloakOpcode(WorldPacket& recv_data)
         _player->SetFlag(PLAYER_FLAGS, PLAYER_FLAG_NOCLOAK);
 }
 
-void WorldSession::HandleToggleHelmOpcode(WorldPacket& recv_data)
+void WorldSession::HandleToggleHelmOpcode(WorldPacket& /*recv_data*/)
 {
     CHECK_INWORLD_RETURN
 
@@ -2772,7 +2770,7 @@ void WorldSession::HandleSummonResponseOpcode(WorldPacket& recv_data)
     _player->m_summoner = _player->m_summonInstanceId = _player->m_summonMapId = 0;
 }
 
-void WorldSession::HandleDismountOpcode(WorldPacket& recv_data)
+void WorldSession::HandleDismountOpcode(WorldPacket& /*recv_data*/)
 {
     CHECK_INWORLD_RETURN
     LOG_DEBUG("WORLD: Received CMSG_DISMOUNT");
@@ -2837,7 +2835,7 @@ void WorldSession::HandleGameobjReportUseOpCode(WorldPacket& recv_data)    // CM
 #endif
 }
 
-void WorldSession::HandleWorldStateUITimerUpdate(WorldPacket& recv_data)
+void WorldSession::HandleWorldStateUITimerUpdate(WorldPacket& /*recv_data*/)
 {
 #if VERSION_STRING > TBC
     CHECK_INWORLD_RETURN
@@ -2880,7 +2878,7 @@ void WorldSession::HandleRealmSplitOpcode(WorldPacket& recv_data)
     SendPacket(&data);
 }
 
-void WorldSession::HandleTimeSyncResp(WorldPacket& recv_data)
+void WorldSession::HandleTimeSyncResp(WorldPacket& /*recv_data*/)
 {
     LogDebugFlag(LF_OPCODE, "HandleTimeSyncResp : Not handled");
 }

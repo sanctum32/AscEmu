@@ -61,7 +61,7 @@ class SelinFireheartAI : public CreatureAIScript
         FelExplosion = AddSpell(SF_FELEXPLOSION, Target_Self, 0, 0, 0);
     }
 
-    void OnCombatStart(Unit* pTarget) override
+    void OnCombatStart(Unit* /*pTarget*/) override
     {
         /*
             Selin Fireheart starts with 0 mana and drains it from the felcrystals in the room
@@ -114,7 +114,7 @@ class SelinFireheartAI : public CreatureAIScript
 
         getCreature()->GetAIInterface()->StopMovement(0);
 
-        if (!FelCrystal->GetCurrentSpell())
+        if (!FelCrystal->isCastingNonMeleeSpell())
             FelCrystal->CastSpell(getCreature(), ManaRage, false);
 
         // Mana Rage giving of mana doesnt work so we give 10%(3231) / AIUpdate() Event.
@@ -252,7 +252,7 @@ class Priestess_DelrissaAI : public CreatureAIScript
             sendDBChatMessage(3031);     // It's been a kick, really.  
     }
 
-    void OnCombatStop(Unit* pTarget) override
+    void OnCombatStop(Unit* /*pTarget*/) override
     {
         sendDBChatMessage(3031);     // It's been a kick, really.
         mKilledPlayers = 0;

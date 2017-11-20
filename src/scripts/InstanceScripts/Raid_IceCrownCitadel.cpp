@@ -92,7 +92,7 @@ class IceCrownCitadelScript : public InstanceScript
             }
         }
 
-        void OnCreatureDeath(Creature* pCreature, Unit* pUnit) override
+        void OnCreatureDeath(Creature* pCreature, Unit* /*pUnit*/) override
         {
             switch (pCreature->GetEntry())
             {
@@ -162,7 +162,7 @@ public:
         menu.Send(player);
     }
 
-    void OnSelectOption(Object* object, Player* player, uint32 Id, const char* enteredcode, uint32 gossipId) override
+    void OnSelectOption(Object* /*object*/, Player* player, uint32 Id, const char* /*enteredcode*/, uint32 /*gossipId*/) override
     {
         switch (Id)
         {
@@ -228,7 +228,7 @@ class LordMarrowgarAI : public CreatureAIScript
 
             auto boneslice = addAISpell(BONE_SLICE, 60.0f, TARGET_ATTACKING, 0, 120);
             boneslice->addEmote("boneslice", CHAT_MSG_MONSTER_YELL, 0);
-            boneslice->setAvailableForScriptPhase({ 1 });
+            boneslice->setAvailableForScriptPhase({ 2 });
 
             auto bonestorm = addAISpell(BONE_STORM, 30.0f, TARGET_DESTINATION, 30, 300, true);
             bonestorm->addEmote("bonestorm", CHAT_MSG_MONSTER_YELL, 0);
@@ -243,13 +243,16 @@ class LordMarrowgarAI : public CreatureAIScript
 
             auto souldFest = addAISpell(SOUL_FEAST, 50.0f, TARGET_RANDOM_SINGLE, 0, 20);
             souldFest->addEmote("Your soul is fest", CHAT_MSG_MONSTER_YELL, 0);
+            souldFest->setAvailableForScriptPhase({ 2 });
 
-            auto bonespike = addAISpell(BONE_SPIKE, 100.0f, TARGET_RANDOM_SINGLE, 0, 90);
+            auto bonespike = addAISpell(BONE_SPIKE, 80.0f, TARGET_RANDOM_SINGLE, 10, 30);
+            bonespike->setAnnouncement("Lord Marrowgar is preparing BoneSpike");
             bonespike->addEmote("bonespike", CHAT_MSG_MONSTER_YELL, 0);
             bonespike->addDBEmote(925);      // Bound by bone!
             bonespike->addDBEmote(926);      // Stick around!
             bonespike->addDBEmote(927);      // The only escape is death!
             bonespike->setAvailableForScriptPhase({ 2 });
+            bonespike->setMinMaxDistance(10.0f, 500.0f);
 
             // example for random message on event
             addEmoteForEvent(Event_OnCombatStart, 923);     // The Scourge will wash over this world as a swarm of death and destruction!
@@ -262,8 +265,24 @@ class LordMarrowgarAI : public CreatureAIScript
         {
         }
 
-        void OnCastSpell(uint32 spellId) override
+        void OnCastSpell(uint32 /*spellId*/) override
         {
+        }
+
+        void OnHitBySpell(uint32_t pSpellId, Unit* pUnitCaster) override
+        {
+            switch (pSpellId)
+            {
+                case 49233:
+                {
+                    if (pUnitCaster != nullptr && pUnitCaster->IsPlayer())
+                    {
+                        std::stringstream ss;
+                        ss << "Player " << static_cast<Player*>(pUnitCaster)->GetName();
+                        sendAnnouncement(ss.str());
+                    }
+                } break;
+            }
         }
 
         // Testcode - remove me please
@@ -276,15 +295,15 @@ class LordMarrowgarAI : public CreatureAIScript
             sendAnnouncement(ss.str());
         }
 
-        void OnCombatStart(Unit* pTarget) override
+        void OnCombatStart(Unit* /*pTarget*/) override
         {
         }
 
-        void OnTargetDied(Unit* pTarget) override
+        void OnTargetDied(Unit* /*pTarget*/) override
         {
         }
 
-        void OnDied(Unit* pTarget) override
+        void OnDied(Unit* /*pTarget*/) override
         {
         }
 };

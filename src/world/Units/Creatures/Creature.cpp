@@ -296,7 +296,7 @@ void Creature::Create(uint32 mapid, float x, float y, float z, float ang)
     Object::_Create(mapid, x, y, z, ang);
 }
 
-void Creature::CreateWayPoint(uint32 WayPointID, uint32 mapid, float x, float y, float z, float ang)
+void Creature::CreateWayPoint(uint32 /*WayPointID*/, uint32 mapid, float x, float y, float z, float ang)
 {
     Object::_Create(mapid, x, y, z, ang);
 }
@@ -710,8 +710,10 @@ void Creature::setDeathState(DeathState s)
         if (m_enslaveSpell)
             RemoveEnslave();
 
-        if (m_currentSpell)
-            m_currentSpell->cancel();
+        for (uint8_t i = 0; i < CURRENT_SPELL_MAX; ++i)
+        {
+            interruptSpellWithSpellType(CurrentSpellType(i));
+        }
 
         // if it's not a Pet, and not a summon and it has skinningloot then we will allow skinning
         if ((GetCreatedByGUID() == 0) && (GetSummonedByGUID() == 0) && lootmgr.IsSkinnable(creature_properties->Id))
@@ -775,7 +777,7 @@ bool Creature::CanAddToWorld()
     return true;
 }
 
-void Creature::RemoveFromWorld(bool addrespawnevent, bool free_guid)
+void Creature::RemoveFromWorld(bool addrespawnevent, bool /*free_guid*/)
 {
     uint32 delay = 0;
     if (addrespawnevent && (m_respawnTimeOverride > 0 || creature_properties->RespawnTime > 0))
@@ -1931,7 +1933,7 @@ uint32 Creature::GetLineByFamily(DBC::Structures::CreatureFamilyEntry const* fam
     return family->skilline ? family->skilline : 0;
 }
 
-void Creature::RemoveLimboState(Unit* healer)
+void Creature::RemoveLimboState(Unit* /*healer*/)
 {
     if (!m_limbostate != true)
         return;
@@ -2268,7 +2270,7 @@ bool Creature::isTrainingDummy()
         return false;
 }
 
-void Creature::DealDamage(Unit* pVictim, uint32 damage, uint32 targetEvent, uint32 unitEvent, uint32 spellId, bool no_remove_auras)
+void Creature::DealDamage(Unit* pVictim, uint32 damage, uint32 /*targetEvent*/, uint32 /*unitEvent*/, uint32 spellId, bool no_remove_auras)
 {
     if (!pVictim || !pVictim->isAlive() || !pVictim->IsInWorld() || !IsInWorld())
         return;
@@ -2350,7 +2352,7 @@ void Creature::TakeDamage(Unit* pAttacker, uint32 damage, uint32 spellid, bool n
     ModHealth(-1 * static_cast<int32>(damage));
 }
 
-void Creature::Die(Unit* pAttacker, uint32 damage, uint32 spellid)
+void Creature::Die(Unit* pAttacker, uint32 /*damage*/, uint32 spellid)
 {
     if (GetVehicleComponent() != NULL)
     {
@@ -2389,7 +2391,7 @@ void Creature::Die(Unit* pAttacker, uint32 damage, uint32 spellid)
     if (GetChannelSpellTargetGUID() != 0)
     {
 
-        Spell* spl = GetCurrentSpell();
+        Spell* spl = getCurrentSpell(CURRENT_CHANNELED_SPELL);
 
         if (spl != NULL)
         {
@@ -2408,7 +2410,7 @@ void Creature::Die(Unit* pAttacker, uint32 damage, uint32 spellid)
             }
 
             if (spl->GetSpellInfo()->getChannelInterruptFlags() == 48140)
-                spl->cancel();
+                interruptSpell(spl->GetSpellInfo()->getId());
         }
     }
 
@@ -2417,10 +2419,14 @@ void Creature::Die(Unit* pAttacker, uint32 damage, uint32 spellid)
     {
         Unit* attacker = static_cast< Unit* >(*itr);
 
-        if (attacker->GetCurrentSpell() != NULL)
+        if (attacker->isCastingNonMeleeSpell())
         {
-            if (attacker->GetCurrentSpell()->m_targets.m_unitTarget == GetGUID())
-                attacker->GetCurrentSpell()->cancel();
+            for (uint8_t i = 0; i < CURRENT_SPELL_MAX; ++i)
+            {
+                Spell* curSpell = attacker->getCurrentSpell(CurrentSpellType(i));
+                if (curSpell != nullptr && curSpell->m_targets.m_unitTarget == GetGUID())
+                    attacker->interruptSpellWithSpellType(CurrentSpellType(i));
+            }
         }
     }
 

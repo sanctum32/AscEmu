@@ -59,13 +59,13 @@ class DoctorTheolenKrastinovAI : public CreatureAIScript
             spells[2].attackstoptimer = 1000;
         }
 
-        void OnCombatStart(Unit* mTarget) override
+        void OnCombatStart(Unit* /*mTarget*/) override
         {
             FRENZY_LIMITER = 0;
             RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
         }
 
-        void OnCombatStop(Unit* mTarget) override
+        void OnCombatStop(Unit* /*mTarget*/) override
         {
             FRENZY_LIMITER = 0;
             setAIAgent(AGENT_NULL);
@@ -73,7 +73,7 @@ class DoctorTheolenKrastinovAI : public CreatureAIScript
             RemoveAIUpdateEvent();
         }
 
-        void OnDied(Unit* mKiller) override
+        void OnDied(Unit* /*mKiller*/) override
         {
             FRENZY_LIMITER = 0;
         }
@@ -95,7 +95,7 @@ class DoctorTheolenKrastinovAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -108,7 +108,6 @@ class DoctorTheolenKrastinovAI : public CreatureAIScript
                         target = getCreature()->GetAIInterface()->getNextTarget();
                         switch (spells[i].targettype)
                         {
-                            target = getCreature()->GetAIInterface()->getNextTarget();
                             case TARGET_SELF:
                             case TARGET_VARIOUS:
                                 getCreature()->CastSpell(getCreature(), spells[i].info, spells[i].instant);
@@ -186,12 +185,12 @@ class InstructorMaliciaAI : public CreatureAIScript
             spells[4].attackstoptimer = 1000;
         }
 
-        void OnCombatStart(Unit* mTarget) override
+        void OnCombatStart(Unit* /*mTarget*/) override
         {
             RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
         }
 
-        void OnCombatStop(Unit* mTarget) override
+        void OnCombatStop(Unit* /*mTarget*/) override
         {
             setAIAgent(AGENT_NULL);
             getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
@@ -206,7 +205,7 @@ class InstructorMaliciaAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -219,7 +218,6 @@ class InstructorMaliciaAI : public CreatureAIScript
                         target = getCreature()->GetAIInterface()->getNextTarget();
                         switch (spells[i].targettype)
                         {
-                            target = getCreature()->GetAIInterface()->getNextTarget();
                             case TARGET_SELF:
                             case TARGET_VARIOUS:
                                 getCreature()->CastSpell(getCreature(), spells[i].info, spells[i].instant);
@@ -290,12 +288,12 @@ class TheRavenianAI : public CreatureAIScript
             spells[3].attackstoptimer = 1000;
         }
 
-        void OnCombatStart(Unit* mTarget) override
+        void OnCombatStart(Unit* /*mTarget*/) override
         {
             RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
         }
 
-        void OnCombatStop(Unit* mTarget) override
+        void OnCombatStop(Unit* /*mTarget*/) override
         {
             setAIAgent(AGENT_NULL);
             getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
@@ -310,7 +308,7 @@ class TheRavenianAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -323,7 +321,6 @@ class TheRavenianAI : public CreatureAIScript
                         target = getCreature()->GetAIInterface()->getNextTarget();
                         switch (spells[i].targettype)
                         {
-                            target = getCreature()->GetAIInterface()->getNextTarget();
                             case TARGET_SELF:
                             case TARGET_VARIOUS:
                                 getCreature()->CastSpell(getCreature(), spells[i].info, spells[i].instant);
@@ -400,12 +397,12 @@ class LadyIlluciaBarovAI : public CreatureAIScript
             spells[4].attackstoptimer = 1000;
         }
 
-        void OnCombatStart(Unit* mTarget) override
+        void OnCombatStart(Unit* /*mTarget*/) override
         {
             RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
         }
 
-        void OnCombatStop(Unit* mTarget) override
+        void OnCombatStop(Unit* /*mTarget*/) override
         {
             setAIAgent(AGENT_NULL);
             getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
@@ -420,7 +417,7 @@ class LadyIlluciaBarovAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -433,7 +430,6 @@ class LadyIlluciaBarovAI : public CreatureAIScript
                         target = getCreature()->GetAIInterface()->getNextTarget();
                         switch (spells[i].targettype)
                         {
-                            target = getCreature()->GetAIInterface()->getNextTarget();
                             case TARGET_SELF:
                             case TARGET_VARIOUS:
                                 getCreature()->CastSpell(getCreature(), spells[i].info, spells[i].instant);
@@ -516,13 +512,13 @@ class RasForstwhisperAI : public CreatureAIScript
             spells[5].attackstoptimer = 2000;
         }
 
-        void OnCombatStart(Unit* mTarget) override
+        void OnCombatStart(Unit* /*mTarget*/) override
         {
             RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
             getCreature()->CastSpell(getCreature(), spells[1].info, spells[1].instant);
         }
 
-        void OnCombatStop(Unit* mTarget) override
+        void OnCombatStop(Unit* /*mTarget*/) override
         {
             setAIAgent(AGENT_NULL);
             getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
@@ -537,7 +533,7 @@ class RasForstwhisperAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -550,7 +546,6 @@ class RasForstwhisperAI : public CreatureAIScript
                         target = getCreature()->GetAIInterface()->getNextTarget();
                         switch (spells[i].targettype)
                         {
-                            target = getCreature()->GetAIInterface()->getNextTarget();
                             case TARGET_SELF:
                             case TARGET_VARIOUS:
                                 getCreature()->CastSpell(getCreature(), spells[i].info, spells[i].instant);
@@ -615,12 +610,12 @@ class JandiceBarovAI : public CreatureAIScript
             spells[2].attackstoptimer = 1000;
         }
 
-        void OnCombatStart(Unit* mTarget) override
+        void OnCombatStart(Unit* /*mTarget*/) override
         {
             RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
         }
 
-        void OnCombatStop(Unit* mTarget) override
+        void OnCombatStop(Unit* /*mTarget*/) override
         {
             setAIAgent(AGENT_NULL);
             getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
@@ -635,7 +630,7 @@ class JandiceBarovAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -648,7 +643,6 @@ class JandiceBarovAI : public CreatureAIScript
                         target = getCreature()->GetAIInterface()->getNextTarget();
                         switch (spells[i].targettype)
                         {
-                            target = getCreature()->GetAIInterface()->getNextTarget();
                             case TARGET_SELF:
                             case TARGET_VARIOUS:
                                 getCreature()->CastSpell(getCreature(), spells[i].info, spells[i].instant);
@@ -713,13 +707,13 @@ class KormokAI : public CreatureAIScript
             spells[2].attackstoptimer = 1000;
         }
 
-        void OnCombatStart(Unit* mTarget) override
+        void OnCombatStart(Unit* /*mTarget*/) override
         {
             RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
             getCreature()->CastSpell(getCreature(), spells[1].info, spells[1].instant);
         }
 
-        void OnCombatStop(Unit* mTarget) override
+        void OnCombatStop(Unit* /*mTarget*/) override
         {
             setAIAgent(AGENT_NULL);
             getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
@@ -734,7 +728,7 @@ class KormokAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -747,7 +741,6 @@ class KormokAI : public CreatureAIScript
                         target = getCreature()->GetAIInterface()->getNextTarget();
                         switch (spells[i].targettype)
                         {
-                            target = getCreature()->GetAIInterface()->getNextTarget();
                             case TARGET_SELF:
                             case TARGET_VARIOUS:
                                 getCreature()->CastSpell(getCreature(), spells[i].info, spells[i].instant);
@@ -813,14 +806,14 @@ class VectusAI : public CreatureAIScript
             spells[2].attackstoptimer = 1000;
         }
 
-        void OnCombatStart(Unit* mTarget) override
+        void OnCombatStart(Unit* /*mTarget*/) override
         {
             FRENZY_LIMITER = 0;
             RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
             getCreature()->CastSpell(getCreature(), spells[1].info, spells[1].instant);
         }
 
-        void OnCombatStop(Unit* mTarget) override
+        void OnCombatStop(Unit* /*mTarget*/) override
         {
             FRENZY_LIMITER = 0;
             setAIAgent(AGENT_NULL);
@@ -828,7 +821,7 @@ class VectusAI : public CreatureAIScript
             RemoveAIUpdateEvent();
         }
 
-        void OnDied(Unit* mKiller) override
+        void OnDied(Unit* /*mKiller*/) override
         {
             FRENZY_LIMITER = 0;
         }
@@ -846,7 +839,7 @@ class VectusAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -859,7 +852,6 @@ class VectusAI : public CreatureAIScript
                         target = getCreature()->GetAIInterface()->getNextTarget();
                         switch (spells[i].targettype)
                         {
-                            target = getCreature()->GetAIInterface()->getNextTarget();
                             case TARGET_SELF:
                             case TARGET_VARIOUS:
                                 getCreature()->CastSpell(getCreature(), spells[i].info, spells[i].instant);
@@ -925,13 +917,13 @@ class LordAlexeiBarovAI : public CreatureAIScript
             spells[2].attackstoptimer = 2000;
         }
 
-        void OnCombatStart(Unit* mTarget) override
+        void OnCombatStart(Unit* /*mTarget*/) override
         {
             RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
             getCreature()->CastSpell(getCreature(), spells[0].info, spells[0].instant);
         }
 
-        void OnCombatStop(Unit* mTarget) override
+        void OnCombatStop(Unit* /*mTarget*/) override
         {
             setAIAgent(AGENT_NULL);
             getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
@@ -946,7 +938,7 @@ class LordAlexeiBarovAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -959,7 +951,6 @@ class LordAlexeiBarovAI : public CreatureAIScript
                         target = getCreature()->GetAIInterface()->getNextTarget();
                         switch (spells[i].targettype)
                         {
-                            target = getCreature()->GetAIInterface()->getNextTarget();
                             case TARGET_SELF:
                             case TARGET_VARIOUS:
                                 getCreature()->CastSpell(getCreature(), spells[i].info, spells[i].instant);
@@ -1030,12 +1021,12 @@ class LorekeeperPolkeltAI : public CreatureAIScript
             spells[3].attackstoptimer = 1000;
         }
 
-        void OnCombatStart(Unit* mTarget) override
+        void OnCombatStart(Unit* /*mTarget*/) override
         {
             RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
         }
 
-        void OnCombatStop(Unit* mTarget) override
+        void OnCombatStop(Unit* /*mTarget*/) override
         {
             setAIAgent(AGENT_NULL);
             getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
@@ -1050,7 +1041,7 @@ class LorekeeperPolkeltAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -1063,7 +1054,6 @@ class LorekeeperPolkeltAI : public CreatureAIScript
                         target = getCreature()->GetAIInterface()->getNextTarget();
                         switch (spells[i].targettype)
                         {
-                            target = getCreature()->GetAIInterface()->getNextTarget();
                             case TARGET_SELF:
                             case TARGET_VARIOUS:
                                 getCreature()->CastSpell(getCreature(), spells[i].info, spells[i].instant);
@@ -1128,13 +1118,13 @@ class DarkmasterGandlingAI : public CreatureAIScript
             spells[2].attackstoptimer = 1000;
         }
 
-        void OnCombatStart(Unit* mTarget) override
+        void OnCombatStart(Unit* /*mTarget*/) override
         {
             RegisterAIUpdateEvent(getCreature()->GetBaseAttackTime(MELEE));
             getCreature()->CastSpell(getCreature(), spells[2].info, spells[2].instant);
         }
 
-        void OnCombatStop(Unit* mTarget) override
+        void OnCombatStop(Unit* /*mTarget*/) override
         {
             setAIAgent(AGENT_NULL);
             getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
@@ -1149,7 +1139,7 @@ class DarkmasterGandlingAI : public CreatureAIScript
 
         void SpellCast(float val)
         {
-            if (getCreature()->GetCurrentSpell() == NULL && getCreature()->GetAIInterface()->getNextTarget())
+            if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
                 float comulativeperc = 0;
                 Unit* target = NULL;
@@ -1162,7 +1152,6 @@ class DarkmasterGandlingAI : public CreatureAIScript
                         target = getCreature()->GetAIInterface()->getNextTarget();
                         switch (spells[i].targettype)
                         {
-                            target = getCreature()->GetAIInterface()->getNextTarget();
                             case TARGET_SELF:
                             case TARGET_VARIOUS:
                                 getCreature()->CastSpell(getCreature(), spells[i].info, spells[i].instant);
