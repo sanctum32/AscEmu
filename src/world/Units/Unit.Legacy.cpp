@@ -4791,7 +4791,7 @@ uint32 Unit::HandleProc(uint32 flag, Unit* victim, SpellInfo* CastingSpell, bool
                 case 64849:
                 case 64850:
                 {
-                    if (CastingSpell == NULL)
+                    if (CastingSpell == nullptr)
                         continue;
                     //trigger only on heal spell cast by NOT us
                     if (!(CastingSpell->custom_c_is_flags & SPELL_FLAG_IS_HEALING) || this == victim)
@@ -4801,14 +4801,14 @@ uint32 Unit::HandleProc(uint32 flag, Unit* victim, SpellInfo* CastingSpell, bool
                     if (idx != 1)
                     {
                         if (ospinfo)
-                            dmg_overwrite[0] = ((CastingSpell->getEffectBasePoints(idx) + 1) * (ospinfo->getEffectBasePoints(0) + 1) / 100);
+                            dmg_overwrite[0] = ((CastingSpell->getEffectBasePoints(static_cast<uint8_t>(idx)) + 1) * (ospinfo->getEffectBasePoints(0) + 1) / 100);
                     }
                 }
                 break;
                 //paladin - Light's Grace
                 case 31834:
                 {
-                    if (CastingSpell == NULL)
+                    if (CastingSpell == nullptr)
                         continue;//this should not occur unless we made a fuckup somewhere
 
                     switch (CastingSpell->getId())
@@ -6773,7 +6773,7 @@ void Unit::RegeneratePower(bool isinterrupted)
 
     if (!IsPlayer() && IsVehicle())
     {
-        uint32 powertype = GetPowerType();
+        uint8_t powertype = GetPowerType();
         float wrate = worldConfig.getFloatRate(RATE_VEHICLES_POWER_REGEN);
         float amount = wrate * 20.0f;
         SetPower(powertype, static_cast<int32>(GetPower(powertype) + amount));
@@ -6927,7 +6927,7 @@ void Unit::CalculateResistanceReduction(Unit* pVictim, dealdamage* dmg, SpellInf
     else
     {
         // applying resistance to other type of damage
-        int32 RResist = float2int32((pVictim->GetResistance((*dmg).school_type) + ((pVictim->getLevel() > getLevel()) ? (pVictim->getLevel() - this->getLevel()) * 5 : 0)) - PowerCostPctMod[(*dmg).school_type]);
+        int32 RResist = float2int32((pVictim->GetResistance(static_cast<uint16_t>((*dmg).school_type)) + ((pVictim->getLevel() > getLevel()) ? (pVictim->getLevel() - this->getLevel()) * 5 : 0)) - PowerCostPctMod[(*dmg).school_type]);
         if (RResist < 0)
             RResist = 0;
         AverageResistance = ((float)(RResist) / (float)(getLevel() * 5) * 0.75f);
@@ -6937,7 +6937,7 @@ void Unit::CalculateResistanceReduction(Unit* pVictim, dealdamage* dmg, SpellInf
         // NOT WOWWIKILIKE but i think it's actually to add some fullresist chance from resistances
         if (!ability || !(ability->getAttributes() & ATTRIBUTES_IGNORE_INVULNERABILITY))
         {
-            float Resistchance = (float)pVictim->GetResistance((*dmg).school_type) / (float)pVictim->getLevel();
+            float Resistchance = (float)pVictim->GetResistance(static_cast<uint16_t>((*dmg).school_type)) / (float)pVictim->getLevel();
             Resistchance *= Resistchance;
             if (Rand(Resistchance))
                 AverageResistance = 1.0f;
@@ -8790,7 +8790,7 @@ void Unit::AddAura(Aura* aur)
                                         ench = oh->GetEnchantment(TEMP_ENCHANTMENT_SLOT);
                                         if (ench)
                                         {
-                                            DBC::Structures::SpellItemEnchantmentEntry const* Entry = ench->Enchantment;
+                                            DBC::Structures::SpellItemEnchantmentEntry const* itemEntry = ench->Enchantment;
                                             for (uint8 c = 0; c < 3; c++)
                                             {
                                                 if (Entry->type[c] && Entry->spell[c])
@@ -8860,7 +8860,7 @@ void Unit::AddAura(Aura* aur)
                                                                 break;
                                                         }
 
-                                                        oh_spell = Entry->spell[c];
+                                                        oh_spell = itemEntry->spell[c];
                                                         break;
                                                     }
                                                 }
@@ -9805,7 +9805,7 @@ int32 Unit::getDetectRangeMod(uint64 guid)
 
 bool Unit::IsSitting()
 {
-    uint8 s = GetStandState();
+    StandState s = GetStandState();
     return
         s == STANDSTATE_SIT_CHAIR        || s == STANDSTATE_SIT_LOW_CHAIR  ||
         s == STANDSTATE_SIT_MEDIUM_CHAIR || s == STANDSTATE_SIT_HIGH_CHAIR ||
@@ -11489,7 +11489,7 @@ bool Unit::IsDazed()
         {
             if (m_auras[x]->GetSpellInfo()->getMechanicsType() == MECHANIC_ENSNARED)
                 return true;
-            for (uint32 y = 0; y < 3; y++)
+            for (uint8_t y = 0; y < 3; y++)
                 if (m_auras[x]->GetSpellInfo()->getEffectMechanic(y) == MECHANIC_ENSNARED)
                     return true;
         }
@@ -12127,8 +12127,8 @@ void Unit::Energize(Unit* target, uint32 SpellId, uint32 amount, uint32 type)
     if (!target || !SpellId || !amount)
         return;
 
-    uint32 cur = target->GetPower(POWER_TYPE_MANA + type);
-    uint32 max = target->GetMaxPower(POWER_TYPE_MANA + type);
+    uint32 cur = target->GetPower(static_cast<uint16_t>(POWER_TYPE_MANA + type));
+    uint32 max = target->GetMaxPower(static_cast<uint16_t>(POWER_TYPE_MANA + type));
 
     if (cur + amount > max)
         amount = max - cur;
@@ -12450,22 +12450,25 @@ void Unit::DispelAll(bool positive)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-/// bool Unit::RemoveAllAurasByMechanic (renamed from MechanicImmunityMassDispel)
-/// Removes all auras on this unit that are of a specific mechanic.
-/// Useful for things like.. Apply Aura: Immune Mechanic, where existing (de)buffs are *always supposed* to be removed.
-/// I'm not sure if this goes here under unit.
-///
-/// \param uint32 MechanicType
-/// \return False if no buffs were dispelled, true if more than 0 were dispelled.
+// bool Unit::RemoveAllAurasByMechanic (renamed from MechanicImmunityMassDispel)
+// Removes all auras on this unit that are of a specific mechanic.
+// Useful for things like.. Apply Aura: Immune Mechanic, where existing (de)buffs are *always supposed* to be removed.
+// I'm not sure if this goes here under unit.
+//
+// \param uint32 MechanicType
+// \return False if no buffs were dispelled, true if more than 0 were dispelled.
 //////////////////////////////////////////////////////////////////////////////////////////
-bool Unit::RemoveAllAurasByMechanic(uint32 MechanicType, uint32 MaxDispel = -1, bool HostileOnly = true)
+
+// MaxDispel was set to -1 which will led to a uint32 of 4294967295
+bool Unit::RemoveAllAurasByMechanic(uint32 MechanicType, uint32 /*MaxDispel = 0*/, bool HostileOnly = true)
 {
     LogDebugFlag(LF_AURA, "Unit::MechanicImmunityMassDispel called, mechanic: %u" , MechanicType);
     uint32 DispelCount = 0;
     for (uint32 x = (HostileOnly ? MAX_NEGATIVE_AURAS_EXTEDED_START : MAX_POSITIVE_AURAS_EXTEDED_START); x < MAX_REMOVABLE_AURAS_END; x++)    // If HostileOnly = 1, then we use aura slots 40-56 (hostile). Otherwise, we use 0-56 (all)
     {
-        if (DispelCount >= MaxDispel && MaxDispel > 0)
-            return true;
+        // This check is will never be true since DispelCount is 0 and MaxDispel was 4294967295!
+        /*if (DispelCount >= MaxDispel && MaxDispel > 0)
+            return true;*/
 
         if (m_auras[x])
         {
@@ -12851,14 +12854,14 @@ void Unit::RemoveReflect(uint32 spellid, bool apply)
 
 void Unit::SetPower(uint32 type, int32 value)
 {
-    uint32 maxpower = getUInt32Value(UNIT_FIELD_MAXPOWER1 + type);
+    uint32 maxpower = getUInt32Value(static_cast<uint16_t>(UNIT_FIELD_MAXPOWER1 + type));
 
     if (value < 0)
         value = 0;
     else if (value > (int32)maxpower)
         value = maxpower;
 
-    setUInt32Value(UNIT_FIELD_POWER1 + type, value);
+    setUInt32Value(static_cast<uint16_t>(UNIT_FIELD_POWER1 + type), value);
 }
 
 void Unit::SendPowerUpdate(bool self)

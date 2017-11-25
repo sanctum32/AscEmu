@@ -1793,7 +1793,7 @@ void Pet::ApplySummonLevelAbilities()
     SetBaseMana((uint32)(mana));
     SetMaxPower(POWER_TYPE_MANA, (uint32)(mana));
 
-    for (uint32 x = 0; x < 5; ++x)
+    for (uint16 x = 0; x < 5; ++x)
         CalcStat(x);
 }
 
@@ -1843,7 +1843,7 @@ void Pet::ApplyPetLevelAbilities()
     else if (family_aura[pet_family] != 0)
         this->CastSpell(this, family_aura[pet_family], true);
 
-    for (uint32 x = 0; x < 5; ++x)
+    for (uint16 x = 0; x < 5; ++x)
         CalcStat(x);
 
     LoadPetAuras(-2);//Load all BM auras
@@ -1967,7 +1967,7 @@ AI_Spell* Pet::HandleAutoCastEvent()
         if ((*itr)->autocast_type == AUTOCAST_EVENT_ATTACK)
         {
             // spells still spammed, I think the cooldowntime is being set incorrectly somewhere else
-            if (chance && (*itr)->spell &&Util::getMSTime() >= (*itr)->cooldowntime && GetPower((*itr)->spell->getPowerType()) >= (*itr)->spell->getManaCost())
+            if (chance && (*itr)->spell &&Util::getMSTime() >= (*itr)->cooldowntime && GetPower(static_cast<uint16_t>((*itr)->spell->getPowerType())) >= (*itr)->spell->getManaCost())
             {
                 return *itr;
             }

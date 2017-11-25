@@ -153,7 +153,8 @@ namespace VMAP
 
     bool ModelSpawn::readFromFile(FILE* rf, ModelSpawn &spawn)
     {
-        uint32 check = 0, nameLen;
+        uint32 nameLen;
+        size_t check = 0;
         check += fread(&spawn.flags, sizeof(uint32), 1, rf);
         // EoF?
         if (!check)
@@ -199,7 +200,7 @@ namespace VMAP
 
     bool ModelSpawn::writeToFile(FILE* wf, const ModelSpawn &spawn)
     {
-        uint32 check=0;
+        size_t check = 0;
         check += fwrite(&spawn.flags, sizeof(uint32), 1, wf);
         check += fwrite(&spawn.adtId, sizeof(uint16), 1, wf);
         check += fwrite(&spawn.ID, sizeof(uint32), 1, wf);
@@ -212,7 +213,7 @@ namespace VMAP
             check += fwrite(&spawn.iBound.low(), sizeof(float), 3, wf);
             check += fwrite(&spawn.iBound.high(), sizeof(float), 3, wf);
         }
-        uint32 nameLen = spawn.name.length();
+        uint32 nameLen = static_cast<uint32>(spawn.name.length());
         check += fwrite(&nameLen, sizeof(uint32), 1, wf);
         if (check != uint32(has_bound ? 17 : 11))
             return false;

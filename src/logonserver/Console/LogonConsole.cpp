@@ -406,8 +406,7 @@ void LogonConsole::checkAccountName(std::string name, uint8 type)
 {
     std::string aname(name);
 
-    for (std::string::iterator itr = aname.begin(); itr != aname.end(); ++itr)
-        *itr = toupper(*itr);
+    Util::StringToUpperCase(aname);
 
     switch (type)
     {
@@ -416,7 +415,6 @@ void LogonConsole::checkAccountName(std::string name, uint8 type)
             if (AccountMgr::getSingleton().GetAccount(aname) == NULL)
             {
                 std::cout << "There's no account with name " << name << std::endl;
-                return;
             }
 
         } break;
@@ -425,9 +423,7 @@ void LogonConsole::checkAccountName(std::string name, uint8 type)
             if (AccountMgr::getSingleton().GetAccount(aname) != NULL)
             {
                 std::cout << "There's already an account with name " << name << std::endl;
-                return;
             }
-
         } break;
     }
 }

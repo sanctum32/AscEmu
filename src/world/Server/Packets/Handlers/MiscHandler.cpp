@@ -664,8 +664,7 @@ void WorldSession::HandleLootReleaseOpcode(WorldPacket& recv_data)
         // delete current loot, so the next one can be filled
         if (item->loot != NULL)
         {
-            uint32 itemsNotLooted =
-                std::count_if (item->loot->items.begin(), item->loot->items.end(), ItemIsNotLooted());
+            auto itemsNotLooted = std::count_if(item->loot->items.begin(), item->loot->items.end(), ItemIsNotLooted());
 
             if ((itemsNotLooted == 0) && (item->loot->gold == 0))
             {
@@ -1550,7 +1549,7 @@ void WorldSession::HandleBarberShopResult(WorldPacket& recv_data)
     uint32 oldhair = _player->getByteValue(PLAYER_BYTES, 2);
     uint32 oldhaircolor = _player->getByteValue(PLAYER_BYTES, 3);
     uint32 oldfacial = _player->getByteValue(PLAYER_BYTES_2, 0);
-    uint32 oldskincolor = _player->getByteValue(PLAYER_BYTES, 0);
+    // uint32 oldskincolor = _player->getByteValue(PLAYER_BYTES, 0);
 
     uint32 newhair, newhaircolor, newfacial;
 
@@ -1754,18 +1753,18 @@ void WorldSession::HandleGameObjectUse(WorldPacket& recv_data)
             }
 
             // Fishing is channeled spell
-            auto spell = plyr->getCurrentSpell(CURRENT_CHANNELED_SPELL);
-            if (spell != nullptr)
+            auto channelledSpell = plyr->getCurrentSpell(CURRENT_CHANNELED_SPELL);
+            if (channelledSpell != nullptr)
             {
                 if (success)
                 {
-                    spell->SendChannelUpdate(0);
-                    spell->finish(true);
+                    channelledSpell->SendChannelUpdate(0);
+                    channelledSpell->finish(true);
                 }
                 else
                 {
-                    spell->SendChannelUpdate(0);
-                    spell->finish(false);
+                    channelledSpell->SendChannelUpdate(0);
+                    channelledSpell->finish(false);
                 }
             }
         }
@@ -2234,7 +2233,7 @@ void WorldSession::HandleInspectOpcode(WorldPacket& recv_data)
 
         data << uint16(enchant_mask);
 
-        for (uint32 Slot = 0; Slot < MAX_ENCHANTMENT_SLOT; ++Slot) // In UpdateFields.h we have ITEM_FIELD_ENCHANTMENT_1_1 to ITEM_FIELD_ENCHANTMENT_12_1, iterate on them...
+        for (uint16 Slot = 0; Slot < MAX_ENCHANTMENT_SLOT; ++Slot) // In UpdateFields.h we have ITEM_FIELD_ENCHANTMENT_1_1 to ITEM_FIELD_ENCHANTMENT_12_1, iterate on them...
         {
             uint32 enchantId = item->GetEnchantmentId(Slot);   // This calculation has to be in sync with Item.cpp line ~614, at the moment it is:    uint32 EnchantBase = Slot * 3 + ITEM_FIELD_ENCHANTMENT_1_1;
 
@@ -2708,40 +2707,40 @@ void WorldSession::HandleToggleHelmOpcode(WorldPacket& /*recv_data*/)
         _player->SetFlag(PLAYER_FLAGS, PLAYER_FLAG_NOHELM);
 }
 
-void WorldSession::HandleDungeonDifficultyOpcode(WorldPacket& recv_data)
+void WorldSession::HandleDungeonDifficultyOpcode(WorldPacket& recvData)
 {
     CHECK_INWORLD_RETURN
 
-    uint32 data;
-    recv_data >> data;
+    uint8_t data;
+    recvData >> data;
 
     // Set dungeon difficulty for us
     _player->iInstanceType = data;
     sInstanceMgr.ResetSavedInstances(_player);
 
-    Group* m_Group = _player->GetGroup();
+    Group* group = _player->GetGroup();
 
     // If we have a group and we are the leader then set it for the entire group as well
-    if (m_Group && _player->IsGroupLeader())
-        m_Group->SetDungeonDifficulty(data);
+    if (group && _player->IsGroupLeader())
+        group->SetDungeonDifficulty(data);
 }
 
-void WorldSession::HandleRaidDifficultyOpcode(WorldPacket& recv_data)
+void WorldSession::HandleRaidDifficultyOpcode(WorldPacket& recvData)
 {
     CHECK_INWORLD_RETURN
 
-    uint32 data;
-    recv_data >> data;
+    uint8_t data;
+    recvData >> data;
 
     // set the raid difficulty for us
     _player->SetRaidDifficulty(data);
     sInstanceMgr.ResetSavedInstances(_player);
 
-    Group* m_Group = _player->GetGroup();
+    Group* group = _player->GetGroup();
 
     // if we have a group and we are the leader then set it for the entire group as well
-    if (m_Group && _player->IsGroupLeader())
-        m_Group->SetRaidDifficulty(data);
+    if (group && _player->IsGroupLeader())
+        group->SetRaidDifficulty(data);
 }
 
 void WorldSession::HandleSummonResponseOpcode(WorldPacket& recv_data)
@@ -2799,7 +2798,7 @@ void WorldSession::HandleRemoveGlyph(WorldPacket& recv_data)
 {
     CHECK_INWORLD_RETURN
 
-    uint32 glyphNum;
+    uint16_t glyphNum;
     recv_data >> glyphNum;
 
     if (glyphNum > 5)

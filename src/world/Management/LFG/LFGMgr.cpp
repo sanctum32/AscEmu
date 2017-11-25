@@ -142,7 +142,7 @@ void LfgMgr::LoadRewards()
         }
 
 #if VERSION_STRING != Cata
-		DBC::Structures::LFGDungeonEntry const* dungeon = sLFGDungeonStore.LookupEntry(dungeonId);
+		//DBC::Structures::LFGDungeonEntry const* dungeon = sLFGDungeonStore.LookupEntry(dungeonId);
 #endif
         m_RewardMap.insert(LfgRewardMap::value_type(dungeonId, new LfgReward(maxLevel, firstQuestId, firstMoneyVar, firstXPVar, otherQuestId, otherMoneyVar, otherXPVar)));
         ++count;
@@ -401,8 +401,8 @@ bool LfgMgr::RemoveFromQueue(uint64 guid)
 void LfgMgr::InitializeLockedDungeons(Player* player)
 {
     uint64 guid = player->GetGUID();
-    uint8 level = player->getLevel();
-    uint8 expansion = player->GetSession()->GetFlags();
+    uint8 level = static_cast<uint8>(player->getLevel());
+    uint8 expansion = static_cast<uint8>(player->GetSession()->GetFlags());
     LfgDungeonSet dungeons = GetDungeonsByRandom(0);
     LfgLockMap lock;
 
@@ -1446,7 +1446,7 @@ void LfgMgr::UpdateProposal(uint32 proposalId, uint64 guid, bool accept)
                 SetDungeon(grp->GetGUID(), dungeon->Entry());
 #endif
 
-                uint32 low_gguid = grp->GetID();
+                // uint32 low_gguid = grp->GetID();
                 uint64 gguid = grp->GetGUID();
                 SetState(gguid, LFG_STATE_PROPOSAL);
                 grp->AddMember(player->getPlayerInfo());
@@ -1878,7 +1878,7 @@ void LfgMgr::RewardDungeonDoneFor(const uint32 dungeonId, Player* player)
         player->GetAchievementMgr().UpdateAchievementCriteria(player, 13029, 1); // Done LFG Dungeon with random Players
 #endif
 
-    LfgReward const* reward = GetRandomDungeonReward(rDungeonId, player->getLevel());
+    LfgReward const* reward = GetRandomDungeonReward(rDungeonId, static_cast<uint8_t>(player->getLevel()));
     if (!reward)
         return;
 

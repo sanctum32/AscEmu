@@ -9,7 +9,7 @@ This file is released under the MIT license. See README-MIT for more information
 
 #include <ctime>
 
-enum PlayerTeam : int
+enum PlayerTeam : uint8_t
 {
     TEAM_ALLIANCE = 0,
     TEAM_HORDE    = 1,
@@ -630,7 +630,7 @@ enum DuelWinner
 const time_t attackTimeoutInterval = 5000;
 const time_t forcedResurrectInterval = 360000;  // 1000*60*6= 6 minutes
 
-enum PlayerCombatRating
+enum PlayerCombatRating : uint16_t
 {
     PCR_RANGED_SKILL                = 0,
     PCR_DEFENCE                     = 1,
@@ -701,3 +701,5 @@ enum PlayerCheats
 #else
     #define GLYPHS_COUNT 6
 #endif
+
+#define MAX_QUEST_SLOT 25

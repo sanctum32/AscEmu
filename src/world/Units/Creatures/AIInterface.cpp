@@ -375,9 +375,9 @@ void AIInterface::generateWaypointScriptRandom()
                     randPos.y = pos.y + distance * sinf(orientation);
                     randPos.z = m_Unit->GetMapMgr()->GetLandHeight(randPos.x, randPos.y, pos.z + 2);
 
-                    VMAP::IVMapManager* vmapMgr = VMAP::VMapFactory::createOrGetVMapManager();
+                    // VMAP::IVMapManager* vmapMgr = VMAP::VMapFactory::createOrGetVMapManager();
 
-                    bool isHittingObject = vmapMgr->getObjectHitPos(m_Unit->GetMapId(), pos.x, pos.y, pos.z + 2, randPos.x, randPos.y, randPos.z, randPos.x, randPos.y, randPos.z, -1);
+                    // bool isHittingObject = vmapMgr->getObjectHitPos(m_Unit->GetMapId(), pos.x, pos.y, pos.z + 2, randPos.x, randPos.y, randPos.z, randPos.x, randPos.y, randPos.z, -1);
 
                     MoveTo(randPos.x, randPos.y, randPos.z);
 
@@ -604,10 +604,10 @@ void AIInterface::setFearRandomMovement()
                 randPos.y = pos.y + distance * sinf(orientation);
                 randPos.z = unitToFear->GetMapMgr()->GetLandHeight(randPos.x, randPos.y, pos.z + 2);
 
-                VMAP::IVMapManager* vmapMgr = VMAP::VMapFactory::createOrGetVMapManager();
+                // VMAP::IVMapManager* vmapMgr = VMAP::VMapFactory::createOrGetVMapManager();
 
                 // change generated x, y, z to a position before hitting the object.
-                bool isHittingObject = vmapMgr->getObjectHitPos(m_Unit->GetMapId(), pos.x, pos.y, pos.z + 2, randPos.x, randPos.y, randPos.z, randPos.x, randPos.y, randPos.z, -1);
+                // bool isHittingObject = vmapMgr->getObjectHitPos(m_Unit->GetMapId(), pos.x, pos.y, pos.z + 2, randPos.x, randPos.y, randPos.z, randPos.x, randPos.y, randPos.z, -1);
 
                 MoveTo(randPos.x, randPos.y, randPos.z);
 
@@ -873,12 +873,12 @@ void AIInterface::changeWayPointId(uint32_t oldWaypointId, uint32_t newWaypointI
     saveWayPoints();
 }
 
-size_t AIInterface::getWayPointsCount()
+uint32_t AIInterface::getWayPointsCount()
 {
     if (mWayPointMap && !mWayPointMap->empty())
-        return mWayPointMap->size() - 1;
-    else
-        return 0;
+        return static_cast<uint32_t>(mWayPointMap->size() - 1);
+
+    return 0;
 }
 
 void AIInterface::setWayPointToMove(uint32_t waypointId)
@@ -1583,7 +1583,7 @@ void AIInterface::_UpdateTargets()
 
 //////////////////////////////////////////////////////////////////////////////////////////
 /// Updates Combat Status of m_Unit
-void AIInterface::_UpdateCombat(uint32 p_time)
+void AIInterface::_UpdateCombat(uint32 /*p_time*/)
 {
     if (!isAiScriptType(AI_SCRIPT_PET) && isCombatDisabled())
         return;
@@ -4225,16 +4225,16 @@ dtStatus AIInterface::findSmoothPath(const float* startPos, const float* endPos,
             npolys -= npos;
 
             // Handle the connection.
-            float startPos[VERTEX_SIZE], endPos[VERTEX_SIZE];
-            if (!dtStatusFailed(mesh->getOffMeshConnectionPolyEndPoints(prevRef, polyRef, startPos, endPos)))
+            float startPos2[VERTEX_SIZE], endPos2[VERTEX_SIZE];
+            if (!dtStatusFailed(mesh->getOffMeshConnectionPolyEndPoints(prevRef, polyRef, startPos2, endPos2)))
             {
                 if (nsmoothPath < maxSmoothPathSize)
                 {
-                    dtVcopy(&smoothPath[nsmoothPath * VERTEX_SIZE], startPos);
+                    dtVcopy(&smoothPath[nsmoothPath * VERTEX_SIZE], startPos2);
                     nsmoothPath++;
                 }
                 // Move position at the other side of the off-mesh link.
-                dtVcopy(iterPos, endPos);
+                dtVcopy(iterPos, endPos2);
                 query->getPolyHeight(polys[0], iterPos, &iterPos[1]);
             }
         }
@@ -4431,7 +4431,7 @@ void AIInterface::EventEnterCombat(Unit* pUnit, uint32 misc1)
     m_Unit->smsg_AttackStart(pUnit);
 }
 
-void AIInterface::EventLeaveCombat(Unit* pUnit, uint32 misc1)
+void AIInterface::EventLeaveCombat(Unit* pUnit, uint32 /*misc1*/)
 {
     if (isAiState(AI_STATE_EVADE))
         return;
@@ -4611,7 +4611,7 @@ void AIInterface::EventDamageTaken(Unit* pUnit, uint32 misc1)
     pUnit->CombatStatus.OnDamageDealt(m_Unit);
 }
 
-void AIInterface::EventFollowOwner(Unit* pUnit, uint32 misc1)
+void AIInterface::EventFollowOwner(Unit* /*pUnit*/, uint32 /*misc1*/)
 {
     if (isAiState(AI_STATE_EVADE))
         return;
@@ -4635,7 +4635,7 @@ void AIInterface::EventFollowOwner(Unit* pUnit, uint32 misc1)
     setSplineRun();
 }
 
-void AIInterface::EventFear(Unit* pUnit, uint32 misc1)
+void AIInterface::EventFear(Unit* pUnit, uint32 /*misc1*/)
 {
     if (pUnit == nullptr)
         return;
@@ -4666,7 +4666,7 @@ void AIInterface::EventFear(Unit* pUnit, uint32 misc1)
     resetNextTarget();
 }
 
-void AIInterface::EventUnfear(Unit* pUnit, uint32 misc1)
+void AIInterface::EventUnfear(Unit* /*pUnit*/, uint32 /*misc1*/)
 {
     if (isAiState(AI_STATE_EVADE))
         return;
@@ -4679,7 +4679,7 @@ void AIInterface::EventUnfear(Unit* pUnit, uint32 misc1)
     StopMovement(1);
 }
 
-void AIInterface::EventWander(Unit* pUnit, uint32 misc1)
+void AIInterface::EventWander(Unit* pUnit, uint32 /*misc1*/)
 {
     if (isAiState(AI_STATE_EVADE))
         return;
@@ -4713,7 +4713,7 @@ void AIInterface::EventWander(Unit* pUnit, uint32 misc1)
     resetNextTarget();
 }
 
-void AIInterface::EventUnwander(Unit* pUnit, uint32 misc1)
+void AIInterface::EventUnwander(Unit* /*pUnit*/, uint32 /*misc1*/)
 {
     if (isAiState(AI_STATE_EVADE))
         return;
@@ -4725,7 +4725,7 @@ void AIInterface::EventUnwander(Unit* pUnit, uint32 misc1)
     StopMovement(1);
 }
 
-void AIInterface::EventUnitDied(Unit* pUnit, uint32 misc1)
+void AIInterface::EventUnitDied(Unit* pUnit, uint32 /*misc1*/)
 {
     if (pUnit == nullptr)
         return;
@@ -4828,7 +4828,7 @@ void AIInterface::EventUnitDied(Unit* pUnit, uint32 misc1)
     }
 }
 
-void AIInterface::EventHostileAction(Unit* pUnit, uint32 misc1)
+void AIInterface::EventHostileAction(Unit* /*pUnit*/, uint32 /*misc1*/)
 {
     m_combatResetX = m_Unit->GetPositionX();
     m_combatResetY = m_Unit->GetPositionY();
@@ -4864,7 +4864,7 @@ void AIInterface::MoveEvadeReturn()
     generateAndSendSplinePath(m_returnX, m_returnY, m_returnZ);
 }
 
-void AIInterface::EventForceRedirected(Unit* pUnit, uint32 misc1)
+void AIInterface::EventForceRedirected(Unit* /*pUnit*/, uint32 /*misc1*/)
 {
     if (isAiState(AI_STATE_IDLE))
         SetReturnPosition();

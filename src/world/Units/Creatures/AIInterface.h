@@ -183,7 +183,7 @@ struct AI_Spell
 {
     ~AI_Spell() { autocast_type = (uint32) - 1; }
     uint32 entryId;
-    uint32 instance_mode;
+    uint8 instance_mode;
     uint16 agent;
     uint32 procChance;
     SpellInfo* spell;
@@ -270,7 +270,7 @@ class SERVER_DECL AIInterface : public IUpdatable
         bool hasWayPoints();
         uint32_t getCurrentWayPointId();
         void changeWayPointId(uint32_t oldWaypointId, uint32_t newWaypointId);
-        size_t getWayPointsCount();
+        uint32_t getWayPointsCount();
 
         void setWayPointToMove(uint32_t waypointId);
 

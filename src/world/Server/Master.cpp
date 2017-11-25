@@ -115,77 +115,12 @@ bool Master::Run(int /*argc*/, char** /*argv*/)
 {
     char* config_file = (char*)CONFDIR "/world.conf";
 
-    //int file_log_level = DEF_VALUE_NOT_SET;
-    //int screen_log_level = DEF_VALUE_NOT_SET;
-
-    // Zyres: The commandline options (especially the config_file value) is leaking our memory (CID 52872 and 52620). This feature seems to be unfinished.
-#ifdef COMMANDLINE_OPT_ENABLE
-
-    int do_check_conf = 0;
-    int do_version = 0;
-    int do_cheater_check = 0;
-    int do_database_clean = 0;
-
-    struct arcemu_option longopts[] =
-    {
-        { "checkconf", arcemu_no_argument, &do_check_conf, 1 },
-        { "screenloglevel", arcemu_required_argument, &screen_log_level, 1 },
-        { "fileloglevel", arcemu_required_argument, &file_log_level, 1 },
-        { "version", arcemu_no_argument, &do_version, 1 },
-        { "conf", arcemu_required_argument, NULL, 'c' },
-        { "realmconf", arcemu_required_argument, NULL, 'r' },
-        { "databasecleanup", arcemu_no_argument, &do_database_clean, 1 },
-        { "cheatercheck", arcemu_no_argument, &do_cheater_check, 1 },
-        { 0, 0, 0, 0 }
-    };
-
-    char c;
-    while ((c = static_cast<char>(arcemu_getopt_long_only(argc, argv, ":f:", longopts, NULL))) != -1)
-    {
-        switch (c)
-        {
-            case 'c':
-                config_file = new char[strlen(arcemu_optarg) + 1];
-                strcpy(config_file, arcemu_optarg);
-                break;
-
-            case 0:
-                break;
-            default:
-                Log.Init(0, WORLD_LOG);
-                printf("Usage: %s [--checkconf] [--fileloglevel <level>] [--conf <filename>] [--realmconf <filename>] [--version] [--databasecleanup] [--cheatercheck]\n", argv[0]);
-                AscLog.~AscEmuLog();
-                return true;
-        }
-    }
-#endif
-    // Startup banner
     UNIXTIME = time(NULL);
     g_localTime = *localtime(&UNIXTIME);
 
     AscLog.InitalizeLogFiles("world");
 
     PrintBanner();
-
-#ifdef COMMANDLINE_OPT_ENABLE
-    if (do_version)
-    {
-        AscLog.~AscEmuLog();
-        return true;
-    }
-
-    if (do_check_conf)
-    {
-        LogNotice("Config : Checking config file: %s", config_file);
-        if (Config.MainConfig.SetSource(config_file, true))
-            LogDetail("Config : Passed world.conf without errors.");
-        else
-            LOG_ERROR("Encountered one or more errors while loading world.conf.");
-
-        AscLog.~AscEmuLog();
-        return true;
-    }
-#endif
 
     LogDefault("The key combination <Ctrl-C> will safely shut down the server.");
 
@@ -227,20 +162,6 @@ bool Master::Run(int /*argc*/, char** /*argv*/)
         AscLog.~AscEmuLog();
         return false;
     }
-#ifdef COMMANDLINE_OPT_ENABLE
-    if (do_database_clean)
-    {
-        LogDebug("Entering database maintenance mode.");
-        new DatabaseCleaner;
-        DatabaseCleaner::getSingleton().Run();
-        delete DatabaseCleaner::getSingletonPtr();
-        LogDebug("Maintenance finished.");
-    }
-
-    /* set new log levels */
-    if (file_log_level != (int)DEF_VALUE_NOT_SET)
-        Log.SetFileLoggingLevel(file_log_level);
-#endif
 
     // Initialize Opcode Table
     WorldSession::InitPacketHandlerTable();
@@ -836,7 +757,7 @@ void Master::ShutdownThreadPools(bool listnersockcreate)
         if (50 > etime)
         {
 
-            Arcemu::Sleep(50 - etime);
+            Arcemu::Sleep(static_cast<unsigned long>(50 - etime));
 
         }
     }

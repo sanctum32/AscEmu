@@ -761,8 +761,8 @@ void WorldSession::HandleItemQuerySingleOpcode(WorldPacket& recv_data)
     WorldPacket data(SMSG_ITEM_QUERY_SINGLE_RESPONSE, 800);
     data << itemProto->ItemId;
     data << itemProto->Class;
-    data << itemProto->SubClass;
-    data << itemProto->unknown_bc;
+    data << uint32_t(itemProto->SubClass);
+    data << itemProto->unknown_bc;  // soundOverride
     data << Name;
     data << uint8(0);           // name 2?
     data << uint8(0);           // name 3?
@@ -887,12 +887,12 @@ void WorldSession::HandleBuyBackOpcode(WorldPacket& recv_data)
         uint32 FreeSlots = _player->GetItemInterface()->CalculateFreeSlots(it->GetItemProperties());
         if ((FreeSlots == 0) && (!add))
         {
-            _player->GetItemInterface()->BuildInventoryChangeError(NULL, NULL, INV_ERR_INVENTORY_FULL);
+            _player->GetItemInterface()->BuildInventoryChangeError(nullptr, nullptr, INV_ERR_INVENTORY_FULL);
             return;
         }
 
         // Check for gold
-        int32 cost = _player->getUInt32Value(PLAYER_FIELD_BUYBACK_PRICE_1 + stuff);
+        uint32_t cost = _player->getUInt32Value(static_cast<uint16_t>(PLAYER_FIELD_BUYBACK_PRICE_1 + stuff));
         if (!_player->HasGold(cost))
         {
             WorldPacket data(SMSG_BUY_FAILED, 12);
@@ -905,10 +905,11 @@ void WorldSession::HandleBuyBackOpcode(WorldPacket& recv_data)
         // Check for item uniqueness
         if ((error = _player->GetItemInterface()->CanReceiveItem(it->GetItemProperties(), amount)) != 0)
         {
-            _player->GetItemInterface()->BuildInventoryChangeError(NULL, NULL, error);
+            _player->GetItemInterface()->BuildInventoryChangeError(nullptr, nullptr, error);
             return;
         }
-        _player->ModGold(-cost);
+        int32_t coins = cost * -1;
+        _player->ModGold(coins);
         _player->GetItemInterface()->RemoveBuyBackItem(stuff);
 
         if (!add)
@@ -1512,10 +1513,6 @@ void WorldSession::SendInventoryList(Creature* unit)
                         continue;
 
                     if (curItem->HasFlag2(ITEM_FLAG2_ALLIANCE_ONLY) && !GetPlayer()->IsTeamAlliance())
-                        continue;
-
-                    int8 Slot = _player->GetItemInterface()->GetItemSlotByType(curItem->InventoryType);
-                    if (_player->GetItemInterface()->CanEquipItemInSlot(INVENTORY_SLOT_NOT_SET, Slot, curItem, true, true))
                         continue;
                 }
                 

@@ -380,8 +380,8 @@ struct Modifier
     //uint32 m_actamt;       // actual amt, for percent and stuff
     uint32 m_type;           // What does it modify? (str,int,hp)
     int32 m_amount;          // By how much does it mod?
-    int32 m_miscValue;       // Misc Value
-    uint32 i;
+    uint16_t m_miscValue;       // Misc Value
+    uint8_t m_effectIndex;
 
     ///needed for per level effect
     int32 realamount;
@@ -422,7 +422,7 @@ class SERVER_DECL Aura : public EventableObject
         ~Aura();
 
         void Remove();
-        void AddMod(uint32 t, int32 a, uint32 miscValue, uint32 i);
+        void AddMod(uint32 t, int32 a, uint32 miscValue, uint8_t effectIndex);
 
         inline SpellInfo* GetSpellInfo() const { return m_spellInfo; }
         inline uint32 GetSpellId() const { return m_spellInfo->getId(); }

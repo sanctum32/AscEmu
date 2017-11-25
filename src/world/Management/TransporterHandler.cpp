@@ -425,18 +425,18 @@ bool Transporter::GenerateWaypoints(uint32 pathid)
                     newY = keyFrames[i].y + (keyFrames[i + 1].y - keyFrames[i].y) * d / keyFrames[i + 1].distFromPrev;
                     newZ = keyFrames[i].z + (keyFrames[i + 1].z - keyFrames[i].z) * d / keyFrames[i + 1].distFromPrev;
 
-                    bool teleport = false;
+                    bool teleport2 = false;
                     if (keyFrames[i].mapid != cM)
                     {
-                        teleport = true;
+                        teleport2 = true;
                         cM = keyFrames[i].mapid;
                     }
 
                     //                    LogDefault("T: %d, D: %f, x: %f, y: %f, z: %f", t, d, newX, newY, newZ);
-                    TWayPoint pos(keyFrames[i].mapid, newX, newY, newZ, teleport);
+                    TWayPoint pos2(keyFrames[i].mapid, newX, newY, newZ, teleport2);
                     if (teleport)
                     {
-                        m_WayPoints[t] = pos;
+                        m_WayPoints[t] = pos2;
                     }
                 }
 
@@ -474,19 +474,19 @@ bool Transporter::GenerateWaypoints(uint32 pathid)
         else
             t += (long)keyFrames[i + 1].tTo % 100;
 
-        bool teleport = false;
+        bool teleport3 = false;
         if ((keyFrames[i + 1].actionflag == 1) || (keyFrames[i + 1].mapid != keyFrames[i].mapid))
         {
-            teleport = true;
+            teleport3 = true;
             cM = keyFrames[i + 1].mapid;
         }
 
-        TWayPoint pos(keyFrames[i + 1].mapid, keyFrames[i + 1].x, keyFrames[i + 1].y, keyFrames[i + 1].z, teleport);
+        TWayPoint pos2(keyFrames[i + 1].mapid, keyFrames[i + 1].x, keyFrames[i + 1].y, keyFrames[i + 1].z, teleport3);
 
         //        LogDefault("T: %d, x: %f, y: %f, z: %f, t:%d", t, pos.x, pos.y, pos.z, teleport);
 
         //if (teleport)
-        m_WayPoints[t] = pos;
+        m_WayPoints[t] = pos2;
         //if (keyFrames[i + 1].delay > 5)
         //    pos2.delayed = true;
 
