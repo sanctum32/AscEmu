@@ -498,7 +498,7 @@ enum
 
 #include "Spell/Customization/SpellCustomizations.hpp"
 
-//\brief: created by Zyres 11/13/2017 - This should replace SP_AI_Spell, ScriptSpell and SpellDesc
+//\brief: created by Zyres 11/13/2017 - This should replace SP_AI_Spell and SpellDesc
 class SERVER_DECL CreatureAISpells
 {
     public:
@@ -1076,7 +1076,6 @@ class SERVER_DECL CreatureAIScript
         void CastSpell(SpellDesc* pSpell);
         void CastSpellNowNoScheduling(SpellDesc* pSpell);
         
-        SpellDesc* FindSpellById(uint32_t pSpellId);
         SpellDesc* FindSpellByFunc(SpellFunc pFnc);
 
         void TriggerCooldownOnAllSpells();
@@ -1116,38 +1115,11 @@ class SERVER_DECL CreatureAIScript
 
         //Basic Interface
         SpellDesc* AddPhaseSpell(uint32_t pPhase, SpellDesc* pSpell);
-        void SetEnrageInfo(SpellDesc* pSpell, uint32_t pTriggerMilliseconds);
 
     protected:
 
         PhaseSpellArray mPhaseSpells;
-        SpellDesc* mEnrageSpell;
-        int32_t mEnrageTimerDuration;
-        uint32_t mEnrageTimer;
 };
-
-//Premade Spell Functions
-SERVER_DECL void SpellFunc_ClearHateList(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
-SERVER_DECL void SpellFunc_Disappear(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
-SERVER_DECL void SpellFunc_Reappear(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
-
-
-//Premade Event Functions
-SERVER_DECL void EventFunc_ApplyAura(CreatureAIScript* pCreatureAI, int32_t pMiscVal);
-SERVER_DECL void EventFunc_ChangeGoState(CreatureAIScript* pCreatureAI, int32_t pMiscVal);
-SERVER_DECL void EventFunc_RemoveUnitFieldFlags(CreatureAIScript* pCreatureAI, int32_t pMiscVal);
-
-//STL Utilities
-template <class Type> inline void DeleteArray(std::vector<Type> pVector)
-{
-    typename std::vector<Type>::iterator Iter = pVector.begin();
-    for (; Iter != pVector.end(); ++Iter)
-    {
-        delete(*Iter);
-    }
-    pVector.clear();
-}
-
 
 class GameEvent;
 class SERVER_DECL EventScript
