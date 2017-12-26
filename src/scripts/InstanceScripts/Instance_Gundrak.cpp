@@ -20,33 +20,28 @@
 #include "Setup.h"
 #include "Instance_Gundrak.h"
 
+#define GO_FLAG_UNCLICKABLE 0x00000010
 
-#define GO_FLAG_UNCLICKABLE            0x00000010
-
-
-/////////////////////////////////////////////////////////////////////////////////
-/// Gundrak Instance Script
-// Status: Finished
 class GundrakScript : public InstanceScript
 {
     public:
-        uint32        mSladranAltarGUID;
-        uint32        mSladranStatueGUID;
-        uint32        mColossusAltarGUID;
-        uint32        mColossusStatueGUID;
-        uint32        mMoorabiAltarGUID;
-        uint32        mMoorabiStatueGUID;
+        uint32 mSladranAltarGUID;
+        uint32 mSladranStatueGUID;
+        uint32 mColossusAltarGUID;
+        uint32 mColossusStatueGUID;
+        uint32 mMoorabiAltarGUID;
+        uint32 mMoorabiStatueGUID;
 
-        uint32        mEckDoorsGUID;
+        uint32 mEckDoorsGUID;
 
-        uint32        mTrapDoorGUID;
-        uint32      mCoilisionGUID;
+        uint32 mTrapDoorGUID;
+        uint32 mCoilisionGUID;
 
-        uint32      mCombatDoorsGUID;
-        uint32        mDoor1GUID;
-        uint32        mDoor2GUID;
+        uint32 mCombatDoorsGUID;
+        uint32 mDoor1GUID;
+        uint32 mDoor2GUID;
 
-        uint8        mStatueCount;
+        uint8 mStatueCount;
 
         GundrakScript(MapMgr* pMapMgr) : InstanceScript(pMapMgr)
         {
@@ -75,7 +70,6 @@ class GundrakScript : public InstanceScript
         {
             switch (pGameObject->GetEntry())
             {
-
                 case GO_ALTAR1_SLADRAN:
                 {
                     mSladranAltarGUID = pGameObject->GetLowGUID();
@@ -244,34 +238,32 @@ class GundrakScript : public InstanceScript
         }
 };
 
-/////////////////////////////////////////////////////////////////////////////////
-// Slad'ran encounter
+
 // Status: 50% done, missing add related stuff and maybe correct timers
 class SladranAI : public CreatureAIScript
 {
     ADD_CREATURE_FACTORY_FUNCTION(SladranAI);
     SladranAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        SpellDesc* sdPoisonNova = nullptr;
+        CreatureAISpells* sdPoisonNova = nullptr;
         if (_isHeroic())
         {
-            AddSpell(59840, Target_Current, 25, 0, 6);
-            AddSpell(59839, Target_RandomPlayerNotCurrent, 18, 1.5f, 8);
+            addAISpell(59840, 25.0f, TARGET_ATTACKING, 0, 6);
+            addAISpell(59839, 18.0f, TARGET_RANDOM_SINGLE, 2, 8);
 
-            sdPoisonNova = AddSpell(59842, Target_Self, 10, 3.5f, 16);
+            sdPoisonNova = addAISpell(59842, 10.0f, TARGET_SELF, 4, 16);
         }
         else
         {
-            AddSpell(48287, Target_Current, 25, 0, 6);
-            AddSpell(54970, Target_RandomPlayerNotCurrent, 18, 1.5f, 8);
+            addAISpell(48287, 25.0f, TARGET_ATTACKING, 0, 6);
+            addAISpell(54970, 18.0f, TARGET_RANDOM_SINGLE, 2, 8);
 
-            sdPoisonNova = AddSpell(55081, Target_Self, 10, 3.5f, 16);
+            sdPoisonNova = addAISpell(55081, 10.0f, TARGET_SELF, 4, 16);
         }
 
         if (sdPoisonNova != nullptr)
-            sdPoisonNova->addAnnouncement("Slad'ran begins to cast Poison Nova!");
+            sdPoisonNova->setAnnouncement("Slad'ran begins to cast Poison Nova!");
 
-        //new
         addEmoteForEvent(Event_OnCombatStart, 8754);     // Drakkari gonna kill anybody who trespass on these lands!
         addEmoteForEvent(Event_OnTargetDied, 4217);     // You not breathin'? Good.
         addEmoteForEvent(Event_OnTargetDied, 4218);     // Ssscared now?
@@ -281,8 +273,6 @@ class SladranAI : public CreatureAIScript
 };
 
 
-/////////////////////////////////////////////////////////////////////////////////
-// Gal'darah encounter
 // Status: 20% done, missing rihno part, need vehicle support for that, missing stampade script
 class GalDarahAI : public CreatureAIScript
 {
@@ -290,11 +280,10 @@ class GalDarahAI : public CreatureAIScript
     GalDarahAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
         if (_isHeroic())
-            AddSpell(59824, Target_Self, 20, 0, 12);
+            addAISpell(59824, 20.0f, TARGET_SELF, 0, 12);
         else
-            AddSpell(55250, Target_Self, 20, 0, 12);
+            addAISpell(55250, 20.0f, TARGET_SELF, 0, 12);
 
-        // new
         addEmoteForEvent(Event_OnCombatStart, 4199);     // I'm gonna spill your guts, mon!
         addEmoteForEvent(Event_OnTargetDied, 4200);     // What a rush!
         addEmoteForEvent(Event_OnTargetDied, 4201);     // Who needs gods when we ARE gods?

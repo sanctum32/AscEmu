@@ -22,14 +22,10 @@
 #include "Instance_DrakTharonKeep.h"
 
 
-/*
- Trollgore - TOO EASY!!
- \todo Whole corpses/consume thingo is wrong
- NOTES:
- Core doesn't support auras on corpses, we are currently unable to script this blizzlike
- */
 
-//TrollgoreAI
+// \todo Whole corpses/consume thingo is wrong
+
+
 const uint32 INVASION_INTERVAL = 20000;
 const uint32 INVADERS_PER_INVASION = 1;
 //two mobs per 10s
@@ -40,8 +36,6 @@ class TrollgoreAI : public CreatureAIScript
         TrollgoreAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
             invastion_timer = 0;
-
-            enableCreatureAISpellSystem = true;
 
             if (_isHeroic())
             {
@@ -64,8 +58,6 @@ class TrollgoreAI : public CreatureAIScript
 
         void OnCombatStop(Unit* /*mTarget*/) override
         {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
             _removeTimer(invastion_timer);
         }
 
@@ -122,8 +114,6 @@ class NovosTheSummonerAI : public CreatureAIScript
             invasion_timer = 0;
             handler_timer = 0;
 
-            enableCreatureAISpellSystem = true;
-
             if (_isHeroic())
             {
                 addAISpell(59909, 70.0f, TARGET_ATTACKING, 0, 4);        //ArcaneBlast
@@ -169,8 +159,6 @@ class NovosTheSummonerAI : public CreatureAIScript
 
         void OnCombatStop(Unit* /*mTarget*/) override
         {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
             for (uint8 i = 0; i < 4; i++)
             {
                 if (getCreature()->m_ObjectSlots[i])
@@ -235,17 +223,17 @@ class NovosTheSummonerAI : public CreatureAIScript
         Player* GetRandomPlayerTarget()
         {
             std::vector< uint32 > possible_targets;
-            for (std::set< Object* >::iterator iter = getCreature()->GetInRangePlayerSetBegin(); iter != getCreature()->GetInRangePlayerSetEnd(); ++iter)
+            for (const auto& iter : getCreature()->getInRangePlayersSet())
             {
-                if ((*iter) && (static_cast< Player* >(*iter))->isAlive())
-                    possible_targets.push_back((uint32)(*iter)->GetGUID());
+                if (iter && static_cast<Player*>(iter)->isAlive())
+                    possible_targets.push_back(static_cast<uint32>(iter->GetGUID()));
             }
             if (possible_targets.size() > 0)
             {
                 uint32 random_player = possible_targets[Rand(uint32(possible_targets.size() - 1))];
                 return getCreature()->GetMapMgr()->GetPlayer(random_player);
             }
-            return NULL;
+            return nullptr;
         }
 
         // scriptPhase
@@ -289,7 +277,7 @@ class NovosTheSummonerAI : public CreatureAIScript
                     else
                     {
                         uint32 mobs[2] = { 27598, 27600 };
-                        mob_entry = mobs[RandomUInt(1)];
+                        mob_entry = mobs[Util::getRandomUInt(1)];
                     }
                     CreatureProperties const* cp = sMySQLStore.getCreatureProperties(mob_entry);
                     if (cp != nullptr)
@@ -368,24 +356,15 @@ class NovosTheSummonerAI : public CreatureAIScript
 };
 
 
-//CrystalHandlerAI
 class CrystalHandlerAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(CrystalHandlerAI);
         CrystalHandlerAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             if (_isHeroic())
                 addAISpell(59004, 50.0f, TARGET_ATTACKING, 0, 4);    //FlashofDarkness
             else
                 addAISpell(49668, 50.0f, TARGET_ATTACKING, 0, 4);    //FlashofDarkness
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 
         void OnDied(Unit* /*mKiller*/) override
@@ -410,15 +389,12 @@ class CrystalHandlerAI : public CreatureAIScript
 };
 
 
-// KingDreadAI
 // \todo King Dred Call nearby friends
 class KingDreadAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(KingDreadAI);
         KingDreadAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             if (_isHeroic())
             {
                 addAISpell(59422, 80.0f, TARGET_ATTACKING, 0, 3);  //GrievousBite
@@ -433,12 +409,6 @@ class KingDreadAI : public CreatureAIScript
             addAISpell(22686, 30.0f, TARGET_ATTACKING, 0, 5); //BellowingRoar
             addAISpell(48878, 40.0f, TARGET_ATTACKING, 0, 5); //PiercingSlash
         }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
 };
 
 /*
@@ -448,7 +418,6 @@ class KingDreadAI : public CreatureAIScript
  - Figure out why players are not always changed to skeletons while chaning phases
  */
 
-// TheProphetTaronjaAI
 const uint32 WINDSERPENT_PHASE_INTERVAL = 60000; //change phase each 60s
 const uint32 WINDSERPENT_PHASE_LENGTH = 30000; //30s
 const uint32 PHASES_COUNT = 2;
@@ -460,8 +429,6 @@ class TheProphetTaronjaAI : public CreatureAIScript
         {
             phase_timer = 0;
             phase_length = 0;
-
-            enableCreatureAISpellSystem = true;
 
             if (_isHeroic())
             {
@@ -493,8 +460,6 @@ class TheProphetTaronjaAI : public CreatureAIScript
 
         void OnCombatStop(Unit* /*mTarget*/) override
         {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
             phase_timer = 0;
             phase_length = 0;
             getCreature()->SetDisplayId(getCreature()->GetNativeDisplayId());
@@ -536,8 +501,6 @@ class TheProphetTaronjaAI : public CreatureAIScript
 
 void SetupDrakTharonKeep(ScriptMgr* mgr)
 {
-    //Trash Mobs
-
     //Bosses
     mgr->register_creature_script(CN_TROLLGORE, &TrollgoreAI::Create);
     mgr->register_creature_script(CN_NOVOS_THE_SUMMONER, &NovosTheSummonerAI::Create);

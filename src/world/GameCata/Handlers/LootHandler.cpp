@@ -480,7 +480,7 @@ void WorldSession::HandleLootReleaseOpcode(WorldPacket& recv_data)
                             if (pLock->locktype[i] == 1)
                             {
                                 if (despawn)
-                                    pGO->Despawn(0, (sQuestMgr.GetGameObjectLootQuest(pGO->GetEntry()) ? 180000 + (RandomUInt(180000)) : 900000 + (RandomUInt(600000))));
+                                    pGO->Despawn(0, (sQuestMgr.GetGameObjectLootQuest(pGO->GetEntry()) ? 180000 + (Util::getRandomUInt(180000)) : 900000 + (Util::getRandomUInt(600000))));
                                 else
                                     pGO->SetState(GO_STATE_CLOSED);
 
@@ -496,7 +496,7 @@ void WorldSession::HandleLootReleaseOpcode(WorldPacket& recv_data)
                                         return;
                                     }
 
-                                    pGO->Despawn(0, 900000 + (RandomUInt(600000)));
+                                    pGO->Despawn(0, 900000 + (Util::getRandomUInt(600000)));
                                     return;
                                 }
                             }
@@ -507,7 +507,7 @@ void WorldSession::HandleLootReleaseOpcode(WorldPacket& recv_data)
                                     pGO->SetState(GO_STATE_CLOSED);
                                     return;
                                 }
-                                pGO->Despawn(0, sQuestMgr.GetGameObjectLootQuest(pGO->GetEntry()) ? 180000 + (RandomUInt(180000)) : (IS_INSTANCE(pGO->GetMapId()) ? 0 : 900000 + (RandomUInt(600000))));
+                                pGO->Despawn(0, sQuestMgr.GetGameObjectLootQuest(pGO->GetEntry()) ? 180000 + (Util::getRandomUInt(180000)) : (IS_INSTANCE(pGO->GetMapId()) ? 0 : 900000 + (Util::getRandomUInt(600000))));
                                 return;
                             }
                         }
@@ -518,7 +518,7 @@ void WorldSession::HandleLootReleaseOpcode(WorldPacket& recv_data)
                                 pGO->SetState(GO_STATE_CLOSED);
                                 return;
                             }
-                            pGO->Despawn(0, sQuestMgr.GetGameObjectLootQuest(pGO->GetEntry()) ? 180000 + (RandomUInt(180000)) : (IS_INSTANCE(pGO->GetMapId()) ? 0 : 900000 + (RandomUInt(600000))));
+                            pGO->Despawn(0, sQuestMgr.GetGameObjectLootQuest(pGO->GetEntry()) ? 180000 + (Util::getRandomUInt(180000)) : (IS_INSTANCE(pGO->GetMapId()) ? 0 : 900000 + (Util::getRandomUInt(600000))));
                             return;
                         }
                     }
@@ -530,7 +530,7 @@ void WorldSession::HandleLootReleaseOpcode(WorldPacket& recv_data)
                         pGO->SetState(GO_STATE_CLOSED);
                         return;
                     }
-                    pGO->Despawn(0, sQuestMgr.GetGameObjectLootQuest(pGO->GetEntry()) ? 180000 + (RandomUInt(180000)) : (IS_INSTANCE(pGO->GetMapId()) ? 0 : 900000 + (RandomUInt(600000))));
+                    pGO->Despawn(0, sQuestMgr.GetGameObjectLootQuest(pGO->GetEntry()) ? 180000 + (Util::getRandomUInt(180000)) : (IS_INSTANCE(pGO->GetMapId()) ? 0 : 900000 + (Util::getRandomUInt(600000))));
 
                     return;
 
@@ -565,7 +565,7 @@ void WorldSession::HandleLootReleaseOpcode(WorldPacket& recv_data)
         if (item->loot != nullptr)
         {
             uint32_t itemsNotLooted =
-                std::count_if(item->loot->items.begin(), item->loot->items.end(), ItemIsNotLooted());
+                static_cast<uint32_t>(std::count_if(item->loot->items.begin(), item->loot->items.end(), ItemIsNotLooted()));
 
             if ((itemsNotLooted == 0) && (item->loot->gold == 0))
             {

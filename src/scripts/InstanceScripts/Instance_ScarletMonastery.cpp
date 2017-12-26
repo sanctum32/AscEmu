@@ -25,18 +25,16 @@
 
 // Graveyard
 
-// Interrogator Vishas
 class VishasAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(VishasAI);
         VishasAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            AddSpell(SP_VISHAS_SHADOW_WORD, Target_RandomPlayer, 20, 0, 8);
+            addAISpell(SP_VISHAS_SHADOW_WORD, 20.0f, TARGET_RANDOM_SINGLE, 0, 8);
 
             m_uiSay = 0;
 
-            // new
-            addEmoteForEvent(Event_OnCombatStart, 2110);     // Tell me... tell me everything!
+            addEmoteForEvent(Event_OnCombatStart, 2110);    // Tell me... tell me everything!
             addEmoteForEvent(Event_OnTargetDied, 2113);     // Purged by pain!
         }
 
@@ -65,18 +63,16 @@ class VishasAI : public CreatureAIScript
         uint8 m_uiSay;
 };
 
-// Bloodmage Thalnos
 class ThalnosAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(ThalnosAI);
         ThalnosAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            AddSpell(SP_THALNOS_SHADOW_BOLT, Target_RandomPlayer, 20, 3.0f, 2);
-            AddSpell(SP_THALNOS_FLAME_SPIKE, Target_RandomPlayerDestination, 20, 3.0f, 14);
+            addAISpell(SP_THALNOS_SHADOW_BOLT, 20.0f, TARGET_RANDOM_SINGLE, 3, 2);
+            addAISpell(SP_THALNOS_FLAME_SPIKE, 20.0f, TARGET_RANDOM_DESTINATION, 3, 14);
 
             m_bEmoted = false;
 
-            // new
             addEmoteForEvent(Event_OnCombatStart, 2107);     // We hunger for vengeance.
             addEmoteForEvent(Event_OnTargetDied, 2109);     // More... More souls!
         }
@@ -101,26 +97,25 @@ class ThalnosAI : public CreatureAIScript
 };
 
 // Library
-//Houndmaster Loksey
 class LokseyAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(LokseyAI);
         LokseyAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            AddSpell(SP_LOKSEY_BLOODLUST, Target_Self, 5, 0, 40);
+            addAISpell(SP_LOKSEY_BLOODLUST, 5.0f, TARGET_SELF, 0, 40);
+
             addEmoteForEvent(Event_OnCombatStart, 2086);     // Release the hounds!
         }
 };
 
-// Arcanist Doan
 class DoanAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(DoanAI);
         DoanAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            AddSpell(SP_DOAN_SILENCE, Target_Self, 25, 1.5f, 14);
-            AddSpell(SP_DOAN_POLY, Target_SecondMostHated, 15, 1.5f, 10);
-            AddSpell(SP_DOAN_ARCANE_EXP, Target_Self, 20, 0, 10);
+            addAISpell(SP_DOAN_SILENCE, 25.0f, TARGET_SELF, 2, 14);
+            addAISpell(SP_DOAN_POLY, 15.0f, TARGET_VARIOUS, 2, 10);
+            addAISpell(SP_DOAN_ARCANE_EXP, 20.0f, TARGET_SELF, 0, 10);
 
             m_bShielded = false;
 
@@ -154,14 +149,15 @@ class DoanAI : public CreatureAIScript
 
 
 // Armory
-// Herod
 class HerodAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(HerodAI);
         HerodAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            AddSpell(SP_HEROD_WHIRLWINDSPELL, Target_Self, 12, 0, 12)->addEmote("Blades of Light!", CHAT_MSG_MONSTER_YELL, 5832);
-            AddSpell(SP_HEROD_CHARGE, Target_RandomPlayer, 6, 0, 20);
+            auto whirlwind = addAISpell(SP_HEROD_WHIRLWINDSPELL, 12.0f, TARGET_SELF, 0, 12);
+            whirlwind->addEmote("Blades of Light!", CHAT_MSG_MONSTER_YELL, 5832);
+
+            addAISpell(SP_HEROD_CHARGE, 6.0f, TARGET_RANDOM_SINGLE, 0, 20);
 
             m_bEnraged = false;
 
@@ -184,7 +180,7 @@ class HerodAI : public CreatureAIScript
             }
         }
 
-        bool    m_bEnraged;
+        bool m_bEnraged;
 };
 
 
@@ -194,8 +190,6 @@ class MograineAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(MograineAI);
         MograineAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto shield = addAISpell(SP_MORGRAINE_SHIELD, 5.0f, TARGET_SELF, 0, 10, false, true);
             shield->setAttackStopTimer(1000);
 
@@ -208,12 +202,6 @@ class MograineAI : public CreatureAIScript
             addEmoteForEvent(Event_OnCombatStart, SAY_MORGRAINE_01);
             addEmoteForEvent(Event_OnTargetDied, SAY_MORGRAINE_02);
             addEmoteForEvent(Event_OnDied, SAY_MORGRAINE_03);
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 
         void OnDied(Unit* /*mKiller*/) override
@@ -229,8 +217,6 @@ class WhitemaneAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(WhitemaneAI);
         WhitemaneAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto smite = addAISpell(SP_WHITEMANE_SMITE, 15.0f, TARGET_ATTACKING);
             smite->setAttackStopTimer(1000);
 
@@ -252,9 +238,7 @@ class WhitemaneAI : public CreatureAIScript
                 return;
 
             if (getCreature()->GetHealthPct() <= 50 && getScriptPhase() == 1)
-            {
                 ChangeToPhase1();
-            }
         }
 
         void ChangeToPhase1()
@@ -278,12 +262,6 @@ class WhitemaneAI : public CreatureAIScript
                 getCreature()->CastSpell(morgrain, resurrection->mSpellInfo, true);
         }
 
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
-
     protected:
 
         CreatureAISpells* sleep;
@@ -296,19 +274,11 @@ class FairbanksAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(FairbanksAI);
         FairbanksAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto blood = addAISpell(SP_FAIRBANKS_BLOOD, 15.0f, TARGET_ATTACKING, 0, 20, false, true);
             blood->setAttackStopTimer(1000);
 
             auto pws = addAISpell(SP_FAIRBANKS_PWS, 15.0f, TARGET_SELF, 0, 0, false, true);
             pws->setAttackStopTimer(1000);
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 };
 
@@ -374,7 +344,7 @@ class CathedralLever : public GameObjectAIScript
 
 void SetupScarletMonastery(ScriptMgr* mgr)
 {
-    //Bosses?
+    //Bosses
     mgr->register_creature_script(CN_LOKSEY, &LokseyAI::Create);
     mgr->register_creature_script(CN_VISHAS, &VishasAI::Create);
     mgr->register_creature_script(CN_THALNOS, &ThalnosAI::Create);

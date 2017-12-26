@@ -437,6 +437,10 @@ void LfgMgr::InitializeLockedDungeons(Player* player)
         }
     }
     SetLockedDungeons(guid, lock);
+#else
+    if (expansion == 0) { return; }
+    if (guid == 0) { return; }
+    if (level == 0) { return; }
 #endif
 }
 
@@ -940,7 +944,7 @@ bool LfgMgr::CheckCompatibility(LfgGuidList check, LfgProposal*& pProposal)
         for (LfgRolesMap::const_iterator itRoles = it->second->roles.begin(); itRoles != it->second->roles.end(); ++itRoles)
         {
             // Assign new leader
-            if (itRoles->second & ROLE_LEADER && (!leader || RandomUInt(1)))
+            if (itRoles->second & ROLE_LEADER && (!leader || Util::getRandomUInt(1)))
             {
                 leader = itRoles->first;
             }
@@ -1828,6 +1832,8 @@ void LfgMgr::TeleportPlayer(Player* player, bool out, bool fromOpcode /*= false*
 
     if (error != LFG_TELEPORTERROR_OK)
         player->GetSession()->SendLfgTeleportError(uint8(error));
+
+    if (fromOpcode) { return;  }
 }
 
 void LfgMgr::RewardDungeonDoneFor(const uint32 dungeonId, Player* player)
@@ -2077,6 +2083,8 @@ void LfgMgr::RewardDungeonDoneFor(const uint32 dungeonId, Player* player)
     //Log.Debug("LfgMgr", "LfgMgr::RewardDungeonDoneFor: %u done dungeon %u, %s previously done.", player->GetGUID(), GetDungeon(gguid), index > 0 ? " " : " not");
     LOG_DEBUG("%u done dungeon %u, previously done.", player->GetGUID(), GetDungeon(gguid));
     player->GetSession()->SendLfgPlayerReward(dungeon->Entry(), GetDungeon(gguid, false), index, reward, qReward);
+#else
+    if (player == nullptr ||dungeonId == 0) { return; }
 #endif
 }
 
@@ -2087,6 +2095,7 @@ const LfgDungeonSet& LfgMgr::GetDungeonsByRandom(uint32 randomdungeon)
     uint32 groupType = dungeon ? dungeon->grouptype : 0;
     return m_CachedDungeonMap[groupType];
 #else
+    if (randomdungeon == 0) { return m_CachedDungeonMap[0]; }
     return m_CachedDungeonMap[0];
 #endif
 }
@@ -2116,6 +2125,7 @@ LfgType LfgMgr::GetDungeonType(uint32 dungeonId)
 
     return LfgType(dungeon->type);
 #else
+    if (dungeonId == 0) { return LfgType(0); }
     return LfgType(0);
 #endif
 }

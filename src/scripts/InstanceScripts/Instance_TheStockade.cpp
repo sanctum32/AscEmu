@@ -22,8 +22,7 @@
 #include "Setup.h"
 #include "Instance_TheStockade.h"
 
-//////////////////////////////////////////////////////////////////////////////////////////
-//Stormwind Stockade
+
 class InstanceStormwindStockadeScript : public InstanceScript
 {
     public:
@@ -34,20 +33,18 @@ class InstanceStormwindStockadeScript : public InstanceScript
         static InstanceScript* Create(MapMgr* pMapMgr) { return new InstanceStormwindStockadeScript(pMapMgr); }
 };
 
-// DeepfuryAI
 class DeepfuryAI : public CreatureAIScript
 {
     ADD_CREATURE_FACTORY_FUNCTION(DeepfuryAI);
     DeepfuryAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        AddSpell(SHIELD_SLAM, Target_Current, 100, 0, 8);
-        AddSpell(IMPROVED_BLOCKING, Target_Self, 100, 0, 20);
+        addAISpell(SHIELD_SLAM, 100.0f, TARGET_ATTACKING, 0, 8);
+        addAISpell(IMPROVED_BLOCKING, 100.0f, TARGET_SELF, 0, 20);
     }
 
     void OnCombatStart(Unit* /*pTarget*/) override
     {
         getCreature()->CastSpell(getCreature(), 7164, false); // Defensive Stance
-        
     }
 
     void AIUpdate() override
@@ -60,34 +57,29 @@ class DeepfuryAI : public CreatureAIScript
             _setCastDisabled(true);
             moveTo(float(105.693390), float(-58.426674), float(-34.856178), true);
         }
-        
     }
 };
 
-// HamhockAI
 class HamhockAI : public CreatureAIScript
 {
     ADD_CREATURE_FACTORY_FUNCTION(HamhockAI);
     HamhockAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        AddSpell(BLOODLUST, Target_RandomFriendly, 100, 0, 60);
-        AddSpell(CHAINLIGHT, Target_Current, 50, 2, 7);
+        addAISpell(BLOODLUST, 100.0f, TARGET_RANDOM_FRIEND, 0, 60);
+        addAISpell(CHAINLIGHT, 50.0f, TARGET_ATTACKING, 2, 7);
 
-        // new
         addEmoteForEvent(Event_OnCombatStart, 8759);
     }
 };
 
-// BazilAI
 class BazilAI : public CreatureAIScript
 {
     ADD_CREATURE_FACTORY_FUNCTION(BazilAI);
     BazilAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        AddSpell(SMOKE_BOMB, Target_Current, 100, 9, 15);
-        AddSpell(BATTLE_SHOUT, Target_Self, 100, 3, 30);
+        addAISpell(SMOKE_BOMB, 100.0f, TARGET_ATTACKING, 9, 15);
+        addAISpell(BATTLE_SHOUT, 100.0f, TARGET_SELF, 3, 30);
 
-        // new
         addEmoteForEvent(Event_OnCombatStart, 8760);
     }
 
@@ -97,14 +89,13 @@ class BazilAI : public CreatureAIScript
     }
 };
 
-// DextrenAI
 class DextrenAI : public CreatureAIScript
 {
     ADD_CREATURE_FACTORY_FUNCTION(DextrenAI);
     DextrenAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        AddSpell(FRIGHTENING_SHOUT, Target_Current, 33, 8, 30);
-        AddSpell(STRIKE, Target_Self, 33, 0, 10);
+        addAISpell(FRIGHTENING_SHOUT, 33.0f, TARGET_ATTACKING, 8, 30);
+        addAISpell(STRIKE, 33.0f, TARGET_SELF, 0, 10);
     }
 
     void OnCombatStart(Unit* /*pTarget*/) override
@@ -113,17 +104,16 @@ class DextrenAI : public CreatureAIScript
     }
 };
 
-// TargorrTheDreadAI
 class TargorrTheDreadAI : public CreatureAIScript
 {
-    bool Enrage = false;
-    SpellDesc *Enraged;
+    bool Enrage;
+    CreatureAISpells *Enraged;
 
     ADD_CREATURE_FACTORY_FUNCTION(TargorrTheDreadAI);
     TargorrTheDreadAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        Enraged = AddSpell(ENRAGE, Target_Self, 0, 0, 0);
-        AddSpell(THRASH, Target_Self, 50, 0, 8);
+        Enraged = addAISpell(ENRAGE, 0.0f, TARGET_SELF);
+        addAISpell(THRASH, 50.0f, TARGET_SELF, 0, 8);
         Enrage = false;
     }
 
@@ -132,18 +122,17 @@ class TargorrTheDreadAI : public CreatureAIScript
         if (_getHealthPercent() < 50 && !Enrage)
         {
             Enrage = true;
-            CastSpellNowNoScheduling(Enraged);
+            _castAISpell(Enraged);
         }
     }
 };
 
-// InmateAI
 class InmateAI : public CreatureAIScript
 {
     ADD_CREATURE_FACTORY_FUNCTION(InmateAI);
     InmateAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        AddSpell(REND, Target_Current, 100, 5, 16);
+        addAISpell(REND, 100.0f, TARGET_ATTACKING, 5, 16);
     }
 
     void OnCombatStart(Unit* /*pTarget*/) override
@@ -152,13 +141,12 @@ class InmateAI : public CreatureAIScript
     }
 };
 
-// InsurgentAI
 class InsurgentAI : public CreatureAIScript
 {
     ADD_CREATURE_FACTORY_FUNCTION(InsurgentAI);
     InsurgentAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        AddSpell(DEMORALIZING_SHOUT, Target_Self, 100, 7, 25);
+        addAISpell(DEMORALIZING_SHOUT, 100.0f, TARGET_SELF, 7, 25);
     }
 
     void OnCombatStart(Unit* /*pTarget*/) override
@@ -167,14 +155,13 @@ class InsurgentAI : public CreatureAIScript
     }
 };
 
-// PrisonerAI
 class PrisonerAI : public CreatureAIScript
 {
     ADD_CREATURE_FACTORY_FUNCTION(PrisonerAI);
     PrisonerAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        AddSpell(KICK, Target_Current, 100, 5, 16);
-        AddSpell(DISARM, Target_Current, 100, 10, 14);
+        addAISpell(KICK, 100.0f, TARGET_ATTACKING, 5, 16);
+        addAISpell(DISARM, 100.0f, TARGET_ATTACKING, 10, 14);
     }
 
     void OnCombatStart(Unit* /*pTarget*/) override
@@ -183,13 +170,12 @@ class PrisonerAI : public CreatureAIScript
     }
 };
 
-// ConvictAI
 class ConvictAI : public CreatureAIScript
 {
     ADD_CREATURE_FACTORY_FUNCTION(ConvictAI);
     ConvictAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        AddSpell(BACKHAND, Target_Current, 100, 5, 12);
+        addAISpell(BACKHAND, 100.0f, TARGET_ATTACKING, 5, 12);
     }
 
     void OnCombatStart(Unit* /*pTarget*/) override

@@ -144,7 +144,7 @@ void WorldSession::HandleCancelAuction(WorldPacket& recv_data)
     pCreature->auctionHouse->SendOwnerListPacket(_player, 0);
 }
 
-void WorldSession::HandleAuctionSellItem(WorldPacket& recv_data)
+void WorldSession::HandleAuctionSellItem(WorldPacket& recvData)
 {
     uint64_t auctioneer;
     uint64_t bid;
@@ -152,24 +152,24 @@ void WorldSession::HandleAuctionSellItem(WorldPacket& recv_data)
     uint32_t itemsCount;
     uint32_t etime;
 
-    recv_data >> auctioneer;
-    recv_data >> itemsCount;
+    recvData >> auctioneer;
+    recvData >> itemsCount;
 
     uint64_t itemGUIDs[MAX_AUCTION_ITEMS];
     uint32_t count[MAX_AUCTION_ITEMS];
     
     for (uint32_t i = 0; i < itemsCount; ++i)
     {
-        recv_data >> itemGUIDs[i];
-        recv_data >> count[i];
+        recvData >> itemGUIDs[i];
+        recvData >> count[i];
 
         if (!itemGUIDs[i] || !count[i] || count[i] > 1000)
             return;
     }
 
-    recv_data >> bid;
-    recv_data >> buyout;
-    recv_data >> etime;
+    recvData >> bid;
+    recvData >> buyout;
+    recvData >> etime;
 
     if (!bid || !etime)
         return;
@@ -228,12 +228,11 @@ void WorldSession::HandleAuctionSellItem(WorldPacket& recv_data)
     for (uint32_t i = 0; i < itemsCount; ++i)
     {
         Item* item = items[i];
-        uint32_t auctionTime = uint32_t(etime);
 
-        AuctionHouse* ah = pCreature->auctionHouse;
+        AuctionHouse* auctionHouse = pCreature->auctionHouse;
 
         uint32_t item_worth = item->GetItemProperties()->SellPrice * item->GetStackCount();
-        uint32_t item_deposit = (uint32_t)(item_worth * ah->deposit_percent) * (uint32_t)(etime / 240.0f);
+        uint32_t item_deposit = (uint32_t)(item_worth * auctionHouse->deposit_percent) * (uint32_t)(etime / 240.0f);
 
         if (!_player->HasGold((uint64_t)item_deposit))
         {
@@ -261,9 +260,9 @@ void WorldSession::HandleAuctionSellItem(WorldPacket& recv_data)
 
         // Create auction
         Auction* auct = new Auction;
-        auct->BuyoutPrice = buyout;
+        auct->BuyoutPrice = static_cast<uint32_t>(buyout);
         auct->ExpiryTime = (uint32_t)UNIXTIME + (etime * 60);
-        auct->StartingPrice = bid;
+        auct->StartingPrice = static_cast<uint32_t>(bid);
         auct->HighestBid = 0;
         auct->HighestBidder = 0;
         auct->Id = sAuctionMgr.GenerateAuctionId();
@@ -273,13 +272,13 @@ void WorldSession::HandleAuctionSellItem(WorldPacket& recv_data)
         auct->DeletedReason = 0;
         auct->DepositAmount = item_deposit;
 
-        ah->AddAuction(auct);
-        auct->SaveToDB(ah->GetID());
+        auctionHouse->AddAuction(auct);
+        auct->SaveToDB(auctionHouse->GetID());
 
         _player->sendAuctionCommandResult(nullptr, AUCTION_CREATE, AUCTION_ERR_NONE);
     }
 
-    ah->SendOwnerListPacket(_player, &recv_data);
+    ah->SendOwnerListPacket(_player, &recvData);
 }
 
 void WorldSession::HandleAuctionListOwnerItems(WorldPacket& recv_data)

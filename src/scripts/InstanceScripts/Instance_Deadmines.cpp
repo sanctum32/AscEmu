@@ -19,7 +19,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "Setup.h"
 #include "Instance_Deadmines.h"
 #include "Server/LazyTimer.h"
@@ -156,9 +155,8 @@ class RhahkZorAI : public CreatureAIScript
     ADD_CREATURE_FACTORY_FUNCTION(RhahkZorAI);
     RhahkZorAI(Creature* pCreature) : CreatureAIScript(pCreature), debugTimer(1500)
     {
-        AddSpell(6304, Target_Current, 8, 0, 3);    // Rhahk'Zor Slam
+        addAISpell(6304, 8.0f, TARGET_ATTACKING, 0, 3);    // Rhahk'Zor Slam
 
-        // new
         addEmoteForEvent(Event_OnCombatStart, 5495);     // VanCleef pay big for you heads!
     }
 };
@@ -169,8 +167,10 @@ class MrSmiteAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(MrSmiteAI);
         MrSmiteAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            AddSpell(SMITE_SLAM, Target_Current, 25, 0.0f, 15, 0.0f, 8.0f, true);
-            mStomp = AddSpell(SMITE_STOMP, Target_Self, 0, 0, 0);
+            auto smiteSlam = addAISpell(SMITE_SLAM, 25.0f, TARGET_ATTACKING, 0, 15, false, true);
+            smiteSlam->setMinMaxDistance(0.0f, 8.0f);
+
+            mStomp = addAISpell(SMITE_STOMP, 0.0f, TARGET_SELF);
             mWaitAtChest = 0;
             _setWieldWeapon(true);
         }
@@ -215,11 +215,11 @@ class MrSmiteAI : public CreatureAIScript
             {
                 case 2:
                     sendChatMessage(CHAT_MSG_MONSTER_YELL, 5778, "You landlubbers are tougher than I thought. I'll have to improvise!");
-                    CastSpellNowNoScheduling(mStomp);
+                    _castAISpell(mStomp);
                     break;
                 case 4:
                     sendChatMessage(CHAT_MSG_MONSTER_YELL, 5779, "D'ah! Now you're making me angry!");
-                    CastSpellNowNoScheduling(mStomp);
+                    _castAISpell(mStomp);
                     break;
                 default:
                     break;
@@ -290,24 +290,21 @@ class MrSmiteAI : public CreatureAIScript
 
     protected:
 
-        SpellDesc* mStomp;
+        CreatureAISpells* mStomp;
         uint32 mWaitAtChest;
 };
 
 
-// VanCleef
 class VanCleefAI : public CreatureAIScript
 {
     ADD_CREATURE_FACTORY_FUNCTION(VanCleefAI);
     VanCleefAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        AddSpell(3391, Target_Self, 25, 0, 0);    //Thrash (Gives the caster 2 extra attacks.)
+        addAISpell(3391, 25.0f, TARGET_SELF);    //Thrash (Gives the caster 2 extra attacks.)
 
-        // new
         addEmoteForEvent(Event_OnCombatStart, 7722);     // None may challenge the Brotherhood!
         addEmoteForEvent(Event_OnDied, 7727);            // The Brotherhood shall prevail!
     }
-
 
     void OnTargetDied(Unit* pTarget) override
     {
@@ -318,7 +315,6 @@ class VanCleefAI : public CreatureAIScript
             sprintf(msg, "And stay down, %s.", static_cast<Pet*>(pTarget)->GetName().c_str());
 
         sendChatMessage(CHAT_MSG_MONSTER_YELL, 5781, msg);
-        
     }
 
     void AIUpdate() override
@@ -350,13 +346,11 @@ class VanCleefAI : public CreatureAIScript
             sendDBChatMessage(7727);     // The Brotherhood shall prevail!
             setScriptPhase(4);
         }
-        
     }
 };
 
 void SetupDeadmines(ScriptMgr* mgr)
 {
-    //mgr->register_instance_script(MAP_DEADMINES, &DeadminesInstanceScript::Create);
     mgr->register_creature_script(NPC_RHAHK_ZOR, &RhahkZorAI::Create);
     mgr->register_creature_script(NPC_MR_SMITE, &MrSmiteAI::Create);
     mgr->register_creature_script(NPC_EDWIN_VANCLEEF, &VanCleefAI::Create);

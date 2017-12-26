@@ -85,16 +85,16 @@ bool Cannibalize(uint8_t effectIndex, Spell* s)
     float rad = s->GetRadius(effectIndex);
     rad *= rad;
 
-    for (Object::InRangeSet::iterator itr = s->p_caster->GetInRangeSetBegin(); itr != s->p_caster->GetInRangeSetEnd(); ++itr)
+    for (const auto& itr : s->p_caster->getInRangeObjectsSet())
     {
-        if ((*itr)->IsCreature())
+        if (itr && itr->IsCreature())
         {
-            if (static_cast<Creature*>((*itr))->getDeathState() == CORPSE)
+            if (static_cast<Creature*>(itr)->getDeathState() == CORPSE)
             {
-                CreatureProperties const* cn = static_cast<Creature*>((*itr))->GetCreatureProperties();
+                CreatureProperties const* cn = static_cast<Creature*>(itr)->GetCreatureProperties();
                 if (cn->Type == UNIT_TYPE_HUMANOID || cn->Type == UNIT_TYPE_UNDEAD)
                 {
-                    if (s->p_caster->GetDistance2dSq((*itr)) < rad)
+                    if (s->p_caster->GetDistance2dSq(itr) < rad)
                     {
                         check = true;
                         break;
@@ -231,7 +231,7 @@ bool NorthRendInscriptionResearch(uint8_t /*effectIndex*/, Spell* s)
 
         if (discoverableGlyphs.size() > 0)
         {
-            uint32 newGlyph = discoverableGlyphs.at(RandomUInt(static_cast<uint32>(discoverableGlyphs.size() - 1)));
+            uint32 newGlyph = discoverableGlyphs.at(Util::getRandomUInt(static_cast<uint32>(discoverableGlyphs.size() - 1)));
             s->p_caster->addSpell(newGlyph);
         }
     }
@@ -423,22 +423,22 @@ bool CrystalSpikes(uint8_t /*effectIndex*/, Spell* pSpell)
 
     for (uint8 i = 1; i < 6; ++i)
     {
-        pCaster->GetMapMgr()->GetInterface()->SpawnCreature(CN_CRYSTAL_SPIKE, pCaster->GetPositionX() + (3 * i) + RandomUInt(2), pCaster->GetPositionY() + (3 * i) + RandomUInt(2), pCaster->GetPositionZ(), pCaster->GetOrientation(), true, false, 0, 0);
+        pCaster->GetMapMgr()->GetInterface()->SpawnCreature(CN_CRYSTAL_SPIKE, pCaster->GetPositionX() + (3 * i) + Util::getRandomUInt(2), pCaster->GetPositionY() + (3 * i) + Util::getRandomUInt(2), pCaster->GetPositionZ(), pCaster->GetOrientation(), true, false, 0, 0);
     }
 
     for (uint8 i = 1; i < 6; ++i)
     {
-        pCaster->GetMapMgr()->GetInterface()->SpawnCreature(CN_CRYSTAL_SPIKE, pCaster->GetPositionX() - (3 * i) - RandomUInt(2), pCaster->GetPositionY() + (3 * i) + RandomUInt(2), pCaster->GetPositionZ(), pCaster->GetOrientation(), true, false, 0, 0);
+        pCaster->GetMapMgr()->GetInterface()->SpawnCreature(CN_CRYSTAL_SPIKE, pCaster->GetPositionX() - (3 * i) - Util::getRandomUInt(2), pCaster->GetPositionY() + (3 * i) + Util::getRandomUInt(2), pCaster->GetPositionZ(), pCaster->GetOrientation(), true, false, 0, 0);
     }
 
     for (uint8 i = 1; i < 6; ++i)
     {
-        pCaster->GetMapMgr()->GetInterface()->SpawnCreature(CN_CRYSTAL_SPIKE, pCaster->GetPositionX() + (3 * i) + RandomUInt(2), pCaster->GetPositionY() - (3 * i) - RandomUInt(2), pCaster->GetPositionZ(), pCaster->GetOrientation(), true, false, 0, 0);
+        pCaster->GetMapMgr()->GetInterface()->SpawnCreature(CN_CRYSTAL_SPIKE, pCaster->GetPositionX() + (3 * i) + Util::getRandomUInt(2), pCaster->GetPositionY() - (3 * i) - Util::getRandomUInt(2), pCaster->GetPositionZ(), pCaster->GetOrientation(), true, false, 0, 0);
     }
 
     for (uint8 i = 1; i < 6; ++i)
     {
-        pCaster->GetMapMgr()->GetInterface()->SpawnCreature(CN_CRYSTAL_SPIKE, pCaster->GetPositionX() - (3 * i) - RandomUInt(2), pCaster->GetPositionY() - (3 * i) - RandomUInt(2), pCaster->GetPositionZ(), pCaster->GetOrientation(), true, false, 0, 0);
+        pCaster->GetMapMgr()->GetInterface()->SpawnCreature(CN_CRYSTAL_SPIKE, pCaster->GetPositionX() - (3 * i) - Util::getRandomUInt(2), pCaster->GetPositionY() - (3 * i) - Util::getRandomUInt(2), pCaster->GetPositionZ(), pCaster->GetOrientation(), true, false, 0, 0);
     }
 
     return true;

@@ -26,7 +26,6 @@
 
 //////////////////////////////////////////////////////////////
 // Boss AIs
-//////////////////////////////////////////////////////////////
 
 class TotemsAI : public CreatureAIScript
 {
@@ -96,8 +95,6 @@ class MennuTheBetrayerAI : public CreatureAIScript
             for (uint8 i = 0; i < 4; i++)
                 SummonedTotems[i] = false;
 
-            enableCreatureAISpellSystem = true;
-
             auto lighningBolt = addAISpell(LIGHTNING_BOLT, 10.0f, TARGET_ATTACKING, 0, 15);
             lighningBolt->setAttackStopTimer(5000);
 
@@ -129,12 +126,6 @@ class MennuTheBetrayerAI : public CreatureAIScript
                 SummonedTotems[i] = false;
 
             TotemCounter = 0;
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 
         void AIUpdate() override
@@ -173,7 +164,7 @@ class MennuTheBetrayerAI : public CreatureAIScript
                     Spawned = true;
                 }
 
-                uint32 i = RandomUInt(3);
+                uint32 i = Util::getRandomUInt(3);
                 if (SummonedTotems[i])
                     Counter++;
                 else
@@ -222,8 +213,6 @@ class RokmarTheCracklerAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(RokmarTheCracklerAI);
         RokmarTheCracklerAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto grievousWound = addAISpell(GRIEVOUS_WOUND, 8.0f, TARGET_ATTACKING, 0, 20, false, true);
             grievousWound->setAttackStopTimer(5000);
 
@@ -245,12 +234,6 @@ class RokmarTheCracklerAI : public CreatureAIScript
             Enraged = false;
         }
 
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
-
         void AIUpdate() override
         {
             if (getCreature()->GetHealthPct() <= 20 && !Enraged && getScriptPhase() == 1)
@@ -268,14 +251,11 @@ class RokmarTheCracklerAI : public CreatureAIScript
 };
 
 
-// QuagmirranAI
 class QuagmirranAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(QuagmirranAI);
         QuagmirranAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto acidGeyser = addAISpell(ACID_GEYSER, 10.0f, TARGET_RANDOM_SINGLE, 0, 20, false, true);
             acidGeyser->setAttackStopTimer(5000);
             acidGeyser->setMinMaxDistance(0.0f, 40.0f);
@@ -285,12 +265,6 @@ class QuagmirranAI : public CreatureAIScript
 
             auto cleave = addAISpell(CLEAVE, 6.0f, TARGET_ATTACKING, 0, 15, false, true);
             cleave->setAttackStopTimer(2000);
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);;
         }
 };
 

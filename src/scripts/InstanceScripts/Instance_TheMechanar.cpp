@@ -27,19 +27,11 @@ class ArcaneServantAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(ArcaneServantAI);
         ArcaneServantAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto arcaneVolley = addAISpell(SP_ARCANE_VOLLEY, 10.0f, TARGET_ATTACKING);
             arcaneVolley->setAttackStopTimer(1000);
 
             auto arcaneExplosion = addAISpell(SP_ARCANE_EXPLOSION, 15.0f, TARGET_ATTACKING, 0, 0, false, true);
             arcaneExplosion->setAttackStopTimer(1000);
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 };
 
@@ -48,8 +40,6 @@ class BloodwarderCenturionAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(BloodwarderCenturionAI);
         BloodwarderCenturionAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto shieldBash = addAISpell(SP_CENTURION_SHIELD_BASH, 5.0f, TARGET_ATTACKING, 0, 0, false, true);
             shieldBash->setAttackStopTimer(1000);
 
@@ -71,12 +61,6 @@ class BloodwarderCenturionAI : public CreatureAIScript
             getCreature()->CastSpell(getCreature(), etherealTeleport->mSpellInfo, etherealTeleport->mIsTriggered);
         }
 
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
-
     protected:
 
         CreatureAISpells* etherealTeleport;
@@ -87,8 +71,6 @@ class BloodwarderPhysicianAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(BloodwarderPhysicianAI);
         BloodwarderPhysicianAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto holyShock = addAISpell(SP_PHYSICIAN_HOLY_SHOCK, 10.0f, TARGET_ATTACKING, 0, 0, false, true);
             holyShock->setAttackStopTimer(1000);
 
@@ -107,12 +89,6 @@ class BloodwarderPhysicianAI : public CreatureAIScript
             getCreature()->CastSpell(getCreature(), etherealTeleport->mSpellInfo, etherealTeleport->mIsTriggered);
         }
 
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
-
     protected:
 
         CreatureAISpells* etherealTeleport;
@@ -123,8 +99,6 @@ class BloodwarderSlayerAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(BloodwarderSlayerAI);
         BloodwarderSlayerAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto whirlwind = addAISpell(SP_SLAYER_WHIRLWIND, 15.0f, TARGET_ATTACKING, 0, 0, false, true);
             whirlwind->setAttackStopTimer(1000);
 
@@ -140,12 +114,6 @@ class BloodwarderSlayerAI : public CreatureAIScript
             auto mortalStrike = addAISpell(SP_SLAYER_MORTAL_STRIKE, 10.0f, TARGET_ATTACKING, 0, 0, false, true);
             mortalStrike->setAttackStopTimer(1000);;
         }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
 };
 
 class MechanarCrusherAI : public CreatureAIScript
@@ -153,16 +121,8 @@ class MechanarCrusherAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(MechanarCrusherAI);
         MechanarCrusherAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto disarm = addAISpell(SP_MECH_CRUSHER_DISARM, 8.0f, TARGET_ATTACKING, 0, 0, false, true);
             disarm->setAttackStopTimer(1000);
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 };
 
@@ -171,8 +131,6 @@ class MechanarDrillerAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(MechanarDrillerAI);
         MechanarDrillerAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto fluid = addAISpell(SP_MECH_DRILLER_GLOB_OF_MACHINE_FLUID, 5.0f, TARGET_ATTACKING, 0, 0, false, true);
             fluid->setAttackStopTimer(1000);
 
@@ -185,12 +143,6 @@ class MechanarDrillerAI : public CreatureAIScript
             auto pound = addAISpell(SP_MECH_DRILLER_POUND, 10.0f, TARGET_ATTACKING, 0, 0, false, true);
             pound->setAttackStopTimer(1000);
         }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
 };
 
 class MechanarTinkererAI : public CreatureAIScript
@@ -198,8 +150,6 @@ class MechanarTinkererAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(MechanarTinkererAI);
         MechanarTinkererAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto netherbomb = addAISpell(SP_MECH_TINKERER_NETHERBOMB, 5.0f, TARGET_DESTINATION);
             netherbomb->setAttackStopTimer(1000);
 
@@ -211,12 +161,6 @@ class MechanarTinkererAI : public CreatureAIScript
 
             netherExplosion = addAISpell(SP_MECH_TINKERER_NETHER_EXPLOSION, 0.0f, TARGET_VARIOUS);
             netherExplosion->setAttackStopTimer(1000);
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 
         void OnDied(Unit* /*mKiller*/) override
@@ -234,8 +178,6 @@ class MechanarWreckerAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(MechanarWreckerAI);
         MechanarWreckerAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto wreckerPound = addAISpell(SP_MECH_WRECKER_POUND, 12.0f, TARGET_ATTACKING);
             wreckerPound->setAttackStopTimer(1000);
 
@@ -245,33 +187,18 @@ class MechanarWreckerAI : public CreatureAIScript
             auto prayerOfMending = addAISpell(SP_MECH_WRECKER_PRAYER_OF_MENDING, 6.0f, TARGET_ATTACKING, 0, 0, false, true);
             prayerOfMending->setAttackStopTimer(1000);
         }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
 };
 
-// Raging FlamesAI
 class RagingFlamesAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(RagingFlamesAI);
         RagingFlamesAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             // disabled to prevent crashes
             // addAISpell(SP_RAGING_FLAMES, 0.0f, TARGET_ATTACKING, 0, 0, false, true);
 
             auto flamesInferno = addAISpell(SP_RAGING_FLAMES_INFERNO, 9.0f, TARGET_VARIOUS, 0, 0, false, true);
             flamesInferno->setAttackStopTimer(1000);
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 };
 
@@ -280,8 +207,6 @@ class SunseekerAstromageAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(SunseekerAstromageAI);
         SunseekerAstromageAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto scorch = addAISpell(SP_SS_ASTROMAGE_SCORCH, 12.0f, TARGET_ATTACKING);
             scorch->setAttackStopTimer(1000);
 
@@ -300,12 +225,6 @@ class SunseekerAstromageAI : public CreatureAIScript
             getCreature()->CastSpell(getCreature(), etherealTeleport->mSpellInfo, etherealTeleport->mIsTriggered);
         }
 
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
-
     protected:
 
         CreatureAISpells* etherealTeleport;
@@ -316,8 +235,6 @@ class SunseekerEngineerAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(SunseekerEngineerAI);
         SunseekerEngineerAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto shrinkRay = addAISpell(SP_SS_ENGINEER_SUPER_SHRINK_RAY, 10.0f, TARGET_ATTACKING, 0, 0, false, true);
             shrinkRay->setAttackStopTimer(1000);
 
@@ -336,12 +253,6 @@ class SunseekerEngineerAI : public CreatureAIScript
             getCreature()->CastSpell(getCreature(), etherealTeleport->mSpellInfo, etherealTeleport->mIsTriggered);
         }
 
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
-
     protected:
 
         CreatureAISpells* etherealTeleport;
@@ -352,8 +263,6 @@ class SunseekerNetherbinderAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(SunseekerNetherbinderAI);
         SunseekerNetherbinderAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto arcaneNova = addAISpell(SP_SS_NETHERBINDER_ARCANE_NOVA, 10.0f, TARGET_VARIOUS, 0, 0, false, true);
             arcaneNova->setAttackStopTimer(1000);
 
@@ -369,12 +278,6 @@ class SunseekerNetherbinderAI : public CreatureAIScript
             auto dispelMagic = addAISpell(SP_SS_NETHERBINDER_DISPEL_MAGIC, 8.0f, TARGET_SELF, 0, 0, false, true);
             dispelMagic->setAttackStopTimer(1000);
         }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
 };
 
 class TempestForgeDestroyerAI : public CreatureAIScript
@@ -382,19 +285,11 @@ class TempestForgeDestroyerAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(TempestForgeDestroyerAI);
         TempestForgeDestroyerAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto knockdown = addAISpell(SP_TEMPEST_DESTROYER_KNOCKDOWN, 8.0f, TARGET_ATTACKING, 0, 0, false, true);
             knockdown->setAttackStopTimer(1000);
 
             auto chargedFirst = addAISpell(SP_TEMPEST_DESTROYER_CHARGED_FIST, 12.0f, TARGET_VARIOUS);
             chargedFirst->setAttackStopTimer(1000);
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 };
 
@@ -403,33 +298,22 @@ class TempestForgePatrollerAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(TempestForgePatrollerAI);
         TempestForgePatrollerAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto arcaneMissile = addAISpell(SP_TEMPEST_PAT_CHARGED_ARCANE_MISSILE, 12.0f, TARGET_ATTACKING, 0, 0, false, true);
             arcaneMissile->setAttackStopTimer(1000);
 
             auto knockdown = addAISpell(SP_TEMPEST_PAT_KNOCKDOWN, 8.0f, TARGET_ATTACKING, 0, 0, false, true);
             knockdown->setAttackStopTimer(1000);
         }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
 };
 
 ///////////////////////////////////////////////////////////////////////////////////
 // Boss AIs
-//////////////////////////////////////////////////////////////////////////////////
 
 class GatewatcherGyroKillAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(GatewatcherGyroKillAI);
         GatewatcherGyroKillAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto sawBlade = addAISpell(SP_GW_GYRO_KILL_SAW_BLADE, 13.0f, TARGET_ATTACKING, 0, 0, false, true);
             sawBlade->setAttackStopTimer(1000);
             sawBlade->addDBEmote(SAY_GW_GYRO_KILL_02);
@@ -446,12 +330,6 @@ class GatewatcherGyroKillAI : public CreatureAIScript
             addEmoteForEvent(Event_OnTargetDied, SAY_GW_GYRO_KILL_04);
             addEmoteForEvent(Event_OnDied, SAY_GW_GYRO_KILL_01);
         }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
 };
 
 class GatewatcherIronHandAI : public CreatureAIScript
@@ -459,8 +337,6 @@ class GatewatcherIronHandAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(GatewatcherIronHandAI);
         GatewatcherIronHandAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto hammer = addAISpell(SP_GW_IRON_HAND_JACK_HAMMER, 7.0f, TARGET_VARIOUS);
             hammer->setAttackStopTimer(1000);
             hammer->addDBEmote(SAY_GW_GYRO_KILL_02);
@@ -487,8 +363,6 @@ class MechanoLordCapacitusAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(MechanoLordCapacitusAI);
         MechanoLordCapacitusAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto headCrack = addAISpell(SP_MECH_LORD_HEAD_CRACK, 8.0f, TARGET_ATTACKING, 0, 0, false, true);
             headCrack->setAttackStopTimer(1000);
 
@@ -508,12 +382,6 @@ class MechanoLordCapacitusAI : public CreatureAIScript
             addEmoteForEvent(Event_OnTargetDied, SAY_MECH_LORD_02);
             addEmoteForEvent(Event_OnDied, SAY_MECH_LORD_01);
         }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
 };
 
 class NethermancerSepethreaAI : public CreatureAIScript
@@ -521,8 +389,6 @@ class NethermancerSepethreaAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(NethermancerSepethreaAI);
         NethermancerSepethreaAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             summonRaginFlames = addAISpell(SP_NETH_SEPETHREA_SUMMON_RAGIN_FLAMES, 0.0f, TARGET_SELF, 0, 0, false, true);
             summonRaginFlames->setAttackStopTimer(1000);
 
@@ -553,8 +419,6 @@ class NethermancerSepethreaAI : public CreatureAIScript
         void OnCombatStop(Unit* /*mTarget*/) override
         {
             SummonTimer = 4;
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 
         void OnDied(Unit* /*mKiller*/) override
@@ -587,8 +451,6 @@ class PathaleonTheCalculatorAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(PathaleonTheCalculatorAI);
         PathaleonTheCalculatorAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto manaTrap = addAISpell(SP_PATHALEON_MANA_TRAP, 8.0f, TARGET_ATTACKING, 0, 0, false, true);
             manaTrap->setAttackStopTimer(1000);
 
@@ -622,19 +484,17 @@ class PathaleonTheCalculatorAI : public CreatureAIScript
 
         void OnCombatStart(Unit* /*mTarget*/) override
         {
-            SummonTimer = RandomUInt(30, 45);
+            SummonTimer = Util::getRandomUInt(30, 45);
         }
 
         void OnCombatStop(Unit* /*mTarget*/) override
         {
-            SummonTimer = RandomUInt(30, 45);
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
+            SummonTimer = Util::getRandomUInt(30, 45);
         }
 
         void OnDied(Unit* /*mKiller*/) override
         {
-            SummonTimer = RandomUInt(30, 45);
+            SummonTimer = Util::getRandomUInt(30, 45);
         }
 
         void AIUpdate() override
@@ -647,7 +507,7 @@ class PathaleonTheCalculatorAI : public CreatureAIScript
                 getCreature()->CastSpell(getCreature(), summonNetherWraith2->mSpellInfo, summonNetherWraith2->mIsTriggered);
                 getCreature()->CastSpell(getCreature(), summonNetherWraith3->mSpellInfo, summonNetherWraith3->mIsTriggered);
                 getCreature()->CastSpell(getCreature(), summonNetherWraith4->mSpellInfo, summonNetherWraith4->mIsTriggered);
-                SummonTimer = RandomUInt(30, 45);    // 30 - 45
+                SummonTimer = Util::getRandomUInt(30, 45);    // 30 - 45
                 sendDBChatMessage(SAY_PATHALEON_04);
             }
         }

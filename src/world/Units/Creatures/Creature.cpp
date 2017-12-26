@@ -380,7 +380,7 @@ void Creature::generateLoot()
         }
 
         // To hide your discrete values a bit, add another random amount between -(chunk_size/2) and +(chunk_size/2)
-        gold_fp += (chunk_size * (RandomFloat(1.0f) - 0.5f));
+        gold_fp += (chunk_size * (Util::getRandomFloat(1.0f) - 0.5f));
 
         /// \ brief In theory we can end up with a negative amount. Give at least one chunk_size here to prevent this from happening. In
         /// case you're interested, the probability is around 2.98e-8.
@@ -828,8 +828,8 @@ void Creature::EnslaveExpire()
 
     GetAIInterface()->Init(((Unit*)this), AI_SCRIPT_AGRO, Movement::WP_MOVEMENT_SCRIPT_NONE);
 
-    UpdateOppFactionSet();
-    UpdateSameFactionSet();
+    updateInRangeOppositeFactionSet();
+    updateInRangeSameFactionSet();
 }
 
 uint32 Creature::GetEnslaveCount()
@@ -857,12 +857,12 @@ bool Creature::RemoveEnslave()
     return RemoveAura(m_enslaveSpell);
 }
 
-void Creature::AddInRangeObject(Object* pObj)
+void Creature::addToInRangeObjects(Object* pObj)
 {
-    Unit::AddInRangeObject(pObj);
+    Unit::addToInRangeObjects(pObj);
 }
 
-void Creature::OnRemoveInRangeObject(Object* pObj)
+void Creature::onRemoveInRangeObject(Object* pObj)
 {
     if (m_escorter == pObj)
     {
@@ -875,12 +875,12 @@ void Creature::OnRemoveInRangeObject(Object* pObj)
         Despawn(1000, 1000);
     }
 
-    Unit::OnRemoveInRangeObject(pObj);
+    Unit::onRemoveInRangeObject(pObj);
 }
 
-void Creature::ClearInRangeSet()
+void Creature::clearInRangeSets()
 {
-    Unit::ClearInRangeSet();
+    Unit::clearInRangeSets();
 }
 
 void Creature::CalcResistance(uint16 type)
@@ -1327,11 +1327,11 @@ bool Creature::Load(CreatureSpawn* spawn, uint8 mode, MySQLStructure::MapInfo co
     if (creature_properties->MinHealth > creature_properties->MaxHealth)
     {
         LOG_ERROR("MinHealth is bigger than MaxHealt! Using MaxHealth value. You should fix this in creature_proto table for entry: %u!", creature_properties->Id);
-        health = creature_properties->MaxHealth - RandomUInt(10);
+        health = creature_properties->MaxHealth - Util::getRandomUInt(10);
     }
     else
     {
-        health = creature_properties->MinHealth + RandomUInt(creature_properties->MaxHealth - creature_properties->MinHealth);
+        health = creature_properties->MinHealth + Util::getRandomUInt(creature_properties->MaxHealth - creature_properties->MinHealth);
     }
 
     SetHealth(health);
@@ -1349,7 +1349,7 @@ bool Creature::Load(CreatureSpawn* spawn, uint8 mode, MySQLStructure::MapInfo co
 
     EventModelChange();
 
-    setLevel(creature_properties->MinLevel + (RandomUInt(creature_properties->MaxLevel - creature_properties->MinLevel)));
+    setLevel(creature_properties->MinLevel + (Util::getRandomUInt(creature_properties->MaxLevel - creature_properties->MinLevel)));
 
     if (mode && info)
         modLevel(std::min(73 - getLevel(), info->lvl_mod_a));
@@ -1449,14 +1449,21 @@ bool Creature::Load(CreatureSpawn* spawn, uint8 mode, MySQLStructure::MapInfo co
 
     GetAIInterface()->setSplineWalk();
 
-    if (isattackable(spawn) && !creature_properties->isTrainingDummy && !IsVehicle())
+    if (!creature_properties->isTrainingDummy && !IsVehicle())
     {
-        GetAIInterface()->SetAllowedToEnterCombat(true);
+        GetAIInterface()->SetAllowedToEnterCombat(isattackable(spawn));
     }
     else
     {
-        GetAIInterface()->SetAllowedToEnterCombat(false);
-        GetAIInterface()->setAiScriptType(AI_SCRIPT_PASSIVE);
+        if (!isattackable(spawn))
+        {
+            GetAIInterface()->SetAllowedToEnterCombat(false);
+            GetAIInterface()->setAiScriptType(AI_SCRIPT_PASSIVE);
+        }
+        else
+        {
+            GetAIInterface()->SetAllowedToEnterCombat(true);
+        }
     }
 
     // load formation data
@@ -1573,7 +1580,7 @@ void Creature::Load(CreatureProperties const* properties_, float x, float y, flo
     setFloatValue(UNIT_FIELD_HOVERHEIGHT, creature_properties->Scale);
 #endif
 
-    uint32 health = creature_properties->MinHealth + RandomUInt(creature_properties->MaxHealth - creature_properties->MinHealth);
+    uint32 health = creature_properties->MinHealth + Util::getRandomUInt(creature_properties->MaxHealth - creature_properties->MinHealth);
 
     SetHealth(health);
     SetMaxHealth(health);
@@ -1593,7 +1600,7 @@ void Creature::Load(CreatureProperties const* properties_, float x, float y, flo
 
     EventModelChange();
 
-    setLevel(creature_properties->MinLevel + (RandomUInt(creature_properties->MaxLevel - creature_properties->MinLevel)));
+    setLevel(creature_properties->MinLevel + (Util::getRandomUInt(creature_properties->MaxLevel - creature_properties->MinLevel)));
 
     for (uint8 i = 0; i < 7; ++i)
         SetResistance(i, creature_properties->Resistances[i]);
@@ -1802,36 +1809,40 @@ void Creature::Despawn(uint32 delay, uint32 respawntime)
     if (delay)
     {
         sEventMgr.AddEvent(this, &Creature::Despawn, (uint32)0, respawntime, EVENT_CREATURE_RESPAWN, delay, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
-        return;
-    }
-
-    PrepareForRemove();
-
-    if (!IsInWorld())
-        return;
-
-    if (_myScriptClass != NULL)
-        _myScriptClass->OnDespawn();
-
-    if (respawntime && !m_noRespawn)
-    {
-        // get the cell with our SPAWN location. if we've moved cell this might break :P
-        MapCell* pCell = m_mapMgr->GetCellByCoords(m_spawnLocation.x, m_spawnLocation.y);
-        if (pCell == NULL)
-            pCell = GetMapCell();
-
-        ARCEMU_ASSERT(pCell != NULL);
-        pCell->_respawnObjects.insert(this);
-        sEventMgr.RemoveEvents(this);
-        sEventMgr.AddEvent(m_mapMgr, &MapMgr::EventRespawnCreature, this, pCell->GetPositionX(), pCell->GetPositionY(), EVENT_CREATURE_RESPAWN, respawntime, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
-        Unit::RemoveFromWorld(false);
-        m_position = m_spawnLocation;
-        m_respawnCell = pCell;
     }
     else
     {
-        Unit::RemoveFromWorld(true);
-        SafeDelete();
+        PrepareForRemove();
+
+        if (!IsInWorld())
+            return;
+
+        if (_myScriptClass != NULL)
+            _myScriptClass->OnDespawn();
+
+        if (respawntime && !m_noRespawn)
+        {
+            // get the cell with our SPAWN location. if we've moved cell this might break :P
+            MapCell* pCell = m_mapMgr->GetCellByCoords(m_spawnLocation.x, m_spawnLocation.y);
+            if (pCell == NULL)
+                pCell = GetMapCell();
+
+            ARCEMU_ASSERT(pCell != NULL);
+            pCell->_respawnObjects.insert(this);
+
+            sEventMgr.RemoveEvents(this);
+            sEventMgr.AddEvent(m_mapMgr, &MapMgr::EventRespawnCreature, this, pCell->GetPositionX(), pCell->GetPositionY(), EVENT_CREATURE_RESPAWN, respawntime, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+            
+            Unit::RemoveFromWorld(false);
+
+            m_position = m_spawnLocation;
+            m_respawnCell = pCell;
+        }
+        else
+        {
+            Unit::RemoveFromWorld(true);
+            SafeDelete();
+        }
     }
 }
 
@@ -1953,10 +1964,10 @@ void Creature::SetGuardWaypoints()
     GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_RANDOMWP);
     for (uint8 i = 1; i <= 4; i++)
     {
-        float ang = RandomFloat(100.0f) / 100.0f;
-        float ran = RandomFloat(100.0f) / 10.0f;
+        float ang = Util::getRandomFloat(100.0f) / 100.0f;
+        float ran = Util::getRandomFloat(100.0f) / 10.0f;
         while (ran < 1)
-            ran = RandomFloat(100.0f) / 10.0f;
+            ran = Util::getRandomFloat(100.0f) / 10.0f;
 
         Movement::WayPoint* wp = new Movement::WayPoint;
         wp->id = i;
@@ -2415,11 +2426,10 @@ void Creature::Die(Unit* pAttacker, uint32 /*damage*/, uint32 spellid)
     }
 
     // Stop players from casting
-    for (std::set< Object* >::iterator itr = GetInRangePlayerSetBegin(); itr != GetInRangePlayerSetEnd(); ++itr)
+    for (const auto& itr : getInRangePlayersSet())
     {
-        Unit* attacker = static_cast< Unit* >(*itr);
-
-        if (attacker->isCastingNonMeleeSpell())
+        Unit* attacker = static_cast<Unit*>(itr);
+        if (attacker && attacker->isCastingNonMeleeSpell())
         {
             for (uint8_t i = 0; i < CURRENT_SPELL_MAX; ++i)
             {
@@ -2591,7 +2601,7 @@ void Creature::HandleMonsterSayEvent(MONSTER_SAY_EVENTS Event)
         int choice = 0;
         if (Rand(npcMonsterSay->chance))
         {
-            choice = (npcMonsterSay->textCount == 1) ? 0 : RandomUInt(npcMonsterSay->textCount - 1);
+            choice = (npcMonsterSay->textCount == 1) ? 0 : Util::getRandomUInt(npcMonsterSay->textCount - 1);
         }
 
         SendMonsterSayMessageInRange(this, npcMonsterSay, choice, Event);

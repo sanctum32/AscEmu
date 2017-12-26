@@ -39,7 +39,6 @@
 
 #include "CommonDefines.hpp"    // QuestLogEntry.h, Object.h
 #include "Common.hpp"
-#include "MersenneTwister.h"
 #include "WorldPacket.h"
 #include "Log.hpp"
 #include "ByteBuffer.h"
@@ -188,7 +187,10 @@
 #include "Map/WorldCreator.h"
 #include "Objects/ObjectMgr.h"
 #include "CThreads.h"
+
 #include "Server/Script/ScriptMgr.h"
+#include "Server/Script/CreatureAIScript.h"
+
 #include "Management/Channel.h"
 #include "Management/ChannelMgr.h"
 #include "Management/ArenaTeam.h"

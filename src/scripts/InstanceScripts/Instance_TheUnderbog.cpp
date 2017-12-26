@@ -27,15 +27,12 @@
 
 ///////////////////////////////////////////////////////////
 // Boss AIs
-///////////////////////////////////////////////////////////
 
 class HungarfenAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(HungarfenAI);
         HungarfenAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto mushroom = addAISpell(UNDERBOG_MUSHROOM, 0.0f, TARGET_RANDOM_DESTINATION, 0, 15, false, true);
             mushroom->setAttackStopTimer(1000);
 
@@ -48,12 +45,6 @@ class HungarfenAI : public CreatureAIScript
         void OnCombatStart(Unit* /*mTarget*/) override
         {
             FourSpores = false;
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 
         void OnDied(Unit* /*mKiller*/) override
@@ -90,8 +81,6 @@ class GhazanAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(GhazanAI);
         GhazanAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto acidSpit = addAISpell(ACID_SPIT, 8.0f, TARGET_VARIOUS, 0, 20, false, true);
             acidSpit->setAttackStopTimer(1000);
 
@@ -110,12 +99,6 @@ class GhazanAI : public CreatureAIScript
         void OnCombatStart(Unit* /*mTarget*/) override
         {
             Enraged = false;
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 
         void AIUpdate() override
@@ -139,8 +122,6 @@ class ClawAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(ClawAI);
         ClawAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto maul = addAISpell(MAUL, 15.0f, TARGET_ATTACKING, 0, 15, false, true);
             maul->setAttackStopTimer(1000);
 
@@ -154,12 +135,6 @@ class ClawAI : public CreatureAIScript
             auto enrage = addAISpell(CL_ENRAGE, 15.0f, TARGET_SELF, 0, 240, false, true);
             enrage->setAttackStopTimer(1000);
         }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
 };
 
 class SwamplordMuselekAI : public CreatureAIScript
@@ -167,8 +142,6 @@ class SwamplordMuselekAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(SwamplordMuselekAI);
         SwamplordMuselekAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto freezingTrap = addAISpell(THROW_FREEZING_TRAP, 8.0f, TARGET_RANDOM_SINGLE, 0, 30, false, true);
             freezingTrap->setAttackStopTimer(1000);
             freezingTrap->setMinMaxDistance(0.0f, 40.0f);
@@ -200,23 +173,17 @@ class SwamplordMuselekAI : public CreatureAIScript
                 Bear->GetAIInterface()->AttackReaction(mTarget, 1, 0);
         }
 
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
-
         void AIUpdate() override
         {
             if (getCreature()->GetAIInterface()->getNextTarget())
             {
                 Unit* target = getCreature()->GetAIInterface()->getNextTarget();
-                if (getCreature()->GetDistance2dSq(target) >= 100.0f && getCreature()->getDistanceSq(target) <= 900.0f && RandomUInt(3) != 1)
+                if (getCreature()->GetDistance2dSq(target) >= 100.0f && getCreature()->getDistanceSq(target) <= 900.0f && Util::getRandomUInt(3) != 1)
                 {
                     getCreature()->GetAIInterface()->StopMovement(2000);
                     if (!getCreature()->isCastingNonMeleeSpell())
                     {
-                        uint32 RangedSpell = RandomUInt(100);
+                        uint32 RangedSpell = Util::getRandomUInt(100);
                         if (RangedSpell <= 20 && _isTimerFinished(aimedShot->mCooldownTimerId))
                         {
                             getCreature()->CastSpell(target, aimedShot->mSpellInfo, true);
@@ -256,8 +223,6 @@ class TheBlackStalkerAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(TheBlackStalkerAI);
         TheBlackStalkerAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto chainLighning = addAISpell(CHAIN_LIGHTNING, 12.0f, TARGET_RANDOM_SINGLE, 0, 15);
             chainLighning->setAttackStopTimer(1000);
             chainLighning->setMinMaxDistance(0.0f, 40.0f);
@@ -272,12 +237,6 @@ class TheBlackStalkerAI : public CreatureAIScript
 
             auto summonSporeStrider = addAISpell(SUMMON_SPORE_STRIDER, 0.0f, TARGET_SELF, 0, 10, false, true);
             summonSporeStrider->setAttackStopTimer(1000);
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 };
 

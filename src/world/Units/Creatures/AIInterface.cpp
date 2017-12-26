@@ -317,7 +317,7 @@ void AIInterface::generateWaypointScriptRandom()
                         {
                             if (mCurrentWaypoint == 0)
                             {
-                                mCurrentWaypoint = RandomUInt(1, (uint32)getWayPointsCount());
+                                mCurrentWaypoint = Util::getRandomUInt(1, (uint32)getWayPointsCount());
                                 isFirstWP = true;
                             }
                             else
@@ -325,7 +325,7 @@ void AIInterface::generateWaypointScriptRandom()
                                 mCurrentWaypoint = mNextPoint;
                             }
 
-                            mNextPoint = RandomUInt(1, (uint32)getWayPointsCount());
+                            mNextPoint = Util::getRandomUInt(1, (uint32)getWayPointsCount());
                         }
 
                         //////////////////////////////////////////////////////////////////////////////////////////
@@ -363,12 +363,12 @@ void AIInterface::generateWaypointScriptRandom()
             {
                 if (MoveDone())
                 {
-                    uint32_t randomMoveTime = RandomUInt(300, 6000);
+                    uint32_t randomMoveTime = Util::getRandomUInt(300, 6000);
 
                     LocationVector pos = m_Unit->GetPosition();
 
-                    float distance = RandomFloat(4.0f) + 2.0f;
-                    float orientation = RandomFloat(6.283f);
+                    float distance = Util::getRandomFloat(4.0f) + 2.0f;
+                    float orientation = Util::getRandomFloat(6.283f);
 
                     LocationVector randPos;
                     randPos.x = pos.x + distance * cosf(orientation);
@@ -596,8 +596,8 @@ void AIInterface::setFearRandomMovement()
             {
                 LocationVector pos = unitToFear->GetPosition();     // current position
 
-                float distance = RandomFloat(15.0f) + 5.0f;
-                float orientation = RandomFloat(6.283f);
+                float distance = Util::getRandomFloat(15.0f) + 5.0f;
+                float orientation = Util::getRandomFloat(6.283f);
 
                 LocationVector randPos;
                 randPos.x = pos.x + distance * cosf(orientation);
@@ -611,7 +611,7 @@ void AIInterface::setFearRandomMovement()
 
                 MoveTo(randPos.x, randPos.y, randPos.z);
 
-                m_FearTimer = Util::getMSTime() + RandomUInt(500, 1700);
+                m_FearTimer = Util::getMSTime() + Util::getRandomUInt(500, 1700);
             }
         }
     }
@@ -2264,9 +2264,9 @@ Unit* AIInterface::FindTarget()
     // Start of neutralguard snippet
     if (m_isNeutralGuard)
     {
-        for (std::set< Object*>::iterator itrPlr = m_Unit->GetInRangePlayerSetBegin(); itrPlr != m_Unit->GetInRangePlayerSetEnd(); ++itrPlr)
+        for (const auto& itrPlr : m_Unit->getInRangePlayersSet())
         {
-            Player* tmpPlr = static_cast< Player* >(*itrPlr);
+            Player* tmpPlr = static_cast<Player*>(itrPlr);
 
             if (tmpPlr == nullptr)
                 continue;
@@ -2331,70 +2331,17 @@ Unit* AIInterface::FindTarget()
 
     //we have a high chance that we will agro a player
     //this is slower then oppfaction list BUT it has a lower chance that contains invalid pointers
-    for (std::set<Object*>::iterator pitr2 = m_Unit->GetInRangePlayerSetBegin(); pitr2 != m_Unit->GetInRangePlayerSetEnd();)
+    for (const auto& pitr2 : m_Unit->getInRangePlayersSet())
     {
-        std::set<Object*>::iterator pitr = pitr2;
-        ++pitr2;
-
-        Unit* pUnit = static_cast< Player* >(*pitr);
-
-        if (UnsafeCanOwnerAttackUnit(pUnit) == false)
-            continue;
-
-        //on blizz there is no Z limit check
-        float dist = m_Unit->GetDistance2dSq(pUnit);
-        if (dist > distance)     // we want to find the CLOSEST target
-            continue;
-
-        if (dist <= _CalcAggroRange(pUnit))
+        if (pitr2)
         {
-            if (worldConfig.terrainCollision.isCollisionEnabled)
-            {
-                if (m_Unit->GetMapMgr()->isInLineOfSight(m_Unit->GetPositionX(), m_Unit->GetPositionY(), m_Unit->GetPositionZ() + 2, pUnit->GetPositionX(), pUnit->GetPositionY(), pUnit->GetPositionZ() + 2))
-                {
-                    distance = dist;
-                    target = pUnit;
-                }
-            }
-            else
-            {
-                distance = dist;
-                target = pUnit;
-            }
-        }
-    }
-
-    Unit* critterTarget = nullptr;
-
-    //a lot less times are check inter faction mob wars :)
-    if (m_updateTargetsTimer2 < Util::getMSTime())
-    {
-        m_updateTargetsTimer2 = Util::getMSTime() + TARGET_UPDATE_INTERVAL;
-
-        for (std::set<Object*>::iterator itr2 = m_Unit->GetInRangeSetBegin(); itr2 != m_Unit->GetInRangeSetEnd();)
-        {
-            std::set<Object*>::iterator itr = itr2;
-            ++itr2;
-
-            if (!(*itr)->IsUnit())
-                continue;
-
-            Unit* pUnit = static_cast< Unit* >(*itr);
+            Unit* pUnit = static_cast<Player*>(pitr2);
 
             if (UnsafeCanOwnerAttackUnit(pUnit) == false)
                 continue;
 
             //on blizz there is no Z limit check
             float dist = m_Unit->GetDistance2dSq(pUnit);
-
-            if (pUnit->m_faction && pUnit->m_faction->Faction == 28)// only Attack a critter if there is no other Enemy in range
-            {
-                if (dist < 225.0f)    // was 10
-                    critterTarget = pUnit;
-
-                continue;
-            }
-
             if (dist > distance)     // we want to find the CLOSEST target
                 continue;
 
@@ -2412,6 +2359,59 @@ Unit* AIInterface::FindTarget()
                 {
                     distance = dist;
                     target = pUnit;
+                }
+            }
+        }
+    }
+
+    Unit* critterTarget = nullptr;
+
+    //a lot less times are check inter faction mob wars :)
+    if (m_updateTargetsTimer2 < Util::getMSTime())
+    {
+        m_updateTargetsTimer2 = Util::getMSTime() + TARGET_UPDATE_INTERVAL;
+
+        for (const auto& itr2 : m_Unit->getInRangeObjectsSet())
+        {
+            if (itr2)
+            {
+                if (!itr2->IsUnit())
+                    continue;
+
+                Unit* pUnit = static_cast<Unit*>(itr2);
+
+                if (UnsafeCanOwnerAttackUnit(pUnit) == false)
+                    continue;
+
+                //on blizz there is no Z limit check
+                float dist = m_Unit->GetDistance2dSq(pUnit);
+
+                if (pUnit->m_faction && pUnit->m_faction->Faction == 28)// only Attack a critter if there is no other Enemy in range
+                {
+                    if (dist < 225.0f)    // was 10
+                        critterTarget = pUnit;
+
+                    continue;
+                }
+
+                if (dist > distance)     // we want to find the CLOSEST target
+                    continue;
+
+                if (dist <= _CalcAggroRange(pUnit))
+                {
+                    if (worldConfig.terrainCollision.isCollisionEnabled)
+                    {
+                        if (m_Unit->GetMapMgr()->isInLineOfSight(m_Unit->GetPositionX(), m_Unit->GetPositionY(), m_Unit->GetPositionZ() + 2, pUnit->GetPositionX(), pUnit->GetPositionY(), pUnit->GetPositionZ() + 2))
+                        {
+                            distance = dist;
+                            target = pUnit;
+                        }
+                    }
+                    else
+                    {
+                        distance = dist;
+                        target = pUnit;
+                    }
                 }
             }
         }
@@ -2485,12 +2485,12 @@ bool AIInterface::FindFriends(float dist)
 
     bool result = false;
 
-    for (std::set<Object*>::iterator itr = m_Unit->GetInRangeSetBegin(); itr != m_Unit->GetInRangeSetEnd(); ++itr)
+    for (const auto& itr : m_Unit->getInRangeObjectsSet())
     {
-        if (!(*itr)->IsUnit())
+        if (!itr || !itr->IsUnit())
             continue;
 
-        Unit* pUnit = static_cast< Unit* >(*itr);
+        Unit* pUnit = static_cast<Unit*>(itr);
         if (!pUnit->isAlive())
             continue;
 
@@ -2566,8 +2566,8 @@ bool AIInterface::FindFriends(float dist)
         if (cp == nullptr)
             return result;
 
-        float x = m_Unit->GetPositionX() + ((RandomFloat(150.f) + 100.f) / 1000.0f);
-        float y = m_Unit->GetPositionY() + ((RandomFloat(150.f) + 100.f) / 1000.0f);
+        float x = m_Unit->GetPositionX() + ((Util::getRandomFloat(150.f) + 100.f) / 1000.0f);
+        float y = m_Unit->GetPositionY() + ((Util::getRandomFloat(150.f) + 100.f) / 1000.0f);
         float z = m_Unit->GetMapMgr()->GetLandHeight(x, y, m_Unit->GetPositionZ() + 2);
 
         if (fabs(z - m_Unit->GetPositionZ()) > 10.0f)
@@ -2575,14 +2575,13 @@ bool AIInterface::FindFriends(float dist)
 
         uint8 spawned = 0;
 
-        for (std::set<Object*>::iterator hostileItr = m_Unit->GetInRangePlayerSetBegin(); hostileItr != m_Unit->GetInRangePlayerSetEnd(); ++hostileItr)
+        for (const auto& hostileItr : m_Unit->getInRangePlayersSet())
         {
-            Player* player = static_cast<Player*>(*hostileItr);
-
+            Player* player = static_cast<Player*>(hostileItr);
             if (spawned >= 3)
                 break;
 
-            if (!isHostile(player, m_Unit))
+            if (!player || !isHostile(player, m_Unit))
                 continue;
 
             if (spawned == 0)
@@ -2599,7 +2598,7 @@ bool AIInterface::FindFriends(float dist)
 
             if (guard->CanAddToWorld())
             {
-                uint32 t = RandomUInt(8) * 1000;
+                uint32 t = Util::getRandomUInt(8) * 1000;
                 if (t == 0)
                     guard->PushToWorld(m_Unit->GetMapMgr());
                 else
@@ -2749,7 +2748,7 @@ void AIInterface::_CalcDestinationAndMove(Unit* target, float dist)
 
     if (!generateAndSendSplinePath(newx, newy, newz))
     {
-        ///\todo enter evade mode if creature, not pet, not totem
+        //\todo enter evade mode if creature, not pet, not totem
     }
 }
 
@@ -3721,11 +3720,11 @@ void AIInterface::WipeReferences()
     tauntedBy = 0;
 
     //Clear targettable
-    for (std::set<Object*>::iterator itr = m_Unit->GetInRangeSetBegin(); itr != m_Unit->GetInRangeSetEnd(); ++itr)
+    for (const auto& itr : m_Unit->getInRangeObjectsSet())
     {
-        if ((*itr)->IsUnit() && static_cast<Unit*>(*itr)->GetAIInterface())
+        if (itr && itr->IsUnit() && static_cast<Unit*>(itr)->GetAIInterface())
         {
-            static_cast<Unit*>(*itr)->GetAIInterface()->RemoveThreatByPtr(m_Unit);
+            static_cast<Unit*>(itr)->GetAIInterface()->RemoveThreatByPtr(m_Unit);
         }
     }
 }
@@ -3754,11 +3753,11 @@ void AIInterface::EventChangeFaction(Unit* ForceAttackersToHateThisInstead)
     //Clear targettable
     if (ForceAttackersToHateThisInstead == nullptr)
     {
-        for (std::set<Object*>::iterator itr = m_Unit->GetInRangeSetBegin(); itr != m_Unit->GetInRangeSetEnd(); ++itr)
+        for (const auto& itr : m_Unit->getInRangeObjectsSet())
         {
-            if ((*itr)->IsUnit() && static_cast<Unit*>(*itr)->GetAIInterface())
+            if (itr && itr->IsUnit() && static_cast<Unit*>(itr)->GetAIInterface())
             {
-                static_cast<Unit*>(*itr)->GetAIInterface()->RemoveThreatByPtr(m_Unit);
+                static_cast<Unit*>(itr)->GetAIInterface()->RemoveThreatByPtr(m_Unit);
             }
         }
 
@@ -3766,13 +3765,13 @@ void AIInterface::EventChangeFaction(Unit* ForceAttackersToHateThisInstead)
     }
     else
     {
-        for (std::set<Object*>::iterator itr = m_Unit->GetInRangeSetBegin(); itr != m_Unit->GetInRangeSetEnd(); ++itr)
+        for (const auto& itr : m_Unit->getInRangeObjectsSet())
         {
-            if ((*itr)->IsUnit() && static_cast<Unit*>(*itr)->GetAIInterface()
-                && static_cast<Unit*>(*itr)->GetAIInterface()->getThreatByPtr(m_Unit))   //this guy will join me in fight since I'm telling him "sorry i was controlled"
+            if (itr && itr->IsUnit() && static_cast<Unit*>(itr)->GetAIInterface()
+                && static_cast<Unit*>(itr)->GetAIInterface()->getThreatByPtr(m_Unit))   //this guy will join me in fight since I'm telling him "sorry i was controlled"
             {
-                static_cast<Unit*>(*itr)->GetAIInterface()->modThreatByPtr(ForceAttackersToHateThisInstead, 10);   //just aping to be bale to hate him in case we got nothing else
-                static_cast<Unit*>(*itr)->GetAIInterface()->RemoveThreatByPtr(m_Unit);
+                static_cast<Unit*>(itr)->GetAIInterface()->modThreatByPtr(ForceAttackersToHateThisInstead, 10);   //just aping to be bale to hate him in case we got nothing else
+                static_cast<Unit*>(itr)->GetAIInterface()->RemoveThreatByPtr(m_Unit);
             }
         }
 
@@ -4918,7 +4917,7 @@ void AIInterface::SetCreatureProtoDifficulty(uint32 entry)
 
             m_Unit->SetScale(properties_difficulty->Scale);
 
-            uint32 health = properties_difficulty->MinHealth + RandomUInt(properties_difficulty->MaxHealth - properties_difficulty->MinHealth);
+            uint32 health = properties_difficulty->MinHealth + Util::getRandomUInt(properties_difficulty->MaxHealth - properties_difficulty->MinHealth);
 
             m_Unit->SetHealth(health);
             m_Unit->SetMaxHealth(health);
@@ -4928,7 +4927,7 @@ void AIInterface::SetCreatureProtoDifficulty(uint32 entry)
             m_Unit->SetBaseMana(properties_difficulty->Mana);
             m_Unit->SetPower(POWER_TYPE_MANA, properties_difficulty->Mana);
 
-            m_Unit->setLevel(properties_difficulty->MinLevel + (RandomUInt(properties_difficulty->MaxLevel - properties_difficulty->MinLevel)));
+            m_Unit->setLevel(properties_difficulty->MinLevel + (Util::getRandomUInt(properties_difficulty->MaxLevel - properties_difficulty->MinLevel)));
 
             for (uint8 i = 0; i < 7; ++i)
             {

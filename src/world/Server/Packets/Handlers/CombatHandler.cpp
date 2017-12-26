@@ -26,18 +26,17 @@
 #include "Log.hpp"
 #include "Units/Players/Player.h"
 
-void WorldSession::HandleAttackSwingOpcode(WorldPacket& recv_data)
+#if VERSION_STRING != Cata
+void WorldSession::HandleAttackSwingOpcode(WorldPacket& recvData)
 {
-    CHECK_INWORLD_RETURN
-
-    CHECK_PACKET_SIZE(recv_data, 8);
-    uint64 guid;
-    recv_data >> guid;
+    CHECK_PACKET_SIZE(recvData, 8);
+    uint64_t guid;
+    recvData >> guid;
 
     if (!guid)
     {
         // does this mean cancel combat?
-        HandleAttackStopOpcode(recv_data);
+        HandleAttackStopOpcode(recvData);
         return;
     }
 
@@ -47,9 +46,7 @@ void WorldSession::HandleAttackSwingOpcode(WorldPacket& recv_data)
     if (GetPlayer()->IsPacified() || GetPlayer()->IsStunned() || GetPlayer()->IsFeared())
         return;
 
-    //    printf("Got ATTACK SWING: %08X %08X\n", GUID_HIPART(guid), Arcemu::Util::GUID_LOPART(guid));
     Unit* pEnemy = _player->GetMapMgr()->GetUnit(guid);
-    //printf("Pointer: %08X\n", pEnemy);
 
     if (!pEnemy)
     {
@@ -62,22 +59,20 @@ void WorldSession::HandleAttackSwingOpcode(WorldPacket& recv_data)
 
     GetPlayer()->smsg_AttackStart(pEnemy);
     GetPlayer()->EventAttackStart();
-
 }
 
 void WorldSession::HandleAttackStopOpcode(WorldPacket& /*recv_data*/)
 {
-    CHECK_INWORLD_RETURN
-
-    uint64 guid = GetPlayer()->GetSelection();
+    uint64_t guid = GetPlayer()->GetSelection();
 
     if (guid)
     {
         Unit* pEnemy = _player->GetMapMgr()->GetUnit(guid);
-        if (pEnemy != NULL)
+        if (pEnemy != nullptr)
         {
             GetPlayer()->EventAttackStop();
             GetPlayer()->smsg_AttackStop(pEnemy);
         }
     }
 }
+#endif

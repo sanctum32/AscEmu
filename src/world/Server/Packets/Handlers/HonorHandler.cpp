@@ -32,13 +32,12 @@
 #include "Objects/ObjectMgr.h"
 #include "Spell/Customization/SpellCustomizations.hpp"
 
-void WorldSession::HandleSetVisibleRankOpcode(WorldPacket& recv_data)
+#if VERSION_STRING != Cata
+void WorldSession::HandleSetVisibleRankOpcode(WorldPacket& recvData)
 {
-    CHECK_INWORLD_RETURN
-
-    CHECK_PACKET_SIZE(recv_data, 4);
-    uint32 ChosenRank;
-    recv_data >> ChosenRank;
+    CHECK_PACKET_SIZE(recvData, 4);
+    uint32_t ChosenRank;
+    recvData >> ChosenRank;
     if (ChosenRank == 0xFFFFFFFF)
         _player->SetChosenTitle(0);
     else if (_player->HasTitle(static_cast<RankTitles>(ChosenRank)))
@@ -52,25 +51,24 @@ void HonorHandler::AddHonorPointsToPlayer(Player* pPlayer, uint32 uAmount)
 
 int32 HonorHandler::CalculateHonorPointsForKill(uint32 playerLevel, uint32 victimLevel)
 {
+    uint32 kLevel = playerLevel;
+    uint32 vLevel = victimLevel;
 
-    uint32 k_level = playerLevel;
-    uint32 v_level = victimLevel;
+    uint32 kGrey;
 
-    uint32 k_grey = 0;
-
-    if (k_level > 5 && k_level < 40)
+    if (kLevel > 5 && kLevel < 40)
     {
-        k_grey = k_level - 5 - float2int32(std::floor(((float)k_level) / 10.0f));
+        kGrey = kLevel - 5 - float2int32(std::floor(((float)kLevel) / 10.0f));
     }
     else
     {
-        k_grey = k_level - 1 - float2int32(std::floor(((float)k_level) / 5.0f));
+        kGrey = kLevel - 1 - float2int32(std::floor(((float)kLevel) / 5.0f));
     }
 
-    if (v_level <= k_grey)
+    if (vLevel <= kGrey)
         return 0;
 
-    float honor_points = -0.53177f + 0.59357f * exp((k_level + 23.54042f) / 26.07859f);
+    float honor_points = -0.53177f + 0.59357f * exp((kLevel + 23.54042f) / 26.07859f);
     honor_points *= World::getSingleton().settings.getFloatRate(RATE_HONOR);
     return float2int32(honor_points);
 }
@@ -99,11 +97,11 @@ void HonorHandler::OnPlayerKilled(Player* pPlayer, Player* pVictim)
     }
 
     // Calculate points
-    int32 Points = 0;
+    int32_t points = 0;
     if (pPlayer != pVictim)
-        Points = CalculateHonorPointsForKill(pPlayer->getLevel(), pVictim->getLevel());
+        points = CalculateHonorPointsForKill(pPlayer->getLevel(), pVictim->getLevel());
 
-    if (Points > 0)
+    if (points > 0)
     {
         if (pPlayer->m_bg)
         {
@@ -124,7 +122,7 @@ void HonorHandler::OnPlayerKilled(Player* pPlayer, Player* pVictim)
 
             if (toadd.size() > 0)
             {
-                uint32 pts = Points / (uint32)toadd.size();
+                uint32 pts = points / (uint32)toadd.size();
                 for (std::vector<Player*>::iterator vtr = toadd.begin(); vtr != toadd.end(); ++vtr)
                 {
                     AddHonorPointsToPlayer(*vtr, pts);
@@ -149,14 +147,14 @@ void HonorHandler::OnPlayerKilled(Player* pPlayer, Player* pVictim)
         {
             std::set<Player*> contributors;
             // First loop: Get all the people in the attackermap.
-            pVictim->UpdateOppFactionSet();
-            for (std::set<Object*>::iterator itr = pVictim->GetInRangeOppFactsSetBegin(); itr != pVictim->GetInRangeOppFactsSetEnd(); ++itr)
+            pVictim->updateInRangeOppositeFactionSet();
+            for (const auto& itr : pVictim->getInRangeOppositeFactionSet())
             {
-                if (!(*itr)->IsPlayer())
+                if (!itr || !itr->IsPlayer())
                     continue;
 
                 bool added = false;
-                Player* plr = static_cast<Player*>(*itr);
+                Player* plr = static_cast<Player*>(itr);
                 if (pVictim->CombatStatus.m_attackers.find(plr->GetGUID()) != pVictim->CombatStatus.m_attackers.end())
                 {
                     added = true;
@@ -195,7 +193,7 @@ void HonorHandler::OnPlayerKilled(Player* pPlayer, Player* pVictim)
                 if (pAffectedPlayer->m_bg)
                     pAffectedPlayer->m_bg->HookOnHK(pAffectedPlayer);
 
-                int32 contributorpts = Points / (int32)contributors.size();
+                int32 contributorpts = points / (int32)contributors.size();
                 AddHonorPointsToPlayer(pAffectedPlayer, contributorpts);
 
                 sHookInterface.OnHonorableKill(pAffectedPlayer, pVictim);
@@ -254,3 +252,4 @@ void HonorHandler::RecalculateHonorFields(Player* pPlayer)
     if (pPlayer != nullptr)
         pPlayer->UpdatePvPCurrencies();
 }
+#endif

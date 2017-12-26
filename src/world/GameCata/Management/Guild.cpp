@@ -165,7 +165,7 @@ void Guild::updateMemberData(Player* player, uint8_t dataid, uint32_t value)
             } break;
             case GM_DATA_LEVEL:
             {
-                member->setLevel(value);
+                member->setLevel(static_cast<uint8_t>(value));
             } break;
             default:
             {
@@ -184,11 +184,11 @@ void Guild::onPlayerStatusChange(Player* player, uint32_t flag, bool state)
     {
         if (state)
         {
-            member->addFlag(flag);
+            member->addFlag(static_cast<uint8_t>(flag));
         }
         else
         {
-            member->removeFlag(flag);
+            member->removeFlag(static_cast<uint8_t>(flag));
         }
     }
 }
@@ -818,10 +818,10 @@ void Guild::handleUpdateMemberRank(WorldSession* session, uint64_t guid, bool de
         }
 
         uint32_t newRankId = member->getRankId() + (demote ? 1 : -1);
-        member->changeRank(newRankId);
+        member->changeRank(static_cast<uint8_t>(newRankId));
 
-        logEvent(demote ? GE_LOG_DEMOTE_PLAYER : GE_LOG_PROMOTE_PLAYER, player->GetLowGUID(), Arcemu::Util::GUID_LOPART(member->getGUID()), newRankId);
-        broadcastEvent(demote ? GE_DEMOTION : GE_PROMOTION, 0, player->GetName(), name.c_str(), getRankName(newRankId).c_str());
+        logEvent(demote ? GE_LOG_DEMOTE_PLAYER : GE_LOG_PROMOTE_PLAYER, player->GetLowGUID(), Arcemu::Util::GUID_LOPART(member->getGUID()), static_cast<uint8_t>(newRankId));
+        broadcastEvent(demote ? GE_DEMOTION : GE_PROMOTION, 0, player->GetName(), name.c_str(), getRankName(static_cast<uint8_t>(newRankId)).c_str());
     }
 }
 
@@ -893,10 +893,10 @@ void Guild::handleMemberDepositMoney(WorldSession* session, uint64_t amount, boo
     modifyBankMoney(amount, true);
     if (cashFlow == false)
     {
-        player->ModGold(-int64_t(amount));
+        player->ModGold(-int32_t(amount));
     }
 
-    logBankEvent(cashFlow ? GB_LOG_CASH_FLOW_DEPOSIT : GB_LOG_DEPOSIT_MONEY, uint8_t(0), player->GetLowGUID(), amount);
+    logBankEvent(cashFlow ? GB_LOG_CASH_FLOW_DEPOSIT : GB_LOG_DEPOSIT_MONEY, uint8_t(0), player->GetLowGUID(), static_cast<uint32_t>(amount));
 
     std::string aux = Util::ByteArrayToHexString(reinterpret_cast<uint8_t*>(&amount), 8, true);
     broadcastEvent(GE_BANK_MONEY_CHANGED, 0, aux.c_str());
@@ -927,10 +927,10 @@ bool Guild::handleMemberWithdrawMoney(WorldSession* session, uint64_t amount, bo
         player->ModGold(int32_t(amount));
     }
 
-    member->updateBankWithdrawValue(MAX_GUILD_BANK_TABS, amount);
+    member->updateBankWithdrawValue(MAX_GUILD_BANK_TABS, static_cast<uint32_t>(amount));
     modifyBankMoney(amount, false);
 
-    logBankEvent(repair ? GB_LOG_REPAIR_MONEY : GB_LOG_WITHDRAW_MONEY, uint8_t(0), player->GetLowGUID(), amount);
+    logBankEvent(repair ? GB_LOG_REPAIR_MONEY : GB_LOG_WITHDRAW_MONEY, uint8_t(0), player->GetLowGUID(), static_cast<uint32_t>(amount));
 
     std::string aux = Util::ByteArrayToHexString(reinterpret_cast<uint8_t*>(&amount), 8, true);
     broadcastEvent(GE_BANK_MONEY_CHANGED, 0, aux.c_str());
@@ -1174,7 +1174,7 @@ bool Guild::loadGuildFromDB(Field* fields)
     mMotd = fields[9].GetString();
     mCreatedDate = time_t(fields[10].GetUInt32());
     mBankMoney = fields[11].GetUInt64();
-    _level = fields[12].GetUInt32();
+    _level = static_cast<uint8_t>(fields[12].GetUInt32());
     _experience = fields[13].GetUInt64();
     _todayExperience = fields[14].GetUInt64();
 
@@ -1476,7 +1476,7 @@ void Guild::massInviteToEvent(WorldSession* session, uint32_t minLevel, uint32_t
         GuildMember* member = itr->second;
         uint32_t level = member->getLevel();
 
-        if (member->getGUID() != session->GetPlayer()->GetGUID() && level >= minLevel && level <= maxLevel && member->isRankNotLower(minRank))
+        if (member->getGUID() != session->GetPlayer()->GetGUID() && level >= minLevel && level <= maxLevel && member->isRankNotLower(static_cast<uint8_t>(minRank)))
         {
             data.appendPackGUID(member->getGUID());
             data << uint8_t(0);
@@ -1535,7 +1535,7 @@ bool Guild::addMember(uint64_t guid, uint8_t rankId)
             name = info->name;
             member->setStats(
                 name,
-                info->lastLevel,
+                static_cast<uint8_t>(info->lastLevel),
                 info->cl,
                 info->lastZone,
                 info->acct,
@@ -1735,7 +1735,7 @@ void Guild::updateAccountsNumber()
         accountsIdSet.insert(itr->second->getAccountId());
     }
 
-    mAccountsNumber = accountsIdSet.size();
+    mAccountsNumber = static_cast<uint32_t>(accountsIdSet.size());
 }
 
 bool Guild::isLeader(Player* player) const
@@ -2049,7 +2049,7 @@ void Guild::sendBankList(WorldSession* session, uint8_t tabId, bool withContent,
                     uint32_t enchants = 0;
                     for (uint32_t ench = 0; ench < MAX_ENCHANTMENT_SLOT; ++ench)
                     {
-                        if (uint32_t enchantId = tabItem->GetEnchantmentId(EnchantmentSlot(ench)))
+                        if (uint32_t enchantId = tabItem->GetEnchantmentId(static_cast<uint16_t>(EnchantmentSlot(ench))))
                         {
                             tabData << uint32_t(enchantId);
                             tabData << uint32_t(ench);
@@ -2173,7 +2173,7 @@ void Guild::sendGuildRanksUpdate(uint64_t setterGuid, uint64_t targetGuid, uint3
 
     broadcastPacket(&data);
 
-    member->changeRank(rank);
+    member->changeRank(static_cast<uint8_t>(rank));
 
     LogDebugFlag(LF_OPCODE, "SMSG_GUILD_RANKS_UPDATE target: %u, issuer: %u, rankId: %u",
         Arcemu::Util::GUID_LOPART(targetGuid), Arcemu::Util::GUID_LOPART(setterGuid), rank);
@@ -2533,7 +2533,7 @@ void Guild::swapItemsWithInventory(Player* player, bool toChar, uint8_t tabId, u
             }
 
            logBankEvent(GB_LOG_WITHDRAW_ITEM, tabId, player->GetLowGUID(),
-                getBankTab(tabId)->getItem(slotId)->GetEntry(), getBankTab(tabId)->getItem(slotId)->GetStackCount());
+                getBankTab(tabId)->getItem(slotId)->GetEntry(), static_cast<uint16_t>(getBankTab(tabId)->getItem(slotId)->GetStackCount()));
         }
     }
 
@@ -2564,7 +2564,7 @@ void Guild::_sendBankContentUpdate(uint8_t tabId, SlotIds slots) const
             {
                 for (uint32_t enchSlot = 0; enchSlot < MAX_ENCHANTMENT_SLOT; ++enchSlot)
                 {
-                    if (uint32_t enchantId = tabItem->GetEnchantmentId(EnchantmentSlot(enchSlot)))
+                    if (uint32_t enchantId = tabItem->GetEnchantmentId(static_cast<uint16_t>(EnchantmentSlot(enchSlot))))
                     {
                         tabData << uint32_t(enchantId);
                         tabData << uint32_t(enchSlot);
@@ -2626,7 +2626,7 @@ mTotalActivity(0), mWeekActivity(0), mTotalReputation(0), mWeekReputation(0)
 void Guild::GuildMember::setStats(Player* player)
 {
     mName = player->GetName();
-    mLevel = player->getLevel();
+    mLevel = static_cast<uint8_t>(player->getLevel());
     mClass = player->getClass();
     mZoneId = player->GetZoneId();
     mAccountId = player->GetSession()->GetAccountId();
@@ -2730,7 +2730,7 @@ bool Guild::GuildMember::loadGuildMembersFromDB(Field* fields, Field* fields2)
         mBankWithdraw[i] = fields2[1 + i].GetUInt32();
     }
 
-    setStats(plr->name, plr->lastLevel, plr->cl, plr->lastZone, plr->acct, 0);
+    setStats(plr->name, static_cast<uint8_t>(plr->lastLevel), plr->cl, plr->lastZone, plr->acct, 0);
     mLogoutTime = plr->lastOnline;
     mTotalActivity = 0;
     mWeekActivity = 0;

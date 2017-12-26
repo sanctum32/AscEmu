@@ -212,6 +212,56 @@ uint32_t Object::getUInt32Value(uint16_t index) const
     return m_uint32Values[index];
 }
 
+void Object::modUInt32Value(uint16_t index, int32_t mod)
+{
+    int32_t value = m_uint32Values[index];
+    value += mod;
+
+    if (value < 0)
+        value = 0;
+
+    setUInt32Value(index, value);
+}
+
+uint32_t Object::getPercentModUInt32Value(uint16_t index, const int32_t value)
+{
+    ARCEMU_ASSERT(index < m_valuesCount);
+    int32_t basevalue = (int32_t)m_uint32Values[index];
+    return ((basevalue * value) / 100);
+}
+
+void Object::setInt32Value(uint16_t index, int32_t value)
+{
+    ARCEMU_ASSERT(index < m_valuesCount);
+
+    if (m_int32Values[index] != value)
+    {
+        m_int32Values[index] = value;
+        m_updateMask.SetBit(index);
+
+        updateObject();
+    }
+}
+
+uint32_t Object::getInt32Value(uint16_t index) const
+{
+    ARCEMU_ASSERT(index < m_valuesCount);
+    return m_int32Values[index];
+}
+
+void Object::modInt32Value(uint16_t index, int32_t mod)
+{
+    ARCEMU_ASSERT(index < m_valuesCount);
+    if (mod == 0)
+        return;
+
+    m_int32Values[index] += mod;
+
+    m_updateMask.SetBit(index);
+
+    updateObject();
+}
+
 void Object::setUInt64Value(uint16_t index, uint64_t value)
 {
     ARCEMU_ASSERT(index + 1 < m_valuesCount);
@@ -253,6 +303,29 @@ float Object::getFloatValue(uint16_t index) const
 {
     ARCEMU_ASSERT(index < m_valuesCount);
     return m_floatValues[index];
+}
+
+void Object::modFloatValue(uint16_t index, float value)
+{
+    ARCEMU_ASSERT(index < m_valuesCount);
+    m_floatValues[index] += value;
+
+    m_updateMask.SetBit(index);
+
+    updateObject();
+}
+
+void Object::modFloatValueByPCT(uint16_t index, int32 byPct)
+{
+    ARCEMU_ASSERT(index < m_valuesCount);
+    if (byPct > 0)
+        m_floatValues[index] *= 1.0f + byPct / 100.0f;
+    else
+        m_floatValues[index] /= 1.0f - byPct / 100.0f;
+
+    m_updateMask.SetBit(index);
+
+    updateObject();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -490,6 +563,189 @@ void Object::_UpdateSpells(uint32_t time)
         }
     }
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// InRange sets
+void Object::clearInRangeSets()
+{
+    mInRangeObjectsSet.clear();
+    mInRangePlayersSet.clear();
+    mInRangeOppositeFactionSet.clear();
+    mInRangeSameFactionSet.clear();
+}
+
+void Object::addToInRangeObjects(Object* pObj)
+{
+    ARCEMU_ASSERT(pObj != nullptr);
+
+    if (pObj == this)
+        LOG_ERROR("We are in range of ourselves!");
+
+    if (pObj->IsPlayer())
+        mInRangePlayersSet.push_back(pObj);
+
+    mInRangeObjectsSet.push_back(pObj);
+}
+
+void Object::removeSelfFromInrangeSets()
+{
+    for (const auto& itr : mInRangeObjectsSet)
+    {
+        if (itr)
+            itr->removeObjectFromInRangeObjectsSet(this);
+    }
+}
+
+// Objects
+std::vector<Object*> Object::getInRangeObjectsSet()
+{
+    return mInRangeObjectsSet;
+}
+
+bool Object::hasInRangeObjects()
+{
+    return mInRangeObjectsSet.size() > 0;
+}
+
+size_t Object::getInRangeObjectsCount()
+{
+    return mInRangeObjectsSet.size();
+}
+
+bool Object::isObjectInInRangeObjectsSet(Object* pObj)
+{
+    auto it = std::find(mInRangeObjectsSet.begin(), mInRangeObjectsSet.end(), pObj);
+    return it != mInRangeObjectsSet.end();
+}
+
+void Object::removeObjectFromInRangeObjectsSet(Object* pObj)
+{
+    ARCEMU_ASSERT(pObj != nullptr);
+
+    if (pObj->IsPlayer())
+        mInRangePlayersSet.erase(std::remove(mInRangePlayersSet.begin(), mInRangePlayersSet.end(), pObj), mInRangePlayersSet.end());
+
+    mInRangeObjectsSet.erase(std::remove(mInRangeObjectsSet.begin(), mInRangeObjectsSet.end(), pObj), mInRangeObjectsSet.end());
+
+    onRemoveInRangeObject(pObj);
+}
+
+// Players
+std::vector<Object*> Object::getInRangePlayersSet()
+{
+    return mInRangePlayersSet;
+}
+
+size_t Object::getInRangePlayersCount()
+{
+    return mInRangePlayersSet.size();
+}
+
+// Opposite Faction
+std::vector<Object*> Object::getInRangeOppositeFactionSet()
+{
+    return mInRangeOppositeFactionSet;
+}
+
+bool Object::isObjectInInRangeOppositeFactionSet(Object* pObj)
+{
+    auto it = std::find(mInRangeOppositeFactionSet.begin(), mInRangeOppositeFactionSet.end(), pObj);
+    return it != mInRangeOppositeFactionSet.end();
+}
+
+void Object::updateInRangeOppositeFactionSet()
+{
+    mInRangeOppositeFactionSet.clear();
+
+    for (const auto& itr : mInRangeObjectsSet)
+    {
+        if (itr)
+        {
+            if (itr->IsUnit() || itr->IsGameObject())
+            {
+                if (isHostile(this, itr))
+                {
+                    if (!itr->isObjectInInRangeOppositeFactionSet(this))
+                        itr->mInRangeOppositeFactionSet.push_back(this);
+                    if (!isObjectInInRangeOppositeFactionSet(itr))
+                        mInRangeOppositeFactionSet.push_back(itr);
+                }
+                else
+                {
+                    if (itr->isObjectInInRangeOppositeFactionSet(this))
+                        itr->mInRangeOppositeFactionSet.erase(std::remove(itr->mInRangeOppositeFactionSet.begin(), itr->mInRangeOppositeFactionSet.end(), this), itr->mInRangeOppositeFactionSet.end());
+                    if (isObjectInInRangeOppositeFactionSet(itr))
+                        mInRangeOppositeFactionSet.erase(std::remove(mInRangeOppositeFactionSet.begin(), mInRangeOppositeFactionSet.end(), itr), mInRangeOppositeFactionSet.end());
+                }
+            }
+        }
+    }
+}
+
+void Object::addInRangeOppositeFaction(Object* obj)
+{
+    mInRangeOppositeFactionSet.push_back(obj);
+}
+
+void Object::removeObjectFromInRangeOppositeFactionSet(Object* obj)
+{
+    mInRangeOppositeFactionSet.erase(std::remove(mInRangeOppositeFactionSet.begin(), mInRangeOppositeFactionSet.end(), obj), mInRangeOppositeFactionSet.end());
+}
+
+// Same Faction
+std::vector<Object*> Object::getInRangeSameFactionSet()
+{
+    return mInRangeSameFactionSet;
+}
+
+bool Object::isObjectInInRangeSameFactionSet(Object* pObj)
+{
+    auto it = std::find(mInRangeSameFactionSet.begin(), mInRangeSameFactionSet.end(), pObj);
+    return it != mInRangeSameFactionSet.end();
+}
+
+void Object::updateInRangeSameFactionSet()
+{
+    mInRangeSameFactionSet.clear();
+
+    for (const auto& itr : mInRangeObjectsSet)
+    {
+        if (itr)
+        {
+            if (itr->IsUnit() || itr->IsGameObject())
+            {
+                if (isFriendly(this, itr))
+                {
+                    if (!itr->isObjectInInRangeSameFactionSet(this))
+                        itr->mInRangeSameFactionSet.push_back(this);
+
+                    if (!isObjectInInRangeOppositeFactionSet(itr))
+                        mInRangeSameFactionSet.push_back(itr);
+                }
+                else
+                {
+                    if (itr->isObjectInInRangeSameFactionSet(this))
+                        itr->mInRangeSameFactionSet.erase(std::remove(itr->mInRangeSameFactionSet.begin(), itr->mInRangeSameFactionSet.end(), this), itr->mInRangeSameFactionSet.end());
+
+                    if (isObjectInInRangeSameFactionSet(itr))
+                        mInRangeSameFactionSet.erase(std::remove(mInRangeSameFactionSet.begin(), mInRangeSameFactionSet.end(), itr), mInRangeSameFactionSet.end());
+                }
+            }
+        }
+    }
+}
+
+void Object::addInRangeSameFaction(Object* obj)
+{
+    mInRangeSameFactionSet.push_back(obj);
+}
+
+void Object::removeObjectFromInRangeSameFactionSet(Object* obj)
+{
+    mInRangeSameFactionSet.erase(std::remove(mInRangeSameFactionSet.begin(), mInRangeSameFactionSet.end(), obj), mInRangeSameFactionSet.end());
+}
+
+
 // MIT End
 
 Object::Object() : m_position(0, 0, 0, 0), m_spawnLocation(0, 0, 0, 0)
@@ -523,10 +779,10 @@ Object::Object() : m_position(0, 0, 0, 0), m_spawnLocation(0, 0, 0, 0)
     m_objectTypeId = TYPEID_OBJECT;
     m_updateFlag = UPDATEFLAG_NONE;
 
-    m_objectsInRange.clear();
-    m_inRangePlayers.clear();
-    m_oppFactsInRange.clear();
-    m_sameFactsInRange.clear();
+    mInRangeObjectsSet.clear();
+    mInRangePlayersSet.clear();
+    mInRangeOppositeFactionSet.clear();
+    mInRangeSameFactionSet.clear();
 
     Active = false;
 }
@@ -802,7 +1058,7 @@ void Object::_BuildMovementUpdate(ByteBuffer* data, uint16 flags, Player* target
         flags2 |= MOVEFLAG_SPLINE_ENABLED | MOVEFLAG_MOVE_FORWARD;	   //1=move forward
         if (IsCreature())
         {
-            if (static_cast<Unit*>(this)->GetAIInterface()->HasWalkMode(WALKMODE_WALK))
+            if (static_cast<Unit*>(this)->GetAIInterface()->hasWalkMode(WALKMODE_WALK))
                 flags2 |= MOVEFLAG_WALK;
         }
     }
@@ -855,7 +1111,7 @@ void Object::_BuildMovementUpdate(ByteBuffer* data, uint16 flags, Player* target
                 break;
             }
 
-            if (uThis->GetAIInterface()->IsFlying())
+            if (uThis->GetAIInterface()->isFlying())
                 flags2 |= MOVEFLAG_DISABLEGRAVITY;        //0x400 Zack : Teribus the Cursed had flag 400 instead of 800 and he is flying all the time
             if (uThis->GetAIInterface()->onGameobject)
                 flags2 |= MOVEFLAG_ROOTED;
@@ -2133,99 +2389,6 @@ void Object::RemoveFromWorld(bool free_guid)
     event_Relocate();
 }
 
-uint32 Object::GetModPUInt32Value(const uint32 index, const int32 value)
-{
-    ARCEMU_ASSERT(index < m_valuesCount);
-    int32 basevalue = (int32)m_uint32Values[index];
-    return ((basevalue * value) / 100);
-}
-
-void Object::ModUnsigned32Value(uint32 index, int32 mod)
-{
-    ARCEMU_ASSERT(index < m_valuesCount);
-    if (mod == 0)
-        return;
-
-    m_uint32Values[index] += mod;
-    if ((int32)m_uint32Values[index] < 0)
-        m_uint32Values[index] = 0;
-
-    m_updateMask.SetBit(index);
-
-    updateObject();
-
-    if (IsPlayer())
-    {
-        switch (index)
-        {
-            case UNIT_FIELD_POWER1:
-            case UNIT_FIELD_POWER2:
-            case UNIT_FIELD_POWER4:
-#if VERSION_STRING == WotLK
-            case UNIT_FIELD_POWER7:
-#endif
-                static_cast< Unit* >(this)->SendPowerUpdate(true);
-                break;
-            default:
-                break;
-        }
-    }
-    else if (IsCreature())
-    {
-        switch (index)
-        {
-            case UNIT_FIELD_POWER1:
-            case UNIT_FIELD_POWER2:
-            case UNIT_FIELD_POWER3:
-            case UNIT_FIELD_POWER4:
-#if VERSION_STRING == WotLK
-            case UNIT_FIELD_POWER7:
-#endif
-                static_cast<Creature*>(this)->SendPowerUpdate(false);
-                break;
-            default:
-                break;
-        }
-    }
-}
-
-void Object::ModSignedInt32Value(uint32 index, int32 value)
-{
-    ARCEMU_ASSERT(index < m_valuesCount);
-    if (value == 0)
-        return;
-
-    m_uint32Values[index] += value;
-
-    m_updateMask.SetBit(index);
-
-    updateObject();
-}
-
-void Object::ModFloatValue(const uint32 index, const float value)
-{
-    ARCEMU_ASSERT(index < m_valuesCount);
-    m_floatValues[index] += value;
-
-    m_updateMask.SetBit(index);
-
-    updateObject();
-}
-
-void Object::ModFloatValueByPCT(const uint32 index, int32 byPct)
-{
-    ARCEMU_ASSERT(index < m_valuesCount);
-    if (byPct > 0)
-        m_floatValues[index] *= 1.0f + byPct / 100.0f;
-    else
-        m_floatValues[index] /= 1.0f - byPct / 100.0f;
-
-    m_updateMask.SetBit(index);
-
-    updateObject();
-}
-
-
 void Object::SetFlag(const uint16 index, uint32 newFlag)
 {
     setUInt32Value(index, getUInt32Value(index) | newFlag);
@@ -2527,67 +2690,6 @@ void Object::_setFaction()
 uint32 Object::_getFaction()
 {
     return m_faction->Faction;
-}
-
-void Object::UpdateOppFactionSet()
-{
-    m_oppFactsInRange.clear();
-
-    for (std::set< Object* >::iterator itr = m_objectsInRange.begin(); itr != m_objectsInRange.end(); ++itr)
-    {
-        Object* i = *itr;
-
-        if (i->IsUnit() || i->IsGameObject())
-        {
-            if (isHostile(this, i))
-            {
-                if (!i->IsInRangeOppFactSet(this))
-                    i->m_oppFactsInRange.insert(this);
-                if (!IsInRangeOppFactSet(i))
-                    m_oppFactsInRange.insert(i);
-
-            }
-            else
-            {
-                if (i->IsInRangeOppFactSet(this))
-                    i->m_oppFactsInRange.erase(this);
-                if (IsInRangeOppFactSet(i))
-                    m_oppFactsInRange.erase(i);
-            }
-        }
-    }
-}
-
-void Object::UpdateSameFactionSet()
-{
-    m_sameFactsInRange.clear();
-
-
-    for (std::set< Object* >::iterator itr = m_objectsInRange.begin(); itr != m_objectsInRange.end(); ++itr)
-    {
-        Object* i = *itr;
-
-        if (i->IsUnit() || i->IsGameObject())
-        {
-            if (isFriendly(this, i))
-            {
-                if (!i->IsInRangeSameFactSet(this))
-                    i->m_sameFactsInRange.insert(this);
-
-                if (!IsInRangeOppFactSet(i))
-                    m_sameFactsInRange.insert(i);
-
-            }
-            else
-            {
-                if (i->IsInRangeSameFactSet(this))
-                    i->m_sameFactsInRange.erase(this);
-
-                if (IsInRangeSameFactSet(i))
-                    m_sameFactsInRange.erase(i);
-            }
-        }
-    }
 }
 
 void Object::EventSetUInt32Value(uint16 index, uint32 value)
@@ -3168,35 +3270,16 @@ void Object::Phase(uint8 command, uint32 newphase)
     return;
 }
 
-void Object::AddInRangeObject(Object* pObj)
-{
-
-    ARCEMU_ASSERT(pObj != NULL);
-
-    if (pObj == this)
-        LOG_ERROR("We are in range of ourselves!");
-
-    if (pObj->IsPlayer())
-        m_inRangePlayers.insert(pObj);
-
-    m_objectsInRange.insert(pObj);
-}
-
-#if VERSION_STRING == Cata
-void Object::OutPacketToSet(uint32 Opcode, uint16 Len, const void* Data, bool self)
-#else
 void Object::OutPacketToSet(uint16 Opcode, uint16 Len, const void* Data, bool /*self*/)
-#endif
 {
     if (!IsInWorld())
         return;
 
     // We are on Object level, which means we can't send it to ourselves so we only send to Players inrange
-    for (std::set< Object* >::iterator itr = m_inRangePlayers.begin(); itr != m_inRangePlayers.end(); ++itr)
+    for (const auto& itr : mInRangePlayersSet)
     {
-        Object* o = *itr;
-
-        o->OutPacket(Opcode, Len, Data);
+        if (itr)
+            itr->OutPacket(Opcode, Len, Data);
     }
 }
 
@@ -3206,21 +3289,20 @@ void Object::SendMessageToSet(WorldPacket* data, bool /*bToSelf*/, bool /*myteam
         return;
 
     uint32 myphase = GetPhase();
-    for (std::set< Object* >::iterator itr = m_inRangePlayers.begin(); itr != m_inRangePlayers.end(); ++itr)
+    for (const auto& itr : mInRangePlayersSet)
     {
-        Object* o = *itr;
-        if ((o->GetPhase() & myphase) != 0)
-            o->SendPacket(data);
+        if (itr && (itr->GetPhase() & myphase) != 0)
+            itr->SendPacket(data);
     }
 }
 
 void Object::SendCreatureChatMessageInRange(Creature* creature, uint32_t textId)
 {
     uint32 myphase = GetPhase();
-    for (std::set<Object*>::iterator itr = m_inRangePlayers.begin(); itr != m_inRangePlayers.end(); ++itr)
+    for (const auto& itr : mInRangePlayersSet)
     {
-        Object* object = *itr;
-        if ((object->GetPhase() & myphase) != 0)
+        Object* object = itr;
+        if (object && (object->GetPhase() & myphase) != 0)
         {
             if (object->IsPlayer())
             {
@@ -3290,10 +3372,10 @@ void Object::SendCreatureChatMessageInRange(Creature* creature, uint32_t textId)
 void Object::SendMonsterSayMessageInRange(Creature* creature, MySQLStructure::NpcMonsterSay* npcMonsterSay, int randChoice, uint32_t event)
 {
     uint32 myphase = GetPhase();
-    for (std::set<Object*>::iterator itr = m_inRangePlayers.begin(); itr != m_inRangePlayers.end(); ++itr)
+    for (const auto& itr : mInRangePlayersSet)
     {
-        Object* object = *itr;
-        if ((object->GetPhase() & myphase) != 0)
+        Object* object = itr;
+        if (object && (object->GetPhase() & myphase) != 0)
         {
             if (object->IsPlayer())
             {
@@ -3445,38 +3527,6 @@ void Object::SendMonsterSayMessageInRange(Creature* creature, MySQLStructure::Np
             }
         }
     }
-}
-
-void Object::RemoveInRangeObject(Object* pObj)
-{
-    ARCEMU_ASSERT(pObj != NULL);
-
-    if (pObj->IsPlayer())
-    {
-        ARCEMU_ASSERT(m_inRangePlayers.erase(pObj) == 1);
-    }
-
-    ARCEMU_ASSERT(m_objectsInRange.erase(pObj) == 1);
-
-    OnRemoveInRangeObject(pObj);
-}
-
-void Object::RemoveSelfFromInrangeSets()
-{
-    std::set< Object* >::iterator itr;
-
-    for (itr = m_objectsInRange.begin(); itr != m_objectsInRange.end(); ++itr)
-    {
-        Object* o = *itr;
-        ARCEMU_ASSERT(o != NULL);
-
-        o->RemoveInRangeObject(this);
-    }
-}
-
-void Object::OnRemoveInRangeObject(Object* /*pObj*/)
-{
-    // This method will remain empty for now, don't remove it! -dfighter
 }
 
 Object* Object::GetMapMgrObject(const uint64 & guid)

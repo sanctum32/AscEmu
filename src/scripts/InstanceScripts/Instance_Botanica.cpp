@@ -19,26 +19,17 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "Setup.h"
 #include "Instance_Botanica.h"
 
-// Bloodwarder Protector AI
+
 class BloodProtectorAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(BloodProtectorAI);
         BloodProtectorAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto crystalStrike = addAISpell(CRYSTAL_STRIKE, 10.0f, TARGET_ATTACKING);
             crystalStrike->setAttackStopTimer(1000);
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 };
 
@@ -50,57 +41,36 @@ class BloodProtectorAI : public CreatureAIScript
     //Casts Shadow Word: Pain and Mind Blast
     //Mind Control these for Holy Fury buff (+295 spell damage for 30 minutes, shows as DIVINE fury on the pet bar). Can be spellstolen.
 
-// Bloodwarder Greenkeeper AI
 class BloodGreenkeeperAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(BloodGreenkeeperAI);
         BloodGreenkeeperAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto greenkeeperFury = addAISpell(GREENKEEPER_FURY, 10.0f, TARGET_ATTACKING);
             greenkeeperFury->setAttackStopTimer(1000);
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 };
 
 
-// Sunseeker Chemist AI
 class SunchemistAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(SunchemistAI);
         SunchemistAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto flameBreath = addAISpell(FLAME_BREATH, 10.0f, TARGET_VARIOUS);
             flameBreath->setAttackStopTimer(1000);
 
             auto poisonCloud = addAISpell(POISON_CLOUD, 5.0f, TARGET_VARIOUS);
             poisonCloud->setAttackStopTimer(1000);
         }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
 };
 
 
-// Sunseeker Researcher AI
 class SunResearcherAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(SunResearcherAI);
         SunResearcherAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             poisonShield = addAISpell(POISON_SHIELD, 0.0f, TARGET_SELF);
             poisonShield->setAttackStopTimer(1000);
 
@@ -119,27 +89,18 @@ class SunResearcherAI : public CreatureAIScript
             getCreature()->CastSpell(getCreature(), poisonShield->mSpellInfo, true);
         }
 
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
-
     protected:
 
         CreatureAISpells* poisonShield;
 };
 
 
-// Commander Sarannis AI
 class CommanderSarannisAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(CommanderSarannisAI);
         CommanderSarannisAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
             GuardAdds = false;
-
-            enableCreatureAISpellSystem = true;
 
             auto arcaneResonance = addAISpell(ARCANE_RESONANCE, 7.0f, TARGET_ATTACKING);
             arcaneResonance->setAttackStopTimer(1000);
@@ -168,8 +129,6 @@ class CommanderSarannisAI : public CreatureAIScript
         void OnCombatStop(Unit* /*mTarget*/) override
         {
             GuardAdds = false;
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 
         void OnDied(Unit* /*mKiller*/) override
@@ -193,15 +152,12 @@ class CommanderSarannisAI : public CreatureAIScript
 };
 
 
-// High Botanist Freywinn AI
 class HighBotanistFreywinnAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(HighBotanistFreywinnAI);
         HighBotanistFreywinnAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
             PlantTimer = 10;
-
-            enableCreatureAISpellSystem = true;
 
             plantRedSeedling = addAISpell(PLANT_RED_SEEDLING, 0.0f, TARGET_SELF);
             plantRedSeedling->setAttackStopTimer(1000);
@@ -240,8 +196,6 @@ class HighBotanistFreywinnAI : public CreatureAIScript
         void OnCombatStop(Unit* /*mTarget*/) override
         {
             PlantTimer = 10;
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 
         void OnDied(Unit* /*mKiller*/) override
@@ -260,9 +214,9 @@ class HighBotanistFreywinnAI : public CreatureAIScript
 
         void PlantColorSeedling()
         {
-            PlantTimer = RandomUInt(5, 10);    //5-10 sec (as in my DB attack time is 1000)
+            PlantTimer = Util::getRandomUInt(5, 10);    //5-10 sec (as in my DB attack time is 1000)
 
-            switch (RandomUInt(3))
+            switch (Util::getRandomUInt(3))
             {
                 case 0:
                 {
@@ -298,15 +252,12 @@ class HighBotanistFreywinnAI : public CreatureAIScript
 };
 
 
-// Thorngrin the Tender AI
 class ThorngrinTheTenderAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(ThorngrinTheTenderAI);
         ThorngrinTheTenderAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
             Enraged = false;
-
-            enableCreatureAISpellSystem = true;
 
             auto hellfire = addAISpell(HELLFIRE, 9.0f, TARGET_VARIOUS);
             hellfire->setAttackStopTimer(1000);
@@ -335,8 +286,6 @@ class ThorngrinTheTenderAI : public CreatureAIScript
         void OnCombatStop(Unit* /*mTarget*/) override
         {
             Enraged = false;
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 
         void OnDied(Unit* /*mKiller*/) override
@@ -360,15 +309,12 @@ class ThorngrinTheTenderAI : public CreatureAIScript
 };
 
 
-// Laj AI
 class LajAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(LajAI);
         LajAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
             TeleportTimer = 20;    // It's sth about that
-
-            enableCreatureAISpellSystem = true;
 
             auto allergicReaction = addAISpell(ALERGIC_REACTION, 10.0f, TARGET_ATTACKING);
             allergicReaction->setAttackStopTimer(1000);
@@ -391,8 +337,6 @@ class LajAI : public CreatureAIScript
         void OnCombatStop(Unit* /*mTarget*/) override
         {
             TeleportTimer = 20;
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 
         void OnDied(Unit* /*mKiller*/) override
@@ -419,15 +363,12 @@ class LajAI : public CreatureAIScript
 };
 
 
-// Warp Splinter AI
 class WarpSplinterAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(WarpSplinterAI);
         WarpSplinterAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
             SummonTimer = 20;    // It's sth about that
-
-            enableCreatureAISpellSystem = true;
 
             auto stomp = addAISpell(STOMP, 8.0f, TARGET_VARIOUS);
             stomp->setAttackStopTimer(1000);
@@ -454,8 +395,6 @@ class WarpSplinterAI : public CreatureAIScript
         void OnCombatStop(Unit* /*mTarget*/) override
         {
             SummonTimer = 20;
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 
         void OnDied(Unit* /*mKiller*/) override

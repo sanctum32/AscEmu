@@ -49,18 +49,15 @@ SERVER_DECL SessionLog* GMCommand_Log;
 SERVER_DECL SessionLog* Anticheat_Log;
 SERVER_DECL SessionLog* Player_Log;
 
-// threads
-extern DayWatcherThread* dw;
-
 ConfigMgr Config;
 
 // DB version
 #if VERSION_STRING != Cata
 static const char* REQUIRED_CHAR_DB_VERSION = "2017-09-13_01_account_permissions";
-static const char* REQUIRED_WORLD_DB_VERSION = "2017-11-09_01_npc_script_text";
+static const char* REQUIRED_WORLD_DB_VERSION = "2017-12-10_01_creature_spawns";
 #else
 static const char* REQUIRED_CHAR_DB_VERSION = "2017-09-13_01_account_permissions";
-static const char* REQUIRED_WORLD_DB_VERSION = "2017-11-09_01_npc_script_text";
+static const char* REQUIRED_WORLD_DB_VERSION = "2017-12-10_01_creature_spawns";
 #endif
 
 void Master::_OnSignal(int s)
@@ -111,6 +108,8 @@ bool StartConsoleListener();
 void CloseConsoleListener();
 ThreadBase* GetConsoleListener();
 
+std::unique_ptr<WorldRunnable> worldRunnable = nullptr;
+
 bool Master::Run(int /*argc*/, char** /*argv*/)
 {
     char* config_file = (char*)CONFDIR "/world.conf";
@@ -130,7 +129,6 @@ bool Master::Run(int /*argc*/, char** /*argv*/)
 #endif
 
     InitImplicitTargetFlags();
-    InitRandomNumberGenerators();
 
     ThreadPool.Startup();
     auto startTime = Util::TimeNow();
@@ -177,8 +175,7 @@ bool Master::Run(int /*argc*/, char** /*argv*/)
 
     sWorld.setWorldStartTime((uint32)UNIXTIME);
 
-    WorldRunnable* wr = new WorldRunnable();
-    ThreadPool.ExecuteTask(wr);
+    worldRunnable = std::move(std::make_unique<WorldRunnable>());
 
     _HookSignals();
 
@@ -252,7 +249,9 @@ bool Master::Run(int /*argc*/, char** /*argv*/)
 
     _UnhookSignals();
 
-    wr->SetThreadState(THREADSTATE_TERMINATE);
+    worldRunnable->threadShutdown();
+    worldRunnable = nullptr;
+
     ThreadPool.ShowStats();
     /* Shut down console system */
     console->stopThread();
@@ -268,10 +267,6 @@ bool Master::Run(int /*argc*/, char** /*argv*/)
     // kill the database thread first so we don't lose any queries/data
     CharacterDatabase.EndThreads();
     WorldDatabase.EndThreads();
-
-    LogNotice("DayWatcherThread : Exiting...");
-    dw->terminate();
-    dw = NULL;
 
     ls->Close();
 

@@ -25,12 +25,9 @@
 
 class AmnennarTheColdbringerAI : public CreatureAIScript
 {
-
         ADD_CREATURE_FACTORY_FUNCTION(AmnennarTheColdbringerAI);
         AmnennarTheColdbringerAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto unknow = addAISpell(10179, 20.0f, TARGET_ATTACKING, 0, 10, false, true);
             unknow->setAttackStopTimer(3000);
 
@@ -40,12 +37,6 @@ class AmnennarTheColdbringerAI : public CreatureAIScript
             auto amnennarsWhath = addAISpell(13009, 20.0f, TARGET_ATTACKING, 0, 10, false, true);
             amnennarsWhath->setAttackStopTimer(3000);
         }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
 };
 
 
@@ -54,8 +45,6 @@ class GluttonAI : public CreatureAIScript
     ADD_CREATURE_FACTORY_FUNCTION(GluttonAI);
     GluttonAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        enableCreatureAISpellSystem = true;
-
         mDiseaseCloud = addAISpell(SP_GLUTTON_DISEASE_CLOUD, 0.0f, TARGET_SELF, 0, 0, false, true);
 
         auto mFrenzy = addAISpell(SP_GLUTTON_FRENZY, 10, TARGET_ATTACKING, 0, 20);
@@ -76,9 +65,8 @@ class MordreshFireEyeAI : public CreatureAIScript
     ADD_CREATURE_FACTORY_FUNCTION(MordreshFireEyeAI);
     MordreshFireEyeAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        //spells
-        AddSpell(SP_MORDRESH_FIRE_NOVA, Target_Self, 10, 2, 0);
-        AddSpell(SP_MORDRESH_FIREBALL, Target_Current, 10, 3, 0, 0, 40);
+        addAISpell(SP_MORDRESH_FIRE_NOVA, 10.0f, TARGET_SELF, 2, 0);
+        addAISpell(SP_MORDRESH_FIREBALL, 10.0f, TARGET_ATTACKING, 3, 0);
     }
 };
 
@@ -87,19 +75,11 @@ class PlaguemawTheRottingAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(PlaguemawTheRottingAI);
         PlaguemawTheRottingAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto witheredTouch = addAISpell(12947, 20.0f, TARGET_ATTACKING, 0, 10, false, true);
             witheredTouch->setAttackStopTimer(3000);
 
             auto putridStench = addAISpell(12946, 20.0f, TARGET_ATTACKING, 0, 10, false, true);
             putridStench->setAttackStopTimer(3000);
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 };
 
@@ -108,19 +88,11 @@ class RagglesnoutAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(RagglesnoutAI);
         RagglesnoutAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto unknown = addAISpell(10892, 20.0f, TARGET_ATTACKING, 0, 10, false, true);
             unknown->setAttackStopTimer(3000);
 
             auto unknown2 = addAISpell(11659, 20.0f, TARGET_ATTACKING, 0, 10, false, true);
             unknown2->setAttackStopTimer(3000);
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 };
 
@@ -130,19 +102,11 @@ class TutenKashAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(TutenKashAI);
         TutenKashAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto curseOfTutenKash = addAISpell(12255, 20.0f, TARGET_ATTACKING, 0, 10, false, true);
             curseOfTutenKash->setAttackStopTimer(3000);
 
             auto webSpray = addAISpell(12252, 20.0f, TARGET_ATTACKING, 0, 10, false, true);
             webSpray->setAttackStopTimer(3000);
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 };
 

@@ -30,8 +30,6 @@ class SHIRRAKTHEDEADWATCHERAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(SHIRRAKTHEDEADWATCHERAI);
         SHIRRAKTHEDEADWATCHERAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto inhibitMagic = addAISpell(INHIBIT_MAGIC, 7.0f, TARGET_SELF, 0, 10, false, true);
             inhibitMagic->setAttackStopTimer(1000);
 
@@ -45,12 +43,6 @@ class SHIRRAKTHEDEADWATCHERAI : public CreatureAIScript
             auto attractMagic = addAISpell(ATTRACT_MAGIC, 10.0f, TARGET_VARIOUS, 0, 15, false, true);
             attractMagic->setAttackStopTimer(1000);
         }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
 };
 
 
@@ -60,8 +52,6 @@ class AvatarOfTheMartyredAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(AvatarOfTheMartyredAI);
         AvatarOfTheMartyredAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto sunderArmor = addAISpell(SUNDER_ARMOR, 15.0f, TARGET_ATTACKING, 0, 10, false, true);
             sunderArmor->setAttackStopTimer(1000);
 
@@ -75,12 +65,6 @@ class AvatarOfTheMartyredAI : public CreatureAIScript
             getCreature()->m_noRespawn = true;
 
             Appear = true;
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 
         void AIUpdate() override
@@ -107,8 +91,6 @@ class EXARCHMALADAARAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(EXARCHMALADAARAI);
         EXARCHMALADAARAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto souldScream = addAISpell(SOUL_SCREAM, 10.0f, TARGET_VARIOUS, 0, 15, false, true);
             souldScream->addEmote("Let your mind be clouded.", CHAT_MSG_MONSTER_YELL, 10510); // dunno for sure if it should be here, but still gives better effect of fight :)
             souldScream->setAttackStopTimer(1000);
@@ -127,7 +109,6 @@ class EXARCHMALADAARAI : public CreatureAIScript
 
             Avatar = false;
 
-            // new
             addEmoteForEvent(Event_OnCombatStart, SAY_MALADAAR_01);
             addEmoteForEvent(Event_OnCombatStart, SAY_MALADAAR_02);
             addEmoteForEvent(Event_OnCombatStart, SAY_MALADAAR_03);
@@ -145,9 +126,6 @@ class EXARCHMALADAARAI : public CreatureAIScript
 
         void OnCombatStop(Unit* /*mTarget*/) override
         {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-
             Avatar = false;
         }
 

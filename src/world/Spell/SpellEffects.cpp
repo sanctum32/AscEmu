@@ -677,9 +677,9 @@ void Spell::SpellEffectSchoolDMG(uint8_t effectIndex) // dmg school
             case 45150:
             {
                 uint32 splitCount = 0;
-                for (std::set<Object*>::iterator itr = u_caster->GetInRangeOppFactsSetBegin(); itr != u_caster->GetInRangeOppFactsSetEnd(); ++itr)
+                for (const auto& itr : u_caster->getInRangeOppositeFactionSet())
                 {
-                    if ((*itr)->isInFront(u_caster) && u_caster->CalcDistance((*itr)) <= 65)
+                    if (itr && itr->isInFront(u_caster) && u_caster->CalcDistance(itr) <= 65)
                         splitCount++;
                 }
 
@@ -723,7 +723,7 @@ void Spell::SpellEffectSchoolDMG(uint8_t effectIndex) // dmg school
                 if (unitTarget->HasFlag(UNIT_FIELD_AURASTATE, AURASTATE_FLAG_IMMOLATE))
                 {
                     // random extra damage
-                    uint32 extra_dmg = 111 + (GetSpellInfo()->custom_RankNumber * 11) + RandomUInt(GetSpellInfo()->custom_RankNumber * 11);
+                    uint32 extra_dmg = 111 + (GetSpellInfo()->custom_RankNumber * 11) + Util::getRandomUInt(GetSpellInfo()->custom_RankNumber * 11);
                     dmg += extra_dmg;
                 }
             } break;
@@ -754,7 +754,7 @@ void Spell::SpellEffectSchoolDMG(uint8_t effectIndex) // dmg school
             {
                 if (u_caster)
                     dmg += float2int32(u_caster->GetRAP() * 0.15f);
-                dmg = float2int32(dmg * (0.9f + RandomFloat(0.2f)));      // randomized damage
+                dmg = float2int32(dmg * (0.9f + Util::getRandomFloat(0.2f)));      // randomized damage
 
                 if (p_caster != nullptr)
                 {
@@ -1348,11 +1348,12 @@ void Spell::SpellEffectSchoolDMG(uint8_t effectIndex) // dmg school
                 if (u_caster != nullptr)
                 {
                     int splitCount = 0;
-                    for (std::set<Object*>::iterator itr = u_caster->GetInRangeOppFactsSetBegin(); itr != u_caster->GetInRangeOppFactsSetEnd(); ++itr)
+                    for (const auto& itr : u_caster->getInRangeOppositeFactionSet())
                     {
-                        if ((*itr)->isInFront(u_caster))
+                        if (itr && itr->isInFront(u_caster))
                             splitCount++;
-                    };
+                    }
+
                     if (splitCount > 1)
                         dmg /= splitCount;
                 }
@@ -1994,7 +1995,7 @@ void Spell::SpellEffectHeal(uint8_t effectIndex) // Heal
                         if (randomPoints <= 1)
                             value = basePoints;
                         else
-                            value = basePoints + RandomUInt(randomPoints);
+                            value = basePoints + Util::getRandomUInt(randomPoints);
                         //the value is in percent. Until now it's a fixed 10%
                         Heal(unitTarget->GetMaxHealth()*value / 100);
                     }
@@ -2416,7 +2417,7 @@ void Spell::SpellEffectCreateItem(uint8_t effectIndex)
         uint32 mincount = basecount - difference;
         uint32 maxcount = basecount + difference;
         uint32 variablecount = maxcount - mincount;
-        uint32 randcount = RandomUInt(variablecount);
+        uint32 randcount = Util::getRandomUInt(variablecount);
 
         count = mincount + randcount;
     }
@@ -2486,7 +2487,7 @@ void Spell::SpellEffectCreateItem(uint8_t effectIndex)
 
                 uint32 spList[] = { 28590, 28587, 28588, 28591, 28589 };
                 cast_chance = 2;
-                learn_spell = spList[RandomUInt(4)];
+                learn_spell = spList[Util::getRandomUInt(4)];
             }
 
             //Transmutation Master
@@ -2509,7 +2510,7 @@ void Spell::SpellEffectCreateItem(uint8_t effectIndex)
 
                 uint32 spList[] = { 28581, 28585, 28585, 28584, 28582, 28580 };
                 cast_chance = 5;
-                learn_spell = spList[RandomUInt(5)];
+                learn_spell = spList[Util::getRandomUInt(5)];
             }
         }
 
@@ -3413,12 +3414,13 @@ void Spell::SpellEffectTriggerMissile(uint8_t effectIndex) // Trigger Missile
 
     float spellRadius = GetRadius(effectIndex);
 
-    ///\todo Following should be / is probably in SpellTarget code
-    for (std::set<Object*>::iterator itr = m_caster->GetInRangeSetBegin(); itr != m_caster->GetInRangeSetEnd(); ++itr)
+    //\todo Following should be / is probably in SpellTarget code
+    for (const auto& itr : m_caster->getInRangeObjectsSet())
     {
-        if (!((*itr)->IsUnit()) || !static_cast< Unit* >((*itr))->isAlive())
+        if (!itr || !itr->IsUnit() || !static_cast<Unit*>(itr)->isAlive())
             continue;
-        Unit* t = static_cast< Unit* >((*itr));
+
+        Unit* t = static_cast<Unit*>(itr);
 
         float r;
         auto destination = m_targets.destination();
@@ -3431,12 +3433,12 @@ void Spell::SpellEffectTriggerMissile(uint8_t effectIndex) // Trigger Missile
 
         if (sqrt(r) > spellRadius) continue;
 
-        if (!isAttackable(m_caster, *itr))//Fix Me: only enemy targets?
+        if (!isAttackable(m_caster, itr))   //Fix Me: only enemy targets?
             continue;
 
         Spell* sp = sSpellFactoryMgr.NewSpell(m_caster, spInfo, true, nullptr);
         SpellCastTargets tgt;
-        tgt.m_unitTarget = (*itr)->GetGUID();
+        tgt.m_unitTarget = itr->GetGUID();
         sp->prepare(&tgt);
     }
 }
@@ -4755,7 +4757,7 @@ void Spell::SpellEffectPickpocket(uint8_t /*effectIndex*/) // pickpocket
     lootmgr.FillPickpocketingLoot(&static_cast< Creature* >(unitTarget)->loot, unitTarget->GetEntry());
 
     uint32 _rank = static_cast< Creature* >(unitTarget)->GetCreatureProperties()->Rank;
-    unitTarget->loot.gold = float2int32((_rank + 1) * unitTarget->getLevel() * (RandomUInt(5) + 1) * worldConfig.getFloatRate(RATE_MONEY));
+    unitTarget->loot.gold = float2int32((_rank + 1) * unitTarget->getLevel() * (Util::getRandomUInt(5) + 1) * worldConfig.getFloatRate(RATE_MONEY));
 
     p_caster->SendLoot(unitTarget->GetGUID(), LOOT_PICKPOCKETING, unitTarget->GetMapId());
     target->SetPickPocketed(true);
@@ -4874,20 +4876,13 @@ void Spell::SpellEffectSanctuary(uint8_t /*effectIndex*/) // Stop all attacks ma
     if (!u_caster)
         return;
 
-    //warning this causes crashes !
-    //  Object::InRangeSet::iterator itr = u_caster->GetInRangeOppFactsSetBegin();
-    //  Object::InRangeSet::iterator itr_end = u_caster->GetInRangeOppFactsSetEnd();
-    //use these instead
-    Object::InRangeSet::iterator itr = u_caster->GetInRangeSetBegin();
-    Object::InRangeSet::iterator itr_end = u_caster->GetInRangeSetEnd();
-
     if (p_caster != nullptr)
         p_caster->RemoveAllAuraType(SPELL_AURA_MOD_ROOT);
 
-    for (; itr != itr_end; ++itr)
+    for (const auto& itr : u_caster->getInRangeObjectsSet())
     {
-        if ((*itr)->IsCreature())
-            static_cast<Creature*>(*itr)->GetAIInterface()->RemoveThreatByPtr(unitTarget);
+        if (itr && itr->IsCreature())
+            static_cast<Creature*>(itr)->GetAIInterface()->RemoveThreatByPtr(unitTarget);
     }
 }
 

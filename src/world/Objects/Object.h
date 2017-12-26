@@ -251,7 +251,7 @@ inline WorldPacket& operator>> (WorldPacket& buf, MovementInfo& mi)
     return buf;
 }
 
-static float normalizeOrientation(float orientation)
+inline float normalizeOrientation(float orientation)
 {
     if (orientation < 0)
     {
@@ -352,11 +352,19 @@ struct MovementInfo
 //////////////////////////////////////////////////////////////////////////////////////////
 class SERVER_DECL Object : public EventableObject, public IUpdatable
 {
-public:
-
     // MIT Start
     //////////////////////////////////////////////////////////////////////////////////////////
     // Object values
+
+protected:
+    union
+    {
+        int32_t* m_int32Values;
+        uint32_t* m_uint32Values;
+        float* m_floatValues;
+    };
+
+public:
 
     void setByteValue(uint16_t index, uint8_t offset, uint8_t value);
     uint8_t getByteValue(uint16_t index, uint8_t offset) const;
@@ -371,12 +379,24 @@ public:
 
     void setUInt32Value(uint16_t index, uint32_t value);
     uint32_t getUInt32Value(uint16_t index) const;
+    void modUInt32Value(uint16_t index, int32_t mod);
+
+    // Zyres 12/26/2017 - percent mod, float, not uint32_t (used for UNIT_FIELD_BASEATTACKTIME which should be a float)
+    uint32_t getPercentModUInt32Value(uint16_t index, const int32_t value);
+
+    void setInt32Value(uint16_t index, int32_t value);
+    uint32_t getInt32Value(uint16_t index) const;
+    void modInt32Value(uint16_t index, int32_t value);
 
     void setUInt64Value(uint16_t index, uint64_t value);
     uint64_t getUInt64Value(uint16_t index) const;
 
     void setFloatValue(uint16_t index, float value);
     float getFloatValue(uint16_t index) const;
+
+    void modFloatValue(uint16_t index, float value);
+    void modFloatValueByPCT(uint16_t index, int32 byPct);
+
 
     //////////////////////////////////////////////////////////////////////////////////////////
     // Object update
@@ -392,6 +412,12 @@ public:
 
     //////////////////////////////////////////////////////////////////////////////////////////
     // Spell functions
+private:
+
+    Spell* m_currentSpell[CURRENT_SPELL_MAX];
+
+public:
+
     Spell* getCurrentSpell(CurrentSpellType spellType) const;
     Spell* getCurrentSpellById(uint32_t spellId) const;
     void setCurrentSpell(Spell* curSpell);
@@ -400,6 +426,7 @@ public:
     // TODO: implement delayed spells
     void interruptSpell(uint32_t spellId = 0, bool checkMeleeSpell = true, bool checkDelayed = true);
     void interruptSpellWithSpellType(CurrentSpellType spellType, bool checkDelayed = true);
+
     // Searches for current casted spell, but skips melee spells
     // TODO: implement delayed spells
     bool isCastingNonMeleeSpell(bool checkDelayed = true, bool skipChanneled = false, bool skipAutorepeat = false, bool isAutoshoot = false) const;
@@ -407,26 +434,70 @@ public:
 
     void _UpdateSpells(uint32_t time); // moved here from Unit class since GameObject can be caster as well
 
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // InRange sets
 private:
-    Spell* m_currentSpell[CURRENT_SPELL_MAX];
+
+    std::vector<Object*> mInRangeObjectsSet;
+    std::vector<Object*> mInRangePlayersSet;
+    std::vector<Object*> mInRangeOppositeFactionSet;
+    std::vector<Object*> mInRangeSameFactionSet;
 
 public:
-    // MIT End
 
-        typedef std::set<Object*> InRangeSet;
+    // general
+    virtual void clearInRangeSets();
+    virtual void addToInRangeObjects(Object* pObj);
+    virtual void onRemoveInRangeObject(Object* /*pObj*/) {}
+
+    void removeSelfFromInrangeSets();
+
+    // Objects
+    std::vector<Object*> getInRangeObjectsSet();
+
+    bool hasInRangeObjects();
+    size_t getInRangeObjectsCount();
+
+    bool isObjectInInRangeObjectsSet(Object* pObj);
+    void removeObjectFromInRangeObjectsSet(Object* pObj);
+
+    // Players
+    std::vector<Object*> getInRangePlayersSet();
+
+    size_t getInRangePlayersCount();
+    
+
+    // Opposite Faction
+    std::vector<Object*> getInRangeOppositeFactionSet();
+
+    bool isObjectInInRangeOppositeFactionSet(Object* pObj);
+    void updateInRangeOppositeFactionSet();
+
+    void addInRangeOppositeFaction(Object* obj);
+    void removeObjectFromInRangeOppositeFactionSet(Object* obj);
+
+    // same faction
+    std::vector<Object*> getInRangeSameFactionSet();
+
+    bool isObjectInInRangeSameFactionSet(Object* pObj);
+    void updateInRangeSameFactionSet();
+
+    void addInRangeSameFaction(Object* obj);
+    void removeObjectFromInRangeSameFactionSet(Object* obj);
+
+    // MIT End
 
         Object();
         virtual ~Object();
 
         void Update(unsigned long /*time_passed*/) {}
 
-        /// True if object exists in world, else false
+        // True if object exists in world, else false
         bool IsInWorld() { return m_mapMgr != NULL; }
         virtual void AddToWorld();
         virtual void AddToWorld(MapMgr* pMapMgr);
         void PushToWorld(MapMgr*);
         virtual void RemoveFromWorld(bool free_guid);
-
 
         //////////////////////////////////////////////////////////////////////////////////////////
         // virtual void OnPrePushToWorld()
@@ -439,7 +510,6 @@ public:
         //////////////////////////////////////////////////////////////////////////////////////////
         virtual void OnPrePushToWorld() {}
 
-
         //////////////////////////////////////////////////////////////////////////////////////////
         // virtual void OnPushToWorld()
         // Virtual method that is called, AFTER pushing the Object in the game world
@@ -450,7 +520,6 @@ public:
         //
         //////////////////////////////////////////////////////////////////////////////////////////
         virtual void OnPushToWorld() {}
-
 
         //////////////////////////////////////////////////////////////////////////////////////////
         // virtual void OnPreRemoveFromWorld()
@@ -463,7 +532,6 @@ public:
         //////////////////////////////////////////////////////////////////////////////////////////
         virtual void OnPreRemoveFromWorld() {}
 
-
         //////////////////////////////////////////////////////////////////////////////////////////
         // virtual void OnRemoveFromWorld()
         // Virtual method that is called, AFTER removing the Object from the game world
@@ -475,8 +543,7 @@ public:
         //////////////////////////////////////////////////////////////////////////////////////////
         virtual void OnRemoveFromWorld() {}
 
-
-        /// Guid always comes first
+        // Guid always comes first
         uint64 GetGUID() const { return getUInt64Value(OBJECT_FIELD_GUID); }
         void SetGUID(uint64 GUID) { setUInt64Value(OBJECT_FIELD_GUID, GUID); }
         const uint32 GetLowGUID() const { return m_uint32Values[OBJECT_FIELD_GUID]; }
@@ -559,25 +626,25 @@ public:
         uint8 GetTransSeat() const { return obj_movement_info.getTransportSeat(); }
 #endif
 
-        /// Distance Calculation
+        // Distance Calculation
         float CalcDistance(Object* Ob);
         float CalcDistance(float ObX, float ObY, float ObZ);
         float CalcDistance(Object* Oa, Object* Ob);
         float CalcDistance(Object* Oa, float ObX, float ObY, float ObZ);
         float CalcDistance(float OaX, float OaY, float OaZ, float ObX, float ObY, float ObZ);
-        /// NYS: scriptdev2
+        // NYS: scriptdev2
         bool IsInMap(Object* obj) { return GetMapId() == obj->GetMapId() && GetInstanceID() == obj->GetInstanceID(); }
         bool IsWithinDistInMap(Object* obj, const float dist2compare) const;
         bool IsWithinLOSInMap(Object* obj);
         bool IsWithinLOS(LocationVector location);
 
-        /// Only for MapMgr use
+        // Only for MapMgr use
         MapCell* GetMapCell() const;
         const uint32 GetMapCellX() { return m_mapCell_x; }
         const uint32 GetMapCellY() { return m_mapCell_y; }
-        /// Only for MapMgr use
+        // Only for MapMgr use
         void SetMapCell(MapCell* cell);
-        /// Only for MapMgr use
+        // Only for MapMgr use
         MapMgr* GetMapMgr() const { return m_mapMgr; }
 
         Object* GetMapMgrObject(const uint64 & guid);
@@ -593,12 +660,6 @@ public:
 
         const uint32 GetMapId() const { return m_mapId; }
         const uint32 & GetZoneId() const { return m_zoneId; }
-
-        void ModFloatValue(const uint32 index, const float value);
-        void ModFloatValueByPCT(const uint32 index, int32 byPct);
-        void ModSignedInt32Value(uint32 index, int32 value);
-        void ModUnsigned32Value(uint32 index, int32 mod);
-        uint32 GetModPUInt32Value(const uint32 index, const int32 value);
 
         void SetNewGuid(uint32 Guid)
         {
@@ -660,7 +721,7 @@ public:
         const float getDistanceSq(Object* obj)
         {
             if (obj->GetMapId() != m_mapId)
-                return 40000.0f;                        /// enough for out of range
+                return 40000.0f;                        // enough for out of range
             return m_position.distanceSquare(obj->GetPosition());
         }
 
@@ -672,96 +733,9 @@ public:
         const float GetDistance2dSq(Object* obj)
         {
             if (obj->GetMapId() != m_mapId)
-                return 40000.0f;                        /// enough for out of range
+                return 40000.0f;                        // enough for out of range
             return m_position.Distance2DSq(obj->m_position);
         }
-
-        /// In-range object management, not sure if we need it
-        bool IsInRangeSet(Object* pObj)
-        {
-            return !(m_objectsInRange.find(pObj) == m_objectsInRange.end());
-        }
-
-        virtual void AddInRangeObject(Object* pObj);
-
-        Mutex m_inrangechangelock;
-
-        void RemoveInRangeObject(Object* pObj);
-
-        //////////////////////////////////////////////////////////////////////////////////////////
-        // void RemoveSelfFromInrangeSets()
-        // Removes the Object from the inrangesets of the Objects in range
-        //
-        // \param none
-        //
-        // \return none
-        //
-        //////////////////////////////////////////////////////////////////////////////////////////
-        void RemoveSelfFromInrangeSets();
-
-
-        bool HasInRangeObjects()
-        {
-            return (m_objectsInRange.size() > 0);
-        }
-
-        virtual void OnRemoveInRangeObject(Object* pObj);
-
-        virtual void ClearInRangeSet()
-        {
-            m_objectsInRange.clear();
-            m_inRangePlayers.clear();
-            m_oppFactsInRange.clear();
-            m_sameFactsInRange.clear();
-        }
-
-        size_t GetInRangeCount() { return m_objectsInRange.size(); }
-        size_t GetInRangePlayersCount() { return m_inRangePlayers.size(); }
-
-        auto GetInRangeSet() { return m_objectsInRange; }
-
-        InRangeSet::iterator GetInRangeSetBegin() { return m_objectsInRange.begin(); }
-        InRangeSet::iterator GetInRangeSetEnd() { return m_objectsInRange.end(); }
-        InRangeSet::iterator FindInRangeSet(Object* obj) { return m_objectsInRange.find(obj); }
-
-        void RemoveInRangeObject(InRangeSet::iterator itr)
-        {
-            OnRemoveInRangeObject(*itr);
-            m_objectsInRange.erase(itr);
-        }
-
-        bool RemoveIfInRange(Object* obj)
-        {
-            InRangeSet::iterator itr = m_objectsInRange.find(obj);
-            if (obj->IsPlayer())
-                m_inRangePlayers.erase(obj);
-
-            if (itr == m_objectsInRange.end())
-                return false;
-
-            m_objectsInRange.erase(itr);
-
-            return true;
-        }
-
-        bool IsInRangeSameFactSet(Object* pObj) { return (m_sameFactsInRange.count(pObj) > 0); }
-        void UpdateSameFactionSet();
-        std::set<Object*>::iterator GetInRangeSameFactsSetBegin() { return m_sameFactsInRange.begin(); }
-        std::set<Object*>::iterator GetInRangeSameFactsSetEnd() { return m_sameFactsInRange.end(); }
-
-        bool IsInRangeOppFactSet(Object* pObj) { return (m_oppFactsInRange.count(pObj) > 0); }
-        void UpdateOppFactionSet();
-        size_t GetInRangeOppFactsSize() { return m_oppFactsInRange.size(); }
-        std::set<Object*>::iterator GetInRangeOppFactsSetBegin() { return m_oppFactsInRange.begin(); }
-        std::set<Object*>::iterator GetInRangeOppFactsSetEnd() { return m_oppFactsInRange.end(); }
-        std::set<Object*>::iterator GetInRangePlayerSetBegin() { return m_inRangePlayers.begin(); }
-        std::set<Object*>::iterator GetInRangePlayerSetEnd() { return m_inRangePlayers.end(); }
-        std::set<Object*> * GetInRangePlayerSet() { return &m_inRangePlayers; }
-        std::set<Object*> & GetInRangePlayers() { return m_inRangePlayers; }
-        std::set<Object*> & GetInRangeOpposingFactions() { return m_oppFactsInRange; }
-        std::set<Object*> & GetInRangeSameFactions() { return m_sameFactsInRange; }
-        std::set<Object*> & GetInRangeObjects() { return m_objectsInRange; }
-
 
         //////////////////////////////////////////////////////////////////////////////////////////
         // void OutPacket(uint16 opcode, uint16 len, const void *data)
@@ -774,11 +748,7 @@ public:
         // \return none
         //
         //////////////////////////////////////////////////////////////////////////////////////////
-#if VERSION_STRING == Cata
-        virtual void OutPacket(uint32_t /*opcode*/, uint16_t /*len*/, const void* /*data*/) {};
-#else
         virtual void OutPacket(uint16_t /*opcode*/, uint16_t /*len*/, const void* /*data*/) {};
-#endif
 
         //////////////////////////////////////////////////////////////////////////////////////////
         // void SendPacket(WorldPacket *packet)
@@ -791,17 +761,12 @@ public:
         //////////////////////////////////////////////////////////////////////////////////////////
         virtual void SendPacket(WorldPacket* /*packet*/) {};
 
-
         void SendCreatureChatMessageInRange(Creature* creature, uint32_t textId);
         void SendMonsterSayMessageInRange(Creature* creature, MySQLStructure::NpcMonsterSay* npcMonsterSay, int randChoice, uint32_t event);
 
         virtual void SendMessageToSet(WorldPacket* data, bool self, bool myteam_only = false);
         void SendMessageToSet(StackBufferBase* data, bool self) { OutPacketToSet(data->GetOpcode(), static_cast<uint16>(data->GetSize()), data->GetBufferPointer(), self); }
-#if VERSION_STRING == Cata
-        virtual void OutPacketToSet(uint32 Opcode, uint16 Len, const void* Data, bool self);
-#else
         virtual void OutPacketToSet(uint16 Opcode, uint16 Len, const void* Data, bool self);
-#endif
 
         //////////////////////////////////////////////////////////////////////////////////////////
         // void SendAIReaction(uint32 reaction = 2)
@@ -815,7 +780,6 @@ public:
         //////////////////////////////////////////////////////////////////////////////////////////
         void SendAIReaction(uint32 reaction = 2);
 
-
         //////////////////////////////////////////////////////////////////////////////////////////
         //void SendDestroyObject()
         // Destroys this Object for the players' clients that are nearby
@@ -827,7 +791,6 @@ public:
         //
         //////////////////////////////////////////////////////////////////////////////////////////
         void SendDestroyObject();
-
 
         // Fill values with data from a space separated string of uint32s.
         void LoadValues(const char* data);
@@ -877,7 +840,7 @@ public:
         virtual bool CanActivate();
         virtual void Activate(MapMgr* mgr);
         virtual void Deactivate(MapMgr* mgr);
-        /// Player is in pvp queue.
+        // Player is in pvp queue.
         bool m_inQueue;
         void SetMapMgr(MapMgr* mgr) { m_mapMgr = mgr; }
 
@@ -887,13 +850,13 @@ public:
                 RemoveFromWorld(true);
             delete this;
         }
-        /// Play's a sound to players in range.
+        // Play's a sound to players in range.
         void PlaySoundToSet(uint32 sound_entry);
-        /// Is the player in a battleground?
+        // Is the player in a battleground?
         bool IsInBg();
-        /// What's their faction? Horde/Ally.
+        // What's their faction? Horde/Ally.
         uint32 GetTeam();
-        /// Objects directly cannot be in a group.
+        // Objects directly cannot be in a group.
         virtual Group* GetGroup() { return NULL; }
 
     protected:
@@ -901,65 +864,51 @@ public:
         //void _Create (uint32 guidlow, uint32 guidhigh);
         void _Create(uint32 mapid, float x, float y, float z, float ang);
 
-        /// Mark values that need updating for specified player.
+        // Mark values that need updating for specified player.
         virtual void _SetUpdateBits(UpdateMask* updateMask, Player* target) const;
-        /// Mark values that player should get when he/she/it sees object for first time.
+        // Mark values that player should get when he/she/it sees object for first time.
         virtual void _SetCreateBits(UpdateMask* updateMask, Player* target) const;
 
-        /// Create updates that player will see
+        // Create updates that player will see
         void _BuildMovementUpdate(ByteBuffer* data, uint16 flags, Player* target);
         void _BuildValuesUpdate(ByteBuffer* data, UpdateMask* updateMask, Player* target);
 
-        /// WoWGuid class
+        // WoWGuid class
         WoWGuid m_wowGuid;
 
         // Type mask
         uint16 m_objectType;
 
-        /// Type id.
+        // Type id.
         uint8 m_objectTypeId;
 
         //update flag
         uint16 m_updateFlag;
 
-        /// Zone id.
+        // Zone id.
         uint32 m_zoneId;
-        /// Continent/map id.
+        // Continent/map id.
         uint32 m_mapId;
-        /// Map manager
+        // Map manager
         MapMgr* m_mapMgr;
-        /// Current map cell row and column
+        // Current map cell row and column
         uint32 m_mapCell_x, m_mapCell_y;
 
-        /// Main Function called by isInFront();
+        // Main Function called by isInFront();
         bool inArc(float Position1X, float Position1Y, float FOV, float Orientation, float Position2X, float Position2Y);
 
         LocationVector m_position;
         LocationVector m_lastMapUpdatePosition;
         LocationVector m_spawnLocation;
 
-        /// Object properties.
-        union
-        {
-            uint32* m_uint32Values;
-            float* m_floatValues;
-        };
-
-        /// Number of properties
+        // Number of properties
         uint16 m_valuesCount;
 
-        /// List of object properties that need updating.
+        // List of object properties that need updating.
         UpdateMask m_updateMask;
 
         // True if object was updated
         bool m_objectUpdated;
-
-        // Set of Objects in range.
-        // \todo that functionality should be moved into WorldServer.
-        std::set<Object*> m_objectsInRange;
-        std::set<Object*> m_inRangePlayers;
-        std::set<Object*> m_oppFactsInRange;
-        std::set<Object*> m_sameFactsInRange;
 
         int32 m_instanceId;
 
@@ -972,9 +921,8 @@ public:
         std::set<Spell*> m_pendingSpells;
 
         bool GetPoint(float angle, float rad, float & outx, float & outy, float & outz, bool sloppypath = false);
-        bool GetRandomPoint(float rad, float & outx, float & outy, float & outz) { return GetPoint(RandomFloat(float(M_PI * 2)), rad, outx, outy, outz); }
+        bool GetRandomPoint(float rad, float & outx, float & outy, float & outz) { return GetPoint(Util::getRandomFloat(float(M_PI * 2)), rad, outx, outy, outz); }
         bool GetRandomPoint(float rad, LocationVector & out) { return GetRandomPoint(rad, out.x, out.y, out.z); }
 };
-
 
 #endif // OBJECT_H

@@ -58,7 +58,7 @@ bool NoggenFoggerElixr(uint8_t /*effectIndex*/, Spell* pSpell)
     if (!pSpell->p_caster)
         return true;
 
-    uint32 chance = RandomUInt(2);
+    uint32 chance = Util::getRandomUInt(2);
 
     switch (chance)
     {
@@ -80,7 +80,7 @@ bool HallowsEndCandy(uint8_t /*effectIndex*/, Spell* pSpell)
     if (!pSpell->p_caster)
         return true;
 
-    int newspell = 24924 + RandomUInt(3);
+    int newspell = 24924 + Util::getRandomUInt(3);
 
     SpellInfo* spInfo = sSpellCustomizations.GetSpellInfo(newspell);
     if (!spInfo) return true;
@@ -94,7 +94,7 @@ bool DeviateFish(uint8_t /*effectIndex*/, Spell* pSpell)
     if (!pSpell->p_caster)
         return true;
 
-    int newspell = 8064 + RandomUInt(4);
+    int newspell = 8064 + Util::getRandomUInt(4);
 
     SpellInfo* spInfo = sSpellCustomizations.GetSpellInfo(newspell);
     if (!spInfo) return true;
@@ -111,7 +111,7 @@ bool CookedDeviateFish(uint8_t /*effectIndex*/, Spell* pSpell)
     int chance = 0;
     int newspell = 0;
 
-    chance = RandomUInt(1);
+    chance = Util::getRandomUInt(1);
 
     switch (chance)
     {
@@ -141,10 +141,10 @@ bool HolidayCheer(uint8_t effectIndex, Spell* pSpell)
     Unit* target;
     float dist = pSpell->GetRadius(effectIndex);
 
-    for (ObjectSet::iterator itr = pSpell->m_caster->GetInRangeSetBegin(); itr != pSpell->m_caster->GetInRangeSetEnd(); ++itr)
+    for (const auto& itr : pSpell->m_caster->getInRangeObjectsSet())
     {
-        if ((*itr)->IsUnit())
-            target = static_cast<Unit*>(*itr);
+        if (itr && itr->IsUnit())
+            target = static_cast<Unit*>(itr);
         else
             continue;
 
@@ -166,7 +166,7 @@ bool NetOMatic(uint8_t /*effectIndex*/, Spell* pSpell)
     if (!spInfo)
         return true;
 
-    int chance = RandomUInt(99) + 1;
+    int chance = Util::getRandomUInt(99) + 1;
 
     if (chance < 51) // nets target: 50%
         pSpell->p_caster->CastSpell(target, spInfo, true);
@@ -221,7 +221,7 @@ bool ForemansBlackjack(uint8_t /*effectIndex*/, Spell* pSpell)
 
     // Add timed event to return lazy peon to Zzz after 5-10 minutes (spell 17743)
     SpellInfo* pSpellEntry = sSpellCustomizations.GetSpellInfo(17743);
-    sEventMgr.AddEvent(target, &Unit::EventCastSpell, target, pSpellEntry, EVENT_UNK, 300000 + RandomUInt(300000), 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+    sEventMgr.AddEvent(target, &Unit::EventCastSpell, target, pSpellEntry, EVENT_UNK, 300000 + Util::getRandomUInt(300000), 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
 
     return true;
 }
@@ -245,7 +245,7 @@ bool NighInvulnBelt(uint8_t /*effectIndex*/, Spell* pSpell)
     if (!pSpell->p_caster)
         return true;
 
-    int chance = RandomUInt(99) + 1;
+    int chance = Util::getRandomUInt(99) + 1;
 
     if (chance > 10)    // Buff - Nigh-Invulnerability - 30456
         pSpell->p_caster->CastSpell(pSpell->p_caster, sSpellCustomizations.GetSpellInfo(30456), true);
@@ -331,16 +331,16 @@ bool MinionsOfGurok(uint8_t /*effectIndex*/, Spell* pSpell)
     float SSZ = target->GetPositionZ();
     float SSO = target->GetOrientation();
 
-    pSpell->p_caster->GetMapMgr()->GetInterface()->SpawnCreature(18181, SSX + RandomUInt(8) - 4, SSY + RandomUInt(8) - 4, SSZ, SSO, true, false, 0, 0);
-    pSpell->p_caster->GetMapMgr()->GetInterface()->SpawnCreature(18181, SSX + RandomUInt(8) - 4, SSY + RandomUInt(8) - 4, SSZ, SSO, true, false, 0, 0);
-    pSpell->p_caster->GetMapMgr()->GetInterface()->SpawnCreature(18181, SSX + RandomUInt(8) - 4, SSY + RandomUInt(8) - 4, SSZ, SSO, true, false, 0, 0);
+    pSpell->p_caster->GetMapMgr()->GetInterface()->SpawnCreature(18181, SSX + Util::getRandomUInt(8) - 4, SSY + Util::getRandomUInt(8) - 4, SSZ, SSO, true, false, 0, 0);
+    pSpell->p_caster->GetMapMgr()->GetInterface()->SpawnCreature(18181, SSX + Util::getRandomUInt(8) - 4, SSY + Util::getRandomUInt(8) - 4, SSZ, SSO, true, false, 0, 0);
+    pSpell->p_caster->GetMapMgr()->GetInterface()->SpawnCreature(18181, SSX + Util::getRandomUInt(8) - 4, SSY + Util::getRandomUInt(8) - 4, SSZ, SSO, true, false, 0, 0);
 
     return true;
 }
 
 bool PurifyBoarMeat(uint8_t /*effectIndex*/, Spell* pSpell)
 {
-    uint32 bormeat = RandomUInt(2);
+    uint32 bormeat = Util::getRandomUInt(2);
     switch (bormeat)
     {
         case 0:
@@ -523,7 +523,7 @@ bool SixDemonBag(uint8_t /*effectIndex*/, Spell* s)
         return false;
 
     uint32 ClearSpellId[6] = { 8401, 8408, 930, 118, 1680, 10159 };
-    uint32 randid = RandomUInt(5);
+    uint32 randid = Util::getRandomUInt(5);
     uint32 spelltocast = ClearSpellId[randid];
 
     s->u_caster->CastSpell(unitTarget, spelltocast, true);
@@ -540,16 +540,16 @@ bool ExtractGas(uint8_t /*effectIndex*/, Spell* s)
     if (!s->p_caster)
         return false;
 
-    for (Object::InRangeSet::iterator itr = s->p_caster->GetInRangeSetBegin(); itr != s->p_caster->GetInRangeSetEnd(); ++itr)
+    for (const auto& itr : s->p_caster->getInRangeObjectsSet())
     {
-        if ((*itr)->IsCreature())
+        if (itr && itr->IsCreature())
         {
-            creature = static_cast<Creature*>((*itr));
+            creature = static_cast<Creature*>(itr);
             cloudtype = creature->GetEntry();
 
             if (cloudtype == 24222 || cloudtype == 17408 || cloudtype == 17407 || cloudtype == 17378)
             {
-                if (s->p_caster->GetDistance2dSq((*itr)) < 400)
+                if (s->p_caster->GetDistance2dSq(itr) < 400)
                 {
                     s->p_caster->SetSelection(creature->GetGUID());
                     check = true;
@@ -565,7 +565,7 @@ bool ExtractGas(uint8_t /*effectIndex*/, Spell* s)
     uint32 item = 0;
     uint32 count = 0;
 
-    count = 3 + (RandomUInt(3));
+    count = 3 + (Util::getRandomUInt(3));
 
     if (cloudtype == 24222)
         item = 22572; //-air
@@ -651,7 +651,7 @@ bool ShrinkRay(uint8_t /*effectIndex*/, Spell* s)
         13010  // shrink
     };
 
-    uint32 chance = RandomUInt(5);
+    uint32 chance = Util::getRandomUInt(5);
     bool malfunction = false;
 
     if (chance == 5)
@@ -665,8 +665,8 @@ bool ShrinkRay(uint8_t /*effectIndex*/, Spell* s)
     }
     else
     {
-        uint32 spellindex = RandomUInt(1);
-        uint32 who = RandomUInt(3);
+        uint32 spellindex = Util::getRandomUInt(1);
+        uint32 who = Util::getRandomUInt(3);
 
         switch (who)
         {
@@ -686,10 +686,12 @@ bool ShrinkRay(uint8_t /*effectIndex*/, Spell* s)
 
             case 2:  // our party
             {
-                for (std::set< Object* >::iterator itr = s->p_caster->GetInRangePlayerSetBegin(); itr != s->p_caster->GetInRangePlayerSetEnd(); ++itr)
+                for (const auto& itr : s->p_caster->getInRangePlayersSet())
                 {
-                    Player* p = static_cast<Player*>(*itr);
+                    if (!itr)
+                        continue;
 
+                    Player* p = static_cast<Player*>(itr);
                     if ((p->GetPhase() & s->p_caster->GetPhase()) == 0)
                         continue;
 
@@ -703,9 +705,12 @@ bool ShrinkRay(uint8_t /*effectIndex*/, Spell* s)
 
             case 3:  // every attacking enemy
             {
-                for (std::set< Object* >::iterator itr = s->p_caster->GetInRangeOppFactsSetBegin(); itr != s->p_caster->GetInRangeOppFactsSetEnd(); ++itr)
+                for (const auto& itr : s->p_caster->getInRangeOppositeFactionSet())
                 {
-                    Object* o = *itr;
+                    if(!itr)
+                        continue;
+
+                    Object* o = itr;
 
                     if ((o->GetPhase() & s->p_caster->GetPhase()) == 0)
                         continue;
@@ -779,7 +784,7 @@ bool Spinning(uint8_t /*effectIndex*/, Spell* s)
     if (p_caster == NULL)
         return true;
 
-    float neworientation = RandomFloat(M_PI_FLOAT * 2);
+    float neworientation = Util::getRandomFloat(M_PI_FLOAT * 2);
 
     float X = p_caster->GetPositionX();
     float Y = p_caster->GetPositionY();

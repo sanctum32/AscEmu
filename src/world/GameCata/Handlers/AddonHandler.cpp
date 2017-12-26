@@ -28,12 +28,12 @@ void WorldSession::readAddonInfoPacket(ByteBuffer &recv_data)
 
     uLongf uSize = recvSize;
 
-    uint32_t pos = recv_data.rpos();
+    uint32_t pos = static_cast<uint32_t>(recv_data.rpos());
 
     ByteBuffer unpackedInfo;
     unpackedInfo.resize(recvSize);
 
-    if (uncompress(unpackedInfo.contents(), &uSize, recv_data.contents() + pos, recv_data.size() - pos) == Z_OK)
+    if (uncompress(unpackedInfo.contents(), &uSize, recv_data.contents() + pos, static_cast<uLong>(recv_data.size() - pos)) == Z_OK)
     {
         uint32_t addonsCount;
         unpackedInfo >> addonsCount;
@@ -168,7 +168,7 @@ void WorldSession::HandleAddonRegisteredPrefixesOpcode(WorldPacket& recv_data)
     std::vector<uint8_t> nameLengths(addonCount);
     for (uint32_t i = 0; i < addonCount; ++i)
     {
-        nameLengths[i] = recv_data.readBits(5);
+        nameLengths[i] = static_cast<uint8_t>(recv_data.readBits(5));
     }
 
     for (uint32_t i = 0; i < addonCount; ++i)

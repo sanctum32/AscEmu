@@ -72,7 +72,7 @@ WorldSocket::WorldSocket(SOCKET fd)
     mOpcode(0),
     mRemaining(0),
     mSize(0),
-    mSeed(RandomUInt()),
+    mSeed(Util::getRandomUInt(RAND_MAX)),
     mRequestID(0),
     mSession(NULL),
     pAuthenticationPacket(NULL),
@@ -133,11 +133,7 @@ void WorldSocket::OnDisconnect()
     }
 }
 
-#if VERSION_STRING != Cata
 void WorldSocket::OutPacket(uint16 opcode, size_t len, const void* data)
-#else
-void WorldSocket::OutPacket(uint32 opcode, size_t len, const void* data)
-#endif
 {
     OUTPACKET_RESULT res;
     if ((len + 10) > WORLDSOCKET_SENDBUF_SIZE)
@@ -207,11 +203,7 @@ void WorldSocket::UpdateQueuedPackets()
     queueLock.Release();
 }
 
-#if VERSION_STRING != Cata
 OUTPACKET_RESULT WorldSocket::_OutPacket(uint16 opcode, size_t len, const void* data)
-#else
-OUTPACKET_RESULT WorldSocket::_OutPacket(uint32 opcode, size_t len, const void* data)
-#endif
 {
     bool rv;
     if (!IsConnected())
@@ -229,7 +221,7 @@ OUTPACKET_RESULT WorldSocket::_OutPacket(uint32 opcode, size_t len, const void* 
     sWorldPacketLog.logPacket((uint32)len, opcode, (const uint8*)data, 1, (mSession ? mSession->GetAccountId() : 0));
 
 #if VERSION_STRING == Cata
-    ServerPktHeader Header(uint32(len + 2), opcode);
+    ServerPktHeader Header(uint32(len + 2), static_cast<uint16_t>(opcode));
 #else
     // Encrypt the packet
     // First, create the header.

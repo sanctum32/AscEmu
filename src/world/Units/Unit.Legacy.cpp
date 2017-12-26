@@ -1858,7 +1858,7 @@ uint32 Unit::HandleProc(uint32 flag, Unit* victim, SpellInfo* CastingSpell, bool
                         continue; //no weapon no joy
                     //float chance=float(it->GetProto()->Delay)*float(talentlevel)/600.0f;
                     uint32 chance = it->GetItemProperties()->Delay * talentlevel / 300; //zack this had a very low proc rate. Kinda like a wasted talent
-                    uint32 myroll = RandomUInt(100);
+                    uint32 myroll = Util::getRandomUInt(100);
                     if (myroll > chance)
                         continue;
                 }
@@ -7164,7 +7164,7 @@ uint32 Unit::GetSpellDidHitResult(Unit* pVictim, uint32 weapon_damage_type, Spel
 
 
     // roll
-    float Roll = RandomFloat(100.0f);
+    float Roll = Util::getRandomFloat(100.0f);
     uint32 r = 0;
 
     while (r < 4 && Roll > chances[r])
@@ -7602,7 +7602,7 @@ void Unit::Strike(Unit* pVictim, uint32 weapon_damage_type, SpellInfo* ability, 
     //printf("crush: %.2f\n", crush);
 
     // roll
-    float Roll = RandomFloat(100.0f);
+    float Roll = Util::getRandomFloat(100.0f);
     uint32 r = 0;
     while (r < 7 && Roll> chances[r])
     {
@@ -8114,7 +8114,7 @@ void Unit::Strike(Unit* pVictim, uint32 weapon_damage_type, SpellInfo* ability, 
                 dmg2 = itr->second.mindmg;
                 range = itr->second.maxdmg - itr->second.mindmg;
                 if (range != 0)
-                    dmg2 += RandomUInt(range);
+                    dmg2 += Util::getRandomUInt(range);
 
                 SpellNonMeleeDamageLog(pVictim, itr->second.spellid, dmg2, true);
             }
@@ -8326,18 +8326,18 @@ void Unit::Strike(Unit* pVictim, uint32 weapon_damage_type, SpellInfo* ability, 
             itx2 = itx++;
             ExtraStrike* ex = *itx2;
 
-            for (std::set<Object*>::iterator itr = m_objectsInRange.begin(); itr != m_objectsInRange.end(); ++itr)
+            for (const auto& itr : getInRangeObjectsSet())
             {
-                if ((*itr) == pVictim || !(*itr)->IsUnit())
+                if (!itr || itr == pVictim || !itr->IsUnit())
                     continue;
 
-                if (CalcDistance(*itr) < 5.0f && isAttackable(this, (*itr)) && (*itr)->isInFront(this) && !static_cast<Unit*>(*itr)->IsPacified())
+                if (CalcDistance(itr) < 5.0f && isAttackable(this, itr) && itr->isInFront(this) && !static_cast<Unit*>(itr)->IsPacified())
                 {
                     // Sweeping Strikes hits cannot be dodged, missed or parried (from wowhead)
                     bool skip_hit_check2 = ex->spell_info->getId() == 12328 ? true : false;
                     //zack : should we use the spell id the registered this extra strike when striking ? It would solve a few proc on proc problems if so ;)
                     //					Strike(TO<Unit*>(*itr), weapon_damage_type, ability, add_damage, pct_dmg_mod, exclusive_damage, false, skip_hit_check);
-                    Strike(static_cast<Unit*>(*itr), weapon_damage_type, ex->spell_info, add_damage, pct_dmg_mod, exclusive_damage, false, skip_hit_check2);
+                    Strike(static_cast<Unit*>(itr), weapon_damage_type, ex->spell_info, add_damage, pct_dmg_mod, exclusive_damage, false, skip_hit_check2);
                     break;
                 }
             }
@@ -9605,24 +9605,24 @@ void Unit::WipeTargetList()
     GetAIInterface()->WipeTargetList();
 }
 
-void Unit::AddInRangeObject(Object* pObj)
+void Unit::addToInRangeObjects(Object* pObj)
 {
     if (pObj->IsUnit())
     {
         if (isHostile(this, pObj))
-            m_oppFactsInRange.insert(pObj);
+            addInRangeOppositeFaction(pObj);
 
         if (isFriendly(this, pObj))
-            m_sameFactsInRange.insert(pObj);
+            addInRangeSameFaction(pObj);
     }
 
-    Object::AddInRangeObject(pObj);
+    Object::addToInRangeObjects(pObj);
 }//427
 
-void Unit::OnRemoveInRangeObject(Object* pObj)
+void Unit::onRemoveInRangeObject(Object* pObj)
 {
-    m_oppFactsInRange.erase(pObj);
-    m_sameFactsInRange.erase(pObj);
+    removeObjectFromInRangeOppositeFactionSet(pObj);
+    removeObjectFromInRangeSameFactionSet(pObj);
 
     if (pObj->IsUnit())
     {
@@ -9634,9 +9634,9 @@ void Unit::OnRemoveInRangeObject(Object* pObj)
     }
 }
 
-void Unit::ClearInRangeSet()
+void Unit::clearInRangeSets()
 {
-    Object::ClearInRangeSet();
+    Object::clearInRangeSets();
 }
 
 //Events
@@ -11511,53 +11511,55 @@ void Unit::UpdateVisibility()
     if (IsPlayer())
     {
         plr = static_cast<Player*>(this);
-        for (Object::InRangeSet::iterator itr2 = m_objectsInRange.begin(); itr2 != m_objectsInRange.end();)
+        for (const auto& itr2 : getInRangeObjectsSet())
         {
-            pObj = (*itr2);
-            ++itr2;
+            if (itr2)
+            {
+                pObj = itr2;
 
-            can_see = plr->CanSee(pObj);
-            is_visible = plr->IsVisible(pObj->GetGUID());
-            if (can_see)
-            {
-                if (!is_visible)
-                {
-                    buf.clear();
-                    count = pObj->BuildCreateUpdateBlockForPlayer(&buf, plr);
-                    plr->PushCreationData(&buf, count);
-                    plr->AddVisibleObject(pObj->GetGUID());
-                }
-            }
-            else
-            {
-                if (is_visible)
-                {
-                    plr->SendDestroyObject(pObj->GetGUID());
-                    plr->RemoveVisibleObject(pObj->GetGUID());
-                }
-            }
-
-            if (pObj->IsPlayer())
-            {
-                pl = static_cast<Player*>(pObj);
-                can_see = pl->CanSee(plr);
-                is_visible = pl->IsVisible(plr->GetGUID());
+                can_see = plr->CanSee(pObj);
+                is_visible = plr->IsVisible(pObj->GetGUID());
                 if (can_see)
                 {
                     if (!is_visible)
                     {
                         buf.clear();
-                        count = plr->BuildCreateUpdateBlockForPlayer(&buf, pl);
-                        pl->PushCreationData(&buf, count);
-                        pl->AddVisibleObject(plr->GetGUID());
+                        count = pObj->BuildCreateUpdateBlockForPlayer(&buf, plr);
+                        plr->PushCreationData(&buf, count);
+                        plr->AddVisibleObject(pObj->GetGUID());
                     }
                 }
                 else
                 {
                     if (is_visible)
                     {
-                        pl->SendDestroyObject(plr->GetGUID());
-                        pl->RemoveVisibleObject(plr->GetGUID());
+                        plr->SendDestroyObject(pObj->GetGUID());
+                        plr->RemoveVisibleObject(pObj->GetGUID());
+                    }
+                }
+
+                if (pObj->IsPlayer())
+                {
+                    pl = static_cast<Player*>(pObj);
+                    can_see = pl->CanSee(plr);
+                    is_visible = pl->IsVisible(plr->GetGUID());
+                    if (can_see)
+                    {
+                        if (!is_visible)
+                        {
+                            buf.clear();
+                            count = plr->BuildCreateUpdateBlockForPlayer(&buf, pl);
+                            pl->PushCreationData(&buf, count);
+                            pl->AddVisibleObject(plr->GetGUID());
+                        }
+                    }
+                    else
+                    {
+                        if (is_visible)
+                        {
+                            pl->SendDestroyObject(plr->GetGUID());
+                            pl->RemoveVisibleObject(plr->GetGUID());
+                        }
                     }
                 }
             }
@@ -11565,29 +11567,30 @@ void Unit::UpdateVisibility()
     }
     else			// For units we can save a lot of work
     {
-        for (std::set<Object*>::iterator it2 = GetInRangePlayerSetBegin(); it2 != GetInRangePlayerSetEnd(); ++it2)
+        for (const auto& it2 : getInRangePlayersSet())
         {
-
-            Player* p = static_cast<Player*>(*it2);
-
-            can_see = p->CanSee(this);
-            is_visible = p->IsVisible(this->GetGUID());
-            if (!can_see)
+            Player* p = static_cast<Player*>(it2);
+            if (p)
             {
-                if (is_visible)
+                can_see = p->CanSee(this);
+                is_visible = p->IsVisible(this->GetGUID());
+                if (!can_see)
                 {
-                    p->SendDestroyObject(GetGUID());
-                    p->RemoveVisibleObject(GetGUID());
+                    if (is_visible)
+                    {
+                        p->SendDestroyObject(GetGUID());
+                        p->RemoveVisibleObject(GetGUID());
+                    }
                 }
-            }
-            else
-            {
-                if (!is_visible)
+                else
                 {
-                    buf.clear();
-                    count = BuildCreateUpdateBlockForPlayer(&buf, p);
-                    p->PushCreationData(&buf, count);
-                    p->AddVisibleObject(this->GetGUID());
+                    if (!is_visible)
+                    {
+                        buf.clear();
+                        count = BuildCreateUpdateBlockForPlayer(&buf, p);
+                        p->PushCreationData(&buf, count);
+                        p->AddVisibleObject(this->GetGUID());
+                    }
                 }
             }
         }
@@ -12590,12 +12593,11 @@ void Unit::RemoveFieldSummon()
 
 void Unit::AggroPvPGuards()
 {
-    Unit* tmpUnit;
-    for (Object::InRangeSet::iterator i = GetInRangeSetBegin(); i != GetInRangeSetEnd(); ++i)
+    for (const auto& i : getInRangeObjectsSet())
     {
-        if ((*i)->IsCreature())
+        if (i && i->IsCreature())
         {
-            tmpUnit = static_cast<Unit*>(*i);
+            Unit* tmpUnit = static_cast<Unit*>(i);
             if (tmpUnit->GetAIInterface() && tmpUnit->GetAIInterface()->m_isNeutralGuard && CalcDistance(tmpUnit) <= (50.0f * 50.0f))
             {
                 tmpUnit->GetAIInterface()->AttackReaction(this, 1, 0);
@@ -12883,6 +12885,7 @@ void Unit::SendPowerUpdate(bool self)
     WorldPacket* pkt = BuildFieldUpdatePacket(UNIT_FIELD_MAXPOWER1 + GetPowerType(), amount);
     SendMessageToSet(pkt, false);
     delete pkt;
+    if (self) { return; }
 #else
 #if VERSION_STRING > TBC
     uint32 amount = getUInt32Value(UNIT_FIELD_POWER1 + GetPowerType()); //save the amount, so we send the same to the player and everyone else
@@ -13124,10 +13127,10 @@ void Unit::Phase(uint8 command, uint32 newphase)
 {
     Object::Phase(command, newphase);
 
-    for (std::set<Object*>::iterator itr = m_objectsInRange.begin(); itr != m_objectsInRange.end(); ++itr)
+    for (const auto& itr : getInRangeObjectsSet())
     {
-        if ((*itr)->IsUnit())
-            static_cast<Unit*>(*itr)->UpdateVisibility();
+        if (itr && itr->IsUnit())
+            static_cast<Unit*>(itr)->UpdateVisibility();
     }
 
     UpdateVisibility();
@@ -13840,7 +13843,7 @@ void Unit::Possess(Unit* pTarget, uint32 delay)
     pThis->SetClientControl(pTarget, 1);
 
     // update target faction set
-    pTarget->UpdateOppFactionSet();
+    pTarget->updateInRangeOppositeFactionSet();
 
     if (!(pTarget->IsPet() && static_cast< Pet* >(pTarget) == pThis->GetSummon()))
     {
@@ -13886,7 +13889,7 @@ void Unit::UnPossess()
     RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_LOCK_PLAYER);
     pTarget->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED_CREATURE | UNIT_FLAG_PVP_ATTACKABLE);
     pTarget->SetFaction(pTarget->GetCharmTempVal());
-    pTarget->UpdateOppFactionSet();
+    pTarget->updateInRangeOppositeFactionSet();
 
     // send "switch mover" packet
     pThis->SetClientControl(pTarget, 0);

@@ -1030,7 +1030,7 @@ bool Player::Create(WorldPacket& data)
     for (uint16 x = 0; x < 7; x++)
         setFloatValue(PLAYER_FIELD_MOD_DAMAGE_DONE_PCT + x, 1.00);
 
-    setUInt32Value(PLAYER_FIELD_WATCHED_FACTION_INDEX, 0xEEEEEEEE);
+    setInt32Value(PLAYER_FIELD_WATCHED_FACTION_INDEX, uint32_t(-1));
 
     m_StableSlotCount = 0;
     Item* item;
@@ -2654,7 +2654,7 @@ void Player::SaveToDB(bool bNewCharacter /* =false */)
 
     SaveSkills(bNewCharacter, buf);
 
-    ss << m_uint32Values[PLAYER_FIELD_WATCHED_FACTION_INDEX] << ","
+    ss << getInt32Value(PLAYER_FIELD_WATCHED_FACTION_INDEX) << ","
 #if VERSION_STRING != Classic
         << m_uint32Values[PLAYER_CHOSEN_TITLE] << ","
 #else
@@ -3243,7 +3243,7 @@ void Player::LoadFromDBProc(QueryResultVector & results)
     }
 
     // set the rest of the stuff
-    m_uint32Values[PLAYER_FIELD_WATCHED_FACTION_INDEX] = get_next_field.GetUInt32();
+    setInt32Value(PLAYER_FIELD_WATCHED_FACTION_INDEX, get_next_field.GetUInt32());
     SetChosenTitle(get_next_field.GetUInt32());
     setUInt64Value(PLAYER_FIELD_KNOWN_TITLES, get_next_field.GetUInt64());
 #if VERSION_STRING > TBC
@@ -6054,7 +6054,7 @@ bool Player::CanSee(Object* obj) // * Invisibility & Stealth Detection - Partha 
     }
 }
 
-void Player::AddInRangeObject(Object* pObj)
+void Player::addToInRangeObjects(Object* pObj)
 {
     //Send taxi move if we're on a taxi
     if (m_CurrentTaxiPath && pObj->IsPlayer())
@@ -6067,7 +6067,7 @@ void Player::AddInRangeObject(Object* pObj)
             m_CurrentTaxiPath->SendMoveForTime(this, TO< Player* >(pObj), m_taxi_ride_time - ntime);*/
     }
 
-    Unit::AddInRangeObject(pObj);
+    Unit::addToInRangeObjects(pObj);
 
     //if the object is a unit send a move packet if they have a destination
     if (pObj->IsCreature())
@@ -6075,7 +6075,7 @@ void Player::AddInRangeObject(Object* pObj)
         static_cast< Creature* >(pObj)->GetAIInterface()->SendCurrentMove(this);
     }
 }
-void Player::OnRemoveInRangeObject(Object* pObj)
+void Player::onRemoveInRangeObject(Object* pObj)
 {
     //object was deleted before reaching here
     if (pObj == nullptr)
@@ -6085,7 +6085,7 @@ void Player::OnRemoveInRangeObject(Object* pObj)
         PushOutOfRange(pObj->GetNewGUID());
 
     m_visibleObjects.erase(pObj->GetGUID());
-    Unit::OnRemoveInRangeObject(pObj);
+    Unit::onRemoveInRangeObject(pObj);
 
     if (pObj->GetGUID() == m_CurrentCharm)
     {
@@ -6117,10 +6117,10 @@ void Player::OnRemoveInRangeObject(Object* pObj)
         sEventMgr.AddEvent(static_cast<Unit*>(this), &Unit::RemoveFieldSummon, EVENT_SUMMON_EXPIRE, 1, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);//otherwise Creature::Update() will access free'd memory
 }
 
-void Player::ClearInRangeSet()
+void Player::clearInRangeSets()
 {
     m_visibleObjects.clear();
-    Unit::ClearInRangeSet();
+    Unit::clearInRangeSets();
 }
 
 void Player::EventCannibalize(uint32 amount)
@@ -6752,11 +6752,10 @@ void Player::CalcResistance(uint16 type)
 
 void Player::UpdateNearbyGameObjects()
 {
-
-    for (Object::InRangeSet::iterator itr = m_objectsInRange.begin(); itr != m_objectsInRange.end(); ++itr)
+    for (const auto& itr : getInRangeObjectsSet())
     {
-        Object* obj = (*itr);
-        if (obj->IsGameObject())
+        Object* obj = itr;
+        if (obj && obj->IsGameObject())
         {
             bool activate_quest_object = false;
             GameObject* go = static_cast<GameObject*>(obj);
@@ -6832,7 +6831,7 @@ void Player::UpdateNearbyGameObjects()
                 }
             }
             if (!bPassed)
-                EventDeActivateGameObject(static_cast<GameObject*>(*itr));
+                EventDeActivateGameObject(static_cast<GameObject*>(itr));
         }
     }
 }
@@ -7185,7 +7184,7 @@ void Player::RegenerateHealth(bool inCombat)
 #if VERSION_STRING != Cata
     float amt = basespirit * HPRegen->ratio + extraspirit * HPRegenBase->ratio;
 #else
-    float amt = basespirit * 200+ extraspirit * 200;
+    float amt = static_cast<float>(basespirit * 200 + extraspirit * 200);
 #endif
 
     if (PctRegenModifier)
@@ -9081,17 +9080,18 @@ void Player::UpdatePvPArea()
 
 void Player::BuildFlagUpdateForNonGroupSet(uint32 index, uint32 flag)
 {
-    Object* curObj;
-    for (Object::InRangeSet::iterator iter = m_objectsInRange.begin(); iter != m_objectsInRange.end();)
+    for (const auto& iter : getInRangeObjectsSet())
     {
-        curObj = *iter;
-        ++iter;
-        if (curObj->IsPlayer())
+        if (iter)
         {
-            Group* pGroup = static_cast< Player* >(curObj)->GetGroup();
-            if (!pGroup && pGroup != GetGroup())
+            Object* curObj = iter;
+            if (curObj->IsPlayer())
             {
-                BuildFieldUpdatePacket(static_cast< Player* >(curObj), index, flag);
+                Group* pGroup = static_cast<Player*>(curObj)->GetGroup();
+                if (!pGroup && pGroup != GetGroup())
+                {
+                    BuildFieldUpdatePacket(static_cast<Player*>(curObj), index, flag);
+                }
             }
         }
     }
@@ -9587,74 +9587,74 @@ void Player::ModifyBonuses(uint32 type, int32 val, bool apply)
         break;
         case WEAPON_SKILL_RATING:
         {
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_RANGED_SKILL, val);
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_MELEE_MAIN_HAND_SKILL, val);   // melee main hand
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_MELEE_OFF_HAND_SKILL, val);   // melee off hand
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_RANGED_SKILL, val);
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_MELEE_MAIN_HAND_SKILL, val);   // melee main hand
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_MELEE_OFF_HAND_SKILL, val);   // melee off hand
         }
         break;
         case DEFENSE_RATING:
         {
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_DEFENCE, val);
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_DEFENCE, val);
         }
         break;
         case DODGE_RATING:
         {
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_DODGE, val);
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_DODGE, val);
         }
         break;
         case PARRY_RATING:
         {
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_PARRY, val);
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_PARRY, val);
         }
         break;
         case SHIELD_BLOCK_RATING:
         {
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_BLOCK, val);
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_BLOCK, val);
         }
         break;
         case MELEE_HIT_RATING:
         {
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_MELEE_HIT, val);
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_MELEE_HIT, val);
         }
         break;
         case RANGED_HIT_RATING:
         {
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_RANGED_HIT, val);
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_RANGED_HIT, val);
         }
         break;
         case SPELL_HIT_RATING:
         {
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_SPELL_HIT, val);
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_SPELL_HIT, val);
         }
         break;
         case MELEE_CRITICAL_STRIKE_RATING:
         {
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_MELEE_CRIT, val);
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_MELEE_CRIT, val);
         }
         break;
         case RANGED_CRITICAL_STRIKE_RATING:
         {
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_RANGED_CRIT, val);
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_RANGED_CRIT, val);
         }
         break;
         case SPELL_CRITICAL_STRIKE_RATING:
         {
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_SPELL_CRIT, val);
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_SPELL_CRIT, val);
         }
         break;
         case MELEE_HIT_AVOIDANCE_RATING:
         {
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_MELEE_HIT_AVOIDANCE, val);
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_MELEE_HIT_AVOIDANCE, val);
         }
         break;
         case RANGED_HIT_AVOIDANCE_RATING:
         {
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_RANGED_HIT_AVOIDANCE, val);
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_RANGED_HIT_AVOIDANCE, val);
         }
         break;
         case SPELL_HIT_AVOIDANCE_RATING:
         {
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_SPELL_HIT_AVOIDANCE, val);
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_SPELL_HIT_AVOIDANCE, val);
         }
         break;
         case MELEE_CRITICAL_AVOIDANCE_RATING:
@@ -9671,38 +9671,38 @@ void Player::ModifyBonuses(uint32 type, int32 val, bool apply)
         } break;
         case MELEE_HASTE_RATING:
         {
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_MELEE_HASTE, val);  //melee
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_MELEE_HASTE, val);  //melee
         }
         break;
         case RANGED_HASTE_RATING:
         {
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_RANGED_HASTE, val);  //ranged
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_RANGED_HASTE, val);  //ranged
         }
         break;
         case SPELL_HASTE_RATING:
         {
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_SPELL_HASTE, val);  //spell
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_SPELL_HASTE, val);  //spell
         }
         break;
         case HIT_RATING:
         {
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_MELEE_HIT, val);  //melee
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_RANGED_HIT, val);  //ranged
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_SPELL_HIT, val);   //Spell
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_MELEE_HIT, val);  //melee
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_RANGED_HIT, val);  //ranged
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_SPELL_HIT, val);   //Spell
         }
         break;
         case CRITICAL_STRIKE_RATING:
         {
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_MELEE_CRIT, val);  //melee
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_RANGED_CRIT, val);  //ranged
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_SPELL_CRIT, val);   //spell
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_MELEE_CRIT, val);  //melee
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_RANGED_CRIT, val);  //ranged
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_SPELL_CRIT, val);   //spell
         }
         break;
         case HIT_AVOIDANCE_RATING:// this is guessed based on layout of other fields
         {
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_MELEE_HIT_AVOIDANCE, val);  //melee
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_RANGED_HIT_AVOIDANCE, val);  //ranged
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_SPELL_HIT_AVOIDANCE, val);  //spell
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_MELEE_HIT_AVOIDANCE, val);  //melee
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_RANGED_HIT_AVOIDANCE, val);  //ranged
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_SPELL_HIT_AVOIDANCE, val);  //spell
         }
         break;
         case CRITICAL_AVOIDANCE_RATING:
@@ -9711,21 +9711,21 @@ void Player::ModifyBonuses(uint32 type, int32 val, bool apply)
         } break;
         case EXPERTISE_RATING:
         {
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_EXPERTISE, val);
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_EXPERTISE, val);
         }
         break;
         case RESILIENCE_RATING:
         {
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_MELEE_CRIT_RESILIENCE, val);  //melee
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_RANGED_CRIT_RESILIENCE, val);  //ranged
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_SPELL_CRIT_RESILIENCE, val);  //spell
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_MELEE_CRIT_RESILIENCE, val);  //melee
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_RANGED_CRIT_RESILIENCE, val);  //ranged
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_SPELL_CRIT_RESILIENCE, val);  //spell
         }
         break;
         case HASTE_RATING:
         {
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_MELEE_HASTE, val);  //melee
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_RANGED_HASTE, val);  //ranged
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_SPELL_HASTE, val);   // Spell
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_MELEE_HASTE, val);  //melee
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_RANGED_HASTE, val);  //ranged
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_SPELL_HASTE, val);   // Spell
         }
         break;
         case ATTACK_POWER:
@@ -9768,7 +9768,7 @@ void Player::ModifyBonuses(uint32 type, int32 val, bool apply)
         break;
         case ARMOR_PENETRATION_RATING:
         {
-            ModUnsigned32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_ARMOR_PENETRATION_RATING, val);
+            modUInt32Value(PLAYER_FIELD_COMBAT_RATING_1 + PCR_ARMOR_PENETRATION_RATING, val);
         }
         break;
         case SPELL_POWER:
@@ -11961,7 +11961,7 @@ void Player::UpdateGlyphs()
     {
         if (DBC::Structures::GlyphSlotEntry const* glyphSlot = sGlyphSlotStore.LookupEntry(i))
         {
-            setUInt32Value(PLAYER_FIELD_GLYPH_SLOTS_1 + slot++, glyphSlot->Id);
+            setUInt32Value(static_cast<uint16_t>(PLAYER_FIELD_GLYPH_SLOTS_1 + slot++), glyphSlot->Id);
         }
     }
 
@@ -12069,8 +12069,8 @@ void Player::CalcExpertise()
     }
 
 #if VERSION_STRING != Classic
-    ModUnsigned32Value(PLAYER_EXPERTISE, (int32)CalcRating(PCR_EXPERTISE) + modifier);
-    ModUnsigned32Value(PLAYER_OFFHAND_EXPERTISE, (int32)CalcRating(PCR_EXPERTISE) + modifier);
+    modUInt32Value(PLAYER_EXPERTISE, (int32)CalcRating(PCR_EXPERTISE) + modifier);
+    modUInt32Value(PLAYER_OFFHAND_EXPERTISE, (int32)CalcRating(PCR_EXPERTISE) + modifier);
 #endif
     UpdateStats();
 }
@@ -12554,7 +12554,7 @@ void Player::LearnTalent(uint32 talentid, uint32 rank, bool isPreviewed)
             }
         }
 
-        for (uint8 i = rank; i < 5; ++i)
+        for (uint32_t i = rank; i < 5; ++i)
         {
             if (talent_info->RankID[i] != 0 && HasSpell(talent_info->RankID[i]))
             {
@@ -12740,18 +12740,20 @@ void Player::OutPacketToSet(uint16 Opcode, uint16 Len, const void* Data, bool se
     if (self)
         OutPacket(Opcode, Len, Data);
 
-    for (std::set< Object* >::iterator itr = m_inRangePlayers.begin(); itr != m_inRangePlayers.end(); ++itr)
+    for (const auto& itr : getInRangePlayersSet())
     {
-        Player* p = static_cast< Player* >(*itr);
-
-        if (gm)
+        if (itr)
         {
-            if (p->GetSession()->GetPermissionCount() > 0)
+            Player* p = static_cast<Player*>(itr);
+            if (gm)
+            {
+                if (p->GetSession()->GetPermissionCount() > 0)
+                    p->OutPacket(Opcode, Len, Data);
+            }
+            else
+            {
                 p->OutPacket(Opcode, Len, Data);
-        }
-        else
-        {
-            p->OutPacket(Opcode, Len, Data);
+            }
         }
     }
 }
@@ -12777,30 +12779,29 @@ void Player::SendMessageToSet(WorldPacket* data, bool bToSelf, bool myteam_only)
 
         if (data->GetOpcode() != SMSG_MESSAGECHAT)
         {
-            for (std::set< Object* >::iterator itr = m_inRangePlayers.begin(); itr != m_inRangePlayers.end(); ++itr)
+            for (const auto& itr : getInRangePlayersSet())
             {
-                Player* p = static_cast< Player* >(*itr);
+                if (itr)
+                {
+                    Player* p = static_cast<Player*>(itr);
+                    if (gminvis && ((p->GetSession() == nullptr) || (p->GetSession()->GetPermissionCount() <= 0)))
+                        continue;
 
-                if (gminvis && ((p->GetSession() == nullptr) || (p->GetSession()->GetPermissionCount() <= 0)))
-                    continue;
-
-                if (p->GetTeam() == myteam
-                    && (p->GetPhase() & myphase) != 0
-                    && p->IsVisible(GetGUID()))
-                    p->SendPacket(data);
+                    if (p->GetTeam() == myteam && (p->GetPhase() & myphase) != 0 && p->IsVisible(GetGUID()))
+                        p->SendPacket(data);
+                }
             }
         }
         else
         {
-            for (std::set< Object* >::iterator itr = m_inRangePlayers.begin(); itr != m_inRangePlayers.end(); ++itr)
+            for (const auto& itr : getInRangePlayersSet())
             {
-                Player* p = static_cast< Player* >(*itr);
-
-                if (p->GetSession()
-                    && p->GetTeam() == myteam
-                    && !p->Social_IsIgnoring(GetLowGUID())
-                    && (p->GetPhase() & myphase) != 0)
-                    p->SendPacket(data);
+                if (itr)
+                {
+                    Player* p = static_cast<Player*>(itr);
+                    if (p->GetSession() && p->GetTeam() == myteam && !p->Social_IsIgnoring(GetLowGUID()) && (p->GetPhase() & myphase) != 0)
+                        p->SendPacket(data);
+                }
             }
         }
     }
@@ -12808,28 +12809,29 @@ void Player::SendMessageToSet(WorldPacket* data, bool bToSelf, bool myteam_only)
     {
         if (data->GetOpcode() != SMSG_MESSAGECHAT)
         {
-            for (std::set< Object* >::iterator itr = m_inRangePlayers.begin(); itr != m_inRangePlayers.end(); ++itr)
+            for (const auto& itr : getInRangePlayersSet())
             {
-                Player* p = static_cast< Player* >(*itr);
+                if (itr)
+                {
+                    Player* p = static_cast<Player*>(itr);
+                    if (gminvis && (p->GetSession() == nullptr || p->GetSession()->GetPermissionCount() <= 0))
+                        continue;
 
-                if (gminvis && ((p->GetSession() == nullptr) || (p->GetSession()->GetPermissionCount() <= 0)))
-                    continue;
-
-                if ((p->GetPhase() & myphase) != 0
-                    && p->IsVisible(GetGUID()))
-                    p->SendPacket(data);
+                    if ((p->GetPhase() & myphase) != 0 && p->IsVisible(GetGUID()))
+                        p->SendPacket(data);
+                }
             }
         }
         else
         {
-            for (std::set< Object* >::iterator itr = m_inRangePlayers.begin(); itr != m_inRangePlayers.end(); ++itr)
+            for (const auto& itr : getInRangePlayersSet())
             {
-                Player* p = static_cast< Player* >(*itr);
-
-                if (p->GetSession()
-                    && !p->Social_IsIgnoring(GetLowGUID())
-                    && (p->GetPhase() & myphase) != 0)
-                    p->SendPacket(data);
+                if (itr)
+                {
+                    Player* p = static_cast<Player*>(itr);
+                    if (p->GetSession() && !p->Social_IsIgnoring(GetLowGUID()) && (p->GetPhase() & myphase) != 0)
+                        p->SendPacket(data);
+                }
             }
         }
     }
@@ -13279,11 +13281,10 @@ void Player::Die(Unit* pAttacker, uint32 /*damage*/, uint32 spellid)
     }
 
     // Stop players from casting
-    for (std::set< Object* >::iterator itr = GetInRangePlayerSetBegin(); itr != GetInRangePlayerSetEnd(); ++itr)
+    for (const auto& itr : getInRangePlayersSet())
     {
-        Unit* attacker = static_cast< Unit* >(*itr);
-
-        if (attacker->isCastingNonMeleeSpell())
+        Unit* attacker = static_cast<Unit*>(itr);
+        if (attacker && attacker->isCastingNonMeleeSpell())
         {
             for (uint8_t i = 0; i < CURRENT_SPELL_MAX; ++i)
             {
@@ -13404,6 +13405,7 @@ void Player::HandleKnockback(Object* caster, float horizontal, float vertical)
     data.WriteByteSeq(guid[5]);
     data.WriteByteSeq(guid[3]);
     data << float(-vertical);
+    data << float(cos);
     data.WriteByteSeq(guid[2]);
     data.WriteByteSeq(guid[0]);
 #endif

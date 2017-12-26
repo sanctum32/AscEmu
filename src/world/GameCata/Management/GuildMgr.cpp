@@ -61,11 +61,13 @@ Guild* GuildMgr::getGuildById(uint32_t guildId) const
 Guild* GuildMgr::getGuildByName(const std::string& guildName) const
 {
     std::string search = guildName;
-    std::transform(search.begin(), search.end(), search.begin(), ::toupper);
+    Util::StringToUpperCase(search);
+    // std::transform(search.begin(), search.end(), search.begin(), ::toupper);
     for (GuildContainer::const_iterator itr = GuildStore.begin(); itr != GuildStore.end(); ++itr)
     {
         std::string gname = itr->second->getName();
-        std::transform(gname.begin(), gname.end(), gname.begin(), ::toupper);
+        Util::StringToUpperCase(gname);
+        // std::transform(gname.begin(), gname.end(), gname.begin(), ::toupper);
         if (search == gname)
         {
             return itr->second;
@@ -101,7 +103,7 @@ uint32_t GuildMgr::getXPForGuildLevel(uint8_t level) const
 {
     if (level < GuildXPperLevel.size())
     {
-        return GuildXPperLevel[level];
+        return static_cast<uint32_t>(GuildXPperLevel[level]);
     }
 
     return 0;
@@ -457,7 +459,7 @@ void GuildMgr::loadGuildXpForLevelFromDB()
         Field* fields = result->Fetch();
 
         uint32_t level = fields[0].GetUInt8();
-        uint32_t requiredXP = fields[1].GetUInt64();
+        uint32_t requiredXP = static_cast<uint32_t>(fields[1].GetUInt64());
 
         if (level >= worldConfig.guild.maxLevel)
         {
@@ -541,13 +543,13 @@ void GuildMgr::update(uint32_t /*diff*/)
 {
     if (!firstSave)
     {
-        lastSave = time(nullptr);
+        lastSave = static_cast<uint32_t>(time(nullptr));
         firstSave = true;
     }
 
     if (time(nullptr) >= lastSave)
     {
-        lastSave = time(nullptr) + worldConfig.guild.saveInterval;
+        lastSave = static_cast<uint32_t>(time(nullptr)) + worldConfig.guild.saveInterval;
         sGuildMgr.saveGuilds();
     }
 }

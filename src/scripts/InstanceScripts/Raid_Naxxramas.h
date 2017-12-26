@@ -33,6 +33,8 @@ class SporeAI;
 class PortalOfShadowsAI;
 class DeathKnightUnderstudyAI;
 
+
+
 /////////////////////////////////////////////////////////////////////////////////
 ////// The Arachnid Quarter
 
@@ -126,8 +128,8 @@ class VigilantShadeAI : public CreatureAIScript
     ADD_CREATURE_FACTORY_FUNCTION(VigilantShadeAI);
     VigilantShadeAI(Creature* pCreature);
 
-    void OnCombatStart(Unit* pTarget);
-    void OnCombatStop(Unit* pTarget);
+    void OnCombatStart(Unit* pTarget) override;
+    void OnCombatStop(Unit* pTarget) override;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -197,7 +199,7 @@ static Movement::Location WebWrapPos[] =
     { 3523.486572f, -3946.144287f, 309.651611f, 1.973552f }
 };
 
-void SpellFunc_MaexxnaWebWrap(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
+//void SpellFunc_MaexxnaWebWrap(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
 
 class MaexxnaAI : public CreatureAIScript
 {
@@ -208,7 +210,6 @@ class MaexxnaAI : public CreatureAIScript
     void OnCombatStop(Unit* pTarget) override;
     void AIUpdate() override;
 
-    SpellDesc* mWebWrapProc;
     bool mHasEnraged;
     bool mLeftWall;
     int32 mAddsSummonTimer;
@@ -245,7 +246,7 @@ const uint32 CN_NAXXRAMAS_FOLLOWER = 16505;
 const uint32 NAXXRAMAS_FOLLOWER_BERSERKER_CHARGE_HEROIC = 56107;
 const uint32 NAXXRAMAS_FOLLOWER_SILENCE_HEROIC = 54093;
 
-void SpellFunc_NaxxramasFollowerCharge(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
+//void SpellFunc_NaxxramasFollowerCharge(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
 
 class NaxxramasFollowerAI : public CreatureAIScript
 {
@@ -256,7 +257,6 @@ class NaxxramasFollowerAI : public CreatureAIScript
     void Destroy() override;
 
     GrandWidowFaerlinaAI* mGrandWidow;
-    SpellDesc* mCharge;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -295,8 +295,8 @@ class GrandWidowFaerlinaAI : public CreatureAIScript
 
     std::set< NaxxramasWorshipperAI* > mWorshippers;
     std::set< NaxxramasFollowerAI* > mFollowers;
-    SpellDesc* mFrenzy;
-    SpellDesc* mPoisonVolleyBolt;
+    CreatureAISpells* mFrenzy;
+    CreatureAISpells* mPoisonVolleyBolt;
     int32 mFrenzyTimer;
     int32 mPoisonVolleyBoltTimer;
 };
@@ -356,8 +356,8 @@ static Movement::Location CryptGuards[] =
     { 3332.591797f, -3476.102539f, 287.073425f, 0.015707f }
 };
 
-void SpellFunc_AnubRekhanCorpseScarabsPlayer(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
-void SpellFunc_AnubRekhanCorpseScarabsCryptGuard(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
+//void SpellFunc_AnubRekhanCorpseScarabsPlayer(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
+//void SpellFunc_AnubRekhanCorpseScarabsCryptGuard(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
 
 class AnubRekhanAI : public CreatureAIScript
 {
@@ -372,11 +372,11 @@ class AnubRekhanAI : public CreatureAIScript
     std::set< CorpseScarabAI* > mScarabs;
     std::set< CryptGuardAI* > mCryptGuards;
     std::set< uint32 > mUsedCorpseGuids;
-    SpellDesc* mLocustSwarm;
+    CreatureAISpells* mLocustSwarm;
     int32 mLocustSwarmTimer;
     uint32 mCryptSpawnTimer;
 
-    SpellDesc* mLocaleEnrageSpell;
+    CreatureAISpells* mLocaleEnrageSpell;
     uint32_t mLocaleEnrageTimerId;
 };
 
@@ -419,7 +419,7 @@ class StoneskinGargoyleAI : public CreatureAIScript
     bool HasStoneskin();
     void AIUpdate() override;
 
-    SpellDesc* mStoneskin;
+    CreatureAISpells* mStoneskin;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -489,10 +489,10 @@ static Movement::Location SkelPosPhase2[] =
     { 2717.878906f, -3518.062988f, 261.905945f, 3.177050f }
 };
 
-void SpellFunc_NothToBalconyPhaseSwitch(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
-void SpellFunc_NothFromBalconyPhaseSwitch(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
-void SpellFunc_NothCriple(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
-void SpellFunc_NothBlink(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
+//void SpellFunc_NothToBalconyPhaseSwitch(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
+//void SpellFunc_NothFromBalconyPhaseSwitch(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
+//void SpellFunc_NothCriple(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
+//void SpellFunc_NothBlink(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
 
 class NothThePlaguebringerAI : public CreatureAIScript
 {
@@ -511,10 +511,7 @@ class NothThePlaguebringerAI : public CreatureAIScript
     std::set<PlaguedWarriorAI*> mWarriors;
     std::set<PlaguedChampionAI*> mChampions;
     std::set<PlaguedGuardianAI*> mGuardians;
-    SpellDesc* mCriple;
-    SpellDesc* mBlink;
-    SpellDesc* mToBalconySwitch;
-    SpellDesc* mFromBalconySwitch;
+
     int32 mBlinkTimer;
     int32 mSkeletonTimer;
     int32 mPhaseSwitchTimer;
@@ -598,17 +595,17 @@ class HeiganTheUncleanAI : public CreatureAIScript
     friend class PlagueFissureGO;
 
     static uint32 CalculateTriggerArea(float pPosX, float pPosY);
-    void    CallEruptionEvent(int32 pTimerId, int32 pNewTime);
-    void    OnCombatStart(Unit* pTarget) override;
-    void    OnCombatStop(Unit* pTarget) override;
-    void    AIUpdate() override;
-    void    Destroy() override;
+    void CallEruptionEvent(int32 pTimerId, int32 pNewTime);
+    void OnCombatStart(Unit* pTarget) override;
+    void OnCombatStop(Unit* pTarget) override;
+    void AIUpdate() override;
+    void Destroy() override;
 
-    std::set<std::pair< uint32, PlagueFissureGO* > >        mFissures;
-    int32                                        mPhaseSwitchTimer;
-    int32                                        mEruptionTimer;
-    int32                                        mEruptionPhase;
-    bool                                        mClockWiseEruption;
+    std::set<std::pair<uint32, PlagueFissureGO*>> mFissures;
+    int32 mPhaseSwitchTimer;
+    int32 mEruptionTimer;
+    int32 mEruptionPhase;
+    bool mClockWiseEruption;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -663,12 +660,12 @@ class LoathebAI : public CreatureAIScript
     void AIUpdate() override;
     void Destroy() override;
 
-    std::set< SporeAI* >    mSpores;
-    uint32            mDoomStaticTimer;
-    int32            mSporeTimer;
-    int32            mDoomTimer;
-    int32            mDeathbloomTimer;
-    bool            mDeathbloomDamagePhase;
+    std::set<SporeAI*> mSpores;
+    uint32 mDoomStaticTimer;
+    int32 mSporeTimer;
+    int32 mDoomTimer;
+    int32 mDeathbloomTimer;
+    bool mDeathbloomDamagePhase;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -784,7 +781,7 @@ const uint32 NECRO_KNIGHT_CONE_OF_COLD = 30095;
 const uint32 NECRO_KNIGHT_FLAMESTRIKE = 30091;
 const uint32 NECRO_KNIGHT_FROST_NOVA = 30094;
 
-void SpellFunc_NecroKnightBlink(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
+//void SpellFunc_NecroKnightBlink(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
 
 class NecroKnightAI : public CreatureAIScript
 {
@@ -839,7 +836,7 @@ class DeathKnightCavalierAI : public CreatureAIScript
 const uint32 CN_DEATHCHARGER_STEED = 29818;
 const uint32 DEATHCHARGER_STEED_CHARGE = 55317;
 
-void SpellFunc_DeathchargerSteedCharge(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
+//void SpellFunc_DeathchargerSteedCharge(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
 
 class DeathchargerSteedAI : public CreatureAIScript
 {
@@ -851,7 +848,7 @@ class DeathchargerSteedAI : public CreatureAIScript
     void Destroy() override;
 
     DeathKnightCavalierAI* mDeathKnightAI;
-    SpellDesc* mCharge;
+    CreatureAISpells* mCharge;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -964,9 +961,15 @@ class DeathKnightUnderstudyAI : public CreatureAIScript
 
 DeathKnightUnderstudyAI::DeathKnightUnderstudyAI(Creature* pCreature) : CreatureAIScript(pCreature)
 {
-    AddSpell(DEATH_KNIGHT_UNDERSTUDY_BLOOD_STRIKE, Target_Current, 10, 0, 4, 0, 8);
-    AddSpell(DEATH_KNIGHT_UNDERSTUDY_BONE_BARRIER, Target_Self, 8, 0, 30);
-    AddSpell(DEATH_KNIGHT_UNDERSTUDY_TAUNT, Target_Current, 8, 0, 10, 0, 8);
+    
+
+    auto bloodStrike = addAISpell(DEATH_KNIGHT_UNDERSTUDY_BLOOD_STRIKE, 10.0f, TARGET_ATTACKING, 0, 4);
+    bloodStrike->setMinMaxDistance(0.0f, 8.0f);
+
+    addAISpell(DEATH_KNIGHT_UNDERSTUDY_BONE_BARRIER, 8.0f, TARGET_SELF, 0, 30);
+
+    auto understudyTaunt = addAISpell(DEATH_KNIGHT_UNDERSTUDY_TAUNT, 8.0f, TARGET_ATTACKING, 0, 10);
+    understudyTaunt->setMinMaxDistance(0.0f, 8.0f);
 
     // Blood Strike
     auto blood_strike_spell = new AI_Spell;
@@ -1182,7 +1185,7 @@ class MaraudingGeistAI : public CreatureAIScript
 /////////////////////////////////////////////////////////////////////////////////
 ////// Patchwerk
 
-void SpellFunc_PatchwerkHatefulStrike(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
+//void SpellFunc_PatchwerkHatefulStrike(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
 
 const uint32 CN_PATCHWERK = 16028;
 const uint32 PATCHWERK_FRENZY = 28131;
@@ -1207,7 +1210,7 @@ class PatchwerkAI : public CreatureAIScript
     }
 
     bool    mEnraged;
-    SpellDesc* mLocaleEnrageSpell;
+    CreatureAISpells* mLocaleEnrageSpell;
     uint32_t mLocaleEnrageTimerId;
 };
 
@@ -1224,7 +1227,7 @@ class StickedSpewerAI : public CreatureAIScript
     ADD_CREATURE_FACTORY_FUNCTION(StickedSpewerAI);
     StickedSpewerAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        enableCreatureAISpellSystem = true;
+        
 
         // Create basic info for spells here, and play with it later , fill always the info, targettype and if is instant or not!
         auto slimeBolt = addAISpell(CN_SLIME_BOLT, 10.0f, TARGET_VARIOUS, 0, 0, false, false);
@@ -1367,7 +1370,7 @@ class GluthAI : public CreatureAIScript
     ADD_CREATURE_FACTORY_FUNCTION(GluthAI);
     GluthAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        enableCreatureAISpellSystem = true;
+        
 
         auto mortalWound = addAISpell(MORTAL_WOUND, 15.0f, TARGET_ATTACKING);
         mortalWound->setAttackStopTimer(2000);
@@ -1399,7 +1402,7 @@ class BonyConstructAI : public CreatureAIScript
     ADD_CREATURE_FACTORY_FUNCTION(BonyConstructAI);
     BonyConstructAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        enableCreatureAISpellSystem = true;
+        
 
         auto sweepingSlam = addAISpell(SWEEPING_SLAM, 15.0f, TARGET_VARIOUS);
         sweepingSlam->setAttackStopTimer(2000);
@@ -1424,7 +1427,7 @@ class DeathLordAI : public CreatureAIScript
     ADD_CREATURE_FACTORY_FUNCTION(DeathLordAI);
     DeathLordAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        enableCreatureAISpellSystem = true;
+        
 
         auto auraOfAgony = addAISpell(AURA_OF_AGONY, 15.0f, TARGET_VARIOUS);
         auraOfAgony->setAttackStopTimer(2000);
@@ -1448,7 +1451,7 @@ class RazuviousAI : public CreatureAIScript
     ADD_CREATURE_FACTORY_FUNCTION(RazuviousAI);
     RazuviousAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        enableCreatureAISpellSystem = true;
+        
 
         auto disruptingShout = addAISpell(DISRUPTING_SHOUT, 15.0f, TARGET_VARIOUS);
         disruptingShout->setAttackStopTimer(3000);
@@ -1500,7 +1503,7 @@ class KorthazzAI : public CreatureAIScript
         tountcooldown = 6;
         tountcont = 0;
 
-        enableCreatureAISpellSystem = true;
+        
 
         auto markOfKorthaz = addAISpell(MARK_OF_KORTHAZZ, 5.0f, TARGET_VARIOUS);
         markOfKorthaz->addDBEmote(4246);     // I like my meat extra crispy!
@@ -1597,7 +1600,7 @@ class BlaumeuxAI : public CreatureAIScript
         tountcooldown = 16;
         tountcont = 0;
 
-        enableCreatureAISpellSystem = true;
+        
 
         auto markOfBlaumeux = addAISpell(MARK_OF_BLAUMEUX, 5.0f, TARGET_VARIOUS);
         markOfBlaumeux->addDBEmote(4253);     // Your life is mine!
@@ -1689,7 +1692,7 @@ class ZeliekAI : public CreatureAIScript
         tountcooldown = 13;
         tountcont = 0;
 
-        enableCreatureAISpellSystem = true;
+        
 
         auto markOfZeliek = addAISpell(MARK_OF_ZELIEK, 5.0f, TARGET_VARIOUS);
         markOfZeliek->addDBEmote(4270);     // I have no choice but to obey!
@@ -1954,7 +1957,7 @@ class SapphironAI : public CreatureAIScript
         SetWaypointMoveType(Movement::WP_MOVEMENT_SCRIPT_NONE);
         AddWaypoint(CreateWaypoint(1, 3000, Movement::WP_MOVE_TYPE_RUN, PhaseTwoWP[1]));
 
-        enableCreatureAISpellSystem = true;
+        
 
         auto lifeDrain = addAISpell(LIFE_DRAIN, 8.0f, TARGET_VARIOUS, 0, 20, false, true);
         lifeDrain->setAttackStopTimer(2000);
@@ -2131,7 +2134,7 @@ class SapphironAI : public CreatureAIScript
                             uint32 Block = 0;
                             while (LastOne == Block)
                             {
-                                Block = RandomUInt(5) + 15;
+                                Block = Util::getRandomUInt(5) + 15;
                             }
 
                             LastOne = Block;
@@ -2156,9 +2159,9 @@ class SapphironAI : public CreatureAIScript
                         {
                             uint32 Block = 0;
                             if (i == 0)
-                                Block = RandomUInt(1, 3);
+                                Block = Util::getRandomUInt(1, 3);
                             else
-                                Block = RandomUInt(10, 13);
+                                Block = Util::getRandomUInt(10, 13);
 
                             GameObject* IceBlock = NULL;
                             IceBlock = getCreature()->GetMapMgr()->GetInterface()->SpawnGameObject(ICE_BLOCK_GO, IceBlocks[Block].x, IceBlocks[Block].y, IceBlocks[Block].z, IceBlocks[Block].o, true, 0, 0);
@@ -2175,9 +2178,9 @@ class SapphironAI : public CreatureAIScript
                         {
                             uint32 Block = 0;
                             if (i == 0)
-                                Block = RandomUInt(3) + 7;
+                                Block = Util::getRandomUInt(3) + 7;
                             else
-                                Block = RandomUInt(7) + 13;
+                                Block = Util::getRandomUInt(7) + 13;
 
                             GameObject* IceBlock = NULL;
                             IceBlock = getCreature()->GetMapMgr()->GetInterface()->SpawnGameObject(ICE_BLOCK_GO, IceBlocks[Block].x, IceBlocks[Block].y, IceBlocks[Block].z, IceBlocks[Block].o, true, 0, 0);
@@ -2468,7 +2471,7 @@ class KelthuzadAI : public CreatureAIScript
             SoulWeavers[i] = false;
         }
 
-        enableCreatureAISpellSystem = true;
+        
 
         auto frostbolt = addAISpell(SFROSTBOLT, 7.0f, TARGET_ATTACKING);
         frostbolt->setAttackStopTimer(2000);
@@ -2579,7 +2582,7 @@ class KelthuzadAI : public CreatureAIScript
         if (getCreature()->GetHealthPct() == 0)
             return;
 
-        switch (RandomUInt(1))
+        switch (Util::getRandomUInt(1))
         {
             case 0:
                 getCreature()->SendChatMessage(CHAT_MSG_MONSTER_YELL, LANG_UNIVERSAL, "The dark void awaits you!");
@@ -2652,7 +2655,7 @@ class KelthuzadAI : public CreatureAIScript
 
                     while (Counter == 0)
                     {
-                        if (FrozenWastes[i] == false && (RandomUInt(3) == 0 || SpawnCounter > 0))
+                        if (FrozenWastes[i] == false && (Util::getRandomUInt(3) == 0 || SpawnCounter > 0))
                         {
                             for (uint8 x = 0; x < 10; x++)
                             {
@@ -2664,7 +2667,7 @@ class KelthuzadAI : public CreatureAIScript
                             Counter++;
                         }
 
-                        if (Abominations[i] == false && (RandomUInt(3) == 0 || SpawnCounter > 0))
+                        if (Abominations[i] == false && (Util::getRandomUInt(3) == 0 || SpawnCounter > 0))
                         {
                             for (uint8 x = 0; x < 3; x++)
                             {
@@ -2676,7 +2679,7 @@ class KelthuzadAI : public CreatureAIScript
                             Counter++;
                         }
 
-                        if (SoulWeavers[i] == false && ((RandomUInt(3) == 0 && Counter < 2) || Counter == 0 || SpawnCounter > 0))
+                        if (SoulWeavers[i] == false && ((Util::getRandomUInt(3) == 0 && Counter < 2) || Counter == 0 || SpawnCounter > 0))
                         {
                             uint32 SpawnID = i;
                             spawnCreature(CN_SOUL_WEAVER, SoulWeaver[SpawnID].x, SoulWeaver[SpawnID].y, SoulWeaver[SpawnID].z, SoulWeaver[SpawnID].o);
@@ -2702,7 +2705,7 @@ class KelthuzadAI : public CreatureAIScript
                     SoulWeavers[i] = false;
                 }
 
-                WaveTimer = RandomUInt(10, 16);
+                WaveTimer = Util::getRandomUInt(10, 16);
                 EventStart = false;
                 SpawnCounter = 0;
                 PhaseTimer = 310;
@@ -2717,7 +2720,7 @@ class KelthuzadAI : public CreatureAIScript
 
             if (PhaseTimer == 5)
             {
-                switch (RandomUInt(2))
+                switch (Util::getRandomUInt(2))
                 {
                     case 0:
                         getCreature()->SendChatMessage(CHAT_MSG_MONSTER_YELL, LANG_UNIVERSAL, "Pray for mercy!");
@@ -2754,16 +2757,16 @@ class KelthuzadAI : public CreatureAIScript
 
             else if (!WaveTimer && PhaseTimer > 5)
             {
-                uint32 SpawnPoint = RandomUInt(6);
+                uint32 SpawnPoint = Util::getRandomUInt(6);
                 uint32 RandomSU = 0;
                 if (PhaseTimer > 250)
-                    RandomSU = RandomUInt(4);
+                    RandomSU = Util::getRandomUInt(4);
                 if (PhaseTimer <= 250 && PhaseTimer >= 150)
-                    RandomSU = RandomUInt(5);
+                    RandomSU = Util::getRandomUInt(5);
                 if (PhaseTimer <= 150 && PhaseTimer > 100)
-                    RandomSU = RandomUInt(6);
+                    RandomSU = Util::getRandomUInt(6);
                 if (PhaseTimer <= 100)
-                    RandomSU = RandomUInt(7);
+                    RandomSU = Util::getRandomUInt(7);
 
                 uint32 UnitType;
 
@@ -2789,7 +2792,7 @@ class KelthuzadAI : public CreatureAIScript
                 }
 
                 spawnCreature(UnitType, Waves[SpawnPoint].x, Waves[SpawnPoint].y, Waves[SpawnPoint].z, Waves[SpawnPoint].o);
-                WaveTimer = RandomUInt(11, 20);
+                WaveTimer = Util::getRandomUInt(11, 20);
             }
         }
     }
@@ -2832,7 +2835,7 @@ class KelthuzadAI : public CreatureAIScript
             if (HelpDialog == 10 || HelpDialog == 12 || HelpDialog == 14 || HelpDialog == 16 || HelpDialog == 18)
             {
                 Unit* Guardian = NULL;
-                uint32 i = RandomUInt(3);
+                uint32 i = Util::getRandomUInt(3);
                 Guardian = spawnCreature(CN_GUARDIAN_OF_ICECROWN, Guardians[i].x, Guardians[i].y, Guardians[i].z, Guardians[i].o);
                 if (Guardian != NULL)
                 {
@@ -2947,14 +2950,14 @@ class SoldierOfTheFrozenWastesAI : public CreatureAIScript
             {
                 if (getCreature()->GetPositionX() == Waves[i].x && getCreature()->GetPositionY() == Waves[i].y && getCreature()->GetPositionZ() == Waves[i].z)
                 {
-                    float xchange = RandomFloat(10.0f);
+                    float xchange = Util::getRandomFloat(10.0f);
                     float distance = 10.0f;
 
                     float ychange = sqrt(distance * distance - xchange * xchange);
 
-                    if (RandomUInt(1) == 1)
+                    if (Util::getRandomUInt(1) == 1)
                         xchange *= -1;
-                    if (RandomUInt(1) == 1)
+                    if (Util::getRandomUInt(1) == 1)
                         ychange *= -1;
 
                     newposx = 3715.845703f + xchange;
@@ -2992,7 +2995,7 @@ class UnstoppableAbominationAI : public CreatureAIScript
     ADD_CREATURE_FACTORY_FUNCTION(UnstoppableAbominationAI);
     UnstoppableAbominationAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        enableCreatureAISpellSystem = true;
+        
 
         auto mortalWound = addAISpell(UA_MORTAL_WOUND, 15.0f, TARGET_VARIOUS, 0, 10, false, true);
         mortalWound->setAttackStopTimer(1000);
@@ -3051,14 +3054,14 @@ class UnstoppableAbominationAI : public CreatureAIScript
             {
                 if (getCreature()->GetPositionX() == Waves[i].x && getCreature()->GetPositionY() == Waves[i].y && getCreature()->GetPositionZ() == Waves[i].z)
                 {
-                    float xchange = RandomFloat(10.0f);
+                    float xchange = Util::getRandomFloat(10.0f);
                     float distance = 10.0f;
 
                     float ychange = sqrt(distance * distance - xchange * xchange);
 
-                    if (RandomUInt(1) == 1)
+                    if (Util::getRandomUInt(1) == 1)
                         xchange *= -1;
-                    if (RandomUInt(1) == 1)
+                    if (Util::getRandomUInt(1) == 1)
                         ychange *= -1;
 
                     newposx = 3715.845703f + xchange;
@@ -3089,7 +3092,7 @@ class SoulWeaverAI : public CreatureAIScript
     ADD_CREATURE_FACTORY_FUNCTION(SoulWeaverAI);
     SoulWeaverAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        enableCreatureAISpellSystem = true;
+        
 
         auto wailOfSouls = addAISpell(WAIL_OF_SOULS, 15.0f, TARGET_VARIOUS, 0, 10, false, true);
         wailOfSouls->setAttackStopTimer(1000);
@@ -3146,14 +3149,14 @@ class SoulWeaverAI : public CreatureAIScript
             {
                 if (getCreature()->GetPositionX() == Waves[i].x && getCreature()->GetPositionY() == Waves[i].y && getCreature()->GetPositionZ() == Waves[i].z)
                 {
-                    float xchange = RandomFloat(10.0f);
+                    float xchange = Util::getRandomFloat(10.0f);
                     float distance = 10.0f;
 
                     float ychange = sqrt(distance * distance - xchange * xchange);
 
-                    if (RandomUInt(1) == 1)
+                    if (Util::getRandomUInt(1) == 1)
                         xchange *= -1;
-                    if (RandomUInt(1) == 1)
+                    if (Util::getRandomUInt(1) == 1)
                         ychange *= -1;
 
                     newposx = 3715.845703f + xchange;
@@ -3184,7 +3187,7 @@ class GuardianOfIcecrownAI : public CreatureAIScript
     ADD_CREATURE_FACTORY_FUNCTION(GuardianOfIcecrownAI);
     GuardianOfIcecrownAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        enableCreatureAISpellSystem = true;
+        
 
         bloodTrap = addAISpell(BLOOD_TAP, 0.0f, TARGET_SELF, 0, 10, false, true);
         bloodTrap->setAttackStopTimer(1000);
@@ -3239,14 +3242,14 @@ class GuardianOfIcecrownAI : public CreatureAIScript
             {
                 if (getCreature()->GetPositionX() == Guardians[i].x && getCreature()->GetPositionY() == Guardians[i].y && getCreature()->GetPositionZ() == Guardians[i].z)
                 {
-                    float xchange = RandomFloat(10.0f);
+                    float xchange = Util::getRandomFloat(10.0f);
                     float distance = 10.0f;
 
                     float ychange = sqrt(distance * distance - xchange * xchange);
 
-                    if (RandomUInt(1) == 1)
+                    if (Util::getRandomUInt(1) == 1)
                         xchange *= -1;
-                    if (RandomUInt(1) == 1)
+                    if (Util::getRandomUInt(1) == 1)
                         ychange *= -1;
 
                     newposx = 3715.845703f + xchange;

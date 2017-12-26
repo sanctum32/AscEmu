@@ -28,16 +28,8 @@ class Archaedas : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(Archaedas);
         Archaedas(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto groundTremor = addAISpell(6524, 20.0f, TARGET_ATTACKING, 0, 10, false, true);
             groundTremor->setAttackStopTimer(3000);
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 };
 
@@ -47,19 +39,11 @@ class Revelosh : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(Revelosh);
         Revelosh(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto unknown = addAISpell(10392, 20.0f, TARGET_ATTACKING, 0, 10, false, true);
             unknown->setAttackStopTimer(3000);
 
             auto unknown2 = addAISpell(2860, 20.0f, TARGET_ATTACKING, 0, 10, false, true);
             unknown2->setAttackStopTimer(3000);
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 };
 
@@ -69,8 +53,6 @@ class Grimlok : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(Grimlok);
         Grimlok(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto chainBolt = addAISpell(8292, 20.0f, TARGET_ATTACKING, 0, 10, false, true);
             chainBolt->setAttackStopTimer(3000);
 
@@ -80,12 +62,6 @@ class Grimlok : public CreatureAIScript
             auto shrink = addAISpell(8066, 20.0f, TARGET_ATTACKING, 0, 10, false, true);
             shrink->setAttackStopTimer(3000);
         }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
 };
 
 
@@ -94,19 +70,11 @@ class Baelog : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(Baelog);
         Baelog(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto unknown = addAISpell(15613, 20.0f, TARGET_ATTACKING, 0, 10, false, true);
             unknown->setAttackStopTimer(3000);
 
             auto shieldSlam = addAISpell(15655, 20.0f, TARGET_ATTACKING, 0, 10, false, true);
             shieldSlam->setAttackStopTimer(3000);
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 };
 
@@ -116,8 +84,6 @@ class GalgannFirehammer : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(GalgannFirehammer);
         GalgannFirehammer(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto unknown = addAISpell(10448, 20.0f, TARGET_ATTACKING, 0, 10, false, true);
             unknown->setAttackStopTimer(3000);
 
@@ -127,12 +93,6 @@ class GalgannFirehammer : public CreatureAIScript
             auto fireNova = addAISpell(12470, 20.0f, TARGET_ATTACKING, 0, 10, false, true);
             fireNova->setAttackStopTimer(3000);
         }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
 };
 
 
@@ -141,19 +101,11 @@ class Ironaya : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(Ironaya);
         Ironaya(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto arcingSmash = addAISpell(16169, 20.0f, TARGET_ATTACKING, 0, 10, false, true);
             arcingSmash->setAttackStopTimer(3000);
 
             auto warstomp = addAISpell(24375, 20.0f, TARGET_ATTACKING, 0, 10, false, true);
             warstomp->setAttackStopTimer(3000);
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 };
 

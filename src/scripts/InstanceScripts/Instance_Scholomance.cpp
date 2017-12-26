@@ -29,8 +29,6 @@ class DoctorTheolenKrastinovAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(DoctorTheolenKrastinovAI);
         DoctorTheolenKrastinovAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto rend = addAISpell(SP_DR_THEOL_REND, 20.0f, TARGET_ATTACKING, 0, 0, false, true);
             rend->setAttackStopTimer(1000);
 
@@ -39,12 +37,6 @@ class DoctorTheolenKrastinovAI : public CreatureAIScript
 
             frenzy = addAISpell(SP_DR_THEOL_FRENZY, 0.0f, TARGET_SELF, 0, 0, false, true);
             frenzy->setAttackStopTimer(1000);
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 
         void AIUpdate() override
@@ -66,8 +58,6 @@ class InstructorMaliciaAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(InstructorMaliciaAI);
         InstructorMaliciaAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto callOfGrave = addAISpell(SP_MALICIA_CALL_OF_GRAVE, 10.0f, TARGET_DESTINATION, 0, 10, false, true);
             callOfGrave->setAttackStopTimer(1000);
 
@@ -83,12 +73,6 @@ class InstructorMaliciaAI : public CreatureAIScript
             auto heal = addAISpell(SP_MALICIA_HEAL, 5.0f, TARGET_SELF, 0, 0, false, true);
             heal->setAttackStopTimer(1000);
         }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
 };
 
 class TheRavenianAI : public CreatureAIScript
@@ -96,8 +80,6 @@ class TheRavenianAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(TheRavenianAI);
         TheRavenianAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto trample = addAISpell(SP_RAVENIAN_TRAMPLE, 8.0f, TARGET_ATTACKING, 0, 0, false, true);
             trample->setAttackStopTimer(1000);
 
@@ -110,12 +92,6 @@ class TheRavenianAI : public CreatureAIScript
             auto knockaway = addAISpell(SP_RAVENIAN_KNOCKAWAY, 11.0f, TARGET_ATTACKING, 0, 0, false, true);
             knockaway->setAttackStopTimer(1000);
         }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
 };
 
 class LadyIlluciaBarovAI : public CreatureAIScript
@@ -123,8 +99,6 @@ class LadyIlluciaBarovAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(LadyIlluciaBarovAI);
         LadyIlluciaBarovAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto curseOfAgony = addAISpell(SP_ILLUCIA_CURSE_OF_AGONY, 8.0f, TARGET_VARIOUS, 0, 0, false, true);
             curseOfAgony->setAttackStopTimer(1000);
 
@@ -140,12 +114,6 @@ class LadyIlluciaBarovAI : public CreatureAIScript
             auto dominantMind = addAISpell(SP_ILLUCIA_DOMINATE_MIND, 4.0f, TARGET_ATTACKING, 0, 0, false, true);
             dominantMind->setAttackStopTimer(1000);
         }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
 };
 
 class RasForstwhisperAI : public CreatureAIScript
@@ -153,8 +121,6 @@ class RasForstwhisperAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(RasForstwhisperAI);
         RasForstwhisperAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto frostbolt = addAISpell(SP_RAS_FORTH_FROSTBOLT, 14.0f, TARGET_ATTACKING);
             frostbolt->setAttackStopTimer(2000);
 
@@ -179,12 +145,6 @@ class RasForstwhisperAI : public CreatureAIScript
             getCreature()->CastSpell(getCreature(), IceArmor->mSpellInfo, true);
         }
 
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
-
     protected:
 
         CreatureAISpells* IceArmor;
@@ -195,8 +155,6 @@ class JandiceBarovAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(JandiceBarovAI);
         JandiceBarovAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto curseOfBlood = addAISpell(SP_JANDICE_CURSE_OF_BLOOD, 8.0f, TARGET_DESTINATION, 0, 0, false, true);
             curseOfBlood->setAttackStopTimer(1000);
 
@@ -206,12 +164,6 @@ class JandiceBarovAI : public CreatureAIScript
             auto summonIllusion = addAISpell(SP_JANDICE_SUMMON_ILLUSION, 5.0f, TARGET_SELF, 0, 0, false, true);
             summonIllusion->setAttackStopTimer(1000);
         }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
 };
 
 class KormokAI : public CreatureAIScript
@@ -219,8 +171,6 @@ class KormokAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(KormokAI);
         KormokAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto shadowVolley = addAISpell(SP_KORMOK_SHADOW_B_VOLLEY, 11.0f, TARGET_VARIOUS, 0, 0, false, true);
             shadowVolley->setAttackStopTimer(1000);
 
@@ -236,12 +186,6 @@ class KormokAI : public CreatureAIScript
             getCreature()->CastSpell(getCreature(), boneShield->mSpellInfo, true);
         }
 
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
-
     protected:
 
         CreatureAISpells* boneShield;
@@ -252,8 +196,6 @@ class VectusAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(VectusAI);
         VectusAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto blastWave = addAISpell(SP_VECTUS_BLAST_WAVE, 18.0f, TARGET_ATTACKING, 0, 0, false, true);
             blastWave->setAttackStopTimer(1000);
 
@@ -290,8 +232,6 @@ class LordAlexeiBarovAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(LordAlexeiBarovAI);
         LordAlexeiBarovAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             unholyAura = addAISpell(SP_ALEXEI_UNHOLY_AURA, 0.0f, TARGET_SELF, 0, 0, false, true);
             unholyAura->setAttackStopTimer(1000);
 
@@ -307,12 +247,6 @@ class LordAlexeiBarovAI : public CreatureAIScript
             getCreature()->CastSpell(getCreature(), unholyAura->mSpellInfo, true);
         }
 
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
-
     protected:
 
         CreatureAISpells* unholyAura;
@@ -323,8 +257,6 @@ class LorekeeperPolkeltAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(LorekeeperPolkeltAI);
         LorekeeperPolkeltAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto volatileInfection = addAISpell(SP_LORE_VOLATILE_INFECTION, 6.0f, TARGET_ATTACKING, 0, 0, false, true);
             volatileInfection->setAttackStopTimer(1000);
 
@@ -337,12 +269,6 @@ class LorekeeperPolkeltAI : public CreatureAIScript
             auto noxiousCatalyst = addAISpell(SP_LORE_NOXIOUS_CATALYST, 10.0f, TARGET_ATTACKING, 0, 0, false, true);
             noxiousCatalyst->setAttackStopTimer(1000);
         }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
 };
 
 class DarkmasterGandlingAI : public CreatureAIScript
@@ -350,8 +276,6 @@ class DarkmasterGandlingAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(DarkmasterGandlingAI);
         DarkmasterGandlingAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto arcaneMissiles = addAISpell(SP_GANDLING_ARCANE_MISSILES, 12.0f, TARGET_ATTACKING, 0, 0, false, true);
             arcaneMissiles->setAttackStopTimer(1000);
 
@@ -365,12 +289,6 @@ class DarkmasterGandlingAI : public CreatureAIScript
         void OnCombatStart(Unit* /*mTarget*/) override
         {
             getCreature()->CastSpell(getCreature(), shadowShield->mSpellInfo, true);
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 
     protected:

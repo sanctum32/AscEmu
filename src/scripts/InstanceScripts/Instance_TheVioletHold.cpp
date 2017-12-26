@@ -193,7 +193,7 @@ class TheVioletHoldScript : public InstanceScript
 
         int GetRandomIntroMob() const
         {
-            auto rnd = RandomFloat(100.0f);
+            auto rnd = Util::getRandomFloat(100.0f);
             if (rnd < 25.0f)
                 return CN_INTRO_AZURE_BINDER_ARCANE;
             if (rnd < 50.f)
@@ -246,7 +246,7 @@ class VHCreatureAI : public CreatureAIScript
          * 
          * TODO: Write a proper spell manager to handle this stuff */
         std::vector<bool> m_spellsEnabled;
-        std::vector<SP_AI_Spell> m_spells;
+        //std::vector<SP_AI_Spell> m_spells;
 
     public:
 
@@ -297,16 +297,13 @@ class VHCreatureAI : public CreatureAIScript
 
         void PutAllSpellsOnCooldown()
         {
-            for (int i = 0; i < m_spellCount; i++)
-                m_spells[i].casttime = m_spells[i].cooldown;
+            /*for (int i = 0; i < m_spellCount; i++)
+                m_spells[i].casttime = m_spells[i].cooldown;*/
         }
 
         void OnCombatStop(Unit* /*mTarget*/) override
         {
             PutAllSpellsOnCooldown();
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-            RemoveAIUpdateEvent();
         }
 
         void OnDied(Unit* /*mKiller*/) override
@@ -316,11 +313,11 @@ class VHCreatureAI : public CreatureAIScript
 
         void AIUpdate() override
         {
-            auto randomValue = RandomFloat(100.0f);
-            SpellCast(randomValue);
+            /*auto randomValue = Util::getRandomFloat(100.0f);
+            SpellCast(randomValue);*/
         }
     
-        void SpellCast(float randomValue)
+        /*void SpellCast(float randomValue)
         {
             if (!getCreature()->isCastingNonMeleeSpell() && getCreature()->GetAIInterface()->getNextTarget())
             {
@@ -371,7 +368,7 @@ class VHCreatureAI : public CreatureAIScript
                     comulativeperc += m_spells[i].perctrigger;
                 }
             }
-        }
+        }*/
 };
 
 class VHIntroAzureBinder : VHCreatureAI
@@ -384,13 +381,13 @@ class VHIntroAzureBinder : VHCreatureAI
         VHIntroAzureBinder(Creature* pCreature) : VHCreatureAI(pCreature)
         {
             m_isIntroMob = true;
-            m_spellCount = 2;
-            for (int i = 0; i < m_spellCount; i++)
+            //m_spellCount = 2;
+            /*for (int i = 0; i < m_spellCount; i++)
             {
                 m_spellsEnabled.push_back(false);
-            }
+            }*/
 
-            auto spellArcaneBarrage = SP_AI_Spell();
+            /*auto spellArcaneBarrage = SP_AI_Spell();
             spellArcaneBarrage.info = sSpellCustomizations.GetSpellInfo(SPELL_ARCANE_BARRAGE);
             spellArcaneBarrage.cooldown = 6;
             spellArcaneBarrage.targettype = TARGET_ATTACKING;
@@ -398,9 +395,9 @@ class VHIntroAzureBinder : VHCreatureAI
             spellArcaneBarrage.perctrigger = 50.0f;
             spellArcaneBarrage.attackstoptimer = 1000;
             m_spells.push_back(spellArcaneBarrage);
-            m_spellsEnabled[0] = true;
+            m_spellsEnabled[0] = true;*/
 
-            auto spellArcaneExplosion = SP_AI_Spell();
+            /*auto spellArcaneExplosion = SP_AI_Spell();
             spellArcaneExplosion.info = sSpellCustomizations.GetSpellInfo(SPELL_ARCANE_EXPLOSION);
             spellArcaneExplosion.cooldown = 4;
             spellArcaneExplosion.targettype = TARGET_VARIOUS;
@@ -408,7 +405,7 @@ class VHIntroAzureBinder : VHCreatureAI
             spellArcaneExplosion.perctrigger = 50.0f;
             spellArcaneExplosion.attackstoptimer = 1000;
             m_spells.push_back(spellArcaneExplosion);
-            m_spellsEnabled[1] = true;
+            m_spellsEnabled[1] = true;*/
         }
 };
 
@@ -421,7 +418,7 @@ class VHIntroAzureInvader : VHCreatureAI
         VHIntroAzureInvader(Creature* pCreature) : VHCreatureAI(pCreature)
         {
             m_isIntroMob = true;
-            m_spellCount = 2;
+           /* m_spellCount = 2;
             for (int i = 0; i < m_spellCount; i++)
             {
                 m_spellsEnabled.push_back(false);
@@ -445,7 +442,7 @@ class VHIntroAzureInvader : VHCreatureAI
             spellImpale.perctrigger = 20.0f;
             spellImpale.attackstoptimer = 1000;
             m_spells.push_back(spellImpale);
-            m_spellsEnabled[1] = true;
+            m_spellsEnabled[1] = true;*/
         }
 };
 
@@ -457,7 +454,7 @@ class VHIntroAzureMageSlayer : VHCreatureAI
         VHIntroAzureMageSlayer(Creature* pCreature) : VHCreatureAI(pCreature)
         {
             m_isIntroMob = true;
-            m_spellCount = 1;
+            /*m_spellCount = 1;
             for (int i = 0; i < m_spellCount; i++)
             {
                 m_spellsEnabled.push_back(false);
@@ -471,7 +468,7 @@ class VHIntroAzureMageSlayer : VHCreatureAI
             spellArcaneEmpowerment.perctrigger = 50.0f;
             spellArcaneEmpowerment.attackstoptimer = 1000;
             m_spells.push_back(spellArcaneEmpowerment);
-            m_spellsEnabled[0] = true;
+            m_spellsEnabled[0] = true;*/
         }
 };
 
@@ -484,7 +481,7 @@ class VHIntroAzureSpellBreaker : VHCreatureAI
         VHIntroAzureSpellBreaker(Creature* pCreature) : VHCreatureAI(pCreature)
         {
             m_isIntroMob = true;
-            m_spellCount = 2;
+            /*m_spellCount = 2;
             for (int i = 0; i < m_spellCount; i++)
             {
                 m_spellsEnabled.push_back(false);
@@ -509,7 +506,7 @@ class VHIntroAzureSpellBreaker : VHCreatureAI
             spellSlow.perctrigger = 40.0f;
             spellSlow.attackstoptimer = 1000;
             m_spells.push_back(spellSlow);
-            m_spellsEnabled[0] = true;        
+            m_spellsEnabled[0] = true;        */
         }
 };
 
@@ -526,20 +523,20 @@ class MoraggAI : public CreatureAIScript
     ADD_CREATURE_FACTORY_FUNCTION(MoraggAI);
     MoraggAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
-        // Spells
-        if (_isHeroic())
-        {
-            AddSpell(MORAGG_SPELL_RAY_OF_SUFFERING_H, Target_Current, 100, 0, 0, 0, 45);
-            AddSpell(MORAGG_SPELL_RAY_OF_PAIN_H, Target_Current, 100, 0, 0, 0 , 45);
-        }
-        else
-        {
-            AddSpell(MORAGG_SPELL_RAY_OF_SUFFERING, Target_Self, 100, 0, 0, 0, 45);
-            AddSpell(MORAGG_SPELL_RAY_OF_PAIN, Target_Current, 100, 0, 0, 0, 45);
-        }
+        //// Spells
+        //if (_isHeroic())
+        //{
+        //    AddSpell(MORAGG_SPELL_RAY_OF_SUFFERING_H, TARGET_ATTACKING, 100, 0, 0, 0, 45);
+        //    AddSpell(MORAGG_SPELL_RAY_OF_PAIN_H, TARGET_ATTACKING, 100, 0, 0, 0 , 45);
+        //}
+        //else
+        //{
+        //    AddSpell(MORAGG_SPELL_RAY_OF_SUFFERING, TARGET_SELF, 100, 0, 0, 0, 45);
+        //    AddSpell(MORAGG_SPELL_RAY_OF_PAIN, TARGET_ATTACKING, 100, 0, 0, 0, 45);
+        //}
 
-        AddSpell(MORAGG_SPELL_CORROSIVE_SALIVA, Target_Current, 100, 0, 10, 0 , 5);
-        AddSpell(MORAGG_SPELL_OPTIC_LINK, Target_Current, 100, 0, 15, 0, 50);
+        //AddSpell(MORAGG_SPELL_CORROSIVE_SALIVA, TARGET_ATTACKING, 100, 0, 10, 0 , 5);
+        //AddSpell(MORAGG_SPELL_OPTIC_LINK, TARGET_ATTACKING, 100, 0, 15, 0, 50);
 
     }
 };

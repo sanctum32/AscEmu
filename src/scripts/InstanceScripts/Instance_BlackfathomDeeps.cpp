@@ -21,35 +21,28 @@
 #include "Instance_BlackfathomDeeps.h"
 
 
-// LadySarevessAI
 class LadySarevessAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(LadySarevessAI);
         LadySarevessAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            AddSpell(8435, Target_Current, 10, 2, 0);    // Forked Lightning
-            AddSpell(865, Target_Self, 15, 0, 25);        // Frost Nova
-            AddSpell(246, Target_Current, 15, 0, 10);    // Slow
+            addAISpell(8435, 10.0f, TARGET_ATTACKING, 2, 0);    // Forked Lightning
+            addAISpell(865, 15.0f, TARGET_SELF, 0, 25);         // Frost Nova
+            addAISpell(246, 15.0f, TARGET_ATTACKING, 0, 10);    // Slow
 
-            //new
-            addEmoteForEvent(Event_OnCombatStart, 7912);     // You should not be here! Slay them!
+            addEmoteForEvent(Event_OnCombatStart, 7912);        // You should not be here! Slay them!
         }
 };
 
-// BaronAquanisAI
 class BaronAquanisAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(BaronAquanisAI);
         BaronAquanisAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            // Frostbolt
-            AddSpell(15043, Target_Current, 20, 3, 0);
-            AggroNearestPlayer();
-            _setDespawnWhenInactive(true);
+            addAISpell(15043, 20.0f, TARGET_ATTACKING, 3, 0);    // Frostbolt
         }
 };
 
-// FathomStone
 class FathomStone : public GameObjectAIScript
 {
     public:
@@ -75,33 +68,31 @@ class FathomStone : public GameObjectAIScript
         bool SpawnBaronAquanis;
 };
 
-// KelrisAI
 class KelrisAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(KelrisAI);
         KelrisAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            AddSpell(8399, Target_RandomPlayer, 12, 1.3f, 0, 0, 0, false, "Sleep...", CHAT_MSG_MONSTER_YELL, 5804);    // Sleep
-            AddSpell(15587, Target_Current, 16, 1.5f, 0);    // Mind Blast
+            auto sleep = addAISpell(8399, 12.0f, TARGET_RANDOM_SINGLE);
+            sleep->addEmote("Sleep...", CHAT_MSG_MONSTER_YELL, 5804);
 
-            // new
+            addAISpell(15587, 16.0f, TARGET_ATTACKING);      // Mind Blast
+
             addEmoteForEvent(Event_OnCombatStart, 3966);     // Who dares disturb my meditation?
             addEmoteForEvent(Event_OnTargetDied, 3968);      // Dust to dust.
         }
 };
 
-// AkumaiAI
 class AkumaiAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(AkumaiAI);
         AkumaiAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            AddSpell(3490, Target_Self, 12, 0, 0);    // Frenzied Rage
-            AddSpell(3815, Target_Self, 16, 0, 45);    // Poison Cloud
+            addAISpell(3490, 12.0f, TARGET_SELF, 0, 0);     // Frenzied Rage
+            addAISpell(3815, 16.0f, TARGET_SELF, 0, 45);    // Poison Cloud
         }
 };
 
-// MorriduneGossip
 class MorriduneGossip : public Arcemu::Gossip::Script
 {
         void OnHello(Object* pObject, Player* pPlayer) override

@@ -1,3 +1,8 @@
+/*
+Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+This file is released under the MIT license. See README-MIT for more information.
+*/
+
 #include "StdAfx.h"
 
 #include <cstdint>
@@ -46,7 +51,7 @@ void BroadcastMgr::sendBroadcast()
         {
             sWorld.sendBroadcastMessageById(itr->second.id);
 
-            uint32_t randomMins = (itr->second.randomInterval ? RandomUInt(itr->second.randomInterval) : 0);
+            uint32_t randomMins = (itr->second.randomInterval ? Util::getRandomUInt(itr->second.randomInterval) : 0);
             uint32_t intervalMins = itr->second.interval;
 
             itr->second.nextUpdate = randomMins + intervalMins + (uint32_t)UNIXTIME;

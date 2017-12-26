@@ -24,15 +24,8 @@
 #include "Objects/Faction.h"
 
 
-
-
 //////////////////////////////////////////////////////////////////////////////////////////
 //Bosses
-//////////////////////////////////////////////////////////////////////////////////////////
-
-//------------------------------------
-//    -= Void Reaver =-
-//------------------------------------
 
 const uint32 CN_VOID_REAVER = 19516;
 
@@ -47,16 +40,17 @@ class VoidReaverAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(VoidReaverAI);
         VoidReaverAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            SpellDesc* pPounding = AddSpell(VOID_REAVER_POUNDING, Target_Self, 100, 0, 12);
-            if (pPounding != NULL)
+            auto pPounding = addAISpell(VOID_REAVER_POUNDING, 100.0f, TARGET_SELF, 0, 12);
+            if (pPounding != nullptr)
             {
                 pPounding->addEmote("Alternative measure commencing...", CHAT_MSG_MONSTER_YELL, 11218);
                 pPounding->addEmote("Calculating force parameters...", CHAT_MSG_MONSTER_YELL, 11219);
             }
 
-            mArcaneOrb = AddSpell(VOID_REAVER_ARCANE_ORB_TRIGGER, Target_RandomPlayerDestination, 100, 0, 3);
-            AddSpell(VOID_REAVER_KNOCK_AWAY, Target_Current, 100, 0, 20, 0, 12);    // 12 is experimental value
-            mLocaleEnrageSpell = AddSpell(VOID_REAVER_ENRAGE, Target_Self, 0, 0, 0);
+            mArcaneOrb = addAISpell(VOID_REAVER_ARCANE_ORB_TRIGGER, 0.0f, TARGET_RANDOM_DESTINATION, 0, 3);
+            addAISpell(VOID_REAVER_KNOCK_AWAY, 100.0f, TARGET_ATTACKING, 0, 20);
+
+            mLocaleEnrageSpell = addAISpell(VOID_REAVER_ENRAGE, 0.0f, TARGET_SELF, 0, 600);
 
             addEmoteForEvent(Event_OnCombatStart, 8867);
             addEmoteForEvent(Event_OnTargetDied, 8868);
@@ -72,24 +66,23 @@ class VoidReaverAI : public CreatureAIScript
         {
             mLocaleEnrageTimerId = _addTimer(600000);
 
-            if (mArcaneOrb != NULL)
+            if (mArcaneOrb != nullptr)
             {
                 mArcaneOrbTimer = _addTimer(10000);
-                mArcaneOrb->mEnabled = false;
             }
         }
 
         void AIUpdate() override
         {
-            if (mArcaneOrb != NULL && !mArcaneOrb->mEnabled && _isTimerFinished(mArcaneOrbTimer))
+            if (_isTimerFinished(mArcaneOrbTimer))
             {
+                _castAISpell(mArcaneOrb);
                 _removeTimer(mArcaneOrbTimer);
-                mArcaneOrb->mEnabled = true;
             }  
 
             if (_isTimerFinished(mLocaleEnrageTimerId))
             {
-                CastSpell(mLocaleEnrageSpell);
+                _castAISpell(mLocaleEnrageSpell);
                 _removeTimer(mLocaleEnrageTimerId);
             }
         }
@@ -99,11 +92,11 @@ class VoidReaverAI : public CreatureAIScript
             _removeTimer(mLocaleEnrageTimerId);
         }
 
-        SpellDesc* mLocaleEnrageSpell;
+        CreatureAISpells* mLocaleEnrageSpell;
         uint32_t mLocaleEnrageTimerId;
 
         uint32 mArcaneOrbTimer;
-        SpellDesc* mArcaneOrb;
+        CreatureAISpells* mArcaneOrb;
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -130,10 +123,6 @@ const uint32 SOLARIAN_PSYCHIC_SCREAM = 34322;    //Fears up to 5 targets in mele
 const uint32 SOLARIUMPRIEST_GREATER_HEAL = 38580;    //Heals 23125 to 26875 any friendly target
 const uint32 SOLARIUMPRIEST_HOLY_SMITE = 31740;   //Deals 553 to 747 holy damage
 
-bool Dummy_Solarian_WrathOfTheAstromancer(uint32 pEffectIndex, Spell* pSpell);
-void SpellFunc_Solarian_Disappear(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
-void SpellFunc_Solarian_Reappear(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
-
 class HighAstromancerSolarianAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(HighAstromancerSolarianAI);
@@ -143,20 +132,33 @@ class HighAstromancerSolarianAI : public CreatureAIScript
             mSplitTimer = mAgentsTimer = mSolarianTimer = 0;
 
             //Phase 1 spells
-            AddPhaseSpell(1, AddSpell(SOLARIAN_ARCANE_MISSILES, Target_RandomUnit, 60, 3, 0, 0, 45));
-            AddPhaseSpell(1, AddSpell(SOLARIAN_WRATH_OF_THE_ASTROMANCER, Target_RandomPlayerNotCurrent, 20, 0, 6, 0, 50000));
-            AddPhaseSpell(1, AddSpell(SOLARIAN_BLINDING_LIGHT, Target_Self, 20, 0, 20, 0, 50));
-            mDisappear = AddSpellFunc(&SpellFunc_Solarian_Disappear, Target_Self, 0, 22, 0);
+            auto arcanMissile = addAISpell(SOLARIAN_ARCANE_MISSILES, 60.0f, TARGET_RANDOM_SINGLE, 3, 0);
+            arcanMissile->setMinMaxDistance(0.0f, 45.0f);
+            arcanMissile->setAvailableForScriptPhase({ 1 });
+
+            auto wrath = addAISpell(SOLARIAN_WRATH_OF_THE_ASTROMANCER, 20.0f, TARGET_RANDOM_SINGLE, 0, 6);
+            wrath->setMinMaxDistance(0.0f, 50000.0f);
+            wrath->setAvailableForScriptPhase({ 1 });
+
+            auto blindingLight = addAISpell(SOLARIAN_BLINDING_LIGHT, 20.0f, TARGET_SELF, 0, 20);
+            blindingLight->setAvailableForScriptPhase({ 1 });
+
+            /* mDisappear = AddSpellFunc(&SpellFunc_Solarian_Disappear, TARGET_SELF, 0, 22, 0);
             mDisappear->addEmote("You are hopelessly outmatched!", CHAT_MSG_MONSTER_YELL, 11139);
-            mDisappear->addEmote("I will crush your delusions of grandeur!", CHAT_MSG_MONSTER_YELL, 11140);
+            mDisappear->addEmote("I will crush your delusions of grandeur!", CHAT_MSG_MONSTER_YELL, 11140);*/
 
             //Phase 2 spells
-            mReappear = AddSpellFunc(&SpellFunc_Solarian_Reappear, Target_Self, 0, 0, 0);
+            /*mReappear = AddSpellFunc(&SpellFunc_Solarian_Reappear, TARGET_SELF, 0, 0, 0);*/
 
             //Phase 3 spells
-            AddPhaseSpell(3, AddSpell(SOLARIAN_VOID_BOLT, Target_Current, 100, 3, 10, 0, 100));
-            AddPhaseSpell(3, AddSpell(SOLARIAN_PSYCHIC_SCREAM, Target_Self, 10, 0, 0));
-            mVoidForm = AddSpell(SOLARIAN_SOLARIANS_TRANSFORM, Target_Self, 0, 0, 0);
+            auto bolt = addAISpell(SOLARIAN_VOID_BOLT, 100.0f, TARGET_ATTACKING, 3, 10);
+            bolt->setMinMaxDistance(0.0f, 100.0f);
+            bolt->setAvailableForScriptPhase({ 3 });
+
+            auto psychicScream = addAISpell(SOLARIAN_PSYCHIC_SCREAM, 10.0f, TARGET_SELF);
+            psychicScream->setAvailableForScriptPhase({ 3 });
+
+            mVoidForm = addAISpell(SOLARIAN_SOLARIANS_TRANSFORM, 0.0f, TARGET_SELF);
             mVoidForm->addEmote("Enough of this! Now I call upon the fury of the cosmos itself.", CHAT_MSG_MONSTER_YELL);
             mVoidForm->addEmote("I become ONE... with the VOID!", CHAT_MSG_MONSTER_YELL);
 
@@ -211,31 +213,28 @@ class HighAstromancerSolarianAI : public CreatureAIScript
                     _removeTimer(mAgentsTimer);
                 }
             }
-            
         }
 
         void OnScriptPhaseChange(uint32_t phaseId) override
         {
             switch (phaseId)
             {
-                case 1:
+                /*case 1:
                     if (isNotInitialPhase)
                         CastSpellNowNoScheduling(mReappear);
                     break;
                 case 2:
                     CastSpellNowNoScheduling(mDisappear);
-                    break;
+                    break;*/
                 case 3:
-                    CastSpellNowNoScheduling(mVoidForm);
+                    _castAISpell(mVoidForm);
                     break;
                 default:
                     break;
             }
         }
 
-        SpellDesc* mVoidForm;
-        SpellDesc* mDisappear;
-        SpellDesc* mReappear;
+        CreatureAISpells* mVoidForm;
         int32 mSplitTimer;
         uint32 mAgentsTimer;
         uint32 mSolarianTimer;
@@ -259,62 +258,56 @@ bool Dummy_Solarian_WrathOfTheAstromancer(uint32 /*pEffectIndex*/, Spell* pSpell
     return true;
 }
 
-void SpellFunc_Solarian_Disappear(SpellDesc* /*pThis*/, CreatureAIScript* pCreatureAI, Unit* /*pTarget*/, TargetType /*pType*/)
-{
-    HighAstromancerSolarianAI* Solarian = (pCreatureAI) ? static_cast< HighAstromancerSolarianAI* >(pCreatureAI) : nullptr;
-    if (Solarian)
-    {
-        if (pCreatureAI != nullptr)
-        {
-            pCreatureAI->_clearHateList();
-            pCreatureAI->setRooted(true);
-            pCreatureAI->setCanEnterCombat(false);
-            pCreatureAI->_applyAura(24699);     // vanish
-        }
+//void SpellFunc_Solarian_Disappear(SpellDesc* /*pThis*/, CreatureAIScript* pCreatureAI, Unit* /*pTarget*/, TargetType /*pType*/)
+//{
+//    HighAstromancerSolarianAI* Solarian = (pCreatureAI) ? static_cast< HighAstromancerSolarianAI* >(pCreatureAI) : nullptr;
+//    if (Solarian)
+//    {
+//        if (pCreatureAI != nullptr)
+//        {
+//            pCreatureAI->_clearHateList();
+//            pCreatureAI->setRooted(true);
+//            pCreatureAI->setCanEnterCombat(false);
+//            pCreatureAI->_applyAura(24699);     // vanish
+//        }
+//
+//        //Spawn spot lights, and despawn them after 26sec X(400,460) Y(-340,-400)
+//        Solarian->mSpawnPositions[0][0] = 400 + Util::getRandomFloat(60);
+//        Solarian->mSpawnPositions[0][1] = -400 + Util::getRandomFloat(60);
+//        Solarian->spawnCreatureAndGetAIScript(CN_SOLARIUM_SPOT_LIGHT, Solarian->mSpawnPositions[0][0], Solarian->mSpawnPositions[0][1], 17, 0)->despawn(26000);
+//        Solarian->mSpawnPositions[1][0] = 400 + Util::getRandomFloat(60);
+//        Solarian->mSpawnPositions[1][1] = -400 + Util::getRandomFloat(60);
+//        Solarian->spawnCreatureAndGetAIScript(CN_SOLARIUM_SPOT_LIGHT, Solarian->mSpawnPositions[1][0], Solarian->mSpawnPositions[1][1], 17, 0)->despawn(26000);
+//        Solarian->mSpawnPositions[2][0] = 400 + Util::getRandomFloat(60);
+//        Solarian->mSpawnPositions[2][1] = -400 + Util::getRandomFloat(60);
+//        Solarian->spawnCreatureAndGetAIScript(CN_SOLARIUM_SPOT_LIGHT, Solarian->mSpawnPositions[2][0], Solarian->mSpawnPositions[2][1], 17, 0)->despawn(26000);
+//    }
+//}
 
-        //Spawn spot lights, and despawn them after 26sec X(400,460) Y(-340,-400)
-        Solarian->mSpawnPositions[0][0] = 400 + RandomFloat(60);
-        Solarian->mSpawnPositions[0][1] = -400 + RandomFloat(60);
-        Solarian->spawnCreatureAndGetAIScript(CN_SOLARIUM_SPOT_LIGHT, Solarian->mSpawnPositions[0][0], Solarian->mSpawnPositions[0][1], 17, 0)->despawn(26000);
-        Solarian->mSpawnPositions[1][0] = 400 + RandomFloat(60);
-        Solarian->mSpawnPositions[1][1] = -400 + RandomFloat(60);
-        Solarian->spawnCreatureAndGetAIScript(CN_SOLARIUM_SPOT_LIGHT, Solarian->mSpawnPositions[1][0], Solarian->mSpawnPositions[1][1], 17, 0)->despawn(26000);
-        Solarian->mSpawnPositions[2][0] = 400 + RandomFloat(60);
-        Solarian->mSpawnPositions[2][1] = -400 + RandomFloat(60);
-        Solarian->spawnCreatureAndGetAIScript(CN_SOLARIUM_SPOT_LIGHT, Solarian->mSpawnPositions[2][0], Solarian->mSpawnPositions[2][1], 17, 0)->despawn(26000);
-    }
-}
-
-void SpellFunc_Solarian_Reappear(SpellDesc* /*pThis*/, CreatureAIScript* pCreatureAI, Unit* /*pTarget*/, TargetType /*pType*/)
-{
-    HighAstromancerSolarianAI* Solarian = (pCreatureAI) ? static_cast< HighAstromancerSolarianAI* >(pCreatureAI) : nullptr;
-    if (Solarian)
-    {
-        //Spawn two priest friend to help Solarian
-        Solarian->spawnCreatureAndGetAIScript(CN_SOLARIUMPRIEST, Solarian->mSpawnPositions[0][0], Solarian->mSpawnPositions[0][1], 17, 0);
-        Solarian->spawnCreatureAndGetAIScript(CN_SOLARIUMPRIEST, Solarian->mSpawnPositions[1][0], Solarian->mSpawnPositions[1][1], 17, 0);
-        //Solarian->MoveTo(Solarian->mSpawnPositions[2][0], Solarian->mSpawnPositions[2][1], 17);    //Doesn't work quite right yet
-
-        if (pCreatureAI != nullptr)
-        {
-            pCreatureAI->setRooted(false);
-            pCreatureAI->setCanEnterCombat(true);
-            pCreatureAI->_removeAura(24699);    // vanish
-        }
-    }
-}
+//void SpellFunc_Solarian_Reappear(SpellDesc* /*pThis*/, CreatureAIScript* pCreatureAI, Unit* /*pTarget*/, TargetType /*pType*/)
+//{
+//    HighAstromancerSolarianAI* Solarian = (pCreatureAI) ? static_cast< HighAstromancerSolarianAI* >(pCreatureAI) : nullptr;
+//    if (Solarian)
+//    {
+//        //Spawn two priest friend to help Solarian
+//        Solarian->spawnCreatureAndGetAIScript(CN_SOLARIUMPRIEST, Solarian->mSpawnPositions[0][0], Solarian->mSpawnPositions[0][1], 17, 0);
+//        Solarian->spawnCreatureAndGetAIScript(CN_SOLARIUMPRIEST, Solarian->mSpawnPositions[1][0], Solarian->mSpawnPositions[1][1], 17, 0);
+//        //Solarian->MoveTo(Solarian->mSpawnPositions[2][0], Solarian->mSpawnPositions[2][1], 17);    //Doesn't work quite right yet
+//
+//        if (pCreatureAI != nullptr)
+//        {
+//            pCreatureAI->setRooted(false);
+//            pCreatureAI->setCanEnterCombat(true);
+//            pCreatureAI->_removeAura(24699);    // vanish
+//        }
+//    }
+//}
 
 class SolariumAgentAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(SolariumAgentAI);
         SolariumAgentAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            _setDespawnWhenInactive(true);    //despawn creature if it gets out of combat or dead
-        }
-
-        void OnLoad() override
-        {
-            AggroNearestUnit(); //Aggro on spawn
         }
 };
 
@@ -323,14 +316,10 @@ class SolariumPriestAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(SolariumPriestAI);
         SolariumPriestAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            AddSpell(SOLARIUMPRIEST_GREATER_HEAL, Target_WoundedFriendly, 20, 2, 0, 0, 40);
-            AddSpell(SOLARIUMPRIEST_HOLY_SMITE, Target_Current, 80, 2.5f, 0, 0, 40);
-            _setDespawnWhenInactive(true);    //despawn creature if it gets out of combat or dead
-        }
+            auto greaterHeal = addAISpell(SOLARIUMPRIEST_GREATER_HEAL, 20.0f, TARGET_RANDOM_FRIEND, 2, 0);
+            greaterHeal->setMinMaxDistance(0.0f, 40.0f);
 
-        void OnLoad() override
-        {
-            AggroNearestUnit(); //Aggro on spawn
+            addAISpell(SOLARIUMPRIEST_HOLY_SMITE, 80.0f, TARGET_ATTACKING, 3, 0);
         }
 };
 
@@ -367,8 +356,9 @@ class DarkenerAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(DarkenerAI);
         DarkenerAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            AddSpell(DARKENER_PSYCHIC_BLOW, Target_Current, 10, 0, 20);
-            AddSpell(DARKENER_SILENCE, Target_Current, 10, 0, 15);
+            addAISpell(DARKENER_PSYCHIC_BLOW, 10.0f, TARGET_ATTACKING, 0, 20);
+            addAISpell(DARKENER_SILENCE, 10.0f, TARGET_ATTACKING, 0, 15);
+
             addEmoteForEvent(Event_OnCombatStart, 8877);
             addEmoteForEvent(Event_OnDied, 8878);
             setCanEnterCombat(false);
@@ -381,7 +371,7 @@ class DarkenerAI : public CreatureAIScript
             setCanEnterCombat(true);
             SwitchTarget();
 
-            mGazeSwitchTimer = _addTimer((RandomUInt(4) + 8) * 1000);
+            mGazeSwitchTimer = _addTimer((Util::getRandomUInt(4) + 8) * 1000);
         }
 
         void OnCombatStop(Unit* /*mTarget*/) override
@@ -403,7 +393,7 @@ class DarkenerAI : public CreatureAIScript
         {
             if (_isTimerFinished(mGazeSwitchTimer))
             {
-                _resetTimer(mGazeSwitchTimer, (RandomUInt(4) + 8) * 1000);
+                _resetTimer(mGazeSwitchTimer, (Util::getRandomUInt(4) + 8) * 1000);
                 if (!SwitchTarget())
                     return;
             }
@@ -411,7 +401,7 @@ class DarkenerAI : public CreatureAIScript
 
         bool SwitchTarget()
         {
-            mCurrentTarget = GetBestPlayerTarget();
+            mCurrentTarget = getBestPlayerTarget();
             if (mCurrentTarget == getCreature()->GetAIInterface()->getNextTarget())
                 return true;
 
@@ -433,7 +423,6 @@ class DarkenerAI : public CreatureAIScript
         Unit* mCurrentTarget;
 };
 
-// Lord Sanguinar AI (2nd advisor)
 const uint32 CN_SANGUINAR = 20060;
 const uint32 SANGUINAR_BELLOWING = 36922;
 
@@ -442,7 +431,8 @@ class SanguinarAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(SanguinarAI);
         SanguinarAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            AddSpell(SANGUINAR_BELLOWING, Target_Self, 100, 0, 30);
+            addAISpell(SANGUINAR_BELLOWING, 100.0f, TARGET_SELF, 0, 30);
+
             addEmoteForEvent(Event_OnCombatStart, 8879);
             addEmoteForEvent(Event_OnDied, 8880);
             setCanEnterCombat(false);
@@ -473,9 +463,12 @@ class CapernianAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(CapernianAI);
         CapernianAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            AddSpell(CAPERNIAN_CONFLAGRATION, Target_RandomPlayer, 7, 0, 10, 0, 30, true);
-            AddSpell(CAPERNIAN_FIREBALL, Target_Current, 73, 2, 0);
-            mArcaneBurst = AddSpell(CAPERNIAN_ARCANE_BURST, Target_Self, 0, 1, 15);
+            auto conflagration = addAISpell(CAPERNIAN_CONFLAGRATION, 7.0f, TARGET_RANDOM_SINGLE, 0, 10, false, true);
+            conflagration->setMinMaxDistance(0.0f, 30.0f);
+
+            addAISpell(CAPERNIAN_FIREBALL, 73.0f, TARGET_ATTACKING, 2, 0);
+            mArcaneBurst = addAISpell(CAPERNIAN_ARCANE_BURST, 0.0f, TARGET_SELF, 1, 15);
+
             addEmoteForEvent(Event_OnCombatStart, 8881);
             addEmoteForEvent(Event_OnDied, 8882);
             setCanEnterCombat(false);
@@ -504,10 +497,10 @@ class CapernianAI : public CreatureAIScript
         {
             setAIAgent(AGENT_NULL);
             setRooted(false);
-            Unit* pClosestTarget = GetBestPlayerTarget(TargetFilter_Closest);
+            Unit* pClosestTarget = getBestPlayerTarget(TargetFilter_Closest);
             if (pClosestTarget != NULL && getRangeToObject(pClosestTarget) <= 6.0f)
             {
-                CastSpellNowNoScheduling(mArcaneBurst);
+                _castAISpell(mArcaneBurst);
             }
 
             Unit* pTarget = getCreature()->GetAIInterface()->getNextTarget();
@@ -522,10 +515,9 @@ class CapernianAI : public CreatureAIScript
             }
         }
 
-        SpellDesc* mArcaneBurst;
+        CreatureAISpells* mArcaneBurst;
 };
 
-// Master Engineer Telonicus AI (4th advisor)
 const uint32 CN_TELONICUS = 20063;
 const uint32 TELONICUS_BOMB = 37036;
 const uint32 TELONICUS_REMOTE_TOY = 37027;    // doesn't seems to work like it should
@@ -535,8 +527,12 @@ class TelonicusAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(TelonicusAI);
         TelonicusAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            AddSpell(TELONICUS_BOMB, Target_RandomPlayerDestination, 10, 1.5f, 15, 0, 30);
-            AddSpell(TELONICUS_REMOTE_TOY, Target_RandomPlayer, 10, 0, 15, 0, 30);
+            auto bomb = addAISpell(TELONICUS_BOMB, 10.0f, TARGET_RANDOM_DESTINATION, 2, 15);
+            bomb->setMinMaxDistance(0.0f, 30.0f);
+
+            auto remoteToy = addAISpell(TELONICUS_REMOTE_TOY, 10.0f, TARGET_RANDOM_SINGLE, 0, 15);
+            remoteToy->setMinMaxDistance(0.0f, 30.0f);
+
             addEmoteForEvent(Event_OnCombatStart, 8883);
             addEmoteForEvent(Event_OnDied, 8884);            // not sure
             setCanEnterCombat(false);
@@ -600,7 +596,7 @@ class PhoenixAI : public CreatureAIScript
         PhoenixAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
             RegisterAIUpdateEvent(1000);
-            Unit* pTarget = GetBestPlayerTarget();
+            Unit* pTarget = getBestPlayerTarget();
             if (pTarget != NULL)
             {
                 getCreature()->GetAIInterface()->AttackReaction(pTarget, 500, 0);
@@ -611,11 +607,10 @@ class PhoenixAI : public CreatureAIScript
 
         void OnTargetDied(Unit* /*mTarget*/) override
         {
-            Unit* pTarget = GetBestPlayerTarget(TargetFilter_Closest);
+            Unit* pTarget = getBestPlayerTarget(TargetFilter_Closest);
             if (pTarget != NULL)
             {
                 getCreature()->GetAIInterface()->AttackReaction(pTarget, 500);
-                
             }
             else
             {
@@ -676,7 +671,7 @@ class PhoenixEggAI : public CreatureAIScript
         }
 };
 
-//-------------------Kael'thas Weapons------------------//
+
 
 const uint32 NETHERSTRAND_LONGBOW = 21268;
 const uint32 DEVASTATION = 21269;
@@ -693,7 +688,7 @@ class WeaponsAI : public CreatureAIScript
         {
             getCreature()->m_noRespawn = true;
 
-            Unit* pTarget = GetBestPlayerTarget();
+            Unit* pTarget = getBestPlayerTarget();
             if (pTarget != NULL)
             {
                 getCreature()->GetAIInterface()->AttackReaction(pTarget, 200, 0);
@@ -702,7 +697,7 @@ class WeaponsAI : public CreatureAIScript
 
         void OnCombatStop(Unit* /*mTarget*/) override
         {
-            Unit* pTarget = GetBestPlayerTarget();
+            Unit* pTarget = getBestPlayerTarget();
             if (pTarget != NULL)
             {
                 getCreature()->GetAIInterface()->AttackReaction(pTarget, 500);
@@ -795,9 +790,6 @@ enum AdvisorPhase
     PHASE_ADV_FIGHT,
 };
 
-void SpellFunc_KaelThasArcaneDisruption(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
-void SpellFunc_KaelThasFlameStrike(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
-
 class KaelThasAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(KaelThasAI);
@@ -813,29 +805,38 @@ class KaelThasAI : public CreatureAIScript
             setRooted(false);
 
             // Other spells
-            mSummonWeapons = AddSpell(KAELTHAS_SUMMON_WEAPONS, Target_Self, 0, 3, 0);
+            mSummonWeapons = addAISpell(KAELTHAS_SUMMON_WEAPONS, 0.0f, TARGET_SELF, 3, 0);
             mSummonWeapons->addEmote("As you see, I have many weapons in my arsenal...", CHAT_MSG_MONSTER_YELL, 11261);
 
             // Common spells
-            mArcaneDisruption = AddSpell(KAELTHAS_ARCANE_DISRUPTION, Target_Self, 0, 0, 0);
-            mArcaneDisruptionFunc = AddSpellFunc(&SpellFunc_KaelThasArcaneDisruption, Target_RandomPlayerNotCurrent, 0, 0, 0);
-            mShockBarrier = AddSpell(KAELTHAS_SHOCK_BARRIER, Target_Self, 0, 0, 60);
-            AddPhaseSpell(7, AddSpell(KAELTHAS_FIREBALL, Target_Current, 10, 2, 15));
-            AddPhaseSpell(8, AddSpell(KAELTHAS_FIREBALL, Target_Current, 10, 2, 15));
+            mArcaneDisruption = addAISpell(KAELTHAS_ARCANE_DISRUPTION, 0.0f, TARGET_SELF);
+
+            //mArcaneDisruptionFunc = AddSpellFunc(&SpellFunc_KaelThasArcaneDisruption, TARGET_RANDOM_SINGLE, 0, 0, 0);
+
+            mShockBarrier = addAISpell(KAELTHAS_SHOCK_BARRIER, 0.0f, TARGET_SELF, 0, 60);
+
+            auto fireball = addAISpell(KAELTHAS_FIREBALL, 10.0f, TARGET_ATTACKING, 2, 15);
+            fireball->setAvailableForScriptPhase({ 7, 8 });
 
             // 1st phase
-            mPyroblast = AddSpell(KAELTHAS_PYROBLAST, Target_Current, 0, 4, 0);
-            SpellDesc* mMindControl = AddPhaseSpell(7, AddSpell(KAELTHAS_MIND_CONTROL, Target_Self, 100, 0, 30));
+            mPyroblast = addAISpell(KAELTHAS_PYROBLAST, 0.0f, TARGET_ATTACKING, 4, 0);
+
+            auto mMindControl = addAISpell(KAELTHAS_MIND_CONTROL, 100.0f, TARGET_SELF, 0, 30);
+            mMindControl->setAvailableForScriptPhase({ 7 });
             mMindControl->addEmote("Obey me.", CHAT_MSG_MONSTER_YELL, 11268);
             mMindControl->addEmote("Bow to my will.", CHAT_MSG_MONSTER_YELL, 11269);
-            mFlameStrike = AddSpell(KAELTHAS_FLAME_STRIKE_SUMMON, Target_RandomPlayerNotCurrent, 0, 0, 0);
-            mFlameStrikeFunc = AddSpellFunc(&SpellFunc_KaelThasFlameStrike, Target_RandomPlayerNotCurrent, 0, 0, 0);
-            mPhoenix = AddSpell(KAELTHAS_PHOENIX, Target_Self, 0, 0, 0);
+
+            mFlameStrike = addAISpell(KAELTHAS_FLAME_STRIKE_SUMMON, 0.0f, TARGET_RANDOM_SINGLE);
+
+            //mFlameStrikeFunc = AddSpellFunc(&SpellFunc_KaelThasFlameStrike, TARGET_RANDOM_SINGLE, 0, 0, 0);
+
+            mPhoenix = addAISpell(KAELTHAS_PHOENIX, 0.0f, TARGET_SELF);
             mPhoenix->addEmote("Anara'nel belore!", CHAT_MSG_MONSTER_YELL, 11267);
             mPhoenix->addEmote("By the power of the sun!", CHAT_MSG_MONSTER_YELL, 11266);
 
             // After powering up + Nether Vapor + Additional spells
-            mNetherBeam = AddPhaseSpell(8, AddSpell(KAELTHAS_NETHER_BEAM, Target_RandomPlayer, 0, 0, 0));
+            mNetherBeam = addAISpell(KAELTHAS_NETHER_BEAM, 0.0f, TARGET_RANDOM_SINGLE);
+            mNetherBeam->setAvailableForScriptPhase({ 8 });
 
             addEmoteForEvent(Event_OnCombatStart, 8885);
             addEmoteForEvent(Event_OnTargetDied, 8886);
@@ -944,7 +945,7 @@ class KaelThasAI : public CreatureAIScript
             pCreature->GetAIInterface()->SetAllowedToEnterCombat(true);
             pCreature->setUInt64Value(UNIT_FIELD_FLAGS, 0);
 
-            Unit* pTarget = GetBestPlayerTarget();
+            Unit* pTarget = getBestPlayerTarget();
             if (pTarget != NULL)
             {
                 pCreature->GetAIInterface()->AttackReaction(pTarget, 200, 0);
@@ -1009,7 +1010,7 @@ class KaelThasAI : public CreatureAIScript
             {
                 if (mEventTimer == -1)
                 {
-                    CastSpellNowNoScheduling(mSummonWeapons);
+                    _castAISpell(mSummonWeapons);
                     SetAIUpdateFreq(3000);
                     mEventTimer = -2;
                     return;
@@ -1050,10 +1051,6 @@ class KaelThasAI : public CreatureAIScript
                         {
                             pCreature->GetAIInterface()->SetAllowedToEnterCombat(true);
                             pCreature->setUInt64Value(UNIT_FIELD_FLAGS, 0);
-                            if (pCreature->GetScript() != nullptr)
-                            {
-                                static_cast< CreatureAIScript* >(pCreature->GetScript())->AggroNearestUnit(200);
-                            }
                         }
                     }
 
@@ -1099,10 +1096,10 @@ class KaelThasAI : public CreatureAIScript
                     }
                     if (_isTimerFinished(mShockBarrierTimer))
                     {
-                        CastSpellNowNoScheduling(mShockBarrier);
+                        _castAISpell(mShockBarrier);
                         _resetTimer(mShockBarrierTimer, 70000);
                     }
-                    else if (_isTimerFinished(mArcaneDisruptionTimer))
+                    /*else if (_isTimerFinished(mArcaneDisruptionTimer))
                     {
                         CastSpellNowNoScheduling(mArcaneDisruptionFunc);
                         _resetTimer(mArcaneDisruptionTimer, 30000);
@@ -1110,18 +1107,18 @@ class KaelThasAI : public CreatureAIScript
                     else if (_isTimerFinished(mFlameStrikeTimer))
                     {
                         CastSpellNowNoScheduling(mFlameStrikeFunc);
-                    }
+                    }*/
                 }
                 if (getCreature()->HasAura(KAELTHAS_SHOCK_BARRIER))
                 {
-                    CastSpellNowNoScheduling(mPyroblast);
+                    _castAISpell(mPyroblast);
                     setAIAgent(AGENT_SPELL);
                     setRooted(true);
                 }
                 else if (_isTimerFinished(mPhoenixTimer))        // it spawns on caster's place, but should in 20y from him
                 {
                     // also it seems to not work (not always)
-                    CastSpell(mPhoenix);
+                    _castAISpell(mPhoenix);
                     _removeTimer(mPhoenixTimer);
                 }
 
@@ -1131,18 +1128,16 @@ class KaelThasAI : public CreatureAIScript
 
         Unit* GetRandomPlayer()
         {
-            return GetBestPlayerTarget(TargetFilter_NotCurrent);
+            return getBestPlayerTarget(TargetFilter_NotCurrent);
         }
 
-        SpellDesc* mSummonWeapons;
-        SpellDesc* mArcaneDisruption;
-        SpellDesc* mArcaneDisruptionFunc;
-        SpellDesc* mShockBarrier;
-        SpellDesc* mPyroblast;
-        SpellDesc* mFlameStrike;
-        SpellDesc* mFlameStrikeFunc;
-        SpellDesc* mPhoenix;
-        SpellDesc* mNetherBeam;
+        CreatureAISpells* mSummonWeapons;
+        CreatureAISpells* mArcaneDisruption;
+        CreatureAISpells* mShockBarrier;
+        CreatureAISpells* mPyroblast;
+        CreatureAISpells* mFlameStrike;
+        CreatureAISpells* mPhoenix;
+        CreatureAISpells* mNetherBeam;
 
         AdvisorPhase mAdvisorPhase;
         int32 mArcaneDisruptionTimer;
@@ -1153,47 +1148,6 @@ class KaelThasAI : public CreatureAIScript
 
         std::vector<LocationExtra> mAdvCoords;
 };
-
-void SpellFunc_KaelThasArcaneDisruption(SpellDesc* /*pThis*/, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType /*pType*/)
-{
-    KaelThasAI* KaelThas = (pCreatureAI) ? static_cast< KaelThasAI* >(pCreatureAI) : NULL;
-    if (KaelThas != NULL)
-    {
-        KaelThas->CastSpellNowNoScheduling(KaelThas->mArcaneDisruption);
-        Unit* pMainTarget = KaelThas->getCreature()->GetAIInterface()->getNextTarget();
-        if (pTarget != NULL && pMainTarget != NULL)
-        {
-            KaelThas->getCreature()->GetAIInterface()->setNextTarget(pTarget);
-            KaelThas->getCreature()->GetAIInterface()->AttackReaction(pTarget, 1000);
-            KaelThas->getCreature()->GetAIInterface()->RemoveThreatByPtr(pMainTarget);
-        }
-    }
-}
-
-void SpellFunc_KaelThasFlameStrike(SpellDesc* /*pThis*/, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType /*pType*/)
-{
-    KaelThasAI* KaelThas = (pCreatureAI) ? static_cast< KaelThasAI* >(pCreatureAI) : NULL;
-    if (KaelThas != NULL)
-    {
-        if (pTarget != NULL)
-        {
-            KaelThas->getCreature()->CastSpell(pTarget, KAELTHAS_FLAME_STRIKE_SUMMON, true);
-            Creature* pFriendlyTrigger = KaelThas->getNearestCreature(CN_FLAME_STRIKE_TRIGGER);
-            if (pFriendlyTrigger != NULL && pFriendlyTrigger->IsPet())
-            {
-                pFriendlyTrigger->Despawn(0, 0);
-            }
-
-            KaelThas->spawnCreature(CN_FLAME_STRIKE_TRIGGER, pTarget->GetPosition());
-            uint32 TimerAdd = (3 + RandomUInt(5)) * 1000;
-            KaelThas->mPhoenixTimer = KaelThas->_addTimer(TimerAdd);
-            KaelThas->_resetTimer(KaelThas->mFlameStrikeTimer, TimerAdd + 40000);
-            return;
-        }
-
-        KaelThas->_resetTimer(KaelThas->mFlameStrikeTimer, 40000);
-    }
-}
 
 void SetupTheEye(ScriptMgr* mgr)
 {

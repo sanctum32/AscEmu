@@ -90,8 +90,7 @@ class OnyxiaAI : public CreatureAIScript
         {
             getCreature()->GetAIInterface()->setWaypointScriptType(Movement::WP_MOVEMENT_SCRIPT_NONE);
             getCreature()->GetAIInterface()->setWayPointToMove(0);
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
+
             getCreature()->GetAIInterface()->SetAllowedToEnterCombat(true);
             getCreature()->GetAIInterface()->unsetSplineFlying();
             getCreature()->GetAIInterface()->m_canMove = true;
@@ -213,7 +212,7 @@ class OnyxiaAI : public CreatureAIScript
 
                 return;
             }
-            uint32 val = RandomUInt(1000);
+            uint32 val = Util::getRandomUInt(1000);
             SpellCast(val);
         }
 
@@ -246,7 +245,7 @@ class OnyxiaAI : public CreatureAIScript
             }
             if (!m_fCastCount)
             {
-                uint32 val = RandomUInt(1250);
+                uint32 val = Util::getRandomUInt(1250);
                 if (val < 250)//Move left
                 {
                     m_currentWP++;
@@ -317,7 +316,7 @@ class OnyxiaAI : public CreatureAIScript
                 m_aoeFearCooldown = 30;
                 return;
             }
-            uint32 val = RandomUInt(1000);
+            uint32 val = Util::getRandomUInt(1000);
             SpellCast(val);
             m_whelpCooldown--;
             m_aoeFearCooldown--;

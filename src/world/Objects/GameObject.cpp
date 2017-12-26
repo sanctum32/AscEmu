@@ -377,9 +377,9 @@ void GameObject::OnPushToWorld()
     }
 }
 
-void GameObject::OnRemoveInRangeObject(Object* pObj)
+void GameObject::onRemoveInRangeObject(Object* pObj)
 {
-    Object::OnRemoveInRangeObject(pObj);
+    Object::onRemoveInRangeObject(pObj);
     if (m_summonedGo && m_summoner == pObj)
     {
         for (uint8 i = 0; i < 4; i++)
@@ -810,13 +810,13 @@ void GameObject_Trap::Update(unsigned long time_passed)
         if (targetupdatetimer != 0)
             return;
 
-        for (std::set<Object*>::iterator itr = m_objectsInRange.begin(); itr != m_objectsInRange.end(); ++itr)
+        for (const auto& itr : getInRangeObjectsSet())
         {
             float dist;
 
-            Object* o = *itr;
+            Object* o = itr;
 
-            if (!o->IsUnit())
+            if (!o || !o->IsUnit())
                 continue;
 
             if ((m_summoner != NULL) && (o->GetGUID() == m_summoner->GetGUID()))
@@ -975,7 +975,7 @@ void GameObject_FishingNode::OnPushToWorld()
     if (lootmgr.IsFishable(zone))
     {
         uint32 seconds[] = { 0, 4, 10, 14 };
-        uint32 rnd = RandomUInt(3);
+        uint32 rnd = Util::getRandomUInt(3);
         sEventMgr.AddEvent(this, &GameObject_FishingNode::EventFishHooked, EVENT_GAMEOBJECT_FISH_HOOKED, seconds[rnd] * 1000, 1, 0);
 
     }
@@ -1098,13 +1098,13 @@ void GameObject_FishingHole::CatchFish()
     ASSERT(usage_remaining > 0);
     usage_remaining--;
     if (usage_remaining == 0)
-        sEventMgr.AddEvent(static_cast<GameObject*>(this), &GameObject::Despawn, uint32(0), (1800000 + RandomUInt(3600000)), EVENT_GAMEOBJECT_EXPIRE, 10000, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT); // respawn in 30 - 90 minutes
+        sEventMgr.AddEvent(static_cast<GameObject*>(this), &GameObject::Despawn, uint32(0), (1800000 + Util::getRandomUInt(3600000)), EVENT_GAMEOBJECT_EXPIRE, 10000, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT); // respawn in 30 - 90 minutes
 }
 
 void GameObject_FishingHole::CalcFishRemaining(bool force)
 {
     if (force || (usage_remaining == 0))
-        usage_remaining = gameobject_properties->fishinghole.min_success_opens + RandomUInt(gameobject_properties->fishinghole.max_success_opens - gameobject_properties->fishinghole.min_success_opens) - 1;
+        usage_remaining = gameobject_properties->fishinghole.min_success_opens + Util::getRandomUInt(gameobject_properties->fishinghole.max_success_opens - gameobject_properties->fishinghole.min_success_opens) - 1;
 }
 
 bool GameObject_FishingHole::HasLoot()

@@ -53,11 +53,8 @@ class ThekaAI : public CreatureAIScript
 
         void OnCombatStop(Unit* /*mTarget*/) override
         {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
             morphcheck = false;
             plaguecount = 0;
-            RemoveAIUpdateEvent();
         }
 
         void OnDied(Unit* /*mKiller*/) override
@@ -69,7 +66,7 @@ class ThekaAI : public CreatureAIScript
         void AIUpdate() override
         {
             plaguecount++;
-            randomplague = 16 + RandomUInt(3);
+            randomplague = 16 + Util::getRandomUInt(3);
             if (plaguecount >= randomplague && getCreature()->GetAIInterface()->getNextTarget())
             {
                 plaguecount = 0;
@@ -167,9 +164,6 @@ class AntusulAI : public CreatureAIScript
             spawns = spawns2 = attack = firstspawn = secondspawn = false;
 
             secondspawncount = 0;
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-            RemoveAIUpdateEvent();
             resettrigger();
             deletespawns();
         }

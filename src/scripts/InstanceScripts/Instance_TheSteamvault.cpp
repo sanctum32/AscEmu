@@ -26,15 +26,12 @@
 
 /////////////////////////////////////////////////////////////
 // Boss AIs
-/////////////////////////////////////////////////////////////
 
 class HydromancerThespiaAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(HydromancerThespiaAI);
         HydromancerThespiaAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto envelopingWinds = addAISpell(ENVELOPING_WINDS, 9.0f, TARGET_RANDOM_SINGLE, 0, 10, false, true);
             envelopingWinds->setAttackStopTimer(1000);
             envelopingWinds->setMinMaxDistance(0.0f, 35.0f);
@@ -54,15 +51,8 @@ class HydromancerThespiaAI : public CreatureAIScript
             addEmoteForEvent(Event_OnTargetDied, SAY_HYDROMACER_THESPIA_06);
             addEmoteForEvent(Event_OnDied, SAY_HYDROMACER_THESPIA_07);
         }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
 };
 
-//---- Steamrigger encounter ----//
 
 static Movement::Location SpawnCoords[] =
 {
@@ -71,7 +61,6 @@ static Movement::Location SpawnCoords[] =
     { -346.530273f, -147.167892f, -6.703687f, 0.010135f }
 };
 
-// Steamrigger MechanicAI
 // Should they really fight?
 class SteamriggerMechanicAI : public CreatureAIScript
 {
@@ -112,7 +101,6 @@ class SteamriggerMechanicAI : public CreatureAIScript
         }
 };
 
-
 // Must spawn 3 Steamrigger Mechanics when his health is on 75%, 50% and 25%
 class MekgineerSteamriggerAI : public CreatureAIScript
 {
@@ -121,8 +109,6 @@ class MekgineerSteamriggerAI : public CreatureAIScript
 
         MekgineerSteamriggerAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto shrinkRay = addAISpell(SUPER_SHRINK_RAY, 9.0f, TARGET_RANDOM_SINGLE, 0, 20, false, true);
             shrinkRay->setAttackStopTimer(1000);
             shrinkRay->setMinMaxDistance(0.0f, 40.0f);
@@ -173,9 +159,6 @@ class MekgineerSteamriggerAI : public CreatureAIScript
             }
 
             Gnomes.clear();
-
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 
         void AIUpdate() override
@@ -242,7 +225,6 @@ class MekgineerSteamriggerAI : public CreatureAIScript
         uint8 GnomeCounter;
 };
 
-//---- Warlord Kalitresh Encounter ----//
 
 static Movement::Location Distiller[] =
 {
@@ -262,7 +244,6 @@ static Movement::Location DistillerMoveTo[] =
     { -112.033188f, -517.945190f, 8.205022f, -0.949258f }
 };
 
-// Naga DistillerAI
 class NagaDistillerAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(NagaDistillerAI);
@@ -282,14 +263,11 @@ class NagaDistillerAI : public CreatureAIScript
         }
 };
 
-// Warlord Kalitresh AI
 class WarlordKalitreshAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(WarlordKalitreshAI);
         WarlordKalitreshAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto impale = addAISpell(IMPALE, 8.0f, TARGET_RANDOM_SINGLE, 0, 10, false, true);
             impale->setAttackStopTimer(1000);
             impale->setMinMaxDistance(0.0f, 40.0f);
@@ -320,7 +298,7 @@ class WarlordKalitreshAI : public CreatureAIScript
 
         void OnCombatStart(Unit* /*mTarget*/) override
         {
-            RagePhaseTimer = (uint32)time(NULL) + RandomUInt(15) + 10;
+            RagePhaseTimer = (uint32)time(NULL) + Util::getRandomUInt(15) + 10;
             DistillerNumber = 0;
             EnrageTimer = 0;
             RagePhase = 0;
@@ -341,8 +319,6 @@ class WarlordKalitreshAI : public CreatureAIScript
             getCreature()->GetAIInterface()->m_canMove = true;
             getCreature()->GetAIInterface()->ResetUnitToFollow();
             getCreature()->GetAIInterface()->SetFollowDistance(0.0f);
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
 
             if (getCreature()->getAuraWithId(37076))
                 getCreature()->RemoveAura(37076);
@@ -359,8 +335,6 @@ class WarlordKalitreshAI : public CreatureAIScript
                 pDistiller->GetAIInterface()->WipeTargetList();
                 pDistiller->GetAIInterface()->WipeHateList();
             }
-
-            RemoveAIUpdateEvent();
         }
 
         void AIUpdate() override
@@ -380,7 +354,7 @@ class WarlordKalitreshAI : public CreatureAIScript
                     getCreature()->GetAIInterface()->ResetUnitToFollow();
                     getCreature()->GetAIInterface()->SetFollowDistance(0.0f);
 
-                    RagePhaseTimer = t + RandomUInt(15) + 20;
+                    RagePhaseTimer = t + Util::getRandomUInt(15) + 20;
                     EnrageTimer = 0;
                     RagePhase = 0;
 
@@ -441,7 +415,7 @@ class WarlordKalitreshAI : public CreatureAIScript
                         getCreature()->GetAIInterface()->SetFollowDistance(0.0f);
                         getCreature()->CastSpell(getCreature(), 36453, true);
 
-                        RagePhaseTimer = t + RandomUInt(15) + 20;
+                        RagePhaseTimer = t + Util::getRandomUInt(15) + 20;
                         DistillerNumber = 0;
                         EnrageTimer = 0;
                         RagePhase = 0;

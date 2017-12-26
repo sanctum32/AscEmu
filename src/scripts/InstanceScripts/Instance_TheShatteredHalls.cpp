@@ -40,17 +40,9 @@ class FelOrcConvertAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(FelOrcConvertAI);
         FelOrcConvertAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             // not casted
             auto hemorrhage = addAISpell(SP_FEL_ORC_CONVERTER_HEMORRHAGE, 0.0f, TARGET_RANDOM_SINGLE, 0, 25, false, true);
             hemorrhage->setAttackStopTimer(1000);
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 };
 
@@ -60,8 +52,6 @@ class ShatteredHandHeathenAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(ShatteredHandHeathenAI);
         ShatteredHandHeathenAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             // not casted
             auto bloodthirst = addAISpell(SP_HAND_HEATHEN_BLOODTHIRST, 0.0f, TARGET_ATTACKING, 0, 25, false, true);
             bloodthirst->setAttackStopTimer(1000);
@@ -75,12 +65,6 @@ class ShatteredHandHeathenAI : public CreatureAIScript
             getCreature()->CastSpell(getCreature(), enrage->mSpellInfo, enrage->mIsTriggered);
         }
 
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
-
     protected:
 
         CreatureAISpells* enrage;
@@ -91,8 +75,6 @@ class ShatteredHandLegionnaireAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(ShatteredHandLegionnaireAI);
         ShatteredHandLegionnaireAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             // not casted
             auraOfDiscipline = addAISpell(SP_HAND_LEGI_AURA_OF_DISCIPLINE, 0.0f, TARGET_VARIOUS, 0, 0, false, true);
             auraOfDiscipline->setAttackStopTimer(1000);
@@ -109,12 +91,6 @@ class ShatteredHandLegionnaireAI : public CreatureAIScript
             getCreature()->CastSpell(getCreature(), auraOfDiscipline->mSpellInfo, auraOfDiscipline->mIsTriggered);
         }
 
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
-
     protected:
 
         CreatureAISpells* auraOfDiscipline;
@@ -125,8 +101,6 @@ class ShatteredHandSavageAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(ShatteredHandSavageAI);
         ShatteredHandSavageAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             // not casted
             auto sliceAndDice = addAISpell(SP_HAND_SAVAGE_SLICE_AND_DICE, 0.0f, TARGET_SELF, 0, 35, false, true);
             sliceAndDice->setAttackStopTimer(1000);
@@ -143,12 +117,6 @@ class ShatteredHandSavageAI : public CreatureAIScript
             getCreature()->CastSpell(getCreature(), enrage->mSpellInfo, enrage->mIsTriggered);
         }
 
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
-
     protected:
 
         CreatureAISpells* enrage;
@@ -159,8 +127,6 @@ class ShadowmoonAcolyteAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(ShadowmoonAcolyteAI);
         ShadowmoonAcolyteAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto heal = addAISpell(SP_SHADOWMOON_ACOLYTE_HEAL, 5.0f, TARGET_SELF, 0, 35, false, true);
             heal->setAttackStopTimer(1000);
 
@@ -173,12 +139,6 @@ class ShadowmoonAcolyteAI : public CreatureAIScript
             auto resistShadow = addAISpell(SP_SHADOWMOON_ACOLYTE_RESIST_SHADOW, 5.0f, TARGET_SELF, 0, 65, false, true);
             resistShadow->setAttackStopTimer(1000);
         }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
 };
 
 class ShatteredHandAssassinAI : public CreatureAIScript
@@ -186,8 +146,6 @@ class ShatteredHandAssassinAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(ShatteredHandAssassinAI);
         ShatteredHandAssassinAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto sap = addAISpell(SP_SHATT_HAND_ASSASSIN_SAP, 5.0f, TARGET_ATTACKING, 0, 0, false, true);
             sap->setAttackStopTimer(1000);
 
@@ -203,8 +161,6 @@ class ShatteredHandAssassinAI : public CreatureAIScript
         void OnCombatStop(Unit* /*mTarget*/) override
         {
             getCreature()->CastSpell(getCreature(), stealth->mSpellInfo, stealth->mIsTriggered);
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 
     protected:
@@ -217,17 +173,9 @@ class ShatteredHandGladiatorAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(ShatteredHandGladiatorAI);
         ShatteredHandGladiatorAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             // not casted
             auto sap = addAISpell(SP_SHATT_HAND_GLADI_MORTAL_STRIKE, 0.0f, TARGET_ATTACKING, 0, 15, false, true);
             sap->setAttackStopTimer(1000);
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 };
 
@@ -237,17 +185,9 @@ class ShatteredHandHoundmasterAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(ShatteredHandHoundmasterAI);
         ShatteredHandHoundmasterAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             // not casted
             auto sap = addAISpell(SP_SHATT_HAND_HOUNDMASTER_VOLLEY, 0.0f, TARGET_DESTINATION, 0, 30);
             sap->setAttackStopTimer(1000);
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 };
 
@@ -256,8 +196,6 @@ class ShatteredHandReaverAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(ShatteredHandReaverAI);
         ShatteredHandReaverAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto cleave = addAISpell(SP_SHATT_HAND_REAVER_CLEAVE, 7.0f, TARGET_VARIOUS, 0, 10, false, true);
             cleave->setAttackStopTimer(1000);
 
@@ -267,12 +205,6 @@ class ShatteredHandReaverAI : public CreatureAIScript
             auto enrage = addAISpell(SP_SHATT_HAND_REAVER_ENRAGE, 5.0f, TARGET_SELF, 0, 70, false, true);
             enrage->setAttackStopTimer(1000);
         }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
 };
 
 class ShatteredHandSentryAI : public CreatureAIScript
@@ -280,19 +212,11 @@ class ShatteredHandSentryAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(ShatteredHandSentryAI);
         ShatteredHandSentryAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto hamstering = addAISpell(SP_SHATT_HAND_SENTRY_HAMSTERING, 7.0f, TARGET_ATTACKING, 0, 20, false, true);
             hamstering->setAttackStopTimer(1000);
 
             auto charge = addAISpell(SP_SHATT_HAND_SENTRY_CHARGE, 5.0f, TARGET_ATTACKING, 0, 0, false, true);
             charge->setAttackStopTimer(1000);
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 };
 
@@ -301,8 +225,6 @@ class ShatteredHandSharpshooterAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(ShatteredHandSharpshooterAI);
         ShatteredHandSharpshooterAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto scatterShot = addAISpell(SP_SHATT_HAND_SHARP_SCATTER_SHOT, 7.0f, TARGET_ATTACKING, 0, 20, false, true);
             scatterShot->setAttackStopTimer(1000);
 
@@ -315,12 +237,6 @@ class ShatteredHandSharpshooterAI : public CreatureAIScript
             auto incendiaryShot = addAISpell(SP_SHATT_HAND_SHARP_INCENDIARY_SHOT, 7.0f, TARGET_ATTACKING, 0, 35, false, true);
             incendiaryShot->setAttackStopTimer(1000);
         }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
 };
 
 // Self Visual - Sleep Until Cancelled (DND) 16093 ?
@@ -329,8 +245,6 @@ class ShatteredHandBrawlerAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(ShatteredHandBrawlerAI);
         ShatteredHandBrawlerAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto shatteredHand = addAISpell(SP_CURSE_OF_THE_SHATTERED_HAND, 7.0f, TARGET_ATTACKING, 0, 35, false, true);
             shatteredHand->setAttackStopTimer(1000);
 
@@ -340,17 +254,9 @@ class ShatteredHandBrawlerAI : public CreatureAIScript
             auto brawlerTrash = addAISpell(SP_SHATT_HAND_BRAWLER_TRASH, 7.0f, TARGET_SELF, 0, 20, false, true);
             brawlerTrash->setAttackStopTimer(1000);
         }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
 };
 
-
 //Grand Warlock Nethekurse Encounter
-
 static Movement::Location Darkcasters[] =
 {
     { 160.563004f, 272.989014f, -13.189000f },
@@ -358,7 +264,6 @@ static Movement::Location Darkcasters[] =
     { 194.951004f, 265.657990f, -13.181700f }
 };
 
-// ShadowmoonDarkcasterAI
 class ShadowmoonDarkcasterAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(ShadowmoonDarkcasterAI);
@@ -379,7 +284,7 @@ class ShadowmoonDarkcasterAI : public CreatureAIScript
             GrandWarlock = getNearestCreature(178.811996f, 292.377991f, -8.190210f, CN_GRAND_WARLOCK_NETHEKURSE);
             if (GrandWarlock)
             {
-                switch (RandomUInt(3))        // must be verified + emotes?
+                switch (Util::getRandomUInt(3))        // must be verified + emotes?
                 {
                     case 0:
                         GrandWarlock->SendScriptTextChatMessage(SAY_GRAND_WARLOCK_02);
@@ -395,12 +300,6 @@ class ShadowmoonDarkcasterAI : public CreatureAIScript
                         break;
                 }
             }
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 
         void OnDied(Creature* /*mKiller*/)
@@ -426,7 +325,7 @@ class ShadowmoonDarkcasterAI : public CreatureAIScript
                     GrandWarlock->GetAIInterface()->HandleEvent(EVENT_ENTERCOMBAT, GrandWarlock, 0);
                 }
 
-                switch (RandomUInt(2))    // those need to be verified too
+                switch (Util::getRandomUInt(2))    // those need to be verified too
                 {
                     case 0:
                         GrandWarlock->SendScriptTextChatMessage(SAY_GRAND_WARLOCK_06);
@@ -440,7 +339,6 @@ class ShadowmoonDarkcasterAI : public CreatureAIScript
                 }
             }
         }
-
 };
 
 
@@ -450,8 +348,6 @@ class GrandWarlockNethekurseAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(GrandWarlockNethekurseAI);
         GrandWarlockNethekurseAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto deathCoil = addAISpell(SP_GRAND_WARLOCK_NETH_DEATH_COIL, 10.0f, TARGET_ATTACKING, 0, 15, false, true);
             deathCoil->setAttackStopTimer(1000);
             deathCoil->setMinMaxDistance(0.0f, 40.0f);
@@ -463,12 +359,6 @@ class GrandWarlockNethekurseAI : public CreatureAIScript
             addEmoteForEvent(Event_OnTargetDied, SAY_GRAND_WARLOCK_17);
             addEmoteForEvent(Event_OnDied, SAY_GRAND_WARLOCK_18);
         }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
 };
 
 
@@ -478,32 +368,20 @@ class BloodGuardPorungAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(BloodGuardPorungAI);
         BloodGuardPorungAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto cleave = addAISpell(SP_BLOOD_GUARD_PORUNG_CLEAVE, 10.0f, TARGET_VARIOUS, 0, 15, false, true);
             cleave->setAttackStopTimer(1000);
         }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
-        }
 };
-
-// WarbringerOmroggAI
-// Maybe timer for 'afterspeech' should be added too?
-void SpellFunc_Warbringer_BurningMaul(SpellDesc* pThis, CreatureAIScript* pCreatureAI, Unit* pTarget, TargetType pType);
 
 class WarbringerOmroggAI : public CreatureAIScript
 {
         ADD_CREATURE_FACTORY_FUNCTION(WarbringerOmroggAI);
         WarbringerOmroggAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            AddSpell(SP_WARBRINGER_OMROGG_THUNDERCLAP, Target_Self, 25, 1, 12);
-            AddSpell(SP_WARBRINGER_OMROGG_FEAR, Target_Self, 7, 0, 20);
-            AddSpellFunc(&SpellFunc_Warbringer_BurningMaul, Target_Self, 100, 0, 30);
-            mBlastWave = AddSpell(SP_WARBRINGER_OMROGG_BLAST_WAVE, Target_Self, 0, 1, 0);
+            addAISpell(SP_WARBRINGER_OMROGG_THUNDERCLAP, 25.0f, TARGET_SELF, 1, 12);
+            addAISpell(SP_WARBRINGER_OMROGG_FEAR, 7.0f, TARGET_SELF, 0, 20);
+
+            mBlastWave = addAISpell(SP_WARBRINGER_OMROGG_BLAST_WAVE, 100.0f, TARGET_SELF, 1, 15);
             mBlastWaveTimer = mSpeechTimer = mSpeechId = mAggroShiftTimer = INVALIDATE_TIMER;
             mRightHead = nullptr;
             mLeftHead = nullptr;
@@ -511,7 +389,7 @@ class WarbringerOmroggAI : public CreatureAIScript
 
         void OnCombatStart(Unit* /*pTarget*/) override
         {
-            mAggroShiftTimer = _addTimer(20000 + RandomUInt(10) * 1000);
+            mAggroShiftTimer = _addTimer(20000 + Util::getRandomUInt(10) * 1000);
             mBlastWaveTimer = mSpeechTimer = mSpeechId = INVALIDATE_TIMER;
 
             mLeftHead = spawnCreatureAndGetAIScript(19523, getCreature()->GetPositionX(), getCreature()->GetPositionY(), getCreature()->GetPositionZ(), getCreature()->GetOrientation());
@@ -523,7 +401,7 @@ class WarbringerOmroggAI : public CreatureAIScript
             mLeftHead->getCreature()->GetAIInterface()->SetUnitToFollow(getCreature());
             mRightHead->getCreature()->GetAIInterface()->SetUnitToFollow(getCreature());
 
-            switch (RandomUInt(2))
+            switch (Util::getRandomUInt(2))
             {
                 case 0:
                     sendChatMessage(CHAT_MSG_MONSTER_YELL, 10308, "If you nice me let you live.");
@@ -566,7 +444,7 @@ class WarbringerOmroggAI : public CreatureAIScript
             if (mLeftHead == nullptr || mRightHead == nullptr || mSpeechTimer != INVALIDATE_TIMER)
                 return;
 
-            switch (RandomUInt(1))
+            switch (Util::getRandomUInt(1))
             {
                 case 0:
                     sendChatMessage(CHAT_MSG_MONSTER_YELL, 10320, "I'm tired. You kill the next one!");
@@ -640,20 +518,20 @@ class WarbringerOmroggAI : public CreatureAIScript
             }
             else if (_isTimerFinished(mAggroShiftTimer))
             {
-                _resetTimer(mAggroShiftTimer, 20000 + RandomUInt(10) * 1000);
+                _resetTimer(mAggroShiftTimer, 20000 + Util::getRandomUInt(10) * 1000);
                 ShiftAggro();
             }
 
             if (mBlastWaveTimer != INVALIDATE_TIMER && _isTimerFinished(mBlastWaveTimer))
             {
                 _removeTimer(mBlastWaveTimer);
-                CastSpell(mBlastWave);
+                _castAISpell(mBlastWave);
             }
         }
 
         void ShiftAggro()
         {
-            Unit* pTarget = GetBestPlayerTarget(TargetFilter_NotCurrent);
+            Unit* pTarget = getBestPlayerTarget(TargetFilter_NotCurrent);
             if (pTarget != nullptr)
             {
                 _clearHateList();
@@ -663,7 +541,7 @@ class WarbringerOmroggAI : public CreatureAIScript
                 if (mLeftHead == nullptr || mRightHead == nullptr || mSpeechTimer != INVALIDATE_TIMER)
                     return;
 
-                switch (RandomUInt(6))
+                switch (Util::getRandomUInt(6))
                 {
                     case 0:
                         mLeftHead->sendChatMessage(CHAT_MSG_MONSTER_YELL, 10301, "We kill his friend!");
@@ -704,18 +582,8 @@ class WarbringerOmroggAI : public CreatureAIScript
         uint32 mBlastWaveTimer;
         uint32 mSpeechTimer;
         int32 mSpeechId;
-        SpellDesc* mBlastWave;
+        CreatureAISpells* mBlastWave;
 };
-
-void SpellFunc_Warbringer_BurningMaul(SpellDesc* /*pThis*/, CreatureAIScript* pCreatureAI, Unit* /*pTarget*/, TargetType /*pType*/)
-{
-    WarbringerOmroggAI* Warbringer = (pCreatureAI) ? static_cast< WarbringerOmroggAI* >(pCreatureAI) : NULL;
-    if (Warbringer != nullptr)
-    {
-        Warbringer->CastSpell(Warbringer->mBlastWave);
-        Warbringer->mBlastWaveTimer = Warbringer->_addTimer(RandomUInt(5) + 5);
-    }
-}
 
 class HeadAI : public CreatureAIScript
 {
@@ -756,8 +624,6 @@ class WarchiefKargathBladefistAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(WarchiefKargathBladefistAI);
         WarchiefKargathBladefistAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            enableCreatureAISpellSystem = true;
-
             auto bladeDance = addAISpell(SP_WARCHIEF_LARAGATH_BLADE_DANCE, 10.0f, TARGET_VARIOUS, 0, 30, false, true);
             bladeDance->setAttackStopTimer(1500);
 
@@ -767,12 +633,6 @@ class WarchiefKargathBladefistAI : public CreatureAIScript
             addEmoteForEvent(Event_OnTargetDied, SAY_WARCHIEF_KARGATH_04);
             addEmoteForEvent(Event_OnTargetDied, SAY_WARCHIEF_KARGATH_05);
             addEmoteForEvent(Event_OnDied, SAY_WARCHIEF_KARGATH_06);
-        }
-
-        void OnCombatStop(Unit* /*mTarget*/) override
-        {
-            setAIAgent(AGENT_NULL);
-            getCreature()->GetAIInterface()->setAiState(AI_STATE_IDLE);
         }
 };
 

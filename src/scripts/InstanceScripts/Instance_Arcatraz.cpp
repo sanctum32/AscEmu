@@ -32,17 +32,17 @@ class ZerekethAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(ZerekethAI);
         ZerekethAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            AddSpell(SEED_OF_C, Target_RandomPlayer, 6.0f, 2, 20, 0, 100.0f);
+            auto seedOfC = addAISpell(SEED_OF_C, 6.0f, TARGET_RANDOM_SINGLE, 2, 20);
+            seedOfC->setMinMaxDistance(0.0f, 100.0f);
 
             SpeechTimer = 0;
             VoidTimer = 0;
 
             if (!_isHeroic())
-                AddSpell(SHADOW_NOVA, Target_Self, 15, 2, 15);
+                addAISpell(SHADOW_NOVA, 15.0f, TARGET_SELF, 2, 15);
             else
-                AddSpell(SHADOW_NOVA_H, Target_Self, 15, 2, 15);
+                addAISpell(SHADOW_NOVA_H, 15.0f, TARGET_SELF, 2, 15);
 
-            // new
             addEmoteForEvent(Event_OnCombatStart, 5496);     // Life energy to... consume.
             addEmoteForEvent(Event_OnTargetDied, 5497);      // This vessel is empty.
             addEmoteForEvent(Event_OnTargetDied, 5498);      // No... more... life.
@@ -51,24 +51,26 @@ class ZerekethAI : public CreatureAIScript
 
         void OnCombatStart(Unit* /*mTarget*/) override
         {
-            VoidTimer = _addTimer((RandomUInt(10) + 30) * 1000);
-            SpeechTimer = _addTimer((RandomUInt(10) + 40) * 1000);
+            VoidTimer = _addTimer((Util::getRandomUInt(10) + 30) * 1000);
+            SpeechTimer = _addTimer((Util::getRandomUInt(10) + 40) * 1000);
         }
 
         void OnDied(Unit* /*mKiller*/) override
         {
             //despawn voids
-            for (std::set<Object*>::iterator itr = getCreature()->GetInRangeSetBegin(); itr != getCreature()->GetInRangeSetEnd();)
+            for (const auto& itr : getCreature()->getInRangeObjectsSet())
             {
-                Object* obj = *itr;
-                ++itr;
-                if (obj->IsCreature())
+                if (itr)
                 {
-                    auto creature = static_cast<Creature*>(obj);
-
-                    if (creature->GetCreatureProperties()->Id == 21101 && creature->isAlive())
+                    Object* obj = itr;
+                    if (obj->IsCreature())
                     {
-                        creature->Despawn(0, 0);
+                        auto creature = static_cast<Creature*>(obj);
+
+                        if (creature->GetCreatureProperties()->Id == 21101 && creature->isAlive())
+                        {
+                            creature->Despawn(0, 0);
+                        }
                     }
                 }
             }
@@ -76,7 +78,7 @@ class ZerekethAI : public CreatureAIScript
 
         void Speech()
         {
-            switch (RandomUInt(1))
+            switch (Util::getRandomUInt(1))
             {
                 case 0:
                     sendDBChatMessage(SAY_ZEREKETH_01);
@@ -85,36 +87,35 @@ class ZerekethAI : public CreatureAIScript
                     sendDBChatMessage(SAY_ZEREKETH_02);
                     break;
             }
-            _resetTimer(SpeechTimer, (RandomUInt(10) + 40) * 1000);
+            _resetTimer(SpeechTimer, (Util::getRandomUInt(10) + 40) * 1000);
         }
 
         void VoidZoneArc()
         {
-            _resetTimer(VoidTimer, (RandomUInt(10) + 30) * 1000);
+            _resetTimer(VoidTimer, (Util::getRandomUInt(10) + 30) * 1000);
 
             std::vector<Player*> TargetTable;
-            std::set< Object* >::iterator Itr = getCreature()->GetInRangePlayerSetBegin();
-            for (; Itr != getCreature()->GetInRangePlayerSetEnd(); ++Itr)
+            for (const auto& itr : getCreature()->getInRangePlayersSet())
             {
-                Player* RandomTarget = NULL;
-                if (!(*Itr)->IsPlayer())
+                if (!itr || !itr->IsPlayer())
                     continue;
-                RandomTarget = static_cast< Player* >(*Itr);
-                if (RandomTarget && RandomTarget->isAlive() && isHostile(*Itr, getCreature()))
+
+                Player* RandomTarget = static_cast<Player*>(itr);
+                if (RandomTarget->isAlive() && isHostile(itr, getCreature()))
                     TargetTable.push_back(RandomTarget);
             }
 
             if (!TargetTable.size())
                 return;
 
-            auto random_index = RandomUInt(0, uint32(TargetTable.size() - 1));
+            auto random_index = Util::getRandomUInt(0, uint32(TargetTable.size() - 1));
             auto random_target = TargetTable[random_index];
 
             if (random_target == nullptr)
                 return;
 
-            float vzX = RandomUInt(5) * cos(RandomFloat(6.28f)) + random_target->GetPositionX();
-            float vzY = RandomUInt(5) * cos(RandomFloat(6.28f)) + random_target->GetPositionY();
+            float vzX = Util::getRandomUInt(5) * cos(Util::getRandomFloat(6.28f)) + random_target->GetPositionX();
+            float vzY = Util::getRandomUInt(5) * cos(Util::getRandomFloat(6.28f)) + random_target->GetPositionY();
             float vzZ = random_target->GetPositionZ();
 
             Creature* VoidZone = spawnCreature(CN_VOIDZONEARC, vzX, vzY, vzZ, 0.0f);
@@ -175,20 +176,19 @@ class DalliahTheDoomsayerAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(DalliahTheDoomsayerAI);
         DalliahTheDoomsayerAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            AddSpell(GIFT_OF_THE_DOOMSAYER, Target_Current, 8.0f, 0.0f, -1);
+            addAISpell(GIFT_OF_THE_DOOMSAYER, 8.0f, TARGET_ATTACKING);
 
-            SpellDesc* WhirlTemp = AddSpell(WHIRLWIND, Target_Self, 15.0f, 0.0f, -1);
-            WhirlTemp->addEmote("Reap the Whirlwind!", CHAT_MSG_MONSTER_YELL, 11089);
-            WhirlTemp->addEmote("I'll cut you to peices!", CHAT_MSG_MONSTER_YELL, 11090);
+            auto whirlTemp = addAISpell(WHIRLWIND, 15.0f, TARGET_SELF);
+            whirlTemp->addEmote("Reap the Whirlwind!", CHAT_MSG_MONSTER_YELL, 11089);
+            whirlTemp->addEmote("I'll cut you to peices!", CHAT_MSG_MONSTER_YELL, 11090);
 
-            SpellDesc* HealTemp = AddSpell(HEAL, Target_Self, 8.0f, 0, -1);
-            HealTemp->addEmote("That is much better.", CHAT_MSG_MONSTER_YELL, 11091);
-            HealTemp->addEmote("Ah, just what I needed.", CHAT_MSG_MONSTER_YELL, 11092);
+            auto healTemp = addAISpell(HEAL, 8.0f, TARGET_SELF);
+            healTemp->addEmote("That is much better.", CHAT_MSG_MONSTER_YELL, 11091);
+            healTemp->addEmote("Ah, just what I needed.", CHAT_MSG_MONSTER_YELL, 11092);
 
             if (_isHeroic())
-                AddSpell(SHADOW_WAVE, Target_Current, 8.0f, 0, -1);
+                addAISpell(SHADOW_WAVE, 8.0f, TARGET_ATTACKING);
 
-            // new
             addEmoteForEvent(Event_OnCombatStart, 7368);    // It is unwise to anger me!
             addEmoteForEvent(Event_OnTargetDied, 7369);     // Completely ineffective.  Just like someone else I know.
             addEmoteForEvent(Event_OnTargetDied, 7370);     // You chose the wrong opponent.
@@ -213,13 +213,12 @@ class WrathScryerSoccothratesAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(WrathScryerSoccothratesAI);
         WrathScryerSoccothratesAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            AddSpell(IMMOLATION, Target_Self, 10.0f, 0, -1);
-            AddSpell(FELFIRE_SHOCK, Target_Current, 8.0f, 0, -1);
-            AddSpell(FELFIRE_LINE_UP, Target_Self, 8.0f, 0, -1);
-            AddSpell(KNOCK_AWAY, Target_Destination, 6.0f, 0, -1);
-            AddSpell(CHARGE, Target_Current, 4.0f, 0, -1);
+            addAISpell(IMMOLATION, 10.0f, TARGET_SELF);
+            addAISpell(FELFIRE_SHOCK, 8.0f, TARGET_ATTACKING);
+            addAISpell(FELFIRE_LINE_UP, 8.0f, TARGET_SELF);
+            addAISpell(KNOCK_AWAY, 6.0f, TARGET_RANDOM_DESTINATION);
+            addAISpell(CHARGE, 4.0f, TARGET_ATTACKING);
 
-            // new
             addEmoteForEvent(Event_OnCombatStart, 7365);    // At last, a target for my frustrations!
             addEmoteForEvent(Event_OnTargetDied, 7364);     // Yes, that was quite satisfying.
             addEmoteForEvent(Event_OnTargetDied, 8753);     // Ha! Much better!
@@ -244,25 +243,24 @@ class HarbringerSkyrissAI : public CreatureAIScript
         ADD_CREATURE_FACTORY_FUNCTION(HarbringerSkyrissAI);
         HarbringerSkyrissAI(Creature* pCreature) : CreatureAIScript(pCreature)
         {
-            AddSpell(MIND_REND, Target_Current, 15.0f, 0, -1);
+            addAISpell(MIND_REND, 15.0f, TARGET_ATTACKING);
 
-            SpellDesc* Fear = AddSpell(FEAR, Target_Current, 8.0f, 0, -1);
-            Fear->addEmote("Flee in terror!", CHAT_MSG_MONSTER_YELL, 11129);
-            Fear->addEmote("I will show you horrors undreamed of.", CHAT_MSG_MONSTER_YELL, 11130);
+            auto fear = addAISpell(FEAR, 8.0f, TARGET_ATTACKING);
+            fear->addEmote("Flee in terror!", CHAT_MSG_MONSTER_YELL, 11129);
+            fear->addEmote("I will show you horrors undreamed of.", CHAT_MSG_MONSTER_YELL, 11130);
 
-            SpellDesc* Domination = AddSpell(DOMINATION, Target_Current, 6.0f, 0, -1);
-            Domination->addEmote("You will do my bidding, weakling.", CHAT_MSG_MONSTER_YELL, 11127);
-            Domination->addEmote("Your will is no longer your own.", CHAT_MSG_MONSTER_YELL, 11128);
+            auto domination = addAISpell(DOMINATION, 6.0f, TARGET_ATTACKING);
+            domination->addEmote("You will do my bidding, weakling.", CHAT_MSG_MONSTER_YELL, 11127);
+            domination->addEmote("Your will is no longer your own.", CHAT_MSG_MONSTER_YELL, 11128);
 
-            Illusion66 = AddSpell(SUMMON_ILLUSION_66, Target_Self, 0, 0, -1, 0, 0, false, "", CHAT_MSG_MONSTER_YELL, 11131);
-            Illusion66->mEnabled = false;
+            Illusion66 = addAISpell(SUMMON_ILLUSION_66, 0.0f, TARGET_SELF);
+            Illusion66->addEmote("", CHAT_MSG_MONSTER_YELL, 11131);
 
-            Illusion33 = AddSpell(SUMMON_ILLUSION_33, Target_Self, 0, 0, -1, 0, 0, false, "", CHAT_MSG_MONSTER_YELL, 11131);
-            Illusion33->mEnabled = false;
+            Illusion33 = addAISpell(SUMMON_ILLUSION_33, 0.0f, TARGET_SELF);
+            Illusion33->addEmote("", CHAT_MSG_MONSTER_YELL, 11131);
 
             IllusionCount = 0;
 
-            // new
             addEmoteForEvent(Event_OnCombatStart, 5034);    // Bear witness to the agent of your demise!
             addEmoteForEvent(Event_OnTargetDied, 5035);     // Your fate is written.
             addEmoteForEvent(Event_OnTargetDied, 5036);     // The chaos I have sown here is but a taste....
@@ -279,20 +277,20 @@ class HarbringerSkyrissAI : public CreatureAIScript
             if (_getHealthPercent() <= 66 && IllusionCount == 0)
             {
                 IllusionCount = 1;
-                CastSpell(Illusion66);
+                _castAISpell(Illusion66);
             }
             else if (_getHealthPercent() <= 33 && IllusionCount == 1)
             {
                 IllusionCount = 2;
-                CastSpell(Illusion33);
+                _castAISpell(Illusion33);
             }
         }
 
     protected:
 
         uint8 IllusionCount;
-        SpellDesc* Illusion66;
-        SpellDesc* Illusion33;
+        CreatureAISpells* Illusion66;
+        CreatureAISpells* Illusion33;
 };
 
 
@@ -318,7 +316,6 @@ class WardenMellicharAI : public CreatureAIScript
             Phasepart = 0;
             NPC_ID_Spawn = 0;
 
-            // new
             addEmoteForEvent(Event_OnCombatStart, SAY_MELLICHAR_01);
         }
 
@@ -360,7 +357,7 @@ class WardenMellicharAI : public CreatureAIScript
                     if (orb1)
                         orb1->SetState(GO_STATE_OPEN);
 
-                    switch (RandomUInt(1))
+                    switch (Util::getRandomUInt(1))
                     {
                         NPC_ID_Spawn = 0;
                         case 0:
@@ -448,7 +445,7 @@ class WardenMellicharAI : public CreatureAIScript
                     if (orb3)
                         orb3->SetState(GO_STATE_OPEN);
 
-                    switch (RandomUInt(1))
+                    switch (Util::getRandomUInt(1))
                     {
                         NPC_ID_Spawn = 0;
                         case 0:
@@ -505,7 +502,7 @@ class WardenMellicharAI : public CreatureAIScript
                     if (orb4)
                         orb4->SetState(GO_STATE_OPEN);
 
-                    switch (RandomUInt(1))
+                    switch (Util::getRandomUInt(1))
                     {
                         NPC_ID_Spawn = 0;
                         case 0:

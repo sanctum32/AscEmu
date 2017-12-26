@@ -1328,11 +1328,11 @@ void Aura::EventUpdateFriendAA(float r)
     if (u == nullptr)
         return;
 
-    for (std::set< Object* >::iterator itr = u->GetInRangeSetBegin(); itr != u->GetInRangeSetEnd(); ++itr)
+    for (const auto& itr : u->getInRangeObjectsSet())
     {
-        Object* o = *itr;
+        Object* o = itr;
 
-        if (!o->IsUnit())
+        if (!o || !o->IsUnit())
             continue;
 
         Unit* ou = static_cast<Unit*>(o);
@@ -1398,11 +1398,11 @@ void Aura::EventUpdateEnemyAA(float r)
     if (u == nullptr)
         return;
 
-    for (std::set< Object* >::iterator itr = u->GetInRangeSetBegin(); itr != u->GetInRangeSetEnd(); ++itr)
+    for (const auto& itr : u->getInRangeObjectsSet())
     {
-        Object* o = *itr;
+        Object* o = itr;
 
-        if (!o->IsUnit())
+        if (!o || !o->IsUnit())
             continue;
 
         Unit* ou = static_cast<Unit*>(o);
@@ -1701,7 +1701,7 @@ void Aura::SpellAuraModPossess(bool apply)
             m_target->SetCharmedByGUID(0);
             m_target->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED_CREATURE | UNIT_FLAG_PVP_ATTACKABLE);
             m_target->SetFaction(m_target->GetCharmTempVal());
-            m_target->UpdateOppFactionSet();
+            m_target->updateInRangeOppositeFactionSet();
         }
         else
         {
@@ -2083,7 +2083,7 @@ void Aura::SpellAuraModCharm(bool apply)
         m_target->addUnitStateFlag(UNIT_STATE_CHARM);
         m_target->SetCharmTempVal(m_target->GetFaction());
         m_target->SetFaction(caster->GetFaction());
-        m_target->UpdateOppFactionSet();
+        m_target->updateInRangeOppositeFactionSet();
         m_target->GetAIInterface()->Init(m_target, AI_SCRIPT_PET, Movement::WP_MOVEMENT_SCRIPT_NONE, caster);
         m_target->SetCharmedByGUID(caster->GetGUID());
         caster->SetCharmedUnitGUID(target->GetGUID());
@@ -2119,7 +2119,7 @@ void Aura::SpellAuraModCharm(bool apply)
         m_target->SetFaction(m_target->GetCharmTempVal());
         m_target->GetAIInterface()->WipeHateList();
         m_target->GetAIInterface()->WipeTargetList();
-        m_target->UpdateOppFactionSet();
+        m_target->updateInRangeOppositeFactionSet();
         m_target->GetAIInterface()->Init(m_target, AI_SCRIPT_AGRO, Movement::WP_MOVEMENT_SCRIPT_NONE);
         m_target->SetCharmedByGUID(0);
 
@@ -2467,11 +2467,11 @@ void Aura::EventPeriodicHeal(uint32 amount)
         std::vector<Unit*> target_threat;
         int count = 0;
         Creature* tmp_creature = nullptr;
-        for (std::set<Object*>::iterator itr = u_caster->GetInRangeSetBegin(); itr != u_caster->GetInRangeSetEnd(); ++itr)
+        for (const auto& itr : u_caster->getInRangeObjectsSet())
         {
-            if (!(*itr)->IsCreature())
+            if (!itr || !itr->IsCreature())
                 continue;
-            tmp_creature = static_cast<Creature*>(*itr);
+            tmp_creature = static_cast<Creature*>(itr);
             if (!tmp_creature->CombatStatus.IsInCombat() || (tmp_creature->GetAIInterface()->getThreatByPtr(u_caster) == 0 && tmp_creature->GetAIInterface()->getThreatByPtr(m_target) == 0))
                 continue;
 
@@ -2519,9 +2519,9 @@ void Aura::SpellAuraModAttackSpeed(bool apply)
     {
         if (apply)
         {
-            mod->fixed_amount[0] = m_target->GetModPUInt32Value(UNIT_FIELD_BASEATTACKTIME, mod->m_amount);
-            mod->fixed_amount[1] = m_target->GetModPUInt32Value(UNIT_FIELD_BASEATTACKTIME + 1, mod->m_amount);
-            mod->fixed_amount[2] = m_target->GetModPUInt32Value(UNIT_FIELD_RANGEDATTACKTIME, mod->m_amount);
+            mod->fixed_amount[0] = m_target->getPercentModUInt32Value(UNIT_FIELD_BASEATTACKTIME, mod->m_amount);
+            mod->fixed_amount[1] = m_target->getPercentModUInt32Value(UNIT_FIELD_BASEATTACKTIME + 1, mod->m_amount);
+            mod->fixed_amount[2] = m_target->getPercentModUInt32Value(UNIT_FIELD_RANGEDATTACKTIME, mod->m_amount);
             m_target->ModBaseAttackTime(MELEE, -mod->fixed_amount[0]);
             m_target->ModBaseAttackTime(OFFHAND, -mod->fixed_amount[1]);
             m_target->ModBaseAttackTime(RANGED, -mod->fixed_amount[2]);
@@ -2726,7 +2726,7 @@ void Aura::SpellAuraModDamageDone(bool apply)
 
     if (m_target->IsPlayer())
     {
-        uint32 index;
+        uint16_t index;
 
         if (mod->m_amount > 0)
         {
@@ -2756,11 +2756,11 @@ void Aura::SpellAuraModDamageDone(bool apply)
             index = PLAYER_FIELD_MOD_DAMAGE_DONE_NEG;
         }
 
-        for (uint32 x = 0; x < 7; x++)
+        for (uint16_t x = 0; x < 7; x++)
         {
             if (mod->m_miscValue & (((uint32)1) << x))
             {
-                m_target->ModUnsigned32Value(index + x, val);
+                m_target->modInt32Value(index + x, val);
             }
         }
     }
@@ -2963,13 +2963,12 @@ void Aura::SpellAuraModStealth(bool apply)
                 case 55964:
                 case 71400:
                 {
-                    for (Object::InRangeSet::iterator iter = m_target->GetInRangeSetBegin(); iter != m_target->GetInRangeSetEnd(); ++iter)
+                    for (const auto& iter : m_target->getInRangeObjectsSet())
                     {
-                        if ((*iter) == nullptr || !(*iter)->IsUnit())
+                        if (iter == nullptr || !iter->IsUnit())
                             continue;
 
-                        Unit* _unit = static_cast<Unit*>(*iter);
-
+                        Unit* _unit = static_cast<Unit*>(iter);
                         if (!_unit->isAlive())
                             continue;
 
@@ -5088,11 +5087,11 @@ void Aura::SpellAuraTransform(bool apply)
                         break;
 
                     case 28272:	 // Pig
-                        displayId = 16356 + RandomUInt(2);
+                        displayId = 16356 + Util::getRandomUInt(2);
                         break;
 
                     case 28271:	 // Turtle
-                        displayId = 16359 + RandomUInt(2);
+                        displayId = 16359 + Util::getRandomUInt(2);
                         break;
 
                     default:
@@ -5376,7 +5375,7 @@ bool isFeignDeathResisted(uint32 playerlevel, uint32 moblevel)
         if (fMobRes > 100)
             fMobRes = 100;
 
-        if (RandomUInt(1, 100) < static_cast<uint32>(fMobRes))
+        if (Util::getRandomUInt(1, 100) < static_cast<uint32>(fMobRes))
             return true;
     }
 
@@ -5401,12 +5400,11 @@ void Aura::SpellAuraFeignDeath(bool apply)
             p_target->SetFlag(UNIT_DYNAMIC_FLAGS, U_DYN_FLAG_DEAD);
 
             //now get rid of mobs agro. pTarget->CombatStatus.AttackersForgetHate() - this works only for already attacking mobs
-            for (std::set<Object*>::iterator itr = p_target->GetInRangeSetBegin(); itr != p_target->GetInRangeSetEnd(); ++itr)
+            for (const auto& itr : p_target->getInRangeObjectsSet())
             {
-                if ((*itr)->IsUnit() && (static_cast< Unit* >(*itr))->isAlive())
+                if (itr && itr->IsUnit() && static_cast<Unit*>(itr)->isAlive())
                 {
-                    Unit* u = static_cast< Unit* >(*itr);
-
+                    Unit* u = static_cast<Unit*>(itr);
                     if (isFeignDeathResisted(p_target->getLevel(), u->getLevel()))
                     {
                         sEventMgr.AddEvent(this, &Aura::Remove, EVENT_AURA_REMOVE, 1, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT | EVENT_FLAG_DELETES_OBJECT);
@@ -5419,8 +5417,7 @@ void Aura::SpellAuraFeignDeath(bool apply)
                     //if this is player and targeting us then we interrupt cast
                     if (u->IsPlayer())
                     {
-                        Player* plr = static_cast< Player* >(*itr);
-
+                        Player* plr = static_cast<Player*>(itr);
                         if (plr->isCastingNonMeleeSpell())
                             plr->interruptSpell(); // cancel current casting spell
 
@@ -5816,7 +5813,7 @@ void Aura::SpellAuraModDamagePercDone(bool apply)
                 if (mod->m_miscValue & ((uint32)1 << x))
                 {
                     // display to client (things that are weapon dependant don't get displayed)
-                    p_target->ModFloatValue(PLAYER_FIELD_MOD_DAMAGE_DONE_PCT + x, val);
+                    p_target->modFloatValue(PLAYER_FIELD_MOD_DAMAGE_DONE_PCT + x, val);
                 }
             }
         }
@@ -7080,7 +7077,7 @@ void Aura::SpellAuraModIncreaseEnergyPerc(bool apply)
     uint16_t modValue = static_cast<uint16_t>(mod->m_miscValue);
     if (apply)
     {
-        mod->fixed_amount[mod->m_effectIndex] = m_target->GetModPUInt32Value(UNIT_FIELD_MAXPOWER1 + mod->m_miscValue, mod->m_amount);
+        mod->fixed_amount[mod->m_effectIndex] = m_target->getPercentModUInt32Value(UNIT_FIELD_MAXPOWER1 + modValue, mod->m_amount);
         m_target->ModMaxPower(modValue, mod->fixed_amount[mod->m_effectIndex]);
         if (p_target != nullptr && mod->m_miscValue == POWER_TYPE_MANA)
             p_target->SetManaFromSpell(p_target->GetManaFromSpell() + mod->fixed_amount[mod->m_effectIndex]);
@@ -7098,7 +7095,7 @@ void Aura::SpellAuraModIncreaseHealthPerc(bool apply)
     SetPositive();
     if (apply)
     {
-        mod->fixed_amount[mod->m_effectIndex] = m_target->GetModPUInt32Value(UNIT_FIELD_MAXHEALTH, mod->m_amount);
+        mod->fixed_amount[mod->m_effectIndex] = m_target->getPercentModUInt32Value(UNIT_FIELD_MAXHEALTH, mod->m_amount);
         m_target->ModMaxHealth(mod->fixed_amount[mod->m_effectIndex]);
         if (p_target != nullptr)
             p_target->SetHealthFromSpell(p_target->GetHealthFromSpell() + mod->fixed_amount[mod->m_effectIndex]);
@@ -7257,8 +7254,8 @@ void Aura::SpellAuraModHaste(bool apply)
     {
         if (apply)
         {
-            mod->fixed_amount[mod->m_effectIndex] = m_target->GetModPUInt32Value(UNIT_FIELD_BASEATTACKTIME, mod->m_amount);
-            mod->fixed_amount[mod->m_effectIndex * 2] = m_target->GetModPUInt32Value(UNIT_FIELD_BASEATTACKTIME + 1, mod->m_amount);
+            mod->fixed_amount[mod->m_effectIndex] = m_target->getPercentModUInt32Value(UNIT_FIELD_BASEATTACKTIME, mod->m_amount);
+            mod->fixed_amount[mod->m_effectIndex * 2] = m_target->getPercentModUInt32Value(UNIT_FIELD_BASEATTACKTIME + 1, mod->m_amount);
 
             if ((int32)m_target->getUInt32Value(UNIT_FIELD_BASEATTACKTIME) <= mod->fixed_amount[mod->m_effectIndex])
                 mod->fixed_amount[mod->m_effectIndex] = m_target->getUInt32Value(UNIT_FIELD_BASEATTACKTIME);    //watch it, a negative timer might be bad ;)
@@ -7338,7 +7335,7 @@ void Aura::SpellAuraModRangedHaste(bool apply)
     {
         if (apply)
         {
-            mod->fixed_amount[mod->m_effectIndex] = m_target->GetModPUInt32Value(UNIT_FIELD_RANGEDATTACKTIME, mod->m_amount);
+            mod->fixed_amount[mod->m_effectIndex] = m_target->getPercentModUInt32Value(UNIT_FIELD_RANGEDATTACKTIME, mod->m_amount);
             m_target->ModBaseAttackTime(RANGED, -mod->fixed_amount[mod->m_effectIndex]);
         }
         else m_target->ModBaseAttackTime(RANGED, mod->fixed_amount[mod->m_effectIndex]);
@@ -7792,7 +7789,7 @@ void Aura::SpellAuraModSpellDamageByAP(bool apply)
 
     if (m_target->IsPlayer())
     {
-        for (uint32 x = 1; x < 7; x++) //melee damage != spell damage.
+        for (uint16_t x = 1; x < 7; x++) //melee damage != spell damage.
             if (mod->m_miscValue & (((uint32)1) << x))
                 p_target->ModPosDamageDoneMod(x, val);
 
@@ -8214,9 +8211,9 @@ void Aura::SpellAuraModPenetration(bool apply) // armor penetration & spell pene
         {
 #if VERSION_STRING != Classic
             if (mod->m_miscValue & 124)
-                m_target->ModSignedInt32Value(PLAYER_FIELD_MOD_TARGET_RESISTANCE, mod->m_amount);
+                m_target->modInt32Value(PLAYER_FIELD_MOD_TARGET_RESISTANCE, mod->m_amount);
             if (mod->m_miscValue & 1)
-                m_target->ModSignedInt32Value(PLAYER_FIELD_MOD_TARGET_PHYSICAL_RESISTANCE, mod->m_amount);
+                m_target->modInt32Value(PLAYER_FIELD_MOD_TARGET_PHYSICAL_RESISTANCE, mod->m_amount);
 #endif
         }
     }
@@ -8231,9 +8228,9 @@ void Aura::SpellAuraModPenetration(bool apply) // armor penetration & spell pene
         {
 #if VERSION_STRING != Classic
             if (mod->m_miscValue & 124)
-                m_target->ModSignedInt32Value(PLAYER_FIELD_MOD_TARGET_RESISTANCE, -mod->m_amount);
+                m_target->modInt32Value(PLAYER_FIELD_MOD_TARGET_RESISTANCE, -mod->m_amount);
             if (mod->m_miscValue & 1)
-                m_target->ModSignedInt32Value(PLAYER_FIELD_MOD_TARGET_PHYSICAL_RESISTANCE, -mod->m_amount);
+                m_target->modInt32Value(PLAYER_FIELD_MOD_TARGET_PHYSICAL_RESISTANCE, -mod->m_amount);
 #endif
         }
     }
@@ -8364,8 +8361,8 @@ void Aura::SpellAuraMeleeHaste(bool apply)
     {
         if (apply)
         {
-            mod->fixed_amount[0] = m_target->GetModPUInt32Value(UNIT_FIELD_BASEATTACKTIME, mod->m_amount);
-            mod->fixed_amount[1] = m_target->GetModPUInt32Value(UNIT_FIELD_BASEATTACKTIME + 1, mod->m_amount);
+            mod->fixed_amount[0] = m_target->getPercentModUInt32Value(UNIT_FIELD_BASEATTACKTIME, mod->m_amount);
+            mod->fixed_amount[1] = m_target->getPercentModUInt32Value(UNIT_FIELD_BASEATTACKTIME + 1, mod->m_amount);
 
             if ((int32)m_target->getUInt32Value(UNIT_FIELD_BASEATTACKTIME) <= mod->fixed_amount[0])
                 mod->fixed_amount[0] = m_target->getUInt32Value(UNIT_FIELD_BASEATTACKTIME);
@@ -9436,13 +9433,11 @@ bool Aura::DotCanCrit()
         return false;
 
     SpellInfo* sp = this->GetSpellInfo();
-    uint32 index = MAX_TOTAL_AURAS_START;
-    Aura* aura;
     bool found = false;
 
     for (;;)
     {
-        aura = caster->getAuraWithAuraEffect(SPELL_AURA_ALLOW_DOT_TO_CRIT);
+        Aura * aura = caster->getAuraWithAuraEffect(SPELL_AURA_ALLOW_DOT_TO_CRIT);
 
         if (aura == nullptr)
             break;
