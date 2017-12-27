@@ -470,7 +470,7 @@ class GruulTheDragonkillerAI : public CreatureAIScript
             {
                 _castAISpell(mGroundSlam);
                 _castAISpell(mGroundSlam2);
-                _castAISpell(mStoned);
+                //_castAISpell(mStoned);
             }
         }
 
@@ -550,8 +550,8 @@ class GruulTheDragonkillerAI : public CreatureAIScript
         CreatureAISpells* mHurtfulStrike;
         CreatureAISpells* mGroundSlam;
         CreatureAISpells* mGroundSlam2;
-        CreatureAISpells* mStoned;
-        CreatureAISpells* mShatter;
+        //CreatureAISpells* mStoned;
+        //CreatureAISpells* mShatter;
         CreatureAISpells* mShatter2;
 };
 
