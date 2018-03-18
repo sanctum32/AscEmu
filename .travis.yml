@@ -44,7 +44,7 @@ addons:
       name: AscEmu/AscEmu
       description: MMORPG Framework
     notification_email: autokaori@gmail.com
-    build_command_prepend: cmake ../ -DCMAKE_BUILD_TYPE=Release -DBUILD_TOOLS=0 -DASCEMU_VERSION=${ASC_VERSION} && cov-configure --comptype gcc --compiler gcc-5 --template
+    build_command_prepend: cmake ../ -DCMAKE_BUILD_TYPE=Release -DBUILD_WITH_WARNINGS=0 -DBUILD_TOOLS=0 -DASCEMU_VERSION=${ASC_VERSION} && cov-configure --comptype gcc --compiler gcc-5 --template
     build_command: make -j 4
     branch_pattern: coverity_scan
 
