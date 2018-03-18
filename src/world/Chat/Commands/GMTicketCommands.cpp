@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -82,7 +82,7 @@ bool ChatHandler::HandleGMTicketGetByIdCommand(const char* args, WorldSession* m
         RedSystemMessage(m_session, "Player not found.");
         return true;
     }
-    GM_Ticket* ticket = objmgr.GetGMTicketByPlayer(plr->GetGUID());
+    GM_Ticket* ticket = objmgr.GetGMTicketByPlayer(plr->getGuid());
     if (ticket == NULL || ticket->deleted)
     {
         RedSystemMessage(m_session, "Ticket not found.");
@@ -136,7 +136,7 @@ bool ChatHandler::HandleGMTicketRemoveByIdCommand(const char* args, WorldSession
         RedSystemMessage(m_session, "Player not found.");
         return true;
     }
-    GM_Ticket* ticket = objmgr.GetGMTicketByPlayer(plr->GetGUID());
+    GM_Ticket* ticket = objmgr.GetGMTicketByPlayer(plr->getGuid());
     if (ticket == NULL || ticket->deleted)
     {
         RedSystemMessage(m_session, "Ticket not found.");
@@ -288,7 +288,7 @@ bool ChatHandler::HandleGMTicketRemoveByIdCommand(const char* args, WorldSession
         return true;
     }
 
-    if (ticket->assignedToPlayer != 0 && ticket->assignedToPlayer != cplr->GetGUID() && !cplr->GetSession()->CanUseCommand('z'))
+    if (ticket->assignedToPlayer != 0 && ticket->assignedToPlayer != cplr->getGuid() && !cplr->GetSession()->CanUseCommand('z'))
     {
         chn->Say(cplr, "GmTicket:0:Ticket is assigned to another GM.", cplr, true);
         return true;
@@ -370,13 +370,13 @@ bool ChatHandler::HandleGMTicketAssignToCommand(const char* args, WorldSession* 
         return true;
     }
 
-    if (ticket->assignedToPlayer == plr->GetGUID())
+    if (ticket->assignedToPlayer == plr->getGuid())
     {
         chn->Say(cplr, "GmTicket:0:Ticket already assigned to this GM.", cplr, true);
         return true;
     }
 
-    if (ticket->assignedToPlayer != 0 && ticket->assignedToPlayer != cplr->GetGUID())
+    if (ticket->assignedToPlayer != 0 && ticket->assignedToPlayer != cplr->getGuid())
     {
         Player* aplr = objmgr.GetPlayer((uint32)ticket->assignedToPlayer);
         if (aplr != NULL && aplr->IsInWorld() && !cplr->GetSession()->CanUseCommand('z'))
@@ -386,7 +386,7 @@ bool ChatHandler::HandleGMTicketAssignToCommand(const char* args, WorldSession* 
         }
     }
 
-    ticket->assignedToPlayer = plr->GetGUID();
+    ticket->assignedToPlayer = plr->getGuid();
     objmgr.UpdateGMTicket(ticket);
 
     std::stringstream ss;
@@ -489,7 +489,7 @@ bool ChatHandler::HandleGMTicketCommentCommand(const char* args, WorldSession* m
         return true;
     }
 
-    if (ticket->assignedToPlayer != 0 && ticket->assignedToPlayer != cplr->GetGUID() && !cplr->GetSession()->CanUseCommand('z'))
+    if (ticket->assignedToPlayer != 0 && ticket->assignedToPlayer != cplr->getGuid() && !cplr->GetSession()->CanUseCommand('z'))
     {
         chn->Say(cplr, "GmTicket:0:Ticket is assigned to another GM.", cplr, true);
         return true;

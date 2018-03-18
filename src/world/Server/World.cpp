@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -277,7 +277,9 @@ void World::addSession(WorldSession* worldSession)
     if ((uint32_t)mActiveSessionMapStore.size() > getPeakSessionCount())
         setNewPeakSessionCount((uint32_t)mActiveSessionMapStore.size());
 
+#ifndef AE_TBC
     worldSession->SendAccountDataTimes(GLOBAL_CACHE_MASK);
+#endif
 
     mSessionLock.ReleaseWriteLock();
 }

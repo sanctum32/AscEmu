@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -266,7 +266,16 @@ void LogonConsole::AccountCreate(char* str)
     query << name << "',";
     query << "SHA( UPPER( '" << pass << "' ) ),'0','";
     query << email << "','";
+
+#if VERSION_STRING == Classic
+    query << 0 << "','' );";
+#elif VERSION_STRING == TBC
+    query << 8 << "','' );";
+#elif VERSION_STRING == WotLK
     query << 24 << "','' );";
+#elif VERSION_STRING == Cata
+    query << 32 << "','' );";
+#endif
 
     if (!sLogonSQL->WaitExecuteNA(query.str().c_str()))
     {

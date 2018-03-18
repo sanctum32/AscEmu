@@ -567,7 +567,7 @@ class FlameStrikeAI : public CreatureAIScript
             setCanEnterCombat(false);
             _setMeleeDisabled(false);
             setRooted(true);
-            getCreature()->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+            getCreature()->addUnitFlags(UNIT_FLAG_NOT_SELECTABLE);
         }
 
         void OnDied(Unit* /*mKiller*/) override
@@ -578,7 +578,7 @@ class FlameStrikeAI : public CreatureAIScript
 
         void AIUpdate() override
         {
-            getCreature()->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_2);
+            getCreature()->addUnitFlags(UNIT_FLAG_NOT_ATTACKABLE_2);
             _applyAura(FLAME_STRIKE_TRIGGER_FLAME_STRIKE);
             RemoveAIUpdateEvent();
             despawn(8500);
@@ -627,11 +627,11 @@ class PhoenixAI : public CreatureAIScript
 
         void AIUpdate() override
         {
-            double CurrentHP = (double)getCreature()->getUInt32Value(UNIT_FIELD_HEALTH);
-            double PercMaxHP = (double)getCreature()->getUInt32Value(UNIT_FIELD_MAXHEALTH) * 0.05;
+            double CurrentHP = (double)getCreature()->getHealth();
+            double PercMaxHP = (double)getCreature()->getMaxHealth() * 0.05;
             if (CurrentHP > PercMaxHP && _isTimerFinished(mBurnTimer))
             {
-                getCreature()->SetHealth((uint32)(CurrentHP - PercMaxHP));
+                getCreature()->setHealth((uint32)(CurrentHP - PercMaxHP));
                 _resetTimer(mBurnTimer, 3000);
                 _applyAura(PHOENIX_BURN);
             }
@@ -866,7 +866,7 @@ class KaelThasAI : public CreatureAIScript
 
         void OnCombatStart(Unit* /*mTarget*/) override
         {
-            getCreature()->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_9);
+            getCreature()->addUnitFlags(UNIT_FLAG_IGNORE_PLAYER_COMBAT);
             SetAIUpdateFreq(24000);
             
             setAIAgent(AGENT_SPELL);
@@ -889,7 +889,7 @@ class KaelThasAI : public CreatureAIScript
         void OnCombatStop(Unit* /*mTarget*/) override
         {
             setRooted(false);
-            getCreature()->setUInt64Value(UNIT_FIELD_FLAGS, 0);
+            getCreature()->removeUnitFlags(UNIT_FLAG_IGNORE_PLAYER_COMBAT);
 
             if (isAlive())
             {
@@ -943,7 +943,7 @@ class KaelThasAI : public CreatureAIScript
         void SendAdvisorToFight(Creature* pCreature)
         {
             pCreature->GetAIInterface()->SetAllowedToEnterCombat(true);
-            pCreature->setUInt64Value(UNIT_FIELD_FLAGS, 0);
+            pCreature->removeUnitFlags(UNIT_FLAG_IGNORE_PLAYER_COMBAT);
 
             Unit* pTarget = getBestPlayerTarget();
             if (pTarget != NULL)
@@ -964,7 +964,7 @@ class KaelThasAI : public CreatureAIScript
                 pCoords.y = pCreature->GetPositionY();
                 pCoords.z = pCreature->GetPositionZ();
                 pCoords.o = pCreature->GetOrientation();
-                pCoords.addition = pCreature->GetEntry();
+                pCoords.addition = pCreature->getEntry();
 
                 SetAIUpdateFreq(5000);
                 setScriptPhase(getScriptPhase() + 1);
@@ -1050,7 +1050,7 @@ class KaelThasAI : public CreatureAIScript
                         if (pCreature != nullptr)
                         {
                             pCreature->GetAIInterface()->SetAllowedToEnterCombat(true);
-                            pCreature->setUInt64Value(UNIT_FIELD_FLAGS, 0);
+                            pCreature->removeUnitFlags(UNIT_FLAG_IGNORE_PLAYER_COMBAT);
                         }
                     }
 

@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -27,6 +27,9 @@ enum PlayerSkills
     SKILL_ARMS                    = 26,
     SKILL_COMBAT                  = 38,
     SKILL_SUBTLETY                = 39,
+#if VERSION_STRING <= TBC
+    SKILL_POISONS = 40,
+#endif
     SKILL_SWORDS                  = 43,
     SKILL_AXES                    = 44,
     SKILL_BOWS                    = 45,

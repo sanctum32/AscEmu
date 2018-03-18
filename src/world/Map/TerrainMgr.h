@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -170,7 +170,7 @@ class TerrainTile
             char filename[1024];
 
             //Normal map stuff
-            sprintf(filename, "%smaps/%03u%02u%02u.map", sWorld.settings.server.dataDir.c_str(), m_mapid, m_tx, m_ty);
+            sprintf(filename, "%smaps/%04u_%02u_%02u.map", sWorld.settings.server.dataDir.c_str(), m_mapid, m_tx, m_ty);
             m_map.Load(filename);
         }
 };

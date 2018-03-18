@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -88,9 +88,9 @@ void SpellProc::CastSpell(Unit* victim, SpellInfo* CastingSpell, int* dmg_overwr
 {
     SpellCastTargets targets;
     if (mProcFlags & PROC_TARGET_SELF)
-        targets.m_unitTarget = mTarget->GetGUID();
+        targets.m_unitTarget = mTarget->getGuid();
     else
-        targets.m_unitTarget = victim->GetGUID();
+        targets.m_unitTarget = victim->getGuid();
 
     Spell* spell = sSpellFactoryMgr.NewSpell(mTarget, mSpell, true, nullptr);
     spell->forced_basepoints[0] = dmg_overwrite[0];

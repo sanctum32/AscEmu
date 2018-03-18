@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -58,7 +58,7 @@ SERVER_DECL DBC::DBCStorage<DBC::Structures::SkillLineAbilityEntry> sSkillLineAb
 SERVER_DECL DBC::DBCStorage<DBC::Structures::SkillLineEntry> sSkillLineStore(DBC::Structures::skill_line_format);
 SERVER_DECL DBC::DBCStorage<DBC::Structures::SpellCastTimesEntry> sSpellCastTimesStore(DBC::Structures::spell_cast_times_format);
 SERVER_DECL DBC::DBCStorage<DBC::Structures::SpellDurationEntry> sSpellDurationStore(DBC::Structures::spell_duration_format);
-SERVER_DECL DBC::DBCStorage<DBC::Structures::SpellEntry_New> sSpellStore(DBC::Structures::spell_entry_format);
+SERVER_DECL DBC::DBCStorage<DBC::Structures::SpellEntry> sSpellStore(DBC::Structures::spell_entry_format);
 SERVER_DECL DBC::DBCStorage<DBC::Structures::SpellRadiusEntry> sSpellRadiusStore(DBC::Structures::spell_radius_format);
 SERVER_DECL DBC::DBCStorage<DBC::Structures::SpellRangeEntry> sSpellRangeStore(DBC::Structures::spell_range_format);
 SERVER_DECL DBC::DBCStorage<DBC::Structures::TalentEntry> sTalentStore(DBC::Structures::talent_format);
@@ -268,7 +268,7 @@ std::string generateName(uint32_t type)
     if (_namegenData[type].size() == 0)
         return "ERR";
 
-    uint32_t ent = RandomUInt((uint32_t)_namegenData[type].size() - 1);
+    uint32_t ent = Util::getRandomUInt((uint32_t)_namegenData[type].size() - 1);
     return _namegenData[type].at(ent).name;
 }
 

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -28,6 +28,9 @@ public:
     bool isDamagingSpell() const;
     bool isHealingSpell() const;
     int firstBeneficialEffect() const;
+
+    // Checks if spell (in most cases an aura) affects another spell, based on spell group mask
+    bool isAffectingSpell(SpellInfo const* spellInfo) const;
 
     uint32_t getSpellDuration(Unit* caster) const;
 

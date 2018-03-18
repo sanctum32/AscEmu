@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  This file is released under the MIT license. See README-MIT for more information.
  */
 
@@ -38,7 +38,7 @@ class PX238WinterWondervolt : public GameObjectAIScript
 
 void WinterReveler(Player* pPlayer, Unit* pUnit)
 {
-    if (pUnit->GetEntry() == 15760)
+    if (pUnit->getEntry() == 15760)
     {
         uint32 Winteritem = 0;
         SlotResult slotresult;
@@ -90,11 +90,11 @@ void WinterReveler(Player* pPlayer, Unit* pUnit)
             if (item == nullptr)
                 return;
 
-            item->SetStackCount(5);
+            item->setStackCount(5);
             auto item_add_result = pPlayer->GetItemInterface()->SafeAddItem(item, slotresult.ContainerSlot, slotresult.Slot);
             if (!item_add_result)
             {
-                LOG_ERROR("Error while adding item %u to player %s", item->GetEntry(), pPlayer->GetNameString());
+                LOG_ERROR("Error while adding item %u to player %s", item->getEntry(), pPlayer->GetNameString());
                 item->DeleteMe();
             }
             else

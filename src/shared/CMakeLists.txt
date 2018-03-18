@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
+# Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
 
 # set up our project name
 project(shared CXX)
@@ -20,10 +20,10 @@ set(sources
 
     Threading/ConditionVariable.cpp
     Threading/Mutex.cpp
-    Threading/LegacyThreading.h
 	Threading/LegacyThreadPool.cpp
 
 	Threading/AEThread.cpp
+	Threading/AEThreadPool.cpp
 
     CrashHandler.cpp
     crc32.cpp
@@ -113,6 +113,7 @@ set(headers
 	Threading/RWLock.h
 
 	Threading/AEThread.h
+	Threading/AEThreadPool.h
 	Threading/ThreadState.h
 	
 	Common.hpp

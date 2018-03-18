@@ -1,6 +1,6 @@
 /*
 * AscEmu Framework based on ArcEmu MMORPG Server
-* Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+* Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
 *
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU Affero General Public License as published by
@@ -104,14 +104,14 @@ void QuestLogEntry::AddAffectedUnit(Unit* target)
     if (!target)
         return;
     if (!IsUnitAffected(target))
-        m_affected_units.insert(target->GetGUID());
+        m_affected_units.insert(target->getGuid());
 }
 
 bool QuestLogEntry::IsUnitAffected(Unit* target)
 {
     if (!target)
         return true;
-    if (m_affected_units.find(target->GetGUID()) != m_affected_units.end())
+    if (m_affected_units.find(target->getGuid()) != m_affected_units.end())
         return true;
     return false;
 }
@@ -124,7 +124,7 @@ void QuestLogEntry::SaveToDB(QueryBuffer* buf)
     std::stringstream ss;
 
     ss << "DELETE FROM questlog WHERE player_guid = ";
-    ss << m_plr->GetLowGUID();
+    ss << m_plr->getGuidLow();
     ss << " AND quest_id = ";
     ss << m_quest->id;
     ss << ";";
@@ -137,7 +137,7 @@ void QuestLogEntry::SaveToDB(QueryBuffer* buf)
     ss.rdbuf()->str("");
 
     ss << "INSERT INTO questlog VALUES(";
-    ss << m_plr->GetLowGUID() << "," << m_quest->id << "," << uint32(m_slot) << "," << expirytime;
+    ss << m_plr->getGuidLow() << "," << m_quest->id << "," << uint32(m_slot) << "," << expirytime;
     for (uint8 i = 0; i < 4; ++i)
         ss << "," << m_explored_areas[i];
 

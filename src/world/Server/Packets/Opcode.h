@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -22,15 +22,15 @@ This file is released under the MIT license. See README-MIT for more information
 
 struct OpcodeTable
 {
-    uint32_t opcode;
+    uint16_t opcode;
     std::string name;
 };
 
 extern OpcodeTable opcodeNameArray[];
 
-static inline std::string getOpcodeName(uint32_t opcode)
+static inline std::string getOpcodeName(uint16_t opcode)
 {
-    for (uint32_t i = 0; i < NUM_MSG_TYPES; ++i)
+    for (uint16_t i = 0; i < NUM_MSG_TYPES; ++i)
     {
         if (opcodeNameArray[i].opcode == opcode)
             return opcodeNameArray[i].name;

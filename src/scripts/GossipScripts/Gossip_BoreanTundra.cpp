@@ -1,6 +1,6 @@
 /**
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -33,7 +33,7 @@ class TiareGossipScript : public Arcemu::Gossip::Script
 
         void OnHello(Object* pObject, Player* Plr) override
         {
-            Arcemu::Gossip::Menu menu(pObject->GetGUID(), GT_TIARE, 0);
+            Arcemu::Gossip::Menu menu(pObject->getGuid(), GT_TIARE, 0);
             menu.AddItem(GOSSIP_ICON_CHAT, Plr->GetSession()->LocalizedGossipOption(GI_TELE_AMBER_LEDGE), 1);
             menu.Send(Plr);
         }

@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -126,7 +126,7 @@ namespace VMAP
 
             // write map tree file
             std::stringstream mapfilename;
-            mapfilename << iDestDir << '/' << std::setfill('0') << std::setw(3) << map_iter->first << ".vmtree";
+            mapfilename << iDestDir << '/' << std::setfill('0') << std::setw(4) << map_iter->first << ".vmtree";
             FILE* mapfile = fopen(mapfilename.str().c_str(), "wb");
             if (!mapfile)
             {
@@ -189,7 +189,7 @@ namespace VMAP
                 size_t nSpawns = tileEntries.count(tile->first);
                 std::stringstream tilefilename;
                 tilefilename.fill('0');
-                tilefilename << iDestDir << '/' << std::setw(3) << map_iter->first << '_';
+                tilefilename << iDestDir << '/' << std::setw(4) << map_iter->first << '_';
                 uint32 x, y;
                 StaticMapTree::unpackTileID(tile->first, x, y);
                 tilefilename << std::setw(2) << x << '_' << std::setw(2) << y << ".vmtile";

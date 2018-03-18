@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -478,6 +478,29 @@ int SpellInfo::firstBeneficialEffect() const
     }
 
     return -1;
+}
+
+bool SpellInfo::isAffectingSpell(SpellInfo const* spellInfo) const
+{
+    // TODO: Verify for cata
+#if VERSION_STRING != Cata
+    if (spellInfo == nullptr)
+        return false;
+
+    if (spellInfo->SpellFamilyName != SpellFamilyName)
+        return false;
+
+    for (auto i = 0; i < MAX_SPELL_EFFECTS; ++i)
+    {
+        for (auto u = 0; u < MAX_SPELL_EFFECTS; ++u)
+        {
+            // If any of the effect indexes contain same mask, the spells affect each other
+            if (EffectSpellClassMask[u][i] && (EffectSpellClassMask[u][i] & spellInfo->SpellGroupType[i]))
+                return true;
+        }
+    }
+#endif
+    return false;
 }
 
 uint32_t SpellInfo::getSpellDuration(Unit* caster) const

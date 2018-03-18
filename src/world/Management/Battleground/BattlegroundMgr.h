@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -305,7 +305,7 @@ class SERVER_DECL CBattlegroundManager : public Singleton<CBattlegroundManager>,
 
         void AddPlayerToBg(CBattleground* bg, std::deque<uint32> *playerVec, uint32 i, uint32 j);
 
-        void AddGroupToArena(CBattleground* bg, Group* group, int nteam);
+        void AddGroupToArena(CBattleground* bg, Group* group, uint32 nteam);
 
         uint32 GetMinimumPlayers(uint32 dbcIndex);
 

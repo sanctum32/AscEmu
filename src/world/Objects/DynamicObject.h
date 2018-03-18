@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -35,10 +35,12 @@ enum DynamicObjectType
 
 typedef std::set<uint64> DynamicObjectList;
 
+struct WoWDynamicObject;
 class SERVER_DECL DynamicObject : public Object
 {
-public:
     // MIT Start
+    const WoWDynamicObject* dynamicObjectData() const { return reinterpret_cast<WoWDynamicObject*>(wow_data); }
+public:
     void Create(Unit* caster, Spell* pSpell, LocationVector lv, uint32 duration, float radius, uint32 type);
     // MIT End
 

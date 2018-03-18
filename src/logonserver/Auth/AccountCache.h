@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -130,7 +130,7 @@ class AccountMgr : public Singleton < AccountMgr >
         {
             setBusy.Acquire();
             Account* pAccount = nullptr;
-            
+
             // this should already be uppercase!
             std::map<std::string, Account*>::iterator itr = AccountDatabase.find(Name);
             if (itr != AccountDatabase.end())
@@ -209,6 +209,9 @@ class InformationCore : public Singleton<InformationCore>
             m_realms.clear();
         }
 
+#ifdef AE_TBC
+        void writeRealmDataTbc(AuthSocket* socket);
+#endif
         // Packets
         void SendRealms(AuthSocket* Socket);
 

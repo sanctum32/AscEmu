@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -61,7 +61,7 @@ class SERVER_DECL MapScriptInterface
                 CurrentDist = (*iter)->CalcDistance(x, y, (z != 0.0f ? z : (*iter)->GetPositionZ()));
                 if (CurrentDist < ClosestDist && (*iter)->GetTypeId() == TypeId)
                 {
-                    if ((Entry && (*iter)->GetEntry() == Entry) || !Entry)
+                    if ((Entry && (*iter)->getEntry() == Entry) || !Entry)
                     {
                         ClosestDist = CurrentDist;
                         ClosestObject = ((T*)(*iter));
@@ -90,9 +90,9 @@ class SERVER_DECL MapScriptInterface
         uint32 GetPlayerCountInRadius(float x, float y, float z = 0.0f, float radius = 5.0f);
 
         GameObject* SpawnGameObject(uint32 Entry, float cX, float cY, float cZ, float cO, bool AddToWorld, uint32 Misc1, uint32 Misc2, uint32 phase = 0xFFFFFFF);
-        GameObject* SpawnGameObject(GameobjectSpawn* gs, bool AddToWorld);
+        GameObject* SpawnGameObject(MySQLStructure::GameobjectSpawn* gs, bool AddToWorld);
         Creature* SpawnCreature(uint32 Entry, float cX, float cY, float cZ, float cO, bool AddToWorld, bool tmplate, uint32 Misc1, uint32 Misc2, uint32 phase = 0xFFFFFFF);
-        Creature* SpawnCreature(CreatureSpawn* sp, bool AddToWorld);
+        Creature* SpawnCreature(MySQLStructure::CreatureSpawn* sp, bool AddToWorld);
         Movement::WayPoint* CreateWaypoint();
 
         void DeleteGameObject(GameObject* ptr);

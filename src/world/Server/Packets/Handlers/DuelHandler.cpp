@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -76,21 +76,21 @@ void WorldSession::HandleDuelCancelled(WorldPacket& /*recv_data*/)
     SendPacket(&data);
     _player->DuelingWith->m_session->SendPacket(&data);
 
-    GameObject* arbiter = _player->GetMapMgr() ? _player->GetMapMgr()->GetGameObject(GET_LOWGUID_PART(_player->GetDuelArbiter())) : NULL;
+    GameObject* arbiter = _player->GetMapMgr() ? _player->GetMapMgr()->GetGameObject(GET_LOWGUID_PART(_player->getDuelArbiter())) : NULL;
     if (arbiter != NULL)
     {
         arbiter->RemoveFromWorld(true);
         delete arbiter;
     }
 
-    _player->DuelingWith->SetDuelArbiter(0);
-    _player->DuelingWith->SetDuelTeam(0);
+    _player->DuelingWith->setDuelArbiter(0);
+    _player->DuelingWith->setDuelTeam(0);
     _player->DuelingWith->m_duelState = DUEL_STATE_FINISHED;
     _player->DuelingWith->m_duelCountdownTimer = 0;
     _player->DuelingWith->DuelingWith = NULL;
 
-    _player->SetDuelArbiter(0);
-    _player->SetDuelTeam(0);
+    _player->setDuelArbiter(0);
+    _player->setDuelTeam(0);
     _player->m_duelState = DUEL_STATE_FINISHED;
     _player->m_duelCountdownTimer = 0;
     _player->DuelingWith = NULL;

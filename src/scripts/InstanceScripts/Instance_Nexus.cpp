@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2008-2015 Sun++ Team <http://www.sunplusplus.info/>
  *
@@ -422,7 +422,7 @@ class CrystalSpikeAI : public CreatureAIScript
     {
         setCanEnterCombat(false);
         setRooted(true);
-        getCreature()->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+        getCreature()->addUnitFlags(UNIT_FLAG_NOT_SELECTABLE);
 
         despawn(4500, 0);
         RegisterAIUpdateEvent(500);
@@ -573,26 +573,26 @@ class NexusScript : public InstanceScript
 
         void OnCreaturePushToWorld(Creature* pCreature) override
         {
-            switch (pCreature->GetEntry())
+            switch (pCreature->getEntry())
             {
                 case CN_KERISTRASZA:
-                    mKeristraszaGUID = pCreature->GetLowGUID();
+                    mKeristraszaGUID = pCreature->getGuidLow();
                     break;
                 case CN_ANOMALUS:
-                    mAnomalusGUID = pCreature->GetLowGUID();
+                    mAnomalusGUID = pCreature->getGuidLow();
                     break;
                 case CN_TELESTRA:
-                    mTelestraGUID = pCreature->GetLowGUID();
+                    mTelestraGUID = pCreature->getGuidLow();
                     break;
                 case CN_ORMOROK:
-                    mOrmorokGUID = pCreature->GetLowGUID();
+                    mOrmorokGUID = pCreature->getGuidLow();
                     break;
             }
         }
 
         void OnGameObjectPushToWorld(GameObject* pGameObject) override
         {
-            switch (pGameObject->GetEntry())
+            switch (pGameObject->getEntry())
             {
                 case ANOMALUS_CS:
                     pGameObject->SetFlags(GO_FLAG_UNCLICKABLE);
@@ -608,7 +608,7 @@ class NexusScript : public InstanceScript
 
         void OnGameObjectActivate(GameObject* pGameObject, Player* /*pPlayer*/) override
         {
-            switch (pGameObject->GetEntry())
+            switch (pGameObject->getEntry())
             {
                 case ANOMALUS_CS:
                     pGameObject->SetFlags(GO_FLAG_UNCLICKABLE);

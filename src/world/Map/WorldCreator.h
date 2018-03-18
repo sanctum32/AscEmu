@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -110,7 +110,7 @@ class SERVER_DECL InstanceMgr
                 return (pPlayer->GetPersistentInstanceId(pInstance->m_mapId, pInstance->m_difficulty) == pInstance->m_instanceId);
             }
             // Default instance handling
-            else if ((pPlayer->GetGroup() && pInstance->m_creatorGroup == pPlayer->GetGroup()->GetID()) || pPlayer->GetLowGUID() == pInstance->m_creatorGuid)
+            else if ((pPlayer->GetGroup() && pInstance->m_creatorGroup == pPlayer->GetGroup()->GetID()) || pPlayer->getGuidLow() == pInstance->m_creatorGuid)
             {
                 return true;
             }

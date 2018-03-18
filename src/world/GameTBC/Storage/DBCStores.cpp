@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -268,7 +268,7 @@ std::string generateName(uint32_t type)
     if (_namegenData[type].size() == 0)
         return "ERR";
 
-    uint32_t ent = RandomUInt((uint32_t)_namegenData[type].size() - 1);
+    uint32_t ent = Util::getRandomUInt((uint32_t)_namegenData[type].size() - 1);
     return _namegenData[type].at(ent).name;
 }
 

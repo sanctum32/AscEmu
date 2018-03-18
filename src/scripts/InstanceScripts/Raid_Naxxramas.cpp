@@ -36,7 +36,7 @@ class NaxxramasScript : public InstanceScript
         void OnCreatureDeath(Creature* pVictim, Unit* /*pKiller*/) override
         {
             //Creature* KelThuzad = NULL;
-            switch (pVictim->GetEntry())
+            switch (pVictim->getEntry())
             {
                 case 16998: // Kel thuzads cat
                     {
@@ -385,7 +385,7 @@ void MaexxnaAI::AIUpdate()
 //
 //        WebWrap->getCreature()->m_noRespawn = true;
 //        WebWrap->RegisterAIUpdateEvent(5000);
-//        WebWrap->mPlayerGuid = static_cast<Player*>(pTarget)->GetGUID();
+//        WebWrap->mPlayerGuid = static_cast<Player*>(pTarget)->getGuid();
 //
 //        if (pTarget->isCastingNonMeleeSpell())
 //            pTarget->interruptSpell();
@@ -897,7 +897,7 @@ void AnubRekhanAI::Destroy()
 //                continue;
 //
 //            PlayerPtr = static_cast<Player*>(Iter);
-//            std::set<uint32>::iterator PlayerIter = AnubRekhan->mUsedCorpseGuids.find(static_cast<uint32>(PlayerPtr->GetGUID()));
+//            std::set<uint32>::iterator PlayerIter = AnubRekhan->mUsedCorpseGuids.find(static_cast<uint32>(PlayerPtr->getGuid()));
 //            if (PlayerIter != AnubRekhan->mUsedCorpseGuids.end())
 //            {
 //                if (PlayerPtr->isAlive())
@@ -913,7 +913,7 @@ void AnubRekhanAI::Destroy()
 //                spawnLocation = PlayerPtr->GetPosition();
 //            else if (PlayerPtr->getDeathState() == CORPSE)
 //            {
-//                Corpse* myCorpse = objmgr.GetCorpseByOwner(PlayerPtr->GetLowGUID());
+//                Corpse* myCorpse = objmgr.GetCorpseByOwner(PlayerPtr->getGuidLow());
 //                if (myCorpse == NULL || myCorpse->GetCorpseState() != CORPSE_STATE_BODY)
 //                    continue;
 //
@@ -937,7 +937,7 @@ void AnubRekhanAI::Destroy()
 //        {
 //            uint32 Id = Util::getRandomUInt(static_cast<uint32>(PlayerCorpses.size() - 1));
 //            PlayerPtr = PlayerCorpses[Id].first;
-//            AnubRekhan->mUsedCorpseGuids.insert(static_cast<uint32>(PlayerPtr->GetGUID()));
+//            AnubRekhan->mUsedCorpseGuids.insert(static_cast<uint32>(PlayerPtr->getGuid()));
 //
 //            for (uint8 i = 0; i < 5; ++i)
 //            {
@@ -967,7 +967,7 @@ void AnubRekhanAI::Destroy()
 //                continue;
 //
 //            CreaturePtr = static_cast<Creature*>(*Iter);
-//            if (CreaturePtr->GetEntry() != CN_CRYPT_GUARD)
+//            if (CreaturePtr->getEntry() != CN_CRYPT_GUARD)
 //                continue;
 //
 //            if (CreaturePtr->isAlive() || !CreaturePtr->IsInWorld())
@@ -1061,13 +1061,13 @@ void StoneskinGargoyleAI::AIUpdate()
     bool HasAura = HasStoneskin();
     if (_isCasting() || HasAura)
         return;
-    else if (getCreature()->GetEmoteState() == EMOTE_STATE_SUBMERGED)
-        getCreature()->SetEmoteState(EMOTE_ONESHOT_NONE);
+    else if (getCreature()->getEmoteState() == EMOTE_STATE_SUBMERGED)
+        getCreature()->setEmoteState(EMOTE_ONESHOT_NONE);
 
     if (!_isCasting() && _getHealthPercent() <= 30)
     {
         _castAISpell(mStoneskin);
-        getCreature()->SetEmoteState(EMOTE_STATE_SUBMERGED_NEW);
+        getCreature()->setEmoteState(EMOTE_STATE_SUBMERGED_NEW);
         setAIAgent(AGENT_SPELL);
         setRooted(true);
         stopMovement();
@@ -2061,7 +2061,7 @@ void ShadeOfNaxxramasAI::OnDied(Unit* /*pKiller*/)
     CreatureAIScript* Ghost = spawnCreatureAndGetAIScript(CN_GHOST_OF_NAXXRAMAS, getCreature()->GetPositionX(), getCreature()->GetPositionY(), getCreature()->GetPositionZ(), getCreature()->GetOrientation(), getCreature()->GetFaction());
     if (Ghost != nullptr)
     {
-        Ghost->getCreature()->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_2);
+        Ghost->getCreature()->addUnitFlags(UNIT_FLAG_NOT_ATTACKABLE_2);
     }
 
     for (std::set< PortalOfShadowsAI* >::iterator Iter = mPortals.begin(); Iter != mPortals.end(); ++Iter)
@@ -2097,7 +2097,7 @@ PortalOfShadowsAI::PortalOfShadowsAI(Creature* pCreature) : CreatureAIScript(pCr
     // We do not consider using a spell that summons these portals by anyone else than Shade of Naxxramas.
     // I must figure out why it's often not added if only one Shade is on the battlefield.
     // I don't like this method anyway.
-    if (getCreature()->GetSummonedByGUID() != 0 && getCreature()->GetMapMgr() != NULL && getCreature()->GetMapMgr()->GetInterface() != NULL)
+    if (getCreature()->getSummonedByGuid() != 0 && getCreature()->GetMapMgr() != NULL && getCreature()->GetMapMgr()->GetInterface() != NULL)
     {
         //mShadeAI = static_cast< ShadeOfNaxxramasAI* >(GetNearestCreature(CN_SHADE_OF_NAXXRAMAS));
         Creature* UnitPtr = getNearestCreature(CN_SHADE_OF_NAXXRAMAS);
@@ -2133,7 +2133,7 @@ void PortalOfShadowsAI::AIUpdate()
             CreatureAIScript* Ghost = spawnCreatureAndGetAIScript(CN_GHOST_OF_NAXXRAMAS, getCreature()->GetPositionX(), getCreature()->GetPositionY(), getCreature()->GetPositionZ(), getCreature()->GetOrientation(), getCreature()->GetFaction());
             if (Ghost != nullptr)
             {
-                Ghost->getCreature()->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_2);
+                Ghost->getCreature()->addUnitFlags(UNIT_FLAG_NOT_ATTACKABLE_2);
             }
 
             _resetTimer(mSpawnTimer, 15000);
@@ -2240,7 +2240,7 @@ void DeathKnightCavalierAI::OnCombatStop(Unit* /*pTarget*/)
 {
     if (mChargerAI != NULL)
     {
-        if (isAlive() && getCreature()->GetMount() == 0)
+        if (isAlive() && getCreature()->getMountDisplayId() == 0)
             getCreature()->setUInt32Value(UNIT_FIELD_MOUNTDISPLAYID , 25278);
 
         mChargerAI->mDeathKnightAI = NULL;
@@ -2253,7 +2253,7 @@ void DeathKnightCavalierAI::OnCombatStop(Unit* /*pTarget*/)
 
 void DeathKnightCavalierAI::AIUpdate()
 {
-    if (mIsMounted && getCreature()->GetMount() == 0)
+    if (mIsMounted && getCreature()->getMountDisplayId() == 0)
         getCreature()->setUInt32Value(UNIT_FIELD_MOUNTDISPLAYID , 25278);
     if (mIsMounted && Util::getRandomUInt(99) < 2)
     {
@@ -2284,7 +2284,7 @@ DeathchargerSteedAI::DeathchargerSteedAI(Creature* pCreature) : CreatureAIScript
 
     // We do not consider using a spell that summons this unit by anyone else than Death Knight Cavalier.
     // I don't like this method anyway.
-    if (getCreature()->GetSummonedByGUID() != 0 && getCreature()->GetMapMgr() != NULL && getCreature()->GetMapMgr()->GetInterface() != NULL)
+    if (getCreature()->getSummonedByGuid() != 0 && getCreature()->GetMapMgr() != NULL && getCreature()->GetMapMgr()->GetInterface() != NULL)
     {
         mDeathKnightAI = static_cast< DeathKnightCavalierAI* >(getNearestCreatureAI(CN_DEATH_KNIGHT_CAVALIER));
         if (mDeathKnightAI != NULL && mDeathKnightAI->mChargerAI == NULL)
@@ -2583,9 +2583,9 @@ MaraudingGeistAI::MaraudingGeistAI(Creature* pCreature) : CreatureAIScript(pCrea
 //    for (const auto& PlayerIter : pCreatureAI->getCreature()->getInRangePlayersSet())
 //    {
 //        if (PlayerIter && (static_cast<Player*>(PlayerIter))->isAlive() && PlayerIter->GetDistance2dSq(pCreatureAI->getCreature()) <= 5.0f
-//                && PlayerIter->getUInt32Value(UNIT_FIELD_HEALTH) > _mostHP)
+//                && PlayerIter->getHealth() > _mostHP)
 //        {
-//            _mostHP = PlayerIter->getUInt32Value(UNIT_FIELD_HEALTH);
+//            _mostHP = PlayerIter->getHealth();
 //            pBestTarget = static_cast<Player*>(PlayerIter);
 //        }
 //    }

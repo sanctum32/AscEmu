@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -57,15 +57,15 @@ class SERVER_DECL Creature : public Unit
         Creature(uint64 guid);
         virtual ~Creature();
 
-        GameEvent* mEvent = nullptr;
-        
+    GameEvent* mEvent = nullptr;
+
         /// For derived subclasses of Creature
         bool IsVehicle();
 
         void AddVehicleComponent(uint32 creature_entry, uint32 vehicleid);
         void RemoveVehicleComponent();
 
-        bool Load(CreatureSpawn* spawn, uint8 mode, MySQLStructure::MapInfo const* info);
+        bool Load(MySQLStructure::CreatureSpawn* spawn, uint8 mode, MySQLStructure::MapInfo const* info);
         void Load(CreatureProperties const* c_properties, float x, float y, float z, float o = 0);
 
         void AddToWorld();
@@ -195,14 +195,14 @@ class SERVER_DECL Creature : public Unit
 
         int32 ModDamageDone[SCHOOL_COUNT];
         float ModDamageDonePct[SCHOOL_COUNT];
-        void CalcResistance(uint16 type);
-        void CalcStat(uint16 type);
+        void CalcResistance(uint8_t type);
+        void CalcStat(uint8_t type);
 
         bool m_canRegenerateHP;
         void RegenerateHealth();
         void RegenerateMana();
         int BaseAttackType;
-        
+
         /// Invisibility & Stealth Detection - Partha
         bool CanSee(Unit* obj);
 
@@ -214,7 +214,6 @@ class SERVER_DECL Creature : public Unit
         uint32 GetRequiredLootSkill();
 
         // Misc
-        void setEmoteState(uint8 emote);
         uint32 GetSQL_id();
 
         virtual void setDeathState(DeathState s);
@@ -263,9 +262,9 @@ class SERVER_DECL Creature : public Unit
 
         Group* GetGroup();
 
-        int32 GetDamageDoneMod(uint32 school);
+        int32 GetDamageDoneMod(uint16_t school);
 
-        float GetDamageDonePctMod(uint32 school);
+        float GetDamageDonePctMod(uint16_t school);
 
         bool IsPickPocketed();
 
@@ -298,7 +297,7 @@ class SERVER_DECL Creature : public Unit
         uint32 spawnid;
         uint32 original_emotestate;
 
-        CreatureSpawn* m_spawn;
+        MySQLStructure::CreatureSpawn* m_spawn;
 
         void OnPushToWorld();
         virtual void Despawn(uint32 delay, uint32 respawntime);
@@ -330,7 +329,7 @@ class SERVER_DECL Creature : public Unit
         uint32 m_respawnTimeOverride;
 
         float GetBaseParry();
-        bool isattackable(CreatureSpawn* spawn);
+        bool isattackable(MySQLStructure::CreatureSpawn* spawn);
 
         void DealDamage(Unit* pVictim, uint32 damage, uint32 targetEvent, uint32 unitEvent, uint32 spellId, bool no_remove_auras = false);
         void TakeDamage(Unit* pAttacker, uint32 damage, uint32 spellid, bool no_remove_auras = false);

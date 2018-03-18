@@ -34,19 +34,19 @@ class ObsidianSanctumScript : public InstanceScript
 
         void OnCreaturePushToWorld(Creature* pCreature) override
         {
-            switch (pCreature->GetEntry())
+            switch (pCreature->getEntry())
             {
                 case CN_DRAKE_TENEBRON:
-                    m_creatureGuid[DRAKE_TENEBRON] = pCreature->GetLowGUID();
+                    m_creatureGuid[DRAKE_TENEBRON] = pCreature->getGuidLow();
                     break;
                 case CN_DRAKE_VESPERON:
-                    m_creatureGuid[DRAKE_VESPERON] = pCreature->GetLowGUID();
+                    m_creatureGuid[DRAKE_VESPERON] = pCreature->getGuidLow();
                     break;
                 case CN_DRAKE_SHADRON:
-                    m_creatureGuid[DRAKE_SHADRON] = pCreature->GetLowGUID();
+                    m_creatureGuid[DRAKE_SHADRON] = pCreature->getGuidLow();
                     break;
                 case CN_SARTHARION:
-                    m_creatureGuid[BOSS_SARTHARION] = pCreature->GetLowGUID();
+                    m_creatureGuid[BOSS_SARTHARION] = pCreature->getGuidLow();
                     break;
                 default:
                     break;
@@ -55,7 +55,7 @@ class ObsidianSanctumScript : public InstanceScript
 
         void OnCreatureDeath(Creature* pVictim, Unit* /*pKiller*/) override
         {
-            switch (pVictim->GetEntry())
+            switch (pVictim->getEntry())
             {
                 case CN_SARTHARION:
                     m_creatureGuid[BOSS_SARTHARION] = 0;
@@ -318,7 +318,7 @@ class TsunamiAI : public CreatureAIScript
             RegisterAIUpdateEvent(1000);
             setFlyMode(true);
             setCanEnterCombat(false);
-            getCreature()->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+            getCreature()->addUnitFlags(UNIT_FLAG_NOT_SELECTABLE);
             despawn(11500, 0);
         }
 
@@ -341,7 +341,7 @@ class CyclonAI : public CreatureAIScript
         {
             setRooted(true);
             setCanEnterCombat(false);
-            getCreature()->setUInt64Value(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+            getCreature()->addUnitFlags(UNIT_FLAG_NOT_SELECTABLE);
             _applyAura(CYCLON_SPELL);
             _applyAura(CYCLON_AURA);
         }

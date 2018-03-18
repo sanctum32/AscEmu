@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -164,7 +164,7 @@ void WorldSession::HandleReadyCheckOpcode(WorldPacket& recv_data)
         if (pGroup->GetLeader() == _player->m_playerInfo || pGroup->GetAssistantLeader() == _player->m_playerInfo)
         {
             WorldPacket data(MSG_RAID_READY_CHECK, 8);
-            data << GetPlayer()->GetGUID();
+            data << GetPlayer()->getGuid();
             /* send packet to group */
             pGroup->SendPacketToAll(&data);
         }
@@ -179,7 +179,7 @@ void WorldSession::HandleReadyCheckOpcode(WorldPacket& recv_data)
         recv_data >> ready;
 
         WorldPacket data(MSG_RAID_READY_CHECK_CONFIRM, 9);
-        data << _player->GetGUID();
+        data << _player->getGuid();
         data << ready;
 
         if (pGroup->GetLeader() && pGroup->GetLeader()->m_loggedInPlayer)

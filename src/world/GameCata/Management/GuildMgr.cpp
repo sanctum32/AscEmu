@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2016 AscEmu Team <http://www.ascemu.org/>
+Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -473,7 +473,7 @@ void GuildMgr::loadGuildXpForLevelFromDB()
     } while (result->NextRow());
 
     // fill level gaps
-    for (uint8_t level = 1; level < worldConfig.guild.maxLevel ; ++level)
+    for (uint8_t level = 1; level < worldConfig.guild.maxLevel; ++level)
     {
         if (!GuildXPperLevel[level])
         {

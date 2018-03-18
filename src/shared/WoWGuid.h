@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -154,6 +154,8 @@ class SERVER_DECL WoWGuid
             _CompileByNew();
         }
 
+    uint32_t getGuidLow() const { return static_cast<uint32_t>(oldguid); }
+    uint32_t getGuidHigh() const { return static_cast<uint32_t>(oldguid >> 32); }
         const uint64 GetOldGuid() const { return oldguid; }
         const uint8* GetNewGuid() const { return guidfields; }
         const uint8 GetNewGuidLen() const { return BitCount8(guidmask); }

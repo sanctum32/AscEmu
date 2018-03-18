@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -622,7 +622,7 @@ enum UnitBytes2_SheathState
 enum UnitBytes2_PvPFlags
 {
     U_FIELD_BYTES_FLAG_PVP          = 0x01,
-    U_FIELD_BYTES_FLAG_UNK1         = 0x04,
+    U_FIELD_BYTES_FLAG_UNK1         = 0x02,
     U_FIELD_BYTES_FLAG_FFA_PVP      = 0x04,
     U_FIELD_BYTES_FLAG_SANCTUARY    = 0x08,
     U_FIELD_BYTES_FLAG_AURAS        = 0x10,
@@ -679,6 +679,7 @@ enum ShapeshiftForm
 enum UnitFieldFlags : uint32_t // UNIT_FIELD_FLAGS #46 - these are client flags
 {
     //                                            Hex    Bit     Decimal  Comments
+    UNIT_FLAG_NONE                       = 0x00000000, //              0 
     UNIT_FLAG_SERVER_CONTROLLED          = 0x00000001, // 1            1
     UNIT_FLAG_NOT_ATTACKABLE_2           = 0x00000002, // 2            2  client won't let you attack them
     UNIT_FLAG_LOCK_PLAYER                = 0x00000004, // 3            4  ? does nothing to client (probably wrong) - only taxi code checks this
@@ -686,8 +687,8 @@ enum UnitFieldFlags : uint32_t // UNIT_FIELD_FLAGS #46 - these are client flags
     UNIT_FLAG_UNKNOWN_5                  = 0x00000010, // 5           16  ? some NPCs have this
     UNIT_FLAG_NO_REAGANT_COST            = 0x00000020, // 6           32  no reagant cost
     UNIT_FLAG_PLUS_MOB                   = 0x00000040, // 7           64  ? some NPCs have this (Rare/Elite/Boss?)
-    UNIT_FLAG_UNKNOWN_8                  = 0x00000080, // 8          128  ? can change attackable status
-    UNIT_FLAG_NOT_ATTACKABLE_9           = 0x00000100, // 9          256  changes attackable status
+    UNIT_FLAG_IGNORE_CREATURE_COMBAT     = 0x00000080, // 8          128  unit will not enter combat with creatures
+    UNIT_FLAG_IGNORE_PLAYER_COMBAT       = 0x00000100, // 9          256  unit will not enter combat with players
     UNIT_FLAG_UNKNOWN_10                 = 0x00000200, // 10         512  ? some NPCs have this
     UNIT_FLAG_LOOTING                    = 0x00000400, // 11        1024
     UNIT_FLAG_SELF_RES                   = 0x00000800, // 12        2048  ? some NPCs have this
@@ -878,8 +879,8 @@ static const UnitFlagNames UnitFlagToName[] =
     { UNIT_FLAG_UNKNOWN_5, "UNIT_FLAG_UNKNOWN_5" },
     { UNIT_FLAG_NO_REAGANT_COST, "UNIT_FLAG_NO_REAGANT_COST" },
     { UNIT_FLAG_PLUS_MOB, "UNIT_FLAG_PLUS_MOB" },
-    { UNIT_FLAG_UNKNOWN_8, "UNIT_FLAG_UNKNOWN_8" },
-    { UNIT_FLAG_NOT_ATTACKABLE_9, "UNIT_FLAG_NOT_ATTACKABLE_9" },
+    { UNIT_FLAG_IGNORE_CREATURE_COMBAT, "UNIT_FLAG_IGNORE_CREATURE_COMBAT" },
+    { UNIT_FLAG_IGNORE_PLAYER_COMBAT, "UNIT_FLAG_IGNORE_PLAYER_COMBAT" },
     { UNIT_FLAG_UNKNOWN_10, "UNIT_FLAG_UNKNOWN_10" },
     { UNIT_FLAG_LOOTING, "UNIT_FLAG_LOOTING" },
     { UNIT_FLAG_SELF_RES, "UNIT_FLAG_SELF_RES" },
@@ -906,6 +907,31 @@ static const UnitFlagNames UnitFlagToName[] =
 };
 
 static uint32 numflags = sizeof(UnitFlagToName) / sizeof(UnitFlagNames);
+
+static const UnitFlagNames UnitFlagToName2[] =
+{
+    { UNIT_FLAG2_FEIGN_DEATH, "UNIT_FLAG2_FEIGN_DEATH" },
+    { UNIT_FLAG2_UNK1, "UNIT_FLAG2_UNK1" },
+    { UNIT_FLAG2_UNK2, "UNIT_FLAG2_UNK2" },
+    { UNIT_FLAG2_COMPREHEND_LANG, "UNIT_FLAG2_COMPREHEND_LANG" },
+    { UNIT_FLAG2_MIRROR_IMAGE, "UNIT_FLAG2_MIRROR_IMAGE" },
+    { UNIT_FLAG2_UNK5, "UNIT_FLAG2_UNK5" },
+    { UNIT_FLAG2_FORCE_MOVE, "UNIT_FLAG2_FORCE_MOVE" },
+    { UNIT_FLAG2_DISARM_OFFHAND, "UNIT_FLAG2_DISARM_OFFHAND" },
+    { UNIT_FLAG2_UNK8, "UNIT_FLAG2_UNK8" },
+    { UNIT_FLAG2_UNK9, "UNIT_FLAG2_UNK9" },
+    { UNIT_FLAG2_DISARM_RANGED, "UNIT_FLAG2_DISARM_RANGED" },
+    { UNIT_FLAG2_ENABLE_POWER_REGEN, "UNIT_FLAG2_ENABLE_POWER_REGEN" },
+    { UNIT_FLAG2_RESTRICT_PARTY_INTERACTION, "UNIT_FLAG2_RESTRICT_PARTY_INTERACTION" },
+    { UNIT_FLAG2_PREVENT_SPELL_CLICK, "UNIT_FLAG2_PREVENT_SPELL_CLICK" },
+    { UNIT_FLAG2_ALLOW_ENEMY_INTERACT, "UNIT_FLAG2_ALLOW_ENEMY_INTERACT" },
+    { UNIT_FLAG2_DISABLE_TURN, "UNIT_FLAG2_DISABLE_TURN" },
+    { UNIT_FLAG2_UNK10, "UNIT_FLAG2_UNK10" },
+    { UNIT_FLAG2_PLAY_DEATH_ANIM, "UNIT_FLAG2_PLAY_DEATH_ANIM" },
+    { UNIT_FLAG2_ALLOW_CHEAT_SPELLS, "UNIT_FLAG2_ALLOW_CHEAT_SPELLS" }
+};
+
+static uint32 numflags2 = sizeof(UnitFlagToName2) / sizeof(UnitFlagNames);
 
 static const UnitDynFlagNames UnitDynFlagToName[] =
 {

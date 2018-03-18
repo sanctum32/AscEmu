@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -4024,7 +4024,7 @@ MovementStatusElements MoveUpdateTeleport[] =
     MSEEnd,
 };
 
-MovementStatusElements* GetMovementStatusElementsSequence(uint32 opcode)
+MovementStatusElements* GetMovementStatusElementsSequence(uint16_t opcode)
 {
     switch (opcode)
     {

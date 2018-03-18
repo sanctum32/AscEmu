@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -30,15 +30,25 @@
 #include "Spell/Definitions/ProcFlags.h"
 #include "Spell/Definitions/SpellEffectTarget.h"
 #include "Spell/Customization/SpellCustomizations.hpp"
+#include "Data/WoWGameObject.h"
+
+// MIT
+bool GameObject::isQuestGiver() const
+{
+    return GetType() == GAMEOBJECT_TYPE_QUESTGIVER;
+}
+// MIT End
 
 GameObject::GameObject(uint64 guid)
 {
     m_objectType |= TYPE_GAMEOBJECT;
     m_objectTypeId = TYPEID_GAMEOBJECT;
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING <= TBC
+    m_updateFlag = (UPDATEFLAG_HIGHGUID | UPDATEFLAG_HAS_POSITION | UPDATEFLAG_LOWGUID);
+#elif VERSION_STRING == WotLK
     m_updateFlag = (UPDATEFLAG_HIGHGUID | UPDATEFLAG_HAS_POSITION | UPDATEFLAG_POSITION | UPDATEFLAG_ROTATION);
-#else
+#elif VERSION_STRING == Cata
     m_updateFlag = (UPDATEFLAG_HAS_POSITION | UPDATEFLAG_ROTATION);
 #endif
 
@@ -46,11 +56,12 @@ GameObject::GameObject(uint64 guid)
     m_uint32Values = _fields;
     std::fill(m_uint32Values, &m_uint32Values[GAMEOBJECT_END], 0);
     m_updateMask.SetCount(GAMEOBJECT_END);
-    setUInt32Value(OBJECT_FIELD_TYPE, TYPE_GAMEOBJECT | TYPE_OBJECT);
-    SetGUID(guid);
+
+    setType(TYPE_GAMEOBJECT | TYPE_OBJECT);
+    setGuid(guid);
     SetAnimProgress(100);
     m_wowGuid.Init(guid);
-    SetScale(1);
+    setScale(1);
     m_summonedGo = false;
     invisible = false;
     invisibilityFlag = INVIS_FLAG_NORMAL;
@@ -93,8 +104,18 @@ GameObject::~GameObject()
 
     if (m_summonedGo && m_summoner)
         for (uint8 i = 0; i < 4; i++)
-            if (m_summoner->m_ObjectSlots[i] == GetLowGUID())
+            if (m_summoner->m_ObjectSlots[i] == getGuidLow())
                 m_summoner->m_ObjectSlots[i] = 0;
+}
+
+bool GameObject::isFishingNode() const
+{
+    return GetType() == GAMEOBJECT_TYPE_FISHINGNODE;
+}
+
+GameObjectProperties const* GameObject::GetGameObjectProperties() const
+{
+    return gameobject_properties;
 }
 
 bool GameObject::CreateFromProto(uint32 entry, uint32 mapid, float x, float y, float z, float ang, float r0, float r1, float r2, float r3, uint32 overrides)
@@ -107,7 +128,7 @@ bool GameObject::CreateFromProto(uint32 entry, uint32 mapid, float x, float y, f
     }
 
     Object::_Create(mapid, x, y, z, ang);
-    SetEntry(entry);
+    setEntry(entry);
 
     m_overrides = overrides;
     SetRotationQuat(r0, r1, r2, r3);
@@ -187,8 +208,8 @@ void GameObject::SaveToDB()
     if (m_spawn == NULL)
     {
         // Create spawn instance
-        m_spawn = new GameobjectSpawn;
-        m_spawn->entry = GetEntry();
+        m_spawn = new MySQLStructure::GameobjectSpawn;
+        m_spawn->entry = getEntry();
         m_spawn->id = objmgr.GenerateGameObjectSpawnID();
         m_spawn->map = GetMapId();
         m_spawn->position_x = GetPositionX();
@@ -202,7 +223,7 @@ void GameObject::SaveToDB()
         m_spawn->state = GetState();
         m_spawn->flags = GetFlags();
         m_spawn->faction = GetFaction();
-        m_spawn->scale = GetScale();
+        m_spawn->scale = getScale();
         //m_spawn->stateNpcLink = 0;
         m_spawn->phase = GetPhase();
         m_spawn->overrides = GetOverrides();
@@ -224,7 +245,7 @@ void GameObject::SaveToDB()
 
     ss << "INSERT INTO gameobject_spawns VALUES("
         << m_spawn->id << ","
-        << GetEntry() << ","
+        << getEntry() << ","
         << GetMapId() << ","
         << GetPositionX() << ","
         << GetPositionY() << ","
@@ -237,7 +258,7 @@ void GameObject::SaveToDB()
         << "0,"              // initial state
         << GetFlags() << ","
         << GetFaction() << ","
-        << GetScale() << ","
+        << getScale() << ","
         << "0,"
         << m_phase << ","
         << m_overrides << ")";
@@ -251,7 +272,7 @@ void GameObject::SaveToFile(std::stringstream & name)
 
     ss << "INSERT INTO gameobject_spawns VALUES("
         << ((m_spawn == NULL) ? 0 : m_spawn->id) << ","
-        << GetEntry() << ","
+        << getEntry() << ","
         << GetMapId() << ","
         << GetPositionX() << ","
         << GetPositionY() << ","
@@ -264,7 +285,7 @@ void GameObject::SaveToFile(std::stringstream & name)
         << uint32(GetState()) << ","
         << GetFlags() << ","
         << GetFaction() << ","
-        << GetScale() << ","
+        << getScale() << ","
         << "0,"
         << m_phase << ","
         << m_overrides << ")";
@@ -281,10 +302,10 @@ void GameObject::SaveToFile(std::stringstream & name)
 void GameObject::InitAI()
 {
     if (myScript == NULL)
-        myScript = sScriptMgr.CreateAIScriptClassForGameObject(GetEntry(), this);
+        myScript = sScriptMgr.CreateAIScriptClassForGameObject(getEntry(), this);
 }
 
-bool GameObject::Load(GameobjectSpawn* go_spawn)
+bool GameObject::Load(MySQLStructure::GameobjectSpawn* go_spawn)
 {
     if (!CreateFromProto(go_spawn->entry, 0, go_spawn->position_x, go_spawn->position_y, go_spawn->position_z, go_spawn->orientation, go_spawn->rotation_0, go_spawn->rotation_1, go_spawn->rotation_2, go_spawn->rotation_3, go_spawn->overrides))
         return false;
@@ -297,7 +318,7 @@ bool GameObject::Load(GameobjectSpawn* go_spawn)
     {
         SetFaction(go_spawn->faction);
     }
-    SetScale(go_spawn->scale);
+    setScale(go_spawn->scale);
 
     return true;
 }
@@ -383,7 +404,7 @@ void GameObject::onRemoveInRangeObject(Object* pObj)
     if (m_summonedGo && m_summoner == pObj)
     {
         for (uint8 i = 0; i < 4; i++)
-            if (m_summoner->m_ObjectSlots[i] == GetLowGUID())
+            if (m_summoner->m_ObjectSlots[i] == getGuidLow())
                 m_summoner->m_ObjectSlots[i] = 0;
 
         m_summoner = 0;
@@ -394,7 +415,7 @@ void GameObject::onRemoveInRangeObject(Object* pObj)
 void GameObject::RemoveFromWorld(bool free_guid)
 {
     WorldPacket data(SMSG_GAMEOBJECT_DESPAWN_ANIM, 8);
-    data << uint64(GetGUID());
+    data << uint64(getGuid());
     SendMessageToSet(&data, true);
 
     sEventMgr.RemoveEvents(this);
@@ -414,6 +435,11 @@ uint32 GameObject::GetGOReqSkill()
             return lock->minlockskill[i];
     }
     return 0;
+}
+
+uint32 GameObject::GetType() const
+{
+    return GetGameObjectProperties()->type;
 }
 
 using G3D::Quat;
@@ -502,9 +528,19 @@ void GameObject::CastSpell(uint64 TargetGUID, uint32 SpellID)
 void GameObject::SetCustomAnim(uint32_t anim)
 {
     WorldPacket data(SMSG_GAMEOBJECT_CUSTOM_ANIM, 12);
-    data << uint64_t(GetGUID());
+    data << uint64_t(getGuid());
     data << uint32_t(anim);
     SendMessageToSet(&data, false, false);
+}
+
+uint32_t GameObject::getDynamic() const
+{
+    return gameObjectData()->dynamic;
+}
+
+void GameObject::setDynamic(uint32_t dynamic)
+{
+    write(gameObjectData()->dynamic, dynamic);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -819,7 +855,7 @@ void GameObject_Trap::Update(unsigned long time_passed)
             if (!o || !o->IsUnit())
                 continue;
 
-            if ((m_summoner != NULL) && (o->GetGUID() == m_summoner->GetGUID()))
+            if ((m_summoner != NULL) && (o->getGuid() == m_summoner->getGuid()))
                 continue;
 
             dist = getDistanceSq(o);
@@ -839,7 +875,7 @@ void GameObject_Trap::Update(unsigned long time_passed)
                         continue;
                 }
 
-                CastSpell(o->GetGUID(), spell);
+                CastSpell(o->getGuid(), spell);
 
                 if (m_summoner != NULL)
                     m_summoner->HandleProc(PROC_ON_TRAP_TRIGGER, reinterpret_cast<Unit*>(o), spell);
@@ -896,7 +932,7 @@ void GameObject_SpellFocus::SpawnLinkedTrap()
     }
 
     go->SetFaction(GetFaction());
-    go->setUInt64Value(OBJECT_FIELD_CREATED_BY, GetGUID());
+    go->setUInt64Value(OBJECT_FIELD_CREATED_BY, getGuid());
     go->PushToWorld(m_mapMgr);
 }
 
@@ -1026,7 +1062,7 @@ bool GameObject_FishingNode::HasLoot()
 // Class functions for GameObject_Ritual
 GameObject_Ritual::GameObject_Ritual(uint64 GUID) : GameObject(GUID)
 {
-    Ritual = NULL;;
+    Ritual = NULL;
 }
 
 GameObject_Ritual::~GameObject_Ritual()

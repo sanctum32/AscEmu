@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -43,8 +43,8 @@ public:
         Item* of = static_cast<Player*>(mTarget)->GetItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_OFFHAND);
         if (mh != nullptr && of != nullptr)
         {
-            uint32 mhs = mh->GetItemProperties()->Delay;
-            uint32 ohs = of->GetItemProperties()->Delay;
+            uint32 mhs = mh->getItemProperties()->Delay;
+            uint32 ohs = of->getItemProperties()->Delay;
             mProcChance = mhs * ohs / (800 * (mhs + ohs));     // 0.75 ppm
         }
     }

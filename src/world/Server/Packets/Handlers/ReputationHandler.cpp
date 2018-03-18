@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -389,7 +389,7 @@ void Player::Reputation_OnKilledUnit(Unit* pUnit, bool InnerLoop)
     }
 
     uint32 team = GetTeam();
-    ReputationModifier* modifier = objmgr.GetReputationModifier(pUnit->GetEntry(), pUnit->m_factionDBC->ID);
+    ReputationModifier* modifier = objmgr.GetReputationModifier(pUnit->getEntry(), pUnit->m_factionDBC->ID);
     if (modifier != nullptr)
     {
         // Apply this data.

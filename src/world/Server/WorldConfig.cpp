@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -581,7 +581,7 @@ void WorldConfig::loadWorldConfigValues(bool reload /*false*/)
     guild.maxMembers = Config.MainConfig.getIntDefault("Guild", "MaxMembers", 80);
     guild.maxXpPerDay = Config.MainConfig.getIntDefault("Guild", "MaxXpPerDay", 6246000);
     guild.maxRepPerWeek = Config.MainConfig.getIntDefault("Guild", "MaxRepPerWeek", 4375);
-    guild.levlingEnabled = Config.MainConfig.getIntDefault("Guild", "LevlingEnabled", true);
+    guild.levlingEnabled = Config.MainConfig.getBoolDefault("Guild", "LevlingEnabled", true);
     guild.undeletabelLevel = Config.MainConfig.getIntDefault("Guild", "UndeletabelLevel", 4);
     guild.eventLogCount = Config.MainConfig.getIntDefault("Guild", "EventLogCount", 100);
     guild.newsLogCount = Config.MainConfig.getIntDefault("Guild", "NewsLogCount", 250);

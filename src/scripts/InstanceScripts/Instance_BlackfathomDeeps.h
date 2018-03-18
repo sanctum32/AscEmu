@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -30,7 +30,7 @@ enum CreatureSpells
 enum CreatureSay
 {
     // MorriduneGossip
-    MORRIDUNE_ON_HELLO      = 7247,     // need to be checked not shure. old: menu(pObject->GetGUID(), 7247);
+    MORRIDUNE_ON_HELLO      = 7247,     // need to be checked not shure. old: menu(pObject->getGuid(), 7247);
     MORRIDUNE_OPTION_1      = 423,      // Please Teleport me to Darnassus.
     MORRIDUNE_OPTION_2      = 424,      // I wish to leave this horrible place.
 };

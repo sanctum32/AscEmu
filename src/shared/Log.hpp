@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -34,11 +34,7 @@ class WorldPacketLog : public Singleton<WorldPacketLog>
         void disablePacketLog();
 
         //WorldSocket.cpp
-    #if VERSION_STRING != Cata
         void logPacket(uint32_t len, uint16_t opcode, const uint8_t* data, uint8_t direction, uint32_t accountid = 0);
-    #else
-        void logPacket(uint32_t len, uint32_t opcode, const uint8_t* data, uint8_t direction, uint32_t accountid = 0);
-    #endif
 };
 #define sWorldPacketLog WorldPacketLog::getSingleton()
 

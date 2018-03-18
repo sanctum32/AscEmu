@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -107,10 +107,12 @@ void DatabaseCleaner::CleanCharacters()
         {
             Corpse* pCorpse = new Corpse(0, result->Fetch()[0].GetUInt32());
             pCorpse->LoadValues(result->Fetch()[8].GetString());
-            pCorpse->SetLowGUID(0);
+
+            //\todo is this really necessary?
+            //pCorpse->setGuidLow(0);
             if (pCorpse->GetDisplayId() == 0 || GET_LOWGUID_PART(pCorpse->GetOwner()) == 0 || chr_guids.find(GET_LOWGUID_PART(pCorpse->GetOwner())) == chr_guids.end())
             {
-                tokill_corpses.push_back(pCorpse->GetLowGUID());
+                tokill_corpses.push_back(pCorpse->getGuidLow());
             }
             delete pCorpse;
         }

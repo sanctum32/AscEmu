@@ -1,5 +1,5 @@
 /*
- Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  This file is released under the MIT license. See README-MIT for more information.
  */
 
@@ -35,7 +35,7 @@ public:
 
 void CorenDirebrewGossip::OnHello(Object* pObject, Player * Plr)
 {
-    Arcemu::Gossip::Menu menu(pObject->GetGUID(), DIREBREW_1, Plr->GetSession()->language);
+    Arcemu::Gossip::Menu menu(pObject->getGuid(), DIREBREW_1, Plr->GetSession()->language);
     menu.AddItem(GOSSIP_ICON_CHAT, Plr->GetSession()->LocalizedGossipOption(439), 1);     // Insult Coren Direbrew's brew.
     menu.Send(Plr);
 }
@@ -48,7 +48,7 @@ void CorenDirebrewGossip::OnSelectOption(Object* pObject, Player* Plr, uint32 Id
     {
         case 1:
         {
-            Arcemu::Gossip::Menu menu(pObject->GetGUID(), DIREBREW_2, Plr->GetSession()->language);
+            Arcemu::Gossip::Menu menu(pObject->getGuid(), DIREBREW_2, Plr->GetSession()->language);
             menu.AddItem(GOSSIP_ICON_CHAT, Plr->GetSession()->LocalizedGossipOption(440), 1);     // Fight.
             menu.AddItem(GOSSIP_ICON_CHAT, Plr->GetSession()->LocalizedGossipOption(441), 1);     // Apologize.
             menu.Send(Plr);

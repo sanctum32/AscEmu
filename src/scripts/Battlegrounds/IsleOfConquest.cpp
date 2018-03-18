@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -570,7 +570,7 @@ void IsleOfConquest::SpawnControlPoint(uint32 Id, uint32 Type)
 
         // assign it a new guid (client needs this to see the entry change?)
         controlpoint[Id].banner->SetNewGuid(m_mapMgr->GenerateGameobjectGuid());
-        controlpoint[Id].banner->SetEntry(gameobject_info->entry);
+        controlpoint[Id].banner->setEntry(gameobject_info->entry);
         controlpoint[Id].banner->SetDisplayId(gameobject_info->display_id);
         controlpoint[Id].banner->SetType(static_cast<uint8>(gameobject_info->type));
 
@@ -649,7 +649,7 @@ void IsleOfConquest::SpawnControlPoint(uint32 Id, uint32 Type)
 
         // re-spawn the aura
         controlpoint[Id].aura->SetNewGuid(m_mapMgr->GenerateGameobjectGuid());
-        controlpoint[Id].aura->SetEntry(gi_aura->entry);
+        controlpoint[Id].aura->setEntry(gi_aura->entry);
         controlpoint[Id].aura->SetDisplayId(gi_aura->display_id);
         controlpoint[Id].aura->SetGameObjectProperties(gi_aura);
         controlpoint[Id].aura->PushToWorld(m_mapMgr);
@@ -737,7 +737,7 @@ bool IsleOfConquest::HookSlowLockOpen(GameObject* pGo, Player* pPlayer, Spell* /
     {
         if (controlpoint[cpid].aura == NULL)
             continue;
-        if (controlpoint[cpid].aura->GetGUID() == pGo->GetGUID())
+        if (controlpoint[cpid].aura->getGuid() == pGo->getGuid())
             break;
     }
 
@@ -799,13 +799,13 @@ void IsleOfConquest::HookOnUnitDied(Unit *victim)
     {
         Creature *c = static_cast<Creature*>(victim);
 
-        if ((generals[TEAM_ALLIANCE] != NULL) && (c->GetEntry() == generals[TEAM_ALLIANCE]->GetEntry()))
+        if ((generals[TEAM_ALLIANCE] != NULL) && (c->getEntry() == generals[TEAM_ALLIANCE]->getEntry()))
         {
             Finish(TEAM_ALLIANCE);
             generals[TEAM_ALLIANCE] = NULL;
         }
         else
-            if ((generals[TEAM_HORDE] != NULL) && (c->GetEntry() == generals[TEAM_HORDE]->GetEntry()))
+            if ((generals[TEAM_HORDE] != NULL) && (c->getEntry() == generals[TEAM_HORDE]->getEntry()))
             {
                 Finish(TEAM_HORDE);
                 generals[TEAM_HORDE] = NULL;
@@ -817,7 +817,7 @@ void IsleOfConquest::HookOnUnitDied(Unit *victim)
             // Was it a workshop vehicle?
             for (uint8 i = 0; i < MAX_PLAYER_TEAMS; i++)
             {
-                if ((workshopvehicle[i].creature != NULL) && (c->GetGUID() == workshopvehicle[i].creature->GetGUID()))
+                if ((workshopvehicle[i].creature != NULL) && (c->getGuid() == workshopvehicle[i].creature->getGuid()))
                 {
                     workshopvehicle[i].creature->Despawn(1 * 1000, 0);
                     workshopvehicle[i].creature = NULL;
@@ -828,7 +828,7 @@ void IsleOfConquest::HookOnUnitDied(Unit *victim)
             {
                 for (uint8 j = 0; j < 4; j++)
                 {
-                    if ((workshopdemolisher[i][j].creature != NULL) && (c->GetGUID() == workshopdemolisher[i][j].creature->GetGUID()))
+                    if ((workshopdemolisher[i][j].creature != NULL) && (c->getGuid() == workshopdemolisher[i][j].creature->getGuid()))
                     {
                         workshopdemolisher[i][j].creature->Despawn(1 * 1000, 0);
                         workshopdemolisher[i][j].creature = NULL;
@@ -841,7 +841,7 @@ void IsleOfConquest::HookOnUnitDied(Unit *victim)
             {
                 for (uint8 j = 0; j < 4; j++)
                 {
-                    if ((dockvehicle[i][j].creature != NULL) && (c->GetGUID() == dockvehicle[i][j].creature->GetGUID()))
+                    if ((dockvehicle[i][j].creature != NULL) && (c->getGuid() == dockvehicle[i][j].creature->getGuid()))
                     {
                         dockvehicle[i][j].creature->Despawn(1 * 1000, 0);
                         dockvehicle[i][j].creature = NULL;

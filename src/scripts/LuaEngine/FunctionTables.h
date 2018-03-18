@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2007 Moon++ <http://www.moonplusplus.info/>
  *
@@ -40,7 +40,7 @@ RegType<Item> ItemMethods[] =
 	{ "GetName", &luaItem::GetName },
 	{ "GetSpellId", &luaItem::GetSpellId },
 	{ "GetSpellTrigger", &luaItem::GetSpellTrigger },
-	{ "GetGUID", &luaItem::GetGUID },
+	{ "GetGuid", &luaItem::GetGUID },
 	{ "AddLoot", &luaItem::AddLoot},
 	{ "SetByteValue", &luaItem::SetByteValue },
 	{ "GetByteValue", &luaItem::GetByteValue },
@@ -166,7 +166,7 @@ RegType<Unit> UnitMethods[] =
 	{ "SetMana", &LuaUnit::SetMana },
 	{ "SetMaxMana", &LuaUnit::SetMaxMana },
 	{ "GetDistance", &LuaUnit::GetDistance },
-	{ "GetGUID", &LuaUnit::GetGUID },
+	{ "GetGuid", &LuaUnit::GetGUID },
 	{ "GetCreatureNearestCoords", &LuaUnit::GetCreatureNearestCoords },
 	{ "CastSpellAoF", &LuaUnit::CastSpellAoF },
 	{ "GetGameObjectNearestCoords", &LuaUnit::GetGameObjectNearestCoords },
@@ -556,7 +556,7 @@ RegType<Unit> UnitMethods[] =
 
 RegType<GameObject> GOMethods[] =
 {
-	{ "GetGUID", &LuaGameObject::GetGUID },
+	{ "GetGuid", &LuaGameObject::GetGUID },
 	{ "GetName", &LuaGameObject::GetName },
 	{ "GetCreatureNearestCoords", &LuaGameObject::GetCreatureNearestCoords },
 	{ "GetAreaId", &LuaGameObject::GetAreaId },
@@ -755,7 +755,7 @@ RegType<Field> SQLFieldMethods[] =
 	{"GetLong", &luaSql::GetLong },
 	{"GetULong", &luaSql::GetULong },
 	{"GetString", &luaSql::GetString },
-	{"GetGUID", &luaSql::GetGUID },
+	{"GetGuid", &luaSql::GetGUID },
 	{"GetFloat", &luaSql::GetFloat },
 	{"GetBool", &luaSql::GetBool },
 	{NULL, NULL},

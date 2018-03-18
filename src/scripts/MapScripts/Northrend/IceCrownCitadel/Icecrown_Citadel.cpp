@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -27,7 +27,7 @@ public:
         if (!pInstance)
             return;
 
-        Arcemu::Gossip::Menu menu(object->GetGUID(), 15221, player->GetSession()->language);
+        Arcemu::Gossip::Menu menu(object->getGuid(), 15221, player->GetSession()->language);
         menu.AddItem(GOSSIP_ICON_CHAT, player->GetSession()->LocalizedGossipOption(515), 0);          // Teleport to Light's Hammer.
 
         if (pInstance->isDataStateFinished(CN_LORD_MARROWGAR))

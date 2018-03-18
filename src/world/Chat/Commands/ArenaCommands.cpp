@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -65,7 +65,7 @@ bool ChatHandler::HandleArenaCreateTeam(const char* args, WorldSession* m_sessio
     arena_team->m_borderColour = 4294931722UL;
     arena_team->m_borderStyle = 1;
     arena_team->m_backgroundColour = 4284906803UL;
-    arena_team->m_leader = player->GetLowGUID();
+    arena_team->m_leader = player->getGuidLow();
     arena_team->m_name = std::string(team_name);
     arena_team->AddMember(player->getPlayerInfo());
 

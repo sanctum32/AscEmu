@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -35,10 +35,11 @@ enum CORPSE_STATE
 #define CORPSE_MINIMUM_RECLAIM_RADIUS 39
 #define CORPSE_MINIMUM_RECLAIM_RADIUS_SQ CORPSE_MINIMUM_RECLAIM_RADIUS * CORPSE_MINIMUM_RECLAIM_RADIUS
 
+struct WoWCorpse;
 class SERVER_DECL Corpse : public Object
 {
+        const WoWCorpse* corpseData() const { return reinterpret_cast<WoWCorpse*>(wow_data); }
     public:
-
         Corpse(uint32 high, uint32 low);
         ~Corpse();
 

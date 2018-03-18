@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -80,7 +80,7 @@ void WorldSession::SendTaxiList(Creature* pCreature)
     uint8 field;
     uint32 TaxiMask[12];
     uint32 submask;
-    uint64 guid = pCreature->GetGUID();
+    uint64 guid = pCreature->getGuid();
 
     curloc = sTaxiMgr.GetNearestTaxiNode(_player->GetPositionX(), _player->GetPositionY(), _player->GetPositionZ(), _player->GetMapId());
     if (curloc == 0)
@@ -147,7 +147,7 @@ void WorldSession::HandleActivateTaxiOpcode(WorldPacket& recv_data)
     recv_data >> sourcenode;
     recv_data >> destinationnode;
 
-    if (GetPlayer()->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_LOCK_PLAYER))
+    if (GetPlayer()->hasUnitFlags(UNIT_FLAG_LOCK_PLAYER))
         return;
 
     TaxiPath* taxipath = sTaxiMgr.GetTaxiPath(sourcenode, destinationnode);
@@ -281,7 +281,7 @@ void WorldSession::HandleMultipleActivateTaxiOpcode(WorldPacket& recvPacket)
     for (uint32 i = 0; i < nodecount; ++i)
         pathes.push_back(recvPacket.read<uint32>());
 
-    if (GetPlayer()->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_LOCK_PLAYER))
+    if (GetPlayer()->hasUnitFlags(UNIT_FLAG_LOCK_PLAYER))
         return;
 
     // get first trip

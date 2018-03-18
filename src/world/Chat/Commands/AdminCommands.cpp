@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -55,7 +55,7 @@ bool ChatHandler::HandleAdminCastAllCommand(const char* args, WorldSession* m_se
             else
             {
                 Spell* spell = sSpellFactoryMgr.NewSpell(player, spell_entry, true, 0);
-                SpellCastTargets targets(player->GetGUID());
+                SpellCastTargets targets(player->getGuid());
                 spell->prepare(&targets);
             }
         }
@@ -134,12 +134,12 @@ bool ChatHandler::HandleAdminMassSummonCommand(const char* args, WorldSession* m
         {
             if (faction > -1 && plr->GetTeam() == static_cast<uint32>(faction))
             {
-                plr->SummonRequest(summon_player->GetLowGUID(), summon_player->GetZoneId(), summon_player->GetMapId(), summon_player->GetInstanceID(), summon_player->GetPosition());
+                plr->SummonRequest(summon_player->getGuidLow(), summon_player->GetZoneId(), summon_player->GetMapId(), summon_player->GetInstanceID(), summon_player->GetPosition());
                 ++summon_count;
             }
             else if (faction == -1)
             {
-                plr->SummonRequest(summon_player->GetLowGUID(), summon_player->GetZoneId(), summon_player->GetMapId(), summon_player->GetInstanceID(), summon_player->GetPosition());
+                plr->SummonRequest(summon_player->getGuidLow(), summon_player->GetZoneId(), summon_player->GetMapId(), summon_player->GetInstanceID(), summon_player->GetPosition());
                 ++summon_count;
             }
 

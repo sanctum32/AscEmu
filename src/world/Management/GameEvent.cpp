@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -34,16 +34,16 @@ void GameEvent::CreateNPCs()
         }
 
         // Set up spawn specific information
-        c->SetDisplayId(npc.displayid);
+        c->setDisplayId(npc.displayid);
         c->SetFaction(npc.faction);
 
         // Equipment
-        c->SetEquippedItem(MELEE, cp->itemslot_1);
-        c->SetEquippedItem(OFFHAND, cp->itemslot_2);
-        c->SetEquippedItem(RANGED, cp->itemslot_3);
+        c->setVirtualItemSlotId(MELEE, cp->itemslot_1);
+        c->setVirtualItemSlotId(OFFHAND, cp->itemslot_2);
+        c->setVirtualItemSlotId(RANGED, cp->itemslot_3);
 
         if (npc.mountdisplayid != 0)
-            c->SetMount(npc.mountdisplayid);
+            c->setMountDisplayId(npc.mountdisplayid);
 
         c->mEvent = this;
         bool addToWorld = true;
@@ -75,7 +75,7 @@ void GameEvent::CreateObjects()
         g->CreateFromProto(gobj.entry, gobj.map_id, gobj.position_x, gobj.position_y, gobj.position_z, gobj.facing);
 
         // Set up spawn specific information
-        g->SetScale(gobj.scale);
+        g->setScale(gobj.scale);
 
         if (gobj.faction != 0)
             g->SetFaction(gobj.faction);

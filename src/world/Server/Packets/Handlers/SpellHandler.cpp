@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2017 AscEmu Team <http://www.ascemu.org/>
+Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -18,6 +18,7 @@ This file is released under the MIT license. See README-MIT for more information
 #include "Storage/MySQLDataStore.hpp"
 #include "Units/Creatures/Pet.h"
 #include "Objects/Faction.h"
+#include "Data/WoWItem.h"
 
 void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
 {
@@ -41,13 +42,13 @@ void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
         return;
     }
 
-    if (tmpItem->GetGUID() != itemGuid)
+    if (tmpItem->getGuid() != itemGuid)
     {
         _player->GetItemInterface()->BuildInventoryChangeError(nullptr, nullptr, INV_ERR_ITEM_NOT_FOUND);
         return;
     }
 
-    ItemProperties const* itemProto = tmpItem->GetItemProperties();
+    ItemProperties const* itemProto = tmpItem->getItemProperties();
     if (!itemProto)
     {
         _player->GetItemInterface()->BuildInventoryChangeError(nullptr, nullptr, INV_ERR_ITEM_NOT_FOUND);
@@ -68,7 +69,7 @@ void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
         return;
     }
 
-    if (tmpItem->IsSoulbound() && tmpItem->GetOwnerGUID() != _player->GetGUID() && !tmpItem->IsAccountbound())
+    if (tmpItem->IsSoulbound() && tmpItem->getOwnerGuid() != _player->getGuid() && !tmpItem->IsAccountbound())
     {
         _player->GetItemInterface()->BuildInventoryChangeError(tmpItem, nullptr, INV_ERR_DONT_OWN_THAT_ITEM);
         return;
@@ -210,7 +211,7 @@ void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
     if (sScriptMgr.CallScriptedItem(tmpItem, _player))
         return;
 
-    SpellCastTargets targets(recvPacket, _player->GetGUID());
+    SpellCastTargets targets(recvPacket, _player->getGuid());
     SpellInfo* spellInfo = sSpellCustomizations.GetSpellInfo(spellId);
     if (spellInfo == nullptr)
     {
@@ -224,7 +225,7 @@ void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
     {
         if (itemProto->ForcedPetId == 0)
         {
-            if (targets.m_unitTarget != _player->GetGUID())
+            if (targets.m_unitTarget != _player->getGuid())
             {
                 _player->SendCastResult(spellInfo->getId(), SPELL_FAILED_BAD_TARGETS, castCount, 0);
                 return;
@@ -232,7 +233,7 @@ void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
         }
         else
         {
-            if (!_player->GetSummon() || _player->GetSummon()->GetEntry() != (uint32_t)itemProto->ForcedPetId)
+            if (!_player->GetSummon() || _player->GetSummon()->getEntry() != (uint32_t)itemProto->ForcedPetId)
             {
                 _player->SendCastResult(spellInfo->getId(), SPELL_FAILED_BAD_TARGETS, castCount, 0);
                 return;
@@ -250,7 +251,7 @@ void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
         }
         else
         {
-            _player->SetStandState(STANDSTATE_SIT);
+            _player->setStandState(STANDSTATE_SIT);
         }
     }
 
@@ -331,7 +332,7 @@ void WorldSession::HandleSpellClick(WorldPacket& recvPacket)
 
     // TODO: move this Lightwell 'script' to SpellScript or CreatureScript...
     // For future reference; seems like the Lightwell npc should actually cast spell 60123 on click
-    // and this 60123 spell has Script Effect, where should be determined which rank of the Lightwell Renew needs to be casted (switch (GetCaster()->GetCreatedBySpell())...)
+    // and this 60123 spell has Script Effect, where should be determined which rank of the Lightwell Renew needs to be casted (switch (GetCaster()->getCreatedBySpellId())...)
 
     // Commented this out for now, it's not even working -Appled
     /*const uint32_t lightWellCharges = 59907;
@@ -350,14 +351,14 @@ void WorldSession::HandleSpellClick(WorldPacket& recvPacket)
 
         if (!_player->hasAurasWithId(lightWellRenew))
         {
-            if (SpellClickSpell const* clickSpell = sMySQLStore.getSpellClickSpell(creatureTarget->GetEntry()))
+            if (SpellClickSpell const* clickSpell = sMySQLStore.getSpellClickSpell(creatureTarget->getEntry()))
             {
                 creatureTarget->CastSpell(_player, clickSpell->SpellID, true);
             }
             else
             {
                 sChatHandler.BlueSystemMessage(this, "NPC Id %u (%s) has no spellclick spell associated with it.", creatureTarget->GetCreatureProperties()->Id, creatureTarget->GetCreatureProperties()->Name.c_str());
-                LogError("Spellclick packet received for creature %u but there is no spell associated with it.", creatureTarget->GetEntry());
+                LogError("Spellclick packet received for creature %u but there is no spell associated with it.", creatureTarget->getEntry());
                 return;
             }
 
@@ -369,7 +370,7 @@ void WorldSession::HandleSpellClick(WorldPacket& recvPacket)
         }
     }*/
 
-    SpellClickSpell const* spellClickData = sMySQLStore.getSpellClickSpell(creatureTarget->GetEntry());
+    SpellClickSpell const* spellClickData = sMySQLStore.getSpellClickSpell(creatureTarget->getEntry());
     if (spellClickData != nullptr)
     {
         // TODO: there are spellclick spells which are friendly only, raid only and party only
@@ -379,7 +380,7 @@ void WorldSession::HandleSpellClick(WorldPacket& recvPacket)
         SpellInfo* spellInfo = sSpellCustomizations.GetSpellInfo(spellClickData->SpellID);
         if (spellInfo == nullptr)
         {
-            LogError("NPC ID %u has spell associated on SpellClick but spell id %u cannot be found.", creatureTarget->GetEntry(), spellClickData->SpellID);
+            LogError("NPC ID %u has spell associated on SpellClick but spell id %u cannot be found.", creatureTarget->getEntry(), spellClickData->SpellID);
             return;
         }
 
@@ -391,7 +392,7 @@ void WorldSession::HandleSpellClick(WorldPacket& recvPacket)
     else
     {
         sChatHandler.BlueSystemMessage(this, "NPC ID %u (%s) has no spellclick spell associated with it.", creatureTarget->GetCreatureProperties()->Id, creatureTarget->GetCreatureProperties()->Name.c_str());
-        LogError("SpellClick packet received for creature %u but there is no spell associated with it.", creatureTarget->GetEntry());
+        LogError("SpellClick packet received for creature %u but there is no spell associated with it.", creatureTarget->getEntry());
         return;
     }
 }
@@ -417,16 +418,16 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
     // Check does player have the spell
     if (!_player->HasSpell(spellId))
     {
-        sCheatLog.writefromsession(this, "WORLD: Player %u tried to cast spell %u but player does not have it.", _player->GetLowGUID(), spellId);
-        LogDetail("WORLD: Player %u tried to cast spell %u but player does not have it.", _player->GetLowGUID(), spellId);
+        sCheatLog.writefromsession(this, "WORLD: Player %u tried to cast spell %u but player does not have it.", _player->getGuidLow(), spellId);
+        LogDetail("WORLD: Player %u tried to cast spell %u but player does not have it.", _player->getGuidLow(), spellId);
         return;
     }
 
     // Check is player trying to cast a passive spell
     if (spellInfo->IsPassive())
     {
-        sCheatLog.writefromsession(this, "WORLD: Player %u tried to cast a passive spell %u, ignored", _player->GetLowGUID(), spellId);
-        LogDetail("WORLD: Player %u tried to cast a passive spell %u, ignored", _player->GetLowGUID(), spellId);
+        sCheatLog.writefromsession(this, "WORLD: Player %u tried to cast a passive spell %u, ignored", _player->getGuidLow(), spellId);
+        LogDetail("WORLD: Player %u tried to cast a passive spell %u, ignored", _player->getGuidLow(), spellId);
         return;
     }
 
@@ -444,7 +445,7 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
         return;
     }
 
-    SpellCastTargets targets(recvPacket, GetPlayer()->GetGUID());
+    SpellCastTargets targets(recvPacket, GetPlayer()->getGuid());
     Spell* spell = sSpellFactoryMgr.NewSpell(GetPlayer(), spellInfo, false, nullptr);
     spell->extra_cast_number = castCount;
 
@@ -616,16 +617,16 @@ void WorldSession::HandlePetCastSpell(WorldPacket& recvPacket)
         return;
     }
 
-    if (_player->GetSummon() == nullptr && _player->m_CurrentCharm == 0 && _player->GetCharmedUnitGUID() == 0)
+    if (_player->GetSummon() == nullptr && _player->m_CurrentCharm == 0 && _player->getCharmGuid() == 0)
     {
-        LogError("HandlePetCastSpell: Received opcode but player %u has no pet.", _player->GetLowGUID());
+        LogError("HandlePetCastSpell: Received opcode but player %u has no pet.", _player->getGuidLow());
         return;
     }
 
     Unit* petUnit = _player->GetMapMgr()->GetUnit(petGuid);
     if (petUnit == nullptr)
     {
-        LogError("HandlePetCastSpell: Pet entity cannot be found for player %u.", _player->GetLowGUID());
+        LogError("HandlePetCastSpell: Pet entity cannot be found for player %u.", _player->getGuidLow());
         return;
     }
 
@@ -644,7 +645,7 @@ void WorldSession::HandlePetCastSpell(WorldPacket& recvPacket)
         }
     }
     // If pet is charmed or possessed by player
-    else if (_player->m_CurrentCharm == petGuid || _player->GetCharmedUnitGUID() == petGuid)
+    else if (_player->m_CurrentCharm == petGuid || _player->getCharmGuid() == petGuid)
     {
         // TODO: find less uglier way for this... using Arcemu's solution for now
         bool found = false;
@@ -695,7 +696,7 @@ void WorldSession::HandlePetCastSpell(WorldPacket& recvPacket)
     }
     else
     {
-        LogError("HandlePetCastSpell: Pet doesn't belong to player %u", _player->GetLowGUID());
+        LogError("HandlePetCastSpell: Pet doesn't belong to player %u", _player->getGuidLow());
         return;
     }
 
@@ -745,7 +746,7 @@ void WorldSession::HandleCancelTotem(WorldPacket& recvPacket)
 
     if (totemSlot >= UNIT_SUMMON_SLOTS)
     {
-        LogError("HandleCancelTotem: Player %u tried to cancel summon from out of range slot %u, ignored.", _player->GetLowGUID(), totemSlot);
+        LogError("HandleCancelTotem: Player %u tried to cancel summon from out of range slot %u, ignored.", _player->getGuidLow(), totemSlot);
         return;
     }
 

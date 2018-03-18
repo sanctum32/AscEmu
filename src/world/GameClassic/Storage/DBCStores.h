@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -52,7 +52,7 @@ extern SERVER_DECL DBC::DBCStorage<DBC::Structures::GemPropertiesEntry> sGemProp
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::ItemEntry> sItemStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::ItemSetEntry> sItemSetStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::LockEntry> sLockStore;
-extern SERVER_DECL DBC::DBCStorage<DBC::Structures::SpellEntry_New> sSpellStore;
+extern SERVER_DECL DBC::DBCStorage<DBC::Structures::SpellEntry> sSpellStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::SpellDurationEntry> sSpellDurationStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::SpellRangeEntry> sSpellRangeStore;
 extern SERVER_DECL DBC::DBCStorage<DBC::Structures::SpellShapeshiftFormEntry> sSpellShapeshiftFormStore;

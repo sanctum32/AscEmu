@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2016 AscEmu Team <http://www.ascemu.org/>
+Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -368,7 +368,7 @@ void Player::Reputation_OnKilledUnit(Unit* pUnit, bool InnerLoop)
     }
 
     uint32 team = GetTeam();
-    ReputationModifier* modifier = objmgr.GetReputationModifier(pUnit->GetEntry(), pUnit->m_factionDBC->ID);
+    ReputationModifier* modifier = objmgr.GetReputationModifier(pUnit->getEntry(), pUnit->m_factionDBC->ID);
     if (modifier != nullptr)
     {
         // Apply this data.

@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -142,7 +142,7 @@ protected:
         void OnPushToWorld();
 
         // Build Update for Player
-        uint32  BuildCreateUpdateBlockForPlayer(ByteBuffer* data, Player* target);
+        uint32  buildCreateUpdateBlockForPlayer(ByteBuffer* data, Player* target);
 
         std::set<uint32> const& GetPassengers() const { return m_passengers; }
 

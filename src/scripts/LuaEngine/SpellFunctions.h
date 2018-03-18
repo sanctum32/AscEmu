@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2014-2017 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2007 Moon++ <http://www.moonplusplus.info/>
  *
@@ -275,7 +275,7 @@ namespace LuaSpell
     {
         if (!sp)
             return 0;
-        lua_pushinteger(L, sp->CanCast(false));
+        lua_pushinteger(L, sp->canCast(false));
         return 1;
     }
 

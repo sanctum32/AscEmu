@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -77,13 +77,13 @@ void WowCrypt::encryptWotlkSend(uint8_t* data, size_t length)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-// TBC
-void WowCrypt::initTbcCrypt()
+// Legacy
+void WowCrypt::initLegacyCrypt()
 {
     m_isInitialized = true;
 }
 
-void WowCrypt::decryptTbcReceive(uint8_t* data, size_t length)
+void WowCrypt::decryptLegacyReceive(uint8_t* data, size_t length)
 {
     if (!m_isInitialized)
         return;
@@ -103,7 +103,7 @@ void WowCrypt::decryptTbcReceive(uint8_t* data, size_t length)
     }
 }
 
-void WowCrypt::encryptTbcSend(uint8_t* data, size_t length)
+void WowCrypt::encryptLegacySend(uint8_t* data, size_t length)
 {
     if (!m_isInitialized)
         return;
@@ -119,7 +119,7 @@ void WowCrypt::encryptTbcSend(uint8_t* data, size_t length)
     }
 }
 
-void WowCrypt::setTbcKey(uint8_t* key, size_t length)
+void WowCrypt::setLegacyKey(uint8_t* key, size_t length)
 {
     crypKeyVector.resize(length);
     std::copy(key, key + length, crypKeyVector.begin());

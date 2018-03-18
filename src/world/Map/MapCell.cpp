@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -273,7 +273,7 @@ void MapCell::LoadObjects(CellSpawns* sp)
             }
             else
             {
-                CreatureSpawn* spawn = (*i);
+                MySQLStructure::CreatureSpawn* spawn = (*i);
                 LOG_ERROR("Failed spawning Creature %u with spawnId %u MapId %u", spawn->entry, spawn->id, _mapmgr->GetMapId());
                 delete c;       //missing proto or something of that kind
             }
@@ -293,7 +293,7 @@ void MapCell::LoadObjects(CellSpawns* sp)
             }
             else
             {
-                GameobjectSpawn* spawn = (*i);
+                MySQLStructure::GameobjectSpawn* spawn = (*i);
                 LOG_ERROR("Failed spawning GameObject %u with spawnId %u MapId %u", spawn->entry, spawn->id, _mapmgr->GetMapId());
                 delete go;          //missing proto or something of that kind
             }

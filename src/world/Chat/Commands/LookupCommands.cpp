@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -72,7 +72,7 @@ bool ChatHandler::HandleLookupAchievementCommand(const char* args, WorldSession*
     uint32 i, j, numFound = 0;
     std::string y, recout;
     char playerGUID[17];
-    snprintf(playerGUID, 17, "%llu", m_session->GetPlayer()->GetGUID());
+    snprintf(playerGUID, 17, "%llu", m_session->GetPlayer()->getGuid());
     if (lookupname || lookupdesc || lookupreward)
     {
         std::set<uint32> foundList;

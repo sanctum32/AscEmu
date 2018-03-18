@@ -1,11 +1,9 @@
 /*
-Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
 #pragma once
-#include "ThreadState.h"
-
 #include <atomic>
 #include <mutex>
 #include <thread>
@@ -18,7 +16,7 @@ namespace AscEmu { namespace Threading
     {
         typedef std::function<void(AEThread&)> ThreadFunc;
 
-        static std::atomic<unsigned int> ThreadIdCounter;
+        static std::atomic<unsigned int> s_thread_id_counter;
         const long long m_longSleepDelay = 64;
 
         // Meta
@@ -35,7 +33,6 @@ namespace AscEmu { namespace Threading
         bool m_longSleep;
 
         void threadRunner();
-        void killThread();
     public:
         AEThread(std::string name, ThreadFunc func, std::chrono::milliseconds intervalMs, bool autostart = true);
         ~AEThread();
@@ -51,10 +48,12 @@ namespace AscEmu { namespace Threading
         bool isKilled() const;
         void requestKill();
         void join();
+        void killAndJoin();
 
         void reboot();
 
-        void lock();
-        void unlock();
+        bool isDone() const;
+        void setWork(ThreadFunc work);
+        bool isWorking() const;
     };
 }}

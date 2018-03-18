@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -76,9 +76,7 @@
 #include "Movement/Spline/SplineFlags.hpp"
 #include "Movement/MovementCommon.hpp"
 
-#include "Server/Packets/ManagedPacket.hpp"
-#include "Server/Packets/Movement/CreatureMovement.hpp"
-#include "Server/Packets/Movement/SmsgMonsterMove.hpp"
+#include "Server/Packets/Movement/CreatureMovement.h"
 
 #include "Server/IUpdatable.h"
 #include "Server/WUtil.h"

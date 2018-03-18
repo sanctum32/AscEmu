@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -515,7 +515,7 @@ void StrandOfTheAncient::HookOnUnitDied(Unit* victim)
                 continue;
             }
 
-            if (victim->GetGUID() != c->GetGUID())
+            if (victim->getGuid() != c->getGuid())
             {
                 continue;
             }
@@ -531,7 +531,7 @@ void StrandOfTheAncient::HookOnUnitDied(Unit* victim)
                 continue;
             }
 
-            if (victim->GetGUID() != canon[i]->GetGUID())
+            if (victim->getGuid() != canon[i]->getGuid())
             {
                 continue;
             }
@@ -550,7 +550,7 @@ void StrandOfTheAncient::SetIsWeekend(bool isweekend)
 
 bool StrandOfTheAncient::HookSlowLockOpen(GameObject* go, Player* /*player*/, Spell* /*spell*/)
 {
-    uint32 goentry = go->GetEntry();
+    uint32 goentry = go->getEntry();
 
     switch (goentry)
     {
@@ -582,7 +582,7 @@ bool StrandOfTheAncient::HookSlowLockOpen(GameObject* go, Player* /*player*/, Sp
 
 bool StrandOfTheAncient::HookQuickLockOpen(GameObject* go, Player* /*player*/, Spell* /*spell*/)
 {
-    uint32 entry = go->GetEntry();
+    uint32 entry = go->getEntry();
     if (entry == GO_RELIC)
     {
         PlaySoundToAll(Attackers == TEAM_ALLIANCE ? SOTA_SOUND_VICTORY_ALLIANCE : SOTA_SOUND_VICTORY_HORDE);

@@ -119,7 +119,7 @@ class ZerekethAI : public CreatureAIScript
             float vzZ = random_target->GetPositionZ();
 
             Creature* VoidZone = spawnCreature(CN_VOIDZONEARC, vzX, vzY, vzZ, 0.0f);
-            VoidZone->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_ATTACKABLE_2);
+            VoidZone->addUnitFlags(UNIT_FLAG_NOT_ATTACKABLE_2);
             VoidZone->m_noRespawn = true;
             if (!VoidZone->IsInWorld())
             {
@@ -326,7 +326,7 @@ class WardenMellicharAI : public CreatureAIScript
             Phase_Timer = _addTimer(55000);
 
             setCanEnterCombat(false);
-            getCreature()->SetEmoteState(EMOTE_ONESHOT_READY1H); // to be replaced for the standstate
+            getCreature()->setEmoteState(EMOTE_ONESHOT_READY1H); // to be replaced for the standstate
 
             shield = getNearestGameObject(445.786f, -169.263f, 43.0466f, 184802);
             if (shield)
@@ -555,7 +555,7 @@ class WardenMellicharAI : public CreatureAIScript
             setRooted(false);
             _setMeleeDisabled(false);
             _setCastDisabled(false);
-            getCreature()->SetStandState(STANDSTATE_KNEEL);
+            getCreature()->setStandState(STANDSTATE_KNEEL);
 
             if (shield)
                 shield->SetState(GO_STATE_OPEN);

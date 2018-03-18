@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -184,10 +184,10 @@ void ArathiBasin::SpawnBuff(uint32 x)
         if (m_buffs[x]->IsInWorld())
             m_buffs[x]->RemoveFromWorld(false);
 
-        if (chosen_buffid != m_buffs[x]->GetEntry())
+        if (chosen_buffid != m_buffs[x]->getEntry())
         {
             m_buffs[x]->SetNewGuid(m_mapMgr->GenerateGameobjectGuid());
-            m_buffs[x]->SetEntry(chosen_buffid);
+            m_buffs[x]->setEntry(chosen_buffid);
             m_buffs[x]->SetGameObjectProperties(gameobject_info);
         }
 
@@ -242,7 +242,7 @@ void ArathiBasin::SpawnControlPoint(uint32 Id, uint32 Type)
 
         // assign it a new guid (client needs this to see the entry change?)
         m_controlPoints[Id]->SetNewGuid(m_mapMgr->GenerateGameobjectGuid());
-        m_controlPoints[Id]->SetEntry(gameobject_info->entry);
+        m_controlPoints[Id]->setEntry(gameobject_info->entry);
         m_controlPoints[Id]->SetDisplayId(gameobject_info->display_id);
         m_controlPoints[Id]->SetType(static_cast<uint8>(gameobject_info->type));
 
@@ -295,7 +295,7 @@ void ArathiBasin::SpawnControlPoint(uint32 Id, uint32 Type)
 
         // re-spawn the aura
         m_controlPointAuras[Id]->SetNewGuid(m_mapMgr->GenerateGameobjectGuid());
-        m_controlPointAuras[Id]->SetEntry(gi_aura->entry);
+        m_controlPointAuras[Id]->setEntry(gi_aura->entry);
         m_controlPointAuras[Id]->SetDisplayId(gi_aura->display_id);
         m_controlPointAuras[Id]->SetGameObjectProperties(gi_aura);
         m_controlPointAuras[Id]->PushToWorld(m_mapMgr);
@@ -656,7 +656,7 @@ void ArathiBasin::HookOnAreaTrigger(Player* plr, uint32 trigger)
             if (sp)
             {
                 Spell* pSpell = sSpellFactoryMgr.NewSpell(plr, sp, true, nullptr);
-                SpellCastTargets targets(plr->GetGUID());
+                SpellCastTargets targets(plr->getGuid());
                 pSpell->prepare(&targets);
             }
         }
@@ -780,7 +780,7 @@ void ArathiBasin::AssaultControlPoint(Player* pPlayer, uint32 Id)
     if (!m_started)
     {
         Anticheat_Log->writefromsession(pPlayer->GetSession(), "%s tried to assault control point in arathi basin before battleground (ID %u) started.", pPlayer->GetName(), this->m_id);
-        SendChatMessage(CHAT_MSG_BG_EVENT_NEUTRAL, pPlayer->GetGUID(), "%s will be removed from the game for cheating.", pPlayer->GetName());
+        SendChatMessage(CHAT_MSG_BG_EVENT_NEUTRAL, pPlayer->getGuid(), "%s will be removed from the game for cheating.", pPlayer->GetName());
         // Remove player from battleground.
         RemovePlayer(pPlayer, false);
         // Kick player from server.
@@ -873,7 +873,7 @@ void ArathiBasin::AssaultControlPoint(Player* pPlayer, uint32 Id)
     if (DefFlag[Id][0] && !DefFlag[Id][1])
     {
         DefFlag[Id][0] = false;
-        SendChatMessage(Team ? CHAT_MSG_BG_EVENT_HORDE : CHAT_MSG_BG_EVENT_ALLIANCE, pPlayer->GetGUID(), "$N defend %s", ControlPointNames[Id]);
+        SendChatMessage(Team ? CHAT_MSG_BG_EVENT_HORDE : CHAT_MSG_BG_EVENT_ALLIANCE, pPlayer->getGuid(), "$N defend %s", ControlPointNames[Id]);
         sEventMgr.AddEvent(this, &ArathiBasin::CaptureControlPoint, Id, Team, EVENT_AB_CAPTURE_CP_1 + Id, 1000, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
         pPlayer->m_bgScore.MiscData[BG_SCORE_AB_BASES_CAPTURED]++;
         UpdatePvPData();
@@ -881,7 +881,7 @@ void ArathiBasin::AssaultControlPoint(Player* pPlayer, uint32 Id)
     else if (!DefFlag[Id][0] && !DefFlag[Id][1])
     {
         DefFlag[Id][0] = true;
-        SendChatMessage(Team ? CHAT_MSG_BG_EVENT_HORDE : CHAT_MSG_BG_EVENT_ALLIANCE, pPlayer->GetGUID(), "$N assault %s !", ControlPointNames[Id]);
+        SendChatMessage(Team ? CHAT_MSG_BG_EVENT_HORDE : CHAT_MSG_BG_EVENT_ALLIANCE, pPlayer->getGuid(), "$N assault %s !", ControlPointNames[Id]);
         PlaySoundToAll(Team ? 8212 : 8174);
         if (Team)
         {
@@ -938,7 +938,7 @@ void ArathiBasin::AssaultControlPoint(Player* pPlayer, uint32 Id)
     else
     {
         DefFlag[Id][0] = true;
-        SendChatMessage(Team ? CHAT_MSG_BG_EVENT_HORDE : CHAT_MSG_BG_EVENT_ALLIANCE, pPlayer->GetGUID(), "$N claims the %s! If left unchallenged, the %s will control it in 1 minute!", ControlPointNames[Id],
+        SendChatMessage(Team ? CHAT_MSG_BG_EVENT_HORDE : CHAT_MSG_BG_EVENT_ALLIANCE, pPlayer->getGuid(), "$N claims the %s! If left unchallenged, the %s will control it in 1 minute!", ControlPointNames[Id],
             Team ? "Horde" : "Alliance");
         PlaySoundToAll(8192);
         sEventMgr.AddEvent(this, &ArathiBasin::CaptureControlPoint, Id, Team, EVENT_AB_CAPTURE_CP_1 + Id, MSTIME_MINUTE, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
@@ -952,7 +952,7 @@ bool ArathiBasin::HookSlowLockOpen(GameObject* pGo, Player* pPlayer, Spell* /*pS
     {
         if (m_controlPoints[cpid] == NULL)
             continue;
-        if (m_controlPoints[cpid]->GetGUID() == pGo->GetGUID())
+        if (m_controlPoints[cpid]->getGuid() == pGo->getGuid())
             break;
     }
 

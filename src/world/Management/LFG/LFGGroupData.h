@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+ * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -51,8 +51,8 @@ class LfgGroupData
     private:
 
         // General
-        LfgState m_State;       ///< State if group in LFG
-        LfgState m_OldState;    ///< Old State
+        LfgState m_State;         ///< State if group in LFG
+        LfgState m_OldState;      ///< Old State
         // Dungeon
         uint32_t m_Dungeon;       ///< Dungeon entry
         // Vote Kick

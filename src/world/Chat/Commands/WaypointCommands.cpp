@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2017 AscEmu Team <http://www.ascemu.org/>
+Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -55,10 +55,10 @@ bool ChatHandler::HandleWayPointAddCommand(const char* args, WorldSession* m_ses
     uint32 BackwardEmoteId = (pBackwardEmoteId) ? atoi(pBackwardEmoteId) : 0;
 
     char* pForwardSkinId = strtok(NULL, " ");
-    uint32 ForwardSkinId = (pForwardSkinId) ? atoi(pForwardSkinId) : creature_target->GetNativeDisplayId();
+    uint32 ForwardSkinId = (pForwardSkinId) ? atoi(pForwardSkinId) : creature_target->getNativeDisplayId();
 
     char* pBackwardSkinId = strtok(NULL, " ");
-    uint32 BackwardSkinId = (pBackwardSkinId) ? atoi(pBackwardSkinId) : creature_target->GetNativeDisplayId();
+    uint32 BackwardSkinId = (pBackwardSkinId) ? atoi(pBackwardSkinId) : creature_target->getNativeDisplayId();
 
     char* pForwardEmoteOneShot = strtok(NULL, " ");
     uint32 ForwardEmoteOneShot = (pForwardEmoteOneShot) ? atoi(pForwardEmoteOneShot) : 1;
@@ -143,10 +143,10 @@ bool ChatHandler::HandleWayPointAddFlyCommand(const char* args, WorldSession* m_
     uint32 BackwardEmoteId = (pBackwardEmoteId) ? atoi(pBackwardEmoteId) : 0;
 
     char* pForwardSkinId = strtok(NULL, " ");
-    uint32 ForwardSkinId = (pForwardSkinId) ? atoi(pForwardSkinId) : creature_target->GetNativeDisplayId();
+    uint32 ForwardSkinId = (pForwardSkinId) ? atoi(pForwardSkinId) : creature_target->getNativeDisplayId();
 
     char* pBackwardSkinId = strtok(NULL, " ");
-    uint32 BackwardSkinId = (pBackwardSkinId) ? atoi(pBackwardSkinId) : creature_target->GetNativeDisplayId();
+    uint32 BackwardSkinId = (pBackwardSkinId) ? atoi(pBackwardSkinId) : creature_target->getNativeDisplayId();
 
     char* pForwardEmoteOneShot = strtok(NULL, " ");
     uint32 ForwardEmoteOneShot = (pForwardEmoteOneShot) ? atoi(pForwardEmoteOneShot) : 1;
