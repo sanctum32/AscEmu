@@ -226,7 +226,7 @@ class LakkaAI : public CreatureAIScript
                     SetWaypointToMove(2);
                     for (const auto& itr : getCreature()->getInRangeObjectsSet())
                     {
-                        if (itr && itr->IsPlayer())
+                        if (itr && itr->isPlayer())
                         {
                             Player* pPlayer = static_cast<Player*>(itr);
                             if (pPlayer != nullptr)
@@ -319,8 +319,8 @@ class DarkweaverSythAI : public CreatureAIScript
 
             if (LakkasCage != NULL)
             {
-                LakkasCage->SetState(GO_STATE_OPEN);
-                LakkasCage->SetFlags(LakkasCage->GetFlags() - 1);
+                LakkasCage->setState(GO_STATE_OPEN);
+                LakkasCage->removeFlags(GO_FLAG_NONSELECTABLE);
             }
 
             if (mLakka != NULL && mLakka->GetScript())
@@ -409,7 +409,7 @@ class TalonKingIkissAI : public CreatureAIScript
         {
             GameObject* IkissDoor = getNearestGameObject(43.079f, 149.505f, 0.034f, 183398);
             if (IkissDoor != nullptr)
-                IkissDoor->SetState(GO_STATE_OPEN);
+                IkissDoor->setState(GO_STATE_OPEN);
         }
 
         void AIUpdate() override

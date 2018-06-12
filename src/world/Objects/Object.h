@@ -276,12 +276,9 @@ inline float normalizeOrientation(float orientation)
 }
 #endif
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// class Object:Base object for every item, unit, player, corpse, container, etc
-//////////////////////////////////////////////////////////////////////////////////////////
+// MIT Start
 class SERVER_DECL Object : public EventableObject, public IUpdatable
 {
-    // MIT Start
     //////////////////////////////////////////////////////////////////////////////////////////
     // Object values
 
@@ -323,8 +320,9 @@ public:
     uint32_t getGuidHigh() const;
     void setGuidHigh(uint32_t high);
 
-    uint32_t getType() const;
-    void setType(uint32_t type);
+    //\todo choose one function!
+    uint32_t getOType() const;
+    void setOType(uint32_t type);
     void setObjectType(uint32_t objectTypeId);
 
     void setEntry(uint32_t entry);
@@ -368,6 +366,29 @@ public:
     //////////////////////////////////////////////////////////////////////////////////////////
     // Object update
     void updateObject();
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Object Type Id
+protected:
+
+    uint8_t m_objectTypeId;
+
+public:
+
+    uint8_t getObjectTypeId() const;
+
+    bool isCreatureOrPlayer() const;
+    bool isPlayer() const;
+    bool isCreature() const;
+    bool isItem() const;
+    bool isGameObject() const;
+    bool isCorpse() const;
+    bool isContainer() const;
+
+    virtual bool isPet() const { return false; }
+    virtual bool isTotem() const { return false; }
+    virtual bool isSummon() const { return false; }
+    virtual bool isVehicle() const { return false; }
 
     //////////////////////////////////////////////////////////////////////////////////////////
     // Position functions
@@ -467,48 +488,16 @@ public:
         void PushToWorld(MapMgr*);
         virtual void RemoveFromWorld(bool free_guid);
 
-        //////////////////////////////////////////////////////////////////////////////////////////
-        // virtual void OnPrePushToWorld()
         // Virtual method that is called, BEFORE pushing the Object in the game world
-        //
-        // \param none
-        //
-        // \return none
-        //
-        //////////////////////////////////////////////////////////////////////////////////////////
         virtual void OnPrePushToWorld() {}
 
-        //////////////////////////////////////////////////////////////////////////////////////////
-        // virtual void OnPushToWorld()
         // Virtual method that is called, AFTER pushing the Object in the game world
-        //
-        // \param none
-        //
-        // \return none
-        //
-        //////////////////////////////////////////////////////////////////////////////////////////
         virtual void OnPushToWorld() {}
 
-        //////////////////////////////////////////////////////////////////////////////////////////
-        // virtual void OnPreRemoveFromWorld()
         // Virtual method that is called, BEFORE removing the Object from the game world
-        //
-        // \param none
-        //
-        // \return none
-        //
-        //////////////////////////////////////////////////////////////////////////////////////////
         virtual void OnPreRemoveFromWorld() {}
 
-        //////////////////////////////////////////////////////////////////////////////////////////
-        // virtual void OnRemoveFromWorld()
         // Virtual method that is called, AFTER removing the Object from the game world
-        //
-        // \param none
-        //
-        // \return none
-        //
-        //////////////////////////////////////////////////////////////////////////////////////////
         virtual void OnRemoveFromWorld() {}
 
         // Guid always comes first
@@ -518,21 +507,8 @@ public:
         const uint32 GetTypeFromGUID() const { return (m_uint32Values[OBJECT_FIELD_GUID + 1] & HIGHGUID_TYPE_MASK); }
         const uint32 GetUIdFromGUID() const { return (m_uint32Values[OBJECT_FIELD_GUID] & LOWGUID_ENTRY_MASK); }
 
-        // type
-        const uint8 & GetTypeId() const { return m_objectTypeId; }
+        // typeFlags
         bool IsType(TYPE type_mask) const { return (type_mask & m_objectType) != 0; }
-
-        bool IsUnit() { return (m_objectTypeId == TYPEID_UNIT || m_objectTypeId == TYPEID_PLAYER); }
-        bool IsPlayer() { return m_objectTypeId == TYPEID_PLAYER; }
-        bool IsCreature() { return m_objectTypeId == TYPEID_UNIT; }
-        bool IsItem() { return m_objectTypeId == TYPEID_ITEM; }
-        virtual bool IsPet() { return false; }
-        virtual bool IsTotem() { return false; }
-        virtual bool IsSummon() { return false; }
-        virtual bool IsVehicle() { return false; }
-        bool IsGameObject() { return m_objectTypeId == TYPEID_GAMEOBJECT; }
-        bool IsCorpse() { return m_objectTypeId == TYPEID_CORPSE; }
-        bool IsContainer() { return m_objectTypeId == TYPEID_CONTAINER; }
 
         //! This includes any nested objects we have, inventory for example.
         virtual uint32 buildCreateUpdateBlockForPlayer(ByteBuffer* data, Player* target);
@@ -779,11 +755,11 @@ public:
         void SendAttackerStateUpdate(Object* Caster, Object* Target, dealdamage* Dmg, uint32 Damage, uint32 Abs, uint32 BlockedDamage, uint32 HitStatus, uint32 VState);
 
         // object faction
-        void _setFaction();
-        uint32 _getFaction();
+        void setServersideFaction();
+        uint32 getServersideFaction();
 
-        DBC::Structures::FactionTemplateEntry const* m_faction;
-        DBC::Structures::FactionEntry const* m_factionDBC;
+        DBC::Structures::FactionTemplateEntry const* m_factionTemplate;
+        DBC::Structures::FactionEntry const* m_factionEntry;
 
         void SetInstanceID(int32 instance) { m_instanceId = instance; }
         int32 GetInstanceID() { return m_instanceId; }
@@ -830,7 +806,12 @@ public:
         virtual void _SetCreateBits(UpdateMask* updateMask, Player* target) const;
 
         // Create updates that player will see
+#if VERSION_STRING < WotLK
+        void buildMovementUpdate(ByteBuffer* data, uint8_t flags, Player* target);
+#else
         void buildMovementUpdate(ByteBuffer* data, uint16 flags, Player* target);
+#endif
+	
         void buildValuesUpdate(ByteBuffer* data, UpdateMask* updateMask, Player* target);
 
         // WoWGuid class
@@ -838,9 +819,6 @@ public:
 
         // Type mask
         uint16 m_objectType;
-
-        // Type id.
-        uint8 m_objectTypeId;
 
         //update flag
         uint16 m_updateFlag;

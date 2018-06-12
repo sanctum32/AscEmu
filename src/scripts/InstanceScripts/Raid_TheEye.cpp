@@ -206,9 +206,9 @@ class HighAstromancerSolarianAI : public CreatureAIScript
                 {
                     for (uint8 SpawnIter = 0; SpawnIter < 4; SpawnIter++)
                     {
-                        spawnCreature(CN_SOLARIUMAGENT, mSpawnPositions[0][0], mSpawnPositions[0][1], 17, 0, getCreature()->GetFaction());
-                        spawnCreature(CN_SOLARIUMAGENT, mSpawnPositions[1][0], mSpawnPositions[1][1], 17, 0, getCreature()->GetFaction());
-                        spawnCreature(CN_SOLARIUMAGENT, mSpawnPositions[2][0], mSpawnPositions[2][1], 17, 0, getCreature()->GetFaction());
+                        spawnCreature(CN_SOLARIUMAGENT, mSpawnPositions[0][0], mSpawnPositions[0][1], 17, 0, getCreature()->getFactionTemplate());
+                        spawnCreature(CN_SOLARIUMAGENT, mSpawnPositions[1][0], mSpawnPositions[1][1], 17, 0, getCreature()->getFactionTemplate());
+                        spawnCreature(CN_SOLARIUMAGENT, mSpawnPositions[2][0], mSpawnPositions[2][1], 17, 0, getCreature()->getFactionTemplate());
                     }
                     _removeTimer(mAgentsTimer);
                 }
@@ -410,7 +410,7 @@ class DarkenerAI : public CreatureAIScript
                 getCreature()->GetAIInterface()->modThreatByPtr(mCurrentTarget, 1000000);
                 Player* pPlayer = static_cast<Player*>(mCurrentTarget);
                 char msg[256];
-                snprintf((char*)msg, 256, "%s sets eyes on %s", getCreature()->GetCreatureProperties()->Name.c_str(), pPlayer->GetName());
+                snprintf((char*)msg, 256, "%s sets eyes on %s", getCreature()->GetCreatureProperties()->Name.c_str(), pPlayer->getName().c_str());
                 getCreature()->SendChatMessageAlternateEntry(CN_DARKENER, CHAT_MSG_MONSTER_EMOTE, LANG_UNIVERSAL, msg);
                 return true;
             }
@@ -875,9 +875,9 @@ class KaelThasAI : public CreatureAIScript
             for (uint8 i = 0; i < 2; ++i)
             {
                 GameObject* pGameobject = getNearestGameObject(Gates[i].x, Gates[i].y, Gates[i].z, Gates[i].addition);
-                if (pGameobject != NULL && pGameobject->GetState() == 0)
+                if (pGameobject != NULL && pGameobject->getState() == 0)
                 {
-                    pGameobject->SetState(GO_STATE_CLOSED);
+                    pGameobject->setState(GO_STATE_CLOSED);
                 }
             }
 
@@ -908,9 +908,9 @@ class KaelThasAI : public CreatureAIScript
             for (uint8 i = 0; i < 2; ++i)
             {
                 GameObject* pGameobject = getNearestGameObject(Gates[i].x, Gates[i].y, Gates[i].z, Gates[i].addition);
-                if (pGameobject != NULL && pGameobject->GetState() == 1)
+                if (pGameobject != NULL && pGameobject->getState() == 1)
                 {
-                    pGameobject->SetState(GO_STATE_OPEN);
+                    pGameobject->setState(GO_STATE_OPEN);
                 }
             }
         }

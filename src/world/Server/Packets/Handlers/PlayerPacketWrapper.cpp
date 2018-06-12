@@ -307,7 +307,7 @@ void Player::SendLoot(uint64 guid, uint8 loot_type, uint32 mapid)
             return;
 
         GameObject_Lootable* pLGO = static_cast<GameObject_Lootable*>(pGO);
-        pLGO->SetState(0);
+        pLGO->setState(0);
         pLoot = &pLGO->loot;
         m_currentLoot = pLGO->getGuid();
     }
@@ -595,7 +595,7 @@ void Player::SendInitialLogonPackets()
     m_session->SendPacket(&data);
 
     UpdateSpeed();
-    LOG_DETAIL("WORLD: Sent initial logon packets for %s.", GetName());
+    LOG_DETAIL("WORLD: Sent initial logon packets for %s.", getName().c_str());
 }
 #endif
 
@@ -662,7 +662,7 @@ void Player::SendInitialLogonPackets()
 
     m_session->SendPacket(&ArenaSettings);
 #endif
-    LOG_DETAIL("WORLD: Sent initial logon packets for %s.", GetName());
+    LOG_DETAIL("WORLD: Sent initial logon packets for %s.", getName().c_str());
 }
 #endif
 
@@ -671,7 +671,7 @@ void Player::SendLootUpdate(Object* o)
     if (!IsVisible(o->getGuid()))
         return;
 
-    if (o->IsUnit())
+    if (o->isCreatureOrPlayer())
     {
         // Build the actual update.
         ByteBuffer buf(500);
@@ -741,7 +741,7 @@ void Player::SendUpdateDataToSet(ByteBuffer* groupbuf, ByteBuffer* nongroupbuf, 
 
 void Player::TagUnit(Object* o)
 {
-    if (o->IsUnit())
+    if (o->isCreatureOrPlayer())
     {
         // For new players who get a create object
         uint32 Flags = static_cast<Unit*>(o)->getDynamicFlags();

@@ -19,6 +19,9 @@ This file is released under the MIT license. See README-MIT for more information
 #include "Units/Creatures/Pet.h"
 #include "Objects/Faction.h"
 #include "Data/WoWItem.h"
+#include "Server/Packets/CmsgCastSpell.h"
+
+using namespace AscEmu::Packets;
 
 void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
 {
@@ -69,7 +72,7 @@ void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
         return;
     }
 
-    if (tmpItem->IsSoulbound() && tmpItem->getOwnerGuid() != _player->getGuid() && !tmpItem->IsAccountbound())
+    if (tmpItem->isSoulbound() && tmpItem->getOwnerGuid() != _player->getGuid() && !tmpItem->isAccountbound())
     {
         _player->GetItemInterface()->BuildInventoryChangeError(tmpItem, nullptr, INV_ERR_DONT_OWN_THAT_ITEM);
         return;
@@ -148,8 +151,8 @@ void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
 
     if (itemProto->Bonding == ITEM_BIND_ON_USE || itemProto->Bonding == ITEM_BIND_ON_PICKUP || itemProto->Bonding == ITEM_BIND_QUEST)
     {
-        if (!tmpItem->IsSoulbound())
-            tmpItem->SoulBind();
+        if (!tmpItem->isSoulbound())
+            tmpItem->addFlags(ITEM_FLAG_SOULBOUND);
     }
 
     // Combat check
@@ -311,7 +314,7 @@ void WorldSession::HandleSpellClick(WorldPacket& recvPacket)
     recvPacket >> unitGuid;
 
     Unit* unitTarget = _player->GetMapMgr()->GetUnit(unitGuid);
-    if (!unitTarget || !unitTarget->IsInWorld() || !unitTarget->IsCreature())
+    if (!unitTarget || !unitTarget->IsInWorld() || !unitTarget->isCreature())
     {
         return;
     }
@@ -323,7 +326,7 @@ void WorldSession::HandleSpellClick(WorldPacket& recvPacket)
     }
 
     // TODO: investigate vehicles more, is this necessary? vehicle enter is handled in ::HandleEnterVehicle() anyway... -Appled
-    if (creatureTarget->IsVehicle())
+    if (creatureTarget->isVehicle())
     {
         if (creatureTarget->GetVehicleComponent() != nullptr)
             creatureTarget->GetVehicleComponent()->AddPassenger(_player);
@@ -403,31 +406,31 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
 {
     CHECK_INWORLD_RETURN
 
-    uint32_t spellId;
-    uint8_t castCount, castFlags;
+    CmsgCastSpell spellPacket;
 
-    recvPacket >> castCount >> spellId >> castFlags;
+    if (!spellPacket.deserialise(recvPacket))
+        return;
 
-    SpellInfo* spellInfo = sSpellCustomizations.GetSpellInfo(spellId);
+    SpellInfo* spellInfo = sSpellCustomizations.GetSpellInfo(spellPacket.spell_id);
     if (spellInfo == nullptr)
     {
-        LogError("WORLD: Unknown spell id %u in HandleCastSpellOpcode().", spellId);
+        LogError("WORLD: Unknown spell id %u in HandleCastSpellOpcode().", spellPacket.spell_id);
         return;
     }
 
     // Check does player have the spell
-    if (!_player->HasSpell(spellId))
+    if (!_player->HasSpell(spellPacket.spell_id))
     {
-        sCheatLog.writefromsession(this, "WORLD: Player %u tried to cast spell %u but player does not have it.", _player->getGuidLow(), spellId);
-        LogDetail("WORLD: Player %u tried to cast spell %u but player does not have it.", _player->getGuidLow(), spellId);
+        sCheatLog.writefromsession(this, "WORLD: Player %u tried to cast spell %u but player does not have it.", _player->getGuidLow(), spellPacket.spell_id);
+        LogDetail("WORLD: Player %u tried to cast spell %u but player does not have it.", _player->getGuidLow(), spellPacket.spell_id);
         return;
     }
 
     // Check is player trying to cast a passive spell
-    if (spellInfo->IsPassive())
+    if (spellInfo->isPassive())
     {
-        sCheatLog.writefromsession(this, "WORLD: Player %u tried to cast a passive spell %u, ignored", _player->getGuidLow(), spellId);
-        LogDetail("WORLD: Player %u tried to cast a passive spell %u, ignored", _player->getGuidLow(), spellId);
+        sCheatLog.writefromsession(this, "WORLD: Player %u tried to cast a passive spell %u, ignored", _player->getGuidLow(), spellPacket.spell_id);
+        LogDetail("WORLD: Player %u tried to cast a passive spell %u, ignored", _player->getGuidLow(), spellPacket.spell_id);
         return;
     }
 
@@ -441,16 +444,16 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
     // TODO: move this check to new Spell::prepare() and clean it
     if (_player->isCastingNonMeleeSpell(false, true, true, spellInfo->getId() == 75))
     {
-        _player->SendCastResult(spellId, SPELL_FAILED_SPELL_IN_PROGRESS, castCount, 0);
+        _player->SendCastResult(spellPacket.spell_id, SPELL_FAILED_SPELL_IN_PROGRESS, spellPacket.cast_count, 0);
         return;
     }
 
     SpellCastTargets targets(recvPacket, GetPlayer()->getGuid());
     Spell* spell = sSpellFactoryMgr.NewSpell(GetPlayer(), spellInfo, false, nullptr);
-    spell->extra_cast_number = castCount;
+    spell->extra_cast_number = spellPacket.cast_count;
 
     // Some spell cast packets include more data
-    if (castFlags & 0x02)
+    if (spellPacket.flags & 0x02)
     {
         float projectilePitch, projectileSpeed;
         uint8_t hasMovementData; // 1 or 0
@@ -525,7 +528,7 @@ void WorldSession::HandleCancelAuraOpcode(WorldPacket& recvPacket)
     }
 
     // You can't cancel a passive aura
-    if (spellInfo->IsPassive())
+    if (spellInfo->isPassive())
     {
         return;
     }
@@ -630,7 +633,7 @@ void WorldSession::HandlePetCastSpell(WorldPacket& recvPacket)
         return;
     }
 
-    if (spellInfo->IsPassive())
+    if (spellInfo->isPassive())
     {
         return;
     }
@@ -658,7 +661,7 @@ void WorldSession::HandlePetCastSpell(WorldPacket& recvPacket)
             }
         }
 
-        if (!found && petUnit->IsCreature())
+        if (!found && petUnit->isCreature())
         {
             Creature* petCreature = static_cast<Creature*>(petUnit);
             if (petCreature->GetCreatureProperties()->spelldataid != 0)

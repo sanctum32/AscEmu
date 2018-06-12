@@ -39,6 +39,7 @@
 #include "Server/Packets/CmsgWho.h"
 #include "Server/Packets/CmsgSetSelection.h"
 #include "Server/Packets/CmsgTutorialFlag.h"
+#include "Server/Packets/CmsgSetSheathed.h"
 #if VERSION_STRING == Cata
 #include "GameCata/Management/GuildMgr.h"
 #endif
@@ -109,7 +110,7 @@ void WorldSession::handleWhoOpcode(WorldPacket& recv_data)
         bool add = true;
 
         // Chat name
-        if (cname && recv_packet.player_name != *plr->GetNameString())
+        if (cname && recv_packet.player_name.compare(plr->getName()) != 0)
             continue;
 
         // Guild name
@@ -160,7 +161,7 @@ void WorldSession::handleWhoOpcode(WorldPacket& recv_data)
             add = false;
             for (uint32 i = 0; i < recv_packet.name_count; ++i)
             {
-                if (!strnicmp(recv_packet.names[i].c_str(), plr->GetName(), recv_packet.names[i].length()))
+                if (!strnicmp(recv_packet.names[i].c_str(), plr->getName().c_str(), recv_packet.names[i].length()))
                 {
                     add = true;
                     break;
@@ -172,7 +173,7 @@ void WorldSession::handleWhoOpcode(WorldPacket& recv_data)
             continue;
 
         // if we're here, it means we've passed all tests
-        data << plr->GetName();
+        data << plr->getName().c_str();
 
 #if VERSION_STRING != Cata
         if (plr->m_playerInfo->guild)
@@ -343,13 +344,13 @@ void WorldSession::HandleAutostoreLootItemOpcode(WorldPacket& recv_data)
     if (lootSlot >= pLoot->items.size())
     {
         LOG_DEBUG("Player %s might be using a hack! (slot %d, size %d)",
-                  GetPlayer()->GetName(), lootSlot, pLoot->items.size());
+                  GetPlayer()->getName().c_str(), lootSlot, pLoot->items.size());
         return;
     }
 
     if (pLoot->items[lootSlot].looted)
     {
-        LOG_DEBUG("Player %s GUID %u tried to loot an already looted item.", _player->GetName(), _player->getGuidLow());
+        LOG_DEBUG("Player %s GUID %u tried to loot an already looted item.", _player->getName().c_str(), _player->getGuidLow());
         return;
     }
 
@@ -412,7 +413,7 @@ void WorldSession::HandleAutostoreLootItemOpcode(WorldPacket& recv_data)
         item->setStackCount(amt);
         if (pLoot->items.at(lootSlot).iRandomProperty != NULL)
         {
-            item->SetItemRandomPropertyId(pLoot->items.at(lootSlot).iRandomProperty->ID);
+            item->setRandomPropertiesId(pLoot->items.at(lootSlot).iRandomProperty->ID);
             item->ApplyRandomProperties(false);
         }
         else if (pLoot->items.at(lootSlot).iRandomSuffix != NULL)
@@ -433,9 +434,9 @@ void WorldSession::HandleAutostoreLootItemOpcode(WorldPacket& recv_data)
                 slotresult.Slot,
                 1,
                 item->getEntry(),
-                item->GetItemRandomSuffixFactor(),
-                item->GetItemRandomPropertyId(),
-                item->GetStackCount()
+                item->getPropertySeed(),
+                item->getRandomPropertiesId(),
+                item->getStackCount()
             );
 #if VERSION_STRING > TBC
             _player->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_LOOT_ITEM, item->getEntry(), 1, 0);
@@ -446,7 +447,7 @@ void WorldSession::HandleAutostoreLootItemOpcode(WorldPacket& recv_data)
     }
     else
     {
-        add->setStackCount(add->GetStackCount() + amt);
+        add->setStackCount(add->getStackCount() + amt);
         add->m_isDirty = true;
 
         sQuestMgr.OnPlayerItemPickup(GetPlayer(), add);
@@ -459,9 +460,9 @@ void WorldSession::HandleAutostoreLootItemOpcode(WorldPacket& recv_data)
             0xFFFFFFFF,
             amt,
             add->getEntry(),
-            add->GetItemRandomSuffixFactor(),
-            add->GetItemRandomPropertyId(),
-            add->GetStackCount()
+            add->getPropertySeed(),
+            add->getRandomPropertiesId(),
+            add->getStackCount()
         );
 #if VERSION_STRING > TBC
         _player->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_LOOT_ITEM, add->getEntry(), 1, 0);
@@ -764,7 +765,7 @@ void WorldSession::HandleLootReleaseOpcode(WorldPacket& recv_data)
         if (pGO == NULL)
             return;
 
-        switch (pGO->GetType())
+        switch (pGO->getGoType())
         {
             case GAMEOBJECT_TYPE_FISHINGNODE:
             {
@@ -799,7 +800,7 @@ void WorldSession::HandleLootReleaseOpcode(WorldPacket& recv_data)
                                 if (despawn)
                                     pGO->Despawn(0, (sQuestMgr.GetGameObjectLootQuest(pGO->getEntry()) ? 180000 + (Util::getRandomUInt(180000)) : 900000 + (Util::getRandomUInt(600000))));
                                 else
-                                    pGO->SetState(GO_STATE_CLOSED);
+                                    pGO->setState(GO_STATE_CLOSED);
 
                                 return;
                             }
@@ -811,7 +812,7 @@ void WorldSession::HandleLootReleaseOpcode(WorldPacket& recv_data)
                                     //we still have loot inside.
                                     if (pLGO->HasLoot())
                                     {
-                                        pGO->SetState(GO_STATE_CLOSED);
+                                        pGO->setState(GO_STATE_CLOSED);
                                         ///\todo redo this temporary fix, because for some reason hasloot is true even when we loot everything my guess is we need to set up some even that rechecks the GO in 10 seconds or something
                                         //pGO->Despawn(600000 + (RandomUInt(300000)));
                                         return;
@@ -825,7 +826,7 @@ void WorldSession::HandleLootReleaseOpcode(WorldPacket& recv_data)
                             {
                                 if (pLGO->HasLoot())
                                 {
-                                    pGO->SetState(GO_STATE_CLOSED);
+                                    pGO->setState(GO_STATE_CLOSED);
                                     return;
                                 }
                                 pGO->Despawn(0, sQuestMgr.GetGameObjectLootQuest(pGO->getEntry()) ? 180000 + (Util::getRandomUInt(180000)) : (IS_INSTANCE(pGO->GetMapId()) ? 0 : 900000 + (Util::getRandomUInt(600000))));
@@ -836,7 +837,7 @@ void WorldSession::HandleLootReleaseOpcode(WorldPacket& recv_data)
                         {
                             if (pLGO->HasLoot())
                             {
-                                pGO->SetState(1);
+                                pGO->setState(1);
                                 return;
                             }
                             pGO->Despawn(0, sQuestMgr.GetGameObjectLootQuest(pGO->getEntry()) ? 180000 + (Util::getRandomUInt(180000)) : (IS_INSTANCE(pGO->GetMapId()) ? 0 : 900000 + (Util::getRandomUInt(600000))));
@@ -848,7 +849,7 @@ void WorldSession::HandleLootReleaseOpcode(WorldPacket& recv_data)
                 {
                     if (pLGO->HasLoot())
                     {
-                        pGO->SetState(GO_STATE_CLOSED);
+                        pGO->setState(GO_STATE_CLOSED);
                         return;
                     }
                     pGO->Despawn(0, sQuestMgr.GetGameObjectLootQuest(pGO->getEntry()) ? 180000 + (Util::getRandomUInt(180000)) : (IS_INSTANCE(pGO->GetMapId()) ? 0 : 900000 + (Util::getRandomUInt(600000))));
@@ -975,7 +976,7 @@ void WorldSession::HandleWhoIsOpcode(WorldPacket& recv_data)
     WorldPacket data(SMSG_WHOIS, msg.size() + 1);
     data << msg;
     SendPacket(&data);
-    LogDebugFlag(LF_OPCODE, "Received WHOIS command from player %s for character %s", GetPlayer()->GetName(), charname.c_str());
+    LogDebugFlag(LF_OPCODE, "Received WHOIS command from player %s for character %s", GetPlayer()->getName().c_str(), charname.c_str());
 }
 
 void WorldSession::HandleLogoutRequestOpcode(WorldPacket& /*recv_data*/)
@@ -1162,7 +1163,7 @@ void WorldSession::HandleCorpseReclaimOpcode(WorldPacket& recv_data)
     if (pCorpse == NULL)	return;
 
     // Check that we're reviving from a corpse, and that corpse is associated with us.
-    if (GET_LOWGUID_PART(pCorpse->GetOwner()) != _player->getGuidLow() && pCorpse->getUInt32Value(CORPSE_FIELD_FLAGS) == 5)
+    if (GET_LOWGUID_PART(pCorpse->getOwnerGuid()) != _player->getGuidLow() && pCorpse->getFlags() == 5)
     {
         WorldPacket data(SMSG_RESURRECT_FAILED, 4);
         data << uint32(1); // this is a real guess!
@@ -1240,7 +1241,7 @@ void WorldSession::HandleUpdateAccountData(WorldPacket& recv_data)
     if (uiID > 8)
     {
         // Shit..
-        LOG_ERROR("WARNING: Accountdata > 8 (%d) was requested to be updated by %s of account %d!", uiID, GetPlayer()->GetName(), this->GetAccountId());
+        LOG_ERROR("WARNING: Accountdata > 8 (%d) was requested to be updated by %s of account %d!", uiID, GetPlayer()->getName().c_str(), this->GetAccountId());
         return;
     }
 
@@ -1289,7 +1290,7 @@ void WorldSession::HandleUpdateAccountData(WorldPacket& recv_data)
         {
             case Z_OK:				  //0 no error decompression is OK
                 SetAccountData(uiID, data, false, uiDecompressedSize);
-                LOG_DETAIL("WORLD: Successfully decompressed account data %d for %s, and updated storage array.", uiID, GetPlayer()->GetName());
+                LOG_DETAIL("WORLD: Successfully decompressed account data %d for %s, and updated storage array.", uiID, GetPlayer()->getName().c_str());
                 break;
 
             case Z_ERRNO:			   //-1
@@ -1300,13 +1301,13 @@ void WorldSession::HandleUpdateAccountData(WorldPacket& recv_data)
             case Z_VERSION_ERROR:	   //-6
             {
                 delete[] data;
-                LOG_ERROR("WORLD WARNING: Decompression of account data %d for %s FAILED.", uiID, GetPlayer()->GetName());
+                LOG_ERROR("WORLD WARNING: Decompression of account data %d for %s FAILED.", uiID, GetPlayer()->getName().c_str());
                 break;
             }
 
             default:
                 delete[] data;
-                LOG_ERROR("WORLD WARNING: Decompression gave a unknown error: %x, of account data %d for %s FAILED.", ZlibResult, uiID, GetPlayer()->GetName());
+                LOG_ERROR("WORLD WARNING: Decompression gave a unknown error: %x, of account data %d for %s FAILED.", ZlibResult, uiID, GetPlayer()->getName().c_str());
                 break;
         }
     }
@@ -1337,7 +1338,7 @@ void WorldSession::HandleRequestAccountData(WorldPacket& recv_data)
     if (id > 8)
     {
         // Shit..
-        LOG_ERROR("WARNING: Accountdata > 8 (%d) was requested by %s of account %d!", id, GetPlayer()->GetName(), this->GetAccountId());
+        LOG_ERROR("WARNING: Accountdata > 8 (%d) was requested by %s of account %d!", id, GetPlayer()->getName().c_str(), this->GetAccountId());
         return;
     }
 
@@ -1490,7 +1491,9 @@ void WorldSession::HandleAmmoSetOpcode(WorldPacket& recv_data)
         case SHAMAN: // these don't get messed up since they don't use wands, but they don't get to use bows/guns/crossbows anyways
         case DRUID:  // we wouldn't want them cheating extra stats from ammo, would we?
         case PALADIN:
+#if VERSION_STRING > TBC
         case DEATHKNIGHT:
+#endif
             _player->GetItemInterface()->BuildInventoryChangeError(NULL, NULL, INV_ERR_YOU_CAN_NEVER_USE_THAT_ITEM); // good error message?
             _player->SetAmmoId(0);
             _player->CalcDamage();
@@ -1621,7 +1624,7 @@ void WorldSession::HandleGameObjectUse(WorldPacket& recv_data)
 
     _player->RemoveStealth(); // cebernic:RemoveStealth due to GO was using. Blizzlike
 
-    uint32 type = obj->GetType();
+    uint32 type = obj->getGoType();
     switch (type)
     {
         case GAMEOBJECT_TYPE_CHAIR:
@@ -1782,7 +1785,7 @@ void WorldSession::HandleGameObjectUse(WorldPacket& recv_data)
         {
             if (obj->GetGameObjectProperties()->spell_caster.party_only != 0)
             {
-                if (obj->m_summoner != NULL && obj->m_summoner->IsPlayer())
+                if (obj->m_summoner != NULL && obj->m_summoner->isPlayer())
                 {
                     Player* summoner = static_cast<Player*>(obj->m_summoner);
 
@@ -1982,11 +1985,12 @@ void WorldSession::HandleGameObjectUse(WorldPacket& recv_data)
 
 void WorldSession::HandleSetSheathedOpcode(WorldPacket& recv_data)
 {
-    CHECK_INWORLD_RETURN
 
-    uint32 active;
-    recv_data >> active;
-    _player->setSheathType((uint8)active);
+    CmsgSetSheathed recv_packet;
+    if (!recv_packet.deserialise(recv_data))
+        return;
+
+    _player->setSheathType(static_cast<uint8>(recv_packet.type));
 }
 
 void WorldSession::HandlePlayedTimeOpcode(WorldPacket& recv_data)
@@ -2176,9 +2180,9 @@ void WorldSession::HandleInspectOpcode(WorldPacket& recv_data)
 
         data << uint16(enchant_mask);
 
-        for (uint16 Slot = 0; Slot < MAX_ENCHANTMENT_SLOT; ++Slot) // In UpdateFields.h we have ITEM_FIELD_ENCHANTMENT_1_1 to ITEM_FIELD_ENCHANTMENT_12_1, iterate on them...
+        for (uint8_t Slot = 0; Slot < MAX_ENCHANTMENT_SLOT; ++Slot) // In UpdateFields.h we have ITEM_FIELD_ENCHANTMENT_1_1 to ITEM_FIELD_ENCHANTMENT_12_1, iterate on them...
         {
-            uint32 enchantId = item->GetEnchantmentId(Slot);   // This calculation has to be in sync with Item.cpp line ~614, at the moment it is:    uint32 EnchantBase = Slot * 3 + ITEM_FIELD_ENCHANTMENT_1_1;
+            uint32 enchantId = item->getEnchantmentId(Slot);   // This calculation has to be in sync with Item.cpp line ~614, at the moment it is:    uint32 EnchantBase = Slot * 3 + ITEM_FIELD_ENCHANTMENT_1_1;
 
             if (!enchantId)
                 continue;
@@ -2190,7 +2194,7 @@ void WorldSession::HandleInspectOpcode(WorldPacket& recv_data)
         data.put<uint16>(enchant_mask_pos, enchant_mask);
 
         data << uint16(0);   // UNKNOWN
-        FastGUIDPack(data, item->GetCreatorGUID());  // Usually 0 will do, but if your friend created that item for you, then it is nice to display it when you get inspected.
+        FastGUIDPack(data, item->getCreatorGuid());  // Usually 0 will do, but if your friend created that item for you, then it is nice to display it when you get inspected.
         data << uint32(0);   // UNKNOWN
     }
     data.put<uint32>(slot_mask_pos, slot_mask);
@@ -2220,20 +2224,9 @@ void WorldSession::HandleSetActionBarTogglesOpcode(WorldPacket & recvPacket)
 }
 
 #if VERSION_STRING != Cata
-// Handlers for acknowledgement opcodes (removes some 'unknown opcode' flood from the logs)
 void WorldSession::HandleAcknowledgementOpcodes(WorldPacket& recv_data)
 {
-    CHECK_INWORLD_RETURN
-
-    switch (recv_data.GetOpcode())
-    {
-        case CMSG_MOVE_WATER_WALK_ACK:
-            break;
-
-        /*case CMSG_MOVE_SET_CAN_FLY_ACK:
-            _player->FlyCheat = _player->m_setflycheat;
-            break;*/
-    }
+    LogDebugFlag(LF_OPCODE, "Opcode %s (%u) received. This opcode is not known/implemented right now!", getOpcodeName(recv_data.GetOpcode()).c_str(), recv_data.GetOpcode());
 }
 #endif
 
@@ -2357,7 +2350,7 @@ void WorldSession::HandleLootMasterGiveOpcode(WorldPacket& recv_data)
             return;
 
         GameObject_Lootable* pLGO = static_cast<GameObject_Lootable*>(pGameObject);
-        pGameObject->SetState(GO_STATE_OPEN);
+        pGameObject->setState(GO_STATE_OPEN);
         pLoot = &pLGO->loot;
     }
 
@@ -2372,7 +2365,7 @@ void WorldSession::HandleLootMasterGiveOpcode(WorldPacket& recv_data)
     if (slotid >= pLoot->items.size())
     {
         LOG_DEBUG("AutoLootItem: Player %s might be using a hack! (slot %d, size %d)",
-                  GetPlayer()->GetName(), slotid, pLoot->items.size());
+                  GetPlayer()->getName().c_str(), slotid, pLoot->items.size());
         return;
     }
 
@@ -2425,7 +2418,7 @@ void WorldSession::HandleLootMasterGiveOpcode(WorldPacket& recv_data)
     item->setStackCount(amt);
     if (pLoot->items.at(slotid).iRandomProperty != NULL)
     {
-        item->SetItemRandomPropertyId(pLoot->items.at(slotid).iRandomProperty->ID);
+        item->setRandomPropertiesId(pLoot->items.at(slotid).iRandomProperty->ID);
         item->ApplyRandomProperties(false);
     }
     else if (pLoot->items.at(slotid).iRandomSuffix != NULL)
@@ -2436,7 +2429,7 @@ void WorldSession::HandleLootMasterGiveOpcode(WorldPacket& recv_data)
 
     if (player->GetItemInterface()->SafeAddItem(item, slotresult.ContainerSlot, slotresult.Slot))
     {
-        player->SendItemPushResult(false, true, true, true, slotresult.ContainerSlot, slotresult.Slot, 1, item->getEntry(), item->GetItemRandomSuffixFactor(), item->GetItemRandomPropertyId(), item->GetStackCount());
+        player->SendItemPushResult(false, true, true, true, slotresult.ContainerSlot, slotresult.Slot, 1, item->getEntry(), item->getPropertySeed(), item->getRandomPropertiesId(), item->getStackCount());
         sQuestMgr.OnPlayerItemPickup(player, item);
 #if VERSION_STRING > TBC
         _player->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_LOOT_ITEM, item->getEntry(), 1, 0);
@@ -2497,7 +2490,7 @@ void WorldSession::HandleLootRollOpcode(WorldPacket& recv_data)
         if ((slotid >= pLGO->loot.items.size()) || (pLGO->loot.items.size() == 0))
             return;
 
-        if (pGO->GetType() == GAMEOBJECT_TYPE_CHEST)
+        if (pGO->getGoType() == GAMEOBJECT_TYPE_CHEST)
             li = pLGO->loot.items[slotid].roll;
     }
     else if (guidtype == HIGHGUID_TYPE_UNIT)
@@ -2538,26 +2531,26 @@ void WorldSession::HandleOpenItemOpcode(WorldPacket& recv_data)
         return;
 
     // gift wrapping handler
-    if (pItem->GetGiftCreatorGUID() && pItem->wrapped_item_id)
+    if (pItem->getGiftCreatorGuid() && pItem->wrapped_item_id)
     {
         ItemProperties const* it = sMySQLStore.getItemProperties(pItem->wrapped_item_id);
         if (it == nullptr)
             return;
 
-        pItem->SetGiftCreatorGUID(0);
+        pItem->setGiftCreatorGuid(0);
         pItem->setEntry(pItem->wrapped_item_id);
         pItem->wrapped_item_id = 0;
         pItem->setItemProperties(it);
 
         if (it->Bonding == ITEM_BIND_ON_PICKUP)
-            pItem->SoulBind();
+            pItem->addFlags(ITEM_FLAG_SOULBOUND);
         else
-            pItem->ClearFlags();
+            pItem->setFlags(ITEM_FLAGS_NONE);
 
         if (it->MaxDurability)
         {
-            pItem->SetDurability(it->MaxDurability);
-            pItem->SetDurabilityMax(it->MaxDurability);
+            pItem->setDurability(it->MaxDurability);
+            pItem->setMaxDurability(it->MaxDurability);
         }
 
         pItem->m_isDirty = true;

@@ -118,9 +118,9 @@ Guild::~Guild()
         free(m_guildName);
 }
 
-void Guild::sendCommandResult(WorldSession* pClient, GuildCommandType iCmd, GuildCommandError iType, const char* szMsg)
+void Guild::sendCommandResult(WorldSession* pClient, GuildCommandType iCmd, GuildCommandError iType, std::string szMsg)
 {
-    WorldPacket data(SMSG_GUILD_COMMAND_RESULT, (9 + strlen(szMsg)));
+    WorldPacket data(SMSG_GUILD_COMMAND_RESULT, (9 + szMsg.size()));
     data << uint32_t(iCmd);
     data << szMsg;
     data << uint32_t(iType);
@@ -376,7 +376,7 @@ void Guild::PromoteGuildMember(PlayerInfo* pMember, WorldSession* pClient)
     itr->second->pPlayer->guildRank = newRank;
 
     // log it
-    LogGuildEvent(GE_PROMOTION, 3, pClient->GetPlayer()->GetName(), pMember->name, newRank->szRankName);
+    LogGuildEvent(GE_PROMOTION, 3, pClient->GetPlayer()->getName().c_str(), pMember->name, newRank->szRankName);
     AddGuildLogEntry(GE_LOG_PROMOTE_PLAYER, 3, pClient->GetPlayer()->getGuidLow(), pMember->guid, newRank->iId);
 
     // update in the database
@@ -433,7 +433,7 @@ void Guild::DemoteGuildMember(PlayerInfo* pMember, WorldSession* pClient)
     itr->second->pPlayer->guildRank = newRank;
 
     // log it
-    LogGuildEvent(GE_DEMOTION, 3, pClient->GetPlayer()->GetName(), pMember->name, newRank->szRankName);
+    LogGuildEvent(GE_DEMOTION, 3, pClient->GetPlayer()->getName().c_str(), pMember->name, newRank->szRankName);
     AddGuildLogEntry(GE_LOG_DEMOTE_PLAYER, 3, pClient->GetPlayer()->getGuidLow(), pMember->guid, newRank->iId);
 
     // update in the database
@@ -847,8 +847,8 @@ void Guild::RemoveGuildMember(PlayerInfo* pMember, WorldSession* pClient)
     if (pClient && pClient->GetPlayer()->getPlayerInfo() != pMember)
     {
         if (plr)
-            sChatHandler.SystemMessage(plr->GetSession(), "You have been kicked from the guild by %s", pClient->GetPlayer()->GetName());
-        LogGuildEvent(GE_REMOVED, 2, pMember->name, pClient->GetPlayer()->GetName());
+            sChatHandler.SystemMessage(plr->GetSession(), "You have been kicked from the guild by %s", pClient->GetPlayer()->getName().c_str());
+        LogGuildEvent(GE_REMOVED, 2, pMember->name, pClient->GetPlayer()->getName().c_str());
         AddGuildLogEntry(GE_LOG_UNINVITE_PLAYER, 2, pClient->GetPlayer()->getGuidLow(), pMember->guid);
     }
     else
@@ -1053,7 +1053,7 @@ void Guild::ChangeGuildMaster(PlayerInfo* pNewMaster, WorldSession* pClient)
     m_lock.Release();
 
 
-    LogGuildEvent(GE_LEADER_CHANGED, 2, pClient->GetPlayer()->GetName(), pNewMaster->name);
+    LogGuildEvent(GE_LEADER_CHANGED, 2, pClient->GetPlayer()->getName().c_str(), pNewMaster->name);
     ///\todo Figure out the GUILD_LOG_EVENT_LEADER_CHANGED code
 }
 

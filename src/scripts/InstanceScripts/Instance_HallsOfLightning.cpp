@@ -71,32 +71,32 @@ class HallsOfLightningScript : public InstanceScript
                 {
                     pDoors = GetGameObjectByGuid(mGeneralDoorsGUID);
                     if (pDoors)
-                        pDoors->SetState(GO_STATE_OPEN);
+                        pDoors->setState(GO_STATE_OPEN);
                 }
                 break;
                 case CN_VOLKHAN:
                 {
                     pDoors = GetGameObjectByGuid(mVolkhanDoorsGUID);
                     if (pDoors)
-                        pDoors->SetState(GO_STATE_OPEN);
+                        pDoors->setState(GO_STATE_OPEN);
                 }
                 break;
                 case CN_LOKEN:
                 {
                     pDoors = GetGameObjectByGuid(mLokenDoorsGUID);
                     if (pDoors)
-                        pDoors->SetState(GO_STATE_OPEN);
+                        pDoors->setState(GO_STATE_OPEN);
                 }
                 break;
                 case CN_IONAR:
                 {
                     pDoors = GetGameObjectByGuid(mIonarDoors1GUID);
                     if (pDoors)
-                        pDoors->SetState(GO_STATE_OPEN);
+                        pDoors->setState(GO_STATE_OPEN);
 
                     pDoors = GetGameObjectByGuid(mIonarDoors2GUID);
                     if (pDoors)
-                        pDoors->SetState(GO_STATE_OPEN);
+                        pDoors->setState(GO_STATE_OPEN);
                 }
                 break;
             }
@@ -317,7 +317,7 @@ class Volkhan : public CreatureAIScript
     {
         for (const auto& itr : getCreature()->getInRangeObjectsSet())
         {
-            if (itr && itr->IsCreature() && itr->getEntry() == CN_BRITTLE_GOLEM)
+            if (itr && itr->isCreature() && itr->getEntry() == CN_BRITTLE_GOLEM)
             {
                 Creature* pCreature = static_cast<Creature*>(itr);
                 if (_isHeroic())

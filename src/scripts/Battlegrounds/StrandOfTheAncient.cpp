@@ -505,7 +505,7 @@ void StrandOfTheAncient::HookOnUnitKill(Player* /*plr*/, Unit* /*pVictim*/)
 
 void StrandOfTheAncient::HookOnUnitDied(Unit* victim)
 {
-    if (victim->IsCreature())
+    if (victim->isCreature())
     {
         for (uint8 i = 0; i < SOTA_NUM_DEMOLISHERS; ++i)
         {
@@ -921,7 +921,7 @@ void StrandOfTheAncient::CaptureControlPoint(SOTAControlPoints point)
 
     SOTAControlPoint &cp = controlpoint[point];
 
-    if (cp.banner->GetFaction() == 14)
+    if (cp.banner->getFactionTemplate() == 14)
         return;
 
     switch (cp.state)

@@ -37,7 +37,7 @@ void Summon::Load(CreatureProperties const* properties_, Unit* pOwner, LocationV
 
     Creature::Load(properties_, position.x, position.y, position.z, position.o);
 
-    SetFaction(pOwner->GetFaction());
+    SetFaction(pOwner->getFactionTemplate());
     Phase(PHASE_SET, pOwner->GetPhase());
     SetZoneId(pOwner->GetZoneId());
     setCreatedBySpellId(spellid);
@@ -109,7 +109,7 @@ Object* Summon::GetPlayerOwner()
     if (owner == NULL)
         return NULL;
 
-    if (owner->IsPlayer())
+    if (owner->isPlayer())
         return owner;
     else
         return NULL;
@@ -117,7 +117,7 @@ Object* Summon::GetPlayerOwner()
 
 void Summon::Die(Unit* pAttacker, uint32 damage, uint32 spellid)
 {
-    if (owner->IsTotem())
+    if (owner->isTotem())
         owner->Die(pAttacker, damage, spellid);
 
     Creature::Die(pAttacker, damage, spellid);

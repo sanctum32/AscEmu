@@ -34,6 +34,7 @@ struct EnchantmentInstance
 {
     DBC::Structures::SpellItemEnchantmentEntry const* Enchantment;
     bool BonusApplied;
+    //\todo slot is < 255 set to uint8_t and get rid of casts.
     uint32 Slot;
     time_t ApplyTime;
     uint32 Duration;
@@ -188,120 +189,112 @@ class SERVER_DECL Item : public Object
 public:
     void init(uint32_t high, uint32_t low);
     void create(uint32_t itemId, Player* owner);
-    Player* getOwner() const;
-    void setOwner(Player* owner);
-    ItemProperties const* getItemProperties() const;
-    void setItemProperties(ItemProperties const* itemProperties);
-    void setContainer(Container* container);
-    void setContainerGuid(uint64_t guid);
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // WoWData
     uint64_t getOwnerGuid() const;
     uint32_t getOwnerGuidLow() const;
     uint32_t getOwnerGuidHigh() const;
     void setOwnerGuid(uint64_t guid);
+
+    void setContainerGuid(uint64_t guid);
+
+    uint64_t getCreatorGuid() const;
+    void setCreatorGuid(uint64_t guid);
+
+    uint64_t getGiftCreatorGuid() const;
+    void setGiftCreatorGuid(uint64_t guid);
+
+    uint32_t getStackCount() const;
     void setStackCount(uint32_t count);
-    void setDuration(uint32_t seconds);
+    void modStackCount(int32_t mod);
+
     uint32_t getDuration() const;
-    void setSpellCharges(uint32_t idx, int32_t count);
+    void setDuration(uint32_t seconds);
+
+    int32_t getSpellCharges(uint8_t index) const;
+    void setSpellCharges(uint8_t index, int32_t count);
+    void modSpellCharges(uint8_t index, int32_t mod);
+
+    uint32_t getFlags() const;
+    void setFlags(uint32_t flags);
+    void addFlags(uint32_t flags);
+    void removeFlags(uint32_t flags);
+    bool hasFlags(uint32_t flags) const;
+
+#if VERSION_STRING >= WotLK
+    uint32_t getEnchantmentId(uint8_t index) const;
+    void setEnchantmentId(uint8_t index, uint32_t id);
+
+    uint32_t getEnchantmentDuration(uint8_t index) const;
+    void setEnchantmentDuration(uint8_t index, uint32_t duration);
+
+    uint32_t getEnchantmentCharges(uint8_t index) const;
+    void setEnchantmentCharges(uint8_t index, uint32_t charges);
+#endif
+
+    uint32_t getPropertySeed() const;
+    void setPropertySeed(uint32_t seed);
+
+    uint32_t getRandomPropertiesId() const;
+    void setRandomPropertiesId(uint32_t id);
+
+    uint32_t getDurability() const;
     void setDurability(uint32_t durability);
+
+    uint32_t getMaxDurability() const;
     void setMaxDurability(uint32_t maxDurability);
+
+#if VERSION_STRING >= WotLK
+    uint32_t getCreatePlayedTime() const;
+    void setCreatePlayedTime(uint32_t time);
+#endif
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Misc
+
+    Player* getOwner() const;
+    void setOwner(Player* owner);
+
+    void setContainer(Container* container);
+
+    ItemProperties const* getItemProperties() const;
+    void setItemProperties(ItemProperties const* itemProperties);
+
+    bool isSoulbound() const { return hasFlags(ITEM_FLAG_SOULBOUND); }
+    bool isAccountbound() const { return hasFlags(ITEM_FLAG_ACCOUNTBOUND); }
+
+    void setDurabilityToMax() { setDurability(getMaxDurability()); }
 
     // MIT End
 
         Item();
         virtual ~Item();
 
-        void SetCreatorGUID(uint64 GUID) { setUInt64Value(ITEM_FIELD_CREATOR, GUID); }
-        void SetGiftCreatorGUID(uint64 GUID) { setUInt64Value(ITEM_FIELD_GIFTCREATOR, GUID); }
-
-        uint64 GetCreatorGUID() { return getUInt64Value(ITEM_FIELD_CREATOR); }
-        uint64 GetGiftCreatorGUID() { return getUInt64Value(ITEM_FIELD_GIFTCREATOR); }
-
-        uint32 GetStackCount() { return getUInt32Value(ITEM_FIELD_STACK_COUNT); }
-        void ModStackCount(int32 val) { modUInt32Value(ITEM_FIELD_STACK_COUNT, val); }
-
-        void SetCharges(uint16_t index, uint32 charges) { setInt32Value(ITEM_FIELD_SPELL_CHARGES + index, charges); }
-        void ModCharges(uint16_t index, int32 val) { modInt32Value(ITEM_FIELD_SPELL_CHARGES + index, val); }
-        uint32 GetCharges(uint16_t index) const { return getInt32Value(ITEM_FIELD_SPELL_CHARGES + index); }
-
-        /////////////////////////////////////////////////// FLAGS ////////////////////////////////////////////////////////////
-
-        void SoulBind() { SetFlag(ITEM_FIELD_FLAGS, ITEM_FLAG_SOULBOUND); }
-        uint32 IsSoulbound() { return HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAG_SOULBOUND); }
-
-        void AccountBind() { SetFlag(ITEM_FIELD_FLAGS, ITEM_FLAG_ACCOUNTBOUND); }
-        uint32 IsAccountbound() { return HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAG_ACCOUNTBOUND);  }
-
-        void MakeConjured() { SetFlag(ITEM_FIELD_FLAGS, ITEM_FLAG_CONJURED); }
-        uint32 IsConjured() { return HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAG_CONJURED); }
-
-        void Lock() { RemoveFlag(ITEM_FIELD_FLAGS, ITEM_FLAG_LOOTABLE); }
-        void UnLock() { SetFlag(ITEM_FIELD_FLAGS, ITEM_FLAG_LOOTABLE); }
-
-        void Wrap() { SetFlag(ITEM_FIELD_FLAGS, ITEM_FLAG_WRAPPED); }
-        void UnWrap() { RemoveFlag(ITEM_FIELD_FLAGS, ITEM_FLAG_WRAPPED); }
-
-        void ClearFlags() { SetFlag(ITEM_FIELD_FLAGS, 0); }
-
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
         void SetDirty(){ m_isDirty = true; }
-
-        uint32 GetItemRandomPropertyId() const { return getInt32Value(ITEM_FIELD_RANDOM_PROPERTIES_ID); }
-        uint32 GetItemRandomSuffixFactor() { return getUInt32Value(ITEM_FIELD_PROPERTY_SEED); }
-
-        void SetItemRandomPropertyId(uint32 id)
-        {
-            random_prop = id;
-            setInt32Value(ITEM_FIELD_RANDOM_PROPERTIES_ID, id);
-        }
-
-        void SetItemRandomSuffixFactor(uint32 factor)
-        {
-            random_suffix = factor;
-            setUInt32Value(ITEM_FIELD_PROPERTY_SEED, factor);
-        }
 
         void SetRandomSuffix(uint32 id)
         {
             int32 r_id = -(int32(id));
             uint32 v = Item::GenerateRandomSuffixFactor(m_itemProperties);
-            SetItemRandomPropertyId((uint32)r_id);
-            SetItemRandomSuffixFactor(v);
+            setRandomPropertiesId((uint32)r_id);
+            setPropertySeed(v);
+            //\todo why override random_suffix set by functions above?
             random_suffix = id;
         }
 
-        void SetDurability(uint32 Value) { setUInt32Value(ITEM_FIELD_DURABILITY, Value); }
-        void SetDurabilityMax(uint32 Value) { setUInt32Value(ITEM_FIELD_MAXDURABILITY, Value); }
 
-        uint32 GetDurability() { return getUInt32Value(ITEM_FIELD_DURABILITY); }
-        uint32 GetDurabilityMax() { return getUInt32Value(ITEM_FIELD_MAXDURABILITY); }
+#if VERSION_STRING <= TBC
+        uint32 getEnchantmentId(uint32 index) { return getUInt32Value(ITEM_FIELD_ENCHANTMENT + 3 * index); }
+        void setEnchantmentId(uint32 index, uint32 value) { setUInt32Value(ITEM_FIELD_ENCHANTMENT + 3 * index, value); }
 
-        void SetDurabilityToMax() { setUInt32Value(ITEM_FIELD_DURABILITY, getUInt32Value(ITEM_FIELD_MAXDURABILITY)); }
+        uint32 getEnchantmentDuration(uint32 index) { return getUInt32Value(ITEM_FIELD_ENCHANTMENT + 1 + 3 * index); }
+        void setEnchantmentDuration(uint32 index, uint32 value) { setUInt32Value(ITEM_FIELD_ENCHANTMENT + 1 + 3 * index, value); }
 
-#if VERSION_STRING < WotLK
-        uint32 GetEnchantmentId(uint32 index) { return getUInt32Value(ITEM_FIELD_ENCHANTMENT + 3 * index); }
-        void SetEnchantmentId(uint32 index, uint32 value) { setUInt32Value(ITEM_FIELD_ENCHANTMENT + 3 * index, value); }
+        uint32 getEnchantmentCharges(uint32 index) { return getUInt32Value(ITEM_FIELD_ENCHANTMENT + 2 + 3 * index); }
+        void setEnchantmentCharges(uint32 index, uint32 value) { setUInt32Value(ITEM_FIELD_ENCHANTMENT + 2 + 3 * index, value); }
 
-        uint32 GetEnchantmentDuration(uint32 index) { return getUInt32Value(ITEM_FIELD_ENCHANTMENT + 1 + 3 * index); }
-        void SetEnchantmentDuration(uint32 index, uint32 value) { setUInt32Value(ITEM_FIELD_ENCHANTMENT + 1 + 3 * index, value); }
-
-        uint32 GetEnchantmentCharges(uint32 index) { return getUInt32Value(ITEM_FIELD_ENCHANTMENT + 2 + 3 * index); }
-        void SetEnchantmentCharges(uint32 index, uint32 value) { setUInt32Value(ITEM_FIELD_ENCHANTMENT + 2 + 3 * index, value); }
-#else
-        uint32 GetEnchantmentId(uint16_t index) { return getUInt32Value(ITEM_FIELD_ENCHANTMENT_1_1 + 3 * index); }
-        void SetEnchantmentId(uint16_t index, uint32 value) { setUInt32Value(ITEM_FIELD_ENCHANTMENT_1_1 + 3 * index, value); }
-
-        uint32 GetEnchantmentDuration(uint16_t index) { return getUInt32Value(ITEM_FIELD_ENCHANTMENT_1_1 + 1 + 3 * index); }
-        void SetEnchantmentDuration(uint16_t index, uint32 value) { setUInt32Value(ITEM_FIELD_ENCHANTMENT_1_1 + 1 + 3 * index, value); }
-
-        uint32 GetEnchantmentCharges(uint16_t index) { return getUInt32Value(ITEM_FIELD_ENCHANTMENT_1_1 + 2 + 3 * index); }
-        void SetEnchantmentCharges(uint16_t index, uint32 value) { setUInt32Value(ITEM_FIELD_ENCHANTMENT_1_1 + 2 + 3 * index, value); }
-
-        //////////////////////////////////////////////////////////
-        // Creation time in terms of played time
-        /////////////////////////////////////////////////////////
-        void SetCreationTime(uint32 time) { setUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME, time); }
-        uint32 GetCreationTime() { return getUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME); }
+		void setTextId(uint32 textId);
 #endif
 
         // DB Serialization
@@ -313,40 +306,40 @@ public:
         bool IsEligibleForRefund();
 
         //////////////////////////////////////////////////////////////////////////////////////////
-        /// uint32 GetChargesLeft()
-        /// Finds an on-use spell on the item and returns the charges left
-        ///
-        /// \param none
-        ///
-        /// \returns the charges left if an on-use spell is found, 0 if no such spell found.
-        ///
+        // uint32 GetChargesLeft()
+        // Finds an on-use spell on the item and returns the charges left
+        //
+        // \param none
+        //
+        // \returns the charges left if an on-use spell is found, 0 if no such spell found.
+        //
         //////////////////////////////////////////////////////////////////////////////////////////
         uint32 GetChargesLeft() const
         {
-            for (uint16_t x = 0; x < 5; ++x)
+            for (uint8_t x = 0; x < 5; ++x)
                 if ((m_itemProperties->Spells[x].Id != 0) && (m_itemProperties->Spells[x].Trigger == USE))
-                    return GetCharges(x);
+                    return getSpellCharges(x) > 0 ? getSpellCharges(x) : 0;
 
             return 0;
         }
 
         //////////////////////////////////////////////////////////////////////////////////////////
-        /// void SetChargesLeft(uint32 charges)
-        /// Finds an on-use spell on the item, and sets the remaining charges.
-        /// If no such spell found, nothing changes.
-        ///
-        /// \param uint32 charges  -  Number to be set as charges left.
-        ///
-        /// \returns none
-        ///
+        // void SetChargesLeft(uint32 charges)
+        // Finds an on-use spell on the item, and sets the remaining charges.
+        // If no such spell found, nothing changes.
+        //
+        // \param uint32 charges  -  Number to be set as charges left.
+        //
+        // \returns none
+        //
         //////////////////////////////////////////////////////////////////////////////////////////
         void SetChargesLeft(uint32 charges)
         {
-            for (uint16_t x = 0; x < 5; ++x)
+            for (uint8_t x = 0; x < 5; ++x)
             {
                 if ((m_itemProperties->Spells[x].Id != 0) && (m_itemProperties->Spells[x].Trigger == USE))
                 {
-                    SetCharges(x, charges);
+                    setSpellCharges(x, charges);
                     break;
                 }
             }
@@ -478,13 +471,11 @@ public:
         std::string text;
 };
 
+//\todo move these functions to ItemProperties/Player class.
 uint32 GetSkillByProto(uint32, uint32);
 
 uint32 GetSellPriceForItem(ItemProperties const* proto, uint32 count);
 uint32 GetBuyPriceForItem(ItemProperties const* proto, uint32 count, Player* plr, Creature* vendor);
-
-uint32 GetSellPriceForItem(uint32 itemid, uint32 count);
-uint32 GetBuyPriceForItem(uint32 itemid, uint32 count, Player* plr, Creature* vendor);
 
 std::string GetItemLinkByProto(ItemProperties const* iProto, uint32 language);
 

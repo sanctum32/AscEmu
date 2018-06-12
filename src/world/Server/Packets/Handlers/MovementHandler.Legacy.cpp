@@ -333,10 +333,10 @@ void WorldSession::HandleMovementOpcodes(WorldPacket& recv_data)
     Object* t_go = _player->m_SummonedObject;
     if (t_go != nullptr)
     {
-        if (t_go->IsGameObject())
+        if (t_go->isGameObject())
         {
             GameObject* go = static_cast<GameObject*>(t_go);
-            if (go->GetType() == GAMEOBJECT_TYPE_FISHINGNODE)
+            if (go->getGoType() == GAMEOBJECT_TYPE_FISHINGNODE)
             {
                 GameObject_FishingNode* go_fishing_node = static_cast<GameObject_FishingNode*>(go);
                 go_fishing_node->EndFishing(true);
@@ -356,7 +356,7 @@ void WorldSession::HandleMovementOpcodes(WorldPacket& recv_data)
     ASSERT(mover != nullptr)
 
     Player* plrMover = nullptr;
-    if (mover->IsPlayer())
+    if (mover->isPlayer())
         plrMover = dynamic_cast<Player*>(mover);
 
     /************************************************************************/

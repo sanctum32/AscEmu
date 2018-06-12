@@ -59,8 +59,8 @@ Item::Item()
     random_prop = 0;
     random_suffix = 0;
     m_mapMgr = 0;
-    m_faction = NULL;
-    m_factionDBC = NULL;
+    m_factionTemplate = NULL;
+    m_factionEntry = NULL;
     m_instanceId = INSTANCEID_NOT_IN_WORLD;
     m_inQueue = false;
     m_loadedFromDB = false;
@@ -122,8 +122,8 @@ void Item::LoadFromDB(Field* fields, Player* plr, bool light)
     m_owner = plr;
 
     wrapped_item_id = fields[3].GetUInt32();
-    SetGiftCreatorGUID(fields[4].GetUInt32());
-    SetCreatorGUID(fields[5].GetUInt32());
+    setGiftCreatorGuid(fields[4].GetUInt32());
+    setCreatorGuid(fields[5].GetUInt32());
 
     count = fields[6].GetUInt32();
     if (count > m_itemProperties->MaxCount && (m_owner && !m_owner->ItemStackCheat))
@@ -132,23 +132,25 @@ void Item::LoadFromDB(Field* fields, Player* plr, bool light)
 
     SetChargesLeft(fields[7].GetUInt32());
 
-    setUInt32Value(ITEM_FIELD_FLAGS, fields[8].GetUInt32());
+    setFlags(fields[8].GetUInt32());
     randomProp = fields[9].GetUInt32();
     randomSuffix = fields[10].GetUInt32();
 
-    SetItemRandomPropertyId(randomProp);
+    setRandomPropertiesId(randomProp);
 
     int32 rprop = int32(randomProp);
     // If random properties point is negative that means the item uses random suffix as random enchantment
     if (rprop < 0)
-        SetItemRandomSuffixFactor(randomSuffix);
+        setPropertySeed(randomSuffix);
     else
-        SetItemRandomSuffixFactor(0);
+        setPropertySeed(0);
 
-    //SetTextId(fields[11].GetUInt32());
+#ifdef AE_TBC
+    setTextId(fields[11].GetUInt32());
+#endif
 
-    SetDurabilityMax(m_itemProperties->MaxDurability);
-    SetDurability(fields[12].GetUInt32());
+    setMaxDurability(m_itemProperties->MaxDurability);
+    setDurability(fields[12].GetUInt32());
 
     if (light)
         return;
@@ -198,49 +200,49 @@ void Item::LoadFromDB(Field* fields, Player* plr, bool light)
     // Charter stuff
     if (getEntry() == ITEM_ENTRY_GUILD_CHARTER)
     {
-        SoulBind();
+        addFlags(ITEM_FLAG_SOULBOUND);
         setStackCount(1);
-        SetItemRandomSuffixFactor(57813883);
+        setPropertySeed(57813883);
         if (plr != NULL && plr->m_charters[CHARTER_TYPE_GUILD])
-            SetEnchantmentId(0, plr->m_charters[CHARTER_TYPE_GUILD]->GetID());
+            setEnchantmentId(0, plr->m_charters[CHARTER_TYPE_GUILD]->GetID());
     }
 
     if (getEntry() == ARENA_TEAM_CHARTER_2v2)
     {
-        SoulBind();
+        addFlags(ITEM_FLAG_SOULBOUND);
         setStackCount(1);
-        SetItemRandomSuffixFactor(57813883);
+        setPropertySeed(57813883);
         if (plr != NULL && plr->m_charters[CHARTER_TYPE_ARENA_2V2])
-            SetEnchantmentId(0, plr->m_charters[CHARTER_TYPE_ARENA_2V2]->GetID());
+            setEnchantmentId(0, plr->m_charters[CHARTER_TYPE_ARENA_2V2]->GetID());
     }
 
     if (getEntry() == ARENA_TEAM_CHARTER_3v3)
     {
-        SoulBind();
+        addFlags(ITEM_FLAG_SOULBOUND);
         setStackCount(1);
-        SetItemRandomSuffixFactor(57813883);
+        setPropertySeed(57813883);
         if (plr != NULL && plr->m_charters[CHARTER_TYPE_ARENA_3V3])
-            SetEnchantmentId(0, plr->m_charters[CHARTER_TYPE_ARENA_3V3]->GetID());
+            setEnchantmentId(0, plr->m_charters[CHARTER_TYPE_ARENA_3V3]->GetID());
     }
 
     if (getEntry() == ARENA_TEAM_CHARTER_5v5)
     {
-        SoulBind();
+        addFlags(ITEM_FLAG_SOULBOUND);
         setStackCount(1);
-        SetItemRandomSuffixFactor(57813883);
+        setPropertySeed(57813883);
         if (plr != NULL && plr->m_charters[CHARTER_TYPE_ARENA_5V5])
-            SetEnchantmentId(0, plr->m_charters[CHARTER_TYPE_ARENA_5V5]->GetID());
+            setEnchantmentId(0, plr->m_charters[CHARTER_TYPE_ARENA_5V5]->GetID());
     }
 }
 
 void Item::ApplyRandomProperties(bool apply)
 {
     // apply random properties
-    if (GetItemRandomPropertyId() != 0)
+    if (getRandomPropertiesId() != 0)
     {
-        if (int32(GetItemRandomPropertyId()) > 0)
+        if (int32(getRandomPropertiesId()) > 0)
         {
-            auto item_random_properties = sItemRandomPropertiesStore.LookupEntry(GetItemRandomPropertyId());
+            auto item_random_properties = sItemRandomPropertiesStore.LookupEntry(getRandomPropertiesId());
             for (uint8 k = 0; k < 3; k++)
             {
                 if (item_random_properties == nullptr)
@@ -265,7 +267,7 @@ void Item::ApplyRandomProperties(bool apply)
         }
         else
         {
-            auto item_random_suffix = sItemRandomSuffixStore.LookupEntry(abs(int(GetItemRandomPropertyId())));
+            auto item_random_suffix = sItemRandomSuffixStore.LookupEntry(abs(int(getRandomPropertiesId())));
 
             for (uint8 k = 0; k < 3; ++k)
             {
@@ -299,8 +301,8 @@ void Item::SaveToDB(int8 containerslot, int8 slot, bool firstsave, QueryBuffer* 
         return;
     }
 
-    uint64 GiftCreatorGUID = GetGiftCreatorGUID();
-    uint64 CreatorGUID = GetCreatorGUID();
+    uint64 GiftCreatorGUID = getGiftCreatorGuid();
+    uint64 CreatorGUID = getCreatorGuid();
 
     std::stringstream ss;
 
@@ -328,12 +330,12 @@ void Item::SaveToDB(int8 containerslot, int8 slot, bool firstsave, QueryBuffer* 
     ss << (Arcemu::Util::GUID_LOPART(GiftCreatorGUID)) << ",";
     ss << (Arcemu::Util::GUID_LOPART(CreatorGUID)) << ",";
 
-    ss << GetStackCount() << ",";
+    ss << getStackCount() << ",";
     ss << int32(GetChargesLeft()) << ",";
-    ss << uint32(m_uint32Values[ITEM_FIELD_FLAGS]) << ",";
+    ss << getFlags() << ",";
     ss << random_prop << ", " << random_suffix << ", ";
     ss << 0 << ",";
-    ss << GetDurability() << ",";
+    ss << getDurability() << ",";
     ss << static_cast<int>(containerslot) << ",";
     ss << static_cast<int>(slot) << ",'";
 
@@ -405,7 +407,7 @@ void Item::SaveToDB(int8 containerslot, int8 slot, bool firstsave, QueryBuffer* 
 
 void Item::DeleteFromDB()
 {
-    if (m_itemProperties->ContainerSlots > 0 && IsContainer())
+    if (m_itemProperties->ContainerSlots > 0 && isContainer())
     {
         /* deleting a container */
         for (uint32 i = 0; i < m_itemProperties->ContainerSlots; ++i)
@@ -518,27 +520,11 @@ uint32 GetBuyPriceForItem(ItemProperties const* proto, uint32 count, Player* plr
 
     if (plr != NULL && vendor != NULL)
     {
-        Standing plrstanding = plr->GetStandingRank(vendor->m_faction->Faction);
+        Standing plrstanding = plr->GetStandingRank(vendor->m_factionTemplate->Faction);
         cost = float2int32(ceilf(proto->BuyPrice * pricemod[plrstanding]));
     }
 
     return cost * count;
-}
-
-uint32 GetSellPriceForItem(uint32 itemid, uint32 count)
-{
-    if (ItemProperties const* proto = sMySQLStore.getItemProperties(itemid))
-        return GetSellPriceForItem(proto, count);
-    else
-        return 1;
-}
-
-uint32 GetBuyPriceForItem(uint32 itemid, uint32 count, Player* plr, Creature* vendor)
-{
-    if (ItemProperties const* proto = sMySQLStore.getItemProperties(itemid))
-        return GetBuyPriceForItem(proto, count, plr, vendor);
-    else
-        return 1;
 }
 
 void Item::RemoveFromWorld()
@@ -573,9 +559,9 @@ int32 Item::AddEnchantment(DBC::Structures::SpellItemEnchantmentEntry const* Enc
     Instance.RandomSuffix = RandomSuffix;
 
     // Set the enchantment in the item fields.
-    SetEnchantmentId(static_cast<uint16>(Slot), Enchantment->Id);
-    SetEnchantmentDuration(static_cast<uint16>(Slot), static_cast<uint32>(Instance.ApplyTime));
-    SetEnchantmentCharges(static_cast<uint16>(Slot), 0);
+    setEnchantmentId(static_cast<uint8_t>(Slot), Enchantment->Id);
+    setEnchantmentDuration(static_cast<uint8_t>(Slot), static_cast<uint32>(Instance.ApplyTime));
+    setEnchantmentCharges(static_cast<uint8_t>(Slot), 0);
 
     // Add it to our map.
     Enchantments.insert(std::make_pair(static_cast<uint32>(Slot), Instance));
@@ -632,9 +618,9 @@ void Item::RemoveEnchantment(uint32 EnchantmentSlot)
         ApplyEnchantmentBonus(EnchantmentSlot, false);
 
     // Unset the item fields.
-    SetEnchantmentId(static_cast<uint16>(Slot), 0);
-    SetEnchantmentDuration(static_cast<uint16>(Slot), 0);
-    SetEnchantmentCharges(static_cast<uint16>(Slot), 0);
+    setEnchantmentId(static_cast<uint8_t>(Slot), 0);
+    setEnchantmentDuration(static_cast<uint8_t>(Slot), 0);
+    setEnchantmentCharges(static_cast<uint8_t>(Slot), 0);
 
     // Remove the enchantment event for removal.
     event_RemoveEvents(EVENT_REMOVE_ENCHANTMENT1 + Slot);
@@ -710,7 +696,7 @@ void Item::ApplyEnchantmentBonus(uint32 Slot, bool Apply)
                 {
                     int32 val = Entry->min[c];
                     if (RandomSuffixAmount)
-                        val = RANDOM_SUFFIX_MAGIC_CALCULATION(RandomSuffixAmount, GetItemRandomSuffixFactor());
+                        val = RANDOM_SUFFIX_MAGIC_CALCULATION(RandomSuffixAmount, getPropertySeed());
 
                     if (Apply)
                         m_owner->ModPosDamageDoneMod(SCHOOL_NORMAL, val);
@@ -752,7 +738,7 @@ void Item::ApplyEnchantmentBonus(uint32 Slot, bool Apply)
                 {
                     int32 val = Entry->min[c];
                     if (RandomSuffixAmount)
-                        val = RANDOM_SUFFIX_MAGIC_CALCULATION(RandomSuffixAmount, GetItemRandomSuffixFactor());
+                        val = RANDOM_SUFFIX_MAGIC_CALCULATION(RandomSuffixAmount, getPropertySeed());
 
                     if (Apply)
                     {
@@ -772,7 +758,7 @@ void Item::ApplyEnchantmentBonus(uint32 Slot, bool Apply)
                     //min=max is amount
                     int32 val = Entry->min[c];
                     if (RandomSuffixAmount)
-                        val = RANDOM_SUFFIX_MAGIC_CALCULATION(RandomSuffixAmount, GetItemRandomSuffixFactor());
+                        val = RANDOM_SUFFIX_MAGIC_CALCULATION(RandomSuffixAmount, getPropertySeed());
 
                     m_owner->ModifyBonuses(Entry->spell[c], val, Apply);
                     m_owner->UpdateStats();
@@ -787,7 +773,7 @@ void Item::ApplyEnchantmentBonus(uint32 Slot, bool Apply)
                         //if I'm not wrong then we should apply DMPS formula for this. This will have somewhat a larger value 28->34
                         int32 val = Entry->min[c];
                         if (RandomSuffixAmount)
-                            val = RANDOM_SUFFIX_MAGIC_CALCULATION(RandomSuffixAmount, GetItemRandomSuffixFactor());
+                            val = RANDOM_SUFFIX_MAGIC_CALCULATION(RandomSuffixAmount, getPropertySeed());
 
                         int32 value = getItemProperties()->Delay * val / 1000;
                         m_owner->ModPosDamageDoneMod(SCHOOL_NORMAL, value);
@@ -796,7 +782,7 @@ void Item::ApplyEnchantmentBonus(uint32 Slot, bool Apply)
                     {
                         int32 val = Entry->min[c];
                         if (RandomSuffixAmount)
-                            val = RANDOM_SUFFIX_MAGIC_CALCULATION(RandomSuffixAmount, GetItemRandomSuffixFactor());
+                            val = RANDOM_SUFFIX_MAGIC_CALCULATION(RandomSuffixAmount, getPropertySeed());
 
                         int32 value = -(int32)(getItemProperties()->Delay * val / 1000);
                         m_owner->ModPosDamageDoneMod(SCHOOL_NORMAL, value);
@@ -871,20 +857,20 @@ int32 Item::FindFreeEnchantSlot(DBC::Structures::SpellItemEnchantmentEntry const
 
     if (random_type == RANDOMPROPERTY)        // random prop
     {
-        for (uint16 Slot = PROP_ENCHANTMENT_SLOT_2; Slot < MAX_ENCHANTMENT_SLOT; ++Slot)
-            if (GetEnchantmentId(Slot) == 0)
+        for (uint8_t Slot = PROP_ENCHANTMENT_SLOT_2; Slot < MAX_ENCHANTMENT_SLOT; ++Slot)
+            if (getEnchantmentId(Slot) == 0)
                 return static_cast<int32>(Slot);
     }
     else if (random_type == RANDOMSUFFIX)    // random suffix
     {
-        for (uint16 Slot = PROP_ENCHANTMENT_SLOT_0; Slot < MAX_ENCHANTMENT_SLOT; ++Slot)
-            if (GetEnchantmentId(Slot) == 0)
+        for (uint8_t Slot = PROP_ENCHANTMENT_SLOT_0; Slot < MAX_ENCHANTMENT_SLOT; ++Slot)
+            if (getEnchantmentId(Slot) == 0)
                 return static_cast<int32>(Slot);
     }
 
-    for (uint16 Slot = static_cast<uint16>(GemSlotsReserve + 2); Slot < 11; Slot++)
+    for (uint8_t Slot = static_cast<uint8_t>(GemSlotsReserve + 2); Slot < 11; Slot++)
     {
-        if (GetEnchantmentId(Slot) == 0)
+        if (getEnchantmentId(Slot) == 0)
             return static_cast<int32>(Slot);
     }
 
@@ -893,9 +879,9 @@ int32 Item::FindFreeEnchantSlot(DBC::Structures::SpellItemEnchantmentEntry const
 
 int32 Item::HasEnchantment(uint32 Id)
 {
-    for (uint16 Slot = 0; Slot < MAX_ENCHANTMENT_SLOT; Slot++)
+    for (uint8_t Slot = 0; Slot < MAX_ENCHANTMENT_SLOT; Slot++)
     {
-        if (GetEnchantmentId(Slot) == Id)
+        if (getEnchantmentId(Slot) == Id)
             return static_cast<int32>(Slot);
     }
 
@@ -1029,7 +1015,7 @@ bool Item::IsGemRelated(DBC::Structures::SpellItemEnchantmentEntry const* Enchan
 
 uint32 Item::GetSocketsCount()
 {
-    if (IsContainer()) // no sockets on containers.
+    if (isContainer()) // no sockets on containers.
         return 0;
 
     uint32 c = 0;
@@ -1217,7 +1203,7 @@ void Item::SendDurationUpdate()
 #if VERSION_STRING >= WotLK
     durationupdate << uint32(GetItemExpireTime() - UNIXTIME);
 #else
-    durationupdate << uint32_t(getUInt32Value(ITEM_FIELD_DURATION));
+    durationupdate << getDuration();
 #endif
     m_owner->SendPacket(&durationupdate);
 
@@ -1278,13 +1264,13 @@ uint32 Item::RepairItemCost()
     }
 
     uint32 dmodifier = durability_costs->modifier[m_itemProperties->Class == ITEM_CLASS_WEAPON ? m_itemProperties->SubClass : m_itemProperties->SubClass + 21];
-    uint32 cost = long2int32((GetDurabilityMax() - GetDurability()) * dmodifier * double(durability_quality->quality_modifier));
+    uint32 cost = long2int32((getMaxDurability() - getDurability()) * dmodifier * double(durability_quality->quality_modifier));
     return cost;
 }
 
 bool Item::RepairItem(Player* pPlayer, bool guildmoney, int32* pCost)   //pCost is needed for the guild log
 {
-    //int32 cost = (int32)pItem->GetUInt32Value(ITEM_FIELD_MAXDURABILITY) - (int32)pItem->GetUInt32Value(ITEM_FIELD_DURABILITY);
+    //int32 cost = (int32)pItem->getMaxDurability()) - (int32)pItem->getDurability();
     int32 cost = RepairItemCost();
     if (cost <= 0)
         return false;
@@ -1306,7 +1292,7 @@ bool Item::RepairItem(Player* pPlayer, bool guildmoney, int32* pCost)   //pCost 
 
         pPlayer->ModGold(-cost);
     }
-    SetDurabilityToMax();
+    setDurabilityToMax();
     m_isDirty = true;
 
     return true;

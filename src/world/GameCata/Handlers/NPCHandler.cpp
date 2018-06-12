@@ -59,7 +59,7 @@ void WorldSession::SendTrainerList(Creature* pCreature)
                 }
 
                 SpellInfo* learnedSpellInfo = sSpellCustomizations.GetSpellInfo(pSpell->learnedSpell[i]);
-                if (learnedSpellInfo && learnedSpellInfo->IsPrimaryProfession())
+                if (learnedSpellInfo && learnedSpellInfo->isPrimaryProfession())
                     primary_prof_first_rank = true;
             }
             if (!valid)
@@ -105,7 +105,7 @@ void WorldSession::SendTrainerList(Creature* pCreature)
             }
 
             SpellInfo* spell = sSpellCustomizations.GetSpellInfo(pSpell->spell);
-            if (spell && spell->IsPrimaryProfession())
+            if (spell && spell->isPrimaryProfession())
                 data << uint32_t(primary_prof_first_rank && can_learn_primary_prof ? 1 : 0);
             else
                 data << uint32_t(1);
@@ -155,7 +155,7 @@ void WorldSession::HandleTrainerBuySpellOpcode(WorldPacket & recvPacket)
 
     if (pSpell == nullptr)
     {
-        sCheatLog.writefromsession(this, "Player %s tried learning none-obtainable spell - Possibly using WPE", _player->GetName());
+        sCheatLog.writefromsession(this, "Player %s tried learning none-obtainable spell - Possibly using WPE", _player->getName().c_str());
         this->Disconnect();
         return;
     }
@@ -352,7 +352,7 @@ void WorldSession::HandleTrainerListOpcode(WorldPacket& recvData)
     Creature* train = GetPlayer()->GetMapMgr()->GetCreature(GET_LOWGUID_PART(guid));
     if (!train) return;
 
-    _player->Reputation_OnTalk(train->m_factionDBC);
+    _player->Reputation_OnTalk(train->m_factionEntry);
     SendTrainerList(train);
 }
 
@@ -470,7 +470,7 @@ void WorldSession::HandleGossipHelloOpcode(WorldPacket& recvData)
             _player->RemoveAllAuraType(SPELL_AURA_MOD_STEALTH);
 
         // reputation
-        _player->Reputation_OnTalk(qst_giver->m_factionDBC);
+        _player->Reputation_OnTalk(qst_giver->m_factionEntry);
 
         LOG_DEBUG("WORLD: Received CMSG_GOSSIP_HELLO from %u", Arcemu::Util::GUID_LOPART(guid));
 
