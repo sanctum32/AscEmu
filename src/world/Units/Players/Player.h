@@ -21,7 +21,7 @@
 #pragma once
 
 #include "Units/Players/PlayerDefines.hpp"
-#include "Server/Packets/Handlers/PlayerCache.h"
+#include "Units/Players/PlayerCache.h"
 #include "Server/Definitions.h"
 #include "Management/QuestDefines.hpp"
 #include "Management/Battleground/BattlegroundMgr.h"
@@ -39,7 +39,7 @@
 #include "GameCata/Management/Guild.h"
 #endif
 
-
+struct CharCreate;
 class QuestLogEntry;
 struct BGScore;
 class AchievementMgr;
@@ -490,6 +490,9 @@ public:
     void setRangedAttackPowerMultiplier(float val);
     void setExploredZone(uint32_t idx, uint32_t data);
 
+    uint32_t getWatchedFaction() const;
+    void setWatchedFaction(uint32_t factionId);
+
     uint32_t getMaxLevel() const;
     void setMaxLevel(uint32_t level);
 
@@ -756,7 +759,7 @@ public:
         void AddToWorld();
         void AddToWorld(MapMgr* pMapMgr);
         void RemoveFromWorld();
-        bool Create(WorldPacket & data);
+        bool Create(CharCreate& charCreateContent);
 
         void Update(unsigned long time_passed);
         void BuildFlagUpdateForNonGroupSet(uint32 index, uint32 flag);
@@ -1102,6 +1105,7 @@ public:
         void DuelBoundaryTest();
         void EndDuel(uint8 WinCondition);
         void DuelCountdown();
+        void cancelDuel();
         void SetDuelStatus(uint8 status) { m_duelStatus = status; }
         uint8 GetDuelStatus() { return m_duelStatus; }
         void SetDuelState(uint8 state) { m_duelState = state; }
@@ -2150,7 +2154,12 @@ public:
         // Rested State Stuff
         uint32 m_timeLogoff;
         // Played time
+        // 0 = played on level
+        // 1 = played total
+        // 2 = played session
         uint32 m_playedtime[3];
+
+
         uint8 m_isResting;
         uint8 m_restState;
         uint32 m_restAmount;

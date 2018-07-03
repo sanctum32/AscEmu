@@ -15,6 +15,9 @@ This file is released under the MIT license. See README-MIT for more information
 #include "Map/MapMgr.h"
 #include "Data/WoWPlayer.h"
 #include "Management/Battleground/Battleground.h"
+#include "Objects/GameObject.h"
+#include "Units/Creatures/Pet.h"
+#include "Spell/SpellAuras.h"
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Data
@@ -98,6 +101,9 @@ void Player::setExploredZone(uint32_t idx, uint32_t data)
 
     write(playerData()->explored_zones[idx], data);
 }
+
+uint32_t Player::getWatchedFaction() const { return playerData()->field_watched_faction_idx; }
+void Player::setWatchedFaction(uint32_t factionId) { write(playerData()->field_watched_faction_idx, factionId); }
 
 uint32_t Player::getMaxLevel() const
 {
@@ -439,4 +445,39 @@ PlayerSpec& Player::getActiveSpec()
 #else
     return m_spec;
 #endif
+}
+
+void Player::cancelDuel()
+{
+    // arbiter
+    const auto arbiter = GetMapMgr()->GetGameObject(GET_LOWGUID_PART(getDuelArbiter()));
+    if (arbiter)
+        arbiter->RemoveFromWorld(true);
+
+    // duel setup (duelpartner and us)
+    DuelingWith->setDuelArbiter(0);
+    DuelingWith->m_duelState = DUEL_STATE_FINISHED;
+    DuelingWith->DuelingWith = nullptr;
+    DuelingWith->setDuelTeam(0);
+    DuelingWith->m_duelCountdownTimer = 0;
+
+    setDuelArbiter(0);
+    m_duelState = DUEL_STATE_FINISHED;
+    DuelingWith = nullptr;
+    setDuelTeam(0);
+    m_duelCountdownTimer = 0;
+
+    // auras
+    for (auto i = MAX_NEGATIVE_AURAS_EXTEDED_START; i < MAX_NEGATIVE_AURAS_EXTEDED_END; ++i)
+    {
+        if (m_auras[i])
+            m_auras[i]->Remove();
+    }
+
+    // summons
+    for (const auto& summonedPet: GetSummons())
+    {
+        if (summonedPet && summonedPet->isAlive())
+            summonedPet->SetPetAction(PET_ACTION_STAY);
+    }
 }
