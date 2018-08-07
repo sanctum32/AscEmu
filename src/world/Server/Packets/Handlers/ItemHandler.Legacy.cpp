@@ -29,6 +29,10 @@
 #include "Map/MapMgr.h"
 #include "Server/Packets/CmsgListInventory.h"
 #include "Server/Packets/CmsgItemQuerySingle.h"
+#include "Server/Packets/CmsgBuyItem.h"
+#include "Server/Packets/SmsgBuyItem.h"
+#include "Server/Packets/CmsgSellItem.h"
+#include "Server/Packets/SmsgSellItem.h"
 
 using namespace AscEmu::Packets;
 
@@ -1066,40 +1070,33 @@ void WorldSession::HandleBuyBackOpcode(WorldPacket& recvData)
 
 void WorldSession::HandleSellItemOpcode(WorldPacket& recvData)
 {
-    CHECK_PACKET_SIZE(recvData, 17);
+    CmsgSellItem recv_packet;
+    if (!recv_packet.deserialise(recvData))
+        return;
+
     LOG_DETAIL("WORLD: Received CMSG_SELL_ITEM");
-
-    uint64 vendorguid = 0, itemguid = 0;
-    int8 amount = 0;
-    //uint8 slot = INVENTORY_NO_SLOT_AVAILABLE;
-    //uint8 bagslot = INVENTORY_NO_SLOT_AVAILABLE;
-    //int check = 0;
-
-    recvData >> vendorguid;
-    recvData >> itemguid;
-    recvData >> amount;
 
     _player->interruptSpell();
 
     // Check if item exists
-    if (!itemguid)
+    if (!recv_packet.itemGuid)
     {
-        SendSellItem(vendorguid, itemguid, 1);
+        SendSellItem(recv_packet.vendorGuid.GetOldGuid(), recv_packet.itemGuid, 1);
         return;
     }
 
-    Creature* unit = _player->GetMapMgr()->GetCreature(GET_LOWGUID_PART(vendorguid));
+    Creature* unit = _player->GetMapMgr()->GetCreature(recv_packet.vendorGuid.getGuidLowPart());
     // Check if Vendor exists
     if (unit == nullptr)
     {
-        SendSellItem(vendorguid, itemguid, 3);
+        SendSellItem(recv_packet.vendorGuid.GetOldGuid(), recv_packet.itemGuid, 3);
         return;
     }
 
-    Item* item = _player->GetItemInterface()->GetItemByGUID(itemguid);
+    Item* item = _player->GetItemInterface()->GetItemByGUID(recv_packet.itemGuid);
     if (!item)
     {
-        SendSellItem(vendorguid, itemguid, 1);
+        SendSellItem(recv_packet.vendorGuid.GetOldGuid(), recv_packet.itemGuid, 1);
         return; //our player doesn't have this item
     }
 
@@ -1107,37 +1104,34 @@ void WorldSession::HandleSellItemOpcode(WorldPacket& recvData)
 
     if (item->isContainer() && static_cast< Container* >(item)->HasItems())
     {
-        SendSellItem(vendorguid, itemguid, 6);
+        SendSellItem(recv_packet.vendorGuid.GetOldGuid(), recv_packet.itemGuid, 6);
         return;
     }
 
     // Check if item can be sold
     if (it->SellPrice == 0 || item->wrapped_item_id != 0)
     {
-        SendSellItem(vendorguid, itemguid, 2);
+        SendSellItem(recv_packet.vendorGuid.GetOldGuid(), recv_packet.itemGuid, 2);
         return;
     }
 
     uint32 stackcount = item->getStackCount();
     uint32 quantity = 0;
 
-    if (amount != 0)
-    {
-        quantity = amount;
-    }
+    if (recv_packet.amount != 0)
+        quantity = recv_packet.amount;
     else
-    {
         quantity = stackcount; //allitems
-    }
 
-    if (quantity > stackcount) quantity = stackcount; //make sure we don't over do it
+    if (quantity > stackcount)
+        quantity = stackcount; //make sure we don't over do it
 
     uint32 price = GetSellPriceForItem(it, quantity);
 
     // Check they don't have more than the max gold
     if (worldConfig.player.isGoldCapEnabled)
     {
-        if ((_player->GetGold() + price) > worldConfig.player.limitGoldAmount)
+        if (_player->GetGold() + price > worldConfig.player.limitGoldAmount)
         {
             _player->GetItemInterface()->BuildInventoryChangeError(nullptr, nullptr, INV_ERR_TOO_MUCH_GOLD);
             return;
@@ -1154,7 +1148,7 @@ void WorldSession::HandleSellItemOpcode(WorldPacket& recvData)
     else
     {
         //removing the item from the char's inventory
-        item = _player->GetItemInterface()->SafeRemoveAndRetreiveItemByGuid(itemguid, false); //again to remove item from slot
+        item = _player->GetItemInterface()->SafeRemoveAndRetreiveItemByGuid(recv_packet.itemGuid, false); //again to remove item from slot
         if (item)
         {
             _player->GetItemInterface()->AddBuyBackItem(item, (it->SellPrice) * quantity);
@@ -1162,13 +1156,7 @@ void WorldSession::HandleSellItemOpcode(WorldPacket& recvData)
         }
     }
 
-    WorldPacket data(SMSG_SELL_ITEM, 12);
-    data << vendorguid;
-    data << itemguid;
-    data << uint8(0);
-    SendPacket(&data);
-
-    LOG_DETAIL("WORLD: Sent SMSG_SELL_ITEM");
+    SendPacket(SmsgSellItem(recv_packet.vendorGuid.GetOldGuid(), recv_packet.itemGuid).serialise().get());
 }
 
 void WorldSession::HandleBuyItemInSlotOpcode(WorldPacket& recvData)   // drag & drop
@@ -1374,37 +1362,26 @@ void WorldSession::HandleBuyItemInSlotOpcode(WorldPacket& recvData)   // drag & 
 
 void WorldSession::HandleBuyItemOpcode(WorldPacket& recvData)   // right-click on item
 {
-    CHECK_PACKET_SIZE(recvData, 14);
+    CmsgBuyItem recv_packet;
+    if (!recv_packet.deserialise(recvData))
+        return;
+
     LOG_DETAIL("WORLD: Received CMSG_BUY_ITEM");
 
-    uint64 srcguid = 0;
-    uint32 itemid = 0;
-    int32 slot = 0;
-    uint8 amount = 0;
     uint8 error = 0;
     SlotResult slotresult;
 
-    recvData >> srcguid;
-
-#if VERSION_STRING == Cata
-    uint8 itemtype;
-    recvData >> itemtype;
-#endif
-    recvData >> itemid;
-    recvData >> slot;
-    recvData >> amount;
-
-    auto creature = _player->GetMapMgr()->GetCreature(GET_LOWGUID_PART(srcguid));
+    auto creature = _player->GetMapMgr()->GetCreature(recv_packet.sourceGuid.getGuidLowPart());
     if (creature == nullptr || !creature->HasItems())
         return;
 
-    auto item_extended_cost = creature->GetItemExtendedCostByItemId(itemid);
+    auto item_extended_cost = creature->GetItemExtendedCostByItemId(recv_packet.itemEntry);
 
-    if (amount < 1)
-        amount = 1;
+    if (recv_packet.amount < 1)
+        recv_packet.amount = 1;
 
     CreatureItem creature_item;
-    creature->GetSellItemByItemId(itemid, creature_item);
+    creature->GetSellItemByItemId(recv_packet.itemEntry, creature_item);
 
     if (creature_item.itemid == 0)
     {
@@ -1413,13 +1390,13 @@ void WorldSession::HandleBuyItemOpcode(WorldPacket& recvData)   // right-click o
         return;
     }
 
-    if (creature_item.max_amount > 0 && creature_item.available_amount < amount)
+    if (creature_item.max_amount > 0 && creature_item.available_amount < recv_packet.amount)
     {
         _player->GetItemInterface()->BuildInventoryChangeError(nullptr, nullptr, INV_ERR_ITEM_IS_CURRENTLY_SOLD_OUT);
         return;
     }
 
-    ItemProperties const* it = sMySQLStore.getItemProperties(itemid);
+    ItemProperties const* it = sMySQLStore.getItemProperties(recv_packet.itemEntry);
     if (!it)
     {
         _player->GetItemInterface()->BuildInventoryChangeError(nullptr, nullptr, INV_ERR_DONT_OWN_THAT_ITEM);
@@ -1427,26 +1404,26 @@ void WorldSession::HandleBuyItemOpcode(WorldPacket& recvData)   // right-click o
     }
 
     uint32 itemMaxStack = (_player->ItemStackCheat) ? 0x7fffffff : it->MaxCount;
-    if (itemMaxStack > 0 && amount * creature_item.amount > itemMaxStack)
+    if (itemMaxStack > 0 && recv_packet.amount * creature_item.amount > itemMaxStack)
     {
         _player->GetItemInterface()->BuildInventoryChangeError(nullptr, nullptr, INV_ERR_ITEM_CANT_STACK);
         return;
     }
 
-    if ((error = _player->GetItemInterface()->CanReceiveItem(it, amount * creature_item.amount)) != 0)
+    if ((error = _player->GetItemInterface()->CanReceiveItem(it, recv_packet.amount * creature_item.amount)) != 0)
     {
         _player->GetItemInterface()->BuildInventoryChangeError(nullptr, nullptr, error);
         return;
     }
 
-    if ((error = _player->GetItemInterface()->CanAffordItem(it, amount, creature)) != 0)
+    if ((error = _player->GetItemInterface()->CanAffordItem(it, recv_packet.amount, creature)) != 0)
     {
         _player->GetItemInterface()->BuildInventoryChangeError(nullptr, nullptr, error);
         return;
     }
 
     // Find free slot and break if inv full
-    auto add_item = _player->GetItemInterface()->FindItemLessMax(itemid, amount * creature_item.amount, false);
+    auto add_item = _player->GetItemInterface()->FindItemLessMax(recv_packet.itemEntry, recv_packet.amount * creature_item.amount, false);
     if (!add_item)
     {
         slotresult = _player->GetItemInterface()->FindFreeInventorySlot(it);
@@ -1468,7 +1445,7 @@ void WorldSession::HandleBuyItemOpcode(WorldPacket& recvData)   // right-click o
         }
 
         item->m_isDirty = true;
-        item->setStackCount(amount * creature_item.amount);
+        item->setStackCount(recv_packet.amount * creature_item.amount);
 
         if (slotresult.ContainerSlot == ITEM_NO_SLOT_AVAILABLE)
         {
@@ -1483,7 +1460,7 @@ void WorldSession::HandleBuyItemOpcode(WorldPacket& recvData)   // right-click o
                 {
                     item->getOwner()->GetItemInterface()->AddRefundable(item->getGuid(), item_extended_cost->costid);
                 }
-                _player->SendItemPushResult(false, true, false, true, static_cast<uint8>(INVENTORY_SLOT_NOT_SET), slotresult.Result, amount * creature_item.amount, item->getEntry(), item->getPropertySeed(), item->getRandomPropertiesId(), item->getStackCount());
+                _player->SendItemPushResult(false, true, false, true, static_cast<uint8>(INVENTORY_SLOT_NOT_SET), slotresult.Result, recv_packet.amount * creature_item.amount, item->getEntry(), item->getPropertySeed(), item->getRandomPropertiesId(), item->getStackCount());
             }
         }
         else
@@ -1507,25 +1484,18 @@ void WorldSession::HandleBuyItemOpcode(WorldPacket& recvData)   // right-click o
     }
     else
     {
-        add_item->modStackCount(amount * creature_item.amount);
+        add_item->modStackCount(recv_packet.amount * creature_item.amount);
         add_item->m_isDirty = true;
-        _player->SendItemPushResult(false, true, false, false, (uint8)_player->GetItemInterface()->GetBagSlotByGuid(add_item->getGuid()), 1, amount * creature_item.amount, add_item->getEntry(), add_item->getPropertySeed(), add_item->getRandomPropertiesId(), add_item->getStackCount());
+        _player->SendItemPushResult(false, true, false, false, (uint8)_player->GetItemInterface()->GetBagSlotByGuid(add_item->getGuid()), 1, recv_packet.amount * creature_item.amount, add_item->getEntry(), add_item->getPropertySeed(), add_item->getRandomPropertiesId(), add_item->getStackCount());
     }
 
-    _player->GetItemInterface()->BuyItem(it, amount, creature);
+    _player->GetItemInterface()->BuyItem(it, recv_packet.amount, creature);
 
-    WorldPacket data(45);
-    data.Initialize(SMSG_BUY_ITEM);
-    data << uint64(srcguid);
-    data <<Util::getMSTime();
-    data << uint32(itemid);
-    data << uint32(amount * creature_item.amount);
-
-    SendPacket(&data);
+    SendPacket(SmsgBuyItem(recv_packet.sourceGuid.GetOldGuid(), Util::getMSTime(), recv_packet.itemEntry, recv_packet.amount * creature_item.amount).serialise().get());
 
     if (creature_item.max_amount)
     {
-        creature->ModAvItemAmount(creature_item.itemid, creature_item.amount * amount);
+        creature->ModAvItemAmount(creature_item.itemid, creature_item.amount * recv_packet.amount);
 
         // there is probably a proper opcode for this. - burlex
         SendInventoryList(creature);
@@ -1885,21 +1855,6 @@ void WorldSession::HandleRepairItemOpcode(WorldPacket& recvPacket)
     if (_player->getDistanceSq(pCreature) > 100)
         return; //avoid talking to anyone by guid hacking. Like repair items anytime in raid ? Low chance hack
 
-    if (guildmoney)
-    {
-#if VERSION_STRING != Cata
-        if (_player->IsInGuild())
-        {
-            if (!(_player->GetGuildRankS()->iRights & GR_RIGHT_GUILD_BANK_REPAIR))
-            {
-                return; //we have not permissions to do that
-            }
-        }
-        else
-            return;//can't repair with guild money if player is not in guild.
-#endif
-    }
-
     if (!itemguid)
     {
         int32 totalcost = 0;
@@ -1930,10 +1885,6 @@ void WorldSession::HandleRepairItemOpcode(WorldPacket& recvPacket)
                 }
             }
         }
-#if VERSION_STRING != Cata
-        if (totalcost > 0)  //we already checked if it's in guild in RepairItem()
-            _player->GetGuild()->LogGuildBankActionMoney(GB_LOG_REPAIR_MONEY, _player->getGuidLow(), totalcost);
-#endif
     }
     else
     {

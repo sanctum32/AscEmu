@@ -1,0 +1,17 @@
+/*
+Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+This file is released under the MIT license. See README-MIT for more information.
+*/
+
+#pragma once
+
+#include "Common.Legacy.h"
+
+#ifdef WIN32
+    #define RIGHT_MODE "rb"
+#else
+    #define RIGHT_MODE "r"
+#endif
+
+// Use experimental file System
+@ASCEMU_COMMENT_WITH_EXPERIMENTAL_FILESYSTEM@#define USE_EXPERIMENTAL_FILESYSTEM

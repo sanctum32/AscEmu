@@ -33,6 +33,8 @@
 #include "Management/AddonMgr.h"
 #include "Management/AuctionMgr.h"
 #include "Spell/SpellTarget.h"
+#include "Util.hpp"
+#include "DatabaseUpdater.h"
 
 createFileSingleton(Master);
 std::string LogFileName;
@@ -52,8 +54,8 @@ SERVER_DECL SessionLog* Player_Log;
 ConfigMgr Config;
 
 // DB version
-static const char* REQUIRED_CHAR_DB_VERSION = "20180427-00_character_db_version";
-static const char* REQUIRED_WORLD_DB_VERSION = "20180619-01_misc_tbc";
+static const char* REQUIRED_CHAR_DB_VERSION = "20180714-00_guild_tables";
+static const char* REQUIRED_WORLD_DB_VERSION = "20180803-02_playercreateinfo_bars";
 
 void Master::_OnSignal(int s)
 {
@@ -105,6 +107,63 @@ ThreadBase* GetConsoleListener();
 
 std::unique_ptr<WorldRunnable> worldRunnable = nullptr;
 
+/////////////////////////////////////////////////////////////////////////////
+// Testscript fo experimental filesystem
+#ifdef USE_EXPERIMENTAL_FILESYSTEM
+
+#include <fstream>
+#include <iostream>
+#include <string>
+
+void createExtendedLogDir()
+{
+    std::string logDir = worldConfig.log.extendedLogsDir;
+
+    if (!logDir.empty())
+        fs::create_directories(logDir);
+}
+
+bool checkRequiredDirs()
+{
+    std::vector<std::string> requiredDirs;
+    requiredDirs.emplace_back("configs");
+    requiredDirs.emplace_back("dbc");
+    requiredDirs.emplace_back("maps");
+
+    std::string dataDir = worldConfig.server.dataDir;
+    dataDir.erase(0, 2); //remove ./ from string
+
+    bool requiredDirsExist = true;
+    for (const auto& dir : requiredDirs)
+    {
+        fs::path requiredPath = fs::current_path();
+
+        if (dataDir.empty() || dir == "configs")
+        {
+            requiredPath /= dir;
+        }
+        else
+        {
+            requiredPath /= dataDir;
+            requiredPath /= dir;
+        }
+
+        if (fs::exists(requiredPath))
+        {
+            std::cout << "Required dir " << requiredPath << " found!" << std::endl;
+        }
+        else
+        {
+            std::cout << "Required dir " << requiredPath << " not found!" << std::endl;
+            requiredDirsExist = false;
+        }
+    }
+
+    return requiredDirsExist;
+}
+#endif
+/////////////////////////////////////////////////////////////////////////////
+
 bool Master::Run(int /*argc*/, char** /*argv*/)
 {
     char* config_file = (char*)CONFDIR "/world.conf";
@@ -149,6 +208,20 @@ bool Master::Run(int /*argc*/, char** /*argv*/)
         AscLog.~AscEmuLog();
         return false;
     }
+
+#ifdef USE_EXPERIMENTAL_FILESYSTEM
+    createExtendedLogDir();
+
+    checkRequiredDirs();
+
+    const std::string charDbName = worldConfig.charDb.dbName;
+    DatabaseUpdater::initBaseIfNeeded(charDbName, "character", CharacterDatabase);
+    DatabaseUpdater::checkAndApplyDBUpdatesIfNeeded("character", CharacterDatabase);
+
+    const std::string worldDbName = worldConfig.worldDb.dbName;
+    DatabaseUpdater::initBaseIfNeeded(worldDbName, "world", WorldDatabase);
+    DatabaseUpdater::checkAndApplyDBUpdatesIfNeeded("world", WorldDatabase);
+#endif
 
     if (!_CheckDBVersion())
     {

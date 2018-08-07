@@ -25,9 +25,16 @@ This file is released under the MIT license. See README-MIT for more information
 #include "Server/Packets/CmsgCharCustomize.h"
 #include "Server/Packets/SmsgCharCustomize.h"
 #include "Server/LogonCommClient/LogonCommHandler.h"
-#if VERSION_STRING == Cata
-#include "GameCata/Management/GuildMgr.h"
-#endif
+#include "Spell/Definitions/PowerType.h"
+#include "Server/Packets/SmsgLearnedDanceMoves.h"
+#include "Server/Packets/SmsgFeatureSystemStatus.h"
+#include "Server/Packets/CmsgSetPlayerDeclinedNames.h"
+#include "Server/Packets/SmsgSetPlayerDeclinedNamesResult.h"
+#include "Server/Packets/SmsgCharEnum.h"
+#include "Management/GuildMgr.h"
+#include "Server/CharacterErrors.h"
+#include "AuthCodes.h"
+
 
 using namespace AscEmu::Packets;
 
@@ -295,15 +302,6 @@ uint8_t WorldSession::deleteCharacter(WoWGuid guid)
         std::string name = result->Fetch()[0].GetString();
         delete result;
 
-#if VERSION_STRING != Cata
-        if (playerInfo->guild)
-        {
-            if (playerInfo->guild->GetGuildLeader() == playerInfo->guid)
-                return E_CHAR_DELETE_FAILED_GUILD_LEADER;
-
-            playerInfo->guild->RemoveGuildMember(playerInfo, nullptr);
-        }
-#else
         if (playerInfo->m_guild)
         {
             const auto guild = sGuildMgr.getGuildById(playerInfo->m_guild);
@@ -313,7 +311,6 @@ uint8_t WorldSession::deleteCharacter(WoWGuid guid)
             if (guild != nullptr)
                 guild->handleRemoveMember(this, playerInfo->guid);
         }
-#endif
 
         for (uint8_t i = 0; i < NUM_CHARTER_TYPES; ++i)
         {
@@ -485,14 +482,8 @@ void WorldSession::handleCharCreateOpcode(WorldPacket& recvPacket)
     playerInfo->subGroup = 0;
     playerInfo->m_loggedInPlayer = nullptr;
     playerInfo->team = newPlayer->GetTeam();
-#if VERSION_STRING != Cata
-    playerInfo->guild = nullptr;
-    playerInfo->guildRank = nullptr;
-    playerInfo->guildMember = nullptr;
-#else
     playerInfo->m_guild = 0;
     playerInfo->guildRank = GUILD_RANK_NONE;
-#endif
     playerInfo->lastOnline = UNIXTIME;
 
     objmgr.AddPlayerInfo(playerInfo);
@@ -547,3 +538,386 @@ void WorldSession::handleCharCustomizeLooksOpcode(WorldPacket& recvPacket)
     SendPacket(SmsgCharCustomize(E_RESPONSE_SUCCESS, recv_packet.guid, recv_packet.createStruct).serialise().get());
 }
 #endif
+
+void WorldSession::initGMMyMaster()
+{
+#ifndef GM_TICKET_MY_MASTER_COMPATIBLE
+    GM_Ticket* ticket = objmgr.GetGMTicketByPlayer(GetPlayer()->getGuid());
+    if (ticket)
+    {
+        //Send status change to gm_sync_channel
+        const auto channel = channelmgr.GetChannel(sWorld.getGmClientChannel().c_str(), _player);
+        if (channel)
+        {
+            std::stringstream ss;
+            ss << "GmTicket:" << GM_TICKET_CHAT_OPCODE_ONLINESTATE;
+            ss << ":" << ticket->guid;
+            ss << ":1";
+            channel->Say(_player, ss.str().c_str(), nullptr, true);
+        }
+    }
+#endif
+}
+
+void WorldSession::sendServerStats()
+{
+    if (Config.MainConfig.getBoolDefault("Server", "SendStatsOnJoin", false))
+    {
+#ifdef WIN32
+        GetPlayer()->BroadcastMessage("Server: %sAscEmu - %s-Windows-%s", MSG_COLOR_WHITE, CONFIG, ARCH);
+#else
+        GetPlayer()->BroadcastMessage("Server: %sAscEmu - %s-%s", MSG_COLOR_WHITE, PLATFORM_TEXT, ARCH);
+#endif
+
+        GetPlayer()->BroadcastMessage("Build hash: %s%s", MSG_COLOR_CYAN, BUILD_HASH_STR);
+        GetPlayer()->BroadcastMessage("Online Players: %s%u |rPeak: %s%u|r Accepted Connections: %s%u",
+            MSG_COLOR_SEXGREEN, sWorld.getSessionCount(), MSG_COLOR_SEXBLUE, sWorld.getPeakSessionCount(), MSG_COLOR_SEXBLUE, sWorld.getAcceptedConnections());
+
+        GetPlayer()->BroadcastMessage("Server Uptime: |r%s", sWorld.getWorldUptimeString().c_str());
+    }
+}
+
+void WorldSession::fullLogin(Player* player)
+{
+    LogDebug("WorldSession : Fully loading player %u", player->getGuidLow());
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // basic setup
+    SetPlayer(player);
+    m_MoverGuid = player->getGuid();
+    m_MoverWoWGuid.Init(player->getGuid());
+
+#if VERSION_STRING != Cata
+    movement_packet[0] = m_MoverWoWGuid.GetNewGuidMask();
+    memcpy(&movement_packet[1], m_MoverWoWGuid.GetNewGuid(), m_MoverWoWGuid.GetNewGuidLen());
+#endif
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // maybe you logged out inside a bg
+    player->logIntoBattleground();
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // start on GM Island or normal position for first login. Check out the config.
+    player->setLoginPosition();
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+#if VERSION_STRING > TBC
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // send feature packet... mostly unknown content.
+    SendPacket(SmsgFeatureSystemStatus(2, 0).serialise().get());
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // dance moves - unknown 2x uint32_t(0)
+    SendPacket(SmsgLearnedDanceMoves(0, 0).serialise().get());
+    //////////////////////////////////////////////////////////////////////////////////////////
+#endif
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // hotfix data for cata
+#if VERSION_STRING == Cata
+    //\todo send Hotfixdata
+#endif
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // update/set attack speed - mostly 0 on login
+    player->UpdateAttackSpeed();
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // set playerinfo - should be already set, just in case.
+    player->setPlayerInfoIfNeeded();
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // guild/group update - send guildmotd set guidlrank and pointers.
+    player->setGuildAndGroupInfo();
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // account data times - since we just logged in, it is 0
+    SendAccountDataTimes(PER_CHARACTER_CACHE_MASK);
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // if we are on a transport we need a lot more checks, otherwise the mapmgr complains
+    const bool canEnterWorld = player->logOntoTransport();
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // set db, time and count - our db now knows that we are online.
+    CharacterDatabase.Execute("UPDATE characters SET online = 1 WHERE guid = %u", player->getGuidLow());
+    LOG_DEBUG("Player %s logged in.", player->getName().c_str());
+    sWorld.incrementPlayerCount(player->GetTeam());
+
+    player->m_playedtime[2] = uint32_t(UNIXTIME);
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // send cinematic on first login if we still allow it in the config
+    player->sendCinematicOnFirstLogin();
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // send social packets and lists
+    player->Social_TellFriendsOnline();
+    player->Social_SendFriendList(7);
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // dungeon and raid setup
+#if VERSION_STRING > TBC
+    player->SendDungeonDifficulty();
+    player->SendRaidDifficulty();
+#endif
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Send Equipment set list - not sure what the intend was here.
+#if VERSION_STRING != Cata
+    player->SendEquipmentSetList();
+#endif
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // GMMyMaster is a custom addon, we send special chat messages to trigger it.
+    // send serverstats (uptime, playerpeak,..)
+    // server Message of the day from config (Welcome to the world of warcraft)
+
+    initGMMyMaster();
+
+    sendServerStats();
+
+    SendMOTD();
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // the restxp is calculated with our offline time
+    if (player->m_isResting)
+        player->ApplyPlayerRestState(true);
+
+    if (player->m_timeLogoff > 0 && player->getLevel() < player->getMaxLevel())
+    {
+        const uint32_t currenttime = uint32_t(UNIXTIME);
+        const uint32_t timediff = currenttime - player->m_timeLogoff;
+
+        if (timediff > 0)
+            player->AddCalculatedRestXP(timediff);
+    }
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // add us to the world if we are not already added
+    if (canEnterWorld && !player->GetMapMgr())
+        player->AddToWorld();
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+
+    sHookInterface.OnFullLogin(player);
+
+    objmgr.AddPlayer(player);
+}
+
+void WorldSession::handleDeclinedPlayerNameOpcode(WorldPacket& recvPacket)
+{
+    CmsgSetPlayerDeclinedNames recv_packet;
+    if (!recv_packet.deserialise(recvPacket))
+        return;
+
+    //\todo check utf8 and cyrillic chars
+    const uint32_t error = 0;     // 0 = success, 1 = error
+
+    SendPacket(SmsgSetPlayerDeclinedNamesResult(error, recv_packet.guid).serialise().get());
+}
+
+void WorldSession::CharacterEnumProc(QueryResult* result)
+{
+    std::vector<CharEnumData> enumData;
+
+    has_dk = false;
+    _side = -1;
+
+    uint32_t numchar = 0;
+    uint8_t char_real_count = 0;
+
+    if (result)
+        numchar = result->GetRowCount();
+
+    const auto startTime = Util::TimeNow();
+
+    if (result)
+    {
+        do
+        {
+            Field* fields = result->Fetch();
+
+            CharEnumData charEnum;
+
+            charEnum.guid = fields[0].GetUInt64();
+            charEnum.level = fields[1].GetUInt8();
+            charEnum.race = fields[2].GetUInt8();
+            charEnum.Class = fields[3].GetUInt8();
+
+            if (!isClassRaceCombinationPossible(charEnum.Class, charEnum.race))
+            {
+                LogDebugFlag(LF_OPCODE, "Class %u and race %u is not a valid combination for Version %u - skipped", charEnum.Class, charEnum.race, VERSION_STRING);
+                continue;
+            }
+
+            charEnum.gender = fields[4].GetUInt8();
+            charEnum.bytes = fields[5].GetUInt32();
+            charEnum.bytes2 = fields[6].GetUInt32();
+            charEnum.name = fields[7].GetString();
+            charEnum.x = fields[8].GetFloat();
+            charEnum.y = fields[9].GetFloat();
+            charEnum.z = fields[10].GetFloat();
+            charEnum.mapId = fields[11].GetUInt32();
+            charEnum.zoneId = fields[12].GetUInt32();
+            charEnum.banned = fields[13].GetUInt32();
+
+            charEnum.deathState = fields[15].GetUInt32();
+            charEnum.loginFlags = fields[16].GetUInt32();
+            charEnum.flags = fields[17].GetUInt32();
+            charEnum.guildId = fields[18].GetUInt32();
+
+            if (_side < 0)
+                _side = getSideByRace(charEnum.race);
+
+#if VERSION_STRING >= WotLK
+            has_level_55_char = has_level_55_char || (charEnum.level >= 55);
+            has_dk = has_dk || (charEnum.Class == DEATHKNIGHT);
+#endif
+
+            charEnum.char_flags = 0;
+
+            if (charEnum.banned && (charEnum.banned < 10 || charEnum.banned >(uint32_t)UNIXTIME))
+                charEnum.char_flags |= CHARACTER_SCREEN_FLAG_BANNED;
+            if (charEnum.deathState != 0)
+                charEnum.char_flags |= CHARACTER_SCREEN_FLAG_DEAD;
+            if (charEnum.flags & PLAYER_FLAG_NOHELM)
+                charEnum.char_flags |= CHARACTER_SCREEN_FLAG_HIDE_HELM;
+            if (charEnum.flags & PLAYER_FLAG_NOCLOAK)
+                charEnum.char_flags |= CHARACTER_SCREEN_FLAG_HIDE_CLOAK;
+            if (charEnum.loginFlags == 1)
+                charEnum.char_flags |= CHARACTER_SCREEN_FLAG_FORCED_RENAME;
+
+#if VERSION_STRING >= WotLK
+            switch (charEnum.loginFlags)
+            {
+                case LOGIN_CUSTOMIZE_LOOKS:
+                    charEnum.customization_flag = CHAR_CUSTOMIZE_FLAG_CUSTOMIZE;
+                    break;
+                case LOGIN_CUSTOMIZE_RACE:
+                    charEnum.customization_flag = CHAR_CUSTOMIZE_FLAG_RACE;
+                    break;
+                case LOGIN_CUSTOMIZE_FACTION:
+                    charEnum.customization_flag = CHAR_CUSTOMIZE_FLAG_FACTION;
+                    break;
+                default:
+                    charEnum.customization_flag = CHAR_CUSTOMIZE_FLAG_NONE;
+            }
+#endif
+
+            CreatureProperties const* petInfo = nullptr;
+            uint32_t petLevel = 0;
+
+            if (charEnum.Class == WARLOCK || charEnum.Class == HUNTER)
+            {
+                QueryResult* player_pet_db_result = CharacterDatabase.Query("SELECT entry, level FROM playerpets WHERE ownerguid = %u AND MOD(active, 10) = 1 AND alive = TRUE;", Arcemu::Util::GUID_LOPART(charEnum.guid));
+                if (player_pet_db_result)
+                {
+                    petLevel = player_pet_db_result->Fetch()[1].GetUInt32();
+                    petInfo = sMySQLStore.getCreatureProperties(player_pet_db_result->Fetch()[0].GetUInt32());
+                    delete player_pet_db_result;
+                }
+            }
+
+            charEnum.pet_data.display_id = 0;
+            charEnum.pet_data.level = 0;
+            charEnum.pet_data.family = 0;
+
+            if (petInfo != nullptr)
+            {
+                charEnum.pet_data.display_id = petInfo->Male_DisplayID;
+                charEnum.pet_data.level = petLevel;
+                charEnum.pet_data.family = petInfo->Family;
+            }
+
+            QueryResult* item_db_result = CharacterDatabase.Query("SELECT slot, entry, enchantments FROM playeritems WHERE ownerguid=%u AND containerslot = '-1' AND slot BETWEEN '0' AND '20'", Arcemu::Util::GUID_LOPART(charEnum.guid));
+#if VERSION_STRING >= WotLK
+            memset(charEnum.player_items, 0, sizeof(PlayerItem) * INVENTORY_SLOT_BAG_END);
+#else
+            memset(charEnum.player_items, 0, sizeof(PlayerItem) * 20);
+#endif
+
+            if (item_db_result)
+            {
+                do
+                {
+                    uint32_t enchantid;
+
+                    int8_t item_slot = item_db_result->Fetch()[0].GetInt8();
+                    ItemProperties const* itemProperties = sMySQLStore.getItemProperties(item_db_result->Fetch()[1].GetUInt32());
+                    if (itemProperties)
+                    {
+                        charEnum.player_items[item_slot].displayId = itemProperties->DisplayInfoID;
+                        charEnum.player_items[item_slot].inventoryType = static_cast<uint8>(itemProperties->InventoryType);
+
+                        if (item_slot == EQUIPMENT_SLOT_MAINHAND || item_slot == EQUIPMENT_SLOT_OFFHAND)
+                        {
+                            const char* enchant_field = item_db_result->Fetch()[2].GetString();
+                            if (sscanf(enchant_field, "%u,0,0;", (unsigned int*)&enchantid) == 1 && enchantid > 0)
+                            {
+                                DBC::Structures::SpellItemEnchantmentEntry const* spell_item_enchant = sSpellItemEnchantmentStore.LookupEntry(enchantid);
+                                if (spell_item_enchant != nullptr)
+                                    charEnum.player_items[item_slot].enchantmentId = spell_item_enchant->visual;
+                            }
+                        }
+                    }
+                } while (item_db_result->NextRow());
+                delete item_db_result;
+            }
+
+            // save data to serialize it in packet serialisation SmsgCharEnum.
+            enumData.push_back(charEnum);
+
+            ++char_real_count;
+        } while (result->NextRow());
+    }
+
+    LogDebugFlag(LF_OPCODE, "Character Enum Built in %u ms.", Util::GetTimeDifferenceToNow(startTime));
+    SendPacket(SmsgCharEnum(char_real_count, enumData).serialise().get());
+}
+
+void WorldSession::handleCharEnumOpcode(WorldPacket& /*recvPacket*/)
+{
+    const auto asyncQuery = new AsyncQuery(new SQLClassCallbackP1<World, uint32_t>(World::getSingletonPtr(), &World::sendCharacterEnumToAccountSession, GetAccountId()));
+
+    asyncQuery->AddQuery("SELECT guid, level, race, class, gender, bytes, bytes2, name, positionX, positionY, positionZ, mapId, zoneId, banned, restState, deathstate, login_flags, player_flags, guild_members.guildId FROM characters LEFT JOIN guild_members ON characters.guid = guild_members.playerid WHERE acct=%u ORDER BY guid LIMIT 10", GetAccountId());
+
+    CharacterDatabase.QueueAsyncQuery(asyncQuery);
+}
+
+void WorldSession::LoadAccountDataProc(QueryResult* result)
+{
+    if (result == nullptr)
+    {
+        CharacterDatabase.Execute("INSERT INTO account_data VALUES(%u, '', '', '', '', '', '', '', '', '')", _accountId);
+        return;
+    }
+
+    for (uint8_t i = 0; i < 7; ++i)
+    {
+        const char* accountData = result->Fetch()[1 + i].GetString();
+        const size_t length = accountData ? strlen(accountData) : 0;
+        if (length > 1)
+        {
+            char* d = new char[length + 1];
+            memcpy(d, accountData, length + 1);
+            SetAccountData(i, d, true, static_cast<uint32_t>(length));
+        }
+    }
+}

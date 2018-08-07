@@ -29,7 +29,7 @@
 #include "Management/Container.h"
 #include "Server/Packets/Opcode.h"
 #include "Objects/DynamicObject.h"
-#include "AuthCodes.h"
+#include "Server/CharacterErrors.h"
 #include "VMapFactory.h"
 #include "Management/HonorHandler.h"
 #include "Storage/WorldStrings.h"
@@ -70,10 +70,11 @@
 #include "Data/WoWDynamicObject.h"
 #include "Data/WoWCorpse.h"
 #include <limits>
+#include "Server/Packets/SmsgNewWorld.h"
+#include "Server/Packets/SmsgFriendStatus.h"
+#include "Management/GuildMgr.h"
 
-#if VERSION_STRING == Cata
-#include "GameCata/Management/GuildMgr.h"
-#endif
+using namespace AscEmu::Packets;
 
 using ascemu::World::Spell::Helpers::spellModFlatIntValue;
 using ascemu::World::Spell::Helpers::spellModPercentageIntValue;
@@ -249,9 +250,7 @@ Player::Player(uint32 guid)
     m_duelCountdownTimer(0),
     m_duelStatus(0),
     m_duelState(DUEL_STATE_FINISHED),        // finished
-#if VERSION_STRING == Cata
     m_GuildIdInvited(0),
-#endif
     // Rest
     m_timeLogoff(0),
     m_isResting(0),
@@ -447,8 +446,6 @@ Player::Player(uint32 guid)
     m_talentSpecsCount = 1;
 #if VERSION_STRING == Cata
     m_FirstTalentTreeLock = 0;
-
-    m_GuildId = 0;
 #endif
 
 #ifdef FT_DUAL_SPEC
@@ -3122,6 +3119,31 @@ void Player::RemovePendingPlayer()
     delete this;
 }
 
+namespace PlayerQuery
+{
+    enum
+    {
+        LoginFlags = 0,
+        Tutorials = 1,
+        Cooldowns = 2,
+        Questlog = 3,
+        Items = 4,
+        Pets = 5,
+        SummonSpells = 6,
+        Mailbox = 7,
+        Friends = 8,
+        FriendsFor = 9,
+        Ignoring = 10,
+        EquipmentSets = 11,
+        Reputation = 12,
+        Spells = 13,
+        DeletedSpells = 14,
+        Skills = 15,
+        Achievements = 16,
+        AchievementProgress = 17
+    };
+}
+
 bool Player::LoadFromDB(uint32 guid)
 {
     AsyncQuery* q = new AsyncQuery(new SQLClassCallbackP0<Player>(this, &Player::LoadFromDBProc));
@@ -3170,7 +3192,7 @@ void Player::LoadFromDBProc(QueryResultVector & results)
         return;
     }
 
-    QueryResult* result = results[0].result;
+    QueryResult* result = results[PlayerQuery::LoginFlags].result;
     if (!result)
     {
         LOG_ERROR("Player login query failed! guid = %u", getGuidLow());
@@ -3290,7 +3312,7 @@ void Player::LoadFromDBProc(QueryResultVector & results)
     // new format
     const ItemProf* prof1;
 
-    LoadSkills(results[15].result);
+    LoadSkills(results[PlayerQuery::Skills].result);
 
     if (m_skills.empty())
     {
@@ -3525,11 +3547,11 @@ void Player::LoadFromDBProc(QueryResultVector & results)
     obj_movement_info.transport_data.relativePosition.z = get_next_field.GetFloat();
     obj_movement_info.transport_data.relativePosition.o = get_next_field.GetFloat();
 
-    LoadSpells(results[13].result);
+    LoadSpells(results[PlayerQuery::Spells].result);
 
-    LoadDeletedSpells(results[14].result);
+    LoadDeletedSpells(results[PlayerQuery::DeletedSpells].result);
 
-    LoadReputations(results[12].result);
+    LoadReputations(results[PlayerQuery::Reputation].result);
 
     // Load saved actionbars
     for (uint8 s = 0; s < MAX_SPEC_COUNT; ++s)
@@ -3748,8 +3770,8 @@ void Player::LoadFromDBProc(QueryResultVector & results)
             break;
         case WARLOCK:
         case HUNTER:
-            _LoadPet(results[5].result);
-            _LoadPetSpells(results[6].result);
+            _LoadPet(results[PlayerQuery::Pets].result);
+            _LoadPetSpells(results[PlayerQuery::SummonSpells].result);
             break;
     }
 
@@ -3762,24 +3784,24 @@ void Player::LoadFromDBProc(QueryResultVector & results)
     _AddLanguages(false);
 #endif
 
-    if (GetGuildId())
+    if (getGuildId())
         setUInt32Value(PLAYER_GUILD_TIMESTAMP, (uint32)UNIXTIME);
 
 #undef get_next_field
 
     // load properties
-    _LoadTutorials(results[1].result);
-    _LoadPlayerCooldowns(results[2].result);
-    _LoadQuestLogEntry(results[3].result);
-    m_ItemInterface->mLoadItemsFromDatabase(results[4].result);
-    m_ItemInterface->m_EquipmentSets.LoadfromDB(results[11].result);
+    _LoadTutorials(results[PlayerQuery::Tutorials].result);
+    _LoadPlayerCooldowns(results[PlayerQuery::Cooldowns].result);
+    _LoadQuestLogEntry(results[PlayerQuery::Questlog].result);
+    m_ItemInterface->mLoadItemsFromDatabase(results[PlayerQuery::Items].result);
+    m_ItemInterface->m_EquipmentSets.LoadfromDB(results[PlayerQuery::EquipmentSets].result);
 
-    m_mailBox.Load(results[7].result);
+    m_mailBox.Load(results[PlayerQuery::Mailbox].result);
 
     // SOCIAL
-    if (results[8].result != nullptr)            // this query is "who are our friends?"
+    if (results[PlayerQuery::Friends].result != nullptr)            // this query is "who are our friends?"
     {
-        result = results[8].result;
+        result = results[PlayerQuery::Friends].result;
         do
         {
             fields = result->Fetch();
@@ -3793,9 +3815,9 @@ void Player::LoadFromDBProc(QueryResultVector & results)
         while (result->NextRow());
     }
 
-    if (results[9].result != nullptr)            // this query is "who has us in their friends?"
+    if (results[PlayerQuery::FriendsFor].result != nullptr)            // this query is "who has us in their friends?"
     {
-        result = results[9].result;
+        result = results[PlayerQuery::FriendsFor].result;
         do
         {
             m_cache->InsertValue64(CACHE_SOCIAL_HASFRIENDLIST, result->Fetch()[0].GetUInt32());
@@ -3803,9 +3825,9 @@ void Player::LoadFromDBProc(QueryResultVector & results)
         while (result->NextRow());
     }
 
-    if (results[10].result != nullptr)        // this query is "who are we ignoring"
+    if (results[PlayerQuery::Ignoring].result != nullptr)        // this query is "who are we ignoring"
     {
-        result = results[10].result;
+        result = results[PlayerQuery::Ignoring].result;
         do
         {
             uint32 guid = result->Fetch()[0].GetUInt32();
@@ -3828,7 +3850,7 @@ void Player::LoadFromDBProc(QueryResultVector & results)
     m_achievementMgr.CheckAllAchievementCriteria();
 #endif
 
-    m_session->FullLogin(this);
+    m_session->fullLogin(this);
     m_session->m_loggingInPlayer = nullptr;
 
     if (!isAlive())
@@ -3897,7 +3919,7 @@ void Player::LoadFromDBProc(QueryResultVector & results)
         return;
     }
 
-    QueryResult* result = results[0].result;
+    QueryResult* result = results[PlayerQuery::LoginFlags].result;
     if (!result)
     {
         LOG_ERROR("Player login query failed! guid = %u", getGuidLow());
@@ -3992,7 +4014,7 @@ void Player::LoadFromDBProc(QueryResultVector & results)
 
 #if VERSION_STRING > TBC
     // load achievements before anything else otherwise skills would complete achievements already in the DB, leading to duplicate achievements and criterias(like achievement=126).
-    m_achievementMgr.LoadFromDB(results[16].result, results[17].result);
+    m_achievementMgr.LoadFromDB(results[PlayerQuery::Achievements].result, results[PlayerQuery::AchievementProgress].result);
 #endif
 
     CalculateBaseStats();
@@ -4032,7 +4054,7 @@ void Player::LoadFromDBProc(QueryResultVector & results)
     // new format
     const ItemProf* prof1;
 
-    LoadSkills(results[15].result);
+    LoadSkills(results[PlayerQuery::Skills].result);
 
     if (m_skills.empty())
     {
@@ -4294,11 +4316,11 @@ void Player::LoadFromDBProc(QueryResultVector & results)
 
 #endif
 
-    LoadSpells(results[13].result);
+    LoadSpells(results[PlayerQuery::Spells].result);
 
-    LoadDeletedSpells(results[14].result);
+    LoadDeletedSpells(results[PlayerQuery::DeletedSpells].result);
 
-    LoadReputations(results[12].result);
+    LoadReputations(results[PlayerQuery::Reputation].result);
 
     // Load saved actionbars
     for (uint8 s = 0; s < MAX_SPEC_COUNT; ++s)
@@ -4530,8 +4552,8 @@ void Player::LoadFromDBProc(QueryResultVector & results)
             break;
         case WARLOCK:
         case HUNTER:
-            _LoadPet(results[5].result);
-            _LoadPetSpells(results[6].result);
+            _LoadPet(results[PlayerQuery::Pets].result);
+            _LoadPetSpells(results[PlayerQuery::SummonSpells].result);
             break;
     }
 
@@ -4544,24 +4566,24 @@ void Player::LoadFromDBProc(QueryResultVector & results)
     _AddLanguages(false);
 #endif
 
-    if (GetGuildId())
-        setUInt32Value(PLAYER_GUILD_TIMESTAMP, (uint32)UNIXTIME);
+    if (getGuildId())
+        setGuildTimestamp(static_cast<uint32_t>(UNIXTIME));
 
 #undef get_next_field
 
     // load properties
-    _LoadTutorials(results[1].result);
-    _LoadPlayerCooldowns(results[2].result);
-    _LoadQuestLogEntry(results[3].result);
-    m_ItemInterface->mLoadItemsFromDatabase(results[4].result);
-    m_ItemInterface->m_EquipmentSets.LoadfromDB(results[11].result);
+    _LoadTutorials(results[PlayerQuery::Tutorials].result);
+    _LoadPlayerCooldowns(results[PlayerQuery::Cooldowns].result);
+    _LoadQuestLogEntry(results[PlayerQuery::Questlog].result);
+    m_ItemInterface->mLoadItemsFromDatabase(results[PlayerQuery::Items].result);
+    m_ItemInterface->m_EquipmentSets.LoadfromDB(results[PlayerQuery::EquipmentSets].result);
 
-    m_mailBox.Load(results[7].result);
+    m_mailBox.Load(results[PlayerQuery::Mailbox].result);
 
     // SOCIAL
-    if (results[8].result != nullptr)            // this query is "who are our friends?"
+    if (results[PlayerQuery::Friends].result != nullptr)            // this query is "who are our friends?"
     {
-        result = results[8].result;
+        result = results[PlayerQuery::Friends].result;
         do
         {
             fields = result->Fetch();
@@ -4575,9 +4597,9 @@ void Player::LoadFromDBProc(QueryResultVector & results)
         while (result->NextRow());
     }
 
-    if (results[9].result != nullptr)            // this query is "who has us in their friends?"
+    if (results[PlayerQuery::FriendsFor].result != nullptr)            // this query is "who has us in their friends?"
     {
-        result = results[9].result;
+        result = results[PlayerQuery::FriendsFor].result;
         do
         {
             m_cache->InsertValue64(CACHE_SOCIAL_HASFRIENDLIST, result->Fetch()[0].GetUInt32());
@@ -4585,9 +4607,9 @@ void Player::LoadFromDBProc(QueryResultVector & results)
         while (result->NextRow());
     }
 
-    if (results[10].result != nullptr)        // this query is "who are we ignoring"
+    if (results[PlayerQuery::Ignoring].result != nullptr)        // this query is "who are we ignoring"
     {
-        result = results[10].result;
+        result = results[PlayerQuery::Ignoring].result;
         do
         {
             uint32 guid = result->Fetch()[0].GetUInt32();
@@ -4610,7 +4632,7 @@ void Player::LoadFromDBProc(QueryResultVector & results)
     m_achievementMgr.CheckAllAchievementCriteria();
 #endif
 
-    m_session->FullLogin(this);
+    m_session->fullLogin(this);
     m_session->m_loggingInPlayer = nullptr;
 
     if (!isAlive())
@@ -8263,25 +8285,9 @@ void Player::_Relocate(uint32 mapid, const LocationVector & v, bool sendpending,
             m_instanceId = instance_id;
 
         if (IsInWorld())
-        {
             RemoveFromWorld();
-        }
 
-        data.Initialize(SMSG_NEW_WORLD);
-
-#if VERSION_STRING != Cata
-        data << uint32(mapid);
-        data << v;
-        data << float(v.o);
-#else
-        data << float(v.x);
-        data << float(v.o);
-        data << float(v.z);
-        data << uint32(mapid);
-        data << float(v.y);
-#endif
-
-        m_session->SendPacket(&data);
+        m_session->SendPacket(AscEmu::Packets::SmsgNewWorld(mapid, v).serialise().get());
 
         SetMapId(mapid);
 
@@ -9888,11 +9894,7 @@ void Player::SafeTeleport(MapMgr* mgr, const LocationVector & vec)
     data << mgr->GetMapId();
     GetSession()->SendPacket(&data);
 
-    data.Initialize(SMSG_NEW_WORLD);
-    data << mgr->GetMapId();
-    data << vec;
-    data << vec.o;
-    GetSession()->SendPacket(&data);
+    GetSession()->SendPacket(AscEmu::Packets::SmsgNewWorld(mgr->GetMapId(), vec).serialise().get());
 
     SetPlayerStatus(TRANSFER_PENDING);
     m_sentTeleportPosition = vec;
@@ -9901,71 +9903,14 @@ void Player::SafeTeleport(MapMgr* mgr, const LocationVector & vec)
     ForceZoneUpdate();
 }
 
-void Player::SetGuildId(uint32 guildId)
-{
-#if VERSION_STRING != Cata
-    if (IsInWorld())
-    {
-        const uint16 field = PLAYER_GUILDID;
-        sEventMgr.AddEvent(static_cast<Object*>(this), &Object::setUInt32Value, field, guildId, EVENT_PLAYER_SEND_PACKET, 1,
-                           1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
-    }
-    else
-    {
-        setUInt32Value(PLAYER_GUILDID, guildId);
-    }
-#else
-    if (IsInWorld())
-    {
-        m_GuildId = guildId;
-        if (m_GuildId == 0)
-        {
-            setUInt64Value(OBJECT_FIELD_DATA, 0);
-            setOType(getOType() | 0x00010000);
-        }
-        else
-        {
-            setUInt64Value(OBJECT_FIELD_DATA, m_GuildId);
-            setOType(getOType() & ~0x00010000);
-        }
-
-        //ApplyModFlag(PLAYER_FLAGS, PLAYER_FLAGS_GUILD_LEVEL_ENABLED, guildId != 0 );
-        setUInt16Value(OBJECT_FIELD_TYPE, 1, m_GuildId != 0);
-    }
-#endif
-}
-
-#if VERSION_STRING == Cata
-void Player::SetInGuild(uint32 guildId)
-{
-    if (IsInWorld())
-    {
-        m_GuildId = guildId;
-        if (m_GuildId == 0)
-        {
-            setUInt64Value(OBJECT_FIELD_DATA, 0);
-            setOType(getOType() | 0x00010000);
-        }
-        else
-        {
-            setUInt64Value(OBJECT_FIELD_DATA, m_GuildId);
-            setOType(getOType() & ~0x00010000);
-        }
-
-        ApplyModFlag(PLAYER_FLAGS, PLAYER_FLAGS_GUILD_LVL_ENABLED, guildId != 0 );
-        setUInt16Value(OBJECT_FIELD_TYPE, 1, m_GuildId != 0);
-    }
-}
-
 Guild* Player::GetGuild()
 {
-    uint32 guildId = GetGuildId();
-    return guildId ? sGuildMgr.getGuildById(guildId) : NULL;
+    return getGuildId() ? sGuildMgr.getGuildById(getGuildId()) : nullptr;
 }
 
 uint32 Player::GetGuildIdFromDB(uint64 guid)
 {
-    QueryResult* result = CharacterDatabase.Query("SELECT guildId, playerGuid FROM guild_member WHERE playerGuid = %u", Arcemu::Util::GUID_LOPART(guid));
+    QueryResult* result = CharacterDatabase.Query("SELECT guildId, playerGuid FROM guild_members WHERE playerid = %u", Arcemu::Util::GUID_LOPART(guid));
     if (result)
     {
         Field* fields = result->Fetch();
@@ -9977,7 +9922,7 @@ uint32 Player::GetGuildIdFromDB(uint64 guid)
 
 int8 Player::GetRankFromDB(uint64 guid)
 {
-    QueryResult* result = CharacterDatabase.Query("SELECT playerGuid, rank FROM guild_member WHERE playerGuid = %u", Arcemu::Util::GUID_LOPART(guid));
+    QueryResult* result = CharacterDatabase.Query("SELECT playerid, guildRank FROM guild_members WHERE playerid = %u", Arcemu::Util::GUID_LOPART(guid));
     if (result)
     {
         Field* fields = result->Fetch();
@@ -9989,23 +9934,9 @@ int8 Player::GetRankFromDB(uint64 guid)
 
 std::string Player::GetGuildName()
 {
-    return GetGuildId() ? sGuildMgr.getGuildById(GetGuildId())->getName() : "";
+    return getGuildId() ? sGuildMgr.getGuildById(getGuildId())->getName() : "";
 }
-#endif
 
-void Player::SetGuildRank(uint32 guildRank)
-{
-    if (IsInWorld())
-    {
-        const uint16 field = PLAYER_GUILDRANK;
-        sEventMgr.AddEvent(static_cast<Object*>(this), &Object::setUInt32Value, field, guildRank, EVENT_PLAYER_SEND_PACKET, 1,
-                           1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
-    }
-    else
-    {
-        setUInt32Value(PLAYER_GUILDRANK, guildRank);
-    }
-}
 
 void Player::UpdatePvPArea()
 {
@@ -12518,7 +12449,6 @@ void Player::_LoadPlayerCooldowns(QueryResult* result)
 
 void Player::Social_AddFriend(const char* name, const char* note)
 {
-    WorldPacket data(SMSG_FRIEND_STATUS, 10);
     std::map<uint32, char*>::iterator itr;
 
     // lookup the player
@@ -12527,8 +12457,7 @@ void Player::Social_AddFriend(const char* name, const char* note)
 
     if (playerInfo == nullptr || (playerCache != nullptr && playerCache->HasFlag(CACHE_PLAYER_FLAGS, PLAYER_FLAG_GM)))
     {
-        data << uint8(FRIEND_NOT_FOUND);
-        m_session->SendPacket(&data);
+        m_session->SendPacket(SmsgFriendStatus(FRIEND_NOT_FOUND).serialise().get());
 
         if (playerCache != nullptr)
             playerCache->DecRef();
@@ -12538,9 +12467,7 @@ void Player::Social_AddFriend(const char* name, const char* note)
     // team check
     if (playerInfo->team != GetTeamInitial() && m_session->permissioncount == 0 && !worldConfig.player.isInterfactionFriendsEnabled)
     {
-        data << uint8(FRIEND_ENEMY);
-        data << uint64(playerInfo->guid);
-        m_session->SendPacket(&data);
+        m_session->SendPacket(SmsgFriendStatus(FRIEND_ENEMY, playerInfo->guid).serialise().get());
         if (playerCache != nullptr)
             playerCache->DecRef();
         return;
@@ -12549,9 +12476,7 @@ void Player::Social_AddFriend(const char* name, const char* note)
     // are we ourselves?
     if (playerCache != nullptr && playerCache->GetUInt32Value(CACHE_PLAYER_LOWGUID) == getGuidLow())
     {
-        data << uint8(FRIEND_SELF);
-        data << getGuid();
-        m_session->SendPacket(&data);
+        m_session->SendPacket(SmsgFriendStatus(FRIEND_SELF, getGuid()).serialise().get());
         if (playerCache != nullptr)
             playerCache->DecRef();
         return;
@@ -12559,9 +12484,7 @@ void Player::Social_AddFriend(const char* name, const char* note)
 
     if (m_cache->CountValue64(CACHE_SOCIAL_FRIENDLIST, playerInfo->guid))
     {
-        data << uint8(FRIEND_ALREADY);
-        data << uint64(playerInfo->guid);
-        m_session->SendPacket(&data);
+        m_session->SendPacket(SmsgFriendStatus(FRIEND_ALREADY, playerInfo->guid).serialise().get());
         if (playerCache != nullptr)
             playerCache->DecRef();
         return;
@@ -12569,30 +12492,17 @@ void Player::Social_AddFriend(const char* name, const char* note)
 
     if (playerCache != nullptr)   //hes online if he has a cache
     {
-        data << uint8(FRIEND_ADDED_ONLINE);
-        data << uint64(playerCache->GetUInt32Value(CACHE_PLAYER_LOWGUID));
-        if (note != nullptr)
-            data << note;
-        else
-            data << uint8(0);
-
-        data << uint8(1);
-        data << playerInfo->m_loggedInPlayer->GetZoneId();
-        data << playerInfo->lastLevel;
-        data << uint32(playerInfo->cl);
-
         playerCache->InsertValue64(CACHE_SOCIAL_HASFRIENDLIST, getGuidLow());
+        m_session->SendPacket(SmsgFriendStatus(FRIEND_ADDED_ONLINE, playerCache->GetUInt32Value(CACHE_PLAYER_LOWGUID), note ? note : "", 1,
+            playerInfo->m_loggedInPlayer->GetZoneId(), playerInfo->lastLevel, playerInfo->cl).serialise().get());
     }
     else
     {
-        data << uint8(FRIEND_ADDED_OFFLINE);
-        data << uint64(playerInfo->guid);
+        m_session->SendPacket(SmsgFriendStatus(FRIEND_ADDED_OFFLINE, playerInfo->guid).serialise().get());
     }
 
     char* notedup = note == nullptr ? NULL : strdup(note);
     m_cache->InsertValue64(CACHE_SOCIAL_FRIENDLIST, playerInfo->guid, notedup);
-
-    m_session->SendPacket(&data);
 
     // dump into the db
     CharacterDatabase.Execute("INSERT INTO social_friends VALUES(%u, %u, \'%s\')",
@@ -12604,13 +12514,10 @@ void Player::Social_AddFriend(const char* name, const char* note)
 
 void Player::Social_RemoveFriend(uint32 guid)
 {
-    WorldPacket data(SMSG_FRIEND_STATUS, 10);
-
     // are we ourselves?
     if (guid == getGuidLow())
     {
-        data << uint8(FRIEND_SELF) << getGuid();
-        m_session->SendPacket(&data);
+        m_session->SendPacket(SmsgFriendStatus(FRIEND_SELF, getGuid()).serialise().get());
         return;
     }
 
@@ -12625,9 +12532,6 @@ void Player::Social_RemoveFriend(uint32 guid)
     m_cache->RemoveValue64(CACHE_SOCIAL_FRIENDLIST, guid);
     m_cache->ReleaseLock64(CACHE_SOCIAL_FRIENDLIST);
 
-    data << uint8(FRIEND_REMOVED);
-    data << uint64(guid);
-
     PlayerCache* cache = objmgr.GetPlayerCache((uint32)guid);
     if (cache != nullptr)
     {
@@ -12635,7 +12539,7 @@ void Player::Social_RemoveFriend(uint32 guid)
         cache->DecRef();
     }
 
-    m_session->SendPacket(&data);
+    m_session->SendPacket(SmsgFriendStatus(FRIEND_REMOVED, guid).serialise().get());
 
     // remove from the db
     CharacterDatabase.Execute("DELETE FROM social_friends WHERE character_guid = %u AND friend_guid = %u",
@@ -12661,40 +12565,31 @@ void Player::Social_SetNote(uint32 guid, const char* note)
 
 void Player::Social_AddIgnore(const char* name)
 {
-    WorldPacket data(SMSG_FRIEND_STATUS, 10);
     PlayerInfo* playerInfo;
 
     // lookup the player
     playerInfo = objmgr.GetPlayerInfoByName(name);
     if (playerInfo == nullptr)
     {
-        data << uint8(FRIEND_IGNORE_NOT_FOUND);
-        m_session->SendPacket(&data);
+        m_session->SendPacket(SmsgFriendStatus(FRIEND_IGNORE_NOT_FOUND).serialise().get());
         return;
     }
 
     // are we ourselves?
     if (playerInfo == m_playerInfo)
     {
-        data << uint8(FRIEND_IGNORE_SELF);
-        data << getGuid();
-        m_session->SendPacket(&data);
+        m_session->SendPacket(SmsgFriendStatus(FRIEND_IGNORE_SELF, getGuid()).serialise().get());
         return;
     }
 
     if (m_cache->CountValue64(CACHE_SOCIAL_IGNORELIST, playerInfo->guid) > 0)
     {
-        data << uint8(FRIEND_IGNORE_ALREADY);
-        data << uint64(playerInfo->guid);
-        m_session->SendPacket(&data);
+        m_session->SendPacket(SmsgFriendStatus(FRIEND_IGNORE_ALREADY, playerInfo->guid).serialise().get());
         return;
     }
 
-    data << uint8(FRIEND_IGNORE_ADDED);
-    data << uint64(playerInfo->guid);
-
     m_cache->InsertValue64(CACHE_SOCIAL_IGNORELIST, playerInfo->guid);
-    m_session->SendPacket(&data);
+    m_session->SendPacket(SmsgFriendStatus(FRIEND_IGNORE_ADDED, playerInfo->guid).serialise().get());
 
     // dump into db
     CharacterDatabase.Execute("INSERT INTO social_ignores VALUES(%u, %u)", getGuidLow(), playerInfo->guid);
@@ -12702,22 +12597,15 @@ void Player::Social_AddIgnore(const char* name)
 
 void Player::Social_RemoveIgnore(uint32 guid)
 {
-    WorldPacket data(SMSG_FRIEND_STATUS, 10);
-
     // are we ourselves?
     if (guid == getGuidLow())
     {
-        data << uint8(FRIEND_IGNORE_SELF);
-        data << getGuid();
-        m_session->SendPacket(&data);
+        m_session->SendPacket(SmsgFriendStatus(FRIEND_IGNORE_SELF, getGuid()).serialise().get());
         return;
     }
 
     m_cache->RemoveValue64(CACHE_SOCIAL_IGNORELIST, guid);
-    data << uint8(FRIEND_IGNORE_REMOVED);
-    data << uint64(guid);
-
-    m_session->SendPacket(&data);
+    m_session->SendPacket(SmsgFriendStatus(FRIEND_IGNORE_REMOVED, guid).serialise().get());
 
     // remove from the db
     CharacterDatabase.Execute("DELETE FROM social_ignores WHERE character_guid = %u AND ignore_guid = %u",
@@ -12739,21 +12627,13 @@ void Player::Social_TellFriendsOnline()
     if (m_cache->GetSize64(CACHE_SOCIAL_HASFRIENDLIST) == 0)
         return;
 
-    WorldPacket data(SMSG_FRIEND_STATUS, 22);
-    data << uint8(FRIEND_ONLINE);
-    data << getGuid();
-    data << uint8(1);
-    data << GetAreaID();
-    data << getLevel();
-    data << uint32(getClass());
-
     m_cache->AcquireLock64(CACHE_SOCIAL_HASFRIENDLIST);
     for (PlayerCacheMap::iterator itr = m_cache->Begin64(CACHE_SOCIAL_HASFRIENDLIST); itr != m_cache->End64(CACHE_SOCIAL_HASFRIENDLIST); ++itr)
     {
         PlayerCache* cache = objmgr.GetPlayerCache(uint32(itr->first));
         if (cache != nullptr)
         {
-            cache->SendPacket(data);
+            cache->SendPacket(SmsgFriendStatus(FRIEND_ONLINE, getGuid(), "", 1, GetAreaID(), getLevel(), getClass()).serialise().get());
             cache->DecRef();
         }
     }
@@ -12765,18 +12645,13 @@ void Player::Social_TellFriendsOffline()
     if (m_cache->GetSize64(CACHE_SOCIAL_HASFRIENDLIST) == 0)
         return;
 
-    WorldPacket data(SMSG_FRIEND_STATUS, 10);
-    data << uint8(FRIEND_OFFLINE);
-    data << getGuid();
-    data << uint8(0);
-
     m_cache->AcquireLock64(CACHE_SOCIAL_HASFRIENDLIST);
     for (PlayerCacheMap::iterator itr = m_cache->Begin64(CACHE_SOCIAL_HASFRIENDLIST); itr != m_cache->End64(CACHE_SOCIAL_HASFRIENDLIST); ++itr)
     {
         PlayerCache* cache = objmgr.GetPlayerCache(uint32(itr->first));
         if (cache != nullptr)
         {
-            cache->SendPacket(data);
+            cache->SendPacket(SmsgFriendStatus(FRIEND_OFFLINE, getGuid()).serialise().get());
             cache->DecRef();
         }
     }

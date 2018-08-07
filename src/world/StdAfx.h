@@ -83,6 +83,7 @@
 #include "Server/UpdateFieldInclude.h"
 #include "Server/UpdateMask.h"
 #include "Server/Packets/Opcode.h"
+#include "Server/CharacterErrors.h"
 
 #include "Management/WordFilter.h"
 #include "Server/EventMgr.h"
@@ -135,13 +136,11 @@
 #include "Objects/CObjectFactory.h"
 #include "Management/CRitual.h"
 #include "Management/Group.h"
+#include "Management/GuildMgr.h"
 
-#if VERSION_STRING != Cata
 #include "Management/Guild.h"
-#else
+#if VERSION_STRING == Cata
 #include "GameCata/Management/GuildFinderMgr.h"
-#include "GameCata/Management/Guild.h"
-#include "GameCata/Management/GuildMgr.h"
 #endif
 
 #include "Management/HonorHandler.h"

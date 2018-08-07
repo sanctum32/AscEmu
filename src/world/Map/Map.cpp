@@ -207,9 +207,15 @@ void Map::LoadSpawns(bool reload)
                     cspawn->stand_state = fields[21].GetUInt16();
                     cspawn->death_state = fields[22].GetUInt32();
                     cspawn->MountedDisplayID = fields[23].GetUInt32();
-                    cspawn->Item1SlotDisplay = fields[24].GetUInt32();
-                    cspawn->Item2SlotDisplay = fields[25].GetUInt32();
-                    cspawn->Item3SlotDisplay = fields[26].GetUInt32();
+
+                    cspawn->Item1SlotEntry = fields[24].GetUInt32();
+                    cspawn->Item2SlotEntry = fields[25].GetUInt32();
+                    cspawn->Item3SlotEntry = fields[26].GetUInt32();
+
+                    cspawn->Item1SlotDisplay = sMySQLStore.getItemDisplayIdForEntry(cspawn->Item1SlotEntry);
+                    cspawn->Item2SlotDisplay = sMySQLStore.getItemDisplayIdForEntry(cspawn->Item2SlotEntry);
+                    cspawn->Item3SlotDisplay = sMySQLStore.getItemDisplayIdForEntry(cspawn->Item3SlotEntry);
+
                     cspawn->CanFly = fields[27].GetUInt32();
 
                     cspawn->phase = fields[28].GetUInt32();
@@ -265,6 +271,20 @@ void Map::LoadSpawns(bool reload)
                         delete go_spawn;
                         continue;
                     }
+
+#if VERSION_STRING == TBC
+                    //\ brief: the following 3 go types crashing tbc
+                    switch (gameobject_info->type)
+                    {
+                        //case GAMEOBJECT_TYPE_TRANSPORT:
+                        case GAMEOBJECT_TYPE_MAP_OBJECT:
+                        case GAMEOBJECT_TYPE_MO_TRANSPORT:
+                        {
+                            delete go_spawn;
+                            continue;
+                        }
+                    }
+#endif
 
                     go_spawn->entry = gameobject_entry;
                     go_spawn->map = fields[4].GetUInt32();

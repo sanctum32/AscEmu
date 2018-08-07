@@ -53,6 +53,8 @@ source_group(world FILES ${SRC_WORLD_PROJECT})
 set(sources
    ${SRC_GAMECLASSIC_FILES}
    ${SRC_GAMECLASSIC_DATA_FILES}
+   ${SRC_GAMECLASSIC_NETWORK_FILES}
+   ${SRC_GAMECLASSIC_STORAGE_FILES}
    
    ${SRC_GAMEBC_FILES}
    ${SRC_GAMEBC_DATA_FILES}
@@ -154,6 +156,10 @@ endif()
 
 if(WIN32 AND NOT USE_PCH)
     set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/INCREMENTAL:NO")
+endif()
+
+if(NOT WIN32)
+    target_link_libraries(${PROJECT_NAME} stdc++fs)
 endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES ENABLE_EXPORTS TRUE)

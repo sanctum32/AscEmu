@@ -51,6 +51,12 @@ set(INSTALLED_DEPENDENCIES
     ${DEPENDENCY_DLLS}/libeay32.dll
 )
 
+#check for db update files
+set(PATH_DB_FILES ${CMAKE_SOURCE_DIR}/sql/)
+
+set(INSTALL_DB_FILES ${PATH_DB_FILES})
+
+
 if(MSVC)
     include(${CMAKE_SOURCE_DIR}/cmake/Compilers/msvc.cmake)
 else()

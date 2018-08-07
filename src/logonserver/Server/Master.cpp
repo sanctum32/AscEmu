@@ -1,23 +1,13 @@
 /*
-* AscEmu Framework based on ArcEmu MMORPG Server
-* Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program. If not, see <http://www.gnu.org/licenses/>.
+Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+This file is released under the MIT license. See README-MIT for more information.
 */
 
 #include "LogonStdAfx.h"
 #include <Threading/AEThreadPool.h>
+#include "Util.hpp"
+#include "DatabaseUpdater.h"
+#include "Logon.h"
 
 using AscEmu::Threading::AEThread;
 using AscEmu::Threading::AEThreadPool;
@@ -25,14 +15,16 @@ using std::chrono::milliseconds;
 
 // Database impl
 Database* sLogonSQL;
-initialiseSingleton(LogonServer);
+initialiseSingleton(MasterLogon);
 std::atomic<bool> mrunning(true);
 Mutex _authSocketLock;
 std::set<AuthSocket*> _authSockets;
 
 ConfigMgr Config;
 
-void LogonServer::Run(int /*argc*/, char** /*argv*/)
+static const char* REQUIRED_LOGON_DB_VERSION = "20180729-00_logon_db_version";
+
+void MasterLogon::Run(int /*argc*/, char** /*argv*/)
 {
     UNIXTIME = time(NULL);
     g_localTime = *localtime(&UNIXTIME);
@@ -43,6 +35,7 @@ void LogonServer::Run(int /*argc*/, char** /*argv*/)
 
     LogDefault("The key combination <Ctrl-C> will safely shut down the server.");
 
+    new Logon;
     LogDetail("Config : Loading Config Files...");
     if (!LoadLogonConfiguration())
     {
@@ -50,12 +43,30 @@ void LogonServer::Run(int /*argc*/, char** /*argv*/)
         return;
     }
 
-    AscLog.SetFileLoggingLevel(Config.MainConfig.getIntDefault("LogLevel", "File", 0));
+    if (!SetLogonConfiguration())
+    {
+        AscLog.~AscEmuLog();
+        return;
+    }
+
+    AscLog.SetFileLoggingLevel(logonConfig.logLevel.file);
 
     LogDetail("ThreadMgr : Starting...");
     ThreadPool.Startup();
 
     if (!StartDb())
+    {
+        AscLog.~AscEmuLog();
+        return;
+    }
+
+#ifdef USE_EXPERIMENTAL_FILESYSTEM
+    DatabaseUpdater::initBaseIfNeeded(logonConfig.logonDb.db, "logon", *sLogonSQL);
+
+    DatabaseUpdater::checkAndApplyDBUpdatesIfNeeded("logon", *sLogonSQL);
+#endif
+
+    if (!CheckDBVersion())
     {
         AscLog.~AscEmuLog();
         return;
@@ -70,30 +81,31 @@ void LogonServer::Run(int /*argc*/, char** /*argv*/)
 
     new PatchMgr;
     LogNotice("AccountMgr : Precaching accounts...");
+
     sAccountMgr.ReloadAccounts(true);
     LogDetail("AccountMgr : %u accounts are loaded and ready.", sAccountMgr.GetCount());
 
+    new RealmsMgr;
+    sRealmsMgr.LoadRealms();
+    LogDetail("Loaded %u realms definitisons.", static_cast<uint32_t>(sRealmsMgr._realmStore.size()));
+
     // Spawn periodic function caller thread for account reload every 10mins
-    uint32 accountReloadPeriod = Config.MainConfig.getIntDefault("Rates", "AccountRefresh", 600);
-    accountReloadPeriod *= 1000;
+    const uint32 accountReloadPeriod = logonConfig.rates.accountRefreshTime * 1000;
 
     PeriodicFunctionCaller<AccountMgr> * periodicReloadAccounts = new PeriodicFunctionCaller<AccountMgr>(AccountMgr::getSingletonPtr(), &AccountMgr::ReloadAccountsCallback, accountReloadPeriod);
     ThreadPool.ExecuteTask(periodicReloadAccounts);
     //AEThreadPool::globalThreadPool()->queueRecurringTask([](AEThread&) {AccountMgr::getSingletonPtr()->ReloadAccountsCallback();}, milliseconds(accountReloadPeriod), "Reload Accounts");
 
+    // periodic ping check for realm status
+    PeriodicFunctionCaller<RealmsMgr> * checkRealmStatusFromPing = new PeriodicFunctionCaller<RealmsMgr>(RealmsMgr::getSingletonPtr(), &RealmsMgr::checkRealmStatus, 60000);
+    ThreadPool.ExecuteTask(checkRealmStatusFromPing);
+
     // Load conf settings..
-    uint32 realmlistPort = Config.MainConfig.getIntDefault("Listen", "RealmListPort", 3724);
-    uint32 logonServerPort = Config.MainConfig.getIntDefault("Listen", "ServerPort", 8093);
-
-    std::string host = Config.MainConfig.getStringDefault("Listen", "Host", "0.0.0.0");
-    std::string shost = Config.MainConfig.getStringDefault("Listen", "ISHost", host.c_str());
-
     clientMinBuild = 5875;
     clientMaxBuild = 15595;
 
-    std::string logonServerPassword = Config.MainConfig.getStringDefault("LogonServer", "RemotePassword", "r3m0t3b4d");
     Sha1Hash hash;
-    hash.UpdateData(logonServerPassword);
+    hash.UpdateData(logonConfig.logonServer.remotePassword);
     hash.Finalize();
     memcpy(sql_hash, hash.GetDigest(), 20);
 
@@ -102,8 +114,8 @@ void LogonServer::Run(int /*argc*/, char** /*argv*/)
     new SocketMgr;
     new SocketGarbageCollector;
 
-    ListenSocket<AuthSocket> * realmlistSocket = new ListenSocket<AuthSocket>(host.c_str(), realmlistPort);
-    ListenSocket<LogonCommServerSocket> * logonServerSocket = new ListenSocket<LogonCommServerSocket>(shost.c_str(), logonServerPort);
+    auto realmlistSocket = new ListenSocket<AuthSocket>(logonConfig.listen.host.c_str(), logonConfig.listen.realmListPort);
+    auto logonServerSocket = new ListenSocket<LogonCommServerSocket>(logonConfig.listen.interServerHost.c_str(), logonConfig.listen.port);
 
     sSocketMgr.SpawnWorkerThreads();
 
@@ -197,7 +209,7 @@ void OnCrash(bool /*Terminate*/)
 
 }
 
-void LogonServer::CheckForDeadSockets()
+void MasterLogon::CheckForDeadSockets()
 {
     _authSocketLock.Acquire();
     time_t t = time(NULL);
@@ -223,7 +235,7 @@ void LogonServer::CheckForDeadSockets()
     _authSocketLock.Release();
 }
 
-void LogonServer::PrintBanner()
+void MasterLogon::PrintBanner()
 {
     AscLog.ConsoleLogDefault(false, "<< AscEmu %s/%s-%s (%s) :: Logon Server >>", BUILD_HASH_STR, CONFIG, PLATFORM_TEXT, ARCH);
     AscLog.ConsoleLogDefault(false, "========================================================");
@@ -231,7 +243,7 @@ void LogonServer::PrintBanner()
     AscLog.ConsoleLogError(true, "========================================================"); // Echo off.
 }
 
-void LogonServer::WritePidFile()
+void MasterLogon::WritePidFile()
 {
     FILE* pidFile = fopen("logonserver.pid", "w");
     if (pidFile)
@@ -247,7 +259,7 @@ void LogonServer::WritePidFile()
     }
 }
 
-void LogonServer::_HookSignals()
+void MasterLogon::_HookSignals()
 {
     LogDefault("Hooking signals...");
     signal(SIGINT, _OnSignal);
@@ -260,7 +272,7 @@ void LogonServer::_HookSignals()
 #endif
 }
 
-void LogonServer::_UnhookSignals()
+void MasterLogon::_UnhookSignals()
 {
     signal(SIGINT, 0);
     signal(SIGTERM, 0);
@@ -272,14 +284,14 @@ void LogonServer::_UnhookSignals()
 #endif
 }
 
-bool LogonServer::StartDb()
+bool MasterLogon::StartDb()
 {
-    std::string dbHostname = Config.MainConfig.getStringDefault("LogonDatabase", "Hostname", "");
-    std::string dbUsername = Config.MainConfig.getStringDefault("LogonDatabase", "Username", "");
-    std::string dbPassword = Config.MainConfig.getStringDefault("LogonDatabase", "Password", "");
-    std::string dbDatabase = Config.MainConfig.getStringDefault("LogonDatabase", "Name", "");
+    std::string dbHostname = logonConfig.logonDb.host;
+    std::string dbUsername = logonConfig.logonDb.user;
+    std::string dbPassword = logonConfig.logonDb.password;
+    std::string dbDatabase = logonConfig.logonDb.db;
 
-    int dbPort = Config.MainConfig.getIntDefault("LogonDatabase", "Port", 3306);
+    int dbPort = logonConfig.logonDb.port;
 
     // Configure Main Database
     bool existsUsername = !dbUsername.empty();
@@ -320,7 +332,7 @@ bool LogonServer::StartDb()
 
     // Initialize it
     if (!sLogonSQL->Initialize(dbHostname.c_str(), (unsigned int)dbPort, dbUsername.c_str(),
-        dbPassword.c_str(), dbDatabase.c_str(), Config.MainConfig.getIntDefault("LogonDatabase", "ConnectionCount", 5),
+        dbPassword.c_str(), dbDatabase.c_str(), logonConfig.logonDb.connections,
         16384))
     {
         LOG_ERROR("sql: Logon database initialization failed. Exiting.");
@@ -330,25 +342,79 @@ bool LogonServer::StartDb()
     return true;
 }
 
+bool MasterLogon::CheckDBVersion()
+{
+    QueryResult* versionQuery = sLogonSQL->QueryNA("SELECT LastUpdate FROM logon_db_version;");
+    if (!versionQuery)
+    {
+        LogError("Database : logon database is missing the table `logon_db_version`. AE will create one for you now!");
+        std::string createTable = "CREATE TABLE `logon_db_version` (`LastUpdate` varchar(255) NOT NULL DEFAULT '', PRIMARY KEY(`LastUpdate`)) ENGINE = InnoDB DEFAULT CHARSET = utf8;";
+        sLogonSQL->ExecuteNA(createTable.c_str());
+
+        std::string insertData = "INSERT INTO `logon_db_version` VALUES ('20180729-00_logon_db_version');";
+        sLogonSQL->ExecuteNA(insertData.c_str());
+    }
+
+    QueryResult* cqr = sLogonSQL->QueryNA("SELECT LastUpdate FROM logon_db_version;");
+    if (cqr == NULL)
+    {
+        LogError("Database : logon database is missing the table `logon_db_version` OR the table doesn't contain any rows. Can't validate database version. Exiting.");
+        LogError("Database : You may need to update your database");
+        return false;
+    }
+
+    Field* f = cqr->Fetch();
+    const char *LogonDBVersion = f->GetString();
+
+    LogNotice("Database : Last logon database update: %s", LogonDBVersion);
+    int result = strcmp(LogonDBVersion, REQUIRED_LOGON_DB_VERSION);
+    if (result != 0)
+    {
+        LogError("Database : Last logon database update doesn't match the required one which is %s.", REQUIRED_LOGON_DB_VERSION);
+        if (result < 0)
+        {
+            LogError("Database : You need to apply the logon update queries that are newer than %s. Exiting.", LogonDBVersion);
+            LogError("Database : You can find the logon update queries in the sql/logon/updates sub-directory of your AscEmu source directory.");
+        }
+        else
+            LogError("Database : Your logon database is too new for this AscEmu version, you need to update your server. Exiting.");
+
+        delete cqr;
+        return false;
+    }
+
+    delete cqr;
+
+    LogDetail("Database : Database successfully validated.");
+
+    return true;
+}
+
 Mutex m_allowedIpLock;
 std::vector<AllowedIP> m_allowedIps;
 std::vector<AllowedIP> m_allowedModIps;
 
-bool LogonServer::LoadLogonConfiguration()
+bool MasterLogon::LoadLogonConfiguration()
 {
-    char* config_file = (char*)CONFDIR "/logon.conf";
-    if (!Config.MainConfig.openAndLoadConfigFile(config_file))
+    if (Config.MainConfig.openAndLoadConfigFile(CONFDIR "/logon.conf"))
     {
-        LOG_ERROR("Config file could not be rehashed.");
+        LogDetail("Config : " CONFDIR "/logon.conf loaded");
+    }
+    else
+    {
+        LogError("Config : error occurred loading " CONFDIR "/logon.conf");
         return false;
     }
 
-    // re-set the allowed server IP's
-    std::string allowedIps = Config.MainConfig.getStringDefault("LogonServer", "AllowedIPs", "");
-    std::vector<std::string> vips = Util::SplitStringBySeperator(allowedIps, " ");
+    return true;
+}
 
-    std::string allowedModIps = Config.MainConfig.getStringDefault("LogonServer", "AllowedModIPs", "");
-    std::vector<std::string> vipsmod = Util::SplitStringBySeperator(allowedModIps, " ");
+bool MasterLogon::SetLogonConfiguration()
+{
+    logonConfig.loadConfigValues();
+
+    std::vector<std::string> allowedIPs = Util::SplitStringBySeperator(logonConfig.logonServer.allowedIps, " ");
+    std::vector<std::string> allowedModIPs = Util::SplitStringBySeperator(logonConfig.logonServer.allowedModIps, " ");
 
     m_allowedIpLock.Acquire();
     m_allowedIps.clear();
@@ -356,23 +422,23 @@ bool LogonServer::LoadLogonConfiguration()
 
     std::vector<std::string>::iterator itr;
 
-    for (itr = vips.begin(); itr != vips.end(); ++itr)
+    for (const auto allowedIP : allowedIPs)
     {
-        std::string::size_type i = itr->find("/");
+        std::string::size_type i = allowedIP.find('/');
         if (i == std::string::npos)
         {
-            LOG_ERROR("Ips: %s could not be parsed. Ignoring", itr->c_str());
+            LOG_ERROR("Ips: %s could not be parsed. Ignoring", allowedIP.c_str());
             continue;
         }
 
-        std::string stmp = itr->substr(0, i);
-        std::string smask = itr->substr(i + 1);
+        std::string stmp = allowedIP.substr(0, i);
+        std::string smask = allowedIP.substr(i + 1);
 
-        unsigned int ipraw = MakeIP(stmp.c_str());
-        unsigned char ipmask = (char)atoi(smask.c_str());
+        const unsigned int ipraw = MakeIP(stmp.c_str());
+        const unsigned char ipmask = static_cast<char>(atoi(smask.c_str()));
         if (ipraw == 0 || ipmask == 0)
         {
-            LOG_ERROR("Ips: %s could not be parsed. Ignoring", itr->c_str());
+            LOG_ERROR("Ips: %s could not be parsed. Ignoring", allowedIP.c_str());
             continue;
         }
 
@@ -382,23 +448,23 @@ bool LogonServer::LoadLogonConfiguration()
         m_allowedIps.push_back(tmp);
     }
 
-    for (itr = vipsmod.begin(); itr != vipsmod.end(); ++itr)
+    for (const auto allowedModIP : allowedModIPs)
     {
-        std::string::size_type i = itr->find("/");
+        std::string::size_type i = allowedModIP.find('/');
         if (i == std::string::npos)
         {
-            LOG_ERROR("ModIps: %s could not be parsed. Ignoring", itr->c_str());
+            LOG_ERROR("ModIps: %s could not be parsed. Ignoring", allowedModIP.c_str());
             continue;
         }
 
-        std::string stmp = itr->substr(0, i);
-        std::string smask = itr->substr(i + 1);
+        std::string stmp = allowedModIP.substr(0, i);
+        std::string smask = allowedModIP.substr(i + 1);
 
         unsigned int ipraw = MakeIP(stmp.c_str());
         unsigned char ipmask = (char)atoi(smask.c_str());
         if (ipraw == 0 || ipmask == 0)
         {
-            LOG_ERROR("ModIps: %s could not be parsed. Ignoring", itr->c_str());
+            LOG_ERROR("ModIps: %s could not be parsed. Ignoring", allowedModIP.c_str());
             continue;
         }
 
@@ -408,7 +474,7 @@ bool LogonServer::LoadLogonConfiguration()
         m_allowedModIps.push_back(tmp);
     }
 
-    if (InformationCore::getSingletonPtr() != NULL)
+    if (InformationCore::getSingletonPtr() != nullptr)
         sInfoCore.CheckServers();
 
     m_allowedIpLock.Release();
@@ -416,7 +482,7 @@ bool LogonServer::LoadLogonConfiguration()
     return true;
 }
 
-bool LogonServer::IsServerAllowed(unsigned int IP)
+bool MasterLogon::IsServerAllowed(unsigned int IP)
 {
     m_allowedIpLock.Acquire();
     for (std::vector<AllowedIP>::iterator itr = m_allowedIps.begin(); itr != m_allowedIps.end(); ++itr)
@@ -431,7 +497,7 @@ bool LogonServer::IsServerAllowed(unsigned int IP)
     return false;
 }
 
-bool LogonServer::IsServerAllowedMod(unsigned int IP)
+bool MasterLogon::IsServerAllowedMod(unsigned int IP)
 {
     m_allowedIpLock.Acquire();
     for (std::vector<AllowedIP>::iterator itr = m_allowedModIps.begin(); itr != m_allowedModIps.end(); ++itr)
@@ -446,7 +512,7 @@ bool LogonServer::IsServerAllowedMod(unsigned int IP)
     return false;
 }
 
-void LogonServer::_OnSignal(int s)
+void MasterLogon::_OnSignal(int s)
 {
     switch (s)
     {

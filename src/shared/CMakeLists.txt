@@ -28,6 +28,7 @@ set(sources
     CrashHandler.cpp
     crc32.cpp
     CThreads.cpp
+    DatabaseUpdater.cpp
     DynLib.cpp
     FindFiles.cpp
 	LocationVector.cpp
@@ -57,6 +58,7 @@ set(headers
 	crc32.h
 	CRefcounter.h
 	CThreads.h
+    DatabaseUpdater.h
     DynLib.hpp
 	Errors.h
 	FastQueue.h
@@ -139,6 +141,11 @@ include_directories(
 
 add_library(${PROJECT_NAME} STATIC ${sources} ${headers})
 target_link_libraries(${PROJECT_NAME} ${ZLIB_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${MYSQL_LIBRARIES} ${OPENSSL_LIBRARIES} ${EXTRA_LIBS})
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Common.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/Common.hpp)
+
+if(NOT WIN32)
+    target_link_libraries(${PROJECT_NAME} stdc++fs)
+endif()
 
 unset(sources)
 unset(headers)

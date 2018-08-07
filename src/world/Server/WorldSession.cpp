@@ -34,12 +34,14 @@
 #include "Spell/Definitions/PowerType.h"
 #include "Auth/MD5.h"
 #include "Packets/SmsgBuyFailed.h"
-
-#if VERSION_STRING != Cata
+#include "Packets/SmsgGuildCommandResult.h"
+#include "Packets/SmsgGuildInvite.h"
 #include "Management/Guild.h"
-#endif
+#include "CharacterErrors.h"
+
 
 using namespace AscEmu::Packets;
+
 
 OpcodeHandler WorldPacketHandlers[NUM_MSG_TYPES];
 
@@ -355,14 +357,6 @@ void WorldSession::LogoutPlayer(bool Save)
 
         // Issue a message telling all guild members that this player signed
         // off
-#if VERSION_STRING != Cata
-        if (_player->IsInGuild())
-        {
-            Guild* pGuild = _player->m_playerInfo->guild;
-            if (pGuild != NULL)
-                pGuild->LogGuildEvent(GE_SIGNED_OFF, 1, _player->getName().c_str());
-        }
-#endif
 
         _player->GetItemInterface()->EmptyBuyBack();
         _player->GetItemInterface()->removeLootableItems();
@@ -1207,17 +1201,10 @@ void WorldSession::HandleMirrorImageOpcode(WorldPacket& recv_data)
         data << uint8(pcaster->getHairColor());
         data << uint8(pcaster->getFacialFeatures());
 
-#if VERSION_STRING != Cata
         if (pcaster->IsInGuild())
-            data << uint32(pcaster->GetGuildId());
+            data << uint32(pcaster->getGuildId());
         else
             data << uint32(0);
-#else
-        if (pcaster->GetGuild())
-            data << uint32(pcaster->GetGuildId());
-        else
-            data << uint32(0);
-#endif
 
         static const uint32 imageitemslots[] =
         {
@@ -1344,4 +1331,51 @@ void WorldSession::Disconnect()
     {
         _socket->Disconnect();
     }
+}
+
+//\todo replace leftovers from legacy CharacterHandler.cpp file
+CharacterErrorCodes VerifyName(const char* name, size_t nlen)
+{
+    const char* p;
+    size_t i;
+
+    static const char* bannedCharacters = "\t\v\b\f\a\n\r\\\"\'\? <>[](){}_=+-|/!@#$%^&*~`.,0123456789\0";
+    static const char* allowedCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    if (worldConfig.server.enableLimitedNames)
+    {
+        if (nlen == 0)
+            return E_CHAR_NAME_NO_NAME;
+        else if (nlen < 2)
+            return E_CHAR_NAME_TOO_SHORT;
+        else if (nlen > 12)
+            return E_CHAR_NAME_TOO_LONG;
+
+        for (i = 0; i < nlen; ++i)
+        {
+            p = allowedCharacters;
+            for (; *p != 0; ++p)
+            {
+                if (name[i] == *p)
+                    goto cont;
+            }
+            return E_CHAR_NAME_INVALID_CHARACTER;
+        cont:
+            continue;
+        }
+    }
+    else
+    {
+        for (i = 0; i < nlen; ++i)
+        {
+            p = bannedCharacters;
+            while (*p != 0 && name[i] != *p && name[i] != 0)
+                ++p;
+
+            if (*p != 0)
+                return E_CHAR_NAME_INVALID_CHARACTER;
+        }
+    }
+
+    return E_CHAR_NAME_SUCCESS;
 }

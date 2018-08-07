@@ -314,11 +314,6 @@ class Charter
         /************************************************************************/
         /* Developer Fields                                                     */
         /************************************************************************/
-        std::string UnkString;
-        uint32 Data[7];
-        uint16 Unk1;
-        uint32 Unk2;
-        uint32 Unk3;
         uint32 PetitionSignerCount;
 
         Charter(Field* fields);
@@ -329,9 +324,6 @@ class Charter
             Slots = GetNumberOfSlotsByType();
             Signatures = new uint32[Slots];
             memset(Signatures, 0, sizeof(uint32)*Slots);
-            Unk1 = 0;
-            Unk2 = 0;
-            Unk3 = 0;
             PetitionSignerCount = 0;
         }
 
@@ -404,7 +396,6 @@ class SERVER_DECL ObjectMgr : public Singleton < ObjectMgr >, public EventableOb
         typedef std::unordered_map<uint32, Group*>                      GroupMap;
 
         // HashMap typedef's
-        typedef std::unordered_map<uint32, Guild*>                      GuildMap;
         typedef std::unordered_map<uint32, DBC::Structures::SkillLineAbilityEntry const*>             SLMap;
         typedef std::unordered_map<uint32, std::vector<CreatureItem>*>  VendorMap;
         typedef std::unordered_map<uint32, Trainer*>                    TrainerMap;
@@ -476,16 +467,6 @@ class SERVER_DECL ObjectMgr : public Singleton < ObjectMgr >, public EventableOb
         void RenamePlayerInfo(PlayerInfo* pn, const char* oldname, const char* newname);
         void DeletePlayerInfo(uint32 guid);
 
-        // Guild
-#if VERSION_STRING != Cata
-        void AddGuild(Guild* pGuild);
-        uint32 GetTotalGuildCount();
-        bool RemoveGuild(uint32 guildId);
-#endif
-        Guild* GetGuild(uint32 guildId);
-        Guild* GetGuildByLeaderGuid(uint64 leaderGuid);
-        Guild* GetGuildByGuildName(std::string guildName);
-
         //Corpse Stuff
         Corpse* GetCorpseByOwner(uint32 ownerguid);
         void CorpseCollectorUnload();
@@ -545,9 +526,6 @@ class SERVER_DECL ObjectMgr : public Singleton < ObjectMgr >, public EventableOb
 #endif
         void LoadPlayersInfo();
 
-#if VERSION_STRING != Cata
-        void LoadGuilds();
-#endif
         Corpse* LoadCorpse(uint32 guid);
         void LoadCorpses(MapMgr* mgr);
         void LoadGMTickets();
@@ -673,9 +651,6 @@ class SERVER_DECL ObjectMgr : public Singleton < ObjectMgr >, public EventableOb
         void EventScriptsUpdate(Player* plr, uint32 next_event);
         ////////////////////////////////////////////
 
-        inline GuildMap::iterator GetGuildsBegin() { return mGuild.begin(); }
-        inline GuildMap::iterator GetGuildsEnd() { return mGuild.end(); }
-
 #if VERSION_STRING > TBC
         void LoadAchievementCriteriaList();
         AchievementCriteriaEntryList const & GetAchievementCriteriaByType(AchievementCriteriaTypes type);
@@ -738,9 +713,6 @@ class SERVER_DECL ObjectMgr : public Singleton < ObjectMgr >, public EventableOb
         // Group List
         RWLock m_groupLock;
         GroupMap m_groups;
-
-        /// DK: Map of all Guild's
-        GuildMap mGuild;
 
         /// Map of all vendor goods
         VendorMap mVendors;

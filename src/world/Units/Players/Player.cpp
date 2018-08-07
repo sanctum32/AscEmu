@@ -18,6 +18,10 @@ This file is released under the MIT license. See README-MIT for more information
 #include "Objects/GameObject.h"
 #include "Units/Creatures/Pet.h"
 #include "Spell/SpellAuras.h"
+#include "Spell/Definitions/PowerType.h"
+#include "Server/Packets/SmsgNewWorld.h"
+#include "Objects/ObjectMgr.h"
+#include "Management/GuildMgr.h"
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Data
@@ -29,6 +33,29 @@ void Player::setPlayerFlags(uint32_t flags) { write(playerData()->player_flags, 
 void Player::addPlayerFlags(uint32_t flags) { setPlayerFlags(getPlayerFlags() | flags); }
 void Player::removePlayerFlags(uint32_t flags) { setPlayerFlags(getPlayerFlags() & ~flags); }
 bool Player::hasPlayerFlags(uint32_t flags) const { return (getPlayerFlags() & flags) != 0; }
+
+uint32_t Player::getGuildId() const
+{
+#if VERSION_STRING != Cata
+    return playerData()->guild_id;
+#else
+    return static_cast<uint32_t>(objectData()->data);
+#endif
+}
+void Player::setGuildId(uint32_t guildId)
+{
+#if VERSION_STRING != Cata
+    write(playerData()->guild_id, guildId);
+#else
+    write(objectData()->data, MAKE_NEW_GUID(guildId, 0, HIGHGUID_TYPE_GUILD));
+
+    ApplyModFlag(PLAYER_FLAGS, PLAYER_FLAGS_GUILD_LVL_ENABLED, guildId != 0);
+    setUInt16Value(OBJECT_FIELD_TYPE, 1, guildId != 0);
+#endif
+}
+
+uint32_t Player::getGuildRank() const { return playerData()->guild_rank; }
+void Player::setGuildRank(uint32_t guildRank) { write(playerData()->guild_rank, guildRank); }
 
 //bytes begin
 uint32_t Player::getPlayerBytes() const { return playerData()->player_bytes.raw; }
@@ -79,6 +106,9 @@ void Player::setPvpRank(uint8_t rank) { write(playerData()->player_bytes_3.s.pvp
 
 uint32_t Player::getDuelTeam() const { return playerData()->duel_team; }
 void Player::setDuelTeam(uint32_t team) { write(playerData()->duel_team, team); }
+
+uint32_t Player::getGuildTimestamp() const { return playerData()->guild_timestamp; }
+void Player::setGuildTimestamp(uint32_t timestamp) { write(playerData()->guild_timestamp, timestamp); }
 
 #if VERSION_STRING > Classic
 uint32_t Player::getChosenTitle() const { return playerData()->chosen_title; }
@@ -479,5 +509,168 @@ void Player::cancelDuel()
     {
         if (summonedPet && summonedPet->isAlive())
             summonedPet->SetPetAction(PET_ACTION_STAY);
+    }
+}
+
+void Player::logIntoBattleground()
+{
+    const auto mapMgr = sInstanceMgr.GetInstance(this);
+    if (mapMgr && mapMgr->m_battleground)
+    {
+        const auto battleground = mapMgr->m_battleground;
+        if (battleground->HasEnded() && battleground->HasFreeSlots(GetTeamInitial(), battleground->GetType()))
+        {
+            if (!IS_INSTANCE(m_bgEntryPointMap))
+            {
+                m_position.ChangeCoords(m_bgEntryPointX, m_bgEntryPointY, m_bgEntryPointZ, m_bgEntryPointO);
+                m_mapId = m_bgEntryPointMap;
+            }
+            else
+            {
+                m_position.ChangeCoords(GetBindPositionX(), GetBindPositionY(), GetBindPositionZ(), 0.0f);
+                m_mapId = GetBindMapId();
+            }
+        }
+    }
+}
+
+bool Player::logOntoTransport()
+{
+    bool success = true;
+#if VERSION_STRING != Cata
+    if (obj_movement_info.transport_data.transportGuid != 0)
+#else
+    if (!obj_movement_info.getTransportGuid().IsEmpty())
+#endif
+    {
+#if VERSION_STRING != Cata
+        const auto transporter = objmgr.GetTransporter(Arcemu::Util::GUID_LOPART(obj_movement_info.transport_data.transportGuid));
+#else
+        const auto transporter = objmgr.GetTransporter(Arcemu::Util::GUID_LOPART(static_cast<uint32>(obj_movement_info.getTransportGuid())));
+#endif
+        if (transporter)
+        {
+            if (IsDead())
+            {
+                ResurrectPlayer();
+                setHealth(getMaxHealth());
+                SetPower(POWER_TYPE_MANA, GetMaxPower(POWER_TYPE_MANA));
+            }
+
+            const float c_tposx = transporter->GetPositionX() + GetTransPositionX();
+            const float c_tposy = transporter->GetPositionY() + GetTransPositionY();
+            const float c_tposz = transporter->GetPositionZ() + GetTransPositionZ();
+
+            const LocationVector positionOnTransport = LocationVector(c_tposx, c_tposy, c_tposz, GetOrientation());
+
+            if (GetMapId() != transporter->GetMapId())
+            {
+                SetMapId(transporter->GetMapId());
+                SendPacket(AscEmu::Packets::SmsgNewWorld(transporter->GetMapId(), positionOnTransport).serialise().get());
+
+                success = false;
+            }
+
+            SetPosition(positionOnTransport.x, positionOnTransport.y, positionOnTransport.z, positionOnTransport.o, false);
+            transporter->AddPassenger(this);
+        }
+    }
+
+    return success;
+}
+
+void Player::setLoginPosition()
+{
+    bool startOnGMIsland = false;
+    if (m_session->HasGMPermissions() && m_FirstLogin && sWorld.settings.gm.isStartOnGmIslandEnabled)
+        startOnGMIsland = true;
+
+    uint32_t mapId = 1;
+    float_t orientation = 0;
+    float_t position_x = 16222.6f;
+    float_t position_y = 16265.9f;
+    float_t position_z = 14.2085f;
+
+    if (startOnGMIsland)
+    {
+        m_position.ChangeCoords(position_x, position_y, position_z, orientation);
+        m_mapId = mapId;
+
+        SetBindPoint(GetPositionX(), GetPositionY(), GetPositionZ(), GetMapId(), GetZoneId());
+    }
+    else
+    {
+        mapId = GetMapId();
+        orientation = GetOrientation();
+        position_x = GetPositionX();
+        position_y = GetPositionY();
+        position_z = GetPositionZ();
+    }
+
+    SendLoginVerifyWorld(mapId, position_x, position_y, position_z, orientation);
+}
+
+void Player::setPlayerInfoIfNeeded()
+{
+    auto playerInfo = objmgr.GetPlayerInfo(getGuidLow());
+    if (playerInfo == nullptr)
+    {
+        playerInfo = new PlayerInfo;
+        playerInfo->cl = getClass();
+        playerInfo->gender = getGender();
+        playerInfo->guid = getGuidLow();
+        playerInfo->name = strdup(getName().c_str());
+        playerInfo->lastLevel = getLevel();
+        playerInfo->lastOnline = UNIXTIME;
+        playerInfo->lastZone = GetZoneId();
+        playerInfo->race = getRace();
+        playerInfo->team = GetTeam();
+        playerInfo->guildRank = GUILD_RANK_NONE;
+        playerInfo->m_Group = nullptr;
+        playerInfo->subGroup = 0;
+
+        playerInfo->m_loggedInPlayer = this;
+
+        objmgr.AddPlayerInfo(playerInfo);
+    }
+
+    m_playerInfo = playerInfo;
+}
+
+void Player::setGuildAndGroupInfo()
+{
+    if (getPlayerInfo()->m_guild)
+    {
+        if (const auto guild = sGuildMgr.getGuildById(getPlayerInfo()->m_guild))
+        {
+            setGuildId(getPlayerInfo()->m_guild);
+            setGuildRank(getPlayerInfo()->guildRank);
+            guild->sendLoginInfo(GetSession());
+#if VERSION_STRING == Cata
+            SetGuildLevel(guild->getLevel());
+#endif
+        }
+    }
+
+    if (getPlayerInfo()->m_Group)
+        getPlayerInfo()->m_Group->Update();
+}
+
+void Player::sendCinematicOnFirstLogin()
+{
+    if (m_FirstLogin && !worldConfig.player.skipCinematics)
+    {
+#if VERSION_STRING > TBC
+        if (const auto charEntry = sChrClassesStore.LookupEntry(getClass()))
+        {
+            if (charEntry->cinematic_id != 0)
+                OutPacket(SMSG_TRIGGER_CINEMATIC, 4, &charEntry->cinematic_id);
+            else if (const auto raceEntry = sChrRacesStore.LookupEntry(getRace()))
+                OutPacket(SMSG_TRIGGER_CINEMATIC, 4, &raceEntry->cinematic_id);
+        }
+#else
+        if (const auto raceEntry = sChrRacesStore.LookupEntry(getRace()))
+            OutPacket(SMSG_TRIGGER_CINEMATIC, 4, &raceEntry->cinematic_id);
+#endif
     }
 }
