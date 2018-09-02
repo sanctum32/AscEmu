@@ -20,7 +20,7 @@
 #ifndef AUTHSOCKET_H
 #define AUTHSOCKET_H
 
-#include "AccountCache.h"
+#include "Server/RealmsMgr.h"
 #include "AuthStructs.h"
 
 class LogonCommServerSocket;
@@ -65,7 +65,7 @@ class AuthSocket : public Socket
     protected:
 
         sAuthLogonChallenge_C m_challenge;
-        Account* m_account;
+        std::shared_ptr<Account> m_account;
         bool m_authenticated;
 
         // BigNumbers for the SRP6 implementation

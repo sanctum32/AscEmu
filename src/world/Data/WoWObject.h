@@ -16,7 +16,7 @@ This file is released under the MIT license. See README-MIT for more information
 #include <cstdint>
 #include <cmath>
 #include "GuidData.h"
-#include "world/WorldConf.h"
+#include "WorldConf.h"
 
 #pragma pack(push, 1)
 struct WoWObject
@@ -37,7 +37,7 @@ struct WoWObject
 
     uint32_t type;
     uint32_t entry;
-    float_t scale_x;
+    float scale_x;
     uint32_t padding_object;
 
     void setLowGuid(uint32_t val)

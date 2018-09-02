@@ -25,8 +25,41 @@
 #include "Management/ItemInterface.h"
 #include "Storage/MySQLDataStore.hpp"
 #include "Map/MapMgr.h"
+#include "Server/Packets/CmsgQuestgiverQueryQuest.h"
+#include "Server/Packets/CmsgQuestgiverAcceptQuest.h"
 
 initialiseSingleton(QuestMgr);
+
+#if VERSION_STRING == TBC
+void WorldSession::HandleInrangeQuestgiverQuery(WorldPacket& /*recvPacket*/)
+{
+    uint32_t inrangeCount = 0;
+    //\brief: maximum inrangeCount * guid(uint64_t) status(uint8_t)
+    WorldPacket data(SMSG_QUESTGIVER_STATUS_MULTIPLE, 1000); // guessed size
+
+    data << inrangeCount;
+
+    for (auto inrangeObject : GetPlayer()->getInRangeObjectsSet())
+    {
+        // gobj can be questgiver too!
+        if (!inrangeObject->isCreature())
+            continue;
+
+        const auto creature = dynamic_cast<Creature*>(inrangeObject);
+        if (creature->isQuestGiver())
+        {
+            data << creature->getGuid();
+            data << uint8_t(sQuestMgr.CalcStatus(creature, GetPlayer()));
+            ++inrangeCount;
+        }
+    }
+
+    *(uint32_t*)data.contents() = inrangeCount;
+
+    SendPacket(&data);
+}
+
+#endif
 
 void WorldSession::HandleQuestgiverStatusQueryOpcode(WorldPacket& recv_data)
 {
@@ -112,33 +145,27 @@ void WorldSession::HandleQuestgiverHelloOpcode(WorldPacket& recv_data)
 
 void WorldSession::HandleQuestGiverQueryQuestOpcode(WorldPacket& recv_data)
 {
-    CHECK_INWORLD_RETURN
-
-    WorldPacket data;
-    uint64 guid;
-    uint32 quest_id;
-    uint32 status = 0;
-    uint8 unk;
-
-    recv_data >> guid;
-    recv_data >> quest_id;
-    recv_data >> unk;
+    AscEmu::Packets::CmsgQuestgiverQueryQuest recv_packet;
+    if (!recv_packet.deserialise(recv_data))
+        return;
 
     Object* qst_giver = nullptr;
 
     bool bValid = false;
 
-    QuestProperties const* qst = sMySQLStore.getQuestProperties(quest_id);
+    QuestProperties const* qst = sMySQLStore.getQuestProperties(recv_packet.questId);
     if (!qst)
     {
-        LOG_DEBUG("WORLD: Invalid quest ID.");
+        LOG_DEBUG("WORLD: Invalid quest with id %u", recv_packet.questId);
         return;
     }
 
-    uint32 guidtype = GET_TYPE_FROM_GUID(guid);
+    uint32 status = QuestStatus::NotAvailable;
+
+    const uint32 guidtype = GET_TYPE_FROM_GUID(recv_packet.guid.GetOldGuid());
     if (guidtype == HIGHGUID_TYPE_UNIT)
     {
-        Creature* quest_giver = _player->GetMapMgr()->GetCreature(GET_LOWGUID_PART(guid));
+        Creature* quest_giver = _player->GetMapMgr()->GetCreature(recv_packet.guid.getGuidLowPart());
         if (quest_giver)
             qst_giver = quest_giver;
         else
@@ -146,12 +173,12 @@ void WorldSession::HandleQuestGiverQueryQuestOpcode(WorldPacket& recv_data)
         if (quest_giver->isQuestGiver())
         {
             bValid = true;
-            status = sQuestMgr.CalcQuestStatus(qst_giver, GetPlayer(), qst, (uint8)quest_giver->GetQuestRelation(qst->id), false);
+            status = sQuestMgr.CalcQuestStatus(qst_giver, GetPlayer(), qst, static_cast<uint8>(quest_giver->GetQuestRelation(qst->id)), false);
         }
     }
     else if (guidtype == HIGHGUID_TYPE_GAMEOBJECT)
     {
-        GameObject* quest_giver = _player->GetMapMgr()->GetGameObject(GET_LOWGUID_PART(guid));
+        GameObject* quest_giver = _player->GetMapMgr()->GetGameObject(recv_packet.guid.getGuidLowPart());
         if (quest_giver)
             qst_giver = quest_giver;
         else
@@ -160,21 +187,20 @@ void WorldSession::HandleQuestGiverQueryQuestOpcode(WorldPacket& recv_data)
         if (quest_giver->getGoType() == GAMEOBJECT_TYPE_QUESTGIVER)
         {
             bValid = true;
-            GameObject_QuestGiver* go_quest_giver = static_cast<GameObject_QuestGiver*>(quest_giver);
-            status = sQuestMgr.CalcQuestStatus(qst_giver, GetPlayer(), qst, (uint8)go_quest_giver->GetQuestRelation(qst->id), false);
+            auto go_quest_giver = dynamic_cast<GameObject_QuestGiver*>(quest_giver);
+            status = sQuestMgr.CalcQuestStatus(qst_giver, GetPlayer(), qst, static_cast<uint8>(go_quest_giver->GetQuestRelation(qst->id)), false);
         }
     }
     else if (guidtype == HIGHGUID_TYPE_ITEM)
     {
-        Item* quest_giver = GetPlayer()->GetItemInterface()->GetItemByGUID(guid);
+        Item* quest_giver = GetPlayer()->GetItemInterface()->GetItemByGUID(recv_packet.guid.GetOldGuid());
         //added it for script engine
         if (quest_giver)
             qst_giver = quest_giver;
         else
             return;
 
-        ItemProperties const* itemProto = quest_giver->getItemProperties();
-
+        const auto itemProto = quest_giver->getItemProperties();
         if (itemProto->Bonding != ITEM_BIND_ON_USE || quest_giver->isSoulbound())     // SoulBind item will be used after SoulBind()
         {
             if (sScriptMgr.CallScriptedItem(quest_giver, GetPlayer()))
@@ -200,7 +226,9 @@ void WorldSession::HandleQuestGiverQueryQuestOpcode(WorldPacket& recv_data)
         return;
     }
 
-    if ((status == QMGR_QUEST_AVAILABLE) || (status == QMGR_QUEST_REPEATABLE) || (status == QMGR_QUEST_CHAT))
+    WorldPacket data;
+
+    if ((status == QuestStatus::Available) || (status == QuestStatus::Repeatable) || (status == QuestStatus::AvailableChat))
     {
         sQuestMgr.BuildQuestDetails(&data, qst, qst_giver, 1, language, _player);	 // 0 because we want goodbye to function
         SendPacket(&data);
@@ -209,7 +237,7 @@ void WorldSession::HandleQuestGiverQueryQuestOpcode(WorldPacket& recv_data)
         if (qst->HasFlag(QUEST_FLAGS_AUTO_ACCEPT))
             _player->AcceptQuest(qst_giver->getGuid(), qst->id);
     }
-    else if (status == QMGR_QUEST_NOT_FINISHED || status == QMGR_QUEST_FINISHED)
+    else if (status == QuestStatus::NotFinished || status == QuestStatus::Finished)
     {
         sQuestMgr.BuildRequestItems(&data, qst, qst_giver, status, language);
         SendPacket(&data);
@@ -219,15 +247,11 @@ void WorldSession::HandleQuestGiverQueryQuestOpcode(WorldPacket& recv_data)
 
 void WorldSession::HandleQuestgiverAcceptQuestOpcode(WorldPacket& recv_data)
 {
-    CHECK_INWORLD_RETURN
+    AscEmu::Packets::CmsgQuestgiverAcceptQuest recv_packet;
+    if (!recv_packet.deserialise(recv_data))
+        return;
 
-    uint64 guid;
-    uint32 quest_id;
-
-    recv_data >> guid;
-    recv_data >> quest_id;
-
-    _player->AcceptQuest(guid, quest_id);
+    _player->AcceptQuest(recv_packet.guid, recv_packet.questId);
 }
 
 void WorldSession::HandleQuestgiverCancelOpcode(WorldPacket& /*recvPacket*/)
@@ -379,7 +403,7 @@ void WorldSession::HandleQuestgiverRequestRewardOpcode(WorldPacket& recv_data)
         return;
     }
 
-    if (status == QMGR_QUEST_FINISHED)
+    if (status == QuestStatus::Finished)
     {
         WorldPacket data;
         sQuestMgr.BuildOfferReward(&data, qst, qst_giver, 1, language, _player);
@@ -458,7 +482,7 @@ void WorldSession::HandleQuestgiverCompleteQuestOpcode(WorldPacket& recvPacket)
         return;
     }
 
-    if (status == QMGR_QUEST_NOT_FINISHED || status == QMGR_QUEST_REPEATABLE)
+    if (status == QuestStatus::NotFinished || status == QuestStatus::Repeatable)
     {
         WorldPacket data;
         sQuestMgr.BuildRequestItems(&data, qst, qst_giver, status, language);
@@ -466,7 +490,7 @@ void WorldSession::HandleQuestgiverCompleteQuestOpcode(WorldPacket& recvPacket)
         LOG_DEBUG("WORLD: Sent SMSG_QUESTGIVER_REQUEST_ITEMS.");
     }
 
-    if (status == QMGR_QUEST_FINISHED)
+    if (status == QuestStatus::Finished)
     {
         WorldPacket data;
         sQuestMgr.BuildOfferReward(&data, qst, qst_giver, 1, language, _player);
@@ -620,7 +644,7 @@ void WorldSession::HandlePushQuestToPartyOpcode(WorldPacket& recv_data)
                             response = QUEST_SHARE_MSG_FINISH_QUEST;
                         }
                         // Checks if the player is able to take the quest
-                        else if (status != QMGR_QUEST_AVAILABLE && status != QMGR_QUEST_CHAT)
+                        else if (status != QuestStatus::Available && status != QuestStatus::AvailableChat)
                         {
                             response = QUEST_SHARE_MSG_CANT_TAKE_QUEST;
                         }

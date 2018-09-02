@@ -59,6 +59,7 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/CmsgEmote.h
    ${PATH_PREFIX}/CmsgGameobjectQuery.h
    ${PATH_PREFIX}/CmsgGameobjReportUse.h
+   ${PATH_PREFIX}/CmsgGameobjUse.h
    ${PATH_PREFIX}/CmsgGetChannelMemberCount.h
    ${PATH_PREFIX}/CmsgGossipHello.h
    ${PATH_PREFIX}/CmsgGossipSelectOption.h
@@ -124,9 +125,12 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/CmsgPlayerLogin.h
    ${PATH_PREFIX}/CmsgPlayerVehicleEnter.h
    ${PATH_PREFIX}/CmsgQueryTime.h
+   ${PATH_PREFIX}/CmsgQuestgiverAcceptQuest.h
+   ${PATH_PREFIX}/CmsgQuestgiverQueryQuest.h
    ${PATH_PREFIX}/CmsgRealmSplit.h
    ${PATH_PREFIX}/CmsgRequestPartyMemberStats.h
    ${PATH_PREFIX}/CmsgRequestVehicleSwitchSeat.h
+   ${PATH_PREFIX}/CmsgResurrectResponse.h
    ${PATH_PREFIX}/CmsgSellItem.h
    ${PATH_PREFIX}/CmsgSetActionbarToggles.h
    ${PATH_PREFIX}/CmsgSetActionButton.h
@@ -153,6 +157,7 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/CmsgTutorialFlag.h
    ${PATH_PREFIX}/CmsgUnstablePet.h
    ${PATH_PREFIX}/CmsgWho.h
+   ${PATH_PREFIX}/CmsgZoneupdate.h
    ${PATH_PREFIX}/ManagedPacket.h
    ${PATH_PREFIX}/MovementPacket.h
    ${PATH_PREFIX}/MsgAuctionHello.h
@@ -242,11 +247,13 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/SmsgShowBank.h
    ${PATH_PREFIX}/SmsgSpiritHealerConfirm.h
    ${PATH_PREFIX}/SmsgStableResult.h
+   ${PATH_PREFIX}/SmsgStandstateUpdate.h
    ${PATH_PREFIX}/SmsgTextEmote.h
    ${PATH_PREFIX}/SmsgTradeStatus.h
    ${PATH_PREFIX}/SmsgTrainerBuySucceeded.h
    ${PATH_PREFIX}/SmsgTutorialFlags.h
    ${PATH_PREFIX}/SmsgUpdateAuraDuration.h
+   ${PATH_PREFIX}/SmsgWeather.h
    ${PATH_PREFIX}/SmsgWorldStateUiTimerUpdate.h
 )
 

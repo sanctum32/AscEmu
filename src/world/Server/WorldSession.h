@@ -77,8 +77,6 @@ struct AddonEntry;
 #define WORLDSOCKET_TIMEOUT 120
 #define PLAYER_LOGOUT_DELAY (20 * 1000) // 20 seconds should be more than enough to gank ya.
 
-#define NOTIFICATION_MESSAGE_NO_PERMISSION "You do not have permission to perform that function."
-
 #define REGISTERED_ADDON_PREFIX_SOFTCAP 64
 
 struct OpcodeHandler
@@ -301,7 +299,7 @@ class SERVER_DECL WorldSession
         void handleLogoutRequestOpcode(WorldPacket& recvPacket);
         void HandlePlayerLogoutOpcode(WorldPacket& recvPacket);
         void HandleLogoutCancelOpcode(WorldPacket& recvPacket);
-        void HandleZoneUpdateOpcode(WorldPacket& recvPacket);
+        void handleZoneupdate(WorldPacket& recvPacket);
         //void HandleSetTargetOpcode(WorldPacket& recvPacket);
         void handleSetSelectionOpcode(WorldPacket& recvPacket);
         void handleStandStateChangeOpcode(WorldPacket& recvPacket);
@@ -525,7 +523,10 @@ class SERVER_DECL WorldSession
         void HandleLearnMultipleTalentsOpcode(WorldPacket& recvPacket);
         void HandleUnlearnTalents(WorldPacket& recv_data);
 
-        /// Quest opcodes (QuestHandler.cpp)
+        // Quest opcodes (QuestHandler.cpp)
+#if VERSION_STRING == TBC
+        void HandleInrangeQuestgiverQuery(WorldPacket& /*recvPacket*/);
+#endif
         void HandleQuestgiverStatusQueryOpcode(WorldPacket& recvPacket);
         void HandleQuestgiverHelloOpcode(WorldPacket& recvPacket);
         void HandleQuestgiverAcceptQuestOpcode(WorldPacket& recvPacket);
@@ -569,10 +570,10 @@ class SERVER_DECL WorldSession
         void handleChatIgnoredOpcode(WorldPacket& recvPacket);
         void handleChatChannelWatchOpcode(WorldPacket& recvPacket);
 
-        /// Corpse opcodes (Corpse.cpp)
+        // Corpse opcodes (Corpse.cpp)
         void HandleCorpseReclaimOpcode(WorldPacket& recvPacket);
         
-        void HandleResurrectResponseOpcode(WorldPacket& recvPacket);
+        void handleResurrectResponse(WorldPacket& recvPacket);
 
         // Channel Opcodes (ChannelHandler.cpp)
         void handleChannelJoin(WorldPacket& recvPacket);
@@ -774,7 +775,7 @@ class SERVER_DECL WorldSession
         void HandleAcknowledgementOpcodes(WorldPacket& recv_data);
         void HandleMountSpecialAnimOpcode(WorldPacket& recv_data);
 
-        void HandleSelfResurrectOpcode(WorldPacket& recv_data);
+        void handleSelfResurrect(WorldPacket& /*recvPacket*/);
         void HandleUnlearnSkillOpcode(WorldPacket& recv_data);
         void handleRandomRollOpcode(WorldPacket& recv_data);
         void handleOpenItemOpcode(WorldPacket& recvPacket);

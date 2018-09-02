@@ -43,7 +43,8 @@
 
 #include "../world/Server/Packets/Opcode.h"
 #include "LogonConf.h"
-#include "Auth/AccountCache.h"
+#include "Server/AccountMgr.h"
+#include "Server/IpBanMgr.h"
 #include "Server/PeriodicFunctionCall_Thread.h"
 #include "Auth/AutoPatcher.h"
 #include "Auth/AuthSocket.h"

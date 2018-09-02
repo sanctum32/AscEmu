@@ -505,3 +505,27 @@ bool ChatHandler::HandleSendCastFailed(const char* args, WorldSession* m_session
 
     return true;
 }
+
+//.debug setweather
+bool ChatHandler::HandleDebugSetWeatherCommand(const char* args, WorldSession* m_session)
+{
+    uint32_t type;
+    float density;
+
+    if (sscanf(args, "%u %f", &type, &density) != 2)
+    {
+        RedSystemMessage(m_session, "Command must be in format <type> <density>.");
+        return true;
+    }
+
+    if (density < 0.30f)
+        density = 0.10f;
+    else if (density > 2.0f)
+        density = 2.0f;
+
+    sWeatherMgr.sendWeatherForPlayer(type, density, m_session->GetPlayer());
+
+    GreenSystemMessage(m_session, "Weather changed to %u with density %f", type, density);
+
+    return true;
+}

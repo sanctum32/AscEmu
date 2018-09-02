@@ -8,9 +8,9 @@ This file is released under the MIT license. See README-MIT for more information
 #include "Util.hpp"
 #include "DatabaseUpdater.h"
 #include "Logon.h"
+#include "IpBanMgr.h"
+#include "RealmsMgr.h"
 
-using AscEmu::Threading::AEThread;
-using AscEmu::Threading::AEThreadPool;
 using std::chrono::milliseconds;
 
 // Database impl
@@ -22,11 +22,11 @@ std::set<AuthSocket*> _authSockets;
 
 ConfigMgr Config;
 
-static const char* REQUIRED_LOGON_DB_VERSION = "20180729-00_logon_db_version";
+static const char* REQUIRED_LOGON_DB_VERSION = "20180810-00_realms";
 
 void MasterLogon::Run(int /*argc*/, char** /*argv*/)
 {
-    UNIXTIME = time(NULL);
+    UNIXTIME = time(nullptr);
     g_localTime = *localtime(&UNIXTIME);
 
     AscLog.InitalizeLogFiles("logon");
@@ -72,42 +72,28 @@ void MasterLogon::Run(int /*argc*/, char** /*argv*/)
         return;
     }
 
-    LogDetail("AccountMgr : Starting...");
+    new IpBanMgr;
     new AccountMgr;
-    new IPBanner;
-
-    LogDetail("InfoCore : Starting...");
-    new InformationCore;
 
     new PatchMgr;
-    LogNotice("AccountMgr : Precaching accounts...");
-
-    sAccountMgr.ReloadAccounts(true);
-    LogDetail("AccountMgr : %u accounts are loaded and ready.", sAccountMgr.GetCount());
+    
 
     new RealmsMgr;
-    sRealmsMgr.LoadRealms();
-    LogDetail("Loaded %u realms definitisons.", static_cast<uint32_t>(sRealmsMgr._realmStore.size()));
+    
 
     // Spawn periodic function caller thread for account reload every 10mins
     const uint32 accountReloadPeriod = logonConfig.rates.accountRefreshTime * 1000;
 
-    PeriodicFunctionCaller<AccountMgr> * periodicReloadAccounts = new PeriodicFunctionCaller<AccountMgr>(AccountMgr::getSingletonPtr(), &AccountMgr::ReloadAccountsCallback, accountReloadPeriod);
+    auto periodicReloadAccounts = new PeriodicFunctionCaller<AccountMgr>(AccountMgr::getSingletonPtr(), &AccountMgr::reloadAccountsCallback, accountReloadPeriod);
     ThreadPool.ExecuteTask(periodicReloadAccounts);
-    //AEThreadPool::globalThreadPool()->queueRecurringTask([](AEThread&) {AccountMgr::getSingletonPtr()->ReloadAccountsCallback();}, milliseconds(accountReloadPeriod), "Reload Accounts");
 
     // periodic ping check for realm status
-    PeriodicFunctionCaller<RealmsMgr> * checkRealmStatusFromPing = new PeriodicFunctionCaller<RealmsMgr>(RealmsMgr::getSingletonPtr(), &RealmsMgr::checkRealmStatus, 60000);
+    const auto checkRealmStatusFromPing = new PeriodicFunctionCaller<RealmsMgr>(RealmsMgr::getSingletonPtr(), &RealmsMgr::checkRealmStatus, 60000);
     ThreadPool.ExecuteTask(checkRealmStatusFromPing);
 
     // Load conf settings..
     clientMinBuild = 5875;
     clientMaxBuild = 15595;
-
-    Sha1Hash hash;
-    hash.UpdateData(logonConfig.logonServer.remotePassword);
-    hash.Finalize();
-    memcpy(sql_hash, hash.GetDigest(), 20);
 
     ThreadPool.ExecuteTask(new LogonConsoleThread);
 
@@ -121,8 +107,8 @@ void MasterLogon::Run(int /*argc*/, char** /*argv*/)
 
     // Spawn auth listener
     // Spawn interserver listener
-    bool isAuthsockCreated = realmlistSocket->IsOpen();
-    bool isIntersockCreated = logonServerSocket->IsOpen();
+    const bool isAuthsockCreated = realmlistSocket->IsOpen();
+    const bool isIntersockCreated = logonServerSocket->IsOpen();
     if (isAuthsockCreated && isIntersockCreated)
     {
 #ifdef WIN32
@@ -146,7 +132,7 @@ void MasterLogon::Run(int /*argc*/, char** /*argv*/)
 
             if (!(loop_counter % 5))
             {
-                sInfoCore.TimeoutSockets();
+                sRealmsMgr.timeoutSockets();
                 sSocketGarbageCollector.Update();
                 CheckForDeadSockets();              // Flood Protection
                 UNIXTIME = time(NULL);
@@ -167,6 +153,7 @@ void MasterLogon::Run(int /*argc*/, char** /*argv*/)
     }
 
     periodicReloadAccounts->kill();
+    checkRealmStatusFromPing->kill();
 
     realmlistSocket->Close();
     logonServerSocket->Close();
@@ -192,9 +179,8 @@ void MasterLogon::Run(int /*argc*/, char** /*argv*/)
         LOG_DEBUG("File logonserver.pid successfully deleted");
 
     delete AccountMgr::getSingletonPtr();
-    delete InformationCore::getSingletonPtr();
     delete PatchMgr::getSingletonPtr();
-    delete IPBanner::getSingletonPtr();
+    delete IpBanMgr::getSingletonPtr();
     delete SocketMgr::getSingletonPtr();
     delete SocketGarbageCollector::getSingletonPtr();
     delete periodicReloadAccounts;
@@ -212,19 +198,14 @@ void OnCrash(bool /*Terminate*/)
 void MasterLogon::CheckForDeadSockets()
 {
     _authSocketLock.Acquire();
-    time_t t = time(NULL);
-    time_t diff;
-    std::set<AuthSocket*>::iterator itr = _authSockets.begin();
-    std::set<AuthSocket*>::iterator it2;
-    AuthSocket* s;
-
-    for (itr = _authSockets.begin(); itr != _authSockets.end();)
+    time_t t = time(nullptr);
+    for (auto itr = _authSockets.begin(); itr != _authSockets.end();)
     {
-        it2 = itr;
-        s = (*it2);
+        auto it2 = itr;
+        auto s = (*it2);
         ++itr;
 
-        diff = t - s->GetLastRecv();
+        time_t diff = t - s->GetLastRecv();
         if (diff > 300)           // More than 5mins
         {
             _authSockets.erase(it2);
@@ -254,7 +235,7 @@ void MasterLogon::WritePidFile()
 #else
         pid = getpid();
 #endif
-        fprintf(pidFile, "%u", (unsigned int)pid);
+        fprintf(pidFile, "%u", static_cast<unsigned int>(pid));
         fclose(pidFile);
     }
 }
@@ -291,15 +272,15 @@ bool MasterLogon::StartDb()
     std::string dbPassword = logonConfig.logonDb.password;
     std::string dbDatabase = logonConfig.logonDb.db;
 
-    int dbPort = logonConfig.logonDb.port;
+    const int dbPort = logonConfig.logonDb.port;
 
     // Configure Main Database
-    bool existsUsername = !dbUsername.empty();
-    bool existsPassword = !dbPassword.empty();
-    bool existsHostname = !dbHostname.empty();
-    bool existsName = !dbDatabase.empty();
+    const bool existsUsername = !dbUsername.empty();
+    const bool existsPassword = !dbPassword.empty();
+    const bool existsHostname = !dbHostname.empty();
+    const bool existsName = !dbDatabase.empty();
 
-    bool result = existsUsername && existsPassword && existsHostname && existsName;
+    const bool result = existsUsername && existsPassword && existsHostname && existsName;
 
     if (!result)
     {
@@ -318,10 +299,18 @@ bool MasterLogon::StartDb()
         else
         {
             errorMessage += "  Missing paramer(s):\r\n";
-            if (!existsHostname) { errorMessage += "    Hostname\r\n"; }
-            if (!existsUsername) { errorMessage += "    Username\r\n"; }
-            if (!existsPassword) { errorMessage += "    Password\r\n"; }
-            if (!existsName) { errorMessage += "    Name\r\n"; }
+
+            if (!existsHostname)
+                errorMessage += "    Hostname\r\n";
+
+            if (!existsUsername)
+                errorMessage += "    Username\r\n";
+
+            if (!existsPassword)
+                errorMessage += "    Password\r\n";
+
+            if (!existsName)
+                errorMessage += "    Name\r\n";
         }
 
         LOG_ERROR(errorMessage.c_str());
@@ -461,7 +450,7 @@ bool MasterLogon::SetLogonConfiguration()
         std::string smask = allowedModIP.substr(i + 1);
 
         unsigned int ipraw = MakeIP(stmp.c_str());
-        unsigned char ipmask = (char)atoi(smask.c_str());
+        unsigned char ipmask = static_cast<char>(atoi(smask.c_str()));
         if (ipraw == 0 || ipmask == 0)
         {
             LOG_ERROR("ModIps: %s could not be parsed. Ignoring", allowedModIP.c_str());
@@ -474,8 +463,9 @@ bool MasterLogon::SetLogonConfiguration()
         m_allowedModIps.push_back(tmp);
     }
 
-    if (InformationCore::getSingletonPtr() != nullptr)
-        sInfoCore.CheckServers();
+    //\todo always nullptr!
+    if (RealmsMgr::getSingletonPtr() != nullptr)
+        sRealmsMgr.checkServers();
 
     m_allowedIpLock.Release();
 
@@ -485,7 +475,7 @@ bool MasterLogon::SetLogonConfiguration()
 bool MasterLogon::IsServerAllowed(unsigned int IP)
 {
     m_allowedIpLock.Acquire();
-    for (std::vector<AllowedIP>::iterator itr = m_allowedIps.begin(); itr != m_allowedIps.end(); ++itr)
+    for (auto itr = m_allowedIps.begin(); itr != m_allowedIps.end(); ++itr)
     {
         if (ParseCIDRBan(IP, itr->IP, itr->Bytes))
         {
@@ -500,7 +490,7 @@ bool MasterLogon::IsServerAllowed(unsigned int IP)
 bool MasterLogon::IsServerAllowedMod(unsigned int IP)
 {
     m_allowedIpLock.Acquire();
-    for (std::vector<AllowedIP>::iterator itr = m_allowedModIps.begin(); itr != m_allowedModIps.end(); ++itr)
+    for (auto itr = m_allowedModIps.begin(); itr != m_allowedModIps.end(); ++itr)
     {
         if (ParseCIDRBan(IP, itr->IP, itr->Bytes))
         {
@@ -520,7 +510,7 @@ void MasterLogon::_OnSignal(int s)
         case SIGHUP:
         {
             LOG_DETAIL("Received SIGHUP signal, reloading accounts.");
-            AccountMgr::getSingleton().ReloadAccounts(true);
+            AccountMgr::getSingleton().reloadAccounts(true);
         }
         break;
 #endif

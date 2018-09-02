@@ -45,7 +45,7 @@
 #include <Map/MapScriptInterface.h>
 #include <Units/Creatures/Pet.h>
 #include "Management/GuildMgr.h"
-
+#include "Management/WeatherMgr.h"
 
 class LuaUnit
 {
@@ -100,7 +100,7 @@ class LuaUnit
         uint32 boxmoney = static_cast<uint32>(luaL_optinteger(L, 6, 0));
 
         if (LuaGlobal::instance()->m_menu == NULL){
-            LOG_ERROR("There is no menu to add items to!");
+            DLLLogDetail("There is no menu to add items to!");
             return 0;
         }
 
@@ -114,7 +114,7 @@ class LuaUnit
         Player* plr = CHECK_PLAYER(L, 1);
 
         if (LuaGlobal::instance()->m_menu == NULL){
-            LOG_ERROR("There is no menu to send!");
+            DLLLogDetail("There is no menu to send!");
             return 0;
         }
 
@@ -164,7 +164,7 @@ class LuaUnit
         TEST_UNIT()
 
             if (LuaGlobal::instance()->m_menu == NULL){
-                LOG_ERROR("There's no menu to fill quests into.");
+                DLLLogDetail("There's no menu to fill quests into.");
                 return 0;
             }
 
@@ -183,7 +183,7 @@ class LuaUnit
 
         if (LuaGlobal::instance()->m_menu == nullptr)
         {
-            LOG_ERROR("There is no menu to complete!");
+            DLLLogDetail("There is no menu to complete!");
             return 0;
         }
 
@@ -615,7 +615,7 @@ class LuaUnit
             GameObjectProperties const* info = sMySQLStore.getGameObjectProperties(entry_id);
             if (info == nullptr)
             {
-                LOG_ERROR("Lua script tried to spawn a gameobject that doesn't exist ( %u ). Aborting.", entry_id);
+                DLLLogDetail("Lua script tried to spawn a gameobject that doesn't exist ( %u ). Aborting.", entry_id);
                 lua_pushnil(L);
                 return 1;
             }
@@ -868,7 +868,7 @@ class LuaUnit
             pCreature->m_custom_waypoint_map->push_back(wp);
         else
         {
-            LogDetail("WayPoint created by a Lua script for Creature ID %u wasn't added due to an error occurred in CreateWaypoint()", pCreature->GetCreatureProperties()->Id);
+            DLLLogDetail("WayPoint created by a Lua script for Creature ID %u wasn't added due to an error occurred in CreateWaypoint()", pCreature->GetCreatureProperties()->Id);
             delete wp;
         }
         return 0;
@@ -1256,161 +1256,26 @@ class LuaUnit
 
     static int SetZoneWeather(lua_State* L, Unit* /*ptr*/)
     {
-        /*
-        WEATHER_TYPE_NORMAL            = 0, // NORMAL (SUNNY)
-        WEATHER_TYPE_FOG               = 1, // FOG
-        WEATHER_TYPE_RAIN              = 2, // RAIN
-        WEATHER_TYPE_HEAVY_RAIN        = 4, // HEAVY_RAIN
-        WEATHER_TYPE_SNOW              = 8, // SNOW
-        WEATHER_TYPE_SANDSTORM         = 16 // SANDSTORM
-        */
-        uint32 zone_id = CHECK_ULONG(L, 1);
-        uint32 type = CHECK_ULONG(L, 2);
-        float Density = CHECK_FLOAT(L, 3); //min: 0.30 max: 2.00
-        if (Density < 0.30f || Density > 2.0f || !zone_id || !type)
+        const uint32_t zoneId = CHECK_ULONG(L, 1);
+        const uint32_t type = CHECK_ULONG(L, 2);
+        const float density = CHECK_FLOAT(L, 3);
+        if (!zoneId)
             return 0;
 
-        uint32 sound;
-        if (Density <= 0.30f)
-            sound = 0;
-
-        switch (type)
-        {
-            case 2:                                             //rain
-            case 4:
-                if (Density < 0.40f)
-                    sound = 8533;
-                else if (Density < 0.70f)
-                    sound = 8534;
-                else
-                    sound = 8535;
-                break;
-            case 8:                                             //snow
-                if (Density < 0.40f)
-                    sound = 8536;
-                else if (Density < 0.70f)
-                    sound = 8537;
-                else
-                    sound = 8538;
-                break;
-            case 16:                                             //storm
-                if (Density < 0.40f)
-                    sound = 8556;
-                else if (Density < 0.70f)
-                    sound = 8557;
-                else
-                    sound = 8558;
-                break;
-            default:                                            //no sound
-                sound = 0;
-                break;
-        }
-        WorldPacket data(SMSG_WEATHER, 9);
-        data.Initialize(SMSG_WEATHER);
-        if (type == 0)  // set all parameter to 0 for sunny.
-        {
-            data << uint32(0);
-            data << float(0);
-            data << uint32(0);
-            data << uint8(0);
-        }
-        else if (type == 1)  // No sound/density for fog
-        {
-            data << type;
-            data << float(0);
-            data << uint32(0);
-            data << uint8(0);
-        }
-        else
-        {
-            data << type;
-            data << Density;
-            data << sound;
-            data << uint8(0);
-        }
-
-        sWorld.sendZoneMessage(&data, zone_id);
+        sWeatherMgr.sendWeatherForZone(type, density, zoneId);
 
         return 0;
     }
 
     static int SetPlayerWeather(lua_State* L, Unit* ptr)
     {
-        /*
-        WEATHER_TYPE_NORMAL            = 0, // NORMAL (SUNNY)
-        WEATHER_TYPE_FOG               = 1, // FOG
-        WEATHER_TYPE_RAIN              = 2, // RAIN
-        WEATHER_TYPE_HEAVY_RAIN        = 4, // HEAVY_RAIN
-        WEATHER_TYPE_SNOW              = 8, // SNOW
-        WEATHER_TYPE_SANDSTORM         = 16 // SANDSTORM
-        */
         TEST_PLAYER()
-            Player* plr = static_cast<Player*>(ptr);
-        uint32 type = CHECK_ULONG(L, 1);
-        float Density = CHECK_FLOAT(L, 2); //min: 0.30 max: 2.00
-        if (Density < 0.30f || Density > 2.0f || !type)
-            return 0;
 
-        uint32 sound;
-        if (Density <= 0.30f)
-            sound = 0;
+        const auto player = dynamic_cast<Player*>(ptr);
+        const uint32_t type = CHECK_ULONG(L, 1);
+        const float density = CHECK_FLOAT(L, 2);
 
-        switch (type)
-        {
-            case 2:                                             //rain
-            case 4:
-                if (Density < 0.40f)
-                    sound = 8533;
-                else if (Density < 0.70f)
-                    sound = 8534;
-                else
-                    sound = 8535;
-                break;
-            case 8:                                             //snow
-                if (Density < 0.40f)
-                    sound = 8536;
-                else if (Density < 0.70f)
-                    sound = 8537;
-                else
-                    sound = 8538;
-                break;
-            case 16:                                             //storm
-                if (Density < 0.40f)
-                    sound = 8556;
-                else if (Density < 0.70f)
-                    sound = 8557;
-                else
-                    sound = 8558;
-                break;
-            default:                                            //no sound
-                sound = 0;
-                break;
-        }
-        WorldPacket data(SMSG_WEATHER, 9);
-        data.Initialize(SMSG_WEATHER);
-        if (type == 0)  // set all parameter to 0 for sunny.
-        {
-            data << uint32(0);
-            data << float(0);
-            data << uint32(0);
-            data << uint8(0);
-        }
-        else if (type == 1)  // No sound/density for fog
-        {
-            data << type;
-            data << float(0);
-            data << uint32(0);
-            data << uint8(0);
-        }
-        else
-        {
-            data << type;
-            data << Density;
-            data << sound;
-            data << uint8(0);
-        }
-
-        plr->GetSession()->SendPacket(&data);
+        sWeatherMgr.sendWeatherForPlayer(type, density, player);
 
         return 0;
     }
@@ -1838,7 +1703,7 @@ class LuaUnit
         {
             if (mapId)
             {
-                LogNotice("LuaEngineMgr : LUATeleporter ERROR - Wrong Coordinates given (Map, X, Y, Z) :: Map%f%s%f%s%f%s%u", mapId, " X", posX, " Y", posY, " Z", posZ);
+                DLLLogDetail("LuaEngineMgr : LUATeleporter ERROR - Wrong Coordinates given (Map, X, Y, Z) :: Map%f%s%f%s%f%s%u", mapId, " X", posX, " Y", posY, " Z", posZ);
                 return 0;
             }
             else
@@ -4157,7 +4022,7 @@ class LuaUnit
 
     static int GetTarget(lua_State* L, Unit* ptr)
     {
-        LogNotice("LuaEngine : GetTarget is outdated. Please use GetPrimaryCombatTarget.");
+        DLLLogDetail("LuaEngine : GetTarget is outdated. Please use GetPrimaryCombatTarget.");
         TEST_PLAYER()
             Player* plr = static_cast<Player*>(ptr);
         Unit* target = plr->GetMapMgr()->GetUnit(plr->GetTarget());

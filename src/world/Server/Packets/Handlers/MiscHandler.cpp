@@ -39,6 +39,9 @@ This file is released under the MIT license. See README-MIT for more information
 #include "Server/Packets/CmsgOpenItem.h"
 #include "Server/Packets/CmsgSetTitle.h"
 #include "Management/GuildMgr.h"
+#include "Server/Packets/SmsgStandstateUpdate.h"
+#include "Server/Packets/CmsgZoneupdate.h"
+#include "Server/Packets/CmsgResurrectResponse.h"
 
 using namespace AscEmu::Packets;
 
@@ -287,11 +290,9 @@ void WorldSession::handleLogoutRequestOpcode(WorldPacket& /*recvPacket*/)
         player->addUnitFlags(UNIT_FLAG_LOCK_PLAYER);
 
         player->setStandState(STANDSTATE_SIT);
-#if VERSION_STRING == TBC
-        WorldPacket packet(SMSG_STANDSTATE_UPDATE, 1);
-        packet << uint8_t(STANDSTATE_SIT);
-        player->SendPacket(&packet);
-#endif
+
+        player->SendPacket(SmsgStandstateUpdate(STANDSTATE_SIT).serialise().get());
+
         SetLogoutTimer(20000);
     }
 }
@@ -681,4 +682,60 @@ void WorldSession::handleSetTitle(WorldPacket& recvPacket)
     if (GetPlayer()->HasTitle(static_cast<RankTitles>(recv_packet.titleId)))
         GetPlayer()->setChosenTitle(recv_packet.titleId);
 #endif
+}
+
+void WorldSession::handleZoneupdate(WorldPacket& recvPacket)
+{
+    CmsgZoneupdate recv_packet;
+    if (!recv_packet.deserialise(recvPacket))
+        return;
+
+    if (GetPlayer()->GetZoneId() == recv_packet.zoneId)
+        return;
+
+    sWeatherMgr.SendWeather(GetPlayer());
+    GetPlayer()->ZoneUpdate(recv_packet.zoneId);
+    GetPlayer()->GetItemInterface()->EmptyBuyBack();
+}
+
+void WorldSession::handleResurrectResponse(WorldPacket& recvPacket)
+{
+    CmsgResurrectResponse recv_packet;
+    if (!recv_packet.deserialise(recvPacket))
+        return;
+
+    if (!GetPlayer()->isAlive())
+        return;
+
+    auto player = GetPlayer()->GetMapMgr()->GetPlayer(recv_packet.guid.getGuidLow());
+    if (player == nullptr)
+        player = objmgr.GetPlayer(recv_packet.guid.getGuidLow());
+
+    if (player == nullptr)
+        return;
+
+    if (recv_packet.status != 1 || GetPlayer()->m_resurrecter || GetPlayer()->m_resurrecter != recv_packet.guid.GetOldGuid())
+    {
+        GetPlayer()->m_resurrectHealth = 0;
+        GetPlayer()->m_resurrectMana = 0;
+        GetPlayer()->m_resurrecter = 0;
+        return;
+    }
+
+    GetPlayer()->ResurrectPlayer();
+    GetPlayer()->setMoveRoot(false);
+}
+
+void WorldSession::handleSelfResurrect(WorldPacket& /*recvPacket*/)
+{
+    if (const auto resurrectSpell = GetPlayer()->getSelfResurrectSpell())
+    {
+        const auto spellInfo = sSpellCustomizations.GetSpellInfo(resurrectSpell);
+        if (const auto spell = sSpellFactoryMgr.NewSpell(GetPlayer(), spellInfo, true, nullptr))
+        {
+            SpellCastTargets spellCastTargets;
+            spellCastTargets.m_unitTarget = GetPlayer()->getGuid();
+            spell->prepare(&spellCastTargets);
+        }
+    }
 }

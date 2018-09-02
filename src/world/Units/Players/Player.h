@@ -489,6 +489,9 @@ public:
     void setRangedAttackPowerMultiplier(float val);
     void setExploredZone(uint32_t idx, uint32_t data);
 
+    uint32_t getSelfResurrectSpell() const;
+    void setSelfResurrectSpell(uint32_t spell);
+
     uint32_t getWatchedFaction() const;
     void setWatchedFaction(uint32_t factionId);
 
@@ -2331,7 +2334,6 @@ public:
         void SendTeleportPacket(float x, float y, float z, float o);
         void SendTeleportAckPacket(float x, float y, float z, float o);
 
-        bool camControle;
         void SendCinematicCamera(uint32 id);
         void SetClientControl(Unit* target, uint8 allowMove);
 

@@ -132,6 +132,9 @@ void Player::setExploredZone(uint32_t idx, uint32_t data)
     write(playerData()->explored_zones[idx], data);
 }
 
+uint32_t Player::getSelfResurrectSpell() const { return playerData()->self_resurrection_spell; }
+void Player::setSelfResurrectSpell(uint32_t spell) { write(playerData()->self_resurrection_spell, spell); }
+
 uint32_t Player::getWatchedFaction() const { return playerData()->field_watched_faction_idx; }
 void Player::setWatchedFaction(uint32_t factionId) { write(playerData()->field_watched_faction_idx, factionId); }
 
@@ -586,10 +589,10 @@ void Player::setLoginPosition()
         startOnGMIsland = true;
 
     uint32_t mapId = 1;
-    float_t orientation = 0;
-    float_t position_x = 16222.6f;
-    float_t position_y = 16265.9f;
-    float_t position_z = 14.2085f;
+    float orientation = 0;
+    float position_x = 16222.6f;
+    float position_y = 16265.9f;
+    float position_z = 14.2085f;
 
     if (startOnGMIsland)
     {

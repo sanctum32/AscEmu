@@ -178,13 +178,14 @@ void LogonConsole::ProcessCmd(char* cmd)
             return;
         }
 
-    printf("Console: Unknown console command (use \"help\" for help).\n");
+    if (strncmp(cmd, "c", 1) == 0)
+        printf("Console: Unknown console command (use \"help\" for help).\n");
 }
 
 void LogonConsole::ReloadAccts(char* /*str*/)
 {
-    AccountMgr::getSingleton().ReloadAccounts(false);
-    IPBanner::getSingleton().Reload();
+    sAccountMgr.reloadAccounts(false);
+    sIpBanMgr.reload();
 }
 
 void LogonConsole::NetworkStatus(char* /*str*/)
@@ -284,7 +285,7 @@ void LogonConsole::AccountCreate(char* str)
         return;
     }
 
-    AccountMgr::getSingleton().ReloadAccounts(true);
+    sAccountMgr.reloadAccounts(true);
 
     std::cout << "Account created." << std::endl;
 }
@@ -313,7 +314,7 @@ void LogonConsole::AccountDelete(char* str)
         return;
     }
 
-    AccountMgr::getSingleton().ReloadAccounts(true);
+    sAccountMgr.reloadAccounts(true);
 
     std::cout << "Account deleted." << std::endl;
 }
@@ -349,7 +350,7 @@ void LogonConsole::AccountSetPassword(char* str)
         return;
     }
 
-    AccountMgr::getSingleton().ReloadAccounts(true);
+    sAccountMgr.reloadAccounts(true);
 
     std::cout << "Account password updated." << std::endl;
 }
@@ -407,7 +408,7 @@ void LogonConsole::AccountChangePassword(char* str)
 
     }
 
-    AccountMgr::getSingleton().ReloadAccounts(true);
+    sAccountMgr.reloadAccounts(true);
 
     std::cout << "Account password changed." << std::endl;
 }
@@ -422,7 +423,7 @@ void LogonConsole::checkAccountName(std::string name, uint8 type)
     {
         case ACC_NAME_DO_EXIST:
         {
-            if (AccountMgr::getSingleton().GetAccount(aname) == NULL)
+            if (sAccountMgr.getAccountByName(aname) == NULL)
             {
                 std::cout << "There's no account with name " << name << std::endl;
             }
@@ -430,7 +431,7 @@ void LogonConsole::checkAccountName(std::string name, uint8 type)
         } break;
         case ACC_NAME_NOT_EXIST:
         {
-            if (AccountMgr::getSingleton().GetAccount(aname) != NULL)
+            if (sAccountMgr.getAccountByName(aname) != NULL)
             {
                 std::cout << "There's already an account with name " << name << std::endl;
             }

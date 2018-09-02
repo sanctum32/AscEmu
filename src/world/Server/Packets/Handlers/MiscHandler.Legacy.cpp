@@ -40,6 +40,8 @@
 #include "Server/Packets/CmsgLootRoll.h"
 #include "Server/Packets/CmsgOpenItem.h"
 #include "Management/GuildMgr.h"
+#include "Server/Packets/CmsgGameobjUse.h"
+#include "Server/Packets/SmsgStandstateUpdate.h"
 
 using namespace AscEmu::Packets;
 
@@ -673,6 +675,9 @@ void WorldSession::HandleLootReleaseOpcode(WorldPacket& recv_data)
 }
 #endif
 
+// LOOT related
+//////////////////////////////////////////////////////////////////////////////////////////
+// MISC
 void WorldSession::HandleWhoIsOpcode(WorldPacket& recv_data)
 {
     std::string charname;
@@ -680,7 +685,7 @@ void WorldSession::HandleWhoIsOpcode(WorldPacket& recv_data)
 
     if (!GetPlayer()->GetSession()->CanUseCommand('3'))
     {
-        SendNotification(NOTIFICATION_MESSAGE_NO_PERMISSION);
+        SendNotification("You do not have permission to perform that function.");
         return;
     }
 
@@ -753,14 +758,9 @@ void WorldSession::HandlePlayerLogoutOpcode(WorldPacket& /*recv_data*/)
 
     LOG_DEBUG("WORLD: Recvd CMSG_PLAYER_LOGOUT Message");
     if (!HasGMPermissions())
-    {
-        // send "You do not have permission to use this"
-        SendNotification(NOTIFICATION_MESSAGE_NO_PERMISSION);
-    }
+        SendNotification("You do not have permission to perform that function.");
     else
-    {
         LogoutPlayer(true);
-    }
 }
 
 void WorldSession::HandleLogoutCancelOpcode(WorldPacket& /*recv_data*/)
@@ -772,8 +772,10 @@ void WorldSession::HandleLogoutCancelOpcode(WorldPacket& /*recv_data*/)
     Player* pPlayer = GetPlayer();
     if (!pPlayer)
         return;
+
     if (!LoggingOut)
         return;
+
     LoggingOut = false;
 
     //Cancel logout Timer
@@ -785,37 +787,13 @@ void WorldSession::HandleLogoutCancelOpcode(WorldPacket& /*recv_data*/)
     //unroot player
     pPlayer->setMoveRoot(false);
 
-#if VERSION_STRING == TBC
-    WorldPacket packet(SMSG_STANDSTATE_UPDATE, 1);
-    packet << uint8_t(STANDSTATE_STAND);
-    pPlayer->SendPacket(&packet);
-#endif
+    pPlayer->setStandState(STANDSTATE_STAND);
+    pPlayer->SendPacket(SmsgStandstateUpdate(STANDSTATE_STAND).serialise().get());
 
     // Remove the "player locked" flag, to allow movement
     pPlayer->removeUnitFlags(UNIT_FLAG_LOCK_PLAYER);
 
-    //make player stand
-    pPlayer->setStandState(STANDSTATE_STAND);
-
     LOG_DEBUG("WORLD: sent SMSG_LOGOUT_CANCEL_ACK Message");
-}
-
-void WorldSession::HandleZoneUpdateOpcode(WorldPacket& recv_data)
-{
-    CHECK_INWORLD_RETURN
-
-    uint32 newZone;
-
-    recv_data >> newZone;
-
-    if (GetPlayer()->GetZoneId() == newZone)
-        return;
-
-    sWeatherMgr.SendWeather(GetPlayer());
-    _player->ZoneUpdate(newZone);
-
-    //clear buyback
-    _player->GetItemInterface()->EmptyBuyBack();
 }
 
 #if VERSION_STRING != Cata
@@ -906,38 +884,6 @@ void WorldSession::HandleCorpseReclaimOpcode(WorldPacket& recv_data)
     GetPlayer()->setHealth(GetPlayer()->getMaxHealth() / 2);
 }
 #endif
-
-void WorldSession::HandleResurrectResponseOpcode(WorldPacket& recv_data)
-{
-    CHECK_INWORLD_RETURN
-
-    LOG_DETAIL("WORLD: Received CMSG_RESURRECT_RESPONSE");
-
-    if (_player->isAlive())
-        return;
-
-    uint64 guid;
-    uint8 status;
-    recv_data >> guid;
-    recv_data >> status;
-
-    // need to check guid
-    Player* pl = _player->GetMapMgr()->GetPlayer((uint32)guid);
-    if (pl == NULL)
-        pl = objmgr.GetPlayer((uint32)guid);
-
-    // checking valid resurrecter fixes exploits
-    if (pl == NULL || status != 1 || !_player->m_resurrecter || _player->m_resurrecter != guid)
-    {
-        _player->m_resurrectHealth = 0;
-        _player->m_resurrectMana = 0;
-        _player->m_resurrecter = 0;
-        return;
-    }
-
-    _player->ResurrectPlayer();
-    _player->setMoveRoot(false);
-}
 
 #if VERSION_STRING != Cata
 void WorldSession::HandleUpdateAccountData(WorldPacket& recv_data)
@@ -1253,16 +1199,13 @@ void WorldSession::HandleBarberShopResult(WorldPacket& recv_data)
 
 void WorldSession::HandleGameObjectUse(WorldPacket& recv_data)
 {
-    CHECK_INWORLD_RETURN
+    CmsgGameobjUse recv_packet;
+    if (!recv_packet.deserialise(recv_data))
+        return;
 
-    uint64 guid;
-    recv_data >> guid;
-    SpellCastTargets targets;
-    Spell* spell = NULL;
-    SpellInfo* spellInfo = NULL;
-    LOG_DEBUG("WORLD: CMSG_GAMEOBJ_USE: [GUID %d]", guid);
+    LOG_DEBUG("WORLD: CMSG_GAMEOBJ_USE: [GUID %d]", recv_packet.guid.getGuidLowPart());
 
-    GameObject* obj = _player->GetMapMgr()->GetGameObject((uint32)guid);
+    GameObject* obj = _player->GetMapMgr()->GetGameObject(recv_packet.guid.getGuidLowPart());
     if (!obj)
         return;
     auto gameobject_info = obj->GetGameObjectProperties();
@@ -1279,6 +1222,10 @@ void WorldSession::HandleGameObjectUse(WorldPacket& recv_data)
 
     _player->RemoveStealth(); // cebernic:RemoveStealth due to GO was using. Blizzlike
 
+    SpellCastTargets targets;
+    Spell* spell = nullptr;
+    SpellInfo* spellInfo = nullptr;
+
     uint32 type = obj->getGoType();
     switch (type)
     {
@@ -1286,6 +1233,8 @@ void WorldSession::HandleGameObjectUse(WorldPacket& recv_data)
         {
             plyr->SafeTeleport(plyr->GetMapId(), plyr->GetInstanceID(), obj->GetPositionX(), obj->GetPositionY(), obj->GetPositionZ(), obj->GetOrientation());
             plyr->setStandState(STANDSTATE_SIT_MEDIUM_CHAIR);
+            SendPacket(SmsgStandstateUpdate(STANDSTATE_SIT_MEDIUM_CHAIR).serialise().get());
+
             plyr->UpdateSpeed();
         }
         break;
@@ -1344,13 +1293,12 @@ void WorldSession::HandleGameObjectUse(WorldPacket& recv_data)
                 if (plyr->_GetSkillLineCurrent(SKILL_FISHING, false) < maxskill)
                     plyr->_AdvanceSkillLine(SKILL_FISHING, float2int32(1.0f * worldConfig.getFloatRate(RATE_SKILLRATE)));
 
-                GameObject* go = nullptr;
                 GameObject_FishingHole* school = nullptr;
 
-                go = fn->GetMapMgr()->FindNearestGoWithType(fn, GAMEOBJECT_TYPE_FISHINGHOLE);
+                GameObject* go = fn->GetMapMgr()->FindNearestGoWithType(fn, GAMEOBJECT_TYPE_FISHINGHOLE);
                 if (go != nullptr)
                 {
-                    school = static_cast<GameObject_FishingHole*>(go);
+                    school = dynamic_cast<GameObject_FishingHole*>(go);
 
                     if (!fn->isInRange(school, static_cast<float>(school->GetGameObjectProperties()->fishinghole.radius)))
                         school = nullptr;
@@ -1358,7 +1306,7 @@ void WorldSession::HandleGameObjectUse(WorldPacket& recv_data)
 
                 if (school != nullptr)
                 {
-                    if (school->GetMapMgr() != NULL)
+                    if (school->GetMapMgr() != nullptr)
                         lootmgr.FillGOLoot(&school->loot, school->GetGameObjectProperties()->raw.parameter_1, school->GetMapMgr()->iInstanceMode);
                     else
                         lootmgr.FillGOLoot(&school->loot, school->GetGameObjectProperties()->raw.parameter_1, 0);
@@ -1578,7 +1526,7 @@ void WorldSession::HandleGameObjectUse(WorldPacket& recv_data)
         {
             obj->Use(plyr->getGuid());
 
-            plyr->CastSpell(guid, gameobject_info->goober.spell_id, false);
+            plyr->CastSpell(recv_packet.guid.GetOldGuid(), gameobject_info->goober.spell_id, false);
 
             // show page
             if (gameobject_info->goober.page_id)
@@ -1807,22 +1755,6 @@ void WorldSession::HandleAcknowledgementOpcodes(WorldPacket& recv_data)
 }
 #endif
 
-void WorldSession::HandleSelfResurrectOpcode(WorldPacket& /*recv_data*/)
-{
-    CHECK_INWORLD_RETURN
-
-    uint32 self_res_spell = _player->getUInt32Value(PLAYER_SELF_RES_SPELL);
-    if (self_res_spell)
-    {
-        SpellInfo* sp = sSpellCustomizations.GetSpellInfo(self_res_spell);
-        Spell* s = sSpellFactoryMgr.NewSpell(_player, sp, true, NULL);
-        SpellCastTargets tgt;
-        tgt.m_unitTarget = _player->getGuid();
-        s->prepare(&tgt);
-    }
-}
-
-
 #if VERSION_STRING != Cata
 void WorldSession::HandleLootMasterGiveOpcode(WorldPacket& recvPacket)
 {
@@ -1968,13 +1900,11 @@ void WorldSession::HandleCompleteCinematic(WorldPacket& /*recv_data*/)
 
     // when a Cinematic is started the player is going to sit down, when its finished its standing up.
     _player->setStandState(STANDSTATE_STAND);
-    _player->camControle = false;
 }
 
 void WorldSession::HandleNextCinematic(WorldPacket& /*recv_data*/)
 {
     CHECK_INWORLD_RETURN
-    _player->camControle = true;
     _player->SetPosition(float(_player->GetPositionX() + 0.01), float(_player->GetPositionY() + 0.01), float(_player->GetPositionZ() + 0.01), _player->GetOrientation());
 }
 
@@ -1992,7 +1922,7 @@ void WorldSession::HandleSummonResponseOpcode(WorldPacket& recv_data)
         return;
     if (!_player->m_summoner)
     {
-        SendNotification(NOTIFICATION_MESSAGE_NO_PERMISSION);
+        SendNotification("You do not have permission to perform that function.");
         return;
     }
 
