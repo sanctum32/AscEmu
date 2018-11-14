@@ -482,11 +482,17 @@ public:
     uint32_t getXp() const;
     void setXp(uint32_t xp);
 
-    uint32_t getNextLevelXp();
+    uint32_t getNextLevelXp() const;
     void setNextLevelXp(uint32_t xp);
 
-    void setAttackPowerMultiplier(float val);
-    void setRangedAttackPowerMultiplier(float val);
+    uint32_t getFreeTalentPoints() const;
+#if VERSION_STRING != Cata
+    void setFreeTalentPoints(uint32_t points);
+#endif
+
+    uint32_t getFreePrimaryProfessionPoints() const;
+    void setFreePrimaryProfessionPoints(uint32_t points);
+
     void setExploredZone(uint32_t idx, uint32_t data);
 
     uint32_t getSelfResurrectSpell() const;
@@ -497,6 +503,27 @@ public:
 
     uint32_t getMaxLevel() const;
     void setMaxLevel(uint32_t level);
+
+    // playerfieldbytes start
+    uint32_t getPlayerFieldBytes() const;
+    void setPlayerFieldBytes(uint32_t bytes);
+
+    uint8_t getActionBarId() const;
+    void setActionBarId(uint8_t actionBarId);
+    // playerfieldbytes end
+
+    // playerfieldbytes2 start
+    uint32_t getPlayerFieldBytes2() const;
+    void setPlayerFieldBytes2(uint32_t bytes);
+    // playerfieldbytes2 end
+
+    float getModDamageDonePct(uint8_t shool) const;
+    void setModDamageDonePct(float damagePct, uint8_t shool);
+
+#if VERSION_STRING > TBC
+    uint32_t getGlyphsEnabled() const;
+    void setGlyphsEnabled(uint32_t glyphs);
+#endif
 
     //////////////////////////////////////////////////////////////////////////////////////////
     // Movement
@@ -527,18 +554,44 @@ public:
 
     void setInitialDisplayIds(uint8_t gender, uint8_t race);
 
-    //////////////////////////////////////////////////////////////////////////////////////////
-    // Spells
-    bool isSpellFitByClassAndRace(uint32_t spell_id);
-#if VERSION_STRING == Cata
-    uint32_t getFreePrimaryProfessionPoints() const { return getUInt32Value(PLAYER_CHARACTER_POINTS); }
-#endif
-    void updateAutoRepeatSpell();
     bool isTransferPending() const;
     void toggleAfk();
     void toggleDnd();
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Spells
+    bool isSpellFitByClassAndRace(uint32_t spell_id);
+    void updateAutoRepeatSpell();
+
+    bool canDualWield2H() const;
+    void setDualWield2H(bool enable);
+
     bool m_FirstCastAutoRepeat;
 
+private:
+    bool m_canDualWield2H;
+
+public:
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Talents
+    void learnTalent(uint32_t talentId, uint32_t talentRank);
+    void addTalent(SpellInfo* sp);
+    void removeTalent(uint32_t spellId, bool onSpecChange = false);
+    void resetTalents();
+    void setTalentPoints(uint32_t talentPoints, bool forBothSpecs = true);
+    void addTalentPoints(uint32_t talentPoints, bool forBothSpecs = true);
+    void setInitialTalentPoints(bool talentsResetted = false);
+
+    uint32_t getTalentPointsFromQuests() const;
+    void setTalentPointsFromQuests(uint32_t talentPoints);
+    void smsg_TalentsInfo(bool SendPetTalents); // TODO: classic and tbc
+
+    void activateTalentSpec(uint8_t specId);
+
+private:
+    uint32_t m_talentPointsFromQuests;
+
+public:
     //////////////////////////////////////////////////////////////////////////////////////////
     // Auction
     void sendAuctionCommandResult(Auction* auction, uint32_t Action, uint32_t ErrorCode, uint32_t bidError = 0);
@@ -587,6 +640,38 @@ public:
     void setPlayerInfoIfNeeded();
     void setGuildAndGroupInfo();
     void sendCinematicOnFirstLogin();
+
+    void unEquipOffHandIfRequired();
+    bool hasOffHandWeapon();
+
+    int32_t getMyCorpseInstanceId() const;
+
+    void sendTalentResetConfirmPacket();
+    void sendPetUnlearnConfirmPacket();
+    void sendDungeonDifficultyPacket();
+    void sendRaidDifficultyPacket();
+    void sendInstanceDifficultyPacket(uint8_t difficulty);
+    void sendNewDrunkStatePacket(uint32_t state, uint32_t itemId);
+    void sendSetProficiencyPacket(uint8_t itemClass, uint32_t proficiency);
+    void sendPartyKillLogPacket(uint64_t killedGuid);
+    void sendDestroyObjectPacket(uint64_t destroyedGuid);
+    void sendEquipmentSetUseResultPacket(uint8_t result);
+    void sendTotemCreatedPacket(uint8_t slot, uint64_t guid, uint32_t duration, uint32_t spellId);
+    void sendGossipPoiPacket(float posX, float posY, uint32_t icon, uint32_t flags, uint32_t data, std::string name);
+    void sendStopMirrorTimerPacket(MirrorTimerTypes type);
+    void sendMeetingStoneSetQueuePacket(uint32_t dungeonId, uint8_t status);
+    void sendPlayObjectSoundPacket(uint64_t objectGuid, uint32_t soundId);
+    void sendPlaySoundPacket(uint32_t soundId);
+    void sendExploreExperiencePacket(uint32_t areaId, uint32_t experience);
+    void sendSpellCooldownEventPacket(uint32_t spellId);
+    void sendSpellModifierPacket(uint8_t spellGroup, uint8_t spellType, int32_t modifier, bool isPct);
+    void sendLoginVerifyWorldPacket(uint32_t mapId, float posX, float posY, float posZ, float orientation);
+    void sendMountResultPacket(uint32_t result);
+    void sendDismountResultPacket(uint32_t result);
+    void sendLogXpGainPacket(uint64_t guid, uint32_t normalXp, uint32_t restedXp, bool type);
+    void sendCastFailedPacket(uint32_t spellId, uint8_t errorMessage, uint8_t multiCast, uint32_t extra1, uint32_t extra2 = 0);
+
+public:
     //MIT End
     //AGPL Start
 
@@ -699,32 +784,11 @@ public:
         //! Okay to remove from world
         bool ok_to_remove;
         void OnLogin();//custom stuff on player login.
-        void SendMeetingStoneQueue(uint32 DungeonId, uint8 Status);
-        void SendDungeonDifficulty();
-        void SendRaidDifficulty();
-        void SendInstanceDifficulty(uint8 difficulty);
-        void SendExploreXP(uint32 areaid, uint32 xp);
-        void SendDestroyObject(uint64 GUID);
+
         void SendEquipmentSetList();
         void SendEquipmentSetSaved(uint32 setID, uint32 setGUID);
-        void SendEquipmentSetUseResult(uint8 result);
+        
         void SendEmptyPetSpellList();
-
-
-        //////////////////////////////////////////////////////////////////////////////////////////
-        // void SendTotemCreated(uint8 slot, uint64 GUID, uint32 duration, uint32 spellid)
-        // Notifies the client about the creation of a Totem/Summon
-        // (client will show a right-clickable icon with a timer that can cancel the summon)
-        //
-        // \param uint8 slot       -  Summon slot number
-        // \param uint64 GUID      -  GUID of the summon
-        // \param uint32 duration  -  Duration of the summon (the timer of the icon)
-        // \param uint32 spellid   -  ID of the spell that created this summon
-        //
-        // \return none
-        //
-        //////////////////////////////////////////////////////////////////////////////////////////
-        void SendTotemCreated(uint8 slot, uint64 GUID, uint32 duration, uint32 spellid);
 
         void SendInitialWorldstates();
 
@@ -936,7 +1000,7 @@ public:
             if (school >= SCHOOL_COUNT)
                 return 0;
 
-            return getFloatValue(PLAYER_FIELD_MOD_DAMAGE_DONE_PCT + school);
+            return getModDamageDonePct(static_cast<uint8_t>(school));
         }
 
         uint32 GetMainMeleeDamage(uint32 AP_owerride);          /// I need this for windfury
@@ -952,8 +1016,6 @@ public:
         bool HasSpell(uint32 spell);
         bool HasDeletedSpell(uint32 spell);
         void smsg_InitialSpells();
-        void smsg_TalentsInfo(bool SendPetTalents);
-        void ActivateSpec(uint8 spec);
         void addSpell(uint32 spell_idy);
         void removeSpellByHashName(uint32 hash);
         bool removeSpell(uint32 SpellID, bool MoveToDeleted, bool SupercededSpell, uint32 SupercededSpellID);
@@ -1172,7 +1234,7 @@ public:
         void SendLoot(uint64 guid, uint8 loot_type, uint32 mapid);
         void SendLootUpdate(Object* o);
         void TagUnit(Object* o);
-        void SendPartyKillLog(uint64 GUID);
+        
         // loot variables
         uint64 m_lootGuid;
         uint64 m_currentLoot;
@@ -1299,9 +1361,7 @@ public:
         void SetManaFromSpell(uint32 value) { m_manafromspell = value;}
 
         uint32 CalcTalentResetCost(uint32 resetnum);
-        void SendTalentResetConfirm();
-        void SendPetUntrainConfirm();
-
+        
         uint32 GetTalentResetTimes() { return m_talentresettimes; }
         void SetTalentResetTimes(uint32 value) { m_talentresettimes = value; }
 
@@ -1314,15 +1374,6 @@ public:
 
         const uint32 & GetBindMapId() const { return m_bind_mapid; }
         const uint32 & GetBindZoneId() const { return m_bind_zoneid; }
-
-        void delayAttackTimer(int32 delay)
-        {
-            if (!delay)
-                return;
-
-            m_attackTimer += delay;
-            m_attackTimer_1 += delay;
-        }
 
         void SetShapeShift(uint8 ss);
 
@@ -1349,7 +1400,6 @@ public:
         uint32 m_UnderwaterTime;
         uint32 m_UnderwaterState;
         // Visible objects
-        bool CanSee(Object* obj);
         bool IsVisible(uint64 pObj) { return !(m_visibleObjects.find(pObj) == m_visibleObjects.end()); }
         void addToInRangeObjects(Object* pObj);
         void onRemoveInRangeObject(Object* pObj);
@@ -1369,7 +1419,6 @@ public:
         uint32 m_modblockvaluefromspells;
         void SendInitialLogonPackets();
         void Reset_Spells();
-        void Reset_Talents();
         void Reset_AllTalents();
         // Battlegrounds xD
         CBattleground* m_bg;
@@ -1400,7 +1449,6 @@ public:
         void SetHasWonRbgToday(bool value);
 
         int32 CanShootRangedWeapon(uint32 spellid, Unit* target, bool autoshot);
-        uint32 m_AutoShotAttackTimer;
         void _InitialReputation();
         void EventActivateGameObject(GameObject* obj);
         void EventDeActivateGameObject(GameObject* obj);
@@ -1467,7 +1515,6 @@ public:
         void SetMisdirectionTarget(uint64 PlayerGUID) { misdirectionTarget = PlayerGUID; }
 
         bool bReincarnation;
-        bool ignoreShapeShiftChecks;
 
         std::map<uint32, WeaponModifier> damagedone;
         std::map<uint32, WeaponModifier> tocritchance;
@@ -1512,10 +1559,6 @@ public:
         void AddVehicleComponent(uint32 creature_entry, uint32 vehicleid);
 
         void RemoveVehicleComponent();
-
-        void SendMountResult(uint32 result);
-
-        void SendDismountResult(uint32 result);
 
         bool bHasBindDialogOpen;
         uint32 TrackingSpell;
@@ -1598,16 +1641,12 @@ public:
         //Use this method carefully..
         void SetPersistentInstanceId(uint32 mapId, uint8 difficulty, uint32 instanceId);
 
-        // DualWield2H (ex: Titan's grip)
-        bool DualWield2H;
-        void ResetDualWield2H();
-
     public:
 
         bool m_Autojoin;
         bool m_AutoAddMem;
         void SendMirrorTimer(MirrorTimerTypes Type, uint32 max, uint32 current, int32 regen);
-        void StopMirrorTimer(MirrorTimerTypes Type);
+        
         BGScore m_bgScore;
         uint32 m_bgTeam;
         void UpdateChanceFields();
@@ -1720,85 +1759,12 @@ public:
         uint64 GetFarsightTarget() { return getUInt64Value(PLAYER_FARSIGHT); }
 
         //\todo fix this
-        void SetTalentPointsForAllSpec(uint32 amt)
-        {
-#ifdef FT_DUAL_SPEC
-            m_specs[0].SetTP(amt);
-            m_specs[1].SetTP(amt);
-#else
-            m_spec.SetTP(amt);
-#endif
-
-#if VERSION_STRING != Cata
-            setUInt32Value(PLAYER_CHARACTER_POINTS1, amt);
-#else
-            setUInt32Value(PLAYER_CHARACTER_POINTS, amt);
-#endif
-            smsg_TalentsInfo(false);
-        }
-
-        void AddTalentPointsToAllSpec(uint32 amt)
-        {
-#ifdef FT_DUAL_SPEC
-            m_specs[0].SetTP(m_specs[0].GetTP() + amt);
-            m_specs[1].SetTP(m_specs[1].GetTP() + amt);
-#else
-            m_spec.SetTP(m_spec.GetTP() + amt);
-#endif
-#if VERSION_STRING != Cata
-            setUInt32Value(PLAYER_CHARACTER_POINTS1, getUInt32Value(PLAYER_CHARACTER_POINTS1) + amt);
-#else
-            setUInt32Value(PLAYER_CHARACTER_POINTS, getUInt32Value(PLAYER_CHARACTER_POINTS) + amt);
-#endif
-            smsg_TalentsInfo(false);
-        }
-
-        void SetCurrentTalentPoints(uint32 points)
-        {
-            getActiveSpec().SetTP(points);
-#if VERSION_STRING != Cata
-            setUInt32Value(PLAYER_CHARACTER_POINTS1, points);
-#else
-            setUInt32Value(PLAYER_CHARACTER_POINTS, points);
-#endif
-            smsg_TalentsInfo(false);
-        }
-
-        uint32 GetCurrentTalentPoints()
-        {
-#if VERSION_STRING != Cata
-            uint32 points = getUInt32Value(PLAYER_CHARACTER_POINTS1);
-#else
-            uint32 points = getUInt32Value(PLAYER_CHARACTER_POINTS);
-#endif
-            Arcemu::Util::ArcemuAssert(points == getActiveSpec().GetTP());
-            return points;
-        }
-
-        //\todo fix this
-        void SetPrimaryProfessionPoints(uint32 amt)
-        {
-#if VERSION_STRING != Cata
-            setUInt32Value(PLAYER_CHARACTER_POINTS2, amt);
-#else
-            if (amt == 0) { return; }
-#endif
-        }
-        //\todo fix this
         void ModPrimaryProfessionPoints(int32 amt)
         {
 #if VERSION_STRING != Cata
             modUInt32Value(PLAYER_CHARACTER_POINTS2, amt);
 #else
             if (amt == 0) { return; }
-#endif
-        }
-        uint32 GetPrimaryProfessionPoints()
-        {
-#if VERSION_STRING != Cata
-            return getUInt32Value(PLAYER_CHARACTER_POINTS2);
-#else
-            return 0;
 #endif
         }
 
@@ -1935,21 +1901,6 @@ public:
         //////////////////////////////////////////////////////////////////////////////////////////
         void HandleSpellLoot(uint32 itemid);
 
-
-        //////////////////////////////////////////////////////////////////////////////////////////
-        // void LearnTalent(uint32 talentid, uint32 rank, bool isPreviewed)
-        // Teaches a talentspell to the Player and decreases the available talent points
-        //
-        // \param uint32 talentid     -   unique numeric identifier of the talent (index of talent.dbc)
-        // \param uint32 rank         -   rank of the talent
-        // \param bool isPreviewed     -   true if called from the preview system
-        //
-        // \return none
-        //
-        //////////////////////////////////////////////////////////////////////////////////////////
-        void LearnTalent(uint32 talentid, uint32 rank, bool isPreviewed = false);
-
-
         void DealDamage(Unit* pVictim, uint32 damage, uint32 targetEvent, uint32 unitEvent, uint32 spellId, bool no_remove_auras = false);
         void TakeDamage(Unit* pAttacker, uint32 damage, uint32 spellid, bool no_remove_auras = false);
         void Die(Unit* pAttacker, uint32 damage, uint32 spellid);
@@ -2027,19 +1978,11 @@ public:
         // Spell Packet wrapper Please keep this separated
         /////////////////////////////////////////////////////////////////////////////////////////
         void SendLevelupInfo(uint32 level, uint32 Hp, uint32 Mana, uint32 Stat0, uint32 Stat1, uint32 Stat2, uint32 Stat3, uint32 Stat4);
-        void SendLogXPGain(uint64 guid, uint32 NormalXP, uint32 RestedXP, bool type);
         void SendWorldStateUpdate(uint32 WorldState, uint32 Value);
-        void SendCastResult(uint32 SpellId, uint8 ErrorMessage, uint8 MultiCast, uint32 Extra);
-        void Gossip_SendPOI(float X, float Y, uint32 Icon, uint32 Flags, uint32 Data, const char* Name);
+        
         void Gossip_SendSQLPOI(uint32 id);
-        void SendSpellCooldownEvent(uint32 SpellId);
-        void SendSpellModifier(uint8 spellgroup, uint8 spelltype, int32 v, bool is_pct);
+        
         void SendItemPushResult(bool created, bool recieved, bool sendtoset, bool newitem,  uint8 destbagslot, uint32 destslot, uint32 count, uint32 entry, uint32 suffix, uint32 randomprop, uint32 stack);
-        void SendSetProficiency(uint8 ItemClass, uint32 Proficiency);
-        void SendLoginVerifyWorld(uint32 MapId, float X, float Y, float Z, float O);
-
-        void SendNewDrunkState(uint32 state, uint32 itemid);
-
         /////////////////////////////////////////////////////////////////////////////////////////
         // End of SpellPacket wrapper
         /////////////////////////////////////////////////////////////////////////////////////////
@@ -2210,9 +2153,6 @@ public:
         uint32 m_tradeSequence;
         bool m_changingMaps;
 
-        void PlaySoundToPlayer(uint64_t from_guid, uint32_t sound_id);
-        void PlaySound(uint32 sound_id);
-
         void SendGuildMOTD();
 
         /////////////////////////////////////////////////////////////////////////////////////////
@@ -2298,7 +2238,6 @@ public:
         uint8 m_talentActiveSpec;
 #if VERSION_STRING == Cata
         uint32 m_FirstTalentTreeLock;
-        uint32 CalcTalentPointsHaveSpent(uint32 spec);
 #endif
 
 #ifdef FT_DUAL_SPEC

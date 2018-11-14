@@ -278,9 +278,11 @@ public:
 
     uint32_t getHealth() const;
     void setHealth(uint32_t health);
+    void modHealth(int32_t health);
 
     uint32_t getMaxHealth() const;
     void setMaxHealth(uint32_t maxHealth);
+    void modMaxHealth(int32_t maxHealth);
 
     void setMaxMana(uint32_t maxMana);
 
@@ -361,6 +363,18 @@ public:
     void setAnimationFlags(uint8_t animationFlags);
     //bytes_1 end
 
+    uint32_t getPetNumber() const;
+    void setPetNumber(uint32_t timestamp);
+
+    uint32_t getPetNameTimestamp() const;
+    void setPetNameTimestamp(uint32_t timestamp);
+
+    uint32_t getPetExperience() const;
+    void setPetExperience(uint32_t experience);
+
+    uint32_t getPetNextLevelExperience() const;
+    void setPetNextLevelExperience(uint32_t experience);
+
     uint32_t getDynamicFlags() const;
     void setDynamicFlags(uint32_t dynamicFlags);
     void addDynamicFlags(uint32_t dynamicFlags);
@@ -419,6 +433,9 @@ public:
     uint32_t getAttackPower() const;
     void setAttackPower(uint32_t value);
 
+    int32_t getRangedAttackPower() const;
+    void setRangedAttackPower(int32_t power);
+
     float getMinRangedDamage() const;
     void setMinRangedDamage(float damage);
 
@@ -429,6 +446,26 @@ public:
     void setPowerCostMultiplier(uint16_t school, float multiplier);
     void modPowerCostMultiplier(uint16_t school, float multiplier);
 
+    int32_t getAttackPowerMods() const;
+    void setAttackPowerMods(int32_t modifier);
+    void modAttackPowerMods(int32_t modifier);
+
+    float getAttackPowerMultiplier() const;
+    void setAttackPowerMultiplier(float multiplier);
+    void modAttackPowerMultiplier(float multiplier);
+
+    int32_t getRangedAttackPowerMods() const;
+    void setRangedAttackPowerMods(int32_t modifier);
+    void modRangedAttackPowerMods(int32_t modifier);
+
+    float getRangedAttackPowerMultiplier() const;
+    void setRangedAttackPowerMultiplier(float multiplier);
+    void modRangedAttackPowerMultiplier(float multiplier);
+
+#if VERSION_STRING >= WotLK
+    float getHoverHeight() const;
+    void setHoverHeight(float height);
+#endif
     //////////////////////////////////////////////////////////////////////////////////////////
     // Movement
 private:
@@ -509,6 +546,13 @@ public:
     void applyDiminishingReturnTimer(uint32_t* duration, SpellInfo* spell);
     void removeDiminishingReturnTimer(SpellInfo* spell);
 
+    bool canDualWield() const;
+    void setDualWield(bool enable);
+
+private:
+    bool m_canDualWield;
+
+public:
     //////////////////////////////////////////////////////////////////////////////////////////
     // Aura
     Aura* getAuraWithId(uint32_t spell_id);
@@ -520,7 +564,7 @@ public:
     bool hasAurasWithId(uint32_t auraId);
     bool hasAurasWithId(uint32_t* auraId);
     bool hasAuraWithAuraEffect(AuraEffect type) const;
-    bool hasAuraState(AuraState state, SpellInfo *spellInfo = nullptr, Unit* caster = nullptr) const;
+    bool hasAuraState(AuraState state, SpellInfo const* spellInfo = nullptr, Unit const* caster = nullptr) const;
 
     void addAuraStateAndAuras(AuraState state);
     void removeAuraStateAndAuras(AuraState state);
@@ -538,15 +582,56 @@ public:
     void setSingleTargetGuidForAura(uint32_t spellId, uint64_t guid);
     void removeSingleTargetGuidForAura(uint32_t spellId);
 
+    void removeAllAurasByAuraEffect(AuraEffect effect);
+
 #ifdef AE_TBC
     uint32_t addAuraVisual(uint32_t spell_id, uint32_t count, bool positive);
     uint32_t addAuraVisual(uint32_t spell_id, uint32_t count, bool positive, bool &skip_client_update);
     void setAuraSlotLevel(uint32_t slot, bool positive);
 #endif
 
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Visibility system
+    bool canSee(Object* const obj);
+
+    // Stealth
+    int32_t getStealthLevel(StealthFlag flag) const;
+    int32_t getStealthDetection(StealthFlag flag) const;
+    void modStealthLevel(StealthFlag flag, const int32_t amount);
+    void modStealthDetection(StealthFlag flag, const int32_t amount);
+    bool isStealthed() const;
+
+    // Invisibility
+    int32_t getInvisibilityLevel(InvisibilityFlag flag) const;
+    int32_t getInvisibilityDetection(InvisibilityFlag flag) const;
+    void modInvisibilityLevel(InvisibilityFlag flag, const int32_t amount);
+    void modInvisibilityDetection(InvisibilityFlag flag, const int32_t amount);
+    bool isInvisible() const;
+
+    void setVisible(const bool visible);
+
+ private:
+     // Stealth
+     int32_t m_stealthLevel[STEALTH_FLAG_TOTAL];
+     int32_t m_stealthDetection[STEALTH_FLAG_TOTAL];
+     // Invisibility
+     int32_t m_invisibilityLevel[INVIS_FLAG_TOTAL];
+     int32_t m_invisibilityDetection[INVIS_FLAG_TOTAL];
+
+public:
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Misc
+    void setAttackTimer(WeaponDamageType type, int32_t time);
+    uint32_t getAttackTimer(WeaponDamageType type) const;
+    bool isAttackReady(WeaponDamageType type) const;
+    void resetAttackTimers();
+
+    void sendEnvironmentalDamageLogPacket(uint64_t guid, uint8_t type, uint32_t damage, uint64_t unk = 0);
+
     // Do not alter anything below this line
     // -------------------------------------
 private:
+    uint32_t m_attackTimer[3];
     // MIT End
     // AGPL Start
 public:
@@ -578,12 +663,6 @@ public:
     virtual bool IsSanctuaryFlagged() = 0;
     virtual void SetSanctuaryFlag() = 0;
     virtual void RemoveSanctuaryFlag() = 0;
-
-
-    void setAttackTimer(int32 time, bool offhand);
-    bool isAttackReady(bool offhand);
-
-    void SetDualWield(bool enabled);
 
     bool  canReachWithAttack(Unit* pVictim);
 
@@ -626,34 +705,10 @@ public:
     uint32 ManaShieldAbsorb(uint32 dmg);
     void smsg_AttackStart(Unit* pVictim);
     void smsg_AttackStop(Unit* pVictim);
-    void smsg_AttackStop(uint64 victimGuid);
 
     bool IsDazed();
     //this function is used for creatures to get chance to daze for another unit
     float get_chance_to_daze(Unit* target);
-
-    // Stealth
-    int32 GetStealthLevel() { return m_stealthLevel; }
-    int32 GetStealthDetectBonus() { return m_stealthDetectBonus; }
-    void SetStealth(uint32 id) { m_stealth = id; }
-    bool IsStealth() { return (m_stealth != 0 ? true : false); }
-    float detectRange;
-
-    // Invisibility
-    void SetInvisibility(uint32 id) { m_invisibility = id; }
-    bool IsInvisible() { return (m_invisible != 0 ? true : false); }
-    uint32 m_invisibility;
-    bool m_invisible;
-    uint8 m_invisFlag;
-    int32 m_invisDetect[INVIS_FLAG_TOTAL];
-    void SetInvisFlag(uint8 pInvisFlag)
-    {
-        m_invisFlag = pInvisFlag;
-        m_invisible = pInvisFlag != INVIS_FLAG_NORMAL;
-
-        UpdateVisibility();
-    }
-    uint8 GetInvisFlag() { return m_invisFlag; }
 
     //////////////////////////////////////////////////////////////////////////////////////////
     // AURAS
@@ -1082,25 +1137,6 @@ public:
     // Escort Quests
     void MoveToWaypoint(uint32 wp_id);
 
-    void RemoveStealth()
-    {
-        if (m_stealth != 0)
-        {
-            RemoveAura(m_stealth);
-            m_stealth = 0;
-        }
-    }
-
-    void RemoveInvisibility()
-    {
-        if (m_invisibility != 0)
-        {
-            RemoveAura(m_invisibility);
-            m_invisibility = 0;
-        }
-    }
-
-    uint32 m_stealth;
     bool m_can_stealth;
 
     Aura* m_auras[MAX_TOTAL_AURAS_END];
@@ -1197,86 +1233,6 @@ public:
     // Unit properties
     //////////////////////////////////////////////////////////////////////////////////////////
 
-    //\todo fix this
-    void SetAttackPowerMods(int32 amt)
-    {
-#if VERSION_STRING != Cata
-        setInt32Value(UNIT_FIELD_ATTACK_POWER_MODS, amt);
-#else
-        setUInt32Value(UNIT_FIELD_ATTACK_POWER_MOD_NEG, (amt < 0 ? -amt : 0));
-        setUInt32Value(UNIT_FIELD_ATTACK_POWER_MOD_POS, (amt > 0 ? amt : 0));
-#endif
-    }
-
-    //\todo fix this
-    int32 GetAttackPowerMods()
-    {
-#if VERSION_STRING != Cata
-        return getInt32Value(UNIT_FIELD_ATTACK_POWER_MODS);
-#else
-        return getUInt32Value(UNIT_FIELD_ATTACK_POWER_MOD_POS) - getUInt32Value(UNIT_FIELD_ATTACK_POWER_MOD_NEG);
-#endif
-    }
-
-    //\todo fix this - bad style
-    void ModAttackPowerMods(int32 amt)
-    {
-#if VERSION_STRING != Cata
-        modInt32Value(UNIT_FIELD_ATTACK_POWER_MODS, amt);
-#else
-        if (amt == 0) { return; }
-#endif
-    }
-
-    void SetAttackPowerMultiplier(float amt) { setFloatValue(UNIT_FIELD_ATTACK_POWER_MULTIPLIER, amt); }
-    float GetAttackPowerMultiplier() { return getFloatValue(UNIT_FIELD_ATTACK_POWER_MULTIPLIER); }
-    void ModAttackPowerMultiplier(float amt) { modFloatValue(UNIT_FIELD_ATTACK_POWER_MULTIPLIER, amt); }
-
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    void SetRangedAttackPower(int32 amt) { setInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER, amt); }
-    int32 GetRangedAttackPower() { return getInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER); }
-
-    //\todo fix this
-    void SetRangedAttackPowerMods(int32 amt)
-    {
-#if VERSION_STRING != Cata
-        setInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER_MODS, amt);
-#else
-        setUInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER_MOD_NEG, (amt < 0 ? -amt : 0));
-        setUInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER_MOD_POS, (amt > 0 ? amt : 0));
-#endif
-    }
-
-    //\todo fix this
-    int32 GetRangedAttackPowerMods()
-    {
-#if VERSION_STRING != Cata
-        return getUInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER_MODS);
-#else
-        return getUInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER_MOD_POS) - getUInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER_MOD_NEG);
-#endif
-    }
-
-    //\todo fix this - bad style
-    void ModRangedAttackPowerMods(int32 amt)
-    {
-#if VERSION_STRING != Cata
-        modUInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER_MODS, amt);
-#else
-        if (amt == 0) { return; }
-#endif
-    }
-
-    void SetRangedAttackPowerMultiplier(float amt) { setFloatValue(UNIT_FIELD_RANGED_ATTACK_POWER_MULTIPLIER, amt); }
-    float GetRangedAttackPowerMultiplier() { return getFloatValue(UNIT_FIELD_RANGED_ATTACK_POWER_MULTIPLIER); }
-    void ModRangedAttackPowerMultiplier(float amt) { modFloatValue(UNIT_FIELD_RANGED_ATTACK_POWER_MULTIPLIER, amt); }
-
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    void ModHealth(int32 val) { modUInt32Value(UNIT_FIELD_HEALTH, val); }
-    void ModMaxHealth(int32 val) { modUInt32Value(UNIT_FIELD_MAXHEALTH, val); }
-
     void SetPower(uint32 type, int32 value);
 
     void ModPower(uint16_t index, int32 value)
@@ -1336,20 +1292,12 @@ protected:
     uint16 m_P_regenTimer;
     uint32 m_interruptedRegenTime;  //PowerInterruptedegenTimer.
 
-    uint32 m_attackTimer;           // timer for attack
-    uint32 m_attackTimer_1;
-    bool m_dualWield;
-
     std::list<Aura*> m_GarbageAuras;
     std::list<Spell*> m_GarbageSpells;
     std::list<Pet*> m_GarbagePets;
 
     /// Combat
     DeathState m_deathState;
-
-    // Stealth
-    uint32 m_stealthLevel;
-    uint32 m_stealthDetectBonus;
 
     // DK:pet
 
@@ -1409,8 +1357,6 @@ public:
     bool m_noFallDamage;
     float z_axisposition;
     int32 m_safeFall;
-
-    void SendEnvironmentalDamageLog(uint64 guid, uint8 type, uint32 damage);
 
     void BuildHeartBeatMsg(WorldPacket* data);
 

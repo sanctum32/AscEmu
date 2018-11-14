@@ -3,11 +3,21 @@
 set(PATH_PREFIX Server/Packets)
 
 set(SRC_PACKET_FILES
+   ${PATH_PREFIX}/CmsgActivatetaxi.h
+   ${PATH_PREFIX}/CmsgActivatetaxiexpress.h
    ${PATH_PREFIX}/CmsgAddFriend.h
    ${PATH_PREFIX}/CmsgAddIgnore.h
+   ${PATH_PREFIX}/CmsgAlterAppearance.h
    ${PATH_PREFIX}/CmsgAreaSpiritHealerQuery.h
    ${PATH_PREFIX}/CmsgAreaSpiritHealerQueue.h
    ${PATH_PREFIX}/CmsgAreatrigger.h
+   ${PATH_PREFIX}/CmsgArenaTeamDisband.h
+   ${PATH_PREFIX}/CmsgArenaTeamInvite.h
+   ${PATH_PREFIX}/CmsgArenaTeamLeader.h
+   ${PATH_PREFIX}/CmsgArenaTeamLeave.h
+   ${PATH_PREFIX}/CmsgArenaTeamQuery.h
+   ${PATH_PREFIX}/CmsgArenaTeamRemove.h
+   ${PATH_PREFIX}/CmsgArenaTeamRoster.h
    ${PATH_PREFIX}/CmsgAttackSwing.h
    ${PATH_PREFIX}/CmsgAuctionListIBidderItemse.h
    ${PATH_PREFIX}/CmsgAuctionListIPendingSales.h
@@ -16,6 +26,11 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/CmsgAuctionPlaceBid.h
    ${PATH_PREFIX}/CmsgAuctionRemoveItem.h
    ${PATH_PREFIX}/CmsgAuctionSellItem.h
+   ${PATH_PREFIX}/CmsgAutobankItem.h
+   ${PATH_PREFIX}/CmsgAutoequipItem.h
+   ${PATH_PREFIX}/CmsgAutoequipItemSlot.h
+   ${PATH_PREFIX}/CmsgAutostoreBagItem.h
+   ${PATH_PREFIX}/CmsgAutostoreBankItem.h
    ${PATH_PREFIX}/CmsgAutostoreLootItem.h
    ${PATH_PREFIX}/CmsgBankerActivate.h
    ${PATH_PREFIX}/CmsgBattlefieldList.h
@@ -23,8 +38,12 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/CmsgBattlemasterHello.h
    ${PATH_PREFIX}/CmsgBattlemasterJoinArena.h
    ${PATH_PREFIX}/CmsgBinderActivate.h
+   ${PATH_PREFIX}/CmsgBug.h
    ${PATH_PREFIX}/CmsgBuyBankSlot.h
    ${PATH_PREFIX}/CmsgBuyItem.h
+   ${PATH_PREFIX}/CmsgBuyItemInSlot.h
+   ${PATH_PREFIX}/CmsgBuybackItem.h
+   ${PATH_PREFIX}/CmsgCancelTempEnchantment.h
    ${PATH_PREFIX}/CmsgCastSpell.h
    ${PATH_PREFIX}/CmsgChangeSeatsOnControlledVehicle.h
    ${PATH_PREFIX}/CmsgChannelAnnouncements.h
@@ -54,13 +73,19 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/CmsgCreatureQuery.h
    ${PATH_PREFIX}/CmsgDelFriend.h
    ${PATH_PREFIX}/CmsgDelIgnore.h
+   ${PATH_PREFIX}/CmsgDestroyItem.h
    ${PATH_PREFIX}/CmsgDismissCritter.h
    ${PATH_PREFIX}/CmsgEjectPassenger.h
    ${PATH_PREFIX}/CmsgEmote.h
+   ${PATH_PREFIX}/CmsgEnabletaxi.h
    ${PATH_PREFIX}/CmsgGameobjectQuery.h
    ${PATH_PREFIX}/CmsgGameobjReportUse.h
    ${PATH_PREFIX}/CmsgGameobjUse.h
    ${PATH_PREFIX}/CmsgGetChannelMemberCount.h
+   ${PATH_PREFIX}/CmsgGmReportLag.h
+   ${PATH_PREFIX}/CmsgGmSurveySubmit.h
+   ${PATH_PREFIX}/CmsgGmTicketCreate.h
+   ${PATH_PREFIX}/CmsgGmTicketUpdateText.h
    ${PATH_PREFIX}/CmsgGossipHello.h
    ${PATH_PREFIX}/CmsgGossipSelectOption.h
    ${PATH_PREFIX}/CmsgGroupAssistantLeader.h
@@ -92,15 +117,33 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/CmsgGuildSetPublicNote.h
    ${PATH_PREFIX}/CmsgGuildSetRank.h
    ${PATH_PREFIX}/CmsgInitiateTrade.h
+   ${PATH_PREFIX}/CmsgInspect.h
    ${PATH_PREFIX}/CmsgInspectAchievements.h
    ${PATH_PREFIX}/CmsgItemNameQuery.h
    ${PATH_PREFIX}/CmsgItemQuerySingle.h
+   ${PATH_PREFIX}/CmsgItemrefundinfo.h
+   ${PATH_PREFIX}/CmsgItemrefundrequest.h
+   ${PATH_PREFIX}/CmsgItemTextQuery.h
    ${PATH_PREFIX}/CmsgJoinChannel.h
+   ${PATH_PREFIX}/CmsgLearnTalent.h
+   ${PATH_PREFIX}/CmsgLearnTalentMultiple.h
    ${PATH_PREFIX}/CmsgLeaveChannel.h
+   ${PATH_PREFIX}/CmsgLfgSetRoles.h
+   ${PATH_PREFIX}/CmsgLfgTeleport.h
+   ${PATH_PREFIX}/CmsgLfgProposalResult.h
+   ${PATH_PREFIX}/CmsgLfgSetBootVote.h
    ${PATH_PREFIX}/CmsgListInventory.h
+   ${PATH_PREFIX}/CmsgLoot.h
    ${PATH_PREFIX}/CmsgLootMasterGive.h
    ${PATH_PREFIX}/CmsgLootMethod.h
+   ${PATH_PREFIX}/CmsgLootRelease.h
    ${PATH_PREFIX}/CmsgLootRoll.h
+   ${PATH_PREFIX}/CmsgMailCreateTextItem.h
+   ${PATH_PREFIX}/CmsgMailDelete.h
+   ${PATH_PREFIX}/CmsgMailMarkAsRead.h
+   ${PATH_PREFIX}/CmsgMailTakeItem.h
+   ${PATH_PREFIX}/CmsgMailReturnToSender.h
+   ${PATH_PREFIX}/CmsgMailTakeMoney.h
    ${PATH_PREFIX}/CmsgMessageChat.h
    ${PATH_PREFIX}/CmsgNameQuery.h
    ${PATH_PREFIX}/CmsgNpcTextQuery.h
@@ -110,6 +153,7 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/CmsgPageTextQuery.h
    ${PATH_PREFIX}/CmsgPetAction.h
    ${PATH_PREFIX}/CmsgPetCancelAura.h
+   ${PATH_PREFIX}/CmsgPetCastSpell.h
    ${PATH_PREFIX}/CmsgPetitionBuy.h
    ${PATH_PREFIX}/CmsgPetitionQuery.h
    ${PATH_PREFIX}/CmsgPetitionShowlist.h
@@ -124,14 +168,30 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/CmsgPlayedTime.h
    ${PATH_PREFIX}/CmsgPlayerLogin.h
    ${PATH_PREFIX}/CmsgPlayerVehicleEnter.h
+   ${PATH_PREFIX}/CmsgPushquesttoparty.h
    ${PATH_PREFIX}/CmsgQueryTime.h
+   ${PATH_PREFIX}/CmsgQuestgiverHello.h
    ${PATH_PREFIX}/CmsgQuestgiverAcceptQuest.h
+   ${PATH_PREFIX}/CmsgQuestgiverChooseReward.h
+   ${PATH_PREFIX}/CmsgQuestgiverCompleteQuest.h
    ${PATH_PREFIX}/CmsgQuestgiverQueryQuest.h
+   ${PATH_PREFIX}/CmsgQuestgiverRequestReward.h
+   ${PATH_PREFIX}/CmsgQuestgiverStatusQuery.h
+   ${PATH_PREFIX}/CmsgQuestlogRemoveQuest.h
+   ${PATH_PREFIX}/CmsgQuestPoiQuery.h
+   ${PATH_PREFIX}/CmsgQuestQuery.h
+   ${PATH_PREFIX}/CmsgReadItem.h
    ${PATH_PREFIX}/CmsgRealmSplit.h
+   ${PATH_PREFIX}/CmsgReclaimCorpse.h
+   ${PATH_PREFIX}/CmsgRemoveGlyph.h
+   ${PATH_PREFIX}/CmsgRepairItem.h
    ${PATH_PREFIX}/CmsgRequestPartyMemberStats.h
    ${PATH_PREFIX}/CmsgRequestVehicleSwitchSeat.h
    ${PATH_PREFIX}/CmsgResurrectResponse.h
+   ${PATH_PREFIX}/CmsgSearchLfgJoin.h
+   ${PATH_PREFIX}/CmsgSearchLfgLeave.h
    ${PATH_PREFIX}/CmsgSellItem.h
+   ${PATH_PREFIX}/CmsgSendMail.h
    ${PATH_PREFIX}/CmsgSetActionbarToggles.h
    ${PATH_PREFIX}/CmsgSetActionButton.h
    ${PATH_PREFIX}/CmsgSetActiveMover.h
@@ -140,6 +200,7 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/CmsgSetFactionAtWar.h
    ${PATH_PREFIX}/CmsgSetFactionInactive.h
    ${PATH_PREFIX}/CmsgSetGuildBankText.h
+   ${PATH_PREFIX}/CmsgSetLfgComment.h
    ${PATH_PREFIX}/CmsgSetPlayerDeclinedNames.h
    ${PATH_PREFIX}/CmsgSetSelection.h
    ${PATH_PREFIX}/CmsgSetSheathed.h
@@ -148,15 +209,28 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/CmsgSetTradeGold.h
    ${PATH_PREFIX}/CmsgSetTradeItem.h
    ${PATH_PREFIX}/CmsgSetWatchedFaction.h
+   ${PATH_PREFIX}/CmsgSocketGems.h
+   ${PATH_PREFIX}/CmsgSplitItem.h
    ${PATH_PREFIX}/CmsgStableSwapPet.h
    ${PATH_PREFIX}/CmsgStandStateChange.h
+   ${PATH_PREFIX}/CmsgSummonResponse.h
+   ${PATH_PREFIX}/CmsgSwapInvItem.h
+   ${PATH_PREFIX}/CmsgSwapItem.h
+   ${PATH_PREFIX}/CmsgTaxinodeStatusQuery.h
+   ${PATH_PREFIX}/CmsgTaxiQueryAvailableNodes.h
    ${PATH_PREFIX}/CmsgTextEmote.h
    ${PATH_PREFIX}/CmsgTrainerBuySpell.h
    ${PATH_PREFIX}/CmsgTrainerList.h
    ${PATH_PREFIX}/CmsgTurnInPetition.h
    ${PATH_PREFIX}/CmsgTutorialFlag.h
+   ${PATH_PREFIX}/CmsgUnlearnSkill.h
    ${PATH_PREFIX}/CmsgUnstablePet.h
+   ${PATH_PREFIX}/CmsgUpdateAccountData.h
+   ${PATH_PREFIX}/CmsgUseItem.h
    ${PATH_PREFIX}/CmsgWho.h
+   ${PATH_PREFIX}/CmsgWhoIs.h
+   ${PATH_PREFIX}/CmsgWorldTeleport.h
+   ${PATH_PREFIX}/CmsgWrapItem.h
    ${PATH_PREFIX}/CmsgZoneupdate.h
    ${PATH_PREFIX}/ManagedPacket.h
    ${PATH_PREFIX}/MovementPacket.h
@@ -170,10 +244,12 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/MsgListStabledPets.h
    ${PATH_PREFIX}/MsgMinimapPing.h
    ${PATH_PREFIX}/MsgMoveFallLand.h
+   ${PATH_PREFIX}/MsgMoveTeleportAck.h
    ${PATH_PREFIX}/MsgPartyAssign.h
    ${PATH_PREFIX}/MsgPetitionDecline.h
    ${PATH_PREFIX}/MsgPetitionRename.h
    ${PATH_PREFIX}/MsgQueryGuildBankText.h
+   ${PATH_PREFIX}/MsgQuestPushResult.h
    ${PATH_PREFIX}/MsgRaidReadyCheck.h
    ${PATH_PREFIX}/MsgRaidTargetUpdate.h
    ${PATH_PREFIX}/MsgRandomRoll.h
@@ -181,16 +257,22 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/MsgSetDungeonDifficulty.h
    ${PATH_PREFIX}/MsgSetRaidDifficulty.h
    ${PATH_PREFIX}/MsgTabardvendorActivate.h
+   ${PATH_PREFIX}/MsgTalentWipeConfirm.h
    ${PATH_PREFIX}/Opcode.h
+   ${PATH_PREFIX}/SmsgActivatetaxireply.h
    ${PATH_PREFIX}/SmsgAreaSpiritHealerTime.h
    ${PATH_PREFIX}/SmsgAreaTriggerMessage.h
    ${PATH_PREFIX}/SmsgArenaError.h
+   ${PATH_PREFIX}/SmsgAttackStart.h
+   ${PATH_PREFIX}/SmsgAttackStop.h
    ${PATH_PREFIX}/SmsgAuctionCommandResult.h
+   ${PATH_PREFIX}/SmsgBarberShopResult.h
    ${PATH_PREFIX}/SmsgBinderConfirm.h
    ${PATH_PREFIX}/SmsgBindPointUpdate.h
    ${PATH_PREFIX}/SmsgBuyBankSlotResult.h
    ${PATH_PREFIX}/SmsgBuyFailed.h
    ${PATH_PREFIX}/SmsgBuyItem.h
+   ${PATH_PREFIX}/SmsgCastFailed.h
    ${PATH_PREFIX}/SmsgChannelMemberCount.h
    ${PATH_PREFIX}/SmsgCharacterLoginFailed.h
    ${PATH_PREFIX}/SmsgCharCreate.h
@@ -202,14 +284,29 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/SmsgChatPlayerNotFound.h
    ${PATH_PREFIX}/SmsgClearExtraAuraInfo.h
    ${PATH_PREFIX}/SmsgComplainResult.h
+   ${PATH_PREFIX}/SmsgCooldownEvent.h
+   ${PATH_PREFIX}/SmsgCorpseReclaimDelay.h
    ${PATH_PREFIX}/SmsgCreatureQueryResponse.h
+   ${PATH_PREFIX}/SmsgCrossedInebriationThreshold.h
+   ${PATH_PREFIX}/SmsgDeathReleaseLoc.h
    ${PATH_PREFIX}/SmsgDestoyObject.h
+   ${PATH_PREFIX}/SmsgDismountResult.h
    ${PATH_PREFIX}/SmsgDuelComplete.h
    ${PATH_PREFIX}/SmsgDuelCountdown.h
+   ${PATH_PREFIX}/SmsgDuelWinner.h
    ${PATH_PREFIX}/SmsgEmote.h
+   ${PATH_PREFIX}/SmsgEnvironmentalDamageLog.h
+   ${PATH_PREFIX}/SmsgEquipmentSetUseResult.h
+   ${PATH_PREFIX}/SmsgExplorationExperience.h
    ${PATH_PREFIX}/SmsgFeatureSystemStatus.h
    ${PATH_PREFIX}/SmsgFriendStatus.h
    ${PATH_PREFIX}/SmsgGameobjectQueryResponse.h
+   ${PATH_PREFIX}/SmsgGmTicketCreate.h
+   ${PATH_PREFIX}/SmsgGmTicketDeleteTicket.h
+   ${PATH_PREFIX}/SmsgGmTicketGetTicket.h
+   ${PATH_PREFIX}/SmsgGmTicketSystemstatus.h
+   ${PATH_PREFIX}/SmsgGmTicketUpdateText.h
+   ${PATH_PREFIX}/SmsgGossipPoi.h
    ${PATH_PREFIX}/SmsgGroupDecline.h
    ${PATH_PREFIX}/SmsgGroupInvite.h
    ${PATH_PREFIX}/SmsgGuildBankMoneyWithdrawn.h
@@ -219,16 +316,32 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/SmsgGuildInvite.h
    ${PATH_PREFIX}/SmsgInitialSpells.h
    ${PATH_PREFIX}/SmsgInstanceDifficulty.h
+   ${PATH_PREFIX}/SmsgInventoryChangeFailure.h
    ${PATH_PREFIX}/SmsgItemNameQueryResponse.h
    ${PATH_PREFIX}/SmsgLearnedDanceMoves.h
+   ${PATH_PREFIX}/SmsgLfgOfferContinue.h
+   ${PATH_PREFIX}/SmsgLfgRoleChosen.h
+   ${PATH_PREFIX}/SmsgLfgTeleportDenied.h
+   ${PATH_PREFIX}/SmsgLfgUpdateSearch.h
+   ${PATH_PREFIX}/SmsgLoginVerifyWorld.h
    ${PATH_PREFIX}/SmsgLogoutResponse.h
+   ${PATH_PREFIX}/SmsgLogXpGain.h
+   ${PATH_PREFIX}/SmsgLootMasterList.h
+   ${PATH_PREFIX}/SmsgLootMoneyNotify.h
+   ${PATH_PREFIX}/SmsgLootReleaseResponse.h
    ${PATH_PREFIX}/SmsgLootRemoved.h
+   ${PATH_PREFIX}/SmsgMeetingstoneSetQueue.h
    ${PATH_PREFIX}/SmsgMessageChat.h
+   ${PATH_PREFIX}/SmsgMountResult.h
+   ${PATH_PREFIX}/SmsgMountspecialAnim.h
+   ${PATH_PREFIX}/SmsgMoveKnockBack.h
    ${PATH_PREFIX}/SmsgMoveUnsetCanFly.h
    ${PATH_PREFIX}/SmsgNameQueryResponse.h
+   ${PATH_PREFIX}/SmsgItemTextQueryResponse.h
    ${PATH_PREFIX}/SmsgNewWorld.h
    ${PATH_PREFIX}/SmsgPageTextQueryResponse.h
    ${PATH_PREFIX}/SmsgPartyCommandResult.h
+   ${PATH_PREFIX}/SmsgPartyKillLog.h
    ${PATH_PREFIX}/SmsgPartyMemberStatsFull.h
    ${PATH_PREFIX}/SmsgPetActionSound.h
    ${PATH_PREFIX}/SmsgPetitionQueryResponse.h
@@ -236,22 +349,40 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/SmsgPetitionShowSignatures.h
    ${PATH_PREFIX}/SmsgPetitionSignResult.h
    ${PATH_PREFIX}/SmsgPetNameQuery.h
+   ${PATH_PREFIX}/SmsgPetUnlearnConfirm.h
    ${PATH_PREFIX}/SmsgPlayedTime.h
+   ${PATH_PREFIX}/SmsgPlayObjectSound.h
+   ${PATH_PREFIX}/SmsgPlaySound.h
+   ${PATH_PREFIX}/SmsgPowerUpdate.h
    ${PATH_PREFIX}/SmsgQueryTimeResponse.h
+   ${PATH_PREFIX}/SmsgQuestgiverStatus.h
    ${PATH_PREFIX}/SmsgQuestgiverStatusMultiple.h
+   ${PATH_PREFIX}/SmsgReadItemFailed.h
+   ${PATH_PREFIX}/SmsgReadItemOk.h
    ${PATH_PREFIX}/SmsgRealmSplit.h
+   ${PATH_PREFIX}/SmsgResurrectFailed.h
    ${PATH_PREFIX}/SmsgSellItem.h
+   ${PATH_PREFIX}/SmsgSendMailResult.h
    ${PATH_PREFIX}/SmsgSetExtraAuraInfo.h
+   ${PATH_PREFIX}/SmsgSetFlatSpellModifier.h
+   ${PATH_PREFIX}/SmsgSetPctSpellModifier.h
    ${PATH_PREFIX}/SmsgSetPlayerDeclinedNamesResult.h
    ${PATH_PREFIX}/SmsgSetProficiency.h
    ${PATH_PREFIX}/SmsgShowBank.h
+   ${PATH_PREFIX}/SmsgShowTaxiNodes.h
    ${PATH_PREFIX}/SmsgSpiritHealerConfirm.h
    ${PATH_PREFIX}/SmsgStableResult.h
    ${PATH_PREFIX}/SmsgStandstateUpdate.h
+   ${PATH_PREFIX}/SmsgStopMirrorTimer.h
+   ${PATH_PREFIX}/SmsgSummonRequest.h
+   ${PATH_PREFIX}/SmsgTaxinodeStatus.h
    ${PATH_PREFIX}/SmsgTextEmote.h
+   ${PATH_PREFIX}/SmsgTitleEarned.h
+   ${PATH_PREFIX}/SmsgTotemCreated.h
    ${PATH_PREFIX}/SmsgTradeStatus.h
    ${PATH_PREFIX}/SmsgTrainerBuySucceeded.h
    ${PATH_PREFIX}/SmsgTutorialFlags.h
+   ${PATH_PREFIX}/SmsgUpdateAccountDataComplete.h
    ${PATH_PREFIX}/SmsgUpdateAuraDuration.h
    ${PATH_PREFIX}/SmsgWeather.h
    ${PATH_PREFIX}/SmsgWorldStateUiTimerUpdate.h

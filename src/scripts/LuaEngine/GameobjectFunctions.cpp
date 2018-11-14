@@ -19,6 +19,7 @@ This file is released under the MIT license. See README-MIT for more information
 #include "LuaHelpers.h"
 #include <Spell/Customization/SpellCustomizations.hpp>
 #include <Map/WorldCreator.h>
+#include "Management/WeatherMgr.h"
 
 extern "C"
 {
@@ -109,7 +110,7 @@ int LuaGameObject::GossipSendPOI(lua_State* L, GameObject* /*ptr*/)
     if (!plr)
         return 0;
 
-    plr->Gossip_SendPOI(x, y, icon, flags, data, name);
+    plr->sendGossipPoiPacket(x, y, icon, flags, data, name);
     return 0;
 }
 

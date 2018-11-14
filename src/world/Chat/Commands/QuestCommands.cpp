@@ -306,26 +306,24 @@ bool ChatHandler::HandleQuestFinishCommand(const char* args, WorldSession* m_ses
                 else
                 {
                     // I need some way to get the guid without targeting the creature or looking through all the spawns...
-                    Object* quest_giver = 0;
+                    Object* questGiver = nullptr;
 
-                    for (size_t guid = 1; guid < plr->GetMapMgr()->CreatureStorage.size(); guid++)
+                    for (auto pCreature: plr->GetMapMgr()->CreatureStorage)
                     {
-                        Creature* pCreature = plr->GetMapMgr()->GetCreature(GET_LOWGUID_PART(guid));
                         if (pCreature)
                         {
                             if (pCreature->getEntry() == giver_id) //found creature
                             {
-                                quest_giver = pCreature;
-                                guid = plr->GetMapMgr()->CreatureStorage.size();
+                                questGiver = pCreature;
                             }
                         }
                     }
 
-                    if (quest_giver)
+                    if (questGiver)
                     {
                         GreenSystemMessage(m_session, "Found a quest_giver creature.");
-                        sQuestMgr.OnActivateQuestGiver(quest_giver, plr);
-                        sQuestMgr.GiveQuestRewardReputation(plr, qst, quest_giver);
+                        sQuestMgr.OnActivateQuestGiver(questGiver, plr);
+                        sQuestMgr.GiveQuestRewardReputation(plr, qst, questGiver);
                     }
                     else
                         RedSystemMessage(m_session, "Unable to find quest_giver object.");
@@ -697,14 +695,15 @@ bool ChatHandler::HandleQuestListCommand(const char* args, WorldSession* m_sessi
         quest_giver = atol(args);
     else
     {
-        uint64 guid = m_session->GetPlayer()->GetSelection();
-        if (guid == 0)
+        WoWGuid wowGuid;
+        wowGuid.Init(m_session->GetPlayer()->GetSelection());
+        if (wowGuid.GetOldGuid() == 0)
         {
             SystemMessage(m_session, "You must target an npc or specify an id.");
             return true;
         }
 
-        Creature* unit = m_session->GetPlayer()->GetMapMgr()->GetCreature(GET_LOWGUID_PART(guid));
+        Creature* unit = m_session->GetPlayer()->GetMapMgr()->GetCreature(wowGuid.getGuidLowPart());
         if (unit)
         {
             if (!unit->isQuestGiver())
@@ -789,14 +788,16 @@ bool ChatHandler::HandleQuestAddStartCommand(const char* args, WorldSession* m_s
     if (!*args)
         return false;
 
-    uint64 guid = m_session->GetPlayer()->GetSelection();
-    if (guid == 0)
+    WoWGuid wowGuid;
+    wowGuid.Init(m_session->GetPlayer()->GetSelection());
+
+    if (wowGuid.getGuidLowPart() == 0)
     {
         SystemMessage(m_session, "You must target an npc.");
         return false;
     }
 
-    Creature* unit = m_session->GetPlayer()->GetMapMgr()->GetCreature(GET_LOWGUID_PART(guid));
+    Creature* unit = m_session->GetPlayer()->GetMapMgr()->GetCreature(wowGuid.getGuidLowPart());
     if (!unit)
     {
         SystemMessage(m_session, "You must target an npc.");
@@ -874,14 +875,16 @@ bool ChatHandler::HandleQuestAddFinishCommand(const char* args, WorldSession* m_
     if (!*args)
         return false;
 
-    uint64 guid = m_session->GetPlayer()->GetSelection();
-    if (guid == 0)
+    WoWGuid wowGuid;
+    wowGuid.Init(m_session->GetPlayer()->GetSelection());
+
+    if (wowGuid.GetOldGuid() == 0)
     {
         SystemMessage(m_session, "You must target an npc.");
         return false;
     }
 
-    Creature* unit = m_session->GetPlayer()->GetMapMgr()->GetCreature(GET_LOWGUID_PART(guid));
+    Creature* unit = m_session->GetPlayer()->GetMapMgr()->GetCreature(wowGuid.getGuidLowPart());
     if (!unit)
     {
         SystemMessage(m_session, "You must target an npc.");
@@ -972,14 +975,16 @@ bool ChatHandler::HandleQuestDelStartCommand(const char* args, WorldSession* m_s
     if (!*args)
         return false;
 
-    uint64 guid = m_session->GetPlayer()->GetSelection();
-    if (guid == 0)
+    WoWGuid wowGuid;
+    wowGuid.Init(m_session->GetPlayer()->GetSelection());
+
+    if (wowGuid.GetOldGuid() == 0)
     {
         SystemMessage(m_session, "You must target an npc.");
         return false;
     }
 
-    Creature* unit = m_session->GetPlayer()->GetMapMgr()->GetCreature(GET_LOWGUID_PART(guid));
+    Creature* unit = m_session->GetPlayer()->GetMapMgr()->GetCreature(wowGuid.getGuidLowPart());
     if (!unit)
     {
         SystemMessage(m_session, "You must target an npc.");
@@ -1056,14 +1061,15 @@ bool ChatHandler::HandleQuestDelFinishCommand(const char* args, WorldSession* m_
     if (!*args)
         return false;
 
-    uint64 guid = m_session->GetPlayer()->GetSelection();
-    if (guid == 0)
+    WoWGuid wowGuid;
+    wowGuid.Init(m_session->GetPlayer()->GetSelection());
+    if (wowGuid.getGuidLowPart() == 0)
     {
         SystemMessage(m_session, "You must target an npc.");
         return false;
     }
 
-    Creature* unit = m_session->GetPlayer()->GetMapMgr()->GetCreature(GET_LOWGUID_PART(guid));
+    Creature* unit = m_session->GetPlayer()->GetMapMgr()->GetCreature(wowGuid.getGuidLowPart());
     if (!unit)
     {
         SystemMessage(m_session, "You must target an npc.");
@@ -1419,11 +1425,13 @@ bool ChatHandler::HandleQuestLoadCommand(const char* /*args*/, WorldSession* m_s
 
     BlueSystemMessage(m_session, "Load completed in %u ms.", Util::GetTimeDifferenceToNow(startTime));
 
-    uint64 guid = m_session->GetPlayer()->GetSelection();
-    if (guid == 0)
+    WoWGuid wowGuid;
+    wowGuid.Init(m_session->GetPlayer()->GetSelection());
+
+    if (wowGuid.GetOldGuid() == 0)
         return true;
 
-    Creature* unit = m_session->GetPlayer()->GetMapMgr()->GetCreature(GET_LOWGUID_PART(guid));
+    Creature* unit = m_session->GetPlayer()->GetMapMgr()->GetCreature(wowGuid.getGuidLowPart());
     if (!unit)
         return true;
 

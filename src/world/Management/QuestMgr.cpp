@@ -29,6 +29,11 @@
 #include "Map/MapMgr.h"
 #include "Spell/SpellAuras.h"
 #include "Spell/Customization/SpellCustomizations.hpp"
+#include "Server/Packets/MsgQuestPushResult.h"
+
+using namespace AscEmu::Packets;
+
+initialiseSingleton(QuestMgr);
 
 uint32 QuestMgr::CalcQuestStatus(Object* quest_giver, Player* plr, QuestRelation* qst)
 {
@@ -615,7 +620,6 @@ void QuestMgr::BuildRequestItems(WorldPacket* data, QuestProperties const* qst, 
 void QuestMgr::BuildQuestComplete(Player* plr, QuestProperties const* qst)
 {
     uint32 xp;
-    uint32 currtalentpoints = plr->GetCurrentTalentPoints();
     uint32 rewardtalents = qst->rewardtalents;
     uint32 playerlevel = plr->getLevel();
 
@@ -629,8 +633,12 @@ void QuestMgr::BuildQuestComplete(Player* plr, QuestProperties const* qst)
         plr->GiveXP(xp, 0, false);
     }
 
-    if (currtalentpoints <= (playerlevel - 9 - rewardtalents))
-        plr->AddTalentPointsToAllSpec(rewardtalents);
+    // Bonus talents
+    if (rewardtalents > 0)
+    {
+        plr->setTalentPointsFromQuests(plr->getTalentPointsFromQuests() + rewardtalents);
+        plr->setInitialTalentPoints();
+    }
 
     // Reward title
     if (qst->rewardtitleid > 0)
@@ -797,10 +805,7 @@ void QuestMgr::BuildQuestUpdateComplete(WorldPacket* data, QuestProperties const
 
 void QuestMgr::SendPushToPartyResponse(Player* plr, Player* pTarget, uint8 response)
 {
-    WorldPacket data(MSG_QUEST_PUSH_RESULT, 9);
-    data << uint64(pTarget->getGuid());
-    data << uint8(response);
-    plr->GetSession()->SendPacket(&data);
+    plr->GetSession()->SendPacket(MsgQuestPushResult(pTarget->getGuid(), 0, response).serialise().get());
 }
 
 bool QuestMgr::OnGameObjectActivate(Player* plr, GameObject* go)

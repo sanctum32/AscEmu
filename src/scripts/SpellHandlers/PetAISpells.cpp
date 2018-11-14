@@ -30,10 +30,8 @@
 
 class ArmyOfTheDeadGhoulAI : public CreatureAIScript
 {
-public:
-
     ADD_CREATURE_FACTORY_FUNCTION(ArmyOfTheDeadGhoulAI);
-    ArmyOfTheDeadGhoulAI(Creature* c) : CreatureAIScript(c)
+    explicit ArmyOfTheDeadGhoulAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
         getCreature()->GetAIInterface()->m_canMove = false;
     }
@@ -64,10 +62,8 @@ public:
 
 class ShadowFiendAI : public CreatureAIScript
 {
-public:
-
     ADD_CREATURE_FACTORY_FUNCTION(ShadowFiendAI);
-    ShadowFiendAI(Creature* c) : CreatureAIScript(c)
+    explicit ShadowFiendAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
     }
 
@@ -98,10 +94,8 @@ public:
 
 class MirrorImageAI : public CreatureAIScript
 {
-public:
-
     ADD_CREATURE_FACTORY_FUNCTION(MirrorImageAI);
-    MirrorImageAI(Creature* c) : CreatureAIScript(c)
+    explicit MirrorImageAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
     }
 
@@ -172,10 +166,8 @@ public:
 
 class DancingRuneWeaponAI : public CreatureAIScript
 {
-public:
-
     ADD_CREATURE_FACTORY_FUNCTION(DancingRuneWeaponAI);
-    DancingRuneWeaponAI(Creature* pCreature) : CreatureAIScript(pCreature)
+    explicit DancingRuneWeaponAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
         dpsCycle = 0;
         dpsSpell = 0;
@@ -235,7 +227,7 @@ public:
     void AIUpdate() override
     {
         Unit* curtarget = getCreature()->GetAIInterface()->getNextTarget();
-        if (!getCreature()->isCastingNonMeleeSpell() && curtarget)
+        if (!getCreature()->isCastingSpell() && curtarget)
         {
             switch (dpsCycle)
             {
@@ -310,10 +302,8 @@ private:
 
 class FrostBroodVanquisherAI : public CreatureAIScript
 {
-public:
-
     ADD_CREATURE_FACTORY_FUNCTION(FrostBroodVanquisherAI);
-    FrostBroodVanquisherAI(Creature* c) : CreatureAIScript(c)
+    explicit FrostBroodVanquisherAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
     }
 

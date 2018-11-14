@@ -7,8 +7,6 @@ master | development
 
 [![Coverity Snac](https://scan.coverity.com/projects/4747/badge.svg)](https://scan.coverity.com/projects/4747)
 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/842741b177dc4a798487729e110f6d2b)](https://www.codacy.com/app/mr/AscEmu?utm_source=github.com&utm_medium=referral&utm_content=AscEmu/AscEmu&utm_campaign=badger)
-
 [![Open HUB Stats](https://www.openhub.net/p/AscEmu/widgets/project_thin_badge.gif)](https://www.openhub.net/p/AscEmu)
 
 ## Introduction
@@ -48,8 +46,8 @@ Be patient with us and give us details.
 
 ## Install
 HowTo install (detailed guides on our wiki)
+* [Linux](https://ascemu.github.io/Wiki/docs/installation/linux/)
 * [Windows](https://ascemu.github.io/Wiki/docs/installation/windows/)
-* [Ubuntu](https://ascemu.github.io/Wiki/docs/installation/ubuntu/)
 
 
 ## Links

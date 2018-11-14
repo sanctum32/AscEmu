@@ -6,9 +6,10 @@ This file is released under the MIT license. See README-MIT for more information
 #include "StdAfx.h"
 #include "Chat/ChatHandler.hpp"
 #include "Server/WorldSession.h"
-#include "Spell/SpellFailure.h"
+#include "Spell/Definitions/SpellFailure.h"
 #include "Server/ServerState.h"
 #include "Objects/ObjectMgr.h"
+#include "Management/WeatherMgr.h"
 
 bool ChatHandler::HandleDoPercentDamageCommand(const char* args, WorldSession* session)
 {
@@ -501,7 +502,7 @@ bool ChatHandler::HandleSendCastFailed(const char* args, WorldSession* m_session
         RedSystemMessage(m_session, "Argument %u is out of range!", fail);
         return false;
     }
-    selected_player->SendCastResult(1, (uint8)fail, 0, 0);
+    selected_player->sendCastFailedPacket(1, (uint8)fail, 0, 0);
 
     return true;
 }

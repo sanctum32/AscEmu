@@ -27,6 +27,7 @@
 #include "Spell/SpellAuras.h"
 #include "Spell/Definitions/SpellCastTargetFlags.h"
 #include "Spell/Customization/SpellCustomizations.hpp"
+#include "Server/Packets/SmsgMoveKnockBack.h"
 
 bool ChatHandler::HandleDebugDumpMovementCommand(const char* /*args*/, WorldSession* session)
 {
@@ -81,12 +82,14 @@ bool ChatHandler::HandleDebugInFrontCommand(const char* /*args*/, WorldSession* 
 
 bool ChatHandler::HandleShowReactionCommand(const char* args, WorldSession* m_session)
 {
-    Object* obj = NULL;
+    Object* obj = nullptr;
 
-    uint64 guid = m_session->GetPlayer()->GetSelection();
-    if (guid != 0)
+    WoWGuid wowGuid;
+    wowGuid.Init(m_session->GetPlayer()->GetSelection());
+
+    if (wowGuid.GetOldGuid() != 0)
     {
-        obj = m_session->GetPlayer()->GetMapMgr()->GetCreature(GET_LOWGUID_PART(guid));
+        obj = m_session->GetPlayer()->GetMapMgr()->GetCreature(wowGuid.getGuidLowPart());
     }
 
     if (!obj)
@@ -142,10 +145,11 @@ bool ChatHandler::HandleAIMoveCommand(const char* args, WorldSession* m_session)
 {
     Creature* creature = nullptr;
 
-    uint64 guid = m_session->GetPlayer()->GetSelection();
-    if (guid != 0)
+    WoWGuid wowGuid;
+    wowGuid.Init(m_session->GetPlayer()->GetSelection());
+    if (wowGuid.GetOldGuid() != 0)
     {
-        creature = m_session->GetPlayer()->GetMapMgr()->GetCreature(GET_LOWGUID_PART(guid));
+        creature = m_session->GetPlayer()->GetMapMgr()->GetCreature(wowGuid.getGuidLowPart());
     }
 
     if (creature == nullptr)
@@ -251,15 +255,17 @@ bool ChatHandler::HandleAIMoveCommand(const char* args, WorldSession* m_session)
 
 bool ChatHandler::HandleFaceCommand(const char* args, WorldSession* m_session)
 {
-    Object* obj = NULL;
+    Object* obj = nullptr;
 
-    uint64 guid = m_session->GetPlayer()->GetSelection();
-    if (guid != 0)
+    WoWGuid wowGuid;
+    wowGuid.Init(m_session->GetPlayer()->GetSelection());
+
+    if (wowGuid.GetOldGuid() != 0)
     {
-        obj = m_session->GetPlayer()->GetMapMgr()->GetCreature(GET_LOWGUID_PART(guid));
+        obj = m_session->GetPlayer()->GetMapMgr()->GetCreature(wowGuid.getGuidLowPart());
     }
 
-    if (obj == NULL)
+    if (obj == nullptr)
     {
         SystemMessage(m_session, "You should select a creature.");
         return true;
@@ -410,14 +416,7 @@ bool ChatHandler::HandleKnockBackCommand(const char* args, WorldSession* m_sessi
 
     float z = f * 0.66f;
 
-    WorldPacket data(SMSG_MOVE_KNOCK_BACK, 50);
-    data << m_session->GetPlayer()->GetNewGUID();
-    data << Util::getMSTime();
-    data << dy;
-    data << dx;
-    data << f;
-    data << z;
-    m_session->SendPacket(&data);
+    m_session->SendPacket(AscEmu::Packets::SmsgMoveKnockBack(m_session->GetPlayer()->GetNewGUID(), Util::getMSTime(), dy, dx, f, z).serialise().get());
     return true;
 }
 
@@ -483,7 +482,7 @@ bool ChatHandler::HandleCalcThreatCommand(const char* args, WorldSession* m_sess
 
 bool ChatHandler::HandleThreatListCommand(const char* /*args*/, WorldSession* m_session)
 {
-    Unit* target = NULL;
+    Unit* target = nullptr;
     target = m_session->GetPlayer()->GetMapMgr()->GetUnit(m_session->GetPlayer()->GetSelection());
     if (!target)
     {
@@ -491,10 +490,12 @@ bool ChatHandler::HandleThreatListCommand(const char* /*args*/, WorldSession* m_
         return true;
     }
 
+    WoWGuid wowGuid;
+    wowGuid.Init(m_session->GetPlayer()->GetSelection());
+
     std::stringstream sstext;
-    sstext << "threatlist of creature: " << Arcemu::Util::GUID_LOPART(m_session->GetPlayer()->GetSelection()) << " " << Arcemu::Util::GUID_HIPART(m_session->GetPlayer()->GetSelection()) << '\n';
-    TargetMap::iterator itr;
-    for (itr = target->GetAIInterface()->GetAITargets()->begin(); itr != target->GetAIInterface()->GetAITargets()->end();)
+    sstext << "threatlist of creature: " << wowGuid.getGuidLowPart() << " " << wowGuid.getGuidHighPart() << '\n';
+    for (TargetMap::iterator itr = target->GetAIInterface()->GetAITargets()->begin(); itr != target->GetAIInterface()->GetAITargets()->end();)
     {
         Unit* ai_t = target->GetMapMgr()->GetUnit(itr->first);
         if (!ai_t || !itr->second)
@@ -719,7 +720,7 @@ bool ChatHandler::HandleDebugSpawnWarCommand(const char* args, WorldSession* m_s
             c->setMaxHealth(health);
             c->setHealth(health);
         }
-        c->setUInt32Value(UNIT_FIELD_FACTIONTEMPLATE, (count % 2) ? 1 : 2);
+        c->setFactionTemplate((count % 2) ? 1 : 2);
         c->setServersideFaction();
         c->PushToWorld(m);
 

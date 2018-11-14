@@ -766,7 +766,7 @@ void MapMgr::UpdateInRangeSet(Object* obj, Player* plObj, MapCell* cell, ByteBuf
                 {
                     plObj2 = static_cast<Player*>(curObj);
 
-                    if (plObj2->CanSee(obj) && !plObj2->IsVisible(obj->getGuid()))
+                    if (plObj2->canSee(obj) && !plObj2->IsVisible(obj->getGuid()))
                     {
                         CHECK_BUF;
                         count = obj->buildCreateUpdateBlockForPlayer(*buf, plObj2);
@@ -779,7 +779,7 @@ void MapMgr::UpdateInRangeSet(Object* obj, Player* plObj, MapCell* cell, ByteBuf
                 {
                     plObj2 = static_cast<Unit*>(curObj)->mPlayerControler;
 
-                    if (plObj2->CanSee(obj) && !plObj2->IsVisible(obj->getGuid()))
+                    if (plObj2->canSee(obj) && !plObj2->IsVisible(obj->getGuid()))
                     {
                         CHECK_BUF;
                         count = obj->buildCreateUpdateBlockForPlayer(*buf, plObj2);
@@ -791,7 +791,7 @@ void MapMgr::UpdateInRangeSet(Object* obj, Player* plObj, MapCell* cell, ByteBuf
 
                 if (plObj != nullptr)
                 {
-                    if (plObj->CanSee(curObj) && !plObj->IsVisible(curObj->getGuid()))
+                    if (plObj->canSee(curObj) && !plObj->IsVisible(curObj->getGuid()))
                     {
                         CHECK_BUF;
                         count = curObj->buildCreateUpdateBlockForPlayer(*buf, plObj);
@@ -807,7 +807,7 @@ void MapMgr::UpdateInRangeSet(Object* obj, Player* plObj, MapCell* cell, ByteBuf
                 if (curObj->isPlayer())
                 {
                     plObj2 = static_cast<Player*>(curObj);
-                    cansee = plObj2->CanSee(obj);
+                    cansee = plObj2->canSee(obj);
                     isvisible = plObj2->IsVisible(obj->getGuid());
                     if (!cansee && isvisible)
                     {
@@ -826,7 +826,7 @@ void MapMgr::UpdateInRangeSet(Object* obj, Player* plObj, MapCell* cell, ByteBuf
                 else if (curObj->isCreatureOrPlayer() && static_cast<Unit*>(curObj)->mPlayerControler != nullptr)
                 {
                     plObj2 = static_cast<Unit*>(curObj)->mPlayerControler;
-                    cansee = plObj2->CanSee(obj);
+                    cansee = plObj2->canSee(obj);
                     isvisible = plObj2->IsVisible(obj->getGuid());
                     if (!cansee && isvisible)
                     {
@@ -845,7 +845,7 @@ void MapMgr::UpdateInRangeSet(Object* obj, Player* plObj, MapCell* cell, ByteBuf
 
                 if (plObj != nullptr)
                 {
-                    cansee = plObj->CanSee(curObj);
+                    cansee = plObj->canSee(curObj);
                     isvisible = plObj->IsVisible(curObj->getGuid());
                     if (!cansee && isvisible)
                     {
@@ -1216,7 +1216,7 @@ void MapMgr::ChangeFarsightLocation(Player* plr, DynamicObject* farsight)
         // We're clearing.
         for (ObjectSet::iterator itr = plr->m_visibleFarsightObjects.begin(); itr != plr->m_visibleFarsightObjects.end(); ++itr)
         {
-            if (plr->IsVisible((*itr)->getGuid()) && !plr->CanSee((*itr)))
+            if (plr->IsVisible((*itr)->getGuid()) && !plr->canSee((*itr)))
             {
                 plr->PushOutOfRange((*itr)->GetNewGUID());      // Send destroy
             }
@@ -1245,7 +1245,7 @@ void MapMgr::ChangeFarsightLocation(Player* plr, DynamicObject* farsight)
                         if (obj == nullptr)
                             continue;
 
-                        if (!plr->IsVisible(obj->getGuid()) && plr->CanSee(obj) && farsight->GetDistance2dSq(obj) <= m_UpdateDistance)
+                        if (!plr->IsVisible(obj->getGuid()) && plr->canSee(obj) && farsight->GetDistance2dSq(obj) <= m_UpdateDistance)
                         {
                             ByteBuffer buf;
                             uint32 count = obj->buildCreateUpdateBlockForPlayer(&buf, plr);
@@ -1442,15 +1442,18 @@ Unit* MapMgr::GetUnit(const uint64 & guid)
     if (guid == 0)
         return nullptr;
 
-    switch (GET_TYPE_FROM_GUID(guid))
+    WoWGuid wowGuid;
+    wowGuid.Init(guid);
+
+    switch (wowGuid.getHigh())
     {
-        case HIGHGUID_TYPE_UNIT:
-        case HIGHGUID_TYPE_VEHICLE:
-            return GetCreature(GET_LOWGUID_PART(guid));
-        case HIGHGUID_TYPE_PLAYER:
-            return GetPlayer(Arcemu::Util::GUID_LOPART(guid));
-        case HIGHGUID_TYPE_PET:
-            return GetPet(GET_LOWGUID_PART(guid));
+        case HighGuid::Unit:
+        case HighGuid::Vehicle:
+            return GetCreature(wowGuid.getGuidLowPart());
+        case HighGuid::Player:
+            return GetPlayer(wowGuid.getGuidLowPart());
+        case HighGuid::Pet:
+            return GetPet(wowGuid.getGuidLowPart());
     }
 
     return nullptr;
@@ -1461,17 +1464,20 @@ Object* MapMgr::_GetObject(const uint64 & guid)
     if (!guid)
         return nullptr;
 
-    switch (GET_TYPE_FROM_GUID(guid))
+    WoWGuid wowGuid;
+    wowGuid.Init(guid);
+
+    switch (wowGuid.getHigh())
     {
-        case HIGHGUID_TYPE_GAMEOBJECT:
-            return GetGameObject(GET_LOWGUID_PART(guid));
-        case HIGHGUID_TYPE_UNIT:
-        case HIGHGUID_TYPE_VEHICLE:
-            return GetCreature(GET_LOWGUID_PART(guid));
-        case HIGHGUID_TYPE_DYNAMICOBJECT:
-            return GetDynamicObject((uint32)guid);
-        case HIGHGUID_TYPE_TRANSPORTER:
-            return objmgr.GetTransporter(Arcemu::Util::GUID_LOPART(guid));
+        case HighGuid::GameObject:
+            return GetGameObject(wowGuid.getGuidLowPart());
+        case HighGuid::Unit:
+        case HighGuid::Vehicle:
+            return GetCreature(wowGuid.getGuidLowPart());
+        case HighGuid::DynamicObject:
+            return GetDynamicObject(wowGuid.getGuidLowPart());
+        case HighGuid::Transporter:
+            return objmgr.GetTransporter(wowGuid.getGuidLowPart());
         default:
             return GetUnit(guid);
     }

@@ -30,6 +30,14 @@
 #include "Spell/SpellAuras.h"
 #include <Spell/Customization/SpellCustomizations.hpp>
 
+enum
+{
+    // Crystal Spikes
+    CN_CRYSTAL_SPIKE = 27099,
+    CRYSTAL_SPIKES = 47958,
+    CRYSTAL_SPIKES_H = 57082
+};
+
 bool FrostWarding(uint8_t /*effectIndex*/, Spell* s)
 {
     Unit* unitTarget = s->GetUnitTarget();
@@ -109,7 +117,7 @@ bool Cannibalize(uint8_t effectIndex, Spell* s)
         s->p_caster->cannibalize = true;
         s->p_caster->cannibalizeCount = 0;
         sEventMgr.AddEvent(s->p_caster, &Player::EventCannibalize, uint32(7), EVENT_CANNIBALIZE, 2000, 5, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
-        s->p_caster->setUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_STATE_CANNIBALIZE);
+        s->p_caster->setEmoteState(EMOTE_STATE_CANNIBALIZE);
     }
 
     return true;
@@ -248,7 +256,7 @@ bool DeadlyThrowInterrupt(uint8_t /*effectIndex*/, Aura* a, bool apply)
     Unit* m_target = a->GetTarget();
 
     // Interrupt target's current casted spell (either channeled or generic spell with cast time)
-    if (m_target->isCastingNonMeleeSpell(true, false, true))
+    if (m_target->isCastingSpell(false, true))
     {
         uint32_t school = 0;
 
@@ -257,7 +265,7 @@ bool DeadlyThrowInterrupt(uint8_t /*effectIndex*/, Aura* a, bool apply)
             school = m_target->getCurrentSpell(CURRENT_CHANNELED_SPELL)->GetSpellInfo()->getSchool();
             m_target->interruptSpellWithSpellType(CURRENT_CHANNELED_SPELL);
         }
-        // No need to check cast time for generic spells, checked already in Object::isCastingNonMeleeSpell()
+        // No need to check cast time for generic spells, checked already in Object::isCastingSpell()
         else if (m_target->getCurrentSpell(CURRENT_GENERIC_SPELL) != nullptr)
         {
             school = m_target->getCurrentSpell(CURRENT_GENERIC_SPELL)->GetSpellInfo()->getSchool();
@@ -284,9 +292,12 @@ bool WaitingToResurrect(uint8_t /*effectIndex*/, Aura* a, bool apply)
 
     uint64 crtguid = p_target->m_areaSpiritHealer_guid;
 
-    Creature* pCreature = p_target->IsInWorld() ? p_target->GetMapMgr()->GetCreature(GET_LOWGUID_PART(crtguid)) : NULL;
+    WoWGuid wowGuid;
+    wowGuid.Init(crtguid);
 
-    if (pCreature == NULL || p_target->m_bg == NULL)
+    Creature* pCreature = p_target->IsInWorld() ? p_target->GetMapMgr()->GetCreature(wowGuid.getGuidLowPart()) : nullptr;
+
+    if (pCreature == nullptr || p_target->m_bg == nullptr)
         return true;
 
     p_target->m_bg->RemovePlayerFromResurrect(p_target, pCreature);
@@ -369,6 +380,7 @@ bool Temper(uint8_t /*effectIndex*/, Spell* pSpell)
     return true;
 };
 
+//////////////////////////////////////////////////////////////////////////////////////////
 //Chaos blast dummy effect
 bool ChaosBlast(uint8_t /*effectIndex*/, Spell* pSpell)
 {
@@ -409,10 +421,6 @@ bool PreparationForBattle(uint8_t /*effectIndex*/, Spell* pSpell)
 
     return true;
 };
-
-#define CN_CRYSTAL_SPIKE    27099
-#define CRYSTAL_SPIKES      47958
-#define CRYSTAL_SPIKES_H    57082
 
 bool CrystalSpikes(uint8_t /*effectIndex*/, Spell* pSpell)
 {
@@ -586,6 +594,7 @@ const float sotaTransDest[5][4] =
     { 1193.857f, 69.9f, 58.046f, 5.7245f },
 };
 
+//////////////////////////////////////////////////////////////////////////////////////////
 // 54640
 bool SOTATeleporter(uint8_t /*effectIndex*/, Spell* s)
 {
@@ -613,6 +622,7 @@ bool SOTATeleporter(uint8_t /*effectIndex*/, Spell* s)
     return true;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////
 // 51892 - Eye of Acherus Visual
 bool EyeOfAcherusVisual(uint8_t /*effectIndex*/, Spell* spell)
 {
@@ -625,6 +635,7 @@ bool EyeOfAcherusVisual(uint8_t /*effectIndex*/, Spell* spell)
     return true;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////
 // 52694 - Recall Eye of Acherus
 bool RecallEyeOfAcherus(uint8_t /*effectIndex*/, Spell* spell)
 {

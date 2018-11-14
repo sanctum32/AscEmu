@@ -27,6 +27,9 @@
 #include "Storage/MySQLDataStore.hpp"
 #include "Data/WoWItem.h"
 #include "Data/WoWPlayer.h"
+#include "Server/Packets/SmsgInventoryChangeFailure.h"
+
+using namespace AscEmu::Packets;
 
 ItemInterface::ItemInterface(Player* pPlayer) : m_EquipmentSets(pPlayer->getGuidLow())
 {
@@ -102,14 +105,14 @@ void ItemInterface::m_DestroyForPlayer()        // 100%
                     Item* pItem = static_cast<Container*>(m_pItems[i])->GetItem(static_cast<int16>(e));
                     if (pItem)
                     {
-                        m_pOwner->SendDestroyObject(pItem->getGuid());
+                        m_pOwner->sendDestroyObjectPacket(pItem->getGuid());
                     }
                 }
-                m_pOwner->SendDestroyObject(m_pItems[i]->getGuid());
+                m_pOwner->sendDestroyObjectPacket(m_pItems[i]->getGuid());
             }
             else
             {
-                m_pOwner->SendDestroyObject(m_pItems[i]->getGuid());
+                m_pOwner->sendDestroyObjectPacket(m_pItems[i]->getGuid());
             }
         }
     }
@@ -316,8 +319,6 @@ AddItemResult ItemInterface::m_AddItem(Item* item, int8 ContainerSlot, int16 slo
 
     if (ContainerSlot == INVENTORY_SLOT_NOT_SET && slot == EQUIPMENT_SLOT_OFFHAND && item->getItemProperties()->Class == ITEM_CLASS_WEAPON)
     {
-        m_pOwner->SetDualWield(true);
-
         /////////////////////////////////////////// Titan's grip stuff ////////////////////////////////////////////////////////////
 
         uint32 subclass = item->getItemProperties()->SubClass;
@@ -407,9 +408,6 @@ Item* ItemInterface::SafeRemoveAndRetreiveItemFromSlot(int8 ContainerSlot, int16
             }
             else if (slot < INVENTORY_SLOT_BAG_END)
                 m_pOwner->ApplyItemMods(pItem, slot, false);
-
-            if (slot == EQUIPMENT_SLOT_OFFHAND)
-                m_pOwner->SetDualWield(false);
 
             if (destroy)
             {
@@ -574,9 +572,6 @@ bool ItemInterface::SafeFullRemoveItemFromSlot(int8 ContainerSlot, int16 slot)
             }
             else if (slot < INVENTORY_SLOT_BAG_END)
                 m_pOwner->ApplyItemMods(pItem, slot, false);  //watch containers that give attackspeed and stuff ;)
-
-            if (slot == EQUIPMENT_SLOT_OFFHAND)
-                m_pOwner->SetDualWield(false);
 
             if (pItem->IsInWorld())
             {
@@ -2132,14 +2127,14 @@ int8 ItemInterface::CanEquipItemInSlot(int8 DstInvSlot, int8 slot, ItemPropertie
         case EQUIPMENT_SLOT_MAINHAND:
         {
             if (type == INVTYPE_WEAPON || type == INVTYPE_WEAPONMAINHAND ||
-                (type == INVTYPE_2HWEAPON && (!GetInventoryItem(EQUIPMENT_SLOT_OFFHAND) || skip_2h_check || m_pOwner->DualWield2H)))
+                (type == INVTYPE_2HWEAPON && (!GetInventoryItem(EQUIPMENT_SLOT_OFFHAND) || skip_2h_check || m_pOwner->canDualWield2H())))
                 return 0;
             else
                 return INV_ERR_ITEM_DOESNT_GO_TO_SLOT;
         }
         case EQUIPMENT_SLOT_OFFHAND:
         {
-            if ((type == INVTYPE_2HWEAPON || type == INVTYPE_SHIELD) && m_pOwner->DualWield2H)
+            if ((type == INVTYPE_2HWEAPON || type == INVTYPE_SHIELD) && m_pOwner->canDualWield2H())
             {
                 return 0;
             }
@@ -2727,34 +2722,30 @@ Item* ItemInterface::GetItemByGUID(uint64 Guid)
     return nullptr;
 }
 
-/// Inventory Error report
+// Inventory Error report
 void ItemInterface::BuildInventoryChangeError(Item* SrcItem, Item* DstItem, uint8 Error)
 {
-    WorldPacket data(SMSG_INVENTORY_CHANGE_FAILURE, 22);
-
-    data << uint8(Error);
+    uint64_t srcGuid = 0;
+    uint64_t destGuid = 0;
+    uint32_t reqLevel = 0;
+    bool sendExtraData = false;
 
     if (SrcItem != nullptr)
-        data << uint64(SrcItem->getGuid());
-    else
-        data << uint64(0);
+        srcGuid = SrcItem->getGuid();
 
     if (DstItem != nullptr)
-        data << uint64(DstItem->getGuid());
-    else
-        data << uint64(0);
+        destGuid = DstItem->getGuid();
 
-    data << uint8(0);
-
-    if ((Error == INV_ERR_YOU_MUST_REACH_LEVEL_N) || (Error == INV_ERR_PURCHASE_LEVEL_TOO_LOW))
+    if (Error == INV_ERR_YOU_MUST_REACH_LEVEL_N || Error == INV_ERR_PURCHASE_LEVEL_TOO_LOW)
     {
         if (SrcItem)
         {
-            data << uint32(SrcItem->getItemProperties()->RequiredLevel);
+            sendExtraData = true;
+            reqLevel = SrcItem->getItemProperties()->RequiredLevel;
         }
     }
 
-    m_pOwner->SendPacket(&data);
+    m_pOwner->SendPacket(SmsgInventoryChangeFailure(Error, srcGuid, destGuid, reqLevel, sendExtraData).serialise().get());
 }
 
 void ItemInterface::EmptyBuyBack()
@@ -2763,7 +2754,7 @@ void ItemInterface::EmptyBuyBack()
     {
         if (m_pBuyBack[j] != nullptr)
         {
-            m_pOwner->SendDestroyObject(m_pBuyBack[j]->getGuid());
+            m_pOwner->sendDestroyObjectPacket(m_pBuyBack[j]->getGuid());
             m_pBuyBack[j]->DeleteFromDB();
 
             if (m_pBuyBack[j]->isContainer())
@@ -2797,7 +2788,7 @@ void ItemInterface::AddBuyBackItem(Item* it, uint32 price)
     {
         if (m_pBuyBack[0] != nullptr)
         {
-            m_pOwner->SendDestroyObject(m_pBuyBack[0]->getGuid());
+            m_pOwner->sendDestroyObjectPacket(m_pBuyBack[0]->getGuid());
             m_pBuyBack[0]->DeleteFromDB();
 
             if (m_pBuyBack[0]->isContainer())
@@ -3240,8 +3231,6 @@ void ItemInterface::SwapItemSlots(int8 srcslot, int8 dstslot)
     {
         if (m_pItems[EQUIPMENT_SLOT_OFFHAND] != nullptr && m_pItems[EQUIPMENT_SLOT_OFFHAND]->getItemProperties()->Class == ITEM_CLASS_WEAPON)
         {
-            m_pOwner->SetDualWield(true);
-
             /////////////////////////////////////////// Titan's grip stuff ////////////////////////////////////////////////////////////
             uint32 subclass = m_pItems[EQUIPMENT_SLOT_OFFHAND]->getItemProperties()->SubClass;
             if (subclass == ITEM_SUBCLASS_WEAPON_TWOHAND_AXE || subclass == ITEM_SUBCLASS_WEAPON_TWOHAND_MACE || subclass == ITEM_SUBCLASS_WEAPON_TWOHAND_SWORD)
@@ -3250,8 +3239,6 @@ void ItemInterface::SwapItemSlots(int8 srcslot, int8 dstslot)
             }
             ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         }
-        else
-            m_pOwner->SetDualWield(false);
     }
 
     //src item is equipped now

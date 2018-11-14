@@ -436,7 +436,6 @@ bool Pet::CreateAsSummon(uint32 entry, CreatureProperties const* ci, Creature* c
         if (created_by_spell != NULL)
         {
             if (created_by_spell->hasEffect(SPELL_EFFECT_SUMMON_PET) ||
-                created_by_spell->hasEffect(SPELL_EFFECT_TAME_CREATURE) ||
                 created_by_spell->hasEffect(SPELL_EFFECT_TAMECREATURE))
                 SetNameForEntry(entry);
 
@@ -469,8 +468,8 @@ bool Pet::CreateAsSummon(uint32 entry, CreatureProperties const* ci, Creature* c
         setUnitFlags(UNIT_FLAG_PVP_ATTACKABLE | UNIT_FLAG_COMBAT);  // why combat ??
         SetPower(POWER_TYPE_HAPPINESS, PET_HAPPINESS_UPDATE_VALUE >> 1);                //happiness
         SetMaxPower(POWER_TYPE_HAPPINESS, 1000000);
-        setUInt32Value(UNIT_FIELD_PETEXPERIENCE, 0);
-        setUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP, GetNextLevelXP(level));
+        setPetExperience(0);
+        setPetNextLevelExperience(GetNextLevelXP(level));
         SetPower(POWER_TYPE_FOCUS, 100);                                                // Focus
         SetMaxPower(POWER_TYPE_FOCUS, 100);
         setSheathType(SHEATH_STATE_MELEE);
@@ -905,7 +904,7 @@ void Pet::LoadFromDB(Player* owner, PlayerPet* pi)
 
     //Preventing overbuffs
     setAttackPower(0);
-    SetAttackPowerMods(0);
+    setAttackPowerMods(0);
     setBaseAttackTime(MELEE, 2000);
     setBaseAttackTime(OFFHAND, 2000);
     setModCastSpeed(1.0f);          // better set this one
@@ -915,7 +914,7 @@ void Pet::LoadFromDB(Player* owner, PlayerPet* pi)
     if (pi->type == WARLOCKPET)
     {
         SetNameForEntry(mPi->entry);
-        setUInt64Value(UNIT_CREATED_BY_SPELL, mPi->spellid);
+        setCreatedBySpellId(mPi->spellid);
         setUnitFlags(UNIT_FLAG_PVP_ATTACKABLE);
         setSheathType(SHEATH_STATE_MELEE);
         setShapeShiftForm(FORM_TREE);   //\todo really?
@@ -931,8 +930,8 @@ void Pet::LoadFromDB(Player* owner, PlayerPet* pi)
         setUnitFlags(UNIT_FLAG_PVP_ATTACKABLE | UNIT_FLAG_COMBAT);      // why combat ??
         SetPower(POWER_TYPE_HAPPINESS, PET_HAPPINESS_UPDATE_VALUE >> 1);                    //happiness
         SetMaxPower(POWER_TYPE_HAPPINESS, 1000000);
-        setUInt32Value(UNIT_FIELD_PETEXPERIENCE, mPi->xp);
-        setUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP, GetNextLevelXP(mPi->level));
+        setPetExperience(mPi->xp);
+        setPetNextLevelExperience(GetNextLevelXP(mPi->level));
         setSheathType(SHEATH_STATE_MELEE);
         SetPower(POWER_TYPE_FOCUS, 100);                                                    // Focus
         SetMaxPower(POWER_TYPE_FOCUS, 100);
@@ -1011,8 +1010,8 @@ void Pet::InitializeMe(bool first)
     m_Owner->AddSummon(this);
     m_Owner->setSummonGuid(getGuid());
 
-    setUInt32Value(UNIT_FIELD_PETNUMBER, GetUIdFromGUID());
-    setUInt32Value(UNIT_FIELD_PET_NAME_TIMESTAMP, (uint32)UNIXTIME);
+    setPetNumber(GetUIdFromGUID());
+    setPetNameTimestamp(static_cast<uint32_t>(UNIXTIME));
 
     myFamily = sCreatureFamilyStore.LookupEntry(creature_properties->Family);
 
@@ -1099,7 +1098,7 @@ void Pet::UpdatePetInfo(bool bSetToOffline)
 
     player_pet->name = GetName();
     player_pet->number = m_PetNumber;
-    player_pet->xp = GetXP();
+    player_pet->xp = getPetExperience();
     player_pet->level = getLevel();
     player_pet->happinessupdate = m_HappinessTimer;
 
@@ -1260,8 +1259,8 @@ bool Pet::CanGainXP()
 
 void Pet::GiveXP(uint32 xp)
 {
-    xp += GetXP();
-    uint32 nxp = getUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP);
+    xp += getPetExperience();
+    uint32 nxp = getPetNextLevelExperience();
 
     if (xp >= nxp)
     {
@@ -1269,13 +1268,13 @@ void Pet::GiveXP(uint32 xp)
         setLevel(1);
         xp -= nxp;
         nxp = GetNextLevelXP(getLevel());
-        setUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP, nxp);
+        setPetNextLevelExperience(nxp);
         ApplyStatsForLevel();
         UpdateSpellList();
         SendTalentsToOwner();
     }
 
-    setUInt32Value(UNIT_FIELD_PETEXPERIENCE, xp);
+    setPetExperience(xp);
 }
 
 uint32 Pet::GetNextLevelXP(uint32 level)
@@ -1350,7 +1349,6 @@ void Pet::UpdateSpellList(bool showLearnSpells)
 
     if (s || s2)
     {
-        SpellInfo* sp;
         for (uint32 idx = 0; idx < sSkillLineAbilityStore.GetNumRows(); ++idx)
         {
             auto skill_line_ability = sSkillLineAbilityStore.LookupEntry(idx);
@@ -1360,7 +1358,7 @@ void Pet::UpdateSpellList(bool showLearnSpells)
             // Update existing spell, or add new "automatic-acquired" spell
             if ((skill_line_ability->skilline == s || skill_line_ability->skilline == s2) && skill_line_ability->acquireMethod == 2)
             {
-                sp = sSpellCustomizations.GetSpellInfo(skill_line_ability->spell);
+                SpellInfo* sp = sSpellCustomizations.GetSpellInfo(skill_line_ability->spell);
                 if (sp && getLevel() >= sp->getBaseLevel())
                 {
                     // Pet is able to learn this spell; now check if it already has it, or a higher rank of it
@@ -1649,7 +1647,7 @@ void Pet::Rename(std::string NewName)
     UpdatePetInfo(false);
 
     // update timestamp to force a re-query
-    setUInt32Value(UNIT_FIELD_PET_NAME_TIMESTAMP, (uint32)UNIXTIME);
+    setPetNameTimestamp(static_cast<uint32>(UNIXTIME));
 
     // save new summoned name to db (.pet renamepet)
     if (m_Owner->getClass() == WARLOCK)
@@ -2363,7 +2361,7 @@ void Pet::TakeDamage(Unit* pAttacker, uint32 damage, uint32 spellid, bool no_rem
 
     GetAIInterface()->AttackReaction(pAttacker, damage, spellid);
 
-    ModHealth(-1 * static_cast<int32>(damage));
+    modHealth(-1 * static_cast<int32>(damage));
 }
 
 void Pet::Die(Unit* pAttacker, uint32 /*damage*/, uint32 spellid)
@@ -2417,7 +2415,7 @@ void Pet::Die(Unit* pAttacker, uint32 /*damage*/, uint32 spellid)
     for (const auto& itr : getInRangePlayersSet())
     {
         Unit* attacker = static_cast<Unit*>(itr);
-        if (attacker && attacker->isCastingNonMeleeSpell())
+        if (attacker && attacker->isCastingSpell())
         {
             for (uint8_t i = 0; i < CURRENT_SPELL_MAX; ++i)
             {

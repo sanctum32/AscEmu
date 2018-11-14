@@ -39,7 +39,7 @@ public:
         creat->GetAIInterface()->StopMovement(3000);
         creat->GetAIInterface()->SetAllowedToEnterCombat(false);
         creat->SendChatMessage(CHAT_MSG_MONSTER_SAY, LANG_UNIVERSAL, "Okay let's do!");
-        creat->setUInt32Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_NONE);
+        creat->setNpcFlags(UNIT_NPC_FLAG_NONE);
 
     }
 };
@@ -59,10 +59,8 @@ static Movement::Location WaypointsMiran[] =
 
 class Miran : public CreatureAIScript
 {
-
-public:
     ADD_CREATURE_FACTORY_FUNCTION(Miran);
-    Miran(Creature* pCreature) : CreatureAIScript(pCreature)
+    explicit Miran(Creature* pCreature) : CreatureAIScript(pCreature)
     {
         WPCount = 7;
 
@@ -93,7 +91,6 @@ public:
 
     uint8 WPCount;
 };
-
 
 void SetupLochModan(ScriptMgr* mgr)
 {

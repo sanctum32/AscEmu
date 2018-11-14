@@ -11,7 +11,7 @@ This file is released under the MIT license. See README-MIT for more information
 #include "Server/MainServerDefines.h"
 #include "Map/MapMgr.h"
 #include "Spell/Customization/SpellCustomizations.hpp"
-#include "Spell/SpellEffects.h"
+#include "Spell/Definitions/SpellEffects.h"
 
 //.npc addagent
 bool ChatHandler::HandleNpcAddAgentCommand(const char* args, WorldSession* m_session)
@@ -408,7 +408,7 @@ bool ChatHandler::HandleNpcInfoCommand(const char* /*args*/, WorldSession* m_ses
     // flags
     GreenSystemMessage(m_session, "Flags ============================");
     std::string s = GetNpcFlagString(creature_target);
-    GreenSystemMessage(m_session, "NpcFlags: %u%s", creature_target->getUInt32Value(UNIT_NPC_FLAGS), s.c_str());
+    GreenSystemMessage(m_session, "NpcFlags: %u%s", creature_target->getNpcFlags(), s.c_str());
 
     uint8 pvp_flags = creature_target->getPvpFlags();
     GreenSystemMessage(m_session, "PvPFlags: %u", pvp_flags);
@@ -824,18 +824,20 @@ bool ChatHandler::HandlePossessCommand(const char* /*args*/, WorldSession* m_ses
 bool ChatHandler::HandleNpcVendorAddItemCommand(const char* args, WorldSession* m_session)
 {
 #if VERSION_STRING != Cata
-    char* pitem = strtok((char*)args, " ");
+    char* pitem = strtok(const_cast<char*>(args), " ");
     if (!pitem)
         return false;
 
-    uint64 guid = m_session->GetPlayer()->GetSelection();
-    if (guid == 0)
+    WoWGuid wowGuid;
+    wowGuid.Init(m_session->GetPlayer()->GetSelection());
+
+    if (wowGuid.GetOldGuid() == 0)
     {
         SystemMessage(m_session, "No selection.");
         return true;
     }
 
-    Creature* selected_creature = m_session->GetPlayer()->GetMapMgr()->GetCreature(GET_LOWGUID_PART(guid));
+    Creature* selected_creature = m_session->GetPlayer()->GetMapMgr()->GetCreature(wowGuid.getGuidLowPart());
     if (selected_creature == nullptr)
     {
         SystemMessage(m_session, "You should select a creature.");
@@ -845,7 +847,7 @@ bool ChatHandler::HandleNpcVendorAddItemCommand(const char* args, WorldSession* 
     uint32 item = atoi(pitem);
     int amount = -1;
 
-    char* pamount = strtok(NULL, " ");
+    char* pamount = strtok(nullptr, " ");
     if (pamount)
         amount = atoi(pamount);
 
@@ -856,12 +858,12 @@ bool ChatHandler::HandleNpcVendorAddItemCommand(const char* args, WorldSession* 
     }
 
     uint32 costid = 0;
-    char* pcostid = strtok(NULL, " ");
+    char* pcostid = strtok(nullptr, " ");
     if (pcostid)
         costid = atoi(pcostid);
 
-    auto item_extended_cost = (costid > 0) ? sItemExtendedCostStore.LookupEntry(costid) : NULL;
-    if (costid > 0 && sItemExtendedCostStore.LookupEntry(costid) == NULL)
+    auto item_extended_cost = (costid > 0) ? sItemExtendedCostStore.LookupEntry(costid) : nullptr;
+    if (costid > 0 && sItemExtendedCostStore.LookupEntry(costid) == nullptr)
     {
         SystemMessage(m_session, "You've entered invalid extended cost id.");
         return true;
@@ -907,14 +909,15 @@ bool ChatHandler::HandleNpcVendorRemoveItemCommand(const char* args, WorldSessio
     if (!iguid)
         return false;
 
-    uint64 guid = m_session->GetPlayer()->GetSelection();
-    if (guid == 0)
+    WoWGuid wowGuid;
+    wowGuid.Init(m_session->GetPlayer()->GetSelection());
+    if (wowGuid.GetOldGuid() == 0)
     {
         SystemMessage(m_session, "No selection.");
         return true;
     }
 
-    Creature* selected_creature = m_session->GetPlayer()->GetMapMgr()->GetCreature(GET_LOWGUID_PART(guid));
+    Creature* selected_creature = m_session->GetPlayer()->GetMapMgr()->GetCreature(wowGuid.getGuidLowPart());
     if (selected_creature == nullptr)
     {
         SystemMessage(m_session, "You should select a creature.");
@@ -1253,8 +1256,8 @@ bool ChatHandler::HandleNpcSetFlagsCommand(const char* args, WorldSession* m_ses
     if (creature_target == nullptr)
         return false;
 
-    uint32 old_npc_flags = creature_target->getUInt32Value(UNIT_NPC_FLAGS);
-    creature_target->setUInt32Value(UNIT_NPC_FLAGS, npc_flags);
+    uint32 old_npc_flags = creature_target->getNpcFlags();
+    creature_target->addNpcFlags(npc_flags);
 
     if (m_session->GetPlayer()->SaveAllChangesCommand)
         save = 1;

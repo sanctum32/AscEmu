@@ -38,7 +38,7 @@
 #include <Spell/Definitions/AuraInterruptFlags.h>
 #include "Spell/Definitions/PowerType.h"
 #include "Pet.h"
-#include "Spell/SpellEffects.h"
+#include "Spell/Definitions/SpellEffects.h"
 #include "Storage/MySQLStructures.h"
 #include "Objects/ObjectMgr.h"
 
@@ -94,8 +94,8 @@ Creature::Creature(uint64 guid)
     mTrainer = 0;
     m_spawn = 0;
     auctionHouse = 0;
-    SetAttackPowerMultiplier(0.0f);
-    SetRangedAttackPowerMultiplier(0.0f);
+    setAttackPowerMultiplier(0.0f);
+    setRangedAttackPowerMultiplier(0.0f);
     m_custom_waypoint_map = nullptr;
     m_escorter = NULL;
     m_limbostate = false;
@@ -259,7 +259,7 @@ void Creature::OnRespawn(MapMgr* m)
     setDynamicFlags(0); // not tagging shit
     if (m_spawn)
     {
-        setUInt32Value(UNIT_NPC_FLAGS, creature_properties->NPCFLags);
+        setNpcFlags(creature_properties->NPCFLags);
         setEmoteState(m_spawn->emote_state);
 
         // creature's death state
@@ -409,7 +409,7 @@ void Creature::SaveToDB()
         m_spawn->y = m_position.y;
         m_spawn->z = m_position.z;
         m_spawn->o = m_position.o;
-        m_spawn->emote_state = m_uint32Values[UNIT_NPC_EMOTESTATE];
+        m_spawn->emote_state = getEmoteState();
         m_spawn->flags = getUnitFlags();
         m_spawn->factionid = getFactionTemplate();
         m_spawn->bytes0 = m_uint32Values[UNIT_FIELD_BYTES_0];
@@ -420,7 +420,7 @@ void Creature::SaveToDB()
         m_spawn->channel_target_creature = 0;
         m_spawn->channel_target_go = 0;
         m_spawn->channel_spell = 0;
-        m_spawn->MountedDisplayID = m_uint32Values[UNIT_FIELD_MOUNTDISPLAYID];
+        m_spawn->MountedDisplayID = getMountDisplayId();
 
         m_spawn->Item1SlotEntry = 0;
         m_spawn->Item2SlotEntry = 0;
@@ -476,7 +476,7 @@ void Creature::SaveToDB()
         << m_uint32Values[UNIT_FIELD_BYTES_0] << ","
         << m_uint32Values[UNIT_FIELD_BYTES_1] << ","
         << m_uint32Values[UNIT_FIELD_BYTES_2] << ","
-        << m_uint32Values[UNIT_NPC_EMOTESTATE] << ",0,";
+        << getEmoteState() << ",0,";
 
     ss << m_spawn->channel_spell << ","
         << m_spawn->channel_target_go << ","
@@ -486,7 +486,7 @@ void Creature::SaveToDB()
 
     ss << m_spawn->death_state << ",";
 
-    ss << m_uint32Values[UNIT_FIELD_MOUNTDISPLAYID] << ","
+    ss << getMountDisplayId() << ","
         << m_spawn->Item1SlotEntry << ","
         << m_spawn->Item2SlotEntry << ","
         << m_spawn->Item3SlotEntry << ",";
@@ -598,87 +598,87 @@ void Creature::SetQuestList(std::list<QuestRelation*>* qst_lst)
 
 uint32 Creature::isVendor() const
 {
-    return HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_VENDOR);
+    return getNpcFlags() & UNIT_NPC_FLAG_VENDOR;
 }
 
 uint32 Creature::isTrainer() const
 {
-    return HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_TRAINER);
+    return getNpcFlags() & UNIT_NPC_FLAG_TRAINER;
 }
 
 uint32 Creature::isClass() const
 {
-    return HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_TRAINER_CLASS);
+    return getNpcFlags() & UNIT_NPC_FLAG_TRAINER_CLASS;
 }
 
 uint32 Creature::isProf() const
 {
-    return HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_TRAINER_PROF);
+    return getNpcFlags() & UNIT_NPC_FLAG_TRAINER_PROF;
 }
 
 uint32 Creature::isQuestGiver() const
 {
-    return HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+    return getNpcFlags() & UNIT_NPC_FLAG_QUESTGIVER;
 }
 
 uint32 Creature::isGossip() const
 {
-    return HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+    return getNpcFlags() & UNIT_NPC_FLAG_GOSSIP;
 }
 
 uint32 Creature::isTaxi() const
 {
-    return HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_TAXIVENDOR);
+    return getNpcFlags() & UNIT_NPC_FLAG_TAXIVENDOR;
 }
 
 uint32 Creature::isCharterGiver() const
 {
-    return HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_ARENACHARTER);
+    return getNpcFlags() & UNIT_NPC_FLAG_ARENACHARTER;
 }
 
 uint32 Creature::isGuildBank() const
 {
-    return HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GUILD_BANK);
+    return getNpcFlags() & UNIT_NPC_FLAG_GUILD_BANK;
 }
 
 uint32 Creature::isBattleMaster() const
 {
-    return HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_BATTLEFIELDPERSON);
+    return getNpcFlags() & UNIT_NPC_FLAG_BATTLEFIELDPERSON;
 }
 
 uint32 Creature::isBanker() const
 {
-    return HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_BANKER);
+    return getNpcFlags() & UNIT_NPC_FLAG_BANKER;
 }
 
 uint32 Creature::isInnkeeper() const
 {
-    return HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_INNKEEPER);
+    return getNpcFlags() & UNIT_NPC_FLAG_INNKEEPER;
 }
 
 uint32 Creature::isSpiritHealer() const
 {
-    return HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_SPIRITHEALER);
+    return getNpcFlags() & UNIT_NPC_FLAG_SPIRITHEALER;
 }
 
 uint32 Creature::isTabardDesigner() const
 {
-    return HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_TABARDCHANGER);
+    return getNpcFlags() & UNIT_NPC_FLAG_TABARDCHANGER;
 }
 
 uint32 Creature::isAuctioner() const
 {
-    return HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_AUCTIONEER);
+    return getNpcFlags() & UNIT_NPC_FLAG_AUCTIONEER;
 }
 
 uint32 Creature::isStableMaster() const
 {
-    return HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_STABLEMASTER);
+    return getNpcFlags() & UNIT_NPC_FLAG_STABLEMASTER;
 }
 
 uint32 Creature::isArmorer() const
 {
-    return HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_ARMORER);
+    return getNpcFlags() & UNIT_NPC_FLAG_ARMORER;
 }
 
 uint32 Creature::GetHealthFromSpell()
@@ -996,8 +996,10 @@ void Creature::CalcStat(uint8_t type)
         {
             //Ranged Attack Power (Does any creature use this?)
             int32 RAP = getLevel() + getStat(STAT_AGILITY) - 10;
-            if (RAP < 0) RAP = 0;
-            SetRangedAttackPower(RAP);
+            if (RAP < 0)
+                RAP = 0;
+
+            setRangedAttackPower(RAP);
         }
         break;
         case STAT_STAMINA:
@@ -1090,45 +1092,6 @@ void Creature::RegenerateMana()
         SetPower(POWER_TYPE_MANA, mm);
     else
         SetPower(POWER_TYPE_MANA, cur);
-}
-
-bool Creature::CanSee(Unit* obj)
-{
-    if (!obj)
-        return false;
-
-    if (obj->m_invisible)    /// Invisibility - Detection of Players and Units
-    {
-        if (obj->getDeathState() == CORPSE)  /// can't see dead players' spirits
-            return false;
-
-        if (m_invisDetect[obj->m_invisFlag] < 1)    /// can't see invisible without proper detection
-            return false;
-    }
-
-    if (obj->IsStealth())       /// Stealth Detection ( I Hate Rogues :P )
-    {
-        if (isInFront(obj))     /// stealthed player is in front of creature
-        {
-            // Detection Range = 5yds + (Detection Skill - Stealth Skill)/5
-            detectRange = 5.0f + getLevel() + (0.2f * (float)(GetStealthDetectBonus()) - obj->GetStealthLevel());
-
-            if (detectRange < 1.0f) detectRange = 1.0f;     /// Minimum Detection Range = 1yd
-        }
-        else /// stealthed player is behind creature
-        {
-            if (GetStealthDetectBonus() > 1000) return true;    /// immune to stealth
-            else detectRange = 0.0f;
-        }
-
-        detectRange += getBoundingRadius();         /// adjust range for size of creature
-        detectRange += obj->getBoundingRadius();    /// adjust range for size of stealthed player
-
-        if (GetDistance2dSq(obj) > detectRange * detectRange)
-            return false;
-    }
-
-    return true;
 }
 
 void Creature::RegenerateFocus()
@@ -1339,7 +1302,7 @@ bool Creature::Load(MySQLStructure::CreatureSpawn* spawn, uint8 mode, MySQLStruc
     setScale(creature_properties->Scale);
 
 #if VERSION_STRING > TBC
-    setFloatValue(UNIT_FIELD_HOVERHEIGHT, creature_properties->Scale);
+    setHoverHeight(creature_properties->Scale);
 #endif
 
     uint32 health;
@@ -1427,7 +1390,7 @@ bool Creature::Load(MySQLStructure::CreatureSpawn* spawn, uint8 mode, MySQLStruc
         m_aiInterface->m_canRangedAttack = false;
 
     //SETUP NPC FLAGS
-    setUInt32Value(UNIT_NPC_FLAGS, creature_properties->NPCFLags);
+    setNpcFlags(creature_properties->NPCFLags);
 
     if (isVendor())
         m_SellItems = objmgr.GetVendorList(getEntry());
@@ -1557,9 +1520,11 @@ bool Creature::Load(MySQLStructure::CreatureSpawn* spawn, uint8 mode, MySQLStruc
         m_limbostate = true;
         setDeathState(CORPSE);
     }
-    m_invisFlag = static_cast<uint8>(creature_properties->invisibility_type);
-    if (m_invisFlag > 0)
-        m_invisible = true;
+
+    if (creature_properties->invisibility_type > INVIS_FLAG_NORMAL)
+        // TODO: currently only invisibility type 15 is used for invisible trigger NPCs
+        // these are always invisible to players
+        modInvisibilityLevel(InvisibilityFlag(creature_properties->invisibility_type), 1);
     if (spawn->stand_state)
         setStandState((uint8)spawn->stand_state);
 
@@ -1572,7 +1537,7 @@ bool Creature::Load(MySQLStructure::CreatureSpawn* spawn, uint8 mode, MySQLStruc
     if (isVehicle())
     {
         AddVehicleComponent(creature_properties->Id, creature_properties->vehicleid);
-        SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
+        addNpcFlags(UNIT_NPC_FLAG_SPELLCLICK);
         setAItoUse(false);
     }
 
@@ -1606,7 +1571,7 @@ void Creature::Load(CreatureProperties const* properties_, float x, float y, flo
     setScale(creature_properties->Scale);
 
 #if VERSION_STRING > TBC
-    setFloatValue(UNIT_FIELD_HOVERHEIGHT, creature_properties->Scale);
+    setHoverHeight(creature_properties->Scale);
 #endif
 
     uint32 health = creature_properties->MinHealth + Util::getRandomUInt(creature_properties->MaxHealth - creature_properties->MinHealth);
@@ -1662,7 +1627,7 @@ void Creature::Load(CreatureProperties const* properties_, float x, float y, flo
         m_aiInterface->m_canRangedAttack = false;
 
     //SETUP NPC FLAGS
-    setUInt32Value(UNIT_NPC_FLAGS, creature_properties->NPCFLags);
+    setNpcFlags(creature_properties->NPCFLags);
 
     if (isVendor())
         m_SellItems = objmgr.GetVendorList(getEntry());
@@ -1743,14 +1708,15 @@ void Creature::Load(CreatureProperties const* properties_, float x, float y, flo
 
     m_aiInterface->UpdateSpeeds();
 
-    m_invisFlag = static_cast<uint8>(creature_properties->invisibility_type);
-    if (m_invisFlag > 0)
-        m_invisible = true;
+    if (creature_properties->invisibility_type > INVIS_FLAG_NORMAL)
+        // TODO: currently only invisibility type 15 is used for invisible trigger NPCs
+        // these are always invisible to players
+        modInvisibilityLevel(InvisibilityFlag(creature_properties->invisibility_type), 1);
 
     if (isVehicle())
     {
         AddVehicleComponent(creature_properties->Id, creature_properties->vehicleid);
-        SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
+        addNpcFlags(UNIT_NPC_FLAG_SPELLCLICK);
         setAItoUse(false);
     }
 
@@ -1767,10 +1733,9 @@ void Creature::OnPushToWorld()
     }
 
     std::set<uint32>::iterator itr = creature_properties->start_auras.begin();
-    SpellInfo* sp;
     for (; itr != creature_properties->start_auras.end(); ++itr)
     {
-        sp = sSpellCustomizations.GetSpellInfo((*itr));
+        SpellInfo* sp = sSpellCustomizations.GetSpellInfo((*itr));
         if (sp == nullptr)
             continue;
 
@@ -2214,12 +2179,12 @@ DBC::Structures::ItemExtendedCostEntry const* Creature::GetItemExtendedCostByIte
 DB2::Structures::ItemExtendedCostEntry const* Creature::GetItemExtendedCostByItemId(uint32 itemid)
 #endif
 {
-    for (std::vector<CreatureItem>::iterator itr = m_SellItems->begin(); itr != m_SellItems->end(); ++itr)
-        {
-            if (itr->itemid == itemid)
-                return itr->extended_cost;
-        }
-    return NULL;
+    for (auto itr = m_SellItems->begin(); itr != m_SellItems->end(); ++itr)
+    {
+        if (itr->itemid == itemid)
+          return itr->extended_cost;
+    }
+    return nullptr;
 }
 
 std::vector<CreatureItem>::iterator Creature::GetSellItemBegin()
@@ -2232,6 +2197,11 @@ std::vector<CreatureItem>::iterator Creature::GetSellItemEnd()
     return m_SellItems->end();
 }
 
+std::vector<CreatureItem>* Creature::getSellItems()
+{
+    return m_SellItems;
+}
+
 size_t Creature::GetSellItemCount()
 {
     return m_SellItems->size();
@@ -2239,14 +2209,14 @@ size_t Creature::GetSellItemCount()
 
 void Creature::RemoveVendorItem(uint32 itemid)
 {
-    for (std::vector<CreatureItem>::iterator itr = m_SellItems->begin(); itr != m_SellItems->end(); ++itr)
+    for (auto itr = m_SellItems->begin(); itr != m_SellItems->end(); ++itr)
+    {
+        if (itr->itemid == itemid)
         {
-            if (itr->itemid == itemid)
-            {
-                m_SellItems->erase(itr);
-                return;
-            }
+            m_SellItems->erase(itr);
+            return;
         }
+    }
 }
 
 void Creature::PrepareForRemove()
@@ -2386,7 +2356,7 @@ void Creature::TakeDamage(Unit* pAttacker, uint32 damage, uint32 spellid, bool n
 
     GetAIInterface()->AttackReaction(pAttacker, damage, spellid);
 
-    ModHealth(-1 * static_cast<int32>(damage));
+    modHealth(-1 * static_cast<int32>(damage));
 }
 
 void Creature::Die(Unit* pAttacker, uint32 /*damage*/, uint32 spellid)
@@ -2455,7 +2425,7 @@ void Creature::Die(Unit* pAttacker, uint32 /*damage*/, uint32 spellid)
     for (const auto& itr : getInRangePlayersSet())
     {
         Unit* attacker = static_cast<Unit*>(itr);
-        if (attacker && attacker->isCastingNonMeleeSpell())
+        if (attacker && attacker->isCastingSpell())
         {
             for (uint8_t i = 0; i < CURRENT_SPELL_MAX; ++i)
             {

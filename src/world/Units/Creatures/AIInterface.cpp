@@ -39,7 +39,7 @@
 #include "Spell/Definitions/PowerType.h"
 #include "Spell/SpellHelpers.h"
 #include "Pet.h"
-#include "Spell/SpellEffects.h"
+#include "Spell/Definitions/SpellEffects.h"
 #include "Objects/ObjectMgr.h"
 #include "Server/Packets/Movement/CreatureMovement.h"
 
@@ -921,7 +921,7 @@ bool AIInterface::activateShowWayPoints(Player* player, bool showBackwards)
             wpCreature->setEmoteState(wayPoint->backwardemoteid);
 
             wpCreature->setLevel(wayPoint->id);
-            wpCreature->setUInt32Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_NONE);
+            wpCreature->setNpcFlags(UNIT_NPC_FLAG_NONE);
             wpCreature->SetFaction(player->getFactionTemplate());
             wpCreature->setHealth(1);
             wpCreature->setMaxHealth(1);
@@ -1409,16 +1409,16 @@ void AIInterface::Update(unsigned long time_passed)
             if ((*next_timed_emote)->type == 1)   //standstate
             {
                 m_Unit->setStandState(static_cast<uint8>((*next_timed_emote)->value));
-                m_Unit->setUInt32Value(UNIT_NPC_EMOTESTATE, 0);
+                m_Unit->setEmoteState(0);
             }
             else if ((*next_timed_emote)->type == 2)   //emotestate
             {
-                m_Unit->setUInt32Value(UNIT_NPC_EMOTESTATE, (*next_timed_emote)->value);
+                m_Unit->setEmoteState((*next_timed_emote)->value);
                 m_Unit->setStandState(STANDSTATE_STAND);
             }
             else if ((*next_timed_emote)->type == 3)   //oneshot emote
             {
-                m_Unit->setUInt32Value(UNIT_NPC_EMOTESTATE, 0);
+                m_Unit->setEmoteState(0);
                 m_Unit->setStandState(STANDSTATE_STAND);
                 m_Unit->Emote((EmoteType)(*next_timed_emote)->value);           // Animation
             }
@@ -1676,10 +1676,7 @@ void AIInterface::_UpdateCombat(uint32 /*p_time*/)
     {
         if (getNextTarget()->event_GetCurrentInstanceId() == m_Unit->event_GetCurrentInstanceId())
         {
-            if (m_Unit->isCreature())
-                cansee = static_cast< Creature* >(m_Unit)->CanSee(getNextTarget());
-            else
-                cansee = static_cast< Player* >(m_Unit)->CanSee(getNextTarget());
+            cansee = m_Unit->canSee(getNextTarget());
         }
         else
         {
@@ -1687,7 +1684,7 @@ void AIInterface::_UpdateCombat(uint32 /*p_time*/)
         }
     }
 
-    if (cansee && getNextTarget() && getNextTarget()->isAlive() && !isAiState(AI_STATE_EVADE) && !m_Unit->isCastingNonMeleeSpell())
+    if (cansee && getNextTarget() && getNextTarget()->isAlive() && !isAiState(AI_STATE_EVADE) && !m_Unit->isCastingSpell())
     {
         if (agent == AGENT_NULL || (isAiScriptType(AI_SCRIPT_PET) && !m_nextSpell))     // allow pets autocast
         {
@@ -1764,7 +1761,7 @@ void AIInterface::_UpdateCombat(uint32 /*p_time*/)
                 if (distance <= combatReach[1] + minWalkDistance) // Target is in Range -> Attack
                 {
                     //FIX ME: offhand shit
-                    if (m_Unit->isAttackReady(false) && !m_fleeTimer)
+                    if (m_Unit->isAttackReady(MELEE) && !m_fleeTimer)
                     {
                         setCreatureState(ATTACKING);
                         bool infront = m_Unit->isInFront(getNextTarget());
@@ -1780,7 +1777,7 @@ void AIInterface::_UpdateCombat(uint32 /*p_time*/)
                         }
                         if (infront)
                         {
-                            m_Unit->setAttackTimer(0, false);
+                            m_Unit->setAttackTimer(MELEE, m_Unit->getBaseAttackTime(MELEE));
 #ifdef ENABLE_CREATURE_DAZE
                             //we require to know if strike was successful. If there was no dmg then target cannot be dazed by it
                             Unit* t_unit = getNextTarget();
@@ -1843,7 +1840,7 @@ void AIInterface::_UpdateCombat(uint32 /*p_time*/)
                 if (distance >= combatReach[0] && distance <= combatReach[1]) // Target is in Range -> Attack
                 {
                     //FIX ME: offhand shit
-                    if (m_Unit->isAttackReady(false) && !m_fleeTimer)
+                    if (m_Unit->isAttackReady(MELEE) && !m_fleeTimer)
                     {
                         setCreatureState(ATTACKING);
                         bool infront = m_Unit->isInFront(getNextTarget());
@@ -1860,7 +1857,7 @@ void AIInterface::_UpdateCombat(uint32 /*p_time*/)
 
                         if (infront)
                         {
-                            m_Unit->setAttackTimer(0, false);
+                            m_Unit->setAttackTimer(MELEE, m_Unit->getBaseAttackTime(MELEE));
                             SpellInfo* info = sSpellCustomizations.GetSpellInfo(SPELL_RANGED_GENERAL);
                             if (info)
                             {
@@ -2289,7 +2286,7 @@ Unit* AIInterface::FindTarget()
             if (tmpPlr->hasUnitFlags(UNIT_FLAG_IGNORE_PLAYER_COMBAT))
                 continue;
 
-            if (tmpPlr->m_invisible)
+            if (tmpPlr->hasAuraWithAuraEffect(SPELL_AURA_MOD_INVISIBILITY))
                 continue;
 
             if (!tmpPlr->hasPlayerFlags(PLAYER_FLAG_PVP_GUARD_ATTACKABLE))    //PvP Guard Attackable.
@@ -2645,7 +2642,7 @@ float AIInterface::_CalcAggroRange(Unit* target)
         lvlDiff = -8;
     }
 
-    if (!static_cast<Creature*>(m_Unit)->CanSee(target))
+    if (!static_cast<Creature*>(m_Unit)->canSee(target))
         return 0;
 
     // Retrieve aggrorange from table
@@ -2655,7 +2652,7 @@ float AIInterface::_CalcAggroRange(Unit* target)
     bool isMining = false;
     if (target->isPlayer())
     {
-        if (target->isCastingNonMeleeSpell())
+        if (target->isCastingSpell())
         {
             // If nearby miners weren't spotted already we'll give them a little surprise.
             Spell* sp = target->getCurrentSpell(CURRENT_GENERIC_SPELL);
@@ -2973,7 +2970,7 @@ void AIInterface::_UpdateMovement(uint32 p_time)
     }
 
     //move after finishing our current spell
-    if (m_Unit->isCastingNonMeleeSpell())
+    if (m_Unit->isCastingSpell())
         return;
 
     uint32 timediff = 0;
@@ -4966,7 +4963,7 @@ void AIInterface::SetCreatureProtoDifficulty(uint32 entry)
 
             m_Unit->setCombatReach(properties_difficulty->CombatReach);
 
-            m_Unit->setUInt32Value(UNIT_NPC_FLAGS, properties_difficulty->NPCFLags);
+            m_Unit->setNpcFlags(properties_difficulty->NPCFLags);
 
             // resistances
             for (uint8 j = 0; j < SCHOOL_COUNT; ++j)
@@ -5002,16 +4999,15 @@ void AIInterface::SetCreatureProtoDifficulty(uint32 entry)
             m_Unit->m_aiInterface->UpdateSpeeds(); // use speed from creature_proto_difficulty.
 
             //invisibility
-            m_Unit->m_invisFlag = static_cast<uint8>(properties_difficulty->invisibility_type);
-            if (m_Unit->m_invisFlag > 0)
-                m_Unit->m_invisible = true;
-            else
-                m_Unit->m_invisible = false;
+            if (properties_difficulty->invisibility_type > INVIS_FLAG_NORMAL)
+                // TODO: currently only invisibility type 15 is used for invisible trigger NPCs
+                // these are always invisible to players
+                m_Unit->modInvisibilityLevel(InvisibilityFlag(properties_difficulty->invisibility_type), 1);
 
             if (m_Unit->isVehicle())
             {
                 m_Unit->AddVehicleComponent(properties_difficulty->Id, properties_difficulty->vehicleid);
-                m_Unit->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
+                m_Unit->addNpcFlags(UNIT_NPC_FLAG_SPELLCLICK);
                 m_Unit->setAItoUse(false);
             }
 

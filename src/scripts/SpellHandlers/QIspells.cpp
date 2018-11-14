@@ -28,6 +28,11 @@
 #include "Spell/SpellAuras.h"
 #include <Units/Creatures/Pet.h>
 
+enum
+{
+    // ShipBombing
+    GO_FIRE = 183816
+};
 
 bool CleansingVial(uint8_t /*effectIndex*/, Spell* pSpell)
 {
@@ -1371,7 +1376,7 @@ bool HunterTamingQuest(uint8_t /*effectIndex*/, Aura* a, bool apply)
 
         if (!p_caster->HasQuest(tamequest->id))
         {
-            p_caster->SendCastResult(triggerspell->getId(), SPELL_FAILED_BAD_TARGETS, 0, 0);
+            p_caster->sendCastFailedPacket(triggerspell->getId(), SPELL_FAILED_BAD_TARGETS, 0, 0);
         }
         else if (!a->GetTimeLeft())
         {
@@ -1406,7 +1411,7 @@ bool HunterTamingQuest(uint8_t /*effectIndex*/, Aura* a, bool apply)
             }
             else
             {
-                p_caster->SendCastResult(triggerspell->getId(), SPELL_FAILED_TRY_AGAIN, 0, 0);
+                p_caster->sendCastFailedPacket(triggerspell->getId(), SPELL_FAILED_TRY_AGAIN, 0, 0);
             }*/
         }
     }
@@ -1641,8 +1646,8 @@ bool CurativeAnimalSalve(uint8_t /*effectIndex*/, Spell* pSpell) // Curing the S
     return true;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////
 // Trial Of The Lake
-
 bool TrialOfTheLake(uint8_t /*effectIndex*/, Spell* pSpell)
 {
     if (pSpell->p_caster == NULL)
@@ -1662,7 +1667,10 @@ bool SymbolOfLife(uint8_t /*effectIndex*/, Spell* pSpell) // Alliance ress. ques
     if (plr == nullptr)
         return true;
 
-    Creature* target = plr->GetMapMgr()->GetCreature(GET_LOWGUID_PART(plr->GetSelection()));
+    WoWGuid wowGuid;
+    wowGuid.Init(plr->GetSelection());
+
+    Creature* target = plr->GetMapMgr()->GetCreature(wowGuid.getGuidLowPart());
 
     if (target == nullptr)
         return true;
@@ -1721,7 +1729,10 @@ bool FilledShimmeringVessel(uint8_t /*effectIndex*/, Spell* pSpell) // Blood Elf
 
     Player* plr = pSpell->p_caster;
 
-    Creature* target = plr->GetMapMgr()->GetCreature(GET_LOWGUID_PART(plr->GetSelection()));
+    WoWGuid wowGuid;
+    wowGuid.Init(plr->GetSelection());
+
+    Creature* target = plr->GetMapMgr()->GetCreature(wowGuid.getGuidLowPart());
     if (target == nullptr)
         return true;
 
@@ -1823,6 +1834,7 @@ bool NeutralizingTheCauldrons(uint8_t /*effectIndex*/, Spell* pSpell)
     return true;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////
 // Stop the Plague
 bool HighmessasCleansingSeeds(uint8_t /*effectIndex*/, Spell* pSpell)
 {
@@ -1836,6 +1848,7 @@ bool HighmessasCleansingSeeds(uint8_t /*effectIndex*/, Spell* pSpell)
     return true;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////
 // There's Something Going On In Those Caves
 bool BixiesInhibitingPowder(uint8_t /*effectIndex*/, Spell* pSpell)
 {
@@ -1849,6 +1862,7 @@ bool BixiesInhibitingPowder(uint8_t /*effectIndex*/, Spell* pSpell)
     return true;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////
 // Leading the Ancestors Home
 bool CompleteAncestorRitual(uint8_t /*effectIndex*/, Spell* pSpell)
 {
@@ -1895,9 +1909,8 @@ bool PoweringOurDefenses(uint8_t /*effectIndex*/, Spell* pSpell)
     return true;
 }
 
-/*--------------------------------------------------------------------------------------------------------*/
+//////////////////////////////////////////////////////////////////////////////////////////
 // Testing the Antidote
-
 bool TestingTheAntidote(uint8_t /*effectIndex*/, Spell* pSpell)
 {
     if (!pSpell->GetUnitTarget() || !pSpell->GetUnitTarget()->isCreature())
@@ -1920,9 +1933,8 @@ bool TestingTheAntidote(uint8_t /*effectIndex*/, Spell* pSpell)
     return true;
 }
 
-/*--------------------------------------------------------------------------------------------------------*/
+//////////////////////////////////////////////////////////////////////////////////////////
 // Zeth'Gor Must Burn!
-
 bool ZethGorMustBurnHorde(uint8_t /*effectIndex*/, Spell* pSpell)
 {
     Player* pPlayer = pSpell->p_caster;
@@ -2024,9 +2036,8 @@ bool ZethGorMustBurnHorde(uint8_t /*effectIndex*/, Spell* pSpell)
     return true;
 }
 
-/*--------------------------------------------------------------------------------------------------------*/
+//////////////////////////////////////////////////////////////////////////////////////////
 // Laying Waste to the Unwanted
-
 bool LayingWasteToTheUnwantedAlliance(uint8_t /*effectIndex*/, Spell* pSpell)
 {
     Player* pPlayer = pSpell->p_caster;
@@ -2109,9 +2120,8 @@ bool LayingWasteToTheUnwantedAlliance(uint8_t /*effectIndex*/, Spell* pSpell)
 }
 
 
-/*--------------------------------------------------------------------------------------------------------*/
+//////////////////////////////////////////////////////////////////////////////////////////
 // Burn It Up... For the Horde!
-
 bool BurnItUp(uint8_t /*effectIndex*/, Spell* pSpell)
 {
     if (pSpell->p_caster == nullptr)
@@ -2162,9 +2172,8 @@ bool BurnItUp(uint8_t /*effectIndex*/, Spell* pSpell)
     return true;
 }
 
-/*--------------------------------------------------------------------------------------------------------*/
+//////////////////////////////////////////////////////////////////////////////////////////
 // The Seer's Relic
-
 bool TheSeersRelic(uint8_t /*effectIndex*/, Spell* pSpell)
 {
     if (pSpell->p_caster == nullptr)
@@ -2175,7 +2184,10 @@ bool TheSeersRelic(uint8_t /*effectIndex*/, Spell* pSpell)
     if (qle == nullptr || qle->GetMobCount(0) >= qle->GetQuest()->required_mob_or_go_count[0])
         return true;
 
-    Creature* pTarget = pPlayer->GetMapMgr()->GetCreature(GET_LOWGUID_PART(pPlayer->GetSelection()));
+    WoWGuid wowGuid;
+    wowGuid.Init(pPlayer->GetSelection());
+
+    Creature* pTarget = pPlayer->GetMapMgr()->GetCreature(wowGuid.getGuidLowPart());
     if (pTarget == nullptr)
         return true;
 
@@ -2192,9 +2204,8 @@ bool TheSeersRelic(uint8_t /*effectIndex*/, Spell* pSpell)
 }
 
 
-/*--------------------------------------------------------------------------------------------------------*/
+//////////////////////////////////////////////////////////////////////////////////////////
 // Disrupt Their Reinforcements
-
 bool DisruptTheirReinforcements(uint8_t /*effectIndex*/, Spell* pSpell)
 {
     if (pSpell->p_caster == nullptr)
@@ -2280,9 +2291,8 @@ bool DisruptTheirReinforcements(uint8_t /*effectIndex*/, Spell* pSpell)
 }
 
 
-/*--------------------------------------------------------------------------------------------------------*/
+//////////////////////////////////////////////////////////////////////////////////////////
 //Arzeth's Demise
-
 bool FuryOfTheDreghoodElders(uint32 /*i*/, Spell* pSpell)
 {
     if (pSpell->p_caster == nullptr)
@@ -2304,6 +2314,7 @@ bool FuryOfTheDreghoodElders(uint32 /*i*/, Spell* pSpell)
     return true;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////
 // War is Hell
 bool WarIsHell(uint8_t /*effectIndex*/, Spell* pSpell)
 {
@@ -2336,6 +2347,7 @@ bool WarIsHell(uint8_t /*effectIndex*/, Spell* pSpell)
     return true;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////
 // A Lesson in Fear
 bool PlantForsakenBanner(uint8_t /*effectIndex*/, Spell* pSpell)
 {
@@ -2377,9 +2389,8 @@ bool PlantForsakenBanner(uint8_t /*effectIndex*/, Spell* pSpell)
     return true;
 }
 
-/*--------------------------------------------------------------------------------------------------------*/
+//////////////////////////////////////////////////////////////////////////////////////////
 // Erratic Behavior
-
 bool ConvertingSentry(uint8_t /*effectIndex*/, Spell* pSpell)
 {
     Player* pCaster = pSpell->p_caster;
@@ -2451,9 +2462,6 @@ bool OrbOfMurlocControl(uint8_t /*effectIndex*/, Spell* pSpell)
     }
     return true;
 }
-
-#define GO_FIRE 183816
-
 
 bool ShipBombing(uint8_t /*effectIndex*/, Spell* pSpell)
 {
@@ -2627,6 +2635,7 @@ bool ManaRemnants(uint8_t /*effectIndex*/, Spell* pSpell)
     return true;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////
 // Stopping the Spread
 bool StoppingTheSpread(uint8_t /*effectIndex*/, Spell* pSpell)
 {
@@ -2663,6 +2672,7 @@ bool StoppingTheSpread(uint8_t /*effectIndex*/, Spell* pSpell)
     return true;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////
 //Ruthless Cunning
 bool RuthlessCunning(uint8_t /*effectIndex*/, Spell* pSpell)
 {
@@ -2847,7 +2857,10 @@ bool ForceofNeltharakuSpell(uint8_t /*effectIndex*/, Spell* pSpell) // Becoming 
         return true;
 
     Player* pPlayer = pSpell->p_caster;
-    Creature* pTarget = pPlayer->GetMapMgr()->GetCreature(GET_LOWGUID_PART(pPlayer->GetSelection()));
+
+    WoWGuid wowGuid;
+    wowGuid.Init(pPlayer->GetSelection());
+    Creature* pTarget = pPlayer->GetMapMgr()->GetCreature(wowGuid.getGuidLowPart());
 
     if (pTarget == nullptr)
         return true;
@@ -2889,7 +2902,9 @@ bool ShatariTorch(uint8_t /*effectIndex*/, Spell* pSpell)
         return true;
 
     Player* plr = pSpell->p_caster;
-    Creature* target = plr->GetMapMgr()->GetCreature(GET_LOWGUID_PART(plr->GetSelection()));
+    WoWGuid wowGuid;
+    wowGuid.Init(plr->GetSelection());
+    Creature* target = plr->GetMapMgr()->GetCreature(wowGuid.getGuidLowPart());
 
     if (target == nullptr)
         return true;
@@ -2945,8 +2960,10 @@ bool SpragglesCanteen(uint8_t /*effectIndex*/, Spell* pSpell)
         return true;
 
     Player* plr = pSpell->p_caster;
+    WoWGuid wowGuid;
+    wowGuid.Init(plr->GetSelection());
 
-    Creature* target = plr->GetMapMgr()->GetCreature(GET_LOWGUID_PART(plr->GetSelection()));
+    Creature* target = plr->GetMapMgr()->GetCreature(wowGuid.getGuidLowPart());
     if (target == nullptr)
         return true;
 
@@ -2969,8 +2986,8 @@ bool SpragglesCanteen(uint8_t /*effectIndex*/, Spell* pSpell)
     return true;
 }
 
-//Finding the Source
-
+//////////////////////////////////////////////////////////////////////////////////////////
+// Finding the Source
 bool FindingTheSource(uint8_t /*effectIndex*/, Spell* pSpell)
 {
     Player* pPlayer = pSpell->p_caster;
@@ -3044,8 +3061,8 @@ bool ReleaseUmisYeti(uint8_t /*effectIndex*/, Spell* pSpell)
     return true;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////
 // Healing The Lake
-
 bool HealingTheLake(uint8_t /*effectIndex*/, Spell* pSpell)
 {
     if (pSpell->p_caster == nullptr)
@@ -3105,7 +3122,7 @@ bool CastFishingNet(uint8_t /*effectIndex*/, Spell* pSpell)
         if (pNewCreature != nullptr)
         {
             pNewCreature->GetAIInterface()->StopMovement(500);
-            pNewCreature->setAttackTimer(1000, false);
+            pNewCreature->setAttackTimer(MELEE, 1000);
             pNewCreature->m_noRespawn = true;
         }
     }
@@ -3180,21 +3197,21 @@ void SetupQuestItems(ScriptMgr* mgr)
     mgr->register_dummy_spell(42817, &WyrmcallersHorn);
     mgr->register_script_effect(60036, &RuneOfDistortion);
     mgr->register_dummy_spell(62272, &RaeloraszSpark);
-    mgr->register_dummy_spell(6509, &GoreBladder);                // http://www.wowhead.com/?item=40551
-    mgr->register_dummy_spell(43385, &PlagueSpray);                // http://www.wowhead.com/?item=33621
-    mgr->register_script_effect(46203, &GoblinWeatherMachine);    // Goblin Weather machine
-    mgr->register_dummy_spell(48549, &PurifiedAshes);            // http://www.wowhead.com/?item=37307
-    mgr->register_dummy_spell(43036, &DISMEMBER);                //http://www.wowhead.com/?item=33342
-    mgr->register_script_effect(45668, &CraftyBlaster);              //http://www.wowhead.com/?item=34812
-    mgr->register_dummy_spell(51276, &IncineratingOil);            //http://www.wowhead.com/?item=38556
-    mgr->register_dummy_spell(46023, &Screwdriver);                //http://www.wowhead.com/?item=35116
-    mgr->register_dummy_spell(55804, &TelluricPoultice);            //http://www.wowhead.com/?item=41988
-    mgr->register_dummy_spell(55983, &HodirsHorn);                //http://www.wowhead.com/?item=42164
+    mgr->register_dummy_spell(6509, &GoreBladder); // http://www.wowhead.com/?item=40551
+    mgr->register_dummy_spell(43385, &PlagueSpray); // http://www.wowhead.com/?item=33621
+    mgr->register_script_effect(46203, &GoblinWeatherMachine); // Goblin Weather machine
+    mgr->register_dummy_spell(48549, &PurifiedAshes); // http://www.wowhead.com/?item=37307
+    mgr->register_dummy_spell(43036, &DISMEMBER); //http://www.wowhead.com/?item=33342
+    mgr->register_script_effect(45668, &CraftyBlaster); //http://www.wowhead.com/?item=34812
+    mgr->register_dummy_spell(51276, &IncineratingOil); //http://www.wowhead.com/?item=38556
+    mgr->register_dummy_spell(46023, &Screwdriver); //http://www.wowhead.com/?item=35116
+    mgr->register_dummy_spell(55804, &TelluricPoultice); //http://www.wowhead.com/?item=41988
+    mgr->register_dummy_spell(55983, &HodirsHorn); //http://www.wowhead.com/?item=42164
     mgr->register_dummy_spell(12189, &SummonEcheyakee);
     mgr->register_dummy_spell(11548, &SummonShadra);
     mgr->register_dummy_spell(45474, &RagefistTorch);
-    mgr->register_script_effect(13978, &SummonAquementas);        //http://www.wowhead.com/?quest=4005
-    mgr->register_dummy_spell(39371, &PrayerBeads);                //http://www.wowhead.com/?quest=10935
+    mgr->register_script_effect(13978, &SummonAquementas); //http://www.wowhead.com/?quest=4005
+    mgr->register_dummy_spell(39371, &PrayerBeads); //http://www.wowhead.com/?quest=10935
 
     mgr->register_script_effect(29297, &CleansingVial);
 

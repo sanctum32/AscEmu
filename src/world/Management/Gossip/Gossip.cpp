@@ -367,7 +367,7 @@ void Arcemu::Gossip::Vendor::OnHello(Object* pObject, Player* Plr)
 
 void Arcemu::Gossip::Vendor::OnSelectOption(Object* pObject, Player* Plr, uint32 /*Id*/, const char* /*EnteredCode*/, uint32_t /*gossipId*/)
 {
-    Plr->GetSession()->SendInventoryList(static_cast<Creature*>(pObject));
+    Plr->GetSession()->sendInventoryList(static_cast<Creature*>(pObject));
 }
 
 //TRAINER
@@ -414,7 +414,7 @@ void Arcemu::Gossip::Trainer::OnSelectOption(Object* pObject, Player* Plr, uint3
     if (1 == Id)
         Plr->GetSession()->sendTrainerList(static_cast<Creature*>(pObject));
     else
-        Plr->GetSession()->SendInventoryList(static_cast<Creature*>(pObject));
+        Plr->GetSession()->sendInventoryList(static_cast<Creature*>(pObject));
 }
 
 // TAXIMASTER
@@ -435,7 +435,7 @@ void Arcemu::Gossip::FlightMaster::OnHello(Object* pObject, Player* Plr)
 
 void Arcemu::Gossip::FlightMaster::OnSelectOption(Object* pObject, Player* Plr, uint32 /*Id*/, const char* /*EnteredCode*/, uint32_t /*gossipId*/)
 {
-    Plr->GetSession()->SendTaxiList(static_cast<Creature*>(pObject));
+    Plr->GetSession()->sendTaxiList(static_cast<Creature*>(pObject));
 }
 
 // AUCTIONEER
@@ -480,7 +480,7 @@ void Arcemu::Gossip::InnKeeper::OnSelectOption(Object* pObject, Player* Plr, uin
     if (1 == Id)
         Plr->GetSession()->sendInnkeeperBind(static_cast<Creature*>(pObject));
     else
-        Plr->GetSession()->SendInventoryList(static_cast<Creature*>(pObject));
+        Plr->GetSession()->sendInventoryList(static_cast<Creature*>(pObject));
 }
 
 //BATTLE MASTER
@@ -499,7 +499,7 @@ void Arcemu::Gossip::BattleMaster::OnHello(Object* pObject, Player* Plr)
 
 void Arcemu::Gossip::BattleMaster::OnSelectOption(Object* pObject, Player* Plr, uint32 /*Id*/, const char* /*EnteredCode*/, uint32_t /*gossipId*/)
 {
-    Plr->GetSession()->SendBattlegroundList(static_cast<Creature*>(pObject), 0);
+    Plr->GetSession()->sendBattlegroundList(static_cast<Creature*>(pObject), 0);
 }
 
 //BANKER
@@ -566,7 +566,7 @@ void Arcemu::Gossip::TabardDesigner::OnSelectOption(Object* pObject, Player* Plr
                 Plr->GetSession()->sendCharterRequest(static_cast<Creature*>(pObject));
             break;
         case 3:
-            Plr->GetSession()->SendInventoryList(static_cast<Creature*>(pObject));
+            Plr->GetSession()->sendInventoryList(static_cast<Creature*>(pObject));
             break;
     }
 }
@@ -617,7 +617,7 @@ void Arcemu::Gossip::PetTrainer::OnSelectOption(Object* pObject, Player* Plr, ui
     else
     {
         Gossip::Menu::Complete(Plr);
-        Plr->SendPetUntrainConfirm();
+        Plr->sendPetUnlearnConfirmPacket();
     }
 
 }
@@ -718,7 +718,7 @@ void Arcemu::Gossip::ClassTrainer::OnSelectOption(Object* pObject, Player* Plr, 
             break;
         case 3:
             Gossip::Menu::Complete(Plr);
-            Plr->SendTalentResetConfirm();
+            Plr->sendTalentResetConfirmPacket();
             break;
         case 4:
             purchaseconfirm = Plr->GetSession()->LocalizedWorldSrv(Gossip::SURE_TO_PURCHASE_DTS);
@@ -735,7 +735,6 @@ void Arcemu::Gossip::ClassTrainer::OnSelectOption(Object* pObject, Player* Plr, 
                 Gossip::Menu::Complete(Plr);
                 Plr->ModGold(-10000000);
                 Plr->m_talentSpecsCount = 2;
-                Plr->Reset_Talents();
                 Plr->CastSpell(Plr, 63624, true); // Show activate spec buttons
                 Plr->CastSpell(Plr, 63706, true); // Allow primary spec to be activated
                 Plr->CastSpell(Plr, 63707, true); // Allow secondary spec to be activated

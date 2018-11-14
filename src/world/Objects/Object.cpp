@@ -48,6 +48,7 @@
 #include "Data/WoWPlayer.h"
 #include "Data/WoWGameObject.h"
 #include "Server/Packets/SmsgDestoyObject.h"
+#include "Server/Packets/SmsgPlaySound.h"
 
 // MIT Start
 
@@ -680,56 +681,56 @@ void Object::setCurrentSpell(Spell* curSpell)
     if (curSpell == m_currentSpell[spellType])
         return;
 
-    // Interrupt spell with same spell type, but ignore delayed spells
-    interruptSpellWithSpellType(spellType, false);
+    // Interrupt spell with same spell type
+    interruptSpellWithSpellType(spellType);
 
     // Handle spelltype specific cases
     switch (spellType)
     {
-    case CURRENT_GENERIC_SPELL:
-    {
-        // Generic spells break channeled spells, but ignore delayed spells
-        interruptSpellWithSpellType(CURRENT_CHANNELED_SPELL, false);
-
-        if (m_currentSpell[CURRENT_AUTOREPEAT_SPELL] != nullptr)
+        case CURRENT_GENERIC_SPELL:
         {
-            // Generic spells do not break Auto Shot
-            if (m_currentSpell[CURRENT_AUTOREPEAT_SPELL]->GetSpellInfo()->getId() != 75)
+            // Generic spells break channeled spells
+            interruptSpellWithSpellType(CURRENT_CHANNELED_SPELL);
+
+            if (m_currentSpell[CURRENT_AUTOREPEAT_SPELL] != nullptr)
+            {
+                // Generic spells do not break Auto Shot
+                if (m_currentSpell[CURRENT_AUTOREPEAT_SPELL]->GetSpellInfo()->getId() != 75)
+                    interruptSpellWithSpellType(CURRENT_AUTOREPEAT_SPELL);
+            }
+            break;
+        }
+        case CURRENT_CHANNELED_SPELL:
+        {
+            // Channeled spells break generic spells
+            interruptSpellWithSpellType(CURRENT_GENERIC_SPELL);
+            // as well break channeled spells too
+            interruptSpellWithSpellType(CURRENT_CHANNELED_SPELL);
+
+            // Also break autorepeat spells, unless it's Auto Shot
+            if (m_currentSpell[CURRENT_AUTOREPEAT_SPELL] != nullptr && m_currentSpell[CURRENT_AUTOREPEAT_SPELL]->GetSpellInfo()->getId() != 75)
+            {
                 interruptSpellWithSpellType(CURRENT_AUTOREPEAT_SPELL);
+            }
+            break;
         }
-        break;
-    }
-    case CURRENT_CHANNELED_SPELL:
-    {
-        // Channeled spells break generic spells, but ignore delayed spells
-        interruptSpellWithSpellType(CURRENT_GENERIC_SPELL, false);
-        // as well break delayed channeled spells too
-        interruptSpellWithSpellType(CURRENT_CHANNELED_SPELL);
+        case CURRENT_AUTOREPEAT_SPELL:
+        {
+            // Other autorepeats than Auto Shot break non-delayed generic and channeled spells
+            if (curSpell->GetSpellInfo()->getId() != 75)
+            {
+                interruptSpellWithSpellType(CURRENT_GENERIC_SPELL);
+                interruptSpellWithSpellType(CURRENT_CHANNELED_SPELL);
+            }
 
-        // Also break autorepeat spells, unless it's Auto Shot
-        if (m_currentSpell[CURRENT_AUTOREPEAT_SPELL] != nullptr && m_currentSpell[CURRENT_AUTOREPEAT_SPELL]->GetSpellInfo()->getId() != 75)
-        {
-            interruptSpellWithSpellType(CURRENT_AUTOREPEAT_SPELL);
+            if (isPlayer())
+            {
+                static_cast<Player*>(this)->m_FirstCastAutoRepeat = true;
+            }
+            break;
         }
-        break;
-    }
-    case CURRENT_AUTOREPEAT_SPELL:
-    {
-        // Other autorepeats than Auto Shot break non-delayed generic and channeled spells
-        if (curSpell->GetSpellInfo()->getId() != 75)
-        {
-            interruptSpellWithSpellType(CURRENT_GENERIC_SPELL, false);
-            interruptSpellWithSpellType(CURRENT_CHANNELED_SPELL, false);
-        }
-
-        if (isPlayer())
-        {
-            static_cast<Player*>(this)->m_FirstCastAutoRepeat = true;
-        }
-        break;
-    }
-    default:
-        break;
+        default:
+            break;
     }
 
     // If spell is not yet cancelled, force it
@@ -742,7 +743,7 @@ void Object::setCurrentSpell(Spell* curSpell)
     m_currentSpell[spellType] = curSpell;
 }
 
-void Object::interruptSpell(uint32_t spellId, bool checkMeleeSpell, bool checkDelayed)
+void Object::interruptSpell(uint32_t spellId, bool checkMeleeSpell)
 {
     for (uint8_t i = 0; i < CURRENT_SPELL_MAX; ++i)
     {
@@ -752,12 +753,12 @@ void Object::interruptSpell(uint32_t spellId, bool checkMeleeSpell, bool checkDe
         if (m_currentSpell[i] != nullptr &&
             (spellId == 0 || m_currentSpell[i]->GetSpellInfo()->getId() == spellId))
         {
-            interruptSpellWithSpellType(CurrentSpellType(i), checkDelayed);
+            interruptSpellWithSpellType(CurrentSpellType(i));
         }
     }
 }
 
-void Object::interruptSpellWithSpellType(CurrentSpellType spellType, bool /*checkDelayed*/)
+void Object::interruptSpellWithSpellType(CurrentSpellType spellType)
 {
     Spell* curSpell = m_currentSpell[spellType];
     if (curSpell != nullptr)
@@ -767,7 +768,8 @@ void Object::interruptSpellWithSpellType(CurrentSpellType spellType, bool /*chec
             if (isPlayer() && IsInWorld())
             {
                 // Send server-side cancel message
-                static_cast<Player*>(this)->GetSession()->OutPacket(SMSG_CANCEL_AUTO_REPEAT);
+                auto spellId = curSpell->GetSpellInfo()->getId();
+                static_cast<Player*>(this)->OutPacket(SMSG_CANCEL_AUTO_REPEAT, 4, &spellId);
             }
         }
 
@@ -777,23 +779,23 @@ void Object::interruptSpellWithSpellType(CurrentSpellType spellType, bool /*chec
     }
 }
 
-bool Object::isCastingNonMeleeSpell(bool /*checkDelayed = true*/, bool skipChanneled /*= false*/, bool skipAutorepeat /*= false*/, bool isAutoshoot /*= false*/) const
+bool Object::isCastingSpell(bool skipChanneled /*= false*/, bool skipAutorepeat /*= false*/, bool isAutoshoot /*= false*/) const
 {
-    // Check from generic spells, ignore finished spells
+    // Check generic spell, but ignore finished spells
     if (m_currentSpell[CURRENT_GENERIC_SPELL] != nullptr && m_currentSpell[CURRENT_GENERIC_SPELL]->getState() != SPELL_STATE_FINISHED && m_currentSpell[CURRENT_GENERIC_SPELL]->getCastTimeLeft() > 0 &&
         (!isAutoshoot || !(m_currentSpell[CURRENT_GENERIC_SPELL]->GetSpellInfo()->getAttributesExB() & ATTRIBUTESEXB_NOT_RESET_AUTO_ATTACKS)))
     {
         return true;
     }
 
-    // If not skipped, check from channeled spells
+    // If not skipped, check channeled spell
     if (!skipChanneled && m_currentSpell[CURRENT_CHANNELED_SPELL] != nullptr && m_currentSpell[CURRENT_CHANNELED_SPELL]->getState() != SPELL_STATE_FINISHED &&
         (!isAutoshoot || !(m_currentSpell[CURRENT_CHANNELED_SPELL]->GetSpellInfo()->getAttributesExB() & ATTRIBUTESEXB_NOT_RESET_AUTO_ATTACKS)))
     {
         return true;
     }
 
-    // If not skipped, check from autorepeat spells
+    // If not skipped, check autorepeat spell
     if (!skipAutorepeat && m_currentSpell[CURRENT_AUTOREPEAT_SPELL] != nullptr)
     {
         return true;
@@ -1130,7 +1132,7 @@ uint32 Object::buildCreateUpdateBlockForPlayer(ByteBuffer* data, Player* target)
 
     uint8_t flags = 0, flags2 = 0, update_type = UPDATETYPE_CREATE_OBJECT;
     if (m_objectTypeId == TYPEID_CORPSE)
-        if (m_uint32Values[CORPSE_FIELD_DISPLAY_ID] == 0)
+        if (static_cast<Corpse*>(this)->getDisplayId() == 0)
             return 0;
 
     switch (m_objectTypeId)
@@ -1763,7 +1765,7 @@ void Object::buildMovementUpdate(ByteBuffer* data, uint16 flags, Player* target)
         }
         else if (flags & UPDATEFLAG_HAS_POSITION)  //0x40
         {
-            if (flags & UPDATEFLAG_TRANSPORT && m_uint32Values[GAMEOBJECT_BYTES_1] == GAMEOBJECT_TYPE_MO_TRANSPORT)
+            if (flags & UPDATEFLAG_TRANSPORT &&  static_cast<GameObject*>(this)->getGoType() == GAMEOBJECT_TYPE_MO_TRANSPORT)
             {
                 *data << float(0);
                 *data << float(0);
@@ -3456,10 +3458,7 @@ void Object::SetZoneId(uint32 newZone)
 
 void Object::PlaySoundToSet(uint32 sound_entry)
 {
-    WorldPacket data(SMSG_PLAY_SOUND, 4);
-    data << sound_entry;
-
-    SendMessageToSet(&data, true);
+    SendMessageToSet(AscEmu::Packets::SmsgPlaySound(sound_entry).serialise().get(), true);
 }
 
 bool Object::IsInBg()
@@ -3820,7 +3819,10 @@ Pet* Object::GetMapMgrPet(const uint64 & guid)
     if (!IsInWorld())
         return nullptr;
 
-    return GetMapMgr()->GetPet(GET_LOWGUID_PART(guid));
+    WoWGuid wowGuid;
+    wowGuid.Init(guid);
+
+    return GetMapMgr()->GetPet(wowGuid.getGuidLowPart());
 }
 
 Unit* Object::GetMapMgrUnit(const uint64 & guid)
@@ -3836,7 +3838,10 @@ Player* Object::GetMapMgrPlayer(const uint64 & guid)
     if (!IsInWorld())
         return nullptr;
 
-    return GetMapMgr()->GetPlayer(GET_LOWGUID_PART(guid));
+    WoWGuid wowGuid;
+    wowGuid.Init(guid);
+
+    return GetMapMgr()->GetPlayer(wowGuid.getGuidLowPart());
 }
 
 Creature* Object::GetMapMgrCreature(const uint64 & guid)
@@ -3844,7 +3849,10 @@ Creature* Object::GetMapMgrCreature(const uint64 & guid)
     if (!IsInWorld())
         return nullptr;
 
-    return GetMapMgr()->GetCreature(GET_LOWGUID_PART(guid));
+    WoWGuid wowGuid;
+    wowGuid.Init(guid);
+
+    return GetMapMgr()->GetCreature(wowGuid.getGuidLowPart());
 }
 
 GameObject* Object::GetMapMgrGameObject(const uint64 & guid)
@@ -3852,7 +3860,10 @@ GameObject* Object::GetMapMgrGameObject(const uint64 & guid)
     if (!IsInWorld())
         return nullptr;
 
-    return GetMapMgr()->GetGameObject(GET_LOWGUID_PART(guid));
+    WoWGuid wowGuid;
+    wowGuid.Init(guid);
+
+    return GetMapMgr()->GetGameObject(wowGuid.getGuidLowPart());
 }
 
 DynamicObject* Object::GetMapMgrDynamicObject(const uint64 & guid)
@@ -3860,7 +3871,10 @@ DynamicObject* Object::GetMapMgrDynamicObject(const uint64 & guid)
     if (!IsInWorld())
         return nullptr;
 
-    return GetMapMgr()->GetDynamicObject(GET_LOWGUID_PART(guid));
+    WoWGuid wowGuid;
+    wowGuid.Init(guid);
+
+    return GetMapMgr()->GetDynamicObject(wowGuid.getGuidLowPart());
 }
 
 Object* Object::GetPlayerOwner()
@@ -3984,3 +3998,396 @@ bool Object::GetPoint(float angle, float rad, float & outx, float & outy, float 
 
     return true;
 }
+
+#if VERSION_STRING == Cata
+#include "GameCata/Movement/MovementStructures.h"
+
+void MovementInfo::readMovementInfo(ByteBuffer& data, uint16_t opcode)
+{
+    bool hasTransportData = false,
+        hasMovementFlags = false,
+        hasMovementFlags2 = false;
+
+    MovementStatusElements* sequence = GetMovementStatusElementsSequence(opcode);
+    if (!sequence)
+    {
+        LogError("Unsupported MovementInfo::Read for 0x%X (%s)!", opcode);
+        return;
+    }
+
+    for (uint32_t i = 0; i < MSE_COUNT; ++i)
+    {
+        MovementStatusElements element = sequence[i];
+        if (element == MSEEnd)
+            break;
+
+        if (element >= MSEGuidBit0 && element <= MSEGuidBit7)
+        {
+            guid[element - MSEGuidBit0] = data.readBit();
+            continue;
+        }
+
+        if (element >= MSEGuid2Bit0 && element <= MSEGuid2Bit7)
+        {
+            guid2[element - MSEGuid2Bit0] = data.readBit();
+            continue;
+        }
+
+        if (element >= MSETransportGuidBit0 && element <= MSETransportGuidBit7)
+        {
+            if (hasTransportData)
+                transport_guid[element - MSETransportGuidBit0] = data.readBit();
+            continue;
+        }
+
+        if (element >= MSEGuidByte0 && element <= MSEGuidByte7)
+        {
+            if (guid[element - MSEGuidByte0])
+                guid[element - MSEGuidByte0] ^= data.readUInt8();
+            continue;
+        }
+
+        if (element >= MSEGuid2Byte0 && element <= MSEGuid2Byte7)
+        {
+            if (guid2[element - MSEGuid2Byte0])
+                guid2[element - MSEGuid2Byte0] ^= data.readUInt8();
+            continue;
+        }
+
+        if (element >= MSETransportGuidByte0 && element <= MSETransportGuidByte7)
+        {
+            if (hasTransportData && transport_guid[element - MSETransportGuidByte0])
+                transport_guid[element - MSETransportGuidByte0] ^= data.readUInt8();
+            continue;
+        }
+
+        switch (element)
+        {
+            case MSEFlags:
+                if (hasMovementFlags)
+                    move_flags = data.readBits(30);
+                break;
+            case MSEFlags2:
+                if (hasMovementFlags2)
+                    move_flags2 = static_cast<uint16_t>(data.readBits(12));
+                break;
+            case MSEHasUnknownBit:
+                data.readBit();
+                break;
+            case MSETimestamp:
+                if (status_info.hasTimeStamp)
+                    data >> update_time;
+                break;
+            case MSEHasTimestamp:
+                status_info.hasTimeStamp = !data.readBit();
+                break;
+            case MSEHasOrientation:
+                status_info.hasOrientation = !data.readBit();
+                break;
+            case MSEHasMovementFlags:
+                hasMovementFlags = !data.readBit();
+                break;
+            case MSEHasMovementFlags2:
+                hasMovementFlags2 = !data.readBit();
+                break;
+            case MSEHasPitch:
+                status_info.hasPitch = !data.readBit();
+                break;
+            case MSEHasFallData:
+                status_info.hasFallData = data.readBit();
+                break;
+            case MSEHasFallDirection:
+                if (status_info.hasFallData)
+                    status_info.hasFallDirection = data.readBit();
+                break;
+            case MSEHasTransportData:
+                hasTransportData = data.readBit();
+                break;
+            case MSEHasTransportTime2:
+                if (hasTransportData)
+                    status_info.hasTransportTime2 = data.readBit();
+                break;
+            case MSEHasTransportTime3:
+                if (hasTransportData)
+                    status_info.hasTransportTime3 = data.readBit();
+                break;
+            case MSEHasSpline:
+                status_info.hasSpline = data.readBit();
+                break;
+            case MSEHasSplineElevation:
+                status_info.hasSplineElevation = !data.readBit();
+                break;
+            case MSEPositionX:
+                data >> position.x;
+                break;
+            case MSEPositionY:
+                data >> position.y;
+                break;
+            case MSEPositionZ:
+                data >> position.z;
+                break;
+            case MSEPositionO:
+                if (status_info.hasOrientation)
+                    data >> position.o;
+                break;
+            case MSEPitch:
+                if (status_info.hasPitch)
+                    data >> pitch_rate;
+                break;
+            case MSEFallTime:
+                if (status_info.hasFallData)
+                    data >> fall_time;
+                break;
+            case MSESplineElevation:
+                if (status_info.hasSplineElevation)
+                    data >> spline_elevation;
+                break;
+            case MSEFallHorizontalSpeed:
+                if (status_info.hasFallData && status_info.hasFallDirection)
+                    data >> jump_info.xyspeed;
+                break;
+            case MSEFallVerticalSpeed:
+                if (status_info.hasFallData)
+                    data >> jump_info.velocity;
+                break;
+            case MSEFallCosAngle:
+                if (status_info.hasFallData && status_info.hasFallDirection)
+                    data >> jump_info.cosAngle;
+                break;
+            case MSEFallSinAngle:
+                if (status_info.hasFallData && status_info.hasFallDirection)
+                    data >> jump_info.sinAngle;
+                break;
+            case MSETransportSeat:
+                if (hasTransportData)
+                    data >> transport_seat;
+                break;
+            case MSETransportPositionO:
+                if (hasTransportData)
+                    data >> transport_position.o;
+                break;
+            case MSETransportPositionX:
+                if (hasTransportData)
+                    data >> transport_position.x;
+                break;
+            case MSETransportPositionY:
+                if (hasTransportData)
+                    data >> transport_position.y;
+                break;
+            case MSETransportPositionZ:
+                if (hasTransportData)
+                    data >> transport_position.z;
+                break;
+            case MSETransportTime:
+                if (hasTransportData)
+                    data >> transport_time;
+                break;
+            case MSETransportTime2:
+                if (hasTransportData && status_info.hasTransportTime2)
+                    data >> transport_time2;
+                break;
+            case MSETransportTime3:
+                if (hasTransportData && status_info.hasTransportTime3)
+                    data >> fall_time;
+                break;
+            case MSEMovementCounter:
+                data.read_skip<uint32_t>();
+                break;
+            case MSEByteParam:
+                data >> byte_parameter;
+                break;
+            default:
+                ARCEMU_ASSERT(false && "Wrong movement status element");
+                break;
+        }
+    }
+}
+
+void MovementInfo::writeMovementInfo(ByteBuffer& data, uint16_t opcode, float custom_speed) const
+{
+    bool hasTransportData = !transport_guid.IsEmpty();
+
+    MovementStatusElements* sequence = GetMovementStatusElementsSequence(opcode);
+    if (!sequence)
+    {
+        LogError("Unsupported MovementInfo::Write for 0x%X!", opcode);
+        return;
+    }
+
+    for (uint32_t i = 0; i < MSE_COUNT; ++i)
+    {
+        MovementStatusElements element = sequence[i];
+
+        if (element == MSEEnd)
+            break;
+
+        if (element >= MSEGuidBit0 && element <= MSEGuidBit7)
+        {
+            data.writeBit(guid[element - MSEGuidBit0]);
+            continue;
+        }
+
+        if (element >= MSETransportGuidBit0 && element <= MSETransportGuidBit7)
+        {
+            if (hasTransportData)
+                data.writeBit(transport_guid[element - MSETransportGuidBit0]);
+            continue;
+        }
+
+        if (element >= MSEGuidByte0 && element <= MSEGuidByte7)
+        {
+            if (guid[element - MSEGuidByte0])
+                data << uint8_t((guid[element - MSEGuidByte0] ^ 1));
+            continue;
+        }
+
+        if (element >= MSETransportGuidByte0 && element <= MSETransportGuidByte7)
+        {
+            if (hasTransportData && transport_guid[element - MSETransportGuidByte0])
+                data << uint8_t((transport_guid[element - MSETransportGuidByte0] ^ 1));
+            continue;
+        }
+
+        switch (element)
+        {
+            case MSEHasMovementFlags:
+                data.writeBit(!move_flags);
+                break;
+            case MSEHasMovementFlags2:
+                data.writeBit(!move_flags2);
+                break;
+            case MSEFlags:
+                if (move_flags)
+                    data.writeBits(move_flags, 30);
+                break;
+            case MSEFlags2:
+                if (move_flags2)
+                    data.writeBits(move_flags2, 12);
+                break;
+            case MSETimestamp:
+                if (status_info.hasTimeStamp)
+                    data << Util::getMSTime();
+                break;
+            case MSEHasPitch:
+                data.writeBit(!status_info.hasPitch);
+                break;
+            case MSEHasTimestamp:
+                data.writeBit(!status_info.hasTimeStamp);
+                break;
+            case MSEHasUnknownBit:
+                data.writeBit(false);
+                break;
+            case MSEHasFallData:
+                data.writeBit(status_info.hasFallData);
+                break;
+            case MSEHasFallDirection:
+                if (status_info.hasFallData)
+                    data.writeBit(status_info.hasFallDirection);
+                break;
+            case MSEHasTransportData:
+                data.writeBit(hasTransportData);
+                break;
+            case MSEHasTransportTime2:
+                if (hasTransportData)
+                    data.writeBit(status_info.hasTransportTime2);
+                break;
+            case MSEHasTransportTime3:
+                if (hasTransportData)
+                    data.writeBit(status_info.hasTransportTime3);
+                break;
+            case MSEHasSpline:
+                data.writeBit(status_info.hasSpline);
+                break;
+            case MSEHasSplineElevation:
+                data.writeBit(!status_info.hasSplineElevation);
+                break;
+            case MSEPositionX:
+                data << float(position.x);
+                break;
+            case MSEPositionY:
+                data << float(position.y);
+                break;
+            case MSEPositionZ:
+                data << float(position.z);
+                break;
+            case MSEPositionO:
+                if (status_info.hasOrientation)
+                    data << float(normalizeOrientation(position.o));
+                break;
+            case MSEPitch:
+                if (status_info.hasPitch)
+                    data << float(pitch_rate);
+                break;
+            case MSEHasOrientation:
+                data.writeBit(!status_info.hasOrientation);
+                break;
+            case MSEFallTime:
+                if (status_info.hasFallData)
+                    data << uint32_t(fall_time);
+                break;
+            case MSESplineElevation:
+                if (status_info.hasSplineElevation)
+                    data << float(spline_elevation);
+                break;
+            case MSEFallHorizontalSpeed:
+                if (status_info.hasFallData && status_info.hasFallDirection)
+                    data << float(jump_info.xyspeed);
+                break;
+            case MSEFallVerticalSpeed:
+                if (status_info.hasFallData)
+                    data << float(jump_info.velocity);
+                break;
+            case MSEFallCosAngle:
+                if (status_info.hasFallData && status_info.hasFallDirection)
+                    data << float(jump_info.cosAngle);
+                break;
+            case MSEFallSinAngle:
+                if (status_info.hasFallData && status_info.hasFallDirection)
+                    data << float(jump_info.sinAngle);
+                break;
+            case MSETransportSeat:
+                if (hasTransportData)
+                    data << int8_t(transport_seat);
+                break;
+            case MSETransportPositionO:
+                if (hasTransportData)
+                    data << float(normalizeOrientation(transport_position.o));
+                break;
+            case MSETransportPositionX:
+                if (hasTransportData)
+                    data << float(transport_position.x);
+                break;
+            case MSETransportPositionY:
+                if (hasTransportData)
+                    data << float(transport_position.y);
+                break;
+            case MSETransportPositionZ:
+                if (hasTransportData)
+                    data << float(transport_position.z);
+                break;
+            case MSETransportTime:
+                if (hasTransportData)
+                    data << uint32_t(transport_time);
+                break;
+            case MSETransportTime2:
+                if (hasTransportData && status_info.hasTransportTime2)
+                    data << uint32_t(transport_time2);
+                break;
+            case MSETransportTime3:
+                if (hasTransportData && status_info.hasTransportTime3)
+                    data << uint32_t(fall_time);
+                break;
+            case MSEMovementCounter:
+                data << uint32_t(0);
+                break;
+            case MSECustomSpeed:
+                data << float(custom_speed);
+                break;
+            default:
+                ARCEMU_ASSERT(false && "Wrong movement status element");
+                break;
+        }
+    }
+}
+
+#endif

@@ -22,13 +22,14 @@
 // reading/writing of all packets.
 
 #include "StdAfx.h"
-#include "Server/CharacterErrors.h"
-#include "Management/AddonMgr.h"
+//#include "Server/CharacterErrors.h"
+//#include "Management/AddonMgr.h"
 #include "Server/LogonCommClient/LogonCommHandler.h"
 #include "Server/MainServerDefines.h"
 #include "Auth/Sha1.h"
 #include "World.h"
-#include "World.Legacy.h"
+#include "Management/AddonMgr.h"
+//#include "World.Legacy.h"
 
 #pragma pack(push, 1)
 struct ClientPktHeader
@@ -53,9 +54,9 @@ struct ServerPktHeader
     }
 
     uint8_t getHeaderLength() { return headerLength; }
-    bool isLargePacket() { return ((headerLength == 4) ? true : false); }
+    bool isLargePacket() { return (headerLength == 4); }
     const uint32_t size;
-    uint8_t header[5];
+    uint8_t header[5]{};
     uint8_t headerLength;
 #else
     uint16_t size;
@@ -67,48 +68,46 @@ struct ServerPktHeader
 
 WorldSocket::WorldSocket(SOCKET fd)
     :
-    Socket(fd, WORLDSOCKET_SENDBUF_SIZE, WORLDSOCKET_RECVBUF_SIZE),
+    Socket(fd, WORLDSOCKET_SENDBUF_SIZE, WORLDSOCKET_RECVBUF_SIZE), AuthDigest{},
+    mClientBuild(0),
     Authed(false),
     mOpcode(0),
     mRemaining(0),
     mSize(0),
     mSeed(Util::getRandomUInt(RAND_MAX)),
+    mClientSeed(0),
     mRequestID(0),
-    mSession(NULL),
-    pAuthenticationPacket(NULL),
+    mSession(nullptr),
+    pAuthenticationPacket(nullptr),
     _latency(0),
     mQueued(false),
     m_nagleEanbled(false),
-    mClientSeed(0),
-    mClientBuild(0),
-    m_fullAccountName(NULL)
+    m_fullAccountName(nullptr)
 {
-
 }
 
 WorldSocket::~WorldSocket()
 {
     WorldPacket* pck;
     queueLock.Acquire();
-    while ((pck = _queue.Pop()) != NULL)
+    while ((pck = _queue.Pop()) != nullptr)
     {
         delete pck;
     }
     queueLock.Release();
 
-    if (pAuthenticationPacket)
-        delete pAuthenticationPacket;
+    delete pAuthenticationPacket;
 
     if (mSession)
     {
-        mSession->SetSocket(NULL);
-        mSession = NULL;
+        mSession->SetSocket(nullptr);
+        mSession = nullptr;
     }
 
-    if (m_fullAccountName != NULL)
+    if (m_fullAccountName != nullptr)
     {
         delete m_fullAccountName;
-        m_fullAccountName = NULL;
+        m_fullAccountName = nullptr;
     }
 }
 
@@ -116,8 +115,8 @@ void WorldSocket::OnDisconnect()
 {
     if (mSession)
     {
-        mSession->SetSocket(0);
-        mSession = NULL;
+        mSession->SetSocket(nullptr);
+        mSession = nullptr;
     }
 
     if (mRequestID != 0)
@@ -135,14 +134,13 @@ void WorldSocket::OnDisconnect()
 
 void WorldSocket::OutPacket(uint16 opcode, size_t len, const void* data)
 {
-    OUTPACKET_RESULT res;
     if ((len + 10) > WORLDSOCKET_SENDBUF_SIZE)
     {
-        LOG_ERROR("WARNING: Tried to send a packet of %u bytes (which is too large) to a socket. Opcode was: %u (0x%03X)", (unsigned int)len, (unsigned int)opcode, (unsigned int)opcode);
+        LOG_ERROR("WARNING: Tried to send a packet of %u bytes (which is too large) to a socket. Opcode was: %u (0x%03X)", static_cast<unsigned int>(len), static_cast<unsigned int>(opcode), static_cast<unsigned int>(opcode));
         return;
     }
 
-    res = _OutPacket(opcode, len, data);
+    OUTPACKET_RESULT res = _OutPacket(opcode, len, data);
     if (res == OUTPACKET_RESULT_SUCCESS)
         return;
 
@@ -150,9 +148,9 @@ void WorldSocket::OutPacket(uint16 opcode, size_t len, const void* data)
     {
         /* queue the packet */
         queueLock.Acquire();
-        WorldPacket* pck = new WorldPacket(opcode, len);
-        if (len) pck->append((const uint8*)data, len);
-        _queue.Push(pck);
+        WorldPacket* packet = new WorldPacket(opcode, len);
+        if (len) packet->append(static_cast<const uint8*>(data), len);
+        _queue.Push(packet);
         queueLock.Release();
     }
 }
@@ -167,10 +165,10 @@ void WorldSocket::UpdateQueuedPackets()
     }
 
     WorldPacket* pck;
-    while ((pck = _queue.front()) != NULL)
+    while ((pck = _queue.front()) != nullptr)
     {
         /* try to push out as many as you can */
-        switch (_OutPacket(pck->GetOpcode(), pck->size(), pck->size() ? pck->contents() : NULL))
+        switch (_OutPacket(pck->GetOpcode(), pck->size(), pck->size() ? pck->contents() : nullptr))
         {
             case OUTPACKET_RESULT_SUCCESS:
             {
@@ -185,9 +183,8 @@ void WorldSocket::UpdateQueuedPackets()
                 queueLock.Release();
                 return;
             }
-            break;
 
-            default:
+        default:
             {
                 /* kill everything in the buffer */
                 while ((pck == _queue.Pop()) != 0)
@@ -197,7 +194,6 @@ void WorldSocket::UpdateQueuedPackets()
                 queueLock.Release();
                 return;
             }
-            break;
         }
     }
     queueLock.Release();
@@ -218,7 +214,7 @@ OUTPACKET_RESULT WorldSocket::_OutPacket(uint16 opcode, size_t len, const void* 
     }
 
     // Packet logger :)
-    sWorldPacketLog.logPacket((uint32)len, opcode, (const uint8*)data, 1, (mSession ? mSession->GetAccountId() : 0));
+    sWorldPacketLog.logPacket(static_cast<uint32_t>(len), opcode, static_cast<const uint8_t*>(data), 1, (mSession ? mSession->GetAccountId() : 0));
 
 #if VERSION_STRING == Cata
     ServerPktHeader Header(uint32(len + 2), static_cast<uint16_t>(opcode));
@@ -236,11 +232,11 @@ OUTPACKET_RESULT WorldSocket::_OutPacket(uint16 opcode, size_t len, const void* 
 #elif VERSION_STRING == WotLK
     _crypt.encryptWotlkSend((uint8*)&Header, sizeof(ServerPktHeader));
 #elif VERSION_STRING == Cata
-    _crypt.encryptWotlkSend(((uint8*)Header.header), Header.getHeaderLength());
+    _crypt.encryptWotlkSend(static_cast<uint8*>(Header.header), Header.getHeaderLength());
 #endif
 
 #if VERSION_STRING == Cata
-    rv = BurstSend((const uint8*)&Header.header, Header.getHeaderLength());
+    rv = BurstSend(reinterpret_cast<const uint8*>(&Header.header), Header.getHeaderLength());
 #else
     // Pass the header to our send buffer
     rv = BurstSend((const uint8*)&Header, 4);
@@ -249,7 +245,7 @@ OUTPACKET_RESULT WorldSocket::_OutPacket(uint16 opcode, size_t len, const void* 
     // Pass the rest of the packet to our send buffer (if there is any)
     if (len > 0 && rv)
     {
-        rv = BurstSend((const uint8*)data, (uint32)len);
+        rv = BurstSend(static_cast<const uint8*>(data), static_cast<uint32>(len));
     }
 
     if (rv) BurstPush();
@@ -340,7 +336,7 @@ void WorldSocket::_HandleAuthSession(WorldPacket* recvPacket)
         if (addonSize)
         {
             mAddonInfoBuffer.resize(addonSize);
-            recvPacket->read((uint8_t*)mAddonInfoBuffer.contents(), addonSize);
+            recvPacket->read(static_cast<uint8_t*>(mAddonInfoBuffer.contents()), addonSize);
         }
         
         recvPacket->readBit();
@@ -416,7 +412,6 @@ void WorldSocket::InformationRetreiveCallback(WorldPacket & recvData, uint32 req
 
     // Extract account information from the packet.
     std::string AccountName;
-    const std::string* ForcedPermissions;
     uint32 AccountID;
     std::string GMFlags;
     uint8 AccountFlags;
@@ -427,9 +422,9 @@ void WorldSocket::InformationRetreiveCallback(WorldPacket & recvData, uint32 req
     recvData >> GMFlags;
     recvData >> AccountFlags;
 
-    ForcedPermissions = sLogonCommHandler.getPermissionStringForAccountId(AccountID);
-    if (ForcedPermissions != nullptr)
-        GMFlags.assign(ForcedPermissions->c_str());
+    const std::string* forcedPermissions = sLogonCommHandler.getPermissionStringForAccountId(AccountID);
+    if (forcedPermissions != nullptr)
+        GMFlags.assign(*forcedPermissions);
 
     LOG_DEBUG(" >> got information packet from logon: `%s` ID %u (request %u)", AccountName.c_str(), AccountID, mRequestID);
 
@@ -521,13 +516,13 @@ void WorldSocket::InformationRetreiveCallback(WorldPacket & recvData, uint32 req
         m_fullAccountName = nullptr;
     }
 
-    sha.UpdateData((uint8*)&t, 4);
-    sha.UpdateData((uint8*)&mClientSeed, 4);
-    sha.UpdateData((uint8*)&mSeed, 4);
+    sha.UpdateData(reinterpret_cast<uint8*>(&t), 4);
+    sha.UpdateData(reinterpret_cast<uint8*>(&mClientSeed), 4);
+    sha.UpdateData(reinterpret_cast<uint8*>(&mSeed), 4);
 #if VERSION_STRING < WotLK
     sha.UpdateBigNumbers(&BNK, NULL);
 #else
-    sha.UpdateData((uint8*)&K, 40);
+    sha.UpdateData(reinterpret_cast<uint8*>(&K), 40);
 #endif
     sha.Finalize();
 
@@ -558,7 +553,7 @@ void WorldSocket::InformationRetreiveCallback(WorldPacket & recvData, uint32 req
 
     pSession->LoadSecurity(GMFlags);
     pSession->SetAccountFlags(AccountFlags);
-    pSession->m_lastPing = (uint32)UNIXTIME;
+    pSession->m_lastPing = static_cast<uint32>(UNIXTIME);
     pSession->language = Util::getLanguagesIdFromString(lang);
 
     recvData >> pSession->m_muted;
@@ -573,18 +568,15 @@ void WorldSocket::InformationRetreiveCallback(WorldPacket & recvData, uint32 req
             CharacterDatabase.Execute("INSERT INTO account_data VALUES(%u, '', '', '', '', '', '', '', '', '')", AccountID);
         else
         {
-            size_t len;
-            const char* data;
-            char* d;
             for (uint8_t i = 0; i < 8; ++i)
             {
-                data = pResult->Fetch()[1 + i].GetString();
-                len = data ? strlen(data) : 0;
+                const char* data = pResult->Fetch()[1 + i].GetString();
+                size_t len = data ? strlen(data) : 0;
                 if (len > 1)
                 {
-                    d = new char[len + 1];
+                    char* d = new char[len + 1];
                     memcpy(d, data, len + 1);
-                    pSession->SetAccountData(i, d, true, (uint32)len);
+                    pSession->SetAccountData(i, d, true, static_cast<uint32>(len));
                 }
             }
 
@@ -593,14 +585,6 @@ void WorldSocket::InformationRetreiveCallback(WorldPacket & recvData, uint32 req
     }
 
     LOG_DEBUG("%s from %s:%u [%ums]", AccountName.c_str(), GetRemoteIP().c_str(), GetRemotePort(), _latency);
-#ifdef SESSION_CAP
-    if (sWorld.GetSessionCount() >= SESSION_CAP)
-    {
-        OutPacket(SMSG_AUTH_RESPONSE, 1, "\x0D");
-        Disconnect();
-        return;
-    }
-#endif
 
     // Check for queue.
     uint32 playerLimit = worldConfig.getPlayerLimit();
@@ -633,7 +617,7 @@ void WorldSocket::Authenticate()
     ARCEMU_ASSERT(pAuthenticationPacket != NULL);
     mQueued = false;
 
-    if (mSession == NULL)
+    if (mSession == nullptr)
         return;
 
 #if VERSION_STRING != Cata
@@ -658,7 +642,7 @@ void WorldSocket::Authenticate()
     data << uint8_t(0x0C);                        // 0x0C = 12 (AUTH_OK)
     SendPacket(&data);
 
-    mSession->SendClientCacheVersion(15595);
+    mSession->sendClientCacheVersion(15595);
 
     // send addon info here
     mSession->sendAddonInfo();
@@ -668,14 +652,14 @@ void WorldSocket::Authenticate()
     mSession->_latency = _latency;
 
     delete pAuthenticationPacket;
-    pAuthenticationPacket = NULL;
+    pAuthenticationPacket = nullptr;
 
     sWorld.addSession(mSession);
     sWorld.addGlobalSession(mSession);
 
 #if VERSION_STRING > TBC
 #if VERSION_STRING != Cata
-    mSession->SendClientCacheVersion(12340);
+    mSession->sendClientCacheVersion(12340);
 #endif
 #endif
 
@@ -728,7 +712,7 @@ void WorldSocket::_HandlePing(WorldPacket* recvPacket)
     if (mSession)
     {
         mSession->_latency = _latency;
-        mSession->m_lastPing = (uint32)UNIXTIME;
+        mSession->m_lastPing = static_cast<uint32>(UNIXTIME);
 
         // reset the move time diff calculator, don't worry it will be re-calculated next movement packet.
         mSession->m_clientTimeDelay = 0;
@@ -745,7 +729,7 @@ void WorldSocket::_HandlePing(WorldPacket* recvPacket)
         if (!m_nagleEanbled)
         {
             u_long arg = 0;
-            setsockopt(GetFd(), 0x6, 0x1, (const char*)&arg, sizeof(arg));
+            setsockopt(GetFd(), 0x6, 0x1, reinterpret_cast<const char*>(&arg), sizeof(arg));
             m_nagleEanbled = true;
         }
     }
@@ -754,7 +738,7 @@ void WorldSocket::_HandlePing(WorldPacket* recvPacket)
         if (m_nagleEanbled)
         {
             u_long arg = 1;
-            setsockopt(GetFd(), 0x6, 0x1, (const char*)&arg, sizeof(arg));
+            setsockopt(GetFd(), 0x6, 0x1, reinterpret_cast<const char*>(&arg), sizeof(arg));
             m_nagleEanbled = false;
         }
     }
@@ -776,20 +760,18 @@ void WorldSocket::OnRead()
 
             // Copy from packet buffer into header local var
             ClientPktHeader Header;
-            readBuffer.Read((uint8*)&Header, 6);
+            readBuffer.Read(reinterpret_cast<uint8*>(&Header), 6);
 
             // Decrypt the header
 #if VERSION_STRING < WotLK
             _crypt.decryptLegacyReceive((uint8*)&Header, sizeof(ClientPktHeader));
 #else
-            _crypt.decryptWotlkReceive((uint8*)&Header, sizeof(ClientPktHeader));
+            _crypt.decryptWotlkReceive(reinterpret_cast<uint8*>(&Header), sizeof(ClientPktHeader));
 #endif
 
             mRemaining = mSize = ntohs(Header.size) - 4;
             mOpcode = Header.cmd;
         }
-
-        WorldPacket* Packet;
 
         if (mRemaining > 0)
         {
@@ -800,46 +782,46 @@ void WorldSocket::OnRead()
             }
         }
 
-        Packet = new WorldPacket(static_cast<uint16>(mOpcode), mSize);
-        Packet->resize(mSize);
+        WorldPacket* packet = new WorldPacket(static_cast<uint16>(mOpcode), mSize);
+        packet->resize(mSize);
 
         if (mRemaining > 0)
         {
             // Copy from packet buffer into our actual buffer.
             ///Read(mRemaining, (uint8*)Packet->contents());
-            readBuffer.Read((uint8*)Packet->contents(), mRemaining);
+            readBuffer.Read(static_cast<uint8*>(packet->contents()), mRemaining);
         }
 
-        sWorldPacketLog.logPacket(mSize, static_cast<uint16>(mOpcode), mSize ? Packet->contents() : NULL, 0, (mSession ? mSession->GetAccountId() : 0));
+        sWorldPacketLog.logPacket(mSize, static_cast<uint16>(mOpcode), mSize ? packet->contents() : nullptr, 0, (mSession ? mSession->GetAccountId() : 0));
         mRemaining = mSize = mOpcode = 0;
 
         // Check for packets that we handle
-        switch (Packet->GetOpcode())
+        switch (packet->GetOpcode())
         {
             case CMSG_PING:
             {
-                _HandlePing(Packet);
-                delete Packet;
+                _HandlePing(packet);
+                delete packet;
             }
             break;
 #if VERSION_STRING == Cata
             case MSG_WOW_CONNECTION:
             {
-                HandleWoWConnection(Packet);
+                HandleWoWConnection(packet);
             }
             break;
 #endif
             case CMSG_AUTH_SESSION:
             {
-                _HandleAuthSession(Packet);
+                _HandleAuthSession(packet);
             }
             break;
             default:
             {
                 if (mSession)
-                    mSession->QueuePacket(Packet);
+                    mSession->QueuePacket(packet);
                 else
-                    delete Packet;
+                    delete packet;
             }
             break;
         }
@@ -891,7 +873,6 @@ void WorldPacketLog::logPacket(uint32_t len, uint16_t opcode, const uint8_t* dat
         unsigned int line = 1;
         unsigned int countpos = 0;
         uint16_t lenght = static_cast<uint16_t>(len);
-        unsigned int count = 0;
 
         fprintf(mPacketLogFile, "{%s} Packet: (0x%04X) %s PacketSize = %u stamp = %u accountid = %u\n", (direction ? "SERVER" : "CLIENT"), opcode,
             getOpcodeName(opcode).c_str(), lenght, Util::getMSTime(), accountid);
@@ -902,7 +883,7 @@ void WorldPacketLog::logPacket(uint32_t len, uint16_t opcode, const uint8_t* dat
         if (lenght > 0)
         {
             fprintf(mPacketLogFile, "|");
-            for (count = 0; count < lenght; count++)
+            for (unsigned int count = 0; count < lenght; count++)
             {
                 if (countpos == 16)
                 {

@@ -23,11 +23,12 @@
 class PathoftheAdept : public Arcemu::Gossip::Script
 {
 public:
+
     void OnHello(Object* pObject, Player* plr) override
     {
         Arcemu::Gossip::Menu menu(pObject->getGuid(), 1, plr->GetSession()->language);
         if (plr->HasQuest(9692))
-            menu.AddItem(GOSSIP_ICON_CHAT, plr->GetSession()->LocalizedGossipOption(493), 1);     // Take Insignia
+            menu.AddItem(GOSSIP_ICON_CHAT, plr->GetSession()->LocalizedGossipOption(493), 1); // Take Insignia
 
         menu.Send(plr);
     }
@@ -40,24 +41,20 @@ public:
 
 class LordDawnstar : public CreatureAIScript
 {
-public:
     ADD_CREATURE_FACTORY_FUNCTION(LordDawnstar);
-    LordDawnstar(Creature* pCreature) : CreatureAIScript(pCreature) {}
+    explicit LordDawnstar(Creature* pCreature) : CreatureAIScript(pCreature) {}
 
     void OnLoad() override
     {
-        getCreature()->setUInt32Value(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+        getCreature()->setNpcFlags(UNIT_NPC_FLAG_GOSSIP);
         getCreature()->setStandState(STANDSTATE_DEAD);
         getCreature()->setDeathState(CORPSE);
         getCreature()->GetAIInterface()->m_canMove = false;
     }
 };
 
-
 void SetupSilvermoonCity(ScriptMgr* mgr)
 {
-    Arcemu::Gossip::Script* LordGossip = new PathoftheAdept();
-    mgr->register_creature_gossip(17832, LordGossip);
-
+    mgr->register_creature_gossip(17832, new PathoftheAdept());
     mgr->register_creature_script(17832, &LordDawnstar::Create);
 }

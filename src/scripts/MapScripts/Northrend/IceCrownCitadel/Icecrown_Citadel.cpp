@@ -10,7 +10,7 @@ class IceCrownCitadel : public InstanceScript
 {
 public:
 
-    IceCrownCitadel(MapMgr* pMapMgr) : InstanceScript(pMapMgr)
+    explicit IceCrownCitadel(MapMgr* pMapMgr) : InstanceScript(pMapMgr)
     {
     }
 
@@ -79,7 +79,7 @@ class IcecrownCitadelTeleport : public GameObjectAIScript
 {
 public:
 
-    IcecrownCitadelTeleport(GameObject* go) : GameObjectAIScript(go)
+    explicit IcecrownCitadelTeleport(GameObject* go) : GameObjectAIScript(go)
     {
     }
 

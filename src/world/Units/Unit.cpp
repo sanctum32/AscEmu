@@ -12,6 +12,9 @@ This file is released under the MIT license. See README-MIT for more information
 #include "Spell/Customization/SpellCustomizations.hpp"
 #include "Data/WoWUnit.h"
 #include "Storage/MySQLDataStore.hpp"
+#include "Server/Packets/SmsgEnvironmentalDamageLog.h"
+
+using namespace AscEmu::Packets;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // WoWData
@@ -61,9 +64,21 @@ void Unit::setPowerType(uint8_t powerType) { write(unitData()->field_bytes_0.s.p
 
 uint32_t Unit::getHealth() const { return unitData()->health; }
 void Unit::setHealth(uint32_t health) { write(unitData()->health, health); }
+void Unit::modHealth(int32_t health)
+{
+    uint32_t currentHealth = getHealth();
+    currentHealth += health;
+    setHealth(currentHealth);
+}
 
 uint32_t Unit::getMaxHealth() const { return unitData()->max_health; }
 void Unit::setMaxHealth(uint32_t maxHealth) { write(unitData()->max_health, maxHealth); }
+void Unit::modMaxHealth(int32_t maxHealth)
+{
+    uint32_t currentHealth = getHealth();
+    currentHealth += maxHealth;
+    setHealth(currentHealth);
+}
 
 void Unit::setMaxMana(uint32_t maxMana) { write(unitData()->max_mana, maxMana); }
 
@@ -158,6 +173,18 @@ uint8_t Unit::getAnimationFlags() const { return unitData()->field_bytes_1.s.ani
 void Unit::setAnimationFlags(uint8_t animationFlags) { write(unitData()->field_bytes_1.s.animation_flag, animationFlags); }
 //bytes_1 end
 
+uint32_t Unit::getPetNumber() const { return unitData()->pet_number; }
+void Unit::setPetNumber(uint32_t timestamp) { write(unitData()->pet_number, timestamp); }
+
+uint32_t Unit::getPetNameTimestamp() const { return unitData()->pet_name_timestamp; }
+void Unit::setPetNameTimestamp(uint32_t timestamp) { write(unitData()->pet_name_timestamp, timestamp); }
+
+uint32_t Unit::getPetExperience() const { return unitData()->pet_experience; }
+void Unit::setPetExperience(uint32_t experience) { write(unitData()->pet_experience, experience); }
+
+uint32_t Unit::getPetNextLevelExperience() const { return unitData()->pet_next_level_experience; }
+void Unit::setPetNextLevelExperience(uint32_t experience) { write(unitData()->pet_next_level_experience, experience); }
+
 uint32_t Unit::getDynamicFlags() const { return unitData()->dynamic_flags; }
 void Unit::setDynamicFlags(uint32_t dynamicFlags) { write(unitData()->dynamic_flags, dynamicFlags); }
 void Unit::addDynamicFlags(uint32_t dynamicFlags) { setDynamicFlags(getDynamicFlags() | dynamicFlags); }
@@ -220,6 +247,9 @@ void Unit::setShapeShiftForm(uint8_t shapeShiftForm) { write(unitData()->field_b
 uint32_t Unit::getAttackPower() const { return unitData()->attack_power; }
 void Unit::setAttackPower(uint32_t value) { write(unitData()->attack_power, value); }
 
+int32_t Unit::getRangedAttackPower() const { return unitData()->ranged_attack_power; }
+void Unit::setRangedAttackPower(int32_t power) { write(unitData()->ranged_attack_power, power); }
+
 float Unit::getMinRangedDamage() const { return unitData()->minimum_ranged_damage; }
 void Unit::setMinRangedDamage(float damage) { write(unitData()->minimum_ranged_damage, damage); }
 
@@ -234,6 +264,89 @@ void Unit::modPowerCostMultiplier(uint16_t school, float multiplier)
     currentMultiplier += multiplier;
     setPowerCostMultiplier(school, currentMultiplier);
 }
+
+int32_t Unit::getAttackPowerMods() const
+{
+#if VERSION_STRING != Cata
+    return unitData()->attack_power_mods;
+#else
+    return unitData()->attack_power_mod_pos - unitData()->attack_power_mod_neg;
+#endif
+}
+
+void Unit::setAttackPowerMods(int32_t modifier)
+{
+#if VERSION_STRING != Cata
+    write(unitData()->attack_power_mods, modifier);
+#else
+    write(unitData()->attack_power_mod_neg, static_cast<uint32_t>(modifier < 0 ? modifier : 0));
+    write(unitData()->attack_power_mod_pos, static_cast<uint32_t>(modifier > 0 ? modifier : 0));
+#endif
+}
+
+void Unit::modAttackPowerMods(int32_t modifier)
+{
+#if VERSION_STRING != Cata
+    int32_t currentModifier = getAttackPowerMods();
+    currentModifier += modifier;
+    setAttackPowerMods(currentModifier);
+#else
+    if (modifier == 0) { return; }
+#endif
+}
+
+float Unit::getAttackPowerMultiplier() const { return unitData()->attack_power_multiplier; }
+void Unit::setAttackPowerMultiplier(float multiplier) { write(unitData()->attack_power_multiplier, multiplier); }
+void Unit::modAttackPowerMultiplier(float multiplier)
+{
+    float currentMultiplier = getAttackPowerMultiplier();
+    currentMultiplier += multiplier;
+    setAttackPowerMultiplier(currentMultiplier);
+}
+
+int32_t Unit::getRangedAttackPowerMods() const
+{
+#if VERSION_STRING != Cata
+    return unitData()->ranged_attack_power_mods;
+#else
+    return unitData()->ranged_attack_power_mods_pos - unitData()->ranged_attack_power_mods_neg;
+#endif
+}
+
+void Unit::setRangedAttackPowerMods(int32_t modifier)
+{
+#if VERSION_STRING != Cata
+    write(unitData()->ranged_attack_power_mods, modifier);
+#else
+    write(unitData()->ranged_attack_power_mods_neg, static_cast<uint32_t>(modifier < 0 ? modifier : 0));
+    write(unitData()->ranged_attack_power_mods_pos, static_cast<uint32_t>(modifier > 0 ? modifier : 0));
+#endif
+}
+
+void Unit::modRangedAttackPowerMods(int32_t modifier)
+{
+#if VERSION_STRING != Cata
+    int32_t currentModifier = getRangedAttackPowerMods();
+    currentModifier += modifier;
+    setRangedAttackPowerMods(currentModifier);
+#else
+    if (modifier == 0) { return; }
+#endif
+}
+
+float Unit::getRangedAttackPowerMultiplier() const { return unitData()->ranged_attack_power_multiplier; }
+void Unit::setRangedAttackPowerMultiplier(float multiplier) { write(unitData()->ranged_attack_power_multiplier, multiplier); }
+void Unit::modRangedAttackPowerMultiplier(float multiplier)
+{
+    float currentMultiplier = getRangedAttackPowerMultiplier();
+    currentMultiplier += multiplier;
+    setRangedAttackPowerMultiplier(currentMultiplier);
+}
+
+#if VERSION_STRING >= WotLK
+float Unit::getHoverHeight() const { return unitData()->hover_height; }
+void Unit::setHoverHeight(float height) { write(unitData()->hover_height, height); }
+#endif
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Movement
@@ -804,9 +917,9 @@ UnitSpeedType Unit::getFastestSpeedType() const
     auto fastest_speed_type = TYPE_WALK;
     for (uint32_t i = TYPE_WALK; i <= TYPE_PITCH_RATE; ++i)
     {
-        const auto speed_type = static_cast<UnitSpeedType>(i + 1);
+        const auto speedType = static_cast<UnitSpeedType>(i + 1);
 
-        switch(speed_type)
+        switch(speedType)
         {
         case TYPE_TURN_RATE:
         case TYPE_PITCH_RATE:
@@ -815,10 +928,10 @@ UnitSpeedType Unit::getFastestSpeedType() const
             break;
         }
 
-        const auto speed = getSpeedForType(speed_type);
+        const auto speed = getSpeedForType(speedType);
 
         fastest_speed = speed > fastest_speed ? speed : fastest_speed;
-        fastest_speed_type = speed == fastest_speed ? speed_type : fastest_speed_type;
+        fastest_speed_type = speed == fastest_speed ? speedType : fastest_speed_type;
     }
     return fastest_speed_type;
 }
@@ -903,7 +1016,7 @@ void Unit::setSpeedForType(UnitSpeedType speed_type, float speed, bool set_basic
     if (player_mover == nullptr)
     {
         if (isPlayer())
-            player_mover = static_cast<Player*>(this);
+            player_mover = dynamic_cast<Player*>(this);
     }
 
     if (player_mover != nullptr)
@@ -933,11 +1046,11 @@ void Unit::resetCurrentSpeed()
     m_currentPitchRate = m_basicPitchRate;
 }
 
-void Unit::sendMoveSplinePaket(UnitSpeedType speed_type)
+void Unit::sendMoveSplinePaket(UnitSpeedType speedType)
 {
     WorldPacket data(12);
 
-    switch (speed_type)
+    switch (speedType)
     {
         case TYPE_WALK:
             data.Initialize(SMSG_SPLINE_SET_WALK_SPEED);
@@ -971,7 +1084,7 @@ void Unit::sendMoveSplinePaket(UnitSpeedType speed_type)
     }
 
     data << GetNewGUID();
-    data << float(getSpeedForType(speed_type));
+    data << float(getSpeedForType(speedType));
 
     SendMessageToSet(&data, false);
 }
@@ -1112,6 +1225,33 @@ void Unit::removeDiminishingReturnTimer(SpellInfo* spell)
     }
 }
 
+bool Unit::canDualWield() const
+{
+    return m_canDualWield;
+}
+
+void Unit::setDualWield(bool enable)
+{
+    m_canDualWield = enable;
+
+    if (!isPlayer())
+        return;
+
+    auto plrUnit = static_cast<Player*>(this);
+    if (enable)
+    {
+        if (!plrUnit->_HasSkillLine(SKILL_DUAL_WIELD))
+            plrUnit->_AddSkillLine(SKILL_DUAL_WIELD, 1, 1);
+    }
+    else
+    {
+        if (plrUnit->canDualWield2H())
+            plrUnit->setDualWield2H(false);
+
+        plrUnit->_RemoveSkillLine(SKILL_DUAL_WIELD);
+    }
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // Aura
 
@@ -1156,7 +1296,7 @@ bool Unit::hasAuraWithAuraEffect(AuraEffect type) const
     return false;
 }
 
-bool Unit::hasAuraState(AuraState state, SpellInfo* spellInfo, Unit* caster) const
+bool Unit::hasAuraState(AuraState state, SpellInfo const* spellInfo, Unit const* caster) const
 {
     if (caster != nullptr && spellInfo != nullptr && caster->hasAuraWithAuraEffect(SPELL_AURA_IGNORE_TARGET_AURA_STATE))
     {
@@ -1409,4 +1549,405 @@ void Unit::removeSingleTargetGuidForAura(uint32_t spellId)
 
     if (itr != m_singleTargetAura.end())
         m_singleTargetAura.erase(itr);
+}
+
+void Unit::removeAllAurasByAuraEffect(AuraEffect effect)
+{
+    for (auto i = MAX_TOTAL_AURAS_START; i < MAX_TOTAL_AURAS_END; ++i)
+    {
+        if (m_auras[i] == nullptr)
+            continue;
+        if (m_auras[i]->GetSpellInfo()->hasEffectApplyAuraName(effect))
+            RemoveAura(m_auras[i]);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Visibility system
+bool Unit::canSee(Object* const obj)
+{
+    if (obj == nullptr)
+        return false;
+
+    if (this == obj)
+        return true;
+
+    if (!obj->IsInWorld() || GetMapId() != obj->GetMapId())
+        return false;
+
+    // Unit cannot see objects from different phases
+    if ((GetPhase() & obj->GetPhase()) == 0)
+        return false;
+
+    // Unit cannot see invisible Game Masters unless he/she has Game Master flag on
+    if (obj->isPlayer() && static_cast<Player*>(obj)->m_isGmInvisible)
+        return isPlayer() && HasFlag(PLAYER_FLAGS, PLAYER_FLAG_GM);
+
+    uint64_t ownerGuid = 0;
+    if (getCharmedByGuid() != 0)
+        ownerGuid = getCharmedByGuid();
+    else
+        ownerGuid = getSummonedByGuid();
+
+    // Unit can always see its master
+    if (ownerGuid == obj->getGuid())
+        return true;
+
+    // Player is dead and has released spirit
+    if (isPlayer() && getDeathState() == CORPSE)
+    {
+        const auto corpseViewDistance = 1600.f; // 40*40 yards
+        const auto playerMe = static_cast<Player*>(this);
+        // If object is another player
+        if (obj->isPlayer())
+        {
+            // Dead player can see all players in arena regardless of range
+            if (playerMe->m_deathVision)
+                return true;
+
+            // Player can see all friendly and unfriendly players within 40 yards from his/her corpse
+            const auto playerObj = static_cast<Player*>(obj);
+            if (playerMe->getMyCorpseInstanceId() == playerMe->GetInstanceID() &&
+                playerObj->getDistanceSq(playerMe->getMyCorpseLocation()) <= corpseViewDistance)
+                return true;
+
+            // Otherwise player can only see other players who have released their spirits as well
+            return playerObj->getDeathState() == CORPSE;
+        }
+
+        // Dead player can also see all objects in arena regardless of range
+        if (playerMe->m_deathVision)
+            return true;
+
+        if (playerMe->getMyCorpseInstanceId() == GetInstanceID())
+        {
+            // Player can see his/her own corpse
+            if (obj->isCorpse() && static_cast<Corpse*>(obj)->getOwnerGuid() == getGuid())
+                return true;
+
+            // Player can see all objects within 40 yards from his/her own corpse
+            if (obj->getDistanceSq(playerMe->getMyCorpseLocation()) <= corpseViewDistance)
+                return true;
+        }
+
+        // Player can see Spirit Healers
+        if (obj->isCreature() && static_cast<Creature*>(obj)->isSpiritHealer())
+            return true;
+
+        return false;
+    }
+
+    // Unit is alive or player hasn't released spirit yet
+    // Do checks based on object's type
+    switch (obj->getObjectTypeId())
+    {
+        case TYPEID_PLAYER:
+        {
+            const auto playerObj = static_cast<Player*>(obj);
+            if (playerObj->getDeathState() == CORPSE)
+            {
+                if (isPlayer())
+                {
+                    // If players are from same group, they can see each other normally
+                    const auto playerMe = static_cast<Player*>(this);
+                    if (playerMe->GetGroup() != nullptr && playerMe->GetGroup() == playerObj->GetGroup())
+                        return true;
+
+                    // Game Masters can see all dead players
+                    return HasFlag(PLAYER_FLAGS, PLAYER_FLAG_GM);
+                }
+                else
+                    // Non-player units cannot see dead players
+                    return false;
+            }
+            break;
+        }
+        case TYPEID_UNIT:
+        {
+            // Unit cannot see Spirit Healers when unit's alive
+            // unless unit is a Game Master
+            if (obj->isCreature() && static_cast<Creature*>(obj)->isSpiritHealer())
+                return isPlayer() && HasFlag(PLAYER_FLAGS, PLAYER_FLAG_GM);
+
+            const auto unitObj = static_cast<Unit*>(obj);
+
+            if (unitObj->getCharmedByGuid() != 0)
+                ownerGuid = unitObj->getCharmedByGuid();
+            else
+                ownerGuid = unitObj->getSummonedByGuid();
+
+            // Unit can always see their own summoned units
+            if (getGuid() == ownerGuid)
+                return true;
+
+            if (isPlayer())
+            {
+                // Group members can see each other's summoned units
+                // unless they are dueling, then it's based on detection
+                const auto objectOwner = GetMapMgrPlayer(ownerGuid);
+                if (objectOwner != nullptr)
+                {
+                    if (objectOwner->GetGroup() != nullptr && objectOwner->GetGroup()->HasMember(static_cast<Player*>(this)))
+                    {
+                        if (objectOwner->DuelingWith != static_cast<Player*>(this))
+                            return true;
+                    }
+                }
+
+                // If object is only visible to either faction
+                if (unitObj->GetAIInterface()->faction_visibility == 1)
+                    return static_cast<Player*>(this)->IsTeamHorde() ? true : false;
+                if (unitObj->GetAIInterface()->faction_visibility == 2)
+                    return static_cast<Player*>(this)->IsTeamHorde() ? false : true;
+            }
+            break;
+        }
+        case TYPEID_GAMEOBJECT:
+        {
+            const auto gameObjectObj = static_cast<GameObject*>(obj);
+            // Stealthed / invisible gameobjects
+            if (gameObjectObj->inStealth || gameObjectObj->invisible)
+            {
+                ownerGuid = gameObjectObj->getCreatedByGuid();
+                // Unit can always see their own created gameobjects
+                if (getGuid() == ownerGuid)
+                    return true;
+
+                // Group members can see each other's created gameobjects
+                // unless they are dueling, then it's based on detection
+                const auto objectOwner = GetMapMgrPlayer(ownerGuid);
+                if (objectOwner != nullptr && isPlayer())
+                {
+                    if (objectOwner->GetGroup() != nullptr && objectOwner->GetGroup()->HasMember(static_cast<Player*>(this)))
+                    {
+                        if (objectOwner->DuelingWith != static_cast<Player*>(this))
+                            return true;
+                    }
+                }
+            }
+            break;
+        }
+        default:
+            break;
+    }
+
+    // Game Masters can see invisible and stealthed objects
+    if (isPlayer() && HasFlag(PLAYER_FLAGS, PLAYER_FLAG_GM))
+        return true;
+
+    // Hunter Marked units are always visible to caster
+    if (obj->isCreatureOrPlayer() && static_cast<Unit*>(obj)->stalkedby == getGuid())
+        return true;
+
+    // Pets and summoned units don't have detection, they rely on their master's detection
+    auto meUnit = this;
+    if (getCharmedByGuid() != 0)
+    {
+        const auto summoner = GetMapMgrUnit(getCharmedByGuid());
+        if (summoner != nullptr)
+            meUnit = summoner;
+    }
+    else if (getSummonedByGuid() != 0)
+    {
+        const auto summoner = GetMapMgrUnit(getSummonedByGuid());
+        if (summoner != nullptr)
+            meUnit = summoner;
+    }
+
+    const auto unitTarget = static_cast<Unit*>(obj);
+    const auto gobTarget = static_cast<GameObject*>(obj);
+
+    ////////////////////////////
+    // Invisibility detection
+
+    for (auto i = 0; i < INVIS_FLAG_TOTAL; ++i)
+    {
+        auto unitInvisibilityValue = meUnit->getInvisibilityLevel(InvisibilityFlag(i));
+        auto unitInvisibilityDetection = meUnit->getInvisibilityDetection(InvisibilityFlag(i));
+        auto objectInvisibilityValue = 0;
+        auto objectInvisibilityDetection = 0;
+
+        if (obj->isCreatureOrPlayer())
+        {
+            objectInvisibilityValue = unitTarget->getInvisibilityLevel(InvisibilityFlag(i));
+            objectInvisibilityDetection = unitTarget->getInvisibilityDetection(InvisibilityFlag(i));
+
+            // When unit is invisible, unit can only see those objects which have enough detection value
+            if ((unitInvisibilityValue > objectInvisibilityDetection) ||
+            // When object is invisible, unit can only see it if unit has enough detection value
+                (objectInvisibilityValue > unitInvisibilityDetection))
+                return false;
+        }
+        else if (obj->isGameObject() && gobTarget->invisible && i == INVIS_FLAG_TRAP)
+        {
+            // Base value for invisible traps seems to be 300 according to spell id 2836
+            objectInvisibilityValue = 300;
+            if (objectInvisibilityValue > unitInvisibilityDetection)
+                return false;
+        }
+    }
+
+    ////////////////////////////
+    // Stealth detection
+
+    if ((obj->isCreatureOrPlayer() && unitTarget->isStealthed()) || (obj->isGameObject() && gobTarget->inStealth))
+    {
+        // Get absolute distance
+        const auto distance = meUnit->CalcDistance(obj);
+        const auto combatReach = meUnit->getCombatReach();
+        if (obj->isCreatureOrPlayer())
+        {
+            // Shadow Sight buff in arena makes unit detect stealth regardless of distance and facing
+            if (meUnit->hasAuraWithAuraEffect(SPELL_AURA_DETECT_STEALTH))
+                return true;
+
+            // Normally units not in front cannot be detected
+            if (!meUnit->isInFront(obj))
+                return false;
+
+            // If object is closer than unit's combat reach
+            if (distance < combatReach)
+                return true;
+        }
+
+        // Objects outside of Line of Sight cannot be detected
+        if (worldConfig.terrainCollision.isCollisionEnabled)
+        {
+            if (!meUnit->IsWithinLOSInMap(obj))
+                return false;
+        }
+
+        // In unit cases base stealth level and base stealth detection increases by 5 points per unit's level
+        // Stealth detection base points start from 30ish, exact value unknown
+        int detectionValue = 30 + meUnit->getLevel() * 5;
+
+        // Apply modifiers which increases unit's stealth detection
+        if (obj->isCreatureOrPlayer())
+            detectionValue += meUnit->getStealthDetection(STEALTH_FLAG_NORMAL);
+        else if (obj->isGameObject())
+            detectionValue += meUnit->getStealthDetection(STEALTH_FLAG_TRAP);
+
+        // Subtract object's stealth level from detection value
+        if (obj->isCreatureOrPlayer())
+            detectionValue -= unitTarget->getStealthLevel(STEALTH_FLAG_NORMAL);
+        else if (obj->isGameObject())
+        {
+            // Base value for stealthed gameobjects seems to be 70 according to spell id 2836
+            detectionValue -= 70;
+            if (gobTarget->getCreatedByGuid() != 0)
+            {
+                // If trap has an owner, subtract owner's stealth level (unit level * 5) from detection value
+                const auto summoner = gobTarget->GetMapMgrUnit(gobTarget->getCreatedByGuid());
+                if (summoner != nullptr)
+                    detectionValue -= summoner->getLevel() * 5;
+            }
+            else
+                // If trap has no owner, subtract trap's level from detection value
+                detectionValue -= gobTarget->GetGameObjectProperties()->trap.level * 5;
+        }
+
+        auto visibilityRange = float_t(detectionValue * 0.3f + combatReach);
+        if (visibilityRange <= 0.0f)
+            return false;
+
+        // Players cannot see stealthed objects from further than 30 yards
+        if (meUnit->isPlayer() && visibilityRange > 30.0f)
+            visibilityRange = 30.0f;
+
+        // Object is further than unit's visibility range
+        if (distance > visibilityRange)
+            return false;
+    }
+    return true;
+}
+
+int32_t Unit::getStealthLevel(StealthFlag flag) const
+{
+    return m_stealthLevel[flag];
+}
+
+int32_t Unit::getStealthDetection(StealthFlag flag) const
+{
+    return m_stealthDetection[flag];
+}
+
+void Unit::modStealthLevel(StealthFlag flag, const int32_t amount)
+{
+    m_stealthLevel[flag] += amount;
+}
+
+void Unit::modStealthDetection(StealthFlag flag, const int32_t amount)
+{
+    m_stealthDetection[flag] += amount;
+}
+
+bool Unit::isStealthed() const
+{
+    return hasAuraWithAuraEffect(SPELL_AURA_MOD_STEALTH);
+}
+
+int32_t Unit::getInvisibilityLevel(InvisibilityFlag flag) const
+{
+    return m_invisibilityLevel[flag];
+}
+
+int32_t Unit::getInvisibilityDetection(InvisibilityFlag flag) const
+{
+    return m_invisibilityDetection[flag];
+}
+
+void Unit::modInvisibilityLevel(InvisibilityFlag flag, const int32_t amount)
+{
+    m_invisibilityLevel[flag] += amount;
+}
+
+void Unit::modInvisibilityDetection(InvisibilityFlag flag, const int32_t amount)
+{
+    m_invisibilityDetection[flag] += amount;
+}
+
+bool Unit::isInvisible() const
+{
+    return hasAuraWithAuraEffect(SPELL_AURA_MOD_INVISIBILITY);
+}
+
+void Unit::setVisible(const bool visible)
+{
+    if (!visible)
+        modInvisibilityLevel(INVIS_FLAG_NEVER_VISIBLE, 1);
+    else
+        modInvisibilityLevel(INVIS_FLAG_NEVER_VISIBLE, -getInvisibilityLevel(INVIS_FLAG_NEVER_VISIBLE));
+    UpdateVisibility();
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Misc
+void Unit::setAttackTimer(WeaponDamageType type, int32_t time)
+{
+    // TODO: getModCastSpeed() is no longer used here, is it required?
+    // it was used in the old function but isnt it about spell casttime only.. - Appled
+    m_attackTimer[type] = Util::getMSTime() + time;
+}
+
+uint32_t Unit::getAttackTimer(WeaponDamageType type) const
+{
+    return m_attackTimer[type];
+}
+
+bool Unit::isAttackReady(WeaponDamageType type) const
+{
+    return Util::getMSTime() >= m_attackTimer[type];
+}
+
+void Unit::resetAttackTimers()
+{
+    for (int8_t i = MELEE; i <= RANGED; ++i)
+    {
+        setAttackTimer(WeaponDamageType(i), getBaseAttackTime(i));
+    }
+}
+
+void Unit::sendEnvironmentalDamageLogPacket(uint64_t guid, uint8_t type, uint32_t damage, uint64_t unk /*= 0*/)
+{
+    SendMessageToSet(SmsgEnvironmentalDamageLog(guid, type, damage, unk).serialise().get(), true, false);
 }

@@ -76,26 +76,6 @@ class Spell;
 class UpdateMask;
 class EventableObject;
 
-enum HIGHGUID_TYPE
-{
-    HIGHGUID_TYPE_PLAYER			= 0x00000000,
-    HIGHGUID_TYPE_CORPSE			= 0x30000000,
-    HIGHGUID_TYPE_ITEM				= 0x40000000,
-    HIGHGUID_TYPE_CONTAINER			= 0x50000000,			// confirm this pl0x
-    HIGHGUID_TYPE_DYNAMICOBJECT		= 0x60000000,
-    HIGHGUID_TYPE_WAYPOINT			= 0x10000000,
-    HIGHGUID_TYPE_TRANSPORTER		= 0x1FC00000,
-    HIGHGUID_TYPE_GAMEOBJECT		= 0xF1100000,
-    HIGHGUID_TYPE_UNIT				= 0xF1300000,
-    HIGHGUID_TYPE_PET				= 0xF1400000,
-    HIGHGUID_TYPE_VEHICLE			= 0xF1500000,
-    HIGHGUID_TYPE_GROUP             = 0x1F500000,
-    HIGHGUID_TYPE_GUILD             = 0x1FF70000,
-//===============================================
-    HIGHGUID_TYPE_MASK				= 0xFFF00000,
-    LOWGUID_ENTRY_MASK				= 0x00FFFFFF,
-};
-
 enum CurrentSpellType : uint8_t
 {
     CURRENT_MELEE_SPELL         = 0,
@@ -104,12 +84,6 @@ enum CurrentSpellType : uint8_t
     CURRENT_AUTOREPEAT_SPELL    = 3,
     CURRENT_SPELL_MAX
 };
-
-#define GET_TYPE_FROM_GUID(x) (Arcemu::Util::GUID_HIPART((x)) & HIGHGUID_TYPE_MASK)
-#define GET_LOWGUID_PART(x) (Arcemu::Util::GUID_LOPART((x)) & LOWGUID_ENTRY_MASK)
-
-#define IS_GROUP(Guid) (Arcemu::Util::GUID_HIPART((Guid)) == HIGHGUID_TYPE_GROUP)
-#define IS_PLAYER_GUID(Guid) (Arcemu::Util::GUID_HIPART((Guid)) == HIGHGUID_TYPE_PLAYER && Guid != 0)
 
 #define MAX_INTERACTION_RANGE 5.0f
 
@@ -412,13 +386,11 @@ public:
     void setCurrentSpell(Spell* curSpell);
 
     // If spellid is set to 0, function will interrupt any current spell
-    // TODO: implement delayed spells
-    void interruptSpell(uint32_t spellId = 0, bool checkMeleeSpell = true, bool checkDelayed = true);
-    void interruptSpellWithSpellType(CurrentSpellType spellType, bool checkDelayed = true);
+    void interruptSpell(uint32_t spellId = 0, bool checkMeleeSpell = true);
+    void interruptSpellWithSpellType(CurrentSpellType spellType);
 
-    // Searches for current casted spell, but skips melee spells
-    // TODO: implement delayed spells
-    bool isCastingNonMeleeSpell(bool checkDelayed = true, bool skipChanneled = false, bool skipAutorepeat = false, bool isAutoshoot = false) const;
+    // Searches for current casted spell, but skips 'on next melee' spells
+    bool isCastingSpell(bool skipChanneled = false, bool skipAutorepeat = false, bool isAutoshoot = false) const;
     Spell* findCurrentCastedSpellBySpellId(uint32_t spellId);
 
     void _UpdateSpells(uint32_t time); // moved here from Unit class since GameObject can be caster as well
@@ -717,7 +689,7 @@ public:
         void SendAIReaction(uint32 reaction = 2);
 
         //////////////////////////////////////////////////////////////////////////////////////////
-        //void SendDestroyObject()
+        //void sendDestroyObjectPacket()
         // Destroys this Object for the players' clients that are nearby
         // (removes object from the scene)
         //
