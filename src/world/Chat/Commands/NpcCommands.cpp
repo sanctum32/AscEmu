@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -10,7 +10,7 @@ This file is released under the MIT license. See README-MIT for more information
 #include "Storage/MySQLDataStore.hpp"
 #include "Server/MainServerDefines.h"
 #include "Map/MapMgr.h"
-#include "Spell/Customization/SpellCustomizations.hpp"
+#include "Spell/SpellMgr.h"
 #include "Spell/Definitions/SpellEffects.h"
 
 //.npc addagent
@@ -38,7 +38,7 @@ bool ChatHandler::HandleNpcAddAgentCommand(const char* args, WorldSession* m_ses
         return true;
     }
 
-    auto spell_entry = sSpellCustomizations.GetSpellInfo(spellId);
+    auto spell_entry = sSpellMgr.getSpellInfo(spellId);
     if (spell_entry == nullptr)
     {
         RedSystemMessage(m_session, "Spell %u is not invalid!", spellId);
@@ -96,6 +96,17 @@ bool ChatHandler::HandleNpcAddAgentCommand(const char* args, WorldSession* m_ses
     return true;
 }
 
+bool ChatHandler::HandleNpcAppearCommand(const char* /*_*/, WorldSession* session)
+{
+    const auto target = GetSelectedCreature(session);
+    if (!target) {
+        return true;
+    }
+
+    session->GetPlayer()->Teleport(target->GetPosition(), target->GetMapMgr());
+    return true;
+}
+
 //.npc addtrainerspell
 bool ChatHandler::HandleNpcAddTrainerSpellCommand(const char* args, WorldSession* m_session)
 {
@@ -106,7 +117,7 @@ bool ChatHandler::HandleNpcAddTrainerSpellCommand(const char* args, WorldSession
     uint32_t spellid;
     uint32_t cost;
     uint32_t reqlevel;
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
     uint32_t reqspell;
     uint32_t delspell;
 
@@ -131,7 +142,7 @@ bool ChatHandler::HandleNpcAddTrainerSpellCommand(const char* args, WorldSession
         return true;
     }
 
-    auto learn_spell = sSpellCustomizations.GetSpellInfo(spellid);
+    auto learn_spell = sSpellMgr.getSpellInfo(spellid);
     if (learn_spell == nullptr)
     {
         RedSystemMessage(m_session, "Invalid spell %u.", spellid);
@@ -145,7 +156,7 @@ bool ChatHandler::HandleNpcAddTrainerSpellCommand(const char* args, WorldSession
     }
 
     TrainerSpell sp;
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
     sp.Cost = cost;
     sp.IsProfession = false;
     sp.pLearnSpell = learn_spell;
@@ -193,7 +204,7 @@ bool ChatHandler::HandleNpcCastCommand(const char* args, WorldSession* m_session
         return true;
     }
 
-    auto spell_entry = sSpellCustomizations.GetSpellInfo(spell_id);
+    auto spell_entry = sSpellMgr.getSpellInfo(spell_id);
     if (spell_entry == nullptr)
     {
         RedSystemMessage(m_session, "Invalid Spell ID: %u !", spell_id);
@@ -201,7 +212,7 @@ bool ChatHandler::HandleNpcCastCommand(const char* args, WorldSession* m_session
     }
 
     auto unit_target = static_cast<Unit*>(creature_target);
-    unit_target->CastSpell(unit_target, spell_entry, false);
+    unit_target->castSpell(unit_target, spell_id, false);
 
     return true;
 }
@@ -293,7 +304,8 @@ bool ChatHandler::HandleNpcFollowCommand(const char* /*args*/, WorldSession* m_s
     if (creature_target == nullptr)
         return true;
 
-    creature_target->GetAIInterface()->SetUnitToFollow(m_session->GetPlayer());
+    //creature_target->GetAIInterface()->SetUnitToFollow(m_session->GetPlayer());
+    creature_target->getMovementAI().startFollowing(m_session->GetPlayer());
     sGMLog.writefromsession(m_session, "used npc follow command on %s, sqlid %u", creature_target->GetCreatureProperties()->Name.c_str(), creature_target->spawnid);
     return true;
 }
@@ -334,7 +346,7 @@ bool ChatHandler::HandleNpcInfoCommand(const char* /*args*/, WorldSession* m_ses
     if (powertype <= 6)
     {
         SystemMessage(m_session, "Powertype: %s", POWERTYPE[powertype]);
-        SystemMessage(m_session, "Power (cur / max): %u / %u", creature_target->GetPower(powertype), creature_target->GetMaxPower(powertype));
+        SystemMessage(m_session, "Power (cur / max): %u / %u", creature_target->getPower(powertype), creature_target->getMaxPower(powertype));
     }
 
     SystemMessage(m_session, "Damage (min / max): %f / %f", creature_target->getMinDamage(), creature_target->getMaxDamage());
@@ -456,7 +468,7 @@ bool ChatHandler::HandleNpcInfoCommand(const char* /*args*/, WorldSession* m_ses
     Unit* unit_owner = nullptr;
     bool owner_header_set = false;
     if (creature_target->isSummon())
-        unit_owner = static_cast<Summon*>(creature_target)->GetOwner();
+        unit_owner = static_cast<Summon*>(creature_target)->getUnitOwner();
 
     if (unit_owner != nullptr)
     {
@@ -595,8 +607,10 @@ bool ChatHandler::HandleNpcStopFollowCommand(const char* /*args*/, WorldSession*
     if (creature_target == nullptr)
         return true;
 
-    creature_target->GetAIInterface()->setAiState(AI_STATE_IDLE);
-    creature_target->GetAIInterface()->ResetUnitToFollow();
+    /*creature_target->GetAIInterface()->setAiState(AI_STATE_IDLE);
+    creature_target->GetAIInterface()->ResetUnitToFollow();*/
+
+    creature_target->getMovementAI().stopFollowing();
 
     sGMLog.writefromsession(m_session, "cancelled npc follow command on %s, sqlid %u", creature_target->GetCreatureProperties()->Name.c_str(), creature_target->spawnid);
     return true;
@@ -823,7 +837,7 @@ bool ChatHandler::HandlePossessCommand(const char* /*args*/, WorldSession* m_ses
 //.npc vendoradditem
 bool ChatHandler::HandleNpcVendorAddItemCommand(const char* args, WorldSession* m_session)
 {
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
     char* pitem = strtok(const_cast<char*>(args), " ");
     if (!pitem)
         return false;

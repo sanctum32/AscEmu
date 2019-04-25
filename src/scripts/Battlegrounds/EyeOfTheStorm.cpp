@@ -1,6 +1,5 @@
 /*
- * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -26,7 +25,6 @@
 #include "Server/MainServerDefines.h"
 #include "Map/MapMgr.h"
 #include "Spell/SpellMgr.h"
-#include <Spell/Customization/SpellCustomizations.hpp>
 
 static float EOTSBuffCoordinates[4][4] =
 {
@@ -239,7 +237,7 @@ void EyeOfTheStorm::RepopPlayersOfTeam(int32 team, Creature* sh)
         for (std::set<uint32>::iterator it2 = itr->second.begin(); it2 != itr->second.end(); ++it2)
         {
             Player* r_plr = m_mapMgr->GetPlayer(*it2);
-            if (r_plr != NULL && (team < 0 || (int32)r_plr->GetTeam() == team) && r_plr->IsDead())
+            if (r_plr != NULL && (team < 0 || (int32)r_plr->getTeam() == team) && r_plr->isDead())
                 HookHandleRepop(r_plr);
         }
     }
@@ -247,7 +245,7 @@ void EyeOfTheStorm::RepopPlayersOfTeam(int32 team, Creature* sh)
 
 bool EyeOfTheStorm::HookHandleRepop(Player* plr)
 {
-    uint32 t = plr->GetTeam();
+    uint32 t = plr->getTeam();
     float dist = 999999.0f;
     float distcur;
     LocationVector dest;
@@ -317,7 +315,7 @@ void EyeOfTheStorm::HookOnAreaTrigger(Player* plr, uint32 id)
             break;
     }
 
-    if (plr->IsDead())        // on ne buff pas les joueurs morts ;)
+    if (plr->isDead())        // on ne buff pas les joueurs morts ;)
         return;
 
     if (bonusid > -1)
@@ -327,10 +325,10 @@ void EyeOfTheStorm::HookOnAreaTrigger(Player* plr, uint32 id)
         if (EOTSm_buffs[x] && EOTSm_buffs[x]->IsInWorld())
         {
             spellid = EOTSm_buffs[x]->GetGameObjectProperties()->raw.parameter_3;
-            SpellInfo* sp = sSpellCustomizations.GetSpellInfo(spellid);
+            SpellInfo const* sp = sSpellMgr.getSpellInfo(spellid);
             if (sp)
             {
-                Spell* pSpell = sSpellFactoryMgr.NewSpell(plr, sp, true, NULL);
+                Spell* pSpell = sSpellMgr.newSpell(plr, sp, true, NULL);
                 SpellCastTargets targets(plr->getGuid());
                 pSpell->prepare(&targets);
             }
@@ -354,7 +352,7 @@ void EyeOfTheStorm::HookOnAreaTrigger(Player* plr, uint32 id)
     }
 #endif
 
-    uint32 team = plr->GetTeam();
+    uint32 team = plr->getTeam();
     if (plr->getGuidLow() != m_flagHolder)
         return;
 
@@ -420,11 +418,11 @@ void EyeOfTheStorm::HookFlagDrop(Player* plr, GameObject* /*obj*/)
     }
 
     m_dropFlag->RemoveFromWorld(false);
-    plr->CastSpell(plr->getGuid(), EOTS_NETHERWING_FLAG_SPELL, true);
+    plr->castSpell(plr->getGuid(), EOTS_NETHERWING_FLAG_SPELL, true);
 
     SetWorldState(EOTS_NETHERWING_FLAG_READY, 0);
-    PlaySoundToAll(plr->IsTeamHorde() ? SOUND_HORDE_CAPTURE : SOUND_ALLIANCE_CAPTURE);
-    SendChatMessage(CHAT_MSG_BG_EVENT_ALLIANCE + plr->GetTeam(), plr->getGuid(), "$N has taken the flag!");
+    PlaySoundToAll(plr->isTeamHorde() ? SOUND_HORDE_CAPTURE : SOUND_ALLIANCE_CAPTURE);
+    SendChatMessage(CHAT_MSG_BG_EVENT_ALLIANCE + plr->getTeam(), plr->getGuid(), "$N has taken the flag!");
     m_flagHolder = plr->getGuidLow();
 
     event_RemoveEvents(EVENT_EOTS_RESET_FLAG);
@@ -441,11 +439,11 @@ bool EyeOfTheStorm::HookSlowLockOpen(GameObject* /*pGo*/, Player* pPlayer, Spell
         return false;
 
     m_standFlag->RemoveFromWorld(false);
-    pPlayer->CastSpell(pPlayer->getGuid(), EOTS_NETHERWING_FLAG_SPELL, true);
+    pPlayer->castSpell(pPlayer->getGuid(), EOTS_NETHERWING_FLAG_SPELL, true);
 
     SetWorldState(EOTS_NETHERWING_FLAG_READY, 0);
-    PlaySoundToAll(pPlayer->IsTeamHorde() ? SOUND_HORDE_CAPTURE : SOUND_ALLIANCE_CAPTURE);
-    SendChatMessage(CHAT_MSG_BG_EVENT_ALLIANCE + pPlayer->GetTeam(), pPlayer->getGuid(), "$N has taken the flag!");
+    PlaySoundToAll(pPlayer->isTeamHorde() ? SOUND_HORDE_CAPTURE : SOUND_ALLIANCE_CAPTURE);
+    SendChatMessage(CHAT_MSG_BG_EVENT_ALLIANCE + pPlayer->getTeam(), pPlayer->getGuid(), "$N has taken the flag!");
     m_flagHolder = pPlayer->getGuidLow();
     return true;
 }
@@ -462,7 +460,7 @@ void EyeOfTheStorm::OnAddPlayer(Player* plr)
 {
     if (!m_started && plr->IsInWorld())
     {
-        plr->CastSpell(plr, BG_PREPARATION, true);
+        plr->castSpell(plr, BG_PREPARATION, true);
         plr->m_bgScore.MiscData[BG_SCORE_EOTS_FLAGS_CAPTURED] = 0;
     }
     UpdatePvPData();
@@ -508,8 +506,8 @@ void EyeOfTheStorm::DropFlag2(Player* plr, uint32 id)
             break;
     }
 
-    plr->CastSpell(plr, EOTS_RECENTLY_DROPPED_FLAG, true);
-    PlaySoundToAll(plr->IsTeamHorde() ? SOUND_HORDE_SCORES : SOUND_ALLIANCE_SCORES);
+    plr->castSpell(plr, EOTS_RECENTLY_DROPPED_FLAG, true);
+    PlaySoundToAll(plr->isTeamHorde() ? SOUND_HORDE_SCORES : SOUND_ALLIANCE_SCORES);
     m_dropFlag->setFlags(GO_FLAG_NONSELECTABLE);
     m_dropFlag->PushToWorld(m_mapMgr);
     m_flagHolder = 0;
@@ -522,13 +520,13 @@ void EyeOfTheStorm::HookOnFlagDrop(Player* plr)
         return;
 
     plr->RemoveAura(EOTS_NETHERWING_FLAG_SPELL);
-    plr->CastSpell(plr, EOTS_RECENTLY_DROPPED_FLAG, true);
+    plr->castSpell(plr, EOTS_RECENTLY_DROPPED_FLAG, true);
 
     m_dropFlag->SetPosition(plr->GetPosition());
     m_dropFlag->PushToWorld(m_mapMgr);
     m_flagHolder = 0;
     PlaySoundToAll(SOUND_FLAG_RETURNED);
-    SendChatMessage(CHAT_MSG_BG_EVENT_ALLIANCE + plr->GetTeam(), plr->getGuid(), "$N has dropped the flag!");
+    SendChatMessage(CHAT_MSG_BG_EVENT_ALLIANCE + plr->getTeam(), plr->getGuid(), "$N has dropped the flag!");
 
     sEventMgr.AddEvent(this, &EyeOfTheStorm::EventResetFlag, EVENT_EOTS_RESET_FLAG, 10000, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
 }
@@ -666,7 +664,7 @@ void EyeOfTheStorm::UpdateCPs()
             Player* plr = static_cast<Player*>(itr);
             if (plr && plr->isAlive() && !(plr->isStealthed()) && !plr->isInvisible() && !(plr->SchoolImmunityList[0]) && plr->GetDistance2dSq(go) <= EOTS_CAPTURE_DISTANCE)
             {
-                playercounts[plr->GetTeam()]++;
+                playercounts[plr->getTeam()]++;
 
                 if (disp->find(plr) == disp->end())
                 {

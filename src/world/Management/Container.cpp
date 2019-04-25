@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -185,7 +185,7 @@ bool Container::AddItem(int16 slot, Item* item)
 
         ByteBuffer buf(3000);
         uint32 count = item->buildCreateUpdateBlockForPlayer(&buf, m_owner);
-        m_owner->PushCreationData(&buf, count);
+        m_owner->getUpdateMgr().pushCreationData(&buf, count);
     }
 #if VERSION_STRING > TBC
     m_owner->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_OWN_ITEM, item->getItemProperties()->ItemId, item->getStackCount(), 0);
@@ -202,7 +202,7 @@ void Container::SwapItems(int8 SrcSlot, int8 DstSlot)
     if (DstSlot < 0 || DstSlot >= (int8)m_itemProperties->ContainerSlots)
         return;
 
-    uint32 destMaxCount = (m_owner->ItemStackCheat) ? 0x7fffffff : ((m_Slot[DstSlot]) ? m_Slot[DstSlot]->getItemProperties()->MaxCount : 0);
+    uint32 destMaxCount = (m_owner->m_cheats.ItemStackCheat) ? 0x7fffffff : ((m_Slot[DstSlot]) ? m_Slot[DstSlot]->getItemProperties()->MaxCount : 0);
     if (m_Slot[DstSlot] && m_Slot[SrcSlot] && m_Slot[DstSlot]->getEntry() == m_Slot[SrcSlot]->getEntry() && m_Slot[SrcSlot]->wrapped_item_id == 0 && m_Slot[DstSlot]->wrapped_item_id == 0 && destMaxCount > 1)
     {
         uint32 total = m_Slot[SrcSlot]->getStackCount() + m_Slot[DstSlot]->getStackCount();
@@ -331,7 +331,7 @@ bool Container::AddItemToFreeSlot(Item* pItem, uint32* r_slot)
                 pItem->PushToWorld(m_owner->GetMapMgr());
                 ByteBuffer buf(2500);
                 uint32 count = pItem->buildCreateUpdateBlockForPlayer(&buf, m_owner);
-                m_owner->PushCreationData(&buf, count);
+                m_owner->getUpdateMgr().pushCreationData(&buf, count);
             }
             if (r_slot)
                 *r_slot = slot;

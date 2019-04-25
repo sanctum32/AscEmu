@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 #pragma once 
@@ -22,10 +22,4 @@ public:
     std::string Help;
 
     ChatCommand* ChildCommands;
-
-    uint16_t NormalValueField;
-    uint16_t MaxValueField;
-
-    /// ValueType: 0 = nothing, 1 = uint, 2 = float
-    uint16_t ValueType;
 };

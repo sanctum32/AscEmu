@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -389,7 +389,7 @@ bool handleRevivePlayerCommand(BaseConsole* baseConsole, int argumentCount, std:
         return true;
     }
 
-    if (player->IsDead())
+    if (player->isDead())
     {
         player->RemoteRevive();
         baseConsole->Write("Revived player %s.\r\n", player->getName().c_str());

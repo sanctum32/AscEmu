@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -498,7 +498,7 @@ void WorldSession::handleCharCreateOpcode(WorldPacket& recvPacket)
     const auto realmType = sLogonCommHandler.getRealmType();
     if (!HasGMPermissions() && realmType == REALMTYPE_PVP && _side >= 0 && !worldConfig.player.isCrossoverCharsCreationEnabled)
     {
-        if ((newPlayer->IsTeamAlliance() && _side == 1) || (newPlayer->IsTeamHorde() && _side == 0))
+        if ((newPlayer->isTeamAlliance() && _side == 1) || (newPlayer->isTeamHorde() && _side == 0))
         {
             newPlayer->ok_to_remove = true;
             delete newPlayer;
@@ -542,7 +542,7 @@ void WorldSession::handleCharCreateOpcode(WorldPacket& recvPacket)
     playerInfo->m_Group = nullptr;
     playerInfo->subGroup = 0;
     playerInfo->m_loggedInPlayer = nullptr;
-    playerInfo->team = newPlayer->GetTeam();
+    playerInfo->team = newPlayer->getTeam();
     playerInfo->m_guild = 0;
     playerInfo->guildRank = GUILD_RANK_NONE;
     playerInfo->lastOnline = UNIXTIME;
@@ -567,7 +567,7 @@ void WorldSession::handleCharCustomizeLooksOpcode(WorldPacket& recvPacket)
     const auto loginErrorCode = VerifyName(srlPacket.createStruct.name.c_str(), srlPacket.createStruct.name.length());
     if (loginErrorCode != E_CHAR_NAME_SUCCESS)
     {
-        SendPacket(SmsgCharCustomize(E_CHAR_NAME_NO_NAME).serialise().get());
+        SendPacket(SmsgCharCustomize(loginErrorCode).serialise().get());
         return;
     }
 
@@ -626,7 +626,7 @@ void WorldSession::initGMMyMaster()
 
 void WorldSession::sendServerStats()
 {
-    if (Config.MainConfig.getBoolDefault("Server", "SendStatsOnJoin", false))
+    if (worldConfig.server.sendStatsOnJoin)
     {
 #ifdef WIN32
         _player->BroadcastMessage("Server: %sAscEmu - %s-Windows-%s", MSG_COLOR_WHITE, CONFIG, ARCH);
@@ -653,7 +653,7 @@ void WorldSession::fullLogin(Player* player)
     m_MoverGuid = player->getGuid();
     m_MoverWoWGuid.Init(player->getGuid());
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
     movement_packet[0] = m_MoverWoWGuid.GetNewGuidMask();
     memcpy(&movement_packet[1], m_MoverWoWGuid.GetNewGuid(), m_MoverWoWGuid.GetNewGuidLen());
 #endif
@@ -677,13 +677,15 @@ void WorldSession::fullLogin(Player* player)
 
     //////////////////////////////////////////////////////////////////////////////////////////
     // dance moves - unknown 2x uint32_t(0)
+#if VERSION_STRING != Mop
     SendPacket(SmsgLearnedDanceMoves(0, 0).serialise().get());
+#endif
     //////////////////////////////////////////////////////////////////////////////////////////
 #endif
 
     //////////////////////////////////////////////////////////////////////////////////////////
     // hotfix data for cata
-#if VERSION_STRING == Cata
+#if VERSION_STRING >= Cata
     //\todo send Hotfixdata
 #endif
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -717,7 +719,7 @@ void WorldSession::fullLogin(Player* player)
     // set db, time and count - our db now knows that we are online.
     CharacterDatabase.Execute("UPDATE characters SET online = 1 WHERE guid = %u", player->getGuidLow());
     LOG_DEBUG("Player %s logged in.", player->getName().c_str());
-    sWorld.incrementPlayerCount(player->GetTeam());
+    sWorld.incrementPlayerCount(player->getTeam());
 
     player->m_playedtime[2] = uint32_t(UNIXTIME);
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -742,7 +744,7 @@ void WorldSession::fullLogin(Player* player)
 
     //////////////////////////////////////////////////////////////////////////////////////////
     // Send Equipment set list - not sure what the intend was here.
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
     player->SendEquipmentSetList();
 #endif
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -812,8 +814,6 @@ void WorldSession::characterEnumProc(QueryResult* result)
 
     if (result)
     {
-        uint32_t numchar = result->GetRowCount();
-
         do
         {
             Field* fields = result->Fetch();

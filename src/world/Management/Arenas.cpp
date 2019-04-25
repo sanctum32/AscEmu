@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -27,7 +27,7 @@
 #include "Spell/SpellAuras.h"
 #include "Objects/GameObject.h"
 #include "Objects/ObjectMgr.h"
-#include "Spell/Customization/SpellCustomizations.hpp"
+#include "Spell/SpellMgr.h"
 
 const uint32 ARENA_PREPARATION = 32727;
 
@@ -213,7 +213,7 @@ void Arena::OnAddPlayer(Player* plr)
         }
     }
     // On arena start all conjured items are removed
-    plr->GetItemInterface()->RemoveAllConjured();
+    plr->getItemInterface()->RemoveAllConjured();
     // On arena start remove all temp enchants
     plr->RemoveTempEnchantsOnArena();
 
@@ -226,9 +226,9 @@ void Arena::OnAddPlayer(Player* plr)
     if (!plr->m_isGmInvisible)
     {
         if (!m_started  && plr->IsInWorld())
-            plr->CastSpell(plr, ARENA_PREPARATION, true);
+            plr->castSpell(plr, ARENA_PREPARATION, true);
 
-        m_playersCount[plr->GetTeam()]++;
+        m_playersCount[plr->getTeam()]++;
         UpdatePlayerCounts();
     }
     // If they're still queued for the arena, remove them from the queue
@@ -236,10 +236,10 @@ void Arena::OnAddPlayer(Player* plr)
         plr->m_bgIsQueued = false;
 
     // Add the green/gold team flag
-    Aura* aura = sSpellFactoryMgr.NewAura(sSpellCustomizations.GetSpellInfo((plr->GetTeamInitial()) ? 35775 - plr->m_bgTeam : 32725 - plr->m_bgTeam), -1, plr, plr, true);
+    Aura* aura = sSpellMgr.newAura(sSpellMgr.getSpellInfo((plr->getInitialTeam()) ? 35775 - plr->getBgTeam() : 32725 - plr->getBgTeam()), -1, plr, plr, true);
     plr->AddAura(aura);
 
-    plr->SetFFAPvPFlag();
+    plr->setFfaPvpFlag();
 
     m_playersAlive.insert(plr->getGuidLow());
 }
@@ -254,8 +254,8 @@ void Arena::OnRemovePlayer(Player* plr)
     // Player has left arena, call HookOnPlayerDeath as if he died
     HookOnPlayerDeath(plr);
 
-    plr->RemoveAura(plr->GetTeamInitial() ? 35775 - plr->m_bgTeam : 32725 - plr->m_bgTeam);
-    plr->RemoveFFAPvPFlag();
+    plr->RemoveAura(plr->getInitialTeam() ? 35775 - plr->getBgTeam() : 32725 - plr->getBgTeam());
+    plr->removeFfaPvpFlag();
 
     // Reset all their cooldowns and restore their HP/Mana/Energy to max
     plr->ResetAllCooldowns();
@@ -291,7 +291,7 @@ void Arena::HookOnPlayerDeath(Player* plr)
 
     if (m_playersAlive.find(plr->getGuidLow()) != m_playersAlive.end())
     {
-        m_playersCount[plr->GetTeam()]--;
+        m_playersCount[plr->getTeam()]--;
         UpdatePlayerCounts();
         m_playersAlive.erase(plr->getGuidLow());
     }
@@ -401,7 +401,7 @@ uint32 Arena::GetTeamFaction(uint32 team)
 {
     std::set< Player* >::iterator itr = m_players[team].begin();
     Player* p = *itr;
-    return p->GetTeam();
+    return p->getTeam();
 }
 
 LocationVector Arena::GetStartingCoords(uint32 /*Team*/)
@@ -441,10 +441,10 @@ void Arena::HookOnAreaTrigger(Player* plr, uint32 id)
         if (m_buffs[buffslot] != NULL && m_buffs[buffslot]->IsInWorld())
         {
             // apply the buff
-            SpellInfo* sp = sSpellCustomizations.GetSpellInfo(m_buffs[buffslot]->GetGameObjectProperties()->raw.parameter_3);
+            SpellInfo const* sp = sSpellMgr.getSpellInfo(m_buffs[buffslot]->GetGameObjectProperties()->raw.parameter_3);
             ARCEMU_ASSERT(sp != NULL);
 
-            Spell* s = sSpellFactoryMgr.NewSpell(plr, sp, true, 0);
+            Spell* s = sSpellMgr.newSpell(plr, sp, true, 0);
             SpellCastTargets targets(plr->getGuid());
             s->prepare(&targets);
 

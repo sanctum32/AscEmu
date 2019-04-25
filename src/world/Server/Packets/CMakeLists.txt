@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+# Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 
 set(PATH_PREFIX Server/Packets)
 
@@ -283,6 +283,7 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/SmsgCharEnum.h
    ${PATH_PREFIX}/SmsgChatPlayerNotFound.h
    ${PATH_PREFIX}/SmsgClearExtraAuraInfo.h
+   ${PATH_PREFIX}/SmsgClientControlUpdate.h
    ${PATH_PREFIX}/SmsgComplainResult.h
    ${PATH_PREFIX}/SmsgCooldownEvent.h
    ${PATH_PREFIX}/SmsgCorpseReclaimDelay.h
@@ -312,13 +313,16 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/SmsgGuildBankMoneyWithdrawn.h
    ${PATH_PREFIX}/SmsgGuildBankQueryTextResult.h
    ${PATH_PREFIX}/SmsgGuildCommandResult.h
+   ${PATH_PREFIX}/SmsgGuildEvent.h
    ${PATH_PREFIX}/SmsgGuildInfo.h
    ${PATH_PREFIX}/SmsgGuildInvite.h
    ${PATH_PREFIX}/SmsgInitialSpells.h
    ${PATH_PREFIX}/SmsgInstanceDifficulty.h
    ${PATH_PREFIX}/SmsgInventoryChangeFailure.h
    ${PATH_PREFIX}/SmsgItemNameQueryResponse.h
+   ${PATH_PREFIX}/SmsgItemPushResult.h
    ${PATH_PREFIX}/SmsgLearnedDanceMoves.h
+   ${PATH_PREFIX}/SmsgLevelupInfo.h
    ${PATH_PREFIX}/SmsgLfgOfferContinue.h
    ${PATH_PREFIX}/SmsgLfgRoleChosen.h
    ${PATH_PREFIX}/SmsgLfgTeleportDenied.h
@@ -332,6 +336,7 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/SmsgLootRemoved.h
    ${PATH_PREFIX}/SmsgMeetingstoneSetQueue.h
    ${PATH_PREFIX}/SmsgMessageChat.h
+   ${PATH_PREFIX}/SmsgMonsterMoveTransport.h
    ${PATH_PREFIX}/SmsgMountResult.h
    ${PATH_PREFIX}/SmsgMountspecialAnim.h
    ${PATH_PREFIX}/SmsgMoveKnockBack.h
@@ -384,6 +389,7 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/SmsgTutorialFlags.h
    ${PATH_PREFIX}/SmsgUpdateAccountDataComplete.h
    ${PATH_PREFIX}/SmsgUpdateAuraDuration.h
+   ${PATH_PREFIX}/SmsgUpdateObject.h
    ${PATH_PREFIX}/SmsgWeather.h
    ${PATH_PREFIX}/SmsgWorldStateUiTimerUpdate.h
 )

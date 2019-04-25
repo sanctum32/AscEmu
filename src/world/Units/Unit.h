@@ -1,6 +1,6 @@
 /*
 * AscEmu Framework based on ArcEmu MMORPG Server
-* Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+* Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
 * Copyright (C) 2005-2007 Ascent Team
 *
@@ -20,6 +20,7 @@
 #pragma once
 
 // MIT Start
+#include "AI/MovementAI.h"
 #include "Objects/Object.h"
 #include "Spell/SpellDefines.hpp"
 
@@ -31,15 +32,12 @@
 #include "Movement/UnitMovementManager.hpp"
 #include "Spell/Definitions/AuraEffects.h"
 #include "Spell/Definitions/AuraStates.h"
+#include "Spell/Definitions/PowerType.h"
 #include "Spell/Definitions/School.h"
 #include "Storage/MySQLStructures.h"
 
-#if VERSION_STRING == Classic
-#include "GameClassic/Data/MovementInfoClassic.h"
-#elif VERSION_STRING == TBC
-#include "GameTBC/Data/MovementInfoTBC.h"
-#elif VERSION_STRING == WotLK
-#include "GameWotLK/Data/MovementInfoWotLK.h"
+#if VERSION_STRING < Cata
+#include "Data/MovementInfo.h"
 #endif
 
 class AIInterface;
@@ -150,7 +148,7 @@ struct AreaAura
 
 typedef struct
 {
-    SpellInfo* spell_info;
+    SpellInfo const* spell_info;
     uint32 charges;
 } ExtraStrike;
 
@@ -229,8 +227,11 @@ class SERVER_DECL Unit : public Object
     // WoWData
     const WoWUnit* unitData() const { return reinterpret_cast<WoWUnit*>(wow_data); }
 
+    MovementAI m_movementAI;
 public:
-
+    MovementAI& getMovementAI();
+    void setLocationWithoutUpdate(LocationVector& location);
+public:
     uint64_t getCharmGuid() const;
     void setCharmGuid(uint64_t guid);
 
@@ -261,6 +262,9 @@ public:
     void setChannelSpellId(uint32_t spell_id);
 
     //bytes_0 begin
+    uint32_t getBytes0() const;
+    void setBytes0(uint32_t bytes);
+
     uint8_t getRace() const;
     void setRace(uint8_t race);
     uint32_t getRaceMask() { return 1 << (getRace() - 1); }
@@ -280,11 +284,19 @@ public:
     void setHealth(uint32_t health);
     void modHealth(int32_t health);
 
+    uint32_t getPower(uint16_t index) const;
+    void setPower(uint16_t index, uint32_t value);
+    void modPower(uint16_t index, int32_t value);
+
     uint32_t getMaxHealth() const;
     void setMaxHealth(uint32_t maxHealth);
     void modMaxHealth(int32_t maxHealth);
 
     void setMaxMana(uint32_t maxMana);
+
+    uint32_t getMaxPower(uint16_t index) const;
+    void setMaxPower(uint16_t index, uint32_t value);
+    void modMaxPower(uint16_t index, int32_t value);
 
     uint32_t getLevel() const;
     void setLevel(uint32_t level);
@@ -311,6 +323,7 @@ public:
     void setUnitFlags2(uint32_t unitFlags2);
     void addUnitFlags2(uint32_t unitFlags2);
     void removeUnitFlags2(uint32_t unitFlags2);
+    bool hasUnitFlags2(uint32_t unitFlags2) const;
 #endif
 
     uint32_t getAuraState() const;
@@ -350,6 +363,9 @@ public:
     void setMaxOffhandDamage(float damage);
 
     //bytes_1 begin
+    uint32_t getBytes1() const;
+    void setBytes1(uint32_t bytes);
+
     uint8_t getStandState() const;
     void setStandState(uint8_t standState);
 
@@ -416,6 +432,9 @@ public:
     void setBaseHealth(uint32_t baseHealth);
 
     //byte_2 begin
+    uint32_t getBytes2() const;
+    void setBytes2(uint32_t bytes);
+
     uint8_t getSheathType() const;
     void setSheathType(uint8_t sheathType);
 
@@ -543,11 +562,24 @@ public:
     //////////////////////////////////////////////////////////////////////////////////////////
     // Spells
     void playSpellVisual(uint64_t guid, uint32_t spell_id);
-    void applyDiminishingReturnTimer(uint32_t* duration, SpellInfo* spell);
-    void removeDiminishingReturnTimer(SpellInfo* spell);
+    void applyDiminishingReturnTimer(uint32_t* duration, SpellInfo const* spell);
+    void removeDiminishingReturnTimer(SpellInfo const* spell);
 
     bool canDualWield() const;
     void setDualWield(bool enable);
+
+    void castSpell(uint64_t targetGuid, uint32_t spellId, bool triggered);
+    void castSpell(Unit* target, uint32_t spellId, bool triggered);
+    void castSpell(uint64_t targetGuid, SpellInfo const* spellInfo, bool triggered);
+    void castSpell(Unit* target, SpellInfo const* spellInfo, bool triggered);
+    void castSpell(uint64_t targetGuid, uint32_t spellId, uint32_t forcedBasepoints, bool triggered);
+    void castSpell(Unit* target, uint32_t spellId, uint32_t forcedBasePoints, bool triggered);
+    void castSpell(Unit* target, SpellInfo const* spellInfo, uint32_t forcedBasePoints, int32_t spellCharges, bool triggered);
+    void castSpellLoc(const LocationVector location, SpellInfo const* spellInfo, bool triggered);
+    void eventCastSpell(Unit* target, SpellInfo const* spellInfo);
+
+    void castSpell(uint64_t targetGuid, SpellInfo const* spellInfo, uint32_t forcedBasepoints, bool triggered);
+    void castSpell(Unit* target, SpellInfo const* spellInfo, uint32_t forcedBasepoints, bool triggered);
 
 private:
     bool m_canDualWield;
@@ -628,6 +660,80 @@ public:
 
     void sendEnvironmentalDamageLogPacket(uint64_t guid, uint8_t type, uint32_t damage, uint64_t unk = 0);
 
+    virtual bool isPvpFlagSet();
+    virtual void setPvpFlag();
+    virtual void removePvpFlag();
+
+    virtual bool isFfaPvpFlagSet();
+    virtual void setFfaPvpFlag();
+    virtual void removeFfaPvpFlag();
+
+    virtual bool isSanctuaryFlagSet();
+    virtual void setSanctuaryFlag();
+    virtual void removeSanctuaryFlag();
+
+    bool isSitting() const;
+
+    uint8_t getHealthPct() const;
+    uint8_t getPowerPct(PowerType powerType) const;
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Death
+protected:
+    DeathState m_deathState;
+
+public:
+    bool isAlive() const;
+    bool justDied() const;
+    bool isDead() const;
+    virtual void setDeathState(DeathState state);
+    DeathState getDeathState() const;
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Movement
+
+    MovementInfo movement_info;
+
+    MovementInfo* getMovementInfo();
+
+    uint32_t getUnitMovementFlags() const;
+    void setUnitMovementFlags(uint32_t f);
+    void addUnitMovementFlag(uint32_t f);
+    void removeUnitMovementFlag(uint32_t f);
+    bool hasUnitMovementFlag(uint32_t f) const;
+
+    //\brief: this is not uint16_t on version < wotlk
+    uint16_t getExtraUnitMovementFlags() const;
+    void addExtraUnitMovementFlag(uint16_t f2);
+    bool hasExtraUnitMovementFlag(uint16_t f2) const;
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Vehicle
+protected:
+    Vehicle* m_currentVehicle;    // The vehicle the unit is attached to
+    Vehicle* m_vehicle;           // The Unit's own vehicle component
+
+public:
+
+    Vehicle* getCurrentVehicle() const;
+    void setCurrentVehicle(Vehicle* vehicle);
+    void addPassengerToVehicle(uint64_t vehicleGuid, uint32_t delay);
+
+    Vehicle* getVehicleComponent() const;
+    Unit* getVehicleBase();
+
+    virtual void addVehicleComponent(uint32 /*creatureEntry*/, uint32 /*vehicleId*/) {}
+    virtual void removeVehicleComponent() {}
+
+    void sendHopOnVehicle(Unit* vehicleOwner, uint32_t seat);
+    void sendHopOffVehicle(Unit* vehicleOwner, LocationVector& /*landPosition*/);
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Unit Owner
+
+    bool isUnitOwnerInParty(Unit* unit);
+    bool isUnitOwnerInRaid(Unit* unit);
+
     // Do not alter anything below this line
     // -------------------------------------
 private:
@@ -652,50 +758,27 @@ public:
 
     virtual void Deactivate(MapMgr* mgr);
 
-    virtual bool IsPvPFlagged() = 0;
-    virtual void SetPvPFlag() = 0;
-    virtual void RemovePvPFlag() = 0;
-
-    virtual bool IsFFAPvPFlagged() = 0;
-    virtual void SetFFAPvPFlag() = 0;
-    virtual void RemoveFFAPvPFlag() = 0;
-
-    virtual bool IsSanctuaryFlagged() = 0;
-    virtual void SetSanctuaryFlag() = 0;
-    virtual void RemoveSanctuaryFlag() = 0;
-
     bool  canReachWithAttack(Unit* pVictim);
 
     //// Combat
-    uint32 GetSpellDidHitResult(Unit* pVictim, uint32 weapon_damage_type, SpellInfo* ability);
-    void Strike(Unit* pVictim, uint32 weapon_damage_type, SpellInfo* ability, int32 add_damage, int32 pct_dmg_mod, uint32 exclusive_damage, bool disable_proc, bool skip_hit_check, bool force_crit = false);
+    uint32 GetSpellDidHitResult(Unit* pVictim, uint32 weapon_damage_type, SpellInfo const* ability);
+    void Strike(Unit* pVictim, uint32 weapon_damage_type, SpellInfo const* ability, int32 add_damage, int32 pct_dmg_mod, uint32 exclusive_damage, bool disable_proc, bool skip_hit_check, bool force_crit = false);
     uint32 m_procCounter;
-    uint32 HandleProc(uint32 flag, Unit* Victim, SpellInfo* CastingSpell, bool is_triggered = false, uint32 dmg = -1, uint32 abs = 0, uint32 weapon_damage_type = 0);
+    uint32 HandleProc(uint32 flag, Unit* Victim, SpellInfo const* CastingSpell, bool is_triggered = false, uint32 dmg = -1, uint32 abs = 0, uint32 weapon_damage_type = 0);
     void HandleProcDmgShield(uint32 flag, Unit* attacker);//almost the same as handleproc :P
-    bool IsCriticalDamageForSpell(Object* victim, SpellInfo* spell);
-    float GetCriticalDamageBonusForSpell(Object* victim, SpellInfo* spell, float amount);
-    bool IsCriticalHealForSpell(Object* victim, SpellInfo* spell);
-    float GetCriticalHealBonusForSpell(Object* victim, SpellInfo* spell, float amount);
+    bool IsCriticalDamageForSpell(Object* victim, SpellInfo const* spell);
+    float GetCriticalDamageBonusForSpell(Object* victim, SpellInfo const* spell, float amount);
+    bool IsCriticalHealForSpell(Object* victim, SpellInfo const* spell);
+    float GetCriticalHealBonusForSpell(Object* victim, SpellInfo const* spell, float amount);
 
-    void RemoveExtraStrikeTarget(SpellInfo* spell_info);
-    void AddExtraStrikeTarget(SpellInfo* spell_info, uint32 charges);
+    void RemoveExtraStrikeTarget(SpellInfo const* spell_info);
+    void AddExtraStrikeTarget(SpellInfo const* spell_info, uint32 charges);
 
     int32 GetAP();
     int32 GetRAP();
 
-    uint8 CastSpell(Unit* Target, uint32 SpellID, bool triggered);
-    uint8 CastSpell(Unit* Target, SpellInfo* Sp, bool triggered);
-    uint8 CastSpell(uint64 targetGuid, uint32 SpellID, bool triggered);
-    uint8 CastSpell(uint64 targetGuid, SpellInfo* Sp, bool triggered);
-    uint8 CastSpell(Unit* Target, uint32 SpellID, uint32 forced_basepoints, bool triggered);
-    uint8 CastSpell(Unit* Target, SpellInfo* Sp, uint32 forced_basepoints, bool triggered);
-    uint8 CastSpell(Unit* Target, uint32 SpellID, uint32 forced_basepoints, int32 charges, bool triggered);
-    uint8 CastSpell(Unit* Target, SpellInfo* Sp, uint32 forced_basepoints, int32 charges, bool triggered);
-    void CastSpellAoF(LocationVector lv, SpellInfo* Sp, bool triggered);
-    void EventCastSpell(Unit* Target, SpellInfo* Sp);
-
     bool IsInInstance();
-    void CalculateResistanceReduction(Unit* pVictim, dealdamage* dmg, SpellInfo* ability, float ArmorPctReduce);
+    void CalculateResistanceReduction(Unit* pVictim, dealdamage* dmg, SpellInfo const* ability, float ArmorPctReduce);
     void RegenerateHealth();
     void RegeneratePower(bool isinterrupted);
     void setHRegenTimer(uint32 time) { m_H_regenTimer = static_cast<uint16>(time); }
@@ -779,8 +862,8 @@ public:
     // ProcTrigger
     std::list<SpellProc*> m_procSpells;
     SpellProc* AddProcTriggerSpell(uint32 spell_id, uint32 orig_spell_id, uint64 caster, uint32 procChance, uint32 procFlags, uint32 procCharges, uint32* groupRelation, uint32* procClassMask = nullptr, Object* obj = nullptr);
-    SpellProc* AddProcTriggerSpell(SpellInfo* spell, SpellInfo* orig_spell, uint64 caster, uint32 procChance, uint32 procFlags, uint32 procCharges, uint32* groupRelation, uint32* procClassMask = nullptr, Object* obj = nullptr);
-    SpellProc* AddProcTriggerSpell(SpellInfo* sp, uint64 caster, uint32* groupRelation, uint32* procClassMask = nullptr, Object* obj = nullptr);
+    SpellProc* AddProcTriggerSpell(SpellInfo const* spell, SpellInfo const* orig_spell, uint64 caster, uint32 procChance, uint32 procFlags, uint32 procCharges, uint32* groupRelation, uint32* procClassMask = nullptr, Object* obj = nullptr);
+    SpellProc* AddProcTriggerSpell(SpellInfo const* sp, uint64 caster, uint32* groupRelation, uint32* procClassMask = nullptr, Object* obj = nullptr);
     SpellProc* GetProcTriggerSpell(uint32 spellId, uint64 casterGuid = 0);
     void RemoveProcTriggerSpell(uint32 spellId, uint64 casterGuid = 0, uint64 misc = 0);
 
@@ -788,22 +871,12 @@ public:
 
     void GiveGroupXP(Unit* pVictim, Player* PlayerInGroup);
 
-    /// Combat / Death Status
-    bool isAlive() { return m_deathState == ALIVE; };
-    bool justDied() const;
-    bool IsDead() { return  m_deathState != ALIVE; };
-    virtual void setDeathState(DeathState s)
-    {
-        m_deathState = s;
-        if (m_deathState == JUST_DIED) DropAurasOnDeath();
-    };
-    DeathState getDeathState() { return m_deathState; }
     void OnDamageTaken();
 
     //caller is the caster
-    int32 GetSpellDmgBonus(Unit* pVictim, SpellInfo* spellInfo, int32 base_dmg, bool isdot);
+    int32 GetSpellDmgBonus(Unit* pVictim, SpellInfo const* spellInfo, int32 base_dmg, bool isdot);
 
-    float CalcSpellDamageReduction(Unit* victim, SpellInfo* spell, float res);
+    float CalcSpellDamageReduction(Unit* victim, SpellInfo const* spell, float res);
 
     uint32 m_addDmgOnce;
     uint32 m_ObjectSlots[4];
@@ -1026,8 +1099,6 @@ public:
     }
     void EventChill(Unit* proc_target, bool is_victim = false);
 
-    bool IsSitting();
-
     void SetFaction(uint32 factionId)
     {
         setFactionTemplate(factionId);
@@ -1039,24 +1110,7 @@ public:
     void SendChatMessageAlternateEntry(uint32 entry, uint8 type, uint32 lang, const char* msg);
     void RegisterPeriodicChatMessage(uint32 delay, uint32 msgid, std::string message, bool sendnotify);
 
-    int GetHealthPct()
-    {
-        //shitty db? pet/guardian bug?
-        if (getHealth() == 0 || getMaxHealth() == 0)
-            return 0;
-
-        return (int)(getHealth() * 100 / getMaxHealth());
-    };
-
     void SetHealthPct(uint32 val) { if (val > 0) setHealth(float2int32(val * 0.01f * getMaxHealth())); };
-
-    int GetManaPct()
-    {
-        if (GetPower(0) == 0 || GetMaxPower(0) == 0)  //POWER_TYPE_MANA
-            return 0;
-
-        return (int)(GetPower(0) * 100 / GetMaxPower(0));
-    };
 
     //In-Range
     virtual void addToInRangeObjects(Object* pObj);
@@ -1164,8 +1218,8 @@ public:
 
     void SetFacing(float newo);     //only working if creature is idle
 
-    AuraCheckResponse AuraCheck(SpellInfo* proto, Object* caster = nullptr);
-    AuraCheckResponse AuraCheck(SpellInfo* proto, Aura* aur, Object* caster = nullptr);
+    AuraCheckResponse AuraCheck(SpellInfo const* proto, Object* caster = nullptr);
+    AuraCheckResponse AuraCheck(SpellInfo const* proto, Aura* aur, Object* caster = nullptr);
 
     uint16 m_diminishCount[DIMINISHING_GROUP_COUNT];
     uint8 m_diminishAuraCount[DIMINISHING_GROUP_COUNT];
@@ -1208,7 +1262,7 @@ public:
     bool m_temp_summon;
 
     void EventStopChanneling(bool abort);
-    void EventStrikeWithAbility(uint64 guid, SpellInfo* sp, uint32 damage);
+    void EventStrikeWithAbility(uint64 guid, SpellInfo const* sp, uint32 damage);
     void DispelAll(bool positive);
 
     void SendPowerUpdate(bool self);
@@ -1228,36 +1282,6 @@ public:
     void SetDodgeFromSpell(float value) { m_dodgefromspell = value; }
 
     void AggroPvPGuards();
-
-    //////////////////////////////////////////////////////////////////////////////////////////
-    // Unit properties
-    //////////////////////////////////////////////////////////////////////////////////////////
-
-    void SetPower(uint32 type, int32 value);
-
-    void ModPower(uint16_t index, int32 value)
-    {
-        int32 power = static_cast<int32>(getUInt32Value(UNIT_FIELD_POWER1 + index));
-        int32 maxpower = static_cast<int32>(getUInt32Value(UNIT_FIELD_MAXPOWER1 + index));
-
-        if (value <= power)
-            setUInt32Value(UNIT_FIELD_POWER1 + index, 0);
-        else
-            setUInt32Value(UNIT_FIELD_POWER1 + index, power + value);
-
-        if ((value + power) > maxpower)
-            setUInt32Value(UNIT_FIELD_POWER1 + index, maxpower);
-        else
-            setUInt32Value(UNIT_FIELD_POWER1 + index, power + value);
-    }
-
-    uint32 GetPower(uint16_t index) { return getUInt32Value(UNIT_FIELD_POWER1 + index); }
-
-    void SetMaxPower(uint16_t index, uint32 value) { setUInt32Value(UNIT_FIELD_MAXPOWER1 + index, value); }
-
-    void ModMaxPower(uint16_t index, int32 value) { modUInt32Value(UNIT_FIELD_MAXPOWER1 + index, value); }
-
-    uint32 GetMaxPower(uint16_t index) { return getUInt32Value(UNIT_FIELD_MAXPOWER1 + index); }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1296,9 +1320,6 @@ protected:
     std::list<Spell*> m_GarbageSpells;
     std::list<Pet*> m_GarbagePets;
 
-    /// Combat
-    DeathState m_deathState;
-
     // DK:pet
 
     // AI
@@ -1329,29 +1350,13 @@ protected:
     float m_parryfromspell;
     uint32 m_BlockModPct;       // is % but does not need float and does not need /100!
 
-    Vehicle* currentvehicle;    // The vehicle the unit is attached to
-    Vehicle* vehicle;           // The Unit's own vehicle component
+    
     uint64 m_auraRaidUpdateMask;
 
 public:
 
-    void SetCurrentVehicle(Vehicle* v) { currentvehicle = v; }
-    void EnterVehicle(uint64 guid, uint32 delay);
-    Vehicle* GetCurrentVehicle();
-
-    Vehicle* GetVehicleComponent();
-
-    virtual void AddVehicleComponent(uint32 /*creatureEntry*/, uint32 /*vehicleId*/) {}
-    virtual void RemoveVehicleComponent() {}
-
-    void SendHopOnVehicle(Unit* vehicleowner, uint32 seat);
-    void SendHopOffVehicle(Unit* vehicleowner, LocationVector &landposition);
-
-    Unit* GetVehicleBase();
-
     virtual Group* GetGroup() { return nullptr; }
-    bool InParty(Unit* u);
-    bool InRaid(Unit* u);
+    
     const CombatStatusHandler* getcombatstatus() const { return &CombatStatus; }
 
     bool m_noFallDamage;
@@ -1363,30 +1368,6 @@ public:
     void BuildMovementPacket(ByteBuffer* data);
     void BuildMovementPacket(ByteBuffer* data, float x, float y, float z, float o);
 
-    MovementInfo* GetMovementInfo() { return &movement_info; }
 
-#if VERSION_STRING != Cata
-    uint32 GetUnitMovementFlags() const { return movement_info.flags; }   //checked
-    void SetUnitMovementFlags(uint32 f) { movement_info.flags = f; }
-    void AddUnitMovementFlag(uint32 f) { movement_info.flags |= f; }
-    void RemoveUnitMovementFlag(uint32 f) { movement_info.flags &= ~f; }
-    bool HasUnitMovementFlag(uint32 f) const { return (movement_info.flags & f) != 0; }
-
-    uint16 GetExtraUnitMovementFlags() const { return movement_info.flags2; }
-    void AddExtraUnitMovementFlag(uint16 f2) { movement_info.flags2 |= f2; }
-    bool HasExtraUnitMovementFlag(uint16 f2) const { return (movement_info.flags2 & f2) != 0; }
-#else
-    MovementFlags GetUnitMovementFlags() const { return movement_info.getMovementFlags(); }   //checked
-    void SetUnitMovementFlags(MovementFlags f) { movement_info.setMovementFlags(f); }
-    void AddUnitMovementFlag(MovementFlags f) { movement_info.addMovementFlag(f); }
-    void RemoveUnitMovementFlag(MovementFlags f) { movement_info.removeMovementFlag(f); }
-    bool HasUnitMovementFlag(MovementFlags f) const { return (movement_info.getMovementFlags() & f) != 0; }
-
-    MovementFlags2 GetExtraUnitMovementFlags() const { return movement_info.getMovementFlags2(); }
-    void AddExtraUnitMovementFlag(MovementFlags2 f2) { movement_info.addMovementFlags2(f2); }
-    bool HasExtraUnitMovementFlag(MovementFlags2 f2) const { return (movement_info.getMovementFlags2() & f2) != 0; }
-#endif
-
-    MovementInfo movement_info;
     // AGPL End
 };

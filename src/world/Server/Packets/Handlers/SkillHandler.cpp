@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -9,6 +9,7 @@ This file is released under the MIT license. See README-MIT for more information
 #include "Server/Packets/CmsgUnlearnSkill.h"
 #include "Server/Packets/CmsgLearnTalent.h"
 #include "Server/Packets/CmsgLearnTalentMultiple.h"
+#include "Units/Players/Player.h"
 
 using namespace AscEmu::Packets;
 
@@ -47,15 +48,15 @@ void WorldSession::handleLearnTalentOpcode(WorldPacket& recvPacket)
 void WorldSession::handleUnlearnTalents(WorldPacket& /*recvPacket*/)
 {
     const uint32_t resetPrice = _player->CalcTalentResetCost(_player->GetTalentResetTimes());
-    if (!_player->HasGold(resetPrice))
+    if (!_player->hasEnoughCoinage(resetPrice))
         return;
 
     _player->SetTalentResetTimes(_player->GetTalentResetTimes() + 1);
-    _player->ModGold(-static_cast<int32_t>(resetPrice));
+    _player->modCoinage(-static_cast<int32_t>(resetPrice));
     _player->resetTalents();
 }
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
 void WorldSession::handleLearnMultipleTalentsOpcode(WorldPacket& recvPacket)
 {
 #if VERSION_STRING > TBC

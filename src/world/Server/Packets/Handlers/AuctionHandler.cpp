@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -136,7 +136,7 @@ void WorldSession::handleAuctionSellItem(WorldPacket& recvPacket)
 
     for (uint32_t i = 0; i < srlPacket.itemsCount; ++i)
     {
-        const auto item = _player->GetItemInterface()->GetItemByGUID(srlPacket.itemGuids[i]);
+        const auto item = _player->getItemInterface()->GetItemByGUID(srlPacket.itemGuids[i]);
         if (!item)
         {
             _player->sendAuctionCommandResult(nullptr, AUCTION_CREATE, AUCTION_ERROR_ITEM);
@@ -173,15 +173,15 @@ void WorldSession::handleAuctionSellItem(WorldPacket& recvPacket)
         const uint32_t item_worth = items[i]->getItemProperties()->SellPrice * items[i]->getStackCount();
         const uint32_t item_deposit = static_cast<uint32_t>(item_worth * auctionHouse->deposit_percent) * static_cast<uint32_t>(srlPacket.expireTime / 240.0f);
 
-        if (!_player->HasGold(item_deposit))
+        if (!_player->hasEnoughCoinage(item_deposit))
         {
             _player->sendAuctionCommandResult(nullptr, AUCTION_CREATE, AUCTION_ERROR_MONEY);
             return;
         }
 
-        _player->ModGold(-int32(item_deposit));
+        _player->modCoinage(-int32(item_deposit));
 
-        const auto item = _player->GetItemInterface()->SafeRemoveAndRetreiveItemByGuid(srlPacket.itemGuids[i], false);
+        const auto item = _player->getItemInterface()->SafeRemoveAndRetreiveItemByGuid(srlPacket.itemGuids[i], false);
         if (!item)
         {
             _player->sendAuctionCommandResult(nullptr, AUCTION_CREATE, AUCTION_ERROR_ITEM);
@@ -249,13 +249,13 @@ void WorldSession::handleAuctionPlaceBid(WorldPacket& recvPacket)
         return;
     }
 
-    if (!_player->HasGold(srlPacket.price))
+    if (!_player->hasEnoughCoinage(srlPacket.price))
     {
         SendPacket(SmsgAuctionCommandResult(0, AUCTION_BID, AUCTION_ERROR_MONEY, 0).serialise().get());
         return;
     }
 
-    _player->ModGold(-static_cast<int32_t>(srlPacket.price));
+    _player->modCoinage(-static_cast<int32_t>(srlPacket.price));
     if (auction->HighestBidder != 0)
     {
         char subject[100];

@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -297,7 +297,7 @@ Gossip::Script* Gossip::Script::GetInterface(Creature* creature)
         return &sScriptMgr.innkeeperScript_;
     else if (creature->isBanker())
         return &sScriptMgr.bankerScript_;
-    else if (creature->isClass())
+    else if (creature->isClassTrainer())
         return &sScriptMgr.classtrainerScript_;
     else if (creature->isTrainer())
     {
@@ -319,7 +319,7 @@ Gossip::Script* Gossip::Script::GetInterface(Creature* creature)
         return &sScriptMgr.stablemasterScript_;
     else if (creature->isBattleMaster())
         return &sScriptMgr.battlemasterScript_;
-    else if (creature->isAuctioner())
+    else if (creature->isAuctioneer())
         return &sScriptMgr.auctioneerScript_;
     else if (creature->isCharterGiver())
         return &sScriptMgr.chartergiverScript_;
@@ -725,7 +725,7 @@ void Arcemu::Gossip::ClassTrainer::OnSelectOption(Object* pObject, Player* Plr, 
             Gossip::Menu::SendQuickMenu(pObject->getGuid(), TXTID_DUALSPECPURCHASE, Plr, 5, GOSSIP_ICON_CHAT, Plr->GetSession()->LocalizedWorldSrv(Gossip::PURCHASE_DTS), 10000000, purchaseconfirm);
             break;
         case 5:
-            if (!Plr->HasGold(10000000))
+            if (!Plr->hasEnoughCoinage(10000000))
             {
                 Gossip::Menu::Complete(Plr);
                 Plr->GetSession()->SendNotification(Plr->GetSession()->LocalizedWorldSrv(Gossip::NOT_ENOUGH_MONEY_DTS)); // I know this is not correct
@@ -733,11 +733,11 @@ void Arcemu::Gossip::ClassTrainer::OnSelectOption(Object* pObject, Player* Plr, 
             else
             {
                 Gossip::Menu::Complete(Plr);
-                Plr->ModGold(-10000000);
+                Plr->modCoinage(-10000000);
                 Plr->m_talentSpecsCount = 2;
-                Plr->CastSpell(Plr, 63624, true); // Show activate spec buttons
-                Plr->CastSpell(Plr, 63706, true); // Allow primary spec to be activated
-                Plr->CastSpell(Plr, 63707, true); // Allow secondary spec to be activated
+                Plr->castSpell(Plr, 63624, true); // Show activate spec buttons
+                Plr->castSpell(Plr, 63706, true); // Allow primary spec to be activated
+                Plr->castSpell(Plr, 63707, true); // Allow secondary spec to be activated
                 Plr->SaveToDB(false); // hai gm i bought dual spec but no werk plis gief mi 1000g back - GTFO you never bought anything
             }
     }

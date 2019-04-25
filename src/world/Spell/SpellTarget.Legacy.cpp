@@ -1,7 +1,8 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2005-2012 <http://www.ArcEmu.org/>
- *
+ * Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
+ * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
+
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -151,7 +152,7 @@ void Spell::FillTargetMap(uint32 i)
         {
             Pet* p = m_caster->GetMapMgr()->GetPet(wowGuid.getGuidLowPart());
             if (p != nullptr)
-                AddTarget(i, TargetType, p->GetPetOwner());
+                AddTarget(i, TargetType, p->getPlayerOwner());
         }
     }
     //targets party, not raid
@@ -248,8 +249,8 @@ void Spell::AddChainTargets(uint32 i, uint32 targetType, float /*r*/, uint32 /*m
     range *= range;
 
     //is this party only?
-    Player* casterFrom = static_cast< Player* >(u_caster->GetPlayerOwner());
-    Player* pfirstTargetFrom = static_cast< Player* >(firstTarget->GetPlayerOwner());
+    Player* casterFrom = static_cast< Player* >(u_caster->getPlayerOwner());
+    Player* pfirstTargetFrom = static_cast< Player* >(firstTarget->getPlayerOwner());
     if (casterFrom != nullptr && pfirstTargetFrom != nullptr && casterFrom->GetGroup() == pfirstTargetFrom->GetGroup())
         RaidOnly = true;
 
@@ -271,11 +272,11 @@ void Spell::AddChainTargets(uint32 i, uint32 targetType, float /*r*/, uint32 /*m
         if (!obj || !itr->isCreatureOrPlayer() || !static_cast<Unit*>(itr)->isAlive())
             continue;
 
-        if (RaidOnly && !pfirstTargetFrom->InRaid(static_cast<Unit*>(itr)))
+        if (RaidOnly && !pfirstTargetFrom->isUnitOwnerInRaid(static_cast<Unit*>(itr)))
             continue;
 
         //healing spell, full health target = NONO
-        if (m_spellInfo->isHealingSpell() && static_cast<Unit*>(itr)->GetHealthPct() == 100)
+        if (m_spellInfo->isHealingSpell() && static_cast<Unit*>(itr)->getHealthPct() == 100)
             continue;
 
         if (obj->isInRange(firstTarget->GetPositionX(), firstTarget->GetPositionY(), firstTarget->GetPositionZ(), range))
@@ -293,8 +294,8 @@ void Spell::AddPartyTargets(uint32 i, uint32 targetType, float r, uint32 /*maxta
     Object* u = m_caster->GetMapMgr()->_GetObject(m_targets.m_unitTarget);
     if (u == nullptr)
         u = m_caster;
-    Player* p = static_cast< Player* >(u->GetPlayerOwner());
 
+    Player* p = dynamic_cast< Player* >(u->getPlayerOwner());
     if (p == nullptr || u_caster == nullptr)
         return;
 
@@ -309,7 +310,7 @@ void Spell::AddPartyTargets(uint32 i, uint32 targetType, float r, uint32 /*maxta
         if (!itr->isPlayer() && !itr->isPet())
             continue;
 
-        if (!p->InParty(static_cast<Unit*>(itr)))
+        if (!p->isUnitOwnerInParty(static_cast<Unit*>(itr)))
             continue;
 
         if (u->CalcDistance(itr) > r)
@@ -324,8 +325,8 @@ void Spell::AddRaidTargets(uint32 i, uint32 targetType, float r, uint32 /*maxtar
     Object* u = m_caster->GetMapMgr()->_GetObject(m_targets.m_unitTarget);
     if (u == nullptr)
         u = m_caster;
-    Player* p = static_cast< Player* >(u->GetPlayerOwner());
 
+    Player* p = dynamic_cast< Player* >(u->getPlayerOwner());
     if (p == nullptr || u_caster == nullptr)
         return;
 
@@ -340,7 +341,7 @@ void Spell::AddRaidTargets(uint32 i, uint32 targetType, float r, uint32 /*maxtar
         if (!itr->isPlayer() && !itr->isPet())
             continue;
 
-        if (!p->InRaid(static_cast<Unit*>(itr)))
+        if (!p->isUnitOwnerInRaid(static_cast<Unit*>(itr)))
             continue;
 
         if (u->CalcDistance(itr) > r)

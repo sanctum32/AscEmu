@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -43,38 +43,37 @@ namespace AscEmu { namespace Packets
 
         bool internalSerialise(WorldPacket& packet) override
         {
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
             packet << guid << time << cos << sin << horizontal << vertical;
 #else
             ObjectGuid objectGuid = guid.GetOldGuid();
 
-            WorldPacket data(SMSG_MOVE_KNOCK_BACK, 50);
-            data.WriteByteMask(objectGuid[0]);
-            data.WriteByteMask(objectGuid[3]);
-            data.WriteByteMask(objectGuid[6]);
-            data.WriteByteMask(objectGuid[7]);
-            data.WriteByteMask(objectGuid[2]);
-            data.WriteByteMask(objectGuid[5]);
-            data.WriteByteMask(objectGuid[1]);
-            data.WriteByteMask(objectGuid[4]);
+            packet.WriteByteMask(objectGuid[0]);
+            packet.WriteByteMask(objectGuid[3]);
+            packet.WriteByteMask(objectGuid[6]);
+            packet.WriteByteMask(objectGuid[7]);
+            packet.WriteByteMask(objectGuid[2]);
+            packet.WriteByteMask(objectGuid[5]);
+            packet.WriteByteMask(objectGuid[1]);
+            packet.WriteByteMask(objectGuid[4]);
 
-            data.WriteByteSeq(objectGuid[1]);
-            data << float(sin);
-            data << uint32_t(0);
-            data.WriteByteSeq(objectGuid[6]);
-            data.WriteByteSeq(objectGuid[7]);
-            data << float(horizontal);
-            data.WriteByteSeq(objectGuid[4]);
-            data.WriteByteSeq(objectGuid[5]);
-            data.WriteByteSeq(objectGuid[3]);
-            data << float(-vertical);
-            data << float(cos);
-            data.WriteByteSeq(objectGuid[2]);
-            data.WriteByteSeq(objectGuid[0]);
+            packet.WriteByteSeq(objectGuid[1]);
+            packet << float(sin);
+            packet << uint32_t(0);
+            packet.WriteByteSeq(objectGuid[6]);
+            packet.WriteByteSeq(objectGuid[7]);
+            packet << float(horizontal);
+            packet.WriteByteSeq(objectGuid[4]);
+            packet.WriteByteSeq(objectGuid[5]);
+            packet.WriteByteSeq(objectGuid[3]);
+            packet << float(-vertical);
+            packet << float(cos);
+            packet.WriteByteSeq(objectGuid[2]);
+            packet.WriteByteSeq(objectGuid[0]);
 #endif
             return true;
         }
 
-        bool internalDeserialise(WorldPacket& packet) override { return false; }
+        bool internalDeserialise(WorldPacket& /*packet*/) override { return false; }
     };
 }}

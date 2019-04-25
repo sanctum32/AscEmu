@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -7,7 +7,7 @@ This file is released under the MIT license. See README-MIT for more information
 #include "Storage/MySQLDataStore.hpp"
 #include "Server/MainServerDefines.h"
 #include "Config/Config.h"
-#include "Spell/Customization/SpellCustomizations.hpp"
+#include "Spell/SpellMgr.h"
 
 initialiseSingleton(MySQLDataStore);
 
@@ -15,6 +15,8 @@ SERVER_DECL std::set<std::string> CreaturePropertiesTables;
 SERVER_DECL std::set<std::string> CreatureQuestStarterTables;
 SERVER_DECL std::set<std::string> CreatureQuestFinisherTables;
 SERVER_DECL std::set<std::string> CreatureSpawnsTables;
+SERVER_DECL std::set<std::string> GameObjectQuestStarterTables;
+SERVER_DECL std::set<std::string> GameObjectQuestFinisherTables;
 SERVER_DECL std::set<std::string> GameObjectSpawnsTables;
 SERVER_DECL std::set<std::string> GameObjectPropertiesTables;
 SERVER_DECL std::set<std::string> ItemPropertiesTables;
@@ -56,6 +58,8 @@ void MySQLDataStore::loadAdditionalTableConfig()
     CreatureQuestStarterTables.insert(std::string("creature_quest_starter"));
     CreatureQuestFinisherTables.insert(std::string("creature_quest_finisher"));
     CreatureSpawnsTables.insert(std::string("creature_spawns"));
+    GameObjectQuestStarterTables.insert(std::string("gameobject_quest_starter"));
+    GameObjectQuestFinisherTables.insert(std::string("gameobject_quest_finisher"));
     GameObjectSpawnsTables.insert(std::string("gameobject_spawns"));
     GameObjectPropertiesTables.insert(std::string("gameobject_properties"));
     ItemPropertiesTables.insert(std::string("item_properties"));
@@ -93,6 +97,12 @@ void MySQLDataStore::loadAdditionalTableConfig()
 
         if (target_table.compare("creature_spawns") == 0)
             CreatureSpawnsTables.insert(additional_table);
+
+        if (target_table.compare("gameobject_quest_starter") == 0)
+            GameObjectQuestStarterTables.insert(additional_table);
+
+        if (target_table.compare("gameobject_quest_finisher") == 0)
+            GameObjectQuestFinisherTables.insert(additional_table);
 
         if (target_table.compare("gameobject_spawns") == 0)
             GameObjectSpawnsTables.insert(additional_table);
@@ -732,7 +742,7 @@ void MySQLDataStore::loadCreaturePropertiesTable()
                 creatureProperties.AISpells[i] = fields[52 + i].GetUInt32();
                 if (creatureProperties.AISpells[i] != 0)
                 {
-                    SpellInfo* sp = sSpellCustomizations.GetSpellInfo(creatureProperties.AISpells[i]);
+                    SpellInfo const* sp = sSpellMgr.getSpellInfo(creatureProperties.AISpells[i]);
                     if (sp == nullptr)
                     {
                         uint8_t spell_number = i;
@@ -767,7 +777,7 @@ void MySQLDataStore::loadCreaturePropertiesTable()
                     if (creature_spell_data->Spells[i] == 0)
                         continue;
 
-                    SpellInfo* sp = sSpellCustomizations.GetSpellInfo(creature_spell_data->Spells[i]);
+                    SpellInfo const* sp = sSpellMgr.getSpellInfo(creature_spell_data->Spells[i]);
                     if (sp == nullptr)
                         continue;
 
@@ -2013,7 +2023,7 @@ void MySQLDataStore::loadTotemDisplayIdsTable()
 
         MySQLStructure::TotemDisplayIds totemDisplayId;
 
-        totemDisplayId._race = fields[0].GetUInt32();
+        totemDisplayId._race = static_cast<uint8_t>(fields[0].GetUInt32());
         totemDisplayId.display_id = fields[1].GetUInt32();
         totemDisplayId.race_specific_id = fields[2].GetUInt32();
 
@@ -2448,7 +2458,7 @@ void MySQLDataStore::loadPlayerCreateInfoItemsTable()
         uint32_t player_info_index = fields[0].GetUInt32();
         uint32_t item_id = fields[1].GetUInt32();
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
         auto player_item = sMySQLStore.getItemProperties(item_id);
 #else
         DB2::Structures::ItemEntry const* player_item = sItemStore.LookupEntry(item_id);
@@ -2598,14 +2608,14 @@ void MySQLDataStore::loadSpellOverrideTable()
         uint32_t distinct_override_id = fields[0].GetUInt32();
 
         QueryResult* spellid_for_overrideid_result = WorldDatabase.Query("SELECT spellId FROM spelloverride WHERE overrideId = %u", distinct_override_id);
-        std::list<SpellInfo*>* list = new std::list <SpellInfo*>;
+        std::list<SpellInfo const*>* list = new std::list <SpellInfo const*>;
         if (spellid_for_overrideid_result != nullptr)
         {
             do
             {
                 Field* fieldsIn = spellid_for_overrideid_result->Fetch();
                 uint32_t spellid = fieldsIn[0].GetUInt32();
-                SpellInfo* spell = sSpellCustomizations.GetSpellInfo(spellid);
+                SpellInfo const* spell = sSpellMgr.getSpellInfo(spellid);
                 if (spell == nullptr)
                 {
                     LOG_ERROR("Table `spelloverride` includes invalid spellId %u for overrideId %u! <skipped>", spellid, distinct_override_id);
@@ -3802,7 +3812,7 @@ MySQLStructure::NpcMonsterSay* MySQLDataStore::getMonstersayEventForCreature(uin
 //        Field* fields = result->Fetch();
 //        uint32 entry = fields[0].GetUInt32();
 //        uint32 spell = fields[1].GetUInt32();
-//        SpellInfo* spellInfo = sSpellCustomizations.GetSpellInfo(spell);
+//        const auto spellInfo = sSpellMgr.getSpellInfo(spell);
 //
 //        if (spell && entry && spellInfo)
 //        {
@@ -3813,7 +3823,7 @@ MySQLStructure::NpcMonsterSay* MySQLDataStore::getMonstersayEventForCreature(uin
 //            }
 //            else
 //            {
-//                std::set<SpellInfo*> spellInfoSet;
+//                std::set<SpellInfo const*> spellInfoSet;
 //                spellInfoSet.insert(spellInfo);
 //                _defaultPetSpellsStore[entry] = spellInfoSet;
 //            }
@@ -3826,7 +3836,7 @@ MySQLStructure::NpcMonsterSay* MySQLDataStore::getMonstersayEventForCreature(uin
 //}
 
 //\brief This function is never called!     Zyres 2017/07/16 not used
-//std::set<SpellInfo*>* MySQLDataStore::getDefaultPetSpellsByEntry(uint32_t entry)
+//std::set<SpellInfo const*>* MySQLDataStore::getDefaultPetSpellsByEntry(uint32_t entry)
 //{
 //    PetDefaultSpellsMap::iterator itr = _defaultPetSpellsStore.find(entry);
 //    if (itr == _defaultPetSpellsStore.end())

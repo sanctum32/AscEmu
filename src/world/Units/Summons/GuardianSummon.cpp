@@ -1,7 +1,8 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
+ * Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
+ * Copyright (C) 2008-2011 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
- * Copyright (C) 2008-2011 <http://www.ArcEmu.org/>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -34,8 +35,8 @@ void GuardianSummon::Load(CreatureProperties const* properties_, Unit* pOwner, L
     Summon::Load(properties_, pOwner, position, spellid, pSummonslot);
 
     setPowerType(POWER_TYPE_MANA);
-    SetMaxPower(POWER_TYPE_MANA, GetMaxPower(POWER_TYPE_MANA) + 28 + 10 * getLevel());
-    SetPower(POWER_TYPE_MANA, GetPower(POWER_TYPE_MANA) + 28 + 10 * getLevel());
+    setMaxPower(POWER_TYPE_MANA, getMaxPower(POWER_TYPE_MANA) + 28 + 10 * getLevel());
+    setPower(POWER_TYPE_MANA, getPower(POWER_TYPE_MANA) + 28 + 10 * getLevel());
     setLevel(pOwner->getLevel());
     setMaxHealth(getMaxHealth() + 28 + 30 * getLevel());
     setHealth(getMaxHealth());

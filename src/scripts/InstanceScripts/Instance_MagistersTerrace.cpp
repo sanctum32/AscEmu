@@ -1,7 +1,7 @@
 /*
- Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
- This file is released under the MIT license. See README-MIT for more information.
- */
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
+This file is released under the MIT license. See README-MIT for more information.
+*/
 
 #include "Setup.h"
 #include "Instance_MagistersTerrace.h"
@@ -39,7 +39,7 @@ class SelinFireheartAI : public CreatureAIScript
         if (_isHeroic())
             addAISpell(SF_DRAINMANA, 8.0f, TARGET_RANDOM_SINGLE, 0, 35);
 
-        ManaRage = sSpellCustomizations.GetSpellInfo(FC_MANARAGE);
+        ManaRage = sSpellMgr.getSpellInfo(FC_MANARAGE);
         ManaRageTrigger = addAISpell(FC_MANARAGE_TRIGGER, 0.0f, TARGET_SELF, 0, 0);
         FelExplosion = addAISpell(SF_FELEXPLOSION, 0.0f, TARGET_SELF, 0, 0);
         mEnableFelExplosion = false;
@@ -90,13 +90,13 @@ class SelinFireheartAI : public CreatureAIScript
         getCreature()->GetAIInterface()->StopMovement(0);
 
         if (!FelCrystal->isCastingSpell())
-            FelCrystal->CastSpell(getCreature(), ManaRage, false);
+            FelCrystal->castSpell(getCreature(), ManaRage, false);
 
         // Mana Rage giving of mana doesnt work so we give 10%(3231) / AIUpdate() Event.
         _castAISpell(ManaRageTrigger);
-        uint32 mana = getCreature()->GetPower(POWER_TYPE_MANA) + 3231;
-        if (mana >= getCreature()->GetMaxPower(POWER_TYPE_MANA))
-            mana = getCreature()->GetMaxPower(POWER_TYPE_MANA);
+        uint32 mana = getCreature()->getPower(POWER_TYPE_MANA) + 3231;
+        if (mana >= getCreature()->getMaxPower(POWER_TYPE_MANA))
+            mana = getCreature()->getMaxPower(POWER_TYPE_MANA);
 
         getCreature()->setUInt32Value(UNIT_FIELD_POWER1, mana);
 
@@ -136,10 +136,10 @@ class SelinFireheartAI : public CreatureAIScript
         _castAISpell(FelExplosion);
 
         // No Idea why the mana isnt taken when the spell is cast so had to manually take it -_-
-        getCreature()->setUInt32Value(UNIT_FIELD_POWER1, getCreature()->GetPower(POWER_TYPE_MANA) - 3231);
+        getCreature()->setUInt32Value(UNIT_FIELD_POWER1, getCreature()->getPower(POWER_TYPE_MANA) - 3231);
     }
 
-    SpellInfo* ManaRage;
+    SpellInfo const* ManaRage;
     CreatureAISpells* ManaRageTrigger;
     CreatureAISpells* FelExplosion;
     bool mEnableFelExplosion;

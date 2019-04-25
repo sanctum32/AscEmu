@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -111,31 +111,13 @@ bool ChatHandler::ExecuteCommandInTable(ChatCommand* table, const char* text, Wo
             return true;
         }
 
-        // Check for field-based commands
-        if (table[i].Handler == NULL && (table[i].MaxValueField || table[i].NormalValueField))
+        if (!(this->*(table[i].Handler))(text, m_session))
         {
-            bool result = false;
-            if (strlen(text) == 0)
-            {
-                RedSystemMessage(m_session, "No values specified.");
-            }
-            if (table[i].ValueType == 2)
-                result = CmdSetFloatField(m_session, table[i].NormalValueField, table[i].MaxValueField, table[i].Name, text);
+            if (table[i].Help != "")
+                SendMultilineMessage(m_session, table[i].Help.c_str());
             else
-                result = CmdSetValueField(m_session, table[i].NormalValueField, table[i].MaxValueField, table[i].Name, text);
-            if (!result)
-                RedSystemMessage(m_session, "Must be in the form of (command) <value>, or, (command) <value> <maxvalue>");
-        }
-        else
-        {
-            if (!(this->*(table[i].Handler))(text, m_session))
             {
-                if (table[i].Help != "")
-                    SendMultilineMessage(m_session, table[i].Help.c_str());
-                else
-                {
-                    RedSystemMessage(m_session, "Incorrect syntax specified. Try .help %s for the correct syntax.", table[i].Name);
-                }
+                RedSystemMessage(m_session, "Incorrect syntax specified. Try .help %s for the correct syntax.", table[i].Name);
             }
         }
 
@@ -187,7 +169,7 @@ WorldPacket* ChatHandler::FillMessageData(uint32 type, uint32 language, const ch
     //channels are handled in channel handler and so on
     uint32 messageLength = (uint32)strlen(message) + 1;
 
-#if VERSION_STRING == Cata
+#if VERSION_STRING >= Cata
     WorldPacket* data = new WorldPacket(SMSG_MESSAGECHAT, messageLength + 60);
 #else
     WorldPacket* data = new WorldPacket(SMSG_MESSAGECHAT, messageLength + 30);
@@ -498,212 +480,6 @@ void ChatHandler::BlueSystemMessage(WorldSession* m_session, const char* message
     delete data;
 }
 
-bool ChatHandler::CmdSetValueField(WorldSession* m_session, uint16 field, uint16 fieldmax, const char* fieldname, const char* args)
-{
-    char* pvalue;
-    uint32 mv, av;
-
-    if (!args || !m_session) return false;
-
-    pvalue = strtok((char*)args, " ");
-    if (!pvalue)
-        return false;
-    else
-        av = atol(pvalue);
-
-    if (fieldmax)
-    {
-        char* pvaluemax = strtok(NULL, " ");
-        if (!pvaluemax)
-            return false;
-        else
-            mv = atol(pvaluemax);
-    }
-    else
-    {
-        mv = 0;
-    }
-
-    if (av <= 0 && mv > 0)
-    {
-        RedSystemMessage(m_session, "Values are invalid. Value must be < max (if max exists), and both must be > 0.");
-        return true;
-    }
-    if (fieldmax)
-    {
-        if (mv < av || mv <= 0)
-        {
-            RedSystemMessage(m_session, "Values are invalid. Value must be < max (if max exists), and both must be > 0.");
-            return true;
-        }
-    }
-
-    Player* plr = GetSelectedPlayer(m_session, false, true);
-    if (plr)
-    {
-        sGMLog.writefromsession(m_session, "used modify field value: %s, %u on %s", fieldname, av, plr->getName().c_str());
-        if (fieldmax)
-        {
-            BlueSystemMessage(m_session, "You set the %s of %s to %d/%d.", fieldname, plr->getName().c_str(), av, mv);
-            GreenSystemMessage(plr->GetSession(), "%s set your %s to %d/%d.", m_session->GetPlayer()->getName().c_str(), fieldname, av, mv);
-        }
-        else
-        {
-            BlueSystemMessage(m_session, "You set the %s of %s to %d.", fieldname, plr->getName().c_str(), av);
-            GreenSystemMessage(plr->GetSession(), "%s set your %s to %d.", m_session->GetPlayer()->getName().c_str(), fieldname, av);
-        }
-
-        if (field == UNIT_FIELD_STAT1) av /= 2;
-        if (field == UNIT_FIELD_BASE_HEALTH)
-        {
-            plr->setHealth(av);
-        }
-
-        plr->setUInt32Value(field, av);
-
-        if (fieldmax)
-        {
-            plr->setUInt32Value(fieldmax, mv);
-        }
-    }
-    else
-    {
-        Creature* cr = GetSelectedCreature(m_session, false);
-        if (cr)
-        {
-            if (!(field < UNIT_END && fieldmax < UNIT_END)) return false;
-            std::string creaturename = cr->GetCreatureProperties()->Name;
-            if (fieldmax)
-                BlueSystemMessage(m_session, "Setting %s of %s to %d/%d.", fieldname, creaturename.c_str(), av, mv);
-            else
-                BlueSystemMessage(m_session, "Setting %s of %s to %d.", fieldname, creaturename.c_str(), av);
-            sGMLog.writefromsession(m_session, "used modify field value: [creature]%s, %u on %s", fieldname, av, creaturename.c_str());
-            if (field == UNIT_FIELD_STAT1) av /= 2;
-            if (field == UNIT_FIELD_BASE_HEALTH)
-                cr->setHealth(av);
-
-            switch(field)
-            {
-                case UNIT_FIELD_FACTIONTEMPLATE:
-                    {
-                        if (cr->m_spawn)
-                            WorldDatabase.Execute("UPDATE creature_spawns SET faction = %u WHERE entry = %u AND min_build <= %u AND max_build >= %u", av, cr->m_spawn->entry, VERSION_STRING, VERSION_STRING);
-                    }
-                    break;
-                case UNIT_NPC_FLAGS:
-                    {
-                        WorldDatabase.Execute("UPDATE creature_properties SET npcflags = %u WHERE entry = %u", av, cr->GetCreatureProperties()->Id);
-                    }
-                    break;
-            }
-
-            cr->setUInt32Value(field, av);
-
-            if (fieldmax)
-            {
-                cr->setUInt32Value(fieldmax, mv);
-            }
-            // reset faction
-            if (field == UNIT_FIELD_FACTIONTEMPLATE)
-                cr->setServersideFaction();
-
-            // Only actually save the change if we are modifying a spawn
-            if (cr->GetSQL_id() != 0)
-                cr->SaveToDB();
-        }
-        else
-        {
-            RedSystemMessage(m_session, "Invalid Selection.");
-        }
-    }
-    return true;
-}
-
-bool ChatHandler::CmdSetFloatField(WorldSession* m_session, uint16 field, uint16 fieldmax, const char* fieldname, const char* args)
-{
-    char* pvalue;
-    float mv, av;
-
-    if (!args || !m_session) return false;
-
-    pvalue = strtok((char*)args, " ");
-    if (!pvalue)
-        return false;
-    else
-        av = (float)atof(pvalue);
-
-    if (fieldmax)
-    {
-        char* pvaluemax = strtok(NULL, " ");
-        if (!pvaluemax)
-            return false;
-        else
-            mv = (float)atof(pvaluemax);
-    }
-    else
-    {
-        mv = 0;
-    }
-
-    if (av <= 0)
-    {
-        RedSystemMessage(m_session, "Values are invalid. Value must be < max (if max exists), and both must be > 0.");
-        return true;
-    }
-    if (fieldmax)
-    {
-        if (mv < av || mv <= 0)
-        {
-            RedSystemMessage(m_session, "Values are invalid. Value must be < max (if max exists), and both must be > 0.");
-            return true;
-        }
-    }
-
-    Player* plr = GetSelectedPlayer(m_session, false, true);
-    if (plr)
-    {
-        sGMLog.writefromsession(m_session, "used modify field value: %s, %f on %s", fieldname, av, plr->getName().c_str());
-        if (fieldmax)
-        {
-            BlueSystemMessage(m_session, "You set the %s of %s to %.1f/%.1f.", fieldname, plr->getName().c_str(), av, mv);
-            GreenSystemMessage(plr->GetSession(), "%s set your %s to %.1f/%.1f.", m_session->GetPlayer()->getName().c_str(), fieldname, av, mv);
-        }
-        else
-        {
-            BlueSystemMessage(m_session, "You set the %s of %s to %.1f.", fieldname, plr->getName().c_str(), av);
-            GreenSystemMessage(plr->GetSession(), "%s set your %s to %.1f.", m_session->GetPlayer()->getName().c_str(), fieldname, av);
-        }
-        plr->setFloatValue(field, av);
-        if (fieldmax)
-            plr->setFloatValue(fieldmax, mv);
-    }
-    else
-    {
-        Creature* cr = GetSelectedCreature(m_session, false);
-        if (cr)
-        {
-            if (!(field < UNIT_END && fieldmax < UNIT_END)) return false;
-            std::string creaturename = cr->GetCreatureProperties()->Name;
-            if (fieldmax)
-                BlueSystemMessage(m_session, "Setting %s of %s to %.1f/%.1f.", fieldname, creaturename.c_str(), av, mv);
-            else
-                BlueSystemMessage(m_session, "Setting %s of %s to %.1f.", fieldname, creaturename.c_str(), av);
-            cr->setFloatValue(field, av);
-            sGMLog.writefromsession(m_session, "used modify field value: [creature]%s, %f on %s", fieldname, av, creaturename.c_str());
-            if (fieldmax)
-            {
-                cr->setFloatValue(fieldmax, mv);
-            }
-            //cr->SaveToDB();
-        }
-        else
-        {
-            RedSystemMessage(m_session, "Invalid Selection.");
-        }
-    }
-    return true;
-}
-
 std::string ChatHandler::GetNpcFlagString(Creature* creature)
 {
     std::string s = "";
@@ -711,7 +487,7 @@ std::string ChatHandler::GetNpcFlagString(Creature* creature)
         s.append(" (Battlemaster)");
     if (creature->isTrainer())
         s.append(" (Trainer)");
-    if (creature->isProf())
+    if (creature->isProfessionTrainer())
         s.append(" (Profession Trainer)");
     if (creature->isQuestGiver())
         s.append(" (Quests)");
@@ -729,7 +505,7 @@ std::string ChatHandler::GetNpcFlagString(Creature* creature)
         s.append(" (Innkeeper)");
     if (creature->isTabardDesigner())
         s.append(" (Tabard Designer)");
-    if (creature->isAuctioner())
+    if (creature->isAuctioneer())
         s.append(" (Auctioneer)");
     if (creature->isStableMaster())
         s.append(" (Stablemaster)");
@@ -953,8 +729,8 @@ void ChatHandler::SendItemLinkToPlayer(ItemProperties const* iProto, WorldSessio
 
     if (ItemCount)
     {
-        int8 count = static_cast<int8>(owner->GetItemInterface()->GetItemCount(iProto->ItemId, true));
-        //int8 slot = owner->GetItemInterface()->GetInventorySlotById(iProto->ItemId); //DISABLED due to being a retarded concept
+        int8 count = static_cast<int8>(owner->getItemInterface()->GetItemCount(iProto->ItemId, true));
+        //int8 slot = owner->getItemInterface()->GetInventorySlotById(iProto->ItemId); //DISABLED due to being a retarded concept
         if (iProto->ContainerSlots > 0)
         {
             SystemMessage(pSession, "Item %u %s Count %u ContainerSlots %u", iProto->ItemId, GetItemLinkByProto(iProto, language).c_str(), count, iProto->ContainerSlots);

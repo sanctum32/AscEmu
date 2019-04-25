@@ -1,7 +1,7 @@
 /*
- Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
- This file is released under the MIT license. See README-MIT for more information.
- */
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
+This file is released under the MIT license. See README-MIT for more information.
+*/
 
 #include "Setup.h"
 #include "Instance_PitOfSaron.h"
@@ -19,7 +19,7 @@ public:
     {
         if (!spawnsCreated())
         {
-            if (player->GetTeam() == TEAM_ALLIANCE)
+            if (player->getTeam() == TEAM_ALLIANCE)
             {
                 spawnCreature(CN_JAINA_PROUDMOORE, 441.39f, 213.32f, 528.71f, 0.10f, 35);
                 spawnCreature(CN_ARCHMAGE_ELANDRA, 439.26f, 215.89f, 528.71f, 0.02f, 35);
@@ -80,7 +80,7 @@ class ForgemasterGarfrostAI : public CreatureAIScript
         if (isScriptPhase(1) && _getHealthPercent() <= 66)
         {
             sendDBChatMessage(8765);
-            getCreature()->CastSpell(getCreature(), SPELL_STOMP, false);
+            getCreature()->castSpell(getCreature(), SPELL_STOMP, false);
             getCreature()->GetAIInterface()->WipeHateList();
             getCreature()->GetAIInterface()->splineMoveJump(JumpCords[0].x, JumpCords[0].y, JumpCords[0].z);
             
@@ -88,9 +88,9 @@ class ForgemasterGarfrostAI : public CreatureAIScript
                 getCreature()->SetFacing(getCreature()->calcRadAngle(getCreature()->GetPositionX(), getCreature()->GetPositionY(), pObject->GetPositionX(), pObject->GetPositionY()));
 
             if (_isHeroic())
-                getCreature()->CastSpell(getCreature(), H_SPELL_FORGE_BLADE, false);
+                getCreature()->castSpell(getCreature(), H_SPELL_FORGE_BLADE, false);
             else
-                getCreature()->CastSpell(getCreature(), SPELL_FROZEBLADE, false);
+                getCreature()->castSpell(getCreature(), SPELL_FROZEBLADE, false);
 
             getCreature()->setVirtualItemSlotId(MELEE, EQUIP_ID_SWORD);
             getCreature()->setVirtualItemSlotId(OFFHAND, 0);
@@ -100,7 +100,7 @@ class ForgemasterGarfrostAI : public CreatureAIScript
         if (isScriptPhase(2) && _getHealthPercent() <= 33)
         {
             sendDBChatMessage(8766);
-            getCreature()->CastSpell(getCreature(), SPELL_STOMP, false);
+            getCreature()->castSpell(getCreature(), SPELL_STOMP, false);
             getCreature()->GetAIInterface()->WipeHateList();
             getCreature()->GetAIInterface()->splineMoveJump(JumpCords[1].x, JumpCords[1].y, JumpCords[1].z);
 
@@ -108,9 +108,9 @@ class ForgemasterGarfrostAI : public CreatureAIScript
                 getCreature()->SetFacing(getCreature()->calcRadAngle(getCreature()->GetPositionX(), getCreature()->GetPositionY(), pObject->GetPositionX(), pObject->GetPositionY()));
             
             if (_isHeroic())
-                getCreature()->CastSpell(getCreature(), H_SPELL_FORGE_MACE, false);
+                getCreature()->castSpell(getCreature(), H_SPELL_FORGE_MACE, false);
             else
-                getCreature()->CastSpell(getCreature(), SPELL_FROZEMACE, false);
+                getCreature()->castSpell(getCreature(), SPELL_FROZEMACE, false);
             
             getCreature()->setVirtualItemSlotId(MELEE, EQUIP_ID_MACE);
             setScriptPhase(3);
@@ -404,7 +404,7 @@ class KrickAI : public CreatureAIScript
         if (!mOutroTimerStarted)
         {
             getCreature()->SetPosition(833.19f, 115.79f, 510.0f, 3.42673f, false);
-            getCreature()->CastSpell(getCreature(), SPELL_STRANGULATE, true);
+            getCreature()->castSpell(getCreature(), SPELL_STRANGULATE, true);
             getCreature()->setMoveRoot(true);
             _clearHateList();
 
@@ -416,7 +416,7 @@ class KrickAI : public CreatureAIScript
             getCreature()->GetAIInterface()->WipeTargetList();
             getCreature()->GetAIInterface()->WipeHateList();
 
-            if (pTarget->IsTeamHorde())
+            if (pTarget->isTeamHorde())
                 JainaOrSylvanas = spawnCreatureAndGetAIScript(CN_SYLVANAS_WINDRUNNER, 816.58f, 111.53f, 510.0f, 0.3825f);
             else
                 JainaOrSylvanas = spawnCreatureAndGetAIScript(CN_JAINA_PROUDMOORE, 816.58f, 111.53f, 510.0f, 0.3825f);
@@ -436,7 +436,7 @@ class KrickAI : public CreatureAIScript
                 case 2:
                     if (JainaOrSylvanas)
                     {
-                        if (pTarget->IsTeamAlliance())
+                        if (pTarget->isTeamAlliance())
                             JainaOrSylvanas->sendDBChatMessage(8776); // SAY_JAYNA_OUTRO_2
                         else
                             JainaOrSylvanas->sendDBChatMessage(8777); // SAY_SYLVANAS_OUTRO_2
@@ -450,7 +450,7 @@ class KrickAI : public CreatureAIScript
                 case 4:
                     if (JainaOrSylvanas)
                     {
-                        if (pTarget->IsTeamAlliance())
+                        if (pTarget->isTeamAlliance())
                             JainaOrSylvanas->sendDBChatMessage(8779); // SAY_JAYNA_OUTRO_4
                         else
                             JainaOrSylvanas->sendDBChatMessage(8780); // SAY_SYLVANAS_OUTRO_4
@@ -484,7 +484,7 @@ class KrickAI : public CreatureAIScript
                 case 10:
                     if (JainaOrSylvanas)
                     {
-                        if (pTarget->IsTeamAlliance() && JainaOrSylvanas)
+                        if (pTarget->isTeamAlliance() && JainaOrSylvanas)
                             JainaOrSylvanas->sendDBChatMessage(8785); // SAY_JAYNA_OUTRO_10
                         else
                             JainaOrSylvanas->sendDBChatMessage(8786); // SAY_SYLVANAS_OUTRO_10
@@ -517,8 +517,8 @@ class BarrageAI : public CreatureAIScript
     explicit BarrageAI(Creature* pCreature) : CreatureAIScript(pCreature)
     {
         getCreature()->addUnitFlags(UNIT_FLAG_NOT_ATTACKABLE_2);
-        getCreature()->CastSpell(getCreature(), SPELL_EXPLODING_ORB, false);
-        getCreature()->CastSpell(getCreature(), SPELL_AUTO_GROW, false);
+        getCreature()->castSpell(getCreature(), SPELL_EXPLODING_ORB, false);
+        getCreature()->castSpell(getCreature(), SPELL_AUTO_GROW, false);
 
         // Invisibility Hack
         getCreature()->setDisplayId(11686);
@@ -533,7 +533,7 @@ class BarrageAI : public CreatureAIScript
         {
             if (getCreature()->GetAuraStackCount(SPELL_HASTY_GROW) >= 15)
             {
-                getCreature()->CastSpell(getCreature(), SPELL_EXPLOSIVE_BARRAGE_DAMAGE, true);
+                getCreature()->castSpell(getCreature(), SPELL_EXPLOSIVE_BARRAGE_DAMAGE, true);
                 getCreature()->Despawn(100, 0);
             }
         }

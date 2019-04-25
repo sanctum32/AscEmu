@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -92,14 +92,14 @@ void Vehicle::Load(Unit* vehicleOwner, uint32 creatureEntry, uint32 vehicleid)
         case POWER_TYPE_OOZE:
         case POWER_TYPE_WRATH:
             vehicleOwner->setPowerType(POWER_TYPE_ENERGY);
-            vehicleOwner->SetMaxPower(POWER_TYPE_ENERGY, 100);
-            vehicleOwner->SetPower(POWER_TYPE_ENERGY, 100);
+            vehicleOwner->setMaxPower(POWER_TYPE_ENERGY, 100);
+            vehicleOwner->setPower(POWER_TYPE_ENERGY, 100);
             break;
 
         case POWER_TYPE_PYRITE:
             vehicleOwner->setPowerType(POWER_TYPE_ENERGY);
-            vehicleOwner->SetMaxPower(POWER_TYPE_ENERGY, 50);
-            vehicleOwner->SetPower(POWER_TYPE_ENERGY, 50);
+            vehicleOwner->setMaxPower(POWER_TYPE_ENERGY, 50);
+            vehicleOwner->setPower(POWER_TYPE_ENERGY, 50);
             break;
     }
 
@@ -149,8 +149,8 @@ void Vehicle::AddPassengerToSeat(Unit* passenger, uint32 seatid)
     if (passenger->isPlayer())
         static_cast<Player*>(passenger)->DismissActivePets();
 
-    if (passenger->GetCurrentVehicle() != nullptr)
-        passenger->GetCurrentVehicle()->EjectPassenger(passenger);
+    if (passenger->getCurrentVehicle() != nullptr)
+        passenger->getCurrentVehicle()->EjectPassenger(passenger);
 
     // set moveflags
     // set movement info
@@ -161,7 +161,7 @@ void Vehicle::AddPassengerToSeat(Unit* passenger, uint32 seatid)
     WorldPacket ack(SMSG_CONTROL_VEHICLE);
     passenger->SendPacket(&ack);
 
-    passenger->SendHopOnVehicle(owner, seatid);
+    passenger->sendHopOnVehicle(owner, seatid);
 
     LocationVector v(owner->GetPosition());
     v.x += seats[seatid]->GetSeatInfo()->attachmentOffsetX;
@@ -173,7 +173,7 @@ void Vehicle::AddPassengerToSeat(Unit* passenger, uint32 seatid)
     // Player's client sets these
     if (passenger->isCreature())
     {
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
         passenger->obj_movement_info.transport_data.transportGuid = owner->getGuid();
         passenger->obj_movement_info.transport_seat = static_cast<uint8_t>(seatid);
 #endif
@@ -186,13 +186,13 @@ void Vehicle::AddPassengerToSeat(Unit* passenger, uint32 seatid)
 
         passenger->addUnitFlags(UNIT_FLAG_PVP_ATTACKABLE);
 
-        static_cast<Player*>(passenger)->SetFarsightTarget(owner->getGuid());
+        static_cast<Player*>(passenger)->setFarsightGuid(owner->getGuid());
 
         if (seats[seatid]->Controller())
         {
             pack.Initialize(SMSG_CLIENT_CONTROL_UPDATE);
             pack << owner->GetNewGUID() << uint8(1);
-            passenger->SendPacket(&pack);
+            static_cast<Player*>(passenger)->sendClientControlPacket(owner, 1);
 
             passenger->setCharmGuid(owner->getGuid());
             owner->setCharmedByGuid(passenger->getGuid());
@@ -207,7 +207,7 @@ void Vehicle::AddPassengerToSeat(Unit* passenger, uint32 seatid)
     }
 
     seats[seatid]->AddPassenger(passenger->getGuid());
-    passenger->SetCurrentVehicle(this);
+    passenger->setCurrentVehicle(this);
 
     if (seats[seatid]->HidesPassenger())
         passenger->addUnitFlags(UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NOT_ATTACKABLE_2);
@@ -262,10 +262,10 @@ void Vehicle::AddPassengerToSeat(Unit* passenger, uint32 seatid)
 
 void Vehicle::EjectPassenger(Unit* passenger)
 {
-    if (passenger->GetCurrentVehicle() == nullptr)
+    if (passenger->getCurrentVehicle() == nullptr)
         return;
 
-    if (passenger->GetCurrentVehicle() != this)
+    if (passenger->getCurrentVehicle() != this)
         return;
 
     // find the seat the passenger is on
@@ -306,13 +306,9 @@ void Vehicle::EjectPassengerFromSeat(uint32 seatid)
 
         if (passenger->isPlayer())
         {
-
             owner->removeUnitFlags(UNIT_FLAG_PLAYER_CONTROLLED_CREATURE | UNIT_FLAG_PVP_ATTACKABLE);
 
-            WorldPacket ack(SMSG_CLIENT_CONTROL_UPDATE, 16);
-            ack << owner->GetNewGUID();
-            ack << uint8(0);
-            passenger->SendPacket(&ack);
+            static_cast<Player*>(passenger)->sendClientControlPacket(owner, 0);
 
             // send null spells if needed
             static_cast<Player*>(passenger)->SendEmptyPetSpellList();
@@ -321,21 +317,21 @@ void Vehicle::EjectPassengerFromSeat(uint32 seatid)
     }
 
     if (passenger->isPlayer())
-        static_cast<Player*>(passenger)->SetFarsightTarget(0);
+        static_cast<Player*>(passenger)->setFarsightGuid(0);
 
     // if we are on a flying vehicle, add a parachute!
     if (owner->HasAuraWithName(SPELL_AURA_ENABLE_FLIGHT) || owner->HasAuraWithName(SPELL_AURA_ENABLE_FLIGHT2))
-        passenger->CastSpell(passenger, 45472, false);
+        passenger->castSpell(passenger, 45472, false);
 
     // re-add spellclick flag if needed
     // despawn vehicle if it was spawned by spell?
     LocationVector landposition(owner->GetPosition());
 
-    passenger->SendHopOffVehicle(owner, landposition);
+    passenger->sendHopOffVehicle(owner, landposition);
     passenger->SetPosition(landposition);
     passenger->setMoveRoot(false);
     seats[seatid]->RemovePassenger();
-    passenger->SetCurrentVehicle(nullptr);
+    passenger->setCurrentVehicle(nullptr);
     passenger->removeUnitFlags(UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NOT_ATTACKABLE_2);
 
     passengercount--;
@@ -392,8 +388,8 @@ void Vehicle::EjectAllPassengers()
                 continue;
             }
 
-            if (u->GetVehicleComponent() != nullptr)
-                u->GetVehicleComponent()->EjectAllPassengers();
+            if (u->getVehicleComponent() != nullptr)
+                u->getVehicleComponent()->EjectAllPassengers();
             else
                 EjectPassengerFromSeat(i);
         }
@@ -532,10 +528,10 @@ uint32 Vehicle::GetPassengerCount() const{
             if (passenger == nullptr)
                 continue;
 
-            if (passenger->GetVehicleComponent() == nullptr)
+            if (passenger->getVehicleComponent() == nullptr)
                 count++;
             else
-                count += passenger->GetVehicleComponent()->GetPassengerCount();
+                count += passenger->getVehicleComponent()->GetPassengerCount();
         }
     }
 
@@ -586,7 +582,7 @@ void Vehicle::InstallAccessories()
 
         Creature* c = owner->GetMapMgr()->CreateCreature(accessory->accessory_entry);
         c->Load(cp, owner->GetPositionX(), owner->GetPositionY(), owner->GetPositionZ(), owner->GetOrientation());
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
         c->obj_movement_info.transport_data.transportGuid = owner->getGuid();
 #ifdef FT_VEHICLES
         c->obj_movement_info.transport_seat = static_cast<uint8_t>(accessory->seat);
@@ -609,8 +605,8 @@ void Vehicle::RemoveAccessories()
         if (u == nullptr)
             continue;
 
-        if (u->GetVehicleComponent() != nullptr)
-            u->GetVehicleComponent()->EjectAllPassengers();
+        if (u->getVehicleComponent() != nullptr)
+            u->getVehicleComponent()->EjectAllPassengers();
 
         EjectPassenger(u);
         u->Delete();

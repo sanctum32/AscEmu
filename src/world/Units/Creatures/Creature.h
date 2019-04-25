@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -53,6 +53,46 @@ public:
 
     GameEvent * mEvent = nullptr;
 
+    // npc flag helper
+    bool isVendor() const;
+    bool isTrainer() const;
+    bool isClassTrainer() const;
+    bool isProfessionTrainer() const;
+    bool isQuestGiver() const;
+    bool isGossip() const;
+    bool isTaxi() const;
+    bool isCharterGiver() const;
+    bool isGuildBank() const;
+    bool isBattleMaster() const;
+    bool isBanker() const;
+    bool isInnkeeper() const;
+    bool isSpiritHealer() const;
+    bool isTabardDesigner() const;
+    bool isAuctioneer() const;
+    bool isStableMaster() const;
+    bool isArmorer() const;
+
+    //type helper
+    bool isVehicle() const override;
+    bool isTrainingDummy() override;
+
+    //pvp helper
+    bool isPvpFlagSet() override;
+    void setPvpFlag() override;
+    void removePvpFlag() override;
+
+    bool isFfaPvpFlagSet() override;
+    void setFfaPvpFlag() override;
+    void removeFfaPvpFlag() override;
+
+    bool isSanctuaryFlagSet() override;
+    void setSanctuaryFlag() override;
+    void removeSanctuaryFlag() override;
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Owner
+    Object* getPlayerOwner() override;
+
  //MIT end
 
         bool Teleport(const LocationVector& vec, MapMgr* map) override;
@@ -60,11 +100,8 @@ public:
         Creature(uint64 guid);
         virtual ~Creature();
 
-        // For derived subclasses of Creature
-        bool isVehicle() const override;
-
-        void AddVehicleComponent(uint32 creature_entry, uint32 vehicleid);
-        void RemoveVehicleComponent();
+        void addVehicleComponent(uint32 creature_entry, uint32 vehicleid);
+        void removeVehicleComponent();
 
         bool Load(MySQLStructure::CreatureSpawn* spawn, uint8 mode, MySQLStructure::MapInfo const* info);
         void Load(CreatureProperties const* c_properties, float x, float y, float z, float o = 0);
@@ -94,18 +131,6 @@ public:
             DeleteMe();
         }
 
-        bool IsPvPFlagged() override;
-        void SetPvPFlag() override;
-        void RemovePvPFlag() override;
-
-        bool IsFFAPvPFlagged() override;
-        void SetFFAPvPFlag() override;
-        void RemoveFFAPvPFlag() override;
-
-        bool IsSanctuaryFlagged() override;
-        void SetSanctuaryFlag() override;
-        void RemoveSanctuaryFlag() override;
-
         int32 GetSlotByItemId(uint32 itemid);
 
         uint32 GetItemAmountByItemId(uint32 itemid);
@@ -114,7 +139,7 @@ public:
 
         void GetSellItemByItemId(uint32 itemid, CreatureItem& ci);
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
         DBC::Structures::ItemExtendedCostEntry const* GetItemExtendedCostByItemId(uint32 itemid);
 #else
         DB2::Structures::ItemExtendedCostEntry const* GetItemExtendedCostByItemId(uint32 itemid);
@@ -131,7 +156,7 @@ public:
         size_t GetSellItemCount();
 
         void RemoveVendorItem(uint32 itemid);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
         void AddVendorItem(uint32 itemid, uint32 amount, DBC::Structures::ItemExtendedCostEntry const* ec);
 #else
         void AddVendorItem(uint32 itemid, uint32 amount, DB2::Structures::ItemExtendedCostEntry const* ec);
@@ -151,40 +176,6 @@ public:
         std::list<QuestRelation*>::iterator QuestsBegin();
         std::list<QuestRelation*>::iterator QuestsEnd();
         void SetQuestList(std::list<QuestRelation*>* qst_lst);
-
-        uint32 isVendor() const;
-
-        uint32 isTrainer() const;
-
-        uint32 isClass() const;
-
-        uint32 isProf() const;
-
-        uint32 isQuestGiver() const;
-
-        uint32 isGossip() const;
-
-        uint32 isTaxi() const;
-
-        uint32 isCharterGiver() const;
-
-        uint32 isGuildBank() const;
-
-        uint32 isBattleMaster() const;
-
-        uint32 isBanker() const;
-
-        uint32 isInnkeeper() const;
-
-        uint32 isSpiritHealer() const;
-
-        uint32 isTabardDesigner() const;
-
-        uint32 isAuctioner() const;
-
-        uint32 isStableMaster() const;
-
-        uint32 isArmorer() const;
 
         uint32 GetHealthFromSpell();
 
@@ -261,8 +252,6 @@ public:
         void SetEnslaveSpell(uint32 spellId);
         bool RemoveEnslave();
 
-        Object* GetPlayerOwner() override;
-
         Group* GetGroup() override;
 
         int32 GetDamageDoneMod(uint16_t school) override;
@@ -290,7 +279,6 @@ public:
 
 
         bool isCritter() override;
-        bool isTrainingDummy() override;
 
         void FormationLinkUp(uint32 SqlId);
         void ChannelLinkUpGO(uint32 SqlId);

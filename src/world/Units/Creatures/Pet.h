@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -23,7 +23,7 @@
 
 #include "Creature.h"
 #include "Spell/SpellInfo.hpp"
-#include "Spell/Customization/SpellCustomizations.hpp"
+#include "Spell/SpellMgr.h"
 
 #define PET_SPELL_SPAM_COOLDOWN 2000        /// applied only to spells that have no cooldown
 
@@ -123,7 +123,7 @@ enum PetType
     WARLOCKPET  = 2,
 };
 
-typedef std::map<SpellInfo*, uint16> PetSpellMap;
+typedef std::map<SpellInfo const*, uint16> PetSpellMap;
 struct PlayerPet;
 
 
@@ -133,7 +133,18 @@ class SERVER_DECL Pet : public Creature
     friend class Creature;
     friend class WorldSession;
 
-    public:
+    // MIT START
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Owner
+protected:
+    Player* m_Owner;
+
+public:
+    
+    Object* getPlayerOwner() override;
+
+    // MIT END
 
         Pet(uint64 guid);
         ~Pet();
@@ -143,7 +154,7 @@ class SERVER_DECL Pet : public Creature
 
         void LoadFromDB(Player* owner, PlayerPet* pi);
         /// returns false if an error occurred. The caller MUST delete us.
-        bool CreateAsSummon(uint32 entry, CreatureProperties const* properties_, Creature* created_from_creature, Player* owner, SpellInfo* created_by_spell, uint32 type, uint32 expiretime, LocationVector* Vec = NULL, bool dismiss_old_pet = true);
+        bool CreateAsSummon(uint32 entry, CreatureProperties const* properties_, Creature* created_from_creature, Player* owner, SpellInfo const* created_by_spell, uint32 type, uint32 expiretime, LocationVector* Vec = NULL, bool dismiss_old_pet = true);
 
         void Update(unsigned long time_passed);
         void OnPushToWorld();
@@ -191,8 +202,6 @@ class SERVER_DECL Pet : public Creature
         void DelayedRemove(bool bTime, bool dismiss = false, uint32 delay = PET_DELAYED_REMOVAL_TIME);
         void Despawn(uint32 delay, uint32 respawntime);
 
-        inline Player* GetPetOwner() { return m_Owner; }
-        inline void ClearPetOwner() { m_Owner = NULL; }
         bool CanGainXP();
         void GiveXP(uint32 xp);
         uint32 GetNextLevelXP(uint32 currentlevel);
@@ -204,27 +213,27 @@ class SERVER_DECL Pet : public Creature
         void SetDefaultActionbar();
         void SetActionBarSlot(uint32 slot, uint32 spell) { ActionBar[slot] = spell; }
 
-        void AddSpell(SpellInfo* sp, bool learning, bool showLearnSpell = true);
-        void RemoveSpell(SpellInfo* sp, bool showUnlearnSpell = true);
+        void AddSpell(SpellInfo const* sp, bool learning, bool showLearnSpell = true);
+        void RemoveSpell(SpellInfo const* sp, bool showUnlearnSpell = true);
         void WipeTalents();
         uint32 GetUntrainCost();
-        void SetSpellState(SpellInfo* sp, uint16 State);
-        uint16 GetSpellState(SpellInfo* sp);
+        void SetSpellState(SpellInfo const* sp, uint16 State);
+        uint16 GetSpellState(SpellInfo const* sp);
         bool HasSpell(uint32 SpellID)
         {
-            SpellInfo* sp = sSpellCustomizations.GetSpellInfo(SpellID);
+            const auto sp = sSpellMgr.getSpellInfo(SpellID);
             if (sp)
                 return mSpells.find(sp) != mSpells.end();
             return false;
         }
         inline void RemoveSpell(uint32 SpellID)
         {
-            SpellInfo* sp = sSpellCustomizations.GetSpellInfo(SpellID);
+            const auto sp = sSpellMgr.getSpellInfo(SpellID);
             if (sp) RemoveSpell(sp);
         }
         inline void SetSpellState(uint32 SpellID, uint16 State)
         {
-            SpellInfo* sp = sSpellCustomizations.GetSpellInfo(SpellID);
+            const auto sp = sSpellMgr.getSpellInfo(SpellID);
             if (sp) SetSpellState(sp, State);
         }
         inline uint16 GetSpellState(uint32 SpellID)
@@ -232,20 +241,20 @@ class SERVER_DECL Pet : public Creature
             if (SpellID == 0)
                 return DEFAULT_SPELL_STATE;
 
-            SpellInfo* sp = sSpellCustomizations.GetSpellInfo(SpellID);
+            const auto sp = sSpellMgr.getSpellInfo(SpellID);
             if (sp)
                 return GetSpellState(sp);
             return DEFAULT_SPELL_STATE;
         }
 
-        AI_Spell* CreateAISpell(SpellInfo* info);
+        AI_Spell* CreateAISpell(SpellInfo const* info);
         inline PetSpellMap* GetSpells() { return &mSpells; }
         inline bool IsSummonedPet() { return Summon; }
 
         void SetAutoCastSpell(AI_Spell* sp);
         void Rename(std::string NewName);
         inline std::string & GetName() { return m_name; }
-        uint32 CanLearnSpell(SpellInfo* sp);
+        uint32 CanLearnSpell(SpellInfo const* sp);
         void UpdateSpellList(bool showLearnSpells = true);
 
         // talents
@@ -266,11 +275,8 @@ class SERVER_DECL Pet : public Creature
         void TakeDamage(Unit* pAttacker, uint32 damage, uint32 spellid, bool no_remove_auras = false) override;
         void Die(Unit* pAttacker, uint32 damage, uint32 spellid);
 
-        Object* GetPlayerOwner() override;
-
     protected:
 
-        Player* m_Owner;
         PetSpellMap mSpells;
         PlayerPet* mPi;
         uint32 ActionBar[10];       /// 10 slots
@@ -285,7 +291,6 @@ class SERVER_DECL Pet : public Creature
         uint32 m_State;
         uint32 m_ExpireTime;
         uint32 m_Diet;
-        uint64 m_OwnerGuid;
         time_t reset_time;
         uint32 reset_cost;
         bool bExpires;
@@ -294,7 +299,7 @@ class SERVER_DECL Pet : public Creature
         std::string m_name;
         HappinessState GetHappinessState();
         void SetNameForEntry(uint32 entry);
-        uint32 GetAutoCastTypeForSpell(SpellInfo* ent);
+        uint32 GetAutoCastTypeForSpell(SpellInfo const* ent);
         void SafeDelete();
 
     std::list<AI_Spell*> m_autoCastSpells[AUTOCAST_EVENT_COUNT];

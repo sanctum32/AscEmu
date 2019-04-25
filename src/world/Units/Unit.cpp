@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -9,15 +9,30 @@ This file is released under the MIT license. See README-MIT for more information
 #include "Players/Player.h"
 #include "Spell/SpellAuras.h"
 #include "Spell/Definitions/DiminishingGroup.h"
-#include "Spell/Customization/SpellCustomizations.hpp"
+#include "Spell/Definitions/SpellCastTargetFlags.h"
+#include "Spell/SpellMgr.h"
 #include "Data/WoWUnit.h"
 #include "Storage/MySQLDataStore.hpp"
 #include "Server/Packets/SmsgEnvironmentalDamageLog.h"
+#include "Spell/Definitions/PowerType.h"
+#include "Server/Packets/SmsgMonsterMoveTransport.h"
+#include "Map/MapMgr.h"
+#include "Units/Creatures/Vehicle.h"
 
 using namespace AscEmu::Packets;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // WoWData
+
+MovementAI & Unit::getMovementAI()
+{
+    return m_movementAI;
+}
+
+void Unit::setLocationWithoutUpdate(LocationVector & location)
+{
+    m_position.ChangeCoords(location.x, location.y, location.z);
+}
 
 uint64_t Unit::getCharmGuid() const { return unitData()->charm_guid.guid; };
 void Unit::setCharmGuid(uint64_t guid) { write(unitData()->charm_guid.guid, guid); }
@@ -49,6 +64,9 @@ uint32_t Unit::getChannelSpellId() const { return unitData()->channel_spell; };
 void Unit::setChannelSpellId(uint32_t spell_id) { write(unitData()->channel_spell, spell_id); }
 
 //bytes_0 begin
+uint32_t Unit::getBytes0() const { return unitData()->field_bytes_0.raw; }
+void Unit::setBytes0(uint32_t bytes) { write(unitData()->field_bytes_0.raw, bytes); }
+
 uint8_t Unit::getRace() const { return unitData()->field_bytes_0.s.race; }
 void Unit::setRace(uint8_t race) { write(unitData()->field_bytes_0.s.race, race); }
 
@@ -71,6 +89,78 @@ void Unit::modHealth(int32_t health)
     setHealth(currentHealth);
 }
 
+uint32_t Unit::getPower(uint16_t index) const
+{
+    switch (index)
+    {
+        case POWER_TYPE_MANA:
+            return unitData()->power_1;
+        case POWER_TYPE_RAGE:
+            return unitData()->power_2;
+        case POWER_TYPE_FOCUS:
+            return unitData()->power_3;
+        case POWER_TYPE_ENERGY:
+            return unitData()->power_4;
+        case POWER_TYPE_HAPPINESS:
+            return unitData()->power_5;
+#if VERSION_STRING == WotLK
+        case POWER_TYPE_RUNES :
+            return unitData()->power_6;
+        case POWER_TYPE_RUNIC_POWER:
+            return unitData()->power_7;
+#endif
+        default:
+            return 0;
+    }
+}
+
+void Unit::setPower(uint16_t index, uint32_t value)
+{
+    const uint32_t maxPower = getMaxPower(index);
+    if (value > maxPower)
+        value = maxPower;
+
+    switch (index)
+    {
+        case POWER_TYPE_MANA:
+            write(unitData()->power_1, value);
+        case POWER_TYPE_RAGE:
+            write(unitData()->power_2, value);
+        case POWER_TYPE_FOCUS:
+            write(unitData()->power_3, value);
+        case POWER_TYPE_ENERGY:
+            write(unitData()->power_4, value);
+        case POWER_TYPE_HAPPINESS:
+            write(unitData()->power_5, value);
+#if VERSION_STRING == WotLK
+        case POWER_TYPE_RUNES:
+            write(unitData()->power_6, value);
+        case POWER_TYPE_RUNIC_POWER:
+            write(unitData()->power_7, value);
+#endif
+    }
+}
+
+void Unit::modPower(uint16_t index, int32_t value)
+{
+    const int32_t power = static_cast<int32_t>(getPower(index));
+    const int32_t maxPower = static_cast<int32_t>(getMaxPower(index));
+
+    uint32_t newValue;
+    if (value <= power)
+        newValue = 0;
+    else
+        newValue = power + value;
+
+    if (value + power > maxPower)
+        newValue = maxPower;
+    else
+        newValue = power + value;
+
+    setPower(index, newValue);
+}
+
+
 uint32_t Unit::getMaxHealth() const { return unitData()->max_health; }
 void Unit::setMaxHealth(uint32_t maxHealth) { write(unitData()->max_health, maxHealth); }
 void Unit::modMaxHealth(int32_t maxHealth)
@@ -81,6 +171,65 @@ void Unit::modMaxHealth(int32_t maxHealth)
 }
 
 void Unit::setMaxMana(uint32_t maxMana) { write(unitData()->max_mana, maxMana); }
+
+uint32_t Unit::getMaxPower(uint16_t index) const
+{
+    switch (index)
+    {
+        case POWER_TYPE_MANA:
+            return unitData()->max_power_1;
+        case POWER_TYPE_RAGE:
+            return unitData()->max_power_2;
+        case POWER_TYPE_FOCUS:
+            return unitData()->max_power_3;
+        case POWER_TYPE_ENERGY:
+            return unitData()->max_power_4;
+        case POWER_TYPE_HAPPINESS:
+            return unitData()->max_power_5;
+#if VERSION_STRING == WotLK
+        case POWER_TYPE_RUNES:
+            return unitData()->max_power_6;
+        case POWER_TYPE_RUNIC_POWER:
+            return unitData()->max_power_7;
+#endif
+        default:
+            return 0;
+    }
+}
+
+void Unit::setMaxPower(uint16_t index, uint32_t value)
+{
+    switch (index)
+    {
+        case POWER_TYPE_MANA:
+            write(unitData()->max_power_1, value);
+        case POWER_TYPE_RAGE:
+            write(unitData()->max_power_2, value);
+        case POWER_TYPE_FOCUS:
+            write(unitData()->max_power_3, value);
+        case POWER_TYPE_ENERGY:
+            write(unitData()->max_power_4, value);
+        case POWER_TYPE_HAPPINESS:
+            write(unitData()->max_power_5, value);
+#if VERSION_STRING == WotLK
+        case POWER_TYPE_RUNES:
+            write(unitData()->max_power_6, value);
+        case POWER_TYPE_RUNIC_POWER:
+            write(unitData()->max_power_7, value);
+#endif
+    }
+}
+
+void Unit::modMaxPower(uint16_t index, int32_t value)
+{
+    int32_t newValue = getMaxPower(index);
+    newValue += value;
+
+    if (newValue < 0)
+        newValue = 0;
+
+    setMaxPower(index, newValue);
+}
 
 uint32_t Unit::getLevel() const { return unitData()->level; }
 void Unit::setLevel(uint32_t level)
@@ -112,6 +261,7 @@ uint32_t Unit::getUnitFlags2() const { return unitData()->unit_flags_2; }
 void Unit::setUnitFlags2(uint32_t unitFlags2) { write(unitData()->unit_flags_2, unitFlags2); }
 void Unit::addUnitFlags2(uint32_t unitFlags2) { setUnitFlags2(getUnitFlags2() | unitFlags2); }
 void Unit::removeUnitFlags2(uint32_t unitFlags2) { setUnitFlags2(getUnitFlags2() & ~unitFlags2); }
+bool Unit::hasUnitFlags2(uint32_t unitFlags2) const { return (getUnitFlags2() & unitFlags2) != 0; }
 #endif
 
 uint32_t Unit::getAuraState() const { return unitData()->aura_state; }
@@ -160,6 +310,9 @@ float Unit::getMaxOffhandDamage() const { return unitData()->maximum_offhand_dam
 void Unit::setMaxOffhandDamage(float damage) { write(unitData()->maximum_offhand_damage, damage); }
 
 //bytes_1 begin
+uint32_t Unit::getBytes1() const { return unitData()->field_bytes_1.raw; }
+void Unit::setBytes1(uint32_t bytes) { write(unitData()->field_bytes_1.raw, bytes); }
+
 uint8_t Unit::getStandState() const { return unitData()->field_bytes_1.s.stand_state; }
 void Unit::setStandState(uint8_t standState) { write(unitData()->field_bytes_1.s.stand_state, standState); }
 
@@ -231,6 +384,9 @@ uint32_t Unit::getBaseHealth() const { return unitData()->base_health; }
 void Unit::setBaseHealth(uint32_t baseHealth) { write(unitData()->base_health, baseHealth); }
 
 //byte_2 begin
+uint32_t Unit::getBytes2() const { return unitData()->field_bytes_2.raw; }
+void Unit::setBytes2(uint32_t bytes) { write(unitData()->field_bytes_2.raw, bytes); }
+
 uint8_t Unit::getSheathType() const { return unitData()->field_bytes_2.s.sheath_type; }
 void Unit::setSheathType(uint8_t sheathType) { write(unitData()->field_bytes_2.s.sheath_type, sheathType); }
 
@@ -267,7 +423,7 @@ void Unit::modPowerCostMultiplier(uint16_t school, float multiplier)
 
 int32_t Unit::getAttackPowerMods() const
 {
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
     return unitData()->attack_power_mods;
 #else
     return unitData()->attack_power_mod_pos - unitData()->attack_power_mod_neg;
@@ -276,7 +432,7 @@ int32_t Unit::getAttackPowerMods() const
 
 void Unit::setAttackPowerMods(int32_t modifier)
 {
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
     write(unitData()->attack_power_mods, modifier);
 #else
     write(unitData()->attack_power_mod_neg, static_cast<uint32_t>(modifier < 0 ? modifier : 0));
@@ -286,7 +442,7 @@ void Unit::setAttackPowerMods(int32_t modifier)
 
 void Unit::modAttackPowerMods(int32_t modifier)
 {
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
     int32_t currentModifier = getAttackPowerMods();
     currentModifier += modifier;
     setAttackPowerMods(currentModifier);
@@ -306,7 +462,7 @@ void Unit::modAttackPowerMultiplier(float multiplier)
 
 int32_t Unit::getRangedAttackPowerMods() const
 {
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
     return unitData()->ranged_attack_power_mods;
 #else
     return unitData()->ranged_attack_power_mods_pos - unitData()->ranged_attack_power_mods_neg;
@@ -315,7 +471,7 @@ int32_t Unit::getRangedAttackPowerMods() const
 
 void Unit::setRangedAttackPowerMods(int32_t modifier)
 {
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
     write(unitData()->ranged_attack_power_mods, modifier);
 #else
     write(unitData()->ranged_attack_power_mods_neg, static_cast<uint32_t>(modifier < 0 ? modifier : 0));
@@ -325,7 +481,7 @@ void Unit::setRangedAttackPowerMods(int32_t modifier)
 
 void Unit::modRangedAttackPowerMods(int32_t modifier)
 {
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
     int32_t currentModifier = getRangedAttackPowerMods();
     currentModifier += modifier;
     setRangedAttackPowerMods(currentModifier);
@@ -420,12 +576,12 @@ void Unit::setAuraSlotLevel(uint32_t slot, bool positive)
 
 void Unit::setMoveWaterWalk()
 {
-    AddUnitMovementFlag(MOVEFLAG_WATER_WALK);
+    addUnitMovementFlag(MOVEFLAG_WATER_WALK);
 
     if (isPlayer())
     {
         WorldPacket data(SMSG_MOVE_WATER_WALK, 12);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
         data << GetNewGUID();
         data << uint32(0);
 #else
@@ -437,7 +593,7 @@ void Unit::setMoveWaterWalk()
     if (isCreature())
     {
         WorldPacket data(SMSG_SPLINE_MOVE_WATER_WALK, 9);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
         data << GetNewGUID();
 #else
         movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_WATER_WALK);
@@ -448,12 +604,12 @@ void Unit::setMoveWaterWalk()
 
 void Unit::setMoveLandWalk()
 {
-    RemoveUnitMovementFlag(MOVEFLAG_WATER_WALK);
+    removeUnitMovementFlag(MOVEFLAG_WATER_WALK);
 
     if (isPlayer())
     {
         WorldPacket data(SMSG_MOVE_LAND_WALK, 12);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
         data << GetNewGUID();
         data << uint32(0);
 #else
@@ -465,7 +621,7 @@ void Unit::setMoveLandWalk()
     if (isCreature())
     {
         WorldPacket data(SMSG_SPLINE_MOVE_LAND_WALK, 9);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
         data << GetNewGUID();
 #else
         movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_LAND_WALK);
@@ -476,12 +632,12 @@ void Unit::setMoveLandWalk()
 
 void Unit::setMoveFeatherFall()
 {
-    AddUnitMovementFlag(MOVEFLAG_FEATHER_FALL);
+    addUnitMovementFlag(MOVEFLAG_FEATHER_FALL);
 
     if (isPlayer())
     {
         WorldPacket data(SMSG_MOVE_FEATHER_FALL, 12);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
         data << GetNewGUID();
         data << uint32(0);
 #else
@@ -493,7 +649,7 @@ void Unit::setMoveFeatherFall()
     if (isCreature())
     {
         WorldPacket data(SMSG_SPLINE_MOVE_FEATHER_FALL, 9);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
         data << GetNewGUID();
 #else
         movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_FEATHER_FALL);
@@ -504,12 +660,12 @@ void Unit::setMoveFeatherFall()
 
 void Unit::setMoveNormalFall()
 {
-    RemoveUnitMovementFlag(MOVEFLAG_FEATHER_FALL);
+    removeUnitMovementFlag(MOVEFLAG_FEATHER_FALL);
 
     if (isPlayer())
     {
         WorldPacket data(SMSG_MOVE_NORMAL_FALL, 12);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
         data << GetNewGUID();
         data << uint32(0);
 #else
@@ -521,7 +677,7 @@ void Unit::setMoveNormalFall()
     if (isCreature())
     {
         WorldPacket data(SMSG_SPLINE_MOVE_NORMAL_FALL, 9);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
         data << GetNewGUID();
 #else
         movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_NORMAL_FALL);
@@ -536,10 +692,10 @@ void Unit::setMoveHover(bool set_hover)
     {
         if (set_hover)
         {
-            AddUnitMovementFlag(MOVEFLAG_HOVER);
+            addUnitMovementFlag(MOVEFLAG_HOVER);
 
             WorldPacket data(SMSG_MOVE_SET_HOVER, 13);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
             data << GetNewGUID();
             data << uint32(0);
 #else
@@ -549,10 +705,10 @@ void Unit::setMoveHover(bool set_hover)
         }
         else
         {
-            RemoveUnitMovementFlag(MOVEFLAG_HOVER);
+            removeUnitMovementFlag(MOVEFLAG_HOVER);
 
             WorldPacket data(SMSG_MOVE_UNSET_HOVER, 13);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
             data << GetNewGUID();
             data << uint32(0);
 #else
@@ -567,12 +723,12 @@ void Unit::setMoveHover(bool set_hover)
     {
         if (set_hover)
         {
-            AddUnitMovementFlag(MOVEFLAG_HOVER);
+            addUnitMovementFlag(MOVEFLAG_HOVER);
 
             setAnimationFlags(UNIT_BYTE1_FLAG_HOVER);
 
             WorldPacket data(SMSG_SPLINE_MOVE_SET_HOVER, 10);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
             data << GetNewGUID();
 #else
             movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_SET_HOVER);
@@ -581,12 +737,12 @@ void Unit::setMoveHover(bool set_hover)
         }
         else
         {
-            RemoveUnitMovementFlag(MOVEFLAG_HOVER);
+            removeUnitMovementFlag(MOVEFLAG_HOVER);
 
             setAnimationFlags(getAnimationFlags() &~UNIT_BYTE1_FLAG_HOVER);
 
             WorldPacket data(SMSG_SPLINE_MOVE_UNSET_HOVER, 10);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
             data << GetNewGUID();
 #else
             movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_UNSET_HOVER);
@@ -602,13 +758,13 @@ void Unit::setMoveCanFly(bool set_fly)
     {
         if (set_fly)
         {
-            AddUnitMovementFlag(MOVEFLAG_CAN_FLY);
+            addUnitMovementFlag(MOVEFLAG_CAN_FLY);
 
             // Remove falling flag if set
-            RemoveUnitMovementFlag(MOVEFLAG_FALLING);
+            removeUnitMovementFlag(MOVEFLAG_FALLING);
 
             WorldPacket data(SMSG_MOVE_SET_CAN_FLY, 13);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
             data << GetNewGUID();
             data << uint32(2);
 #else
@@ -619,12 +775,12 @@ void Unit::setMoveCanFly(bool set_fly)
         else
         {
             // Remove all fly related moveflags
-            RemoveUnitMovementFlag(MOVEFLAG_CAN_FLY);
-            RemoveUnitMovementFlag(MOVEFLAG_DESCENDING);
-            RemoveUnitMovementFlag(MOVEFLAG_ASCENDING);
+            removeUnitMovementFlag(MOVEFLAG_CAN_FLY);
+            removeUnitMovementFlag(MOVEFLAG_DESCENDING);
+            removeUnitMovementFlag(MOVEFLAG_ASCENDING);
 
             WorldPacket data(SMSG_MOVE_UNSET_CAN_FLY, 13);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
             data << GetNewGUID();
             data << uint32(5);
 #else
@@ -638,13 +794,13 @@ void Unit::setMoveCanFly(bool set_fly)
     {
         if (set_fly)
         {
-            AddUnitMovementFlag(MOVEFLAG_CAN_FLY);
+            addUnitMovementFlag(MOVEFLAG_CAN_FLY);
 
             // Remove falling flag if set
-            RemoveUnitMovementFlag(MOVEFLAG_FALLING);
+            removeUnitMovementFlag(MOVEFLAG_FALLING);
 
             WorldPacket data(SMSG_SPLINE_MOVE_SET_FLYING, 10);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
             data << GetNewGUID();
 #else
             movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_SET_FLYING);
@@ -654,12 +810,12 @@ void Unit::setMoveCanFly(bool set_fly)
         else
         {
             // Remove all fly related moveflags
-            RemoveUnitMovementFlag(MOVEFLAG_CAN_FLY);
-            RemoveUnitMovementFlag(MOVEFLAG_DESCENDING);
-            RemoveUnitMovementFlag(MOVEFLAG_ASCENDING);
+            removeUnitMovementFlag(MOVEFLAG_CAN_FLY);
+            removeUnitMovementFlag(MOVEFLAG_DESCENDING);
+            removeUnitMovementFlag(MOVEFLAG_ASCENDING);
 
             WorldPacket data(SMSG_SPLINE_MOVE_UNSET_FLYING, 10);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
             data << GetNewGUID();
 #else
             movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_UNSET_FLYING);
@@ -675,10 +831,10 @@ void Unit::setMoveRoot(bool set_root)
     {
         if (set_root)
         {
-            AddUnitMovementFlag(MOVEFLAG_ROOTED);
+            addUnitMovementFlag(MOVEFLAG_ROOTED);
 
             WorldPacket data(SMSG_FORCE_MOVE_ROOT, 12);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
             data << GetNewGUID();
             data << uint32(0);
 #else
@@ -688,10 +844,10 @@ void Unit::setMoveRoot(bool set_root)
         }
         else
         {
-            RemoveUnitMovementFlag(MOVEFLAG_ROOTED);
+            removeUnitMovementFlag(MOVEFLAG_ROOTED);
 
             WorldPacket data(SMSG_FORCE_MOVE_UNROOT, 12);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
             data << GetNewGUID();
             data << uint32(0);
 #else
@@ -710,10 +866,10 @@ void Unit::setMoveRoot(bool set_root)
             m_aiInterface->m_canMove = false;
             m_aiInterface->StopMovement(100);
 
-            AddUnitMovementFlag(MOVEFLAG_ROOTED);
+            addUnitMovementFlag(MOVEFLAG_ROOTED);
 
             WorldPacket data(SMSG_SPLINE_MOVE_ROOT, 9);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
             data << GetNewGUID();
 #else
             movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_ROOT);
@@ -724,10 +880,10 @@ void Unit::setMoveRoot(bool set_root)
         {
             m_aiInterface->m_canMove = true;
 
-            RemoveUnitMovementFlag(MOVEFLAG_ROOTED);
+            removeUnitMovementFlag(MOVEFLAG_ROOTED);
 
             WorldPacket data(SMSG_SPLINE_MOVE_UNROOT, 9);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
             data << GetNewGUID();
 #else
             movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_UNROOT);
@@ -739,7 +895,7 @@ void Unit::setMoveRoot(bool set_root)
 
 bool Unit::isRooted() const
 {
-    return HasUnitMovementFlag(MOVEFLAG_ROOTED);
+    return hasUnitMovementFlag(MOVEFLAG_ROOTED);
 }
 
 void Unit::setMoveSwim(bool set_swim)
@@ -748,10 +904,10 @@ void Unit::setMoveSwim(bool set_swim)
     {
         if (set_swim)
         {
-            AddUnitMovementFlag(MOVEFLAG_SWIMMING);
+            addUnitMovementFlag(MOVEFLAG_SWIMMING);
 
             WorldPacket data(SMSG_SPLINE_MOVE_START_SWIM, 10);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
             data << GetNewGUID();
 #else
             movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_START_SWIM);
@@ -760,10 +916,10 @@ void Unit::setMoveSwim(bool set_swim)
         }
         else
         {
-            RemoveUnitMovementFlag(MOVEFLAG_SWIMMING);
+            removeUnitMovementFlag(MOVEFLAG_SWIMMING);
 
             WorldPacket data(SMSG_SPLINE_MOVE_STOP_SWIM, 10);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
             data << GetNewGUID();
 #else
             movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_STOP_SWIM);
@@ -780,10 +936,10 @@ void Unit::setMoveDisableGravity(bool disable_gravity)
     {
         if (disable_gravity)
         {
-            AddUnitMovementFlag(MOVEFLAG_DISABLEGRAVITY);
+            addUnitMovementFlag(MOVEFLAG_DISABLEGRAVITY);
 
             WorldPacket data(SMSG_MOVE_GRAVITY_DISABLE, 13);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
             data << GetNewGUID();
             data << uint32(0);
 #else
@@ -793,10 +949,10 @@ void Unit::setMoveDisableGravity(bool disable_gravity)
         }
         else
         {
-            RemoveUnitMovementFlag(MOVEFLAG_DISABLEGRAVITY);
+            removeUnitMovementFlag(MOVEFLAG_DISABLEGRAVITY);
 
             WorldPacket data(SMSG_MOVE_GRAVITY_ENABLE, 13);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
             data << GetNewGUID();
             data << uint32(0);
 #else
@@ -810,10 +966,10 @@ void Unit::setMoveDisableGravity(bool disable_gravity)
     {
         if (disable_gravity)
         {
-            AddUnitMovementFlag(MOVEFLAG_DISABLEGRAVITY);
+            addUnitMovementFlag(MOVEFLAG_DISABLEGRAVITY);
 
             WorldPacket data(SMSG_SPLINE_MOVE_GRAVITY_DISABLE, 10);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
             data << GetNewGUID();
 #else
             movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_GRAVITY_DISABLE);
@@ -822,10 +978,10 @@ void Unit::setMoveDisableGravity(bool disable_gravity)
         }
         else
         {
-            RemoveUnitMovementFlag(MOVEFLAG_DISABLEGRAVITY);
+            removeUnitMovementFlag(MOVEFLAG_DISABLEGRAVITY);
 
             WorldPacket data(SMSG_SPLINE_MOVE_GRAVITY_ENABLE, 10);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
             data << GetNewGUID();
 #else
             movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_GRAVITY_ENABLE);
@@ -844,10 +1000,10 @@ void Unit::setMoveWalk(bool set_walk)
     {
         if (set_walk)
         {
-            AddUnitMovementFlag(MOVEFLAG_WALK);
+            addUnitMovementFlag(MOVEFLAG_WALK);
 
             WorldPacket data(SMSG_SPLINE_MOVE_SET_WALK_MODE, 10);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
             data << GetNewGUID();
 #else
             movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_SET_WALK_MODE);
@@ -856,10 +1012,10 @@ void Unit::setMoveWalk(bool set_walk)
         }
         else
         {
-            RemoveUnitMovementFlag(MOVEFLAG_WALK);
+            removeUnitMovementFlag(MOVEFLAG_WALK);
 
             WorldPacket data(SMSG_SPLINE_MOVE_SET_RUN_MODE, 10);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
             data << GetNewGUID();
 #else
             movement_info.writeMovementInfo(data, SMSG_SPLINE_MOVE_SET_RUN_MODE);
@@ -1021,7 +1177,7 @@ void Unit::setSpeedForType(UnitSpeedType speed_type, float speed, bool set_basic
 
     if (player_mover != nullptr)
     {
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
         player_mover->sendForceMovePacket(speed_type, speed);
 #endif
         player_mover->sendMoveSetSpeedPaket(speed_type, speed);
@@ -1094,7 +1250,7 @@ void Unit::sendMoveSplinePaket(UnitSpeedType speedType)
 
 void Unit::playSpellVisual(uint64_t guid, uint32_t spell_id)
 {
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
     WorldPacket data(SMSG_PLAY_SPELL_VISUAL, 12);
     data << uint64_t(guid);
     data << uint32_t(spell_id);
@@ -1135,9 +1291,9 @@ void Unit::playSpellVisual(uint64_t guid, uint32_t spell_id)
 #endif
 }
 
-void Unit::applyDiminishingReturnTimer(uint32_t* duration, SpellInfo* spell)
+void Unit::applyDiminishingReturnTimer(uint32_t* duration, SpellInfo const* spell)
 {
-    uint32_t status = sSpellCustomizations.getDiminishingGroup(spell->getId());
+    uint32_t status = sSpellMgr.getDiminishingGroup(spell->getId());
     uint32_t group  = status & 0xFFFF;
     uint32_t PvE    = (status >> 16) & 0xFFFF;
 
@@ -1182,9 +1338,9 @@ void Unit::applyDiminishingReturnTimer(uint32_t* duration, SpellInfo* spell)
     ++m_diminishCount[group];
 }
 
-void Unit::removeDiminishingReturnTimer(SpellInfo* spell)
+void Unit::removeDiminishingReturnTimer(SpellInfo const* spell)
 {
-    uint32_t status = sSpellCustomizations.getDiminishingGroup(spell->getId());
+    uint32_t status = sSpellMgr.getDiminishingGroup(spell->getId());
     uint32_t group  = status & 0xFFFF;
     uint32_t pve    = (status >> 16) & 0xFFFF;
     uint32_t aura_group;
@@ -1209,7 +1365,7 @@ void Unit::removeDiminishingReturnTimer(SpellInfo* spell)
     {
         if (m_auras[x])
         {
-            aura_group = sSpellCustomizations.getDiminishingGroup(m_auras[x]->GetSpellInfo()->getId());
+            aura_group = sSpellMgr.getDiminishingGroup(m_auras[x]->GetSpellInfo()->getId());
             if (aura_group == status)
             {
                 m_diminishAuraCount[group]++;
@@ -1250,6 +1406,127 @@ void Unit::setDualWield(bool enable)
 
         plrUnit->_RemoveSkillLine(SKILL_DUAL_WIELD);
     }
+}
+
+void Unit::castSpell(uint64_t targetGuid, uint32_t spellId, bool triggered)
+{
+    castSpell(targetGuid, spellId, 0, triggered);
+}
+
+void Unit::castSpell(Unit* target, uint32_t spellId, bool triggered)
+{
+    castSpell(target, spellId, 0, triggered);
+}
+
+void Unit::castSpell(uint64_t targetGuid, SpellInfo const* spellInfo, bool triggered)
+{
+    if (spellInfo == nullptr)
+        return;
+
+    castSpell(targetGuid, spellInfo, 0, triggered);
+}
+
+void Unit::castSpell(Unit* target, SpellInfo const* spellInfo, bool triggered)
+{
+    if (spellInfo == nullptr)
+        return;
+    
+    castSpell(target, spellInfo, 0, triggered);
+}
+
+void Unit::castSpell(uint64_t targetGuid, uint32_t spellId, uint32_t forcedBasepoints, bool triggered)
+{
+    const auto spellInfo = sSpellMgr.getSpellInfo(spellId);
+    if (spellInfo == nullptr)
+        return;
+
+    castSpell(targetGuid, spellInfo, forcedBasepoints, triggered);
+}
+
+void Unit::castSpell(Unit* target, uint32_t spellId, uint32_t forcedBasepoints, bool triggered)
+{
+    const auto spellInfo = sSpellMgr.getSpellInfo(spellId);
+    if (spellInfo == nullptr)
+        return;
+
+    castSpell(target, spellInfo, forcedBasepoints, triggered);
+}
+
+void Unit::castSpell(Unit* target, SpellInfo const* spellInfo, uint32_t forcedBasePoints, int32_t spellCharges, bool triggered)
+{
+    if (spellInfo == nullptr)
+        return;
+
+    Spell* newSpell = sSpellMgr.newSpell(this, spellInfo, triggered, nullptr);
+    newSpell->forced_basepoints[0] = forcedBasePoints;
+    newSpell->m_charges = spellCharges;
+
+    SpellCastTargets targets(0);
+    if (target != nullptr)
+    {
+        targets.m_targetMask |= TARGET_FLAG_UNIT;
+        targets.m_unitTarget = target->getGuid();
+    }
+    else
+        newSpell->GenerateTargets(&targets);
+
+    // Prepare the spell
+    newSpell->prepare(&targets);
+}
+
+void Unit::castSpellLoc(const LocationVector location, SpellInfo const* spellInfo, bool triggered)
+{
+    if (spellInfo == nullptr)
+        return;
+
+    SpellCastTargets targets;
+    targets.setDestination(location);
+    targets.m_targetMask = TARGET_FLAG_DEST_LOCATION;
+
+    // Prepare the spell
+    Spell* newSpell = sSpellMgr.newSpell(this, spellInfo, triggered, nullptr);
+    newSpell->prepare(&targets);
+}
+
+void Unit::eventCastSpell(Unit* target, SpellInfo const* spellInfo)
+{
+    ARCEMU_ASSERT(spellInfo != nullptr);
+
+    castSpell(target, spellInfo, 0, true);
+}
+
+void Unit::castSpell(uint64_t targetGuid, SpellInfo const* spellInfo, uint32_t forcedBasepoints, bool triggered)
+{
+    if (spellInfo == nullptr)
+        return;
+
+    Spell* newSpell = sSpellMgr.newSpell(this, spellInfo, triggered, nullptr);
+    newSpell->forced_basepoints[0] = forcedBasepoints;
+    SpellCastTargets targets(targetGuid);
+
+    // Prepare the spell
+    newSpell->prepare(&targets);
+}
+
+void Unit::castSpell(Unit* target, SpellInfo const* spellInfo, uint32_t forcedBasepoints, bool triggered)
+{
+    if (spellInfo == nullptr)
+        return;
+
+    Spell* newSpell = sSpellMgr.newSpell(this, spellInfo, triggered, nullptr);
+    newSpell->forced_basepoints[0] = forcedBasepoints;
+
+    SpellCastTargets targets(0);
+    if (target != nullptr)
+    {
+        targets.m_targetMask |= TARGET_FLAG_UNIT;
+        targets.m_unitTarget = target->getGuid();
+    }
+    else
+        newSpell->GenerateTargets(&targets);
+
+    // Prepare the spell
+    newSpell->prepare(&targets);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1328,11 +1605,11 @@ void Unit::addAuraStateAndAuras(AuraState state)
                 auto deletedSpell = static_cast<Player*>(this)->mDeletedSpells.find(spellId);
                 if ((deletedSpell != static_cast<Player*>(this)->mDeletedSpells.end()))
                     continue;
-                SpellInfo const* spellInfo = sSpellCustomizations.GetSpellInfo(spellId);
+                SpellInfo const* spellInfo = sSpellMgr.getSpellInfo(spellId);
                 if (spellInfo == nullptr || !spellInfo->isPassive())
                     continue;
                 if (spellInfo->getCasterAuraState() == uint32_t(state))
-                    CastSpell(this, spellId, true);
+                    castSpell(this, spellId, true);
             }
         }
     }
@@ -1696,9 +1973,9 @@ bool Unit::canSee(Object* const obj)
 
                 // If object is only visible to either faction
                 if (unitObj->GetAIInterface()->faction_visibility == 1)
-                    return static_cast<Player*>(this)->IsTeamHorde() ? true : false;
+                    return static_cast<Player*>(this)->isTeamHorde() ? true : false;
                 if (unitObj->GetAIInterface()->faction_visibility == 2)
-                    return static_cast<Player*>(this)->IsTeamHorde() ? false : true;
+                    return static_cast<Player*>(this)->isTeamHorde() ? false : true;
             }
             break;
         }
@@ -1942,12 +2219,207 @@ bool Unit::isAttackReady(WeaponDamageType type) const
 void Unit::resetAttackTimers()
 {
     for (int8_t i = MELEE; i <= RANGED; ++i)
-    {
         setAttackTimer(WeaponDamageType(i), getBaseAttackTime(i));
-    }
 }
 
 void Unit::sendEnvironmentalDamageLogPacket(uint64_t guid, uint8_t type, uint32_t damage, uint64_t unk /*= 0*/)
 {
     SendMessageToSet(SmsgEnvironmentalDamageLog(guid, type, damage, unk).serialise().get(), true, false);
+}
+
+bool Unit::isPvpFlagSet() { return false; }
+void Unit::setPvpFlag() {}
+void Unit::removePvpFlag() {}
+
+bool Unit::isFfaPvpFlagSet() { return false; }
+void Unit::setFfaPvpFlag() {}
+void Unit::removeFfaPvpFlag() {}
+
+bool Unit::isSanctuaryFlagSet() { return false; }
+void Unit::setSanctuaryFlag() {}
+void Unit::removeSanctuaryFlag() {}
+
+bool Unit::isSitting() const
+{
+    const auto standState = getStandState();
+    return
+        standState == STANDSTATE_SIT_CHAIR || standState == STANDSTATE_SIT_LOW_CHAIR ||
+        standState == STANDSTATE_SIT_MEDIUM_CHAIR || standState == STANDSTATE_SIT_HIGH_CHAIR ||
+        standState == STANDSTATE_SIT;
+}
+
+uint8_t Unit::getHealthPct() const
+{
+    if (getHealth() <= 0 || getMaxHealth() <= 0)
+        return 0;
+
+    if (getHealth() > getMaxHealth())
+        return 100;
+
+    return static_cast<uint8_t>(getHealth() * 100 / getMaxHealth());
+}
+
+uint8_t Unit::getPowerPct(PowerType powerType) const
+{
+    if (powerType == POWER_TYPE_HEALTH)
+        return getHealthPct();
+
+    const auto powerIndex = static_cast<uint16_t>(powerType);
+    if (getPower(powerIndex) <= 0 || getMaxPower(powerIndex) <= 0)
+        return 0;
+
+    if (getPower(powerIndex) > getMaxPower(powerIndex))
+        return 100;
+
+    return static_cast<uint8_t>(getPower(powerIndex) * 100 / getMaxPower(powerIndex));
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Death
+bool Unit::isAlive() const { return m_deathState == ALIVE; }
+bool Unit::isDead() const { return  m_deathState != ALIVE; }
+bool Unit::justDied() const { return m_deathState == JUST_DIED; }
+
+void Unit::setDeathState(DeathState state)
+{
+    m_deathState = state;
+    if (state == JUST_DIED)
+        DropAurasOnDeath();
+}
+
+DeathState Unit::getDeathState() const { return m_deathState; }
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Movement
+
+MovementInfo* Unit::getMovementInfo() { return &movement_info; }
+
+uint32_t Unit::getUnitMovementFlags() const { return movement_info.flags; }   //checked
+void Unit::setUnitMovementFlags(uint32_t f) { movement_info.flags = f; }
+void Unit::addUnitMovementFlag(uint32_t f) { movement_info.flags |= f; }
+void Unit::removeUnitMovementFlag(uint32_t f) { movement_info.flags &= ~f; }
+bool Unit::hasUnitMovementFlag(uint32_t f) const { return (movement_info.flags & f) != 0; }
+
+//\brief: this is not uint16_t on version < wotlk
+uint16_t Unit::getExtraUnitMovementFlags() const { return movement_info.flags2; }
+void Unit::addExtraUnitMovementFlag(uint16_t f2) { movement_info.flags2 |= f2; }
+bool Unit::hasExtraUnitMovementFlag(uint16_t f2) const { return (movement_info.flags2 & f2) != 0; }
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Vehicle
+
+Vehicle* Unit::getCurrentVehicle() const { return m_currentVehicle; }
+
+void Unit::setCurrentVehicle(Vehicle* vehicle) { m_currentVehicle = vehicle; }
+
+void Unit::addPassengerToVehicle(uint64_t vehicleGuid, uint32_t delay)
+{
+    if (delay > 0)
+    {
+        sEventMgr.AddEvent(this, &Unit::addPassengerToVehicle, vehicleGuid, uint32_t(0), 0, delay, 1, 0);
+        return;
+    }
+
+    if (const auto unit = m_mapMgr->GetUnit(vehicleGuid))
+    {
+        if (unit->getVehicleComponent() == nullptr)
+            return;
+
+        if (m_currentVehicle != nullptr)
+            return;
+
+        unit->getVehicleComponent()->AddPassenger(this);
+    }
+}
+
+Vehicle* Unit::getVehicleComponent() const
+{
+    return m_vehicle;
+}
+
+Unit* Unit::getVehicleBase()
+{
+    if (m_currentVehicle != nullptr)
+        return m_currentVehicle->GetOwner();
+
+    if (m_vehicle != nullptr)
+        return this;
+
+    return nullptr;
+}
+
+void Unit::sendHopOnVehicle(Unit* vehicleOwner, uint32_t seat)
+{
+    SendMessageToSet(SmsgMonsterMoveTransport(GetNewGUID(), vehicleOwner->GetNewGUID(), static_cast<uint8_t>(seat), GetPosition()).serialise().get(), true);
+}
+
+void Unit::sendHopOffVehicle(Unit* vehicleOwner, LocationVector& /*landPosition*/)
+{
+    WorldPacket data(SMSG_MONSTER_MOVE, 1 + 12 + 4 + 1 + 4 + 4 + 4 + 12 + 8);
+    data << GetNewGUID();
+
+    if (isPlayer())
+        data << uint8(1);
+    else
+        data << uint8(0);
+
+    data << float(GetPositionX());
+    data << float(GetPositionY());
+    data << float(GetPositionZ());
+    data << uint32(Util::getMSTime());
+    data << uint8(4);                            // SPLINETYPE_FACING_ANGLE
+    data << float(GetOrientation());             // guess
+    data << uint32(0x01000000);                  // SPLINEFLAG_EXIT_VEHICLE
+    data << uint32(0);                           // Time in between points
+    data << uint32(1);                           // 1 single waypoint
+    data << float(vehicleOwner->GetPositionX());
+    data << float(vehicleOwner->GetPositionY());
+    data << float(vehicleOwner->GetPositionZ());
+
+    SendMessageToSet(&data, true);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Unit Owner
+bool Unit::isUnitOwnerInParty(Unit* unit)
+{
+    if (unit)
+    {
+        Player* playOwner = static_cast<Player*>(getPlayerOwner());
+        Player* playerOwnerFromUnit = static_cast<Player*>(unit->getPlayerOwner());
+        if (playOwner == nullptr || playerOwnerFromUnit == nullptr)
+            return false;
+
+        if (playOwner == playerOwnerFromUnit)
+            return true;
+
+        if (playOwner->GetGroup() != nullptr
+            && playerOwnerFromUnit->GetGroup() != nullptr
+            && playOwner->GetGroup() == playerOwnerFromUnit->GetGroup()
+            && playOwner->GetSubGroup() == playerOwnerFromUnit->GetSubGroup())
+            return true;
+    }
+
+    return false;
+}
+
+bool Unit::isUnitOwnerInRaid(Unit* unit)
+{
+    if (unit)
+    {
+        Player* playerOwner = static_cast<Player*>(getPlayerOwner());
+        Player* playerOwnerFromUnit = static_cast<Player*>(unit->getPlayerOwner());
+        if (playerOwner == nullptr || playerOwnerFromUnit == nullptr)
+            return false;
+
+        if (playerOwner == playerOwnerFromUnit)
+            return true;
+
+        if (playerOwner->GetGroup() != nullptr
+            && playerOwnerFromUnit->GetGroup() != nullptr
+            && playerOwner->GetGroup() == playerOwnerFromUnit->GetGroup())
+            return true;
+    }
+
+    return false;
 }

@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -43,8 +43,10 @@ template < class type > class SERVER_DECL Singleton
         Singleton()
         {
             /// If you hit this assert, this singleton already exists -- you can't create another one!
-            ASSERT(this->mSingleton == 0);
-            this->mSingleton = static_cast<type*>(this);
+            // not reproduceable issue on ubuntu
+            //ASSERT(this->mSingleton == 0);
+            if (this->mSingleton == nullptr)
+                this->mSingleton = static_cast<type*>(this);
         }
         /// Destructor
         virtual ~Singleton()

@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -929,7 +929,7 @@ bool AIInterface::activateShowWayPoints(Player* player, bool showBackwards)
 
             ByteBuffer buf(3000);
             uint32_t count = wpCreature->buildCreateUpdateBlockForPlayer(&buf, player);
-            player->PushCreationData(&buf, count);
+            player->getUpdateMgr().pushCreationData(&buf, count);
 
             wpCreature->setMoveRoot(true);
 
@@ -970,7 +970,7 @@ bool AIInterface::hideWayPoints(Player* player)
         {
             uint64_t guid = ((uint64_t)HIGHGUID_TYPE_WAYPOINT << 32) | wayPoint->id;
             WoWGuid wowguid(guid);
-            player->PushOutOfRange(wowguid);
+            player->getUpdateMgr().pushOutOfRangeGuid(wowguid);
         }
     }
     return true;
@@ -1014,7 +1014,7 @@ bool AIInterface::isFlying()
         return m_Unit->m_movementManager.isFlying();
 
     if (m_Unit->isPlayer())
-        return static_cast<Player*>(m_Unit)->FlyCheat;
+        return static_cast<Player*>(m_Unit)->m_cheats.FlyCheat;
 
     return false;
 }
@@ -1065,7 +1065,7 @@ void AIInterface::unsetSpline()
 
     m_Unit->m_movementManager.m_spline.GetSplineFlags()->m_splineFlagsRaw.trajectory = false;
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
     m_Unit->m_movementManager.m_spline.GetSplineFlags()->m_splineFlagsRaw.knockback = false;
 #else
     m_Unit->m_movementManager.m_spline.GetSplineFlags()->m_splineFlagsRaw.falling = false;
@@ -1088,7 +1088,7 @@ void AIInterface::splineMoveKnockback(float x, float y, float z, float /*horizon
     m_runSpeed /= speedmod;
 
     m_Unit->m_movementManager.m_spline.GetSplineFlags()->m_splineFlagsRaw.trajectory = true;
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
     m_Unit->m_movementManager.m_spline.GetSplineFlags()->m_splineFlagsRaw.knockback = true;
 #else
     m_Unit->m_movementManager.m_spline.GetSplineFlags()->m_splineFlagsRaw.falling = true;
@@ -1655,7 +1655,7 @@ void AIInterface::_UpdateCombat(uint32 /*p_time*/)
                     {
                         MovementInfo* mi = static_cast<Player*>(getNextTarget())->GetSession()->GetMovementInfo();
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
                         if (mi->flags & MOVEFLAG_FLYING)
                             HandleEvent(EVENT_LEAVECOMBAT, m_Unit, 0);
 #else
@@ -1723,7 +1723,7 @@ void AIInterface::_UpdateCombat(uint32 /*p_time*/)
                 if (getNextTarget()->isPlayer())
                 {
                     float dist = m_Unit->getDistanceSq(getNextTarget());
-                    if (static_cast< Player* >(getNextTarget())->HasUnitMovementFlag(MOVEFLAG_ROOTED) || dist >= 64.0f)
+                    if (static_cast< Player* >(getNextTarget())->hasUnitMovementFlag(MOVEFLAG_ROOTED) || dist >= 64.0f)
                     {
                         agent = AGENT_RANGED;
                     }
@@ -1805,8 +1805,8 @@ void AIInterface::_UpdateCombat(uint32 /*p_time*/)
                                 float his_facing = getNextTarget()->GetOrientation();
                                 if (fabs(our_facing - his_facing) < CREATURE_DAZE_TRIGGER_ANGLE && !getNextTarget()->HasAura(CREATURE_SPELL_TO_DAZE))
                                 {
-                                    SpellInfo* info = sSpellCustomizations.GetSpellInfo(CREATURE_SPELL_TO_DAZE);
-                                    Spell* sp = sSpellFactoryMgr.NewSpell(m_Unit, info, false, NULL);
+                                    SpellInfo const* info = sSpellMgr.getSpellInfo(CREATURE_SPELL_TO_DAZE);
+                                    Spell* sp = sSpellMgr.newSpell(m_Unit, info, false, NULL);
                                     SpellCastTargets targets;
                                     targets.m_unitTarget = getNextTarget()->getGuid();
                                     sp->prepare(&targets);
@@ -1858,10 +1858,10 @@ void AIInterface::_UpdateCombat(uint32 /*p_time*/)
                         if (infront)
                         {
                             m_Unit->setAttackTimer(MELEE, m_Unit->getBaseAttackTime(MELEE));
-                            SpellInfo* info = sSpellCustomizations.GetSpellInfo(SPELL_RANGED_GENERAL);
+                            SpellInfo const* info = sSpellMgr.getSpellInfo(SPELL_RANGED_GENERAL);
                             if (info)
                             {
-                                Spell* sp = sSpellFactoryMgr.NewSpell(m_Unit, info, false, NULL);
+                                Spell* sp = sSpellMgr.newSpell(m_Unit, info, false, NULL);
                                 SpellCastTargets targets;
                                 targets.m_unitTarget = getNextTarget()->getGuid();
                                 sp->prepare(&targets);
@@ -1902,7 +1902,7 @@ void AIInterface::_UpdateCombat(uint32 /*p_time*/)
                 float distance = m_Unit->CalcDistance(getNextTarget());
                 if (los && ((distance <= m_nextSpell->maxrange + m_Unit->GetModelHalfSize()) || m_nextSpell->maxrange == 0))  // Target is in Range -> Attack
                 {
-                    SpellInfo* spellInfo = m_nextSpell->spell;
+                    const auto spellInfo = m_nextSpell->spell;
 
                     /* if in range stop moving so we don't interrupt the spell */
                     //do not stop for instant spells
@@ -1925,19 +1925,19 @@ void AIInterface::_UpdateCombat(uint32 /*p_time*/)
                         }
                         case TTYPE_SOURCE:
                         {
-                            m_Unit->CastSpellAoF(targets.source(), spellInfo, true);
+                            m_Unit->castSpellLoc(targets.source(), spellInfo, true);
                             break;
                         }
                         case TTYPE_DESTINATION:
                         {
-                            m_Unit->CastSpellAoF(targets.destination(), spellInfo, true);
+                            m_Unit->castSpellLoc(targets.destination(), spellInfo, true);
                             break;
                         }
                         default:
                             LOG_ERROR("AI Agents: Targettype of AI agent spell %u for creature %u not set", spellInfo->getId(), static_cast< Creature* >(m_Unit)->GetCreatureProperties()->Id);
                     }
 
-                    // CastSpell(m_Unit, spellInfo, targets);
+                    // castSpell(m_Unit, spellInfo, targets);
                     if (m_nextSpell && m_nextSpell->cooldown)
                         m_nextSpell->cooldowntime = Util::getMSTime() + m_nextSpell->cooldown;
 
@@ -2072,7 +2072,7 @@ void AIInterface::SetUnitToFollowBackup(Unit* un)
 
 void AIInterface::AttackReaction(Unit* pUnit, uint32 damage_dealt, uint32 spellId)
 {
-    if (isAiState(AI_STATE_EVADE) || !pUnit || !pUnit->isAlive() || m_Unit->IsDead() || (m_Unit == pUnit) || isAiScriptType(AI_SCRIPT_PASSIVE) || isCombatDisabled())
+    if (isAiState(AI_STATE_EVADE) || !pUnit || !pUnit->isAlive() || m_Unit->isDead() || (m_Unit == pUnit) || isAiScriptType(AI_SCRIPT_PASSIVE) || isCombatDisabled())
         return;
 
     if ((pUnit->isPlayer() && m_Unit->hasUnitFlags(UNIT_FLAG_IGNORE_PLAYER_COMBAT)) || (pUnit->isCreature() && m_Unit->hasUnitFlags(UNIT_FLAG_IGNORE_CREATURE_COMBAT)))
@@ -2096,7 +2096,7 @@ void AIInterface::AttackReaction(Unit* pUnit, uint32 damage_dealt, uint32 spellI
                     {
                         MovementInfo* mi = static_cast< Player* >(pUnit)->GetSession()->GetMovementInfo();
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
                         if (mi != nullptr && !(mi->flags & MOVEFLAG_FALLING) && !(mi->flags & MOVEFLAG_SWIMMING) && !(mi->flags & MOVEFLAG_HOVER))
                             return;
 #else
@@ -2130,10 +2130,10 @@ void AIInterface::AttackReaction(Unit* pUnit, uint32 damage_dealt, uint32 spellI
         removeAiState(AI_STATE_UNFEARED);
     }
 
-    HandleEvent(EVENT_DAMAGETAKEN, pUnit, _CalcThreat(damage_dealt, spellId ? sSpellCustomizations.GetSpellInfo(spellId) : NULL, pUnit));
+    HandleEvent(EVENT_DAMAGETAKEN, pUnit, _CalcThreat(damage_dealt, spellId ? sSpellMgr.getSpellInfo(spellId) : NULL, pUnit));
 }
 
-void AIInterface::HealReaction(Unit* caster, Unit* victim, SpellInfo* sp, uint32 amount)
+void AIInterface::HealReaction(Unit* caster, Unit* victim, SpellInfo const* sp, uint32 amount)
 {
     if (!caster || !victim)
         return;
@@ -2274,7 +2274,7 @@ Unit* AIInterface::FindTarget()
             if (tmpPlr == nullptr)
                 continue;
 
-            if (tmpPlr->IsDead())
+            if (tmpPlr->isDead())
                 continue;
 
             if (tmpPlr->isOnTaxi())
@@ -2452,7 +2452,7 @@ Unit* AIInterface::FindTargetForSpell(AI_Spell* sp)
     {
         if (sp->spellType == STYPE_HEAL)
         {
-            if (m_Unit->GetHealthPct() / 100.0f <= sp->floatMisc1) // Heal ourselves cause we got too low HP
+            if (m_Unit->getHealthPct() / 100.0f <= sp->floatMisc1) // Heal ourselves cause we got too low HP
             {
                 m_Unit->setTargetGuid(0);
                 return m_Unit;
@@ -2463,7 +2463,7 @@ Unit* AIInterface::FindTargetForSpell(AI_Spell* sp)
                 {
                     continue;
                 }
-                if ((*i)->GetHealthPct() / 100.0f <= sp->floatMisc1) // Heal ourselves cause we got too low HP
+                if ((*i)->getHealthPct() / 100.0f <= sp->floatMisc1) // Heal ourselves cause we got too low HP
                 {
                     m_Unit->setTargetGuid((*i)->getGuid());
                     return (*i); // heal Assist Target which has low HP
@@ -2656,7 +2656,7 @@ float AIInterface::_CalcAggroRange(Unit* target)
         {
             // If nearby miners weren't spotted already we'll give them a little surprise.
             Spell* sp = target->getCurrentSpell(CURRENT_GENERIC_SPELL);
-            if (sp != nullptr && sp->GetSpellInfo()->getEffect(0) == SPELL_EFFECT_OPEN_LOCK && sp->GetSpellInfo()->getEffectMiscValue(0) == LOCKTYPE_MINING)
+            if (sp != nullptr && sp->getSpellInfo()->getEffect(0) == SPELL_EFFECT_OPEN_LOCK && sp->getSpellInfo()->getEffectMiscValue(0) == LOCKTYPE_MINING)
             {
                 isMining = true;
             }
@@ -2831,7 +2831,7 @@ void AIInterface::SendMoveToPacket()
 
 bool AIInterface::StopMovement(uint32 time)
 {
-    if (m_Unit->GetCurrentVehicle() != nullptr)
+    if (m_Unit->getCurrentVehicle() != nullptr)
     {
         return true;
     }
@@ -2939,7 +2939,7 @@ void AIInterface::SendCurrentMove(Player* plyr)
         *splineBuf << end.pos.x << end.pos.y << end.pos.z;
     }
 
-    plyr->AddSplinePacket(m_Unit->getGuid(), splineBuf);
+    plyr->getSplineMgr().addSplinePacket(m_Unit->getGuid(), splineBuf);
 }
 
 bool AIInterface::setInFront(Unit* target) // not the best way to do it, though
@@ -3040,7 +3040,7 @@ void AIInterface::_UpdateMovement(uint32 p_time)
     setPetFollowMovement();
 }
 
-void AIInterface::CastSpell(Unit* caster, SpellInfo* spellInfo, SpellCastTargets targets)
+void AIInterface::CastSpell(Unit* caster, SpellInfo const* spellInfo, SpellCastTargets targets)
 {
     ARCEMU_ASSERT(spellInfo != NULL);
     if (!isAiScriptType(AI_SCRIPT_PET) && isCastDisabled())
@@ -3054,13 +3054,13 @@ void AIInterface::CastSpell(Unit* caster, SpellInfo* spellInfo, SpellCastTargets
 #endif
 
     //i wonder if this will lead to a memory leak :S
-    Spell* nspell = sSpellFactoryMgr.NewSpell(caster, spellInfo, false, NULL);
+    Spell* nspell = sSpellMgr.newSpell(caster, spellInfo, false, NULL);
     nspell->prepare(&targets);
 }
 
-SpellInfo* AIInterface::getSpellEntry(uint32 spellId)
+SpellInfo const* AIInterface::getSpellEntry(uint32 spellId)
 {
-    SpellInfo* spellInfo = sSpellCustomizations.GetSpellInfo(spellId);
+    const auto spellInfo = sSpellMgr.getSpellInfo(spellId);
 
     if (!spellInfo)
     {
@@ -3071,7 +3071,7 @@ SpellInfo* AIInterface::getSpellEntry(uint32 spellId)
     return spellInfo;
 }
 
-SpellCastTargets AIInterface::setSpellTargets(SpellInfo* /*spellInfo*/, Unit* target) const
+SpellCastTargets AIInterface::setSpellTargets(SpellInfo const* /*spellInfo*/, Unit* target) const
 {
     SpellCastTargets targets;
     targets.m_unitTarget = target ? target->getGuid() : 0;
@@ -3164,12 +3164,12 @@ AI_Spell* AIInterface::getSpell()
                         {
                             case POWER_TYPE_MANA:
                             {
-                                if (m_Unit->GetPower(POWER_TYPE_MANA) < sp->spell->getManaCost())
+                                if (m_Unit->getPower(POWER_TYPE_MANA) < sp->spell->getManaCost())
                                     continue;
                             } break;
                             case POWER_TYPE_FOCUS:
                             {
-                                if (m_Unit->GetPower(POWER_TYPE_FOCUS) < sp->spell->getManaCost())
+                                if (m_Unit->getPower(POWER_TYPE_FOCUS) < sp->spell->getManaCost())
                                     continue;
                             } break;
                         }
@@ -3670,7 +3670,7 @@ void AIInterface::CheckTarget(Unit* target)
         tauntedBy = nullptr;
 }
 
-uint32 AIInterface::_CalcThreat(uint32 damage, SpellInfo* sp, Unit* Attacker)
+uint32 AIInterface::_CalcThreat(uint32 damage, SpellInfo const* sp, Unit* Attacker)
 {
     if (!Attacker)
         return 0; // No attacker means no threat and we prevent crashes this way
@@ -3905,13 +3905,13 @@ void AIInterface::_UpdateTotem(uint32 p_time)
     ARCEMU_ASSERT(totemspell != 0);
     if (p_time >= m_totemspelltimer)
     {
-        Spell* pSpell = sSpellFactoryMgr.NewSpell(m_Unit, totemspell, true, 0);
+        Spell* pSpell = sSpellMgr.newSpell(m_Unit, totemspell, true, 0);
         Unit* nextTarget = getNextTarget();
         if (nextTarget == NULL ||
             (!m_Unit->GetMapMgr()->GetUnit(nextTarget->getGuid()) ||
             !nextTarget->isAlive() ||
-            !(m_Unit->isInRange(nextTarget->GetPosition(), pSpell->GetSpellInfo()->custom_base_range_or_radius_sqr)) ||
-            !isAttackable(m_Unit, nextTarget, !(pSpell->GetSpellInfo()->custom_c_is_flags & SPELL_FLAG_IS_TARGETINGSTEALTHED))
+            !(m_Unit->isInRange(nextTarget->GetPosition(), pSpell->getSpellInfo()->custom_base_range_or_radius_sqr)) ||
+            !isAttackable(m_Unit, nextTarget, !(pSpell->getSpellInfo()->custom_c_is_flags & SPELL_FLAG_IS_TARGETINGSTEALTHED))
            )
            )
         {
@@ -3938,7 +3938,7 @@ void AIInterface::_UpdateTotem(uint32 p_time)
         }
         // these will *almost always* be AoE, so no need to find a target here.
         //            SpellCastTargets targets(m_Unit->getGuid());
-        //            Spell* pSpell = sSpellFactoryMgr.NewSpell(m_Unit, totemspell, true, 0);
+        //            Spell* pSpell = sSpellMgr.newSpell(m_Unit, totemspell, true, 0);
         //            pSpell->prepare(&targets);
         // need proper cooldown time!
         //            m_totemspelltimer = m_totemspelltime;
@@ -4345,7 +4345,7 @@ void AIInterface::EventEnterCombat(Unit* pUnit, uint32 misc1)
     if (isAiState(AI_STATE_EVADE))
         return;
 
-    if (pUnit == nullptr || pUnit->IsDead() || m_Unit->IsDead())
+    if (pUnit == nullptr || pUnit->isDead() || m_Unit->isDead())
         return;
 
     // set the target first
@@ -4443,7 +4443,7 @@ void AIInterface::EventLeaveCombat(Unit* pUnit, uint32 /*misc1*/)
 
     if (pUnit->isCreature())
     {
-        if (pUnit->IsDead())
+        if (pUnit->isDead())
             pUnit->RemoveAllAuras();
         else
             pUnit->RemoveNegativeAuras();
@@ -4844,7 +4844,7 @@ void AIInterface::OnMoveCompleted()
     //remove flags that are temporary
     splineFlags.done = false;
     splineFlags.trajectory = false;
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
     splineFlags.knockback = false;
 #else
     splineFlags.falling = false;
@@ -4926,9 +4926,9 @@ void AIInterface::SetCreatureProtoDifficulty(uint32 entry)
             m_Unit->setMaxHealth(health);
             m_Unit->setBaseHealth(health);
 
-            m_Unit->SetMaxPower(POWER_TYPE_MANA, properties_difficulty->Mana);
+            m_Unit->setMaxPower(POWER_TYPE_MANA, properties_difficulty->Mana);
             m_Unit->setBaseMana(properties_difficulty->Mana);
-            m_Unit->SetPower(POWER_TYPE_MANA, properties_difficulty->Mana);
+            m_Unit->setPower(POWER_TYPE_MANA, properties_difficulty->Mana);
 
             m_Unit->setLevel(properties_difficulty->MinLevel + (Util::getRandomUInt(properties_difficulty->MaxLevel - properties_difficulty->MinLevel)));
 
@@ -5006,7 +5006,7 @@ void AIInterface::SetCreatureProtoDifficulty(uint32 entry)
 
             if (m_Unit->isVehicle())
             {
-                m_Unit->AddVehicleComponent(properties_difficulty->Id, properties_difficulty->vehicleid);
+                m_Unit->addVehicleComponent(properties_difficulty->Id, properties_difficulty->vehicleid);
                 m_Unit->addNpcFlags(UNIT_NPC_FLAG_SPELLCLICK);
                 m_Unit->setAItoUse(false);
             }

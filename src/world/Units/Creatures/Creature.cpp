@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -41,6 +41,93 @@
 #include "Spell/Definitions/SpellEffects.h"
 #include "Storage/MySQLStructures.h"
 #include "Objects/ObjectMgr.h"
+
+//MIT start
+
+bool Creature::isVendor() const { return getNpcFlags() & UNIT_NPC_FLAG_VENDOR; }
+bool Creature::isTrainer() const { return getNpcFlags() & UNIT_NPC_FLAG_TRAINER; }
+bool Creature::isClassTrainer() const { return getNpcFlags() & UNIT_NPC_FLAG_TRAINER_CLASS; }
+bool Creature::isProfessionTrainer() const { return getNpcFlags() & UNIT_NPC_FLAG_TRAINER_PROF; }
+bool Creature::isQuestGiver() const { return getNpcFlags() & UNIT_NPC_FLAG_QUESTGIVER; }
+bool Creature::isGossip() const{ return getNpcFlags() & UNIT_NPC_FLAG_GOSSIP; }
+bool Creature::isTaxi() const { return getNpcFlags() & UNIT_NPC_FLAG_TAXIVENDOR; }
+bool Creature::isCharterGiver() const { return getNpcFlags() & UNIT_NPC_FLAG_ARENACHARTER; }
+bool Creature::isGuildBank() const { return getNpcFlags() & UNIT_NPC_FLAG_GUILD_BANK; }
+bool Creature::isBattleMaster() const { return getNpcFlags() & UNIT_NPC_FLAG_BATTLEFIELDPERSON; }
+bool Creature::isBanker() const { return getNpcFlags() & UNIT_NPC_FLAG_BANKER; }
+bool Creature::isInnkeeper() const { return getNpcFlags() & UNIT_NPC_FLAG_INNKEEPER; }
+bool Creature::isSpiritHealer() const { return getNpcFlags() & UNIT_NPC_FLAG_SPIRITHEALER; }
+bool Creature::isTabardDesigner() const { return getNpcFlags() & UNIT_NPC_FLAG_TABARDCHANGER; }
+bool Creature::isAuctioneer() const { return getNpcFlags() & UNIT_NPC_FLAG_AUCTIONEER; }
+bool Creature::isStableMaster() const { return getNpcFlags() & UNIT_NPC_FLAG_STABLEMASTER; }
+bool Creature::isArmorer() const { return getNpcFlags() & UNIT_NPC_FLAG_ARMORER; }
+
+bool Creature::isVehicle() const
+{
+    return creature_properties->vehicleid != 0;
+}
+
+bool Creature::isTrainingDummy()
+{
+    return creature_properties->isTrainingDummy;
+}
+
+bool Creature::isPvpFlagSet()
+{
+    return getPvpFlags() & U_FIELD_BYTES_FLAG_PVP;
+}
+
+void Creature::setPvpFlag()
+{
+    setPvpFlags(getPvpFlags() | U_FIELD_BYTES_FLAG_PVP);
+    summonhandler.SetPvPFlags();
+}
+
+void Creature::removePvpFlag()
+{
+    setPvpFlags(getPvpFlags() & ~U_FIELD_BYTES_FLAG_PVP);
+    summonhandler.RemovePvPFlags();
+}
+
+bool Creature::isFfaPvpFlagSet()
+{
+    return getPvpFlags() & U_FIELD_BYTES_FLAG_FFA_PVP;
+}
+
+void Creature::setFfaPvpFlag()
+{
+    setPvpFlags(getPvpFlags() | U_FIELD_BYTES_FLAG_FFA_PVP);
+    summonhandler.SetFFAPvPFlags();
+}
+
+void Creature::removeFfaPvpFlag()
+{
+    setPvpFlags(getPvpFlags() & ~U_FIELD_BYTES_FLAG_FFA_PVP);
+    summonhandler.RemoveFFAPvPFlags();
+}
+
+bool Creature::isSanctuaryFlagSet()
+{
+    return getPvpFlags() & U_FIELD_BYTES_FLAG_SANCTUARY;
+}
+
+void Creature::setSanctuaryFlag()
+{
+    setPvpFlags(getPvpFlags() | U_FIELD_BYTES_FLAG_SANCTUARY);
+    summonhandler.SetSanctuaryFlags();
+}
+
+void Creature::removeSanctuaryFlag()
+{
+    setPvpFlags(getPvpFlags() & ~U_FIELD_BYTES_FLAG_SANCTUARY);
+    summonhandler.RemoveSanctuaryFlags();
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Owner
+Object* Creature::getPlayerOwner() { return nullptr; }
+
+//MIT end
 
 Creature::Creature(uint64 guid)
 {
@@ -596,91 +683,6 @@ void Creature::SetQuestList(std::list<QuestRelation*>* qst_lst)
     m_quests = qst_lst;
 }
 
-uint32 Creature::isVendor() const
-{
-    return getNpcFlags() & UNIT_NPC_FLAG_VENDOR;
-}
-
-uint32 Creature::isTrainer() const
-{
-    return getNpcFlags() & UNIT_NPC_FLAG_TRAINER;
-}
-
-uint32 Creature::isClass() const
-{
-    return getNpcFlags() & UNIT_NPC_FLAG_TRAINER_CLASS;
-}
-
-uint32 Creature::isProf() const
-{
-    return getNpcFlags() & UNIT_NPC_FLAG_TRAINER_PROF;
-}
-
-uint32 Creature::isQuestGiver() const
-{
-    return getNpcFlags() & UNIT_NPC_FLAG_QUESTGIVER;
-}
-
-uint32 Creature::isGossip() const
-{
-    return getNpcFlags() & UNIT_NPC_FLAG_GOSSIP;
-}
-
-uint32 Creature::isTaxi() const
-{
-    return getNpcFlags() & UNIT_NPC_FLAG_TAXIVENDOR;
-}
-
-uint32 Creature::isCharterGiver() const
-{
-    return getNpcFlags() & UNIT_NPC_FLAG_ARENACHARTER;
-}
-
-uint32 Creature::isGuildBank() const
-{
-    return getNpcFlags() & UNIT_NPC_FLAG_GUILD_BANK;
-}
-
-uint32 Creature::isBattleMaster() const
-{
-    return getNpcFlags() & UNIT_NPC_FLAG_BATTLEFIELDPERSON;
-}
-
-uint32 Creature::isBanker() const
-{
-    return getNpcFlags() & UNIT_NPC_FLAG_BANKER;
-}
-
-uint32 Creature::isInnkeeper() const
-{
-    return getNpcFlags() & UNIT_NPC_FLAG_INNKEEPER;
-}
-
-uint32 Creature::isSpiritHealer() const
-{
-    return getNpcFlags() & UNIT_NPC_FLAG_SPIRITHEALER;
-}
-
-uint32 Creature::isTabardDesigner() const
-{
-    return getNpcFlags() & UNIT_NPC_FLAG_TABARDCHANGER;
-}
-
-uint32 Creature::isAuctioner() const
-{
-    return getNpcFlags() & UNIT_NPC_FLAG_AUCTIONEER;
-}
-
-uint32 Creature::isStableMaster() const
-{
-    return getNpcFlags() & UNIT_NPC_FLAG_STABLEMASTER;
-}
-
-uint32 Creature::isArmorer() const
-{
-    return getNpcFlags() & UNIT_NPC_FLAG_ARMORER;
-}
-
 uint32 Creature::GetHealthFromSpell()
 {
     return m_healthfromspell;
@@ -913,7 +915,7 @@ void Creature::CalcResistance(uint8_t type)
 
     if (isPet() && isAlive() && IsInWorld())
     {
-        Player* owner = static_cast<Pet*>(this)->GetPetOwner();
+        Player* owner = dynamic_cast<Player*>(static_cast<Pet*>(this)->getPlayerOwner());
         if (type == 0 && owner)
             pos += int32(0.35f * owner->getResistance(type));
         else if (owner)
@@ -952,7 +954,7 @@ void Creature::CalcStat(uint8_t type)
 
     if (isPet())
     {
-        Player* owner = static_cast< Pet* >(this)->GetPetOwner();
+        Player* owner = dynamic_cast<Player*>(static_cast<Pet*>(this)->getPlayerOwner());
         if (type == STAT_STAMINA && owner)
             pos += int32(0.45f * owner->getStat(STAT_STAMINA));
         else if (type == STAT_INTELLECT && owner && getCreatedBySpellId())
@@ -1007,7 +1009,7 @@ void Creature::CalcStat(uint8_t type)
 #if VERSION_STRING != Classic
             //Health
             uint32 hp = getBaseHealth();
-            uint32 stat_bonus = getUInt32Value(UNIT_FIELD_POSSTAT2) - getUInt32Value(UNIT_FIELD_NEGSTAT2);
+            uint32 stat_bonus = getPosStat(STAT_STAMINA)- getNegStat(STAT_STAMINA);
             if (static_cast<int32>(stat_bonus) < 0) stat_bonus = 0;
 
             uint32 bonus = stat_bonus * 10 + m_healthfromspell;
@@ -1027,14 +1029,14 @@ void Creature::CalcStat(uint8_t type)
             if (getPowerType() == POWER_TYPE_MANA)
             {
                 uint32 mana = getBaseMana();
-                uint32 stat_bonus = (getUInt32Value(UNIT_FIELD_POSSTAT3) - getUInt32Value(UNIT_FIELD_NEGSTAT3));
+                uint32 stat_bonus = getPosStat(STAT_INTELLECT) - getNegStat(STAT_INTELLECT);
                 if (static_cast<int32>(stat_bonus) < 0) stat_bonus = 0;
 
                 uint32 bonus = stat_bonus * 15;
                 uint32 res = mana + bonus;
 
                 if (res < mana) res = mana;
-                SetMaxPower(POWER_TYPE_MANA, res);
+                setMaxPower(POWER_TYPE_MANA, res);
             }
 #endif
         }
@@ -1076,8 +1078,8 @@ void Creature::RegenerateMana()
     if (m_interruptRegen)
         return;
 
-    uint32 cur = GetPower(POWER_TYPE_MANA);
-    uint32 mm = GetMaxPower(POWER_TYPE_MANA);
+    uint32 cur = getPower(POWER_TYPE_MANA);
+    uint32 mm = getMaxPower(POWER_TYPE_MANA);
     if (cur >= mm)return;
     amt = (getLevel() + 10) * PctPowerRegenModifier[POWER_TYPE_MANA];
 
@@ -1089,9 +1091,9 @@ void Creature::RegenerateMana()
         cur += (uint32)amt;
 
     if (cur >= mm)
-        SetPower(POWER_TYPE_MANA, mm);
+        setPower(POWER_TYPE_MANA, mm);
     else
-        SetPower(POWER_TYPE_MANA, cur);
+        setPower(POWER_TYPE_MANA, cur);
 }
 
 void Creature::RegenerateFocus()
@@ -1099,13 +1101,13 @@ void Creature::RegenerateFocus()
     if (m_interruptRegen)
         return;
 
-    uint32 cur = GetPower(POWER_TYPE_FOCUS);
-    uint32 mm = GetMaxPower(POWER_TYPE_FOCUS);
+    uint32 cur = getPower(POWER_TYPE_FOCUS);
+    uint32 mm = getMaxPower(POWER_TYPE_FOCUS);
     if (cur >= mm)return;
     float regenrate = worldConfig.getFloatRate(RATE_POWER3);
     float amt = 25.0f * PctPowerRegenModifier[POWER_TYPE_FOCUS] * regenrate;
     cur += (uint32)amt;
-    SetPower(POWER_TYPE_FOCUS, (cur >= mm) ? mm : cur);
+    setPower(POWER_TYPE_FOCUS, (cur >= mm) ? mm : cur);
 }
 
 void Creature::CallScriptUpdate()
@@ -1132,7 +1134,7 @@ Trainer* Creature::GetTrainer()
     return mTrainer;
 }
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
 void Creature::AddVendorItem(uint32 itemid, uint32 amount, DBC::Structures::ItemExtendedCostEntry const* ec)
 #else
 void Creature::AddVendorItem(uint32 itemid, uint32 amount, DB2::Structures::ItemExtendedCostEntry const* ec)
@@ -1320,9 +1322,9 @@ bool Creature::Load(MySQLStructure::CreatureSpawn* spawn, uint8 mode, MySQLStruc
     setMaxHealth(health);
     setBaseHealth(health);
 
-    SetMaxPower(POWER_TYPE_MANA, creature_properties->Mana);
+    setMaxPower(POWER_TYPE_MANA, creature_properties->Mana);
     setBaseMana(creature_properties->Mana);
-    SetPower(POWER_TYPE_MANA, creature_properties->Mana);
+    setPower(POWER_TYPE_MANA, creature_properties->Mana);
 
 
     setDisplayId(spawn->displayid);
@@ -1398,10 +1400,10 @@ bool Creature::Load(MySQLStructure::CreatureSpawn* spawn, uint8 mode, MySQLStruc
     if (isQuestGiver())
         _LoadQuests();
 
-    if (isTrainer() | isProf())
+    if (isTrainer() | isProfessionTrainer())
         mTrainer = objmgr.GetTrainer(getEntry());
 
-    if (isAuctioner())
+    if (isAuctioneer())
         auctionHouse = sAuctionMgr.GetAuctionHouse(getEntry());
 
     //load resistances
@@ -1536,7 +1538,7 @@ bool Creature::Load(MySQLStructure::CreatureSpawn* spawn, uint8 mode, MySQLStruc
 
     if (isVehicle())
     {
-        AddVehicleComponent(creature_properties->Id, creature_properties->vehicleid);
+        addVehicleComponent(creature_properties->Id, creature_properties->vehicleid);
         addNpcFlags(UNIT_NPC_FLAG_SPELLCLICK);
         setAItoUse(false);
     }
@@ -1580,9 +1582,9 @@ void Creature::Load(CreatureProperties const* properties_, float x, float y, flo
     setMaxHealth(health);
     setBaseHealth(health);
 
-    SetMaxPower(POWER_TYPE_MANA, creature_properties->Mana);
+    setMaxPower(POWER_TYPE_MANA, creature_properties->Mana);
     setBaseMana(creature_properties->Mana);
-    SetPower(POWER_TYPE_MANA, creature_properties->Mana);
+    setPower(POWER_TYPE_MANA, creature_properties->Mana);
 
     uint32 model = 0;
     uint8 gender = creature_properties->GetGenderAndCreateRandomDisplayID(&model);
@@ -1635,10 +1637,10 @@ void Creature::Load(CreatureProperties const* properties_, float x, float y, flo
     if (isQuestGiver())
         _LoadQuests();
 
-    if (isTrainer() | isProf())
+    if (isTrainer() | isProfessionTrainer())
         mTrainer = objmgr.GetTrainer(getEntry());
 
-    if (isAuctioner())
+    if (isAuctioneer())
         auctionHouse = sAuctionMgr.GetAuctionHouse(getEntry());
 
     //load resistances
@@ -1715,7 +1717,7 @@ void Creature::Load(CreatureProperties const* properties_, float x, float y, flo
 
     if (isVehicle())
     {
-        AddVehicleComponent(creature_properties->Id, creature_properties->vehicleid);
+        addVehicleComponent(creature_properties->Id, creature_properties->vehicleid);
         addNpcFlags(UNIT_NPC_FLAG_SPELLCLICK);
         setAItoUse(false);
     }
@@ -1735,11 +1737,11 @@ void Creature::OnPushToWorld()
     std::set<uint32>::iterator itr = creature_properties->start_auras.begin();
     for (; itr != creature_properties->start_auras.end(); ++itr)
     {
-        SpellInfo* sp = sSpellCustomizations.GetSpellInfo((*itr));
+        SpellInfo const* sp = sSpellMgr.getSpellInfo((*itr));
         if (sp == nullptr)
             continue;
 
-        CastSpell(this, sp, 0);
+        castSpell(this, sp, 0);
     }
 
     if (GetScript() == NULL)
@@ -2077,57 +2079,6 @@ bool Creature::HasItems()
     return ((m_SellItems != NULL) ? true : false);
 }
 
-bool Creature::IsPvPFlagged()
-{
-    return getPvpFlags() & U_FIELD_BYTES_FLAG_PVP;
-}
-
-void Creature::SetPvPFlag()
-{
-    setPvpFlags(getPvpFlags() | U_FIELD_BYTES_FLAG_PVP);
-    summonhandler.SetPvPFlags();
-}
-
-void Creature::RemovePvPFlag()
-{
-    setPvpFlags(getPvpFlags() & ~U_FIELD_BYTES_FLAG_PVP);
-    summonhandler.RemovePvPFlags();
-}
-
-bool Creature::IsFFAPvPFlagged()
-{
-    return getPvpFlags() & U_FIELD_BYTES_FLAG_FFA_PVP;
-}
-
-void Creature::SetFFAPvPFlag()
-{
-    setPvpFlags(getPvpFlags() | U_FIELD_BYTES_FLAG_FFA_PVP);
-    summonhandler.SetFFAPvPFlags();
-}
-
-void Creature::RemoveFFAPvPFlag()
-{
-    setPvpFlags(getPvpFlags() & ~U_FIELD_BYTES_FLAG_FFA_PVP);
-    summonhandler.RemoveFFAPvPFlags();
-}
-
-bool Creature::IsSanctuaryFlagged()
-{
-    return getPvpFlags() & U_FIELD_BYTES_FLAG_SANCTUARY;
-}
-
-void Creature::SetSanctuaryFlag()
-{
-    setPvpFlags(getPvpFlags() | U_FIELD_BYTES_FLAG_SANCTUARY);
-    summonhandler.SetSanctuaryFlags();
-}
-
-void Creature::RemoveSanctuaryFlag()
-{
-    setPvpFlags(getPvpFlags() & ~U_FIELD_BYTES_FLAG_SANCTUARY);
-    summonhandler.RemoveSanctuaryFlags();
-}
-
 int32 Creature::GetSlotByItemId(uint32 itemid)
 {
     uint32 slot = 0;
@@ -2173,7 +2124,7 @@ void Creature::GetSellItemByItemId(uint32 itemid, CreatureItem& ci)
     ci.itemid = 0;
 }
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
 DBC::Structures::ItemExtendedCostEntry const* Creature::GetItemExtendedCostByItemId(uint32 itemid)
 #else
 DB2::Structures::ItemExtendedCostEntry const* Creature::GetItemExtendedCostByItemId(uint32 itemid)
@@ -2269,19 +2220,11 @@ bool Creature::isCritter()
         return false;
 }
 
-bool Creature::isTrainingDummy()
-{
-    if (creature_properties->isTrainingDummy)
-        return true;
-    else
-        return false;
-}
-
 void Creature::DealDamage(Unit* pVictim, uint32 damage, uint32 /*targetEvent*/, uint32 /*unitEvent*/, uint32 spellId, bool no_remove_auras)
 {
     if (!pVictim || !pVictim->isAlive() || !pVictim->IsInWorld() || !IsInWorld())
         return;
-    if (pVictim->isPlayer() && static_cast< Player* >(pVictim)->GodModeCheat == true)
+    if (pVictim->isPlayer() && static_cast< Player* >(pVictim)->m_cheats.GodModeCheat == true)
         return;
     if (pVictim->bInvincible)
         return;
@@ -2293,14 +2236,13 @@ void Creature::DealDamage(Unit* pVictim, uint32 damage, uint32 /*targetEvent*/, 
 
     pVictim->setStandState(STANDSTATE_STAND);
 
-    if (pVictim->IsPvPFlagged())
+    if (pVictim->isPvpFlagSet())
     {
-        Player* p = static_cast< Player* >(GetPlayerOwner());
-
-        if (p != NULL)
+        if (auto p = static_cast<Player*>(getPlayerOwner()))
         {
-            if (!p->IsPvPFlagged())
+            if (!p->isPvpFlagSet())
                 p->PvPToggle();
+
             p->AggroPvPGuards();
         }
     }
@@ -2308,7 +2250,7 @@ void Creature::DealDamage(Unit* pVictim, uint32 damage, uint32 /*targetEvent*/, 
     // Bg dmg counter
     if (pVictim != this)
     {
-        Player* p = static_cast< Player* >(GetPlayerOwner());
+        Player* p = static_cast< Player* >(getPlayerOwner());
         if (p != NULL)
         {
             if (p->m_bg != NULL && GetMapMgr() == pVictim->GetMapMgr())
@@ -2361,18 +2303,18 @@ void Creature::TakeDamage(Unit* pAttacker, uint32 damage, uint32 spellid, bool n
 
 void Creature::Die(Unit* pAttacker, uint32 /*damage*/, uint32 spellid)
 {
-    if (GetVehicleComponent() != NULL)
+    if (getVehicleComponent() != NULL)
     {
-        GetVehicleComponent()->RemoveAccessories();
-        GetVehicleComponent()->EjectAllPassengers();
+        getVehicleComponent()->RemoveAccessories();
+        getVehicleComponent()->EjectAllPassengers();
     }
 
     if (GetAIInterface()->isFlying())
         GetAIInterface()->splineMoveFalling(GetPositionX(), GetPositionY(), GetMapMgr()->GetADTLandHeight(GetPositionX(), GetPositionY()), 0);
 
     // Creature falls off vehicle on death
-    if ((currentvehicle != NULL))
-        currentvehicle->EjectPassenger(this);
+    if ((m_currentVehicle != NULL))
+        m_currentVehicle->EjectPassenger(this);
 
     //general hook for die
     if (!sHookInterface.OnPreUnitDie(pAttacker, this))
@@ -2380,9 +2322,9 @@ void Creature::Die(Unit* pAttacker, uint32 /*damage*/, uint32 spellid)
 
     // on die and an target die proc
     {
-        SpellInfo* killerspell;
+        SpellInfo const* killerspell;
         if (spellid)
-            killerspell = sSpellCustomizations.GetSpellInfo(spellid);
+            killerspell = sSpellMgr.getSpellInfo(spellid);
         else killerspell = NULL;
 
         HandleProc(PROC_ON_DIE, this, killerspell);
@@ -2405,7 +2347,7 @@ void Creature::Die(Unit* pAttacker, uint32 /*damage*/, uint32 spellid)
 
             for (uint8 i = 0; i < 3; i++)
             {
-                if (spl->GetSpellInfo()->getEffect(i) == SPELL_EFFECT_PERSISTENT_AREA_AURA)
+                if (spl->getSpellInfo()->getEffect(i) == SPELL_EFFECT_PERSISTENT_AREA_AURA)
                 {
                     uint64 guid = getChannelObjectGuid();
                     DynamicObject* dObj = GetMapMgr()->GetDynamicObject(Arcemu::Util::GUID_LOPART(guid));
@@ -2416,8 +2358,8 @@ void Creature::Die(Unit* pAttacker, uint32 /*damage*/, uint32 spellid)
                 }
             }
 
-            if (spl->GetSpellInfo()->getChannelInterruptFlags() == 48140)
-                interruptSpell(spl->GetSpellInfo()->getId());
+            if (spl->getSpellInfo()->getChannelInterruptFlags() == 48140)
+                interruptSpell(spl->getSpellInfo()->getId());
         }
     }
 
@@ -2649,33 +2591,20 @@ void Creature::BuildPetSpellList(WorldPacket& data)
     data << uint8(0);
 }
 
-Object* Creature::GetPlayerOwner()
+void Creature::addVehicleComponent(uint32 creature_entry, uint32 vehicleid)
 {
-    return NULL;
-}
-
-bool Creature::isVehicle() const
-{
-    if (creature_properties->vehicleid != 0)
-        return true;
-    else
-        return false;
-}
-
-void Creature::AddVehicleComponent(uint32 creature_entry, uint32 vehicleid)
-{
-    if (vehicle != nullptr)
+    if (m_vehicle != nullptr)
     {
         LOG_ERROR("Creature %u (%s) with GUID %u already has a vehicle component.", creature_properties->Id, creature_properties->Name.c_str(), GetUIdFromGUID());
         return;
     }
 
-    vehicle = new Vehicle();
-    vehicle->Load(this, creature_entry, vehicleid);
+    m_vehicle = new Vehicle();
+    m_vehicle->Load(this, creature_entry, vehicleid);
 }
 
-void Creature::RemoveVehicleComponent()
+void Creature::removeVehicleComponent()
 {
-    delete vehicle;
-    vehicle = nullptr;
+    delete m_vehicle;
+    m_vehicle = nullptr;
 }

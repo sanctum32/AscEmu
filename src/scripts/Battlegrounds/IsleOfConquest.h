@@ -1,7 +1,7 @@
 /*
- Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
- This file is released under the MIT license. See README-MIT for more information.
- */
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
+This file is released under the MIT license. See README-MIT for more information.
+*/
 
 #pragma once
 
@@ -189,12 +189,12 @@ struct IOCVehicle
             return true;
         }
 
-        if (creature->GetVehicleComponent() == nullptr)
+        if (creature->getVehicleComponent() == nullptr)
         {
             return true;
         }
 
-        if (creature->GetVehicleComponent()->GetPassengerCount() > 0)
+        if (creature->getVehicleComponent()->GetPassengerCount() > 0)
         {
             return false;
         }

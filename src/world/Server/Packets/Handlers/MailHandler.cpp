@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -81,14 +81,14 @@ void WorldSession::handleTakeMoneyOpcode(WorldPacket& recvPacket)
 
     if (worldConfig.player.isGoldCapEnabled)
     {
-        if (_player->GetGold() + mailMessage->money > worldConfig.player.limitGoldAmount)
+        if (_player->getCoinage() + mailMessage->money > worldConfig.player.limitGoldAmount)
         {
-            _player->GetItemInterface()->BuildInventoryChangeError(nullptr, nullptr, INV_ERR_TOO_MUCH_GOLD);
+            _player->getItemInterface()->BuildInventoryChangeError(nullptr, nullptr, INV_ERR_TOO_MUCH_GOLD);
             return;
         }
     }
 
-    _player->ModGold(mailMessage->money);
+    _player->modCoinage(mailMessage->money);
     mailMessage->money = 0;
 
     CharacterDatabase.WaitExecute("UPDATE mailbox SET money = 0 WHERE message_id = %u", mailMessage->message_id);
@@ -146,7 +146,7 @@ void WorldSession::handleMailCreateTextItemOpcode(WorldPacket& recvPacket)
         return;
     }
 
-    const auto slotResult = _player->GetItemInterface()->FindFreeInventorySlot(itemProperties);
+    const auto slotResult = _player->getItemInterface()->FindFreeInventorySlot(itemProperties);
     if (slotResult.Result == 0)
     {
         SendPacket(SmsgSendMailResult(srlPacket.messageId, MAIL_RES_MADE_PERMANENT, MAIL_ERR_INTERNAL_ERROR).serialise().get());
@@ -160,7 +160,7 @@ void WorldSession::handleMailCreateTextItemOpcode(WorldPacket& recvPacket)
     item->setFlags(ITEM_FLAG_WRAP_GIFT);
     item->SetText(message->body);
 
-    if (_player->GetItemInterface()->AddItemToFreeSlot(item))
+    if (_player->getItemInterface()->AddItemToFreeSlot(item))
         SendPacket(SmsgSendMailResult(srlPacket.messageId, MAIL_RES_MADE_PERMANENT, MAIL_OK).serialise().get());
     else
         item->DeleteMe();
@@ -174,7 +174,7 @@ void WorldSession::handleItemTextQueryOpcode(WorldPacket& recvPacket)
     if (!srlPacket.deserialise(recvPacket))
         return;
   
-    if (const auto item = _player->GetItemInterface()->GetItemByGUID(srlPacket.itemGuid))
+    if (const auto item = _player->getItemInterface()->GetItemByGUID(srlPacket.itemGuid))
         SendPacket(SmsgItemTextQueryResponse(0, srlPacket.itemGuid, item->GetText()).serialise().get());
     else
         SendPacket(SmsgItemTextQueryResponse(1, 0, "").serialise().get());
@@ -246,7 +246,7 @@ void WorldSession::handleGetMailOpcode(WorldPacket& /*recvPacket*/)
         else
             guidSize = 4;
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
         const size_t messageSize = 2 + 4 + 1 + guidSize + 4 * 8 + (message.second.subject.size() + 1) + (message.second.body.size() + 1) + 1 + (
             message.second.items.size() * (1 + 4 + 4 + MAX_INSPECTED_ENCHANTMENT_SLOT * 3 * 4 + 4 + 4 + 4 + 4 + 4 + 4 + 1));
 #else
@@ -274,14 +274,14 @@ void WorldSession::handleGetMailOpcode(WorldPacket& /*recvPacket*/)
                 break;
         }
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
         data << uint32_t(message.second.cod);
 #else
         data << uint64_t(message.second.cod);
 #endif
         data << uint32_t(0);
         data << uint32_t(message.second.stationery);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
         data << uint32_t(message.second.money);
 #else
         data << uint64_t(message.second.money);
@@ -362,7 +362,7 @@ void WorldSession::handleTakeItemOpcode(WorldPacket& recvPacket)
 
     if (mailMessage->cod > 0)
     {
-        if (!_player->HasGold(mailMessage->cod))
+        if (!_player->hasEnoughCoinage(mailMessage->cod))
         {
             SendPacket(SmsgSendMailResult(srlPacket.messageId, MAIL_RES_ITEM_TAKEN, MAIL_ERR_NOT_ENOUGH_MONEY).serialise().get());
             return;
@@ -376,7 +376,7 @@ void WorldSession::handleTakeItemOpcode(WorldPacket& recvPacket)
         return;
     }
 
-    const auto slotResult = _player->GetItemInterface()->FindFreeInventorySlot(item->getItemProperties());
+    const auto slotResult = _player->getItemInterface()->FindFreeInventorySlot(item->getItemProperties());
     if (slotResult.Result == 0)
     {
         SendPacket(SmsgSendMailResult(srlPacket.messageId, MAIL_RES_ITEM_TAKEN, MAIL_ERR_BAG_FULL, INV_ERR_INVENTORY_FULL).serialise().get());
@@ -386,9 +386,9 @@ void WorldSession::handleTakeItemOpcode(WorldPacket& recvPacket)
     }
     item->m_isDirty = true;
 
-    if (!_player->GetItemInterface()->SafeAddItem(item, slotResult.ContainerSlot, slotResult.Slot))
+    if (!_player->getItemInterface()->SafeAddItem(item, slotResult.ContainerSlot, slotResult.Slot))
     {
-        if (!_player->GetItemInterface()->AddItemToFreeSlot(item))
+        if (!_player->getItemInterface()->AddItemToFreeSlot(item))
         {
             SendPacket(SmsgSendMailResult(srlPacket.messageId, MAIL_RES_ITEM_TAKEN, MAIL_ERR_BAG_FULL, INV_ERR_INVENTORY_FULL).serialise().get());
             item->DeleteMe();
@@ -408,7 +408,7 @@ void WorldSession::handleTakeItemOpcode(WorldPacket& recvPacket)
 
     if (mailMessage->cod > 0)
     {
-        _player->ModGold(-static_cast<int32_t>(mailMessage->cod));
+        _player->modCoinage(-static_cast<int32_t>(mailMessage->cod));
         std::string subject = "COD Payment: ";
         subject += mailMessage->subject;
 
@@ -450,7 +450,7 @@ void WorldSession::handleSendMailOpcode(WorldPacket& recvPacket)
     std::vector<Item*> attachedItems;
     for (uint8_t i = 0; i < srlPacket.itemCount; ++i)
     {
-        Item* pItem = _player->GetItemInterface()->GetItemByGUID(srlPacket.itemGuid[i]);
+        Item* pItem = _player->getItemInterface()->GetItemByGUID(srlPacket.itemGuid[i]);
         if (pItem == nullptr || pItem->isSoulbound() || pItem->hasFlags(ITEM_FLAG_CONJURED))
         {
             SendPacket(SmsgSendMailResult(0, MAIL_RES_MAIL_SENT, MAIL_ERR_INTERNAL_ERROR).serialise().get());
@@ -471,7 +471,7 @@ void WorldSession::handleSendMailOpcode(WorldPacket& recvPacket)
         isInterfactionMailAllowed = true;
     }
 
-    if (playerReceiverInfo->team != _player->GetTeam() && !isInterfactionMailAllowed)
+    if (playerReceiverInfo->team != _player->getTeam() && !isInterfactionMailAllowed)
     {
         SendPacket(SmsgSendMailResult(0, MAIL_RES_MAIL_SENT, MAIL_ERR_NOT_YOUR_ALLIANCE).serialise().get());
         return;
@@ -497,7 +497,7 @@ void WorldSession::handleSendMailOpcode(WorldPacket& recvPacket)
     if (!sMailSystem.MailOption(MAIL_FLAG_DISABLE_POSTAGE_COSTS) && !(GetPermissionCount() && sMailSystem.MailOption(MAIL_FLAG_NO_COST_FOR_GM)))
         cost += srlPacket.itemCount ? 30 * srlPacket.itemCount : 30;;
 
-    if (!_player->HasGold(cost))
+    if (!_player->hasEnoughCoinage(cost))
     {
         SendPacket(SmsgSendMailResult(0, MAIL_RES_MAIL_SENT, MAIL_ERR_NOT_ENOUGH_MONEY).serialise().get());
         return;
@@ -511,7 +511,7 @@ void WorldSession::handleSendMailOpcode(WorldPacket& recvPacket)
         for (auto& item : attachedItems)
         {
             Item* pItem = item;
-            if (_player->GetItemInterface()->SafeRemoveAndRetreiveItemByGuid(item->getGuid(), false) != pItem)
+            if (_player->getItemInterface()->SafeRemoveAndRetreiveItemByGuid(item->getGuid(), false) != pItem)
                 continue;
 
             pItem->RemoveFromWorld();
@@ -553,9 +553,9 @@ void WorldSession::handleSendMailOpcode(WorldPacket& recvPacket)
     sMailSystem.DeliverMessage(playerReceiverInfo->guid, &msg);
 
     // charge and save gold
-    _player->ModGold(-static_cast<int32_t>(cost));
+    _player->modCoinage(-static_cast<int32_t>(cost));
 
-    CharacterDatabase.Execute("UPDATE characters SET gold = %u WHERE guid = %u", _player->GetGold(), _player->m_playerInfo->guid);
+    CharacterDatabase.Execute("UPDATE characters SET gold = %u WHERE guid = %u", _player->getCoinage(), _player->m_playerInfo->guid);
 
     SendPacket(SmsgSendMailResult(0, MAIL_RES_MAIL_SENT, MAIL_OK).serialise().get());
 }

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -29,7 +29,7 @@ void WorldSession::sendTaxiList(Creature* creature)
     const uint8_t field = static_cast<uint8_t>((nearestNode - 1) / 32);
     const uint32_t subMask = 1 << ((nearestNode - 1) % 32);
 
-    if (!(_player->GetTaximask(field) & subMask) && !_player->TaxiCheat)
+    if (!(_player->GetTaximask(field) & subMask) && !_player->m_cheats.TaxiCheat)
     {
         _player->SetTaximask(field, (subMask | _player->GetTaximask(field)));
 
@@ -42,7 +42,7 @@ void WorldSession::sendTaxiList(Creature* creature)
     sTaxiMgr.GetGlobalTaxiNodeMask(nearestNode, tmpTaxiNodeMask);
     tmpTaxiNodeMask[field] |= 1 << ((nearestNode - 1) % 32);
 
-    if (!_player->TaxiCheat)
+    if (!_player->m_cheats.TaxiCheat)
     {
         for (uint8_t i = 0; i < 12; ++i)
             tmpTaxiNodeMask[i] &= _player->GetTaximask(i);
@@ -115,7 +115,7 @@ void WorldSession::handleEnabletaxiOpcode(WorldPacket& recvPacket)
 
 uint32_t getMountForNode(Player* player, TaxiNode* taxiNode)
 {
-    if (player->IsTeamHorde())
+    if (player->isTeamHorde())
     {
         const auto creatureProperties = sMySQLStore.getCreatureProperties(taxiNode->horde_mount);
         if (creatureProperties != nullptr)
@@ -166,7 +166,7 @@ void WorldSession::handleActivateTaxiOpcode(WorldPacket& recvPacket)
         return;
     }
 
-    if (_player->HasGold(taxiPath->GetPrice()))
+    if (_player->hasEnoughCoinage(taxiPath->GetPrice()))
     {
         SendPacket(SmsgActivatetaxireply(TaxiNodeError::NotEnoughMoney).serialise().get());
         return;
@@ -237,7 +237,7 @@ void WorldSession::handleMultipleActivateTaxiOpcode(WorldPacket& recvPacket)
         totalCost += additionalTaxiPath->GetPrice();
     }
 
-    if (!_player->HasGold(totalCost))
+    if (!_player->hasEnoughCoinage(totalCost))
     {
         SendPacket(SmsgActivatetaxireply(TaxiNodeError::NotEnoughMoney).serialise().get());
         return;

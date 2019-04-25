@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -29,10 +29,9 @@
 #include "Map/MapMgr.h"
 #include "Spell/SpellMgr.h"
 #include "Spell/Definitions/ProcFlags.h"
-#include "Spell/Customization/SpellCustomizations.hpp"
 #include "Data/WoWItem.h"
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
 #include "Management/Guild.h"
 #endif
 
@@ -47,7 +46,7 @@ Item::Item()
     m_objectType |= TYPE_ITEM;
     m_objectTypeId = TYPEID_ITEM;
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
     m_updateFlag = UPDATEFLAG_HIGHGUID;
 #else
     m_updateFlag = UPDATEFLAG_NONE;
@@ -65,7 +64,7 @@ Item::Item()
     m_inQueue = false;
     m_loadedFromDB = false;
     ItemExpiresOn = 0;
-#if VERSION_STRING == Cata
+#if VERSION_STRING >= Cata
     m_isInTrade = false;
 #endif
     Enchantments.clear();
@@ -126,7 +125,7 @@ void Item::LoadFromDB(Field* fields, Player* plr, bool light)
     setCreatorGuid(fields[5].GetUInt32());
 
     count = fields[6].GetUInt32();
-    if (count > m_itemProperties->MaxCount && (m_owner && !m_owner->ItemStackCheat))
+    if (count > m_itemProperties->MaxCount && (m_owner && !m_owner->m_cheats.ItemStackCheat))
         count = m_itemProperties->MaxCount;
     setStackCount(count);
 
@@ -188,7 +187,7 @@ void Item::LoadFromDB(Field* fields, Player* plr, bool light)
     {
         uint32* played = getOwner()->GetPlayedtime();
         if (played[1] < (refundentry.first + 60 * 60 * 2))
-            m_owner->GetItemInterface()->AddRefundable(this, refundentry.second, refundentry.first);
+            m_owner->getItemInterface()->AddRefundable(this, refundentry.second, refundentry.first);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////
@@ -375,7 +374,7 @@ void Item::SaveToDB(int8 containerslot, int8 slot, bool firstsave, QueryBuffer* 
         refundentry.first = 0;
         refundentry.second = 0;
 
-        refundentry = this->getOwner()->GetItemInterface()->LookupRefundable(this->getGuid());
+        refundentry = this->getOwner()->getItemInterface()->LookupRefundable(this->getGuid());
 
         ss << uint32(refundentry.first) << "','";
         ss << uint32(refundentry.second);
@@ -429,7 +428,7 @@ void Item::DeleteMe()
 
     // check to see if our owner is instantiated
     if (this->m_owner != NULL)
-        this->m_owner->GetItemInterface()->RemoveRefundable(this->getGuid());
+        this->m_owner->getItemInterface()->RemoveRefundable(this->getGuid());
 
     delete this;
 }
@@ -589,7 +588,7 @@ int32 Item::AddEnchantment(DBC::Structures::SpellItemEnchantmentEntry const* Enc
         EnchantLog << uint8(0);
         m_owner->SendPacket(&EnchantLog);
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
         if (m_owner->GetTradeTarget())
         {
             m_owner->SendTradeUpdate();
@@ -597,7 +596,7 @@ int32 Item::AddEnchantment(DBC::Structures::SpellItemEnchantmentEntry const* Enc
 #endif
 
         /* Only apply the enchantment bonus if we're equipped */
-        int16 slot = m_owner->GetItemInterface()->GetInventorySlotByGuid(getGuid());
+        int16 slot = m_owner->getItemInterface()->GetInventorySlotByGuid(getGuid());
         if (slot >= EQUIPMENT_SLOT_START && slot < EQUIPMENT_SLOT_END)
             ApplyEnchantmentBonus(Slot, true);
     }
@@ -654,14 +653,14 @@ void Item::ApplyEnchantmentBonus(uint32 Slot, bool Apply)
 
     // Apply the visual on the player.
 #if VERSION_STRING > TBC
-    uint32 ItemSlot = m_owner->GetItemInterface()->GetInventorySlotByGuid(getGuid()) * 2;   //VLack: for 3.1.1 "* 18" is a bad idea, now it's "* 2"; but this could have been calculated based on UpdateFields.h! This is PLAYER_VISIBLE_ITEM_LENGTH
+    uint32 ItemSlot = m_owner->getItemInterface()->GetInventorySlotByGuid(getGuid()) * 2;   //VLack: for 3.1.1 "* 18" is a bad idea, now it's "* 2"; but this could have been calculated based on UpdateFields.h! This is PLAYER_VISIBLE_ITEM_LENGTH
     uint32 VisibleBase = PLAYER_VISIBLE_ITEM_1_ENCHANTMENT + ItemSlot;
     if (VisibleBase <= PLAYER_VISIBLE_ITEM_19_ENCHANTMENT)
         m_owner->setUInt32Value(static_cast<uint16_t>(VisibleBase), Apply ? Entry->Id : 0);   //On 3.1 we can't add a Slot to the base now, as we no longer have multiple fields for storing them. This in some cases will try to write for example 3 visuals into one place, but now every item has only one field for this, and as we can't choose which visual to have, we'll accept the last one.
     else
         LOG_ERROR("Item::ApplyEnchantmentBonus visual out of range! Tried to address UInt32 field %i !!!", VisibleBase);
 #else
-    uint32 ItemSlot = m_owner->GetItemInterface()->GetInventorySlotByGuid(getGuid()) * 16;
+    uint32 ItemSlot = m_owner->getItemInterface()->GetInventorySlotByGuid(getGuid()) * 16;
     uint32 VisibleBase = PLAYER_VISIBLE_ITEM_1_0 + ItemSlot;
     if (VisibleBase <= PLAYER_VISIBLE_ITEM_19_PAD)
         m_owner->setUInt32Value(VisibleBase + 1 + Slot, Apply ? Entry->Id : 0);
@@ -699,9 +698,9 @@ void Item::ApplyEnchantmentBonus(uint32 Slot, bool Apply)
                         val = RANDOM_SUFFIX_MAGIC_CALCULATION(RandomSuffixAmount, getPropertySeed());
 
                     if (Apply)
-                        m_owner->ModPosDamageDoneMod(SCHOOL_NORMAL, val);
+                        m_owner->modModDamageDonePositive(SCHOOL_NORMAL, val);
                     else
-                        m_owner->ModPosDamageDoneMod(SCHOOL_NORMAL, -val);
+                        m_owner->modModDamageDonePositive(SCHOOL_NORMAL, -val);
                     m_owner->CalcDamage();
                 }
                 break;
@@ -715,11 +714,11 @@ void Item::ApplyEnchantmentBonus(uint32 Slot, bool Apply)
 
                         if (Entry->spell[c] != 0)
                         {
-                            SpellInfo* sp = sSpellCustomizations.GetSpellInfo(Entry->spell[c]);
+                            SpellInfo const* sp = sSpellMgr.getSpellInfo(Entry->spell[c]);
                             if (sp == NULL)
                                 continue;
 
-                            spell = sSpellFactoryMgr.NewSpell(m_owner, sp, true, 0);
+                            spell = sSpellMgr.newSpell(m_owner, sp, true, 0);
                             spell->i_caster = this;
                             spell->prepare(&targets);
                         }
@@ -768,14 +767,14 @@ void Item::ApplyEnchantmentBonus(uint32 Slot, bool Apply)
                 {
                     if (Apply)
                     {
-                        //m_owner->ModUInt32Value(PLAYER_FIELD_MOD_DAMAGE_DONE_POS, Entry->min[c]);
+                        //m_owner->modModDamageDonePositive(SCHOOL_NORMAL, Entry->min[c]);
                         //if I'm not wrong then we should apply DMPS formula for this. This will have somewhat a larger value 28->34
                         int32 val = Entry->min[c];
                         if (RandomSuffixAmount)
                             val = RANDOM_SUFFIX_MAGIC_CALCULATION(RandomSuffixAmount, getPropertySeed());
 
                         int32 value = getItemProperties()->Delay * val / 1000;
-                        m_owner->ModPosDamageDoneMod(SCHOOL_NORMAL, value);
+                        m_owner->modModDamageDonePositive(SCHOOL_NORMAL, value);
                     }
                     else
                     {
@@ -784,7 +783,7 @@ void Item::ApplyEnchantmentBonus(uint32 Slot, bool Apply)
                             val = RANDOM_SUFFIX_MAGIC_CALCULATION(RandomSuffixAmount, getPropertySeed());
 
                         int32 value = -(int32)(getItemProperties()->Delay * val / 1000);
-                        m_owner->ModPosDamageDoneMod(SCHOOL_NORMAL, value);
+                        m_owner->modModDamageDonePositive(SCHOOL_NORMAL, value);
                     }
                     m_owner->CalcDamage();
                 }
@@ -935,7 +934,7 @@ void Item::SendEnchantTimeUpdate(uint32 Slot, uint32 Duration)
     *data << Slot;
     *data << Duration;
     *data << m_owner->getGuid();
-    m_owner->delayedPackets.add(data);
+    m_owner->getUpdateMgr().queueDelayedPacket(data);
 }
 
 void Item::RemoveAllEnchantments(bool OnlyTemporary)
@@ -1179,7 +1178,7 @@ void Item::EventRemoveItem()
 {
     ARCEMU_ASSERT(this->getOwner() != NULL);
 
-    m_owner->GetItemInterface()->SafeFullRemoveItemByGuid(this->getGuid());
+    m_owner->getItemInterface()->SafeFullRemoveItemByGuid(this->getGuid());
 }
 
 void Item::SendDurationUpdate()
@@ -1243,7 +1242,7 @@ void Item::RemoveFromRefundableMap()
     GUID = this->getGuid();
 
     if (owner != NULL && GUID != 0)
-        owner->GetItemInterface()->RemoveRefundable(GUID);
+        owner->getItemInterface()->RemoveRefundable(GUID);
 }
 
 uint32 Item::RepairItemCost()
@@ -1270,24 +1269,24 @@ uint32 Item::RepairItemCost()
 bool Item::RepairItem(Player* pPlayer, bool guildmoney, int32* pCost)   //pCost is needed for the guild log
 {
     //int32 cost = (int32)pItem->getMaxDurability()) - (int32)pItem->getDurability();
-    int32 cost = RepairItemCost();
-    if (cost <= 0)
+    uint32 cost = RepairItemCost();
+    if (cost == 0)
         return false;
 
     if (guildmoney && pPlayer->IsInGuild())
     {
-        if (!pPlayer->GetGuild()->handleMemberWithdrawMoney(pPlayer->GetSession(), (uint32)cost, true))
+        if (!pPlayer->GetGuild()->handleMemberWithdrawMoney(pPlayer->GetSession(), cost, true))
             return false;//we should tell the client that he can't repair with the guild gold.
 
-        if (pCost != NULL)
+        if (pCost != 0)
             *pCost += cost;
     }
     else //we pay with our gold
     {
-        if (!pPlayer->HasGold(cost))
+        if (!pPlayer->hasEnoughCoinage(cost))
             return false;
 
-        pPlayer->ModGold(-cost);
+        pPlayer->modCoinage(-(int32)cost);
     }
     setDurabilityToMax();
     m_isDirty = true;

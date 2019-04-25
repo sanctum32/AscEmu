@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -9,7 +9,7 @@ This file is released under the MIT license. See README-MIT for more information
 #include "ManagedPacket.h"
 #include "WorldPacket.h"
 #if VERSION_STRING == WotLK
-#include <GameWotLK/Data/MovementInfoWotLK.h>
+#include "Data/MovementInfo.h"
 #endif
 
 namespace AscEmu { namespace Packets
@@ -37,7 +37,7 @@ namespace AscEmu { namespace Packets
         }
 
     protected:
-        bool internalSerialise(WorldPacket& packet) override
+        bool internalSerialise(WorldPacket& /*packet*/) override
         {
             return false;
         }

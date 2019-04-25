@@ -1,7 +1,7 @@
 /*
- Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
- This file is released under the MIT license. See README-MIT for more information.
- */
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
+This file is released under the MIT license. See README-MIT for more information.
+*/
 
 #include "Setup.h"
 #include "Instance_HallsOfReflection.h"
@@ -23,7 +23,7 @@ public:
         pPlayer->SafeTeleport(MAP_HALLSOFREFLECTION, pPlayer->GetInstanceID(), 5260.970f, 1956.850f, 707.692f, 1.08f);
         if (!spawnsCreated())
         {
-            if (pPlayer->GetTeam() == TEAM_ALLIANCE)
+            if (pPlayer->getTeam() == TEAM_ALLIANCE)
             {
                 spawnCreature(CN_JAINA_PROUDMOORE, 5266.77f, 1953.52f, 707.69f, 0.74f, 35);
                 spawnCreature(CN_ARCHMAGE_KORELN, 5264.26f, 1953.36f, 707.69f, 0.74f, 35);
@@ -219,19 +219,19 @@ class Falric : public CreatureAIScript
     {
         if (isScriptPhase(1) && _getHealthPercent() <= 66)
         {
-            getCreature()->CastSpell(Plr, 72395, true);
+            getCreature()->castSpell(Plr, 72395, true);
             setScriptPhase(2);
         }
 
         if (isScriptPhase(2) && _getHealthPercent() <= 33)
         {
-            getCreature()->CastSpell(Plr, 72396, true);
+            getCreature()->castSpell(Plr, 72396, true);
             setScriptPhase(3);
         }
 
         if (isScriptPhase(3) && _getHealthPercent() <= 11)
         {
-            getCreature()->CastSpell(Plr, 72397, true);
+            getCreature()->castSpell(Plr, 72397, true);
             setScriptPhase(4);
         }
     }

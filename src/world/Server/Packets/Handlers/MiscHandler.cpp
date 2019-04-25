@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -83,7 +83,7 @@ void WorldSession::handleWhoOpcode(WorldPacket& recvPacket)
 
     LogDebugFlag(LF_OPCODE, "Received CMSG_WHO with %u zones and %u names", srlPacket.zone_count, srlPacket.name_count);
 
-    uint32_t team = _player->GetTeam();
+    uint32_t team = _player->getTeam();
 
     uint32_t sent_count = 0;
     uint32_t total_count = 0;
@@ -103,14 +103,14 @@ void WorldSession::handleWhoOpcode(WorldPacket& recvPacket)
         if (!plr->GetSession() || !plr->IsInWorld())
             continue;
 
-        if (!worldConfig.server.showGmInWhoList && !HasGMPermissions())
+        if (!worldConfig.gm.showGmInWhoList && !HasGMPermissions())
         {
             if (plr->GetSession()->HasGMPermissions())
                 continue;
         }
 
         // Team check
-        if (!HasGMPermissions() && plr->GetTeam() != team && !plr->GetSession()->HasGMPermissions() && !worldConfig.player.isInterfactionMiscEnabled)
+        if (!HasGMPermissions() && plr->getTeam() != team && !plr->GetSession()->HasGMPermissions() && !worldConfig.player.isInterfactionMiscEnabled)
             continue;
 
         ++total_count;
@@ -577,7 +577,7 @@ void WorldSession::handleOpenItemOpcode(WorldPacket& recvPacket)
 
     LogDebugFlag(LF_OPCODE, "Received CMSG_OPEN_ITEM: %u (containerSlot), %u (slot)", srlPacket.containerSlot, srlPacket.slot);
 
-    auto item = _player->GetItemInterface()->GetInventoryItem(srlPacket.containerSlot, srlPacket.slot);
+    auto item = _player->getItemInterface()->GetInventoryItem(srlPacket.containerSlot, srlPacket.slot);
     if (item == nullptr)
         return;
 
@@ -616,20 +616,20 @@ void WorldSession::handleOpenItemOpcode(WorldPacket& recvPacket)
         {
             if (lockEntry->locktype[lockCase] == 1 && lockEntry->lockmisc[lockCase] > 0)
             {
-                const int16_t slot2 = _player->GetItemInterface()->GetInventorySlotById(lockEntry->lockmisc[lockCase]);
+                const int16_t slot2 = _player->getItemInterface()->GetInventorySlotById(lockEntry->lockmisc[lockCase]);
                 if (slot2 != ITEM_NO_SLOT_AVAILABLE && slot2 >= INVENTORY_SLOT_ITEM_START && slot2 < INVENTORY_SLOT_ITEM_END)
                 {
                     removeLockItems[lockCase] = lockEntry->lockmisc[lockCase];
                 }
                 else
                 {
-                    _player->GetItemInterface()->BuildInventoryChangeError(item, nullptr, INV_ERR_ITEM_LOCKED);
+                    _player->getItemInterface()->BuildInventoryChangeError(item, nullptr, INV_ERR_ITEM_LOCKED);
                     return;
                 }
             }
             else if (lockEntry->locktype[lockCase] == 2 && item->locked)
             {
-                _player->GetItemInterface()->BuildInventoryChangeError(item, nullptr, INV_ERR_ITEM_LOCKED);
+                _player->getItemInterface()->BuildInventoryChangeError(item, nullptr, INV_ERR_ITEM_LOCKED);
                 return;
             }
         }
@@ -637,7 +637,7 @@ void WorldSession::handleOpenItemOpcode(WorldPacket& recvPacket)
         for (uint8_t lockCase = 0; lockCase < LOCK_NUM_CASES; ++lockCase)
         {
             if (removeLockItems[lockCase])
-                _player->GetItemInterface()->RemoveItemAmt(removeLockItems[lockCase], 1);
+                _player->getItemInterface()->RemoveItemAmt(removeLockItems[lockCase], 1);
         }
     }
 
@@ -708,7 +708,7 @@ void WorldSession::handleZoneupdate(WorldPacket& recvPacket)
 
     sWeatherMgr.SendWeather(_player);
     _player->ZoneUpdate(srlPacket.zoneId);
-    _player->GetItemInterface()->EmptyBuyBack();
+    _player->getItemInterface()->EmptyBuyBack();
 }
 
 void WorldSession::handleResurrectResponse(WorldPacket& recvPacket)
@@ -743,8 +743,8 @@ void WorldSession::handleSelfResurrect(WorldPacket& /*recvPacket*/)
 {
     if (const auto resurrectSpell = _player->getSelfResurrectSpell())
     {
-        const auto spellInfo = sSpellCustomizations.GetSpellInfo(resurrectSpell);
-        if (const auto spell = sSpellFactoryMgr.NewSpell(_player, spellInfo, true, nullptr))
+        const auto spellInfo = sSpellMgr.getSpellInfo(resurrectSpell);
+        if (const auto spell = sSpellMgr.newSpell(_player, spellInfo, true, nullptr))
         {
             SpellCastTargets spellCastTargets;
             spellCastTargets.m_unitTarget = _player->getGuid();
@@ -878,7 +878,7 @@ void WorldSession::handleRequestAccountData(WorldPacket& recvPacket)
     SendPacket(&data);
 }
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
 void WorldSession::handleBugOpcode(WorldPacket& recv_data)
 {
     CHECK_INWORLD_RETURN
@@ -944,7 +944,7 @@ void WorldSession::handleBugOpcode(WorldPacket& recv_data)
 }
 #endif
 
-#if VERSION_STRING == Cata
+#if VERSION_STRING >= Cata
 void WorldSession::handleSuggestionOpcode(WorldPacket& recvPacket)
 {
     uint8_t unk1;
@@ -980,7 +980,7 @@ void WorldSession::handleSuggestionOpcode(WorldPacket& recvPacket)
 }
 #endif
 
-#if VERSION_STRING == Cata
+#if VERSION_STRING >= Cata
 void WorldSession::handleReturnToGraveyardOpcode(WorldPacket& /*recvPacket*/)
 {
     if (_player->isAlive())
@@ -990,7 +990,7 @@ void WorldSession::handleReturnToGraveyardOpcode(WorldPacket& /*recvPacket*/)
 }
 #endif
 
-#if VERSION_STRING == Cata
+#if VERSION_STRING >= Cata
 void WorldSession::handleLogDisconnectOpcode(WorldPacket& recvPacket)
 {
     uint32_t disconnectReason;
@@ -1127,7 +1127,7 @@ void WorldSession::handleCorpseReclaimOpcode(WorldPacket& recvPacket)
     _player->setHealth(_player->getMaxHealth() / 2);
 }
 
-#if VERSION_STRING == Cata
+#if VERSION_STRING >= Cata
 void WorldSession::handleLoadScreenOpcode(WorldPacket& recvPacket)
 {
     uint32_t mapId;
@@ -1155,6 +1155,7 @@ void WorldSession::handleObjectUpdateFailedOpcode(WorldPacket& recvPacket)
 {
     ObjectGuid guid;
 
+#if VERSION_STRING == Cata
     guid[6] = recvPacket.readBit();
     guid[7] = recvPacket.readBit();
     guid[4] = recvPacket.readBit();
@@ -1172,6 +1173,25 @@ void WorldSession::handleObjectUpdateFailedOpcode(WorldPacket& recvPacket)
     recvPacket.ReadByteSeq(guid[4]);
     recvPacket.ReadByteSeq(guid[0]);
     recvPacket.ReadByteSeq(guid[5]);
+#elif VERSION_STRING == Mop
+    guid[3] = recvPacket.readBit();
+    guid[5] = recvPacket.readBit();
+    guid[6] = recvPacket.readBit();
+    guid[0] = recvPacket.readBit();
+    guid[1] = recvPacket.readBit();
+    guid[2] = recvPacket.readBit();
+    guid[7] = recvPacket.readBit();
+    guid[4] = recvPacket.readBit();
+
+    recvPacket.ReadByteSeq(guid[0]);
+    recvPacket.ReadByteSeq(guid[6]);
+    recvPacket.ReadByteSeq(guid[5]);
+    recvPacket.ReadByteSeq(guid[7]);
+    recvPacket.ReadByteSeq(guid[2]);
+    recvPacket.ReadByteSeq(guid[1]);
+    recvPacket.ReadByteSeq(guid[3]);
+    recvPacket.ReadByteSeq(guid[4]);
+#endif
 
     LogError("handleObjectUpdateFailedOpcode : Object update failed for playerguid %u", Arcemu::Util::GUID_LOPART(guid));
 
@@ -1189,6 +1209,7 @@ void WorldSession::handleObjectUpdateFailedOpcode(WorldPacket& recvPacket)
 
 void WorldSession::handleRequestHotfix(WorldPacket& recvPacket)
 {
+#if VERSION_STRING == Cata
     uint32_t type;
     recvPacket >> type;
 
@@ -1234,13 +1255,60 @@ void WorldSession::handleRequestHotfix(WorldPacket& recvPacket)
                 break;
         }*/
     }
+#elif VERSION_STRING == Mop
+    uint32_t type;
+    recvPacket >> type;
+
+    uint32_t count = recvPacket.readBits(23);
+
+    ObjectGuid* guids = new ObjectGuid[count];
+    for (uint32_t i = 0; i < count; ++i)
+    {
+        guids[i][6] = recvPacket.readBit();
+        guids[i][3] = recvPacket.readBit();
+        guids[i][0] = recvPacket.readBit();
+        guids[i][1] = recvPacket.readBit();
+        guids[i][4] = recvPacket.readBit();
+        guids[i][5] = recvPacket.readBit();
+        guids[i][7] = recvPacket.readBit();
+        guids[i][2] = recvPacket.readBit();
+    }
+
+    uint32_t entry;
+    for (uint32_t i = 0; i < count; ++i)
+    {
+        recvPacket.ReadByteSeq(guids[i][1]);
+        recvPacket >> entry;
+        recvPacket.ReadByteSeq(guids[i][0]);
+        recvPacket.ReadByteSeq(guids[i][5]);
+        recvPacket.ReadByteSeq(guids[i][6]);
+        recvPacket.ReadByteSeq(guids[i][4]);
+        recvPacket.ReadByteSeq(guids[i][7]);
+        recvPacket.ReadByteSeq(guids[i][2]);
+        recvPacket.ReadByteSeq(guids[i][3]);
+
+        /*switch (type)
+        {
+            case DB2_REPLY_ITEM:
+                SendItemDb2Reply(entry);
+                break;
+            case DB2_REPLY_SPARSE:
+                SendItemSparseDb2Reply(entry);
+                break;
+            default:
+                LogDebugFlag(LF_OPCODE, "Received unknown hotfix type %u", type);
+                recvPacket.clear();
+                break;
+        }*/
+    }
+#endif
 }
 
 void WorldSession::handleRequestCemeteryListOpcode(WorldPacket& /*recvPacket*/)
 {
     LogDebugFlag(LF_OPCODE, "Received CMSG_REQUEST_CEMETERY_LIST");
 
-    QueryResult* result = WorldDatabase.Query("SELECT id FROM graveyards WHERE faction = %u OR faction = 3;", _player->GetTeam());
+    QueryResult* result = WorldDatabase.Query("SELECT id FROM graveyards WHERE faction = %u OR faction = 3;", _player->getTeam());
     if (result)
     {
         WorldPacket data(SMSG_REQUEST_CEMETERY_LIST_RESPONSE, 8 * result->GetRowCount());
@@ -1273,7 +1341,7 @@ void WorldSession::handleRemoveGlyph(WorldPacket& recvPacket)
     if (srlPacket.glyphNumber > 5)
         return;
 
-    const uint32_t glyphId = _player->GetGlyph(srlPacket.glyphNumber);
+    const uint32_t glyphId = _player->getGlyph(srlPacket.glyphNumber);
     if (glyphId == 0)
         return;
 
@@ -1281,7 +1349,7 @@ void WorldSession::handleRemoveGlyph(WorldPacket& recvPacket)
     if (!glyphPropertiesEntry)
         return;
 
-    _player->SetGlyph(srlPacket.glyphNumber, 0);
+    _player->setGlyph(srlPacket.glyphNumber, 0);
     _player->removeAllAurasById(glyphPropertiesEntry->SpellID);
     _player->m_specs[_player->m_talentActiveSpec].glyphs[srlPacket.glyphNumber] = 0;
     _player->smsg_TalentsInfo(false);
@@ -1350,7 +1418,7 @@ void WorldSession::handleBarberShopResult(WorldPacket& recvPacket)
     if (newFacial != oldFacial)
         cost += static_cast<uint32_t>(gtBarberShopCostBaseEntry->cost * 0.75f);
 
-    if (!_player->HasGold(cost))
+    if (!_player->hasEnoughCoinage(cost))
     {
         SendPacket(SmsgBarberShopResult(BarberShopResult::NoMoney).serialise().get());
         return;
@@ -1364,7 +1432,7 @@ void WorldSession::handleBarberShopResult(WorldPacket& recvPacket)
     if (barberShopSkinColor)
         _player->setSkinColor(static_cast<uint8_t>(barberShopSkinColor->hair_id));
 
-    _player->ModGold(-static_cast<int32_t>(cost));
+    _player->modCoinage(-static_cast<int32_t>(cost));
 
     _player->setStandState(STANDSTATE_STAND);
     _player->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_VISIT_BARBER_SHOP, 1, 0, 0);
@@ -1381,7 +1449,7 @@ void WorldSession::handleRepopRequestOpcode(WorldPacket& /*recvPacket*/)
     if (_player->getDeathState() != JUST_DIED)
         return;
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
     if (_player->obj_movement_info.isOnTransport())
 #else
     if (!_player->obj_movement_info.getTransportGuid().IsEmpty())
@@ -1485,7 +1553,7 @@ void WorldSession::handleAmmoSetOpcode(WorldPacket& recvPacket)
     if (!itemProperties)
         return;
 
-    if (itemProperties->Class != ITEM_CLASS_PROJECTILE || _player->GetItemInterface()->GetItemCount(ammoId) == 0)
+    if (itemProperties->Class != ITEM_CLASS_PROJECTILE || _player->getItemInterface()->GetItemCount(ammoId) == 0)
     {
         sCheatLog.writefromsession(_player->GetSession(), "Definitely cheating. tried to add %u as ammo.", ammoId);
         _player->GetSession()->Disconnect();
@@ -1496,8 +1564,10 @@ void WorldSession::handleAmmoSetOpcode(WorldPacket& recvPacket)
     {
         if (_player->getLevel() < itemProperties->RequiredLevel)
         {
-            _player->GetItemInterface()->BuildInventoryChangeError(nullptr, nullptr, INV_ERR_ITEM_RANK_NOT_ENOUGH);
-            _player->SetAmmoId(0);
+            _player->getItemInterface()->BuildInventoryChangeError(nullptr, nullptr, INV_ERR_ITEM_RANK_NOT_ENOUGH);
+#if VERSION_STRING < Cata
+            _player->setAmmoId(0);
+#endif
             _player->CalcDamage();
             return;
         }
@@ -1506,8 +1576,10 @@ void WorldSession::handleAmmoSetOpcode(WorldPacket& recvPacket)
     {
         if (!_player->_HasSkillLine(itemProperties->RequiredSkill))
         {
-            _player->GetItemInterface()->BuildInventoryChangeError(nullptr, nullptr, INV_ERR_ITEM_RANK_NOT_ENOUGH);
-            _player->SetAmmoId(0);
+            _player->getItemInterface()->BuildInventoryChangeError(nullptr, nullptr, INV_ERR_ITEM_RANK_NOT_ENOUGH);
+#if VERSION_STRING < Cata
+            _player->setAmmoId(0);
+#endif
             _player->CalcDamage();
             return;
         }
@@ -1516,8 +1588,10 @@ void WorldSession::handleAmmoSetOpcode(WorldPacket& recvPacket)
         {
             if (_player->_GetSkillLineCurrent(itemProperties->RequiredSkill, false) < itemProperties->RequiredSkillRank)
             {
-                _player->GetItemInterface()->BuildInventoryChangeError(nullptr, nullptr, INV_ERR_ITEM_RANK_NOT_ENOUGH);
-                _player->SetAmmoId(0);
+                _player->getItemInterface()->BuildInventoryChangeError(nullptr, nullptr, INV_ERR_ITEM_RANK_NOT_ENOUGH);
+#if VERSION_STRING < Cata
+                _player->setAmmoId(0);
+#endif
                 _player->CalcDamage();
                 return;
             }
@@ -1534,12 +1608,16 @@ void WorldSession::handleAmmoSetOpcode(WorldPacket& recvPacket)
 #if VERSION_STRING > TBC
         case DEATHKNIGHT:
 #endif
-            _player->GetItemInterface()->BuildInventoryChangeError(nullptr, nullptr, INV_ERR_YOU_CAN_NEVER_USE_THAT_ITEM);
-            _player->SetAmmoId(0);
+            _player->getItemInterface()->BuildInventoryChangeError(nullptr, nullptr, INV_ERR_YOU_CAN_NEVER_USE_THAT_ITEM);
+#if VERSION_STRING < Cata
+            _player->setAmmoId(0);
+#endif
             _player->CalcDamage();
             return;
         default:
-            _player->SetAmmoId(ammoId);
+#if VERSION_STRING < Cata
+            _player->setAmmoId(ammoId);
+#endif
             _player->CalcDamage();
             break;
     }
@@ -1684,7 +1762,7 @@ void WorldSession::handleInspectOpcode(WorldPacket& recvPacket)
     const auto slotMaskPos = data.wpos();
     data << uint32_t(slotMask);
 
-    auto itemInterface = inspectedPlayer->GetItemInterface();
+    auto itemInterface = inspectedPlayer->getItemInterface();
     for (uint32_t i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; ++i)
     {
         const auto inventoryItem = itemInterface->GetInventoryItem(static_cast<uint16_t>(i));
@@ -1717,7 +1795,7 @@ void WorldSession::handleInspectOpcode(WorldPacket& recvPacket)
     }
     data.put<uint32_t>(slotMaskPos, slotMask);
 
-#if VERSION_STRING == Cata
+#if VERSION_STRING >= Cata
     if (Guild* guild = sGuildMgr.getGuildById(inspectedPlayer->getGuildId()))
     {
         data << guild->getGUID();
@@ -1730,7 +1808,7 @@ void WorldSession::handleInspectOpcode(WorldPacket& recvPacket)
     SendPacket(&data);
 }
 
-#if VERSION_STRING == Cata
+#if VERSION_STRING >= Cata
 void WorldSession::readAddonInfoPacket(ByteBuffer &recvPacket)
 {
     if (recvPacket.rpos() + 4 > recvPacket.size())
@@ -2062,7 +2140,7 @@ void WorldSession::HandleMirrorImageOpcode(WorldPacket& recv_data)
 
         for (uint8_t i = 0; i < 11; ++i)
         {
-            Item* item = pcaster->GetItemInterface()->GetInventoryItem(static_cast <int16_t> (imageitemslots[i]));
+            Item* item = pcaster->getItemInterface()->GetInventoryItem(static_cast <int16_t> (imageitemslots[i]));
             if (item != nullptr)
                 data << uint32_t(item->getItemProperties()->DisplayInfoID);
             else
@@ -2126,7 +2204,7 @@ void WorldSession::sendAccountDataTimes(uint32 mask)
 
         data.Write(md5hash.GetDigest(), MD5_DIGEST_LENGTH);
     }
-#else
+#elif VERSION_STRING <= Cata
     WorldPacket data(SMSG_ACCOUNT_DATA_TIMES, 4 + 1 + 4 + 8 * 4);
     data << uint32_t(UNIXTIME);
     data << uint8_t(1);
@@ -2136,6 +2214,17 @@ void WorldSession::sendAccountDataTimes(uint32 mask)
         if (mask & (1 << i))
             data << uint32(0);
     }
+#else
+    WorldPacket data(SMSG_ACCOUNT_DATA_TIMES, 4 + 1 + 4 + 8 * 4);
+    data.writeBit(1);
+    data.flushBits();
+    for (uint8_t i = 0; i < NUM_ACCOUNT_DATA_TYPES; ++i)
+    {
+        if (mask & (1 << i))
+            data << uint32_t(0);
+    }
+    data << uint32_t(mask);
+    data << uint32_t(UNIXTIME);
 #endif
     SendPacket(&data);
 }

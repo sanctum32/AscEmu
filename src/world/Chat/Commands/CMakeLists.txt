@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+# Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 
 set(PATH_PREFIX Chat/Commands)
 
@@ -20,6 +20,7 @@ set(SRC_COMMAND_FILES
    ${PATH_PREFIX}/InstanceCommands.cpp
    ${PATH_PREFIX}/LookupCommands.cpp
    ${PATH_PREFIX}/MiscCommands.cpp
+   ${PATH_PREFIX}/ModifyCommands.cpp
    ${PATH_PREFIX}/NpcCommands.cpp
    ${PATH_PREFIX}/PetCommands.cpp
    ${PATH_PREFIX}/QuestCommands.cpp

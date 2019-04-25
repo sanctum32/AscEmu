@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+# Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 
 set(PATH_PREFIX Data)
 
@@ -13,6 +13,7 @@ set(SRC_DATA_FILES
    ${PATH_PREFIX}/WoWObject.h
    ${PATH_PREFIX}/WoWPlayer.h
    ${PATH_PREFIX}/WoWUnit.h
+   ${PATH_PREFIX}/MovementInfo.h
 )
 
 source_group(Data FILES ${SRC_DATA_FILES})

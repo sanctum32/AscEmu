@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -52,7 +52,7 @@ uint32_t checkTriggerPrerequisites(MySQLStructure::AreaTrigger const* areaTrigge
         return AreaTriggerResult::NoWotLK;
 
     // These can be overridden by cheats/GM
-    if (player->TriggerpassCheat)
+    if (player->m_cheats.TriggerpassCheat)
         return AreaTriggerResult::Success;
 
     if (areaTrigger->requiredLevel && player->getLevel() < areaTrigger->requiredLevel)
@@ -67,19 +67,19 @@ uint32_t checkTriggerPrerequisites(MySQLStructure::AreaTrigger const* areaTrigge
     if ((mapInfo->type == INSTANCE_MULTIMODE && player->iInstanceType >= MODE_HEROIC) && !player->GetGroup())
         return AreaTriggerResult::NoGroup;
 
-    if (mapInfo && mapInfo->required_quest_A && (player->GetTeam() == TEAM_ALLIANCE) && !player->HasFinishedQuest(mapInfo->required_quest_A))
+    if (mapInfo && mapInfo->required_quest_A && (player->getTeam() == TEAM_ALLIANCE) && !player->HasFinishedQuest(mapInfo->required_quest_A))
         return AreaTriggerResult::NoAttuneQA;
 
-    if (mapInfo && mapInfo->required_quest_H && (player->GetTeam() == TEAM_HORDE) && !player->HasFinishedQuest(mapInfo->required_quest_H))
+    if (mapInfo && mapInfo->required_quest_H && (player->getTeam() == TEAM_HORDE) && !player->HasFinishedQuest(mapInfo->required_quest_H))
         return AreaTriggerResult::NoAttuneQH;
 
-    if (mapInfo && mapInfo->required_item && !player->GetItemInterface()->GetItemCount(mapInfo->required_item, true))
+    if (mapInfo && mapInfo->required_item && !player->getItemInterface()->GetItemCount(mapInfo->required_item, true))
         return AreaTriggerResult::NoAttuneI;
 
     if (player->iInstanceType >= MODE_HEROIC &&
         mapInfo->type == INSTANCE_MULTIMODE
-        && ((mapInfo->heroic_key_1 > 0 && !player->GetItemInterface()->GetItemCount(mapInfo->heroic_key_1, false))
-        && (mapInfo->heroic_key_2 > 0 && !player->GetItemInterface()->GetItemCount(mapInfo->heroic_key_2, false))
+        && ((mapInfo->heroic_key_1 > 0 && !player->getItemInterface()->GetItemCount(mapInfo->heroic_key_1, false))
+        && (mapInfo->heroic_key_2 > 0 && !player->getItemInterface()->GetItemCount(mapInfo->heroic_key_2, false))
         )
         )
         return AreaTriggerResult::NoKey;

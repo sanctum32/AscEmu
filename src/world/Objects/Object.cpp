@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -42,7 +42,7 @@
 #include <Spell/Definitions/AuraInterruptFlags.h>
 #include "Spell/Definitions/SpellSchoolConversionTable.h"
 #include "Spell/Definitions/PowerType.h"
-#include "Spell/Customization/SpellCustomizations.hpp"
+#include "Spell/SpellMgr.h"
 #include "Units/Creatures/CreatureDefines.hpp"
 #include "Data/WoWObject.h"
 #include "Data/WoWPlayer.h"
@@ -257,9 +257,9 @@ void Object::setGuidHigh(uint32_t high) { setGuid(objectData()->guid_parts.low, 
 
 uint32_t Object::getOType() const { return objectData()->type; }
 void Object::setOType(uint32_t type) { write(objectData()->type, type); }
-void Object::setObjectType(uint32_t objectTypeId)
+void Object::setObjectType(uint8_t objectTypeId)
 {
-    uint32_t object_type = TYPE_OBJECT;
+    uint16_t object_type = TYPE_OBJECT;
     switch (objectTypeId)
     {
     case TYPEID_CONTAINER:
@@ -649,7 +649,7 @@ Spell* Object::getCurrentSpellById(uint32_t spellId) const
     {
         if (m_currentSpell[i] == nullptr)
             continue;
-        if (m_currentSpell[i]->GetSpellInfo()->getId() == spellId)
+        if (m_currentSpell[i]->getSpellInfo()->getId() == spellId)
             return m_currentSpell[i];
     }
     return nullptr;
@@ -661,17 +661,17 @@ void Object::setCurrentSpell(Spell* curSpell)
 
     // Get current spell type
     CurrentSpellType spellType = CURRENT_GENERIC_SPELL;
-    if (curSpell->GetSpellInfo()->getAttributes() & (ATTRIBUTES_ON_NEXT_ATTACK | ATTRIBUTES_ON_NEXT_SWING_2))
+    if (curSpell->getSpellInfo()->isOnNextMeleeAttack())
     {
         // Melee spell
         spellType = CURRENT_MELEE_SPELL;
     }
-    else if (curSpell->GetSpellInfo()->getAttributesExB() & ATTRIBUTESEXB_AUTOREPEAT)
+    else if (curSpell->getSpellInfo()->isRangedAutoRepeat())
     {
         // Autorepeat spells (Auto shot / Shoot (wand))
         spellType = CURRENT_AUTOREPEAT_SPELL;
     }
-    else if (curSpell->GetSpellInfo()->getAttributesEx() & (ATTRIBUTESEX_CHANNELED_1 | ATTRIBUTESEX_CHANNELED_2))
+    else if (curSpell->getSpellInfo()->isChanneled())
     {
         // Channeled spells
         spellType = CURRENT_CHANNELED_SPELL;
@@ -695,7 +695,7 @@ void Object::setCurrentSpell(Spell* curSpell)
             if (m_currentSpell[CURRENT_AUTOREPEAT_SPELL] != nullptr)
             {
                 // Generic spells do not break Auto Shot
-                if (m_currentSpell[CURRENT_AUTOREPEAT_SPELL]->GetSpellInfo()->getId() != 75)
+                if (m_currentSpell[CURRENT_AUTOREPEAT_SPELL]->getSpellInfo()->getId() != 75)
                     interruptSpellWithSpellType(CURRENT_AUTOREPEAT_SPELL);
             }
             break;
@@ -708,7 +708,7 @@ void Object::setCurrentSpell(Spell* curSpell)
             interruptSpellWithSpellType(CURRENT_CHANNELED_SPELL);
 
             // Also break autorepeat spells, unless it's Auto Shot
-            if (m_currentSpell[CURRENT_AUTOREPEAT_SPELL] != nullptr && m_currentSpell[CURRENT_AUTOREPEAT_SPELL]->GetSpellInfo()->getId() != 75)
+            if (m_currentSpell[CURRENT_AUTOREPEAT_SPELL] != nullptr && m_currentSpell[CURRENT_AUTOREPEAT_SPELL]->getSpellInfo()->getId() != 75)
             {
                 interruptSpellWithSpellType(CURRENT_AUTOREPEAT_SPELL);
             }
@@ -717,7 +717,7 @@ void Object::setCurrentSpell(Spell* curSpell)
         case CURRENT_AUTOREPEAT_SPELL:
         {
             // Other autorepeats than Auto Shot break non-delayed generic and channeled spells
-            if (curSpell->GetSpellInfo()->getId() != 75)
+            if (curSpell->getSpellInfo()->getId() != 75)
             {
                 interruptSpellWithSpellType(CURRENT_GENERIC_SPELL);
                 interruptSpellWithSpellType(CURRENT_CHANNELED_SPELL);
@@ -751,7 +751,7 @@ void Object::interruptSpell(uint32_t spellId, bool checkMeleeSpell)
             continue;
 
         if (m_currentSpell[i] != nullptr &&
-            (spellId == 0 || m_currentSpell[i]->GetSpellInfo()->getId() == spellId))
+            (spellId == 0 || m_currentSpell[i]->getSpellInfo()->getId() == spellId))
         {
             interruptSpellWithSpellType(CurrentSpellType(i));
         }
@@ -768,7 +768,7 @@ void Object::interruptSpellWithSpellType(CurrentSpellType spellType)
             if (isPlayer() && IsInWorld())
             {
                 // Send server-side cancel message
-                auto spellId = curSpell->GetSpellInfo()->getId();
+                auto spellId = curSpell->getSpellInfo()->getId();
                 static_cast<Player*>(this)->OutPacket(SMSG_CANCEL_AUTO_REPEAT, 4, &spellId);
             }
         }
@@ -783,14 +783,14 @@ bool Object::isCastingSpell(bool skipChanneled /*= false*/, bool skipAutorepeat 
 {
     // Check generic spell, but ignore finished spells
     if (m_currentSpell[CURRENT_GENERIC_SPELL] != nullptr && m_currentSpell[CURRENT_GENERIC_SPELL]->getState() != SPELL_STATE_FINISHED && m_currentSpell[CURRENT_GENERIC_SPELL]->getCastTimeLeft() > 0 &&
-        (!isAutoshoot || !(m_currentSpell[CURRENT_GENERIC_SPELL]->GetSpellInfo()->getAttributesExB() & ATTRIBUTESEXB_NOT_RESET_AUTO_ATTACKS)))
+        (!isAutoshoot || !(m_currentSpell[CURRENT_GENERIC_SPELL]->getSpellInfo()->getAttributesExB() & ATTRIBUTESEXB_NOT_RESET_AUTO_ATTACKS)))
     {
         return true;
     }
 
     // If not skipped, check channeled spell
     if (!skipChanneled && m_currentSpell[CURRENT_CHANNELED_SPELL] != nullptr && m_currentSpell[CURRENT_CHANNELED_SPELL]->getState() != SPELL_STATE_FINISHED &&
-        (!isAutoshoot || !(m_currentSpell[CURRENT_CHANNELED_SPELL]->GetSpellInfo()->getAttributesExB() & ATTRIBUTESEXB_NOT_RESET_AUTO_ATTACKS)))
+        (!isAutoshoot || !(m_currentSpell[CURRENT_CHANNELED_SPELL]->getSpellInfo()->getAttributesExB() & ATTRIBUTESEXB_NOT_RESET_AUTO_ATTACKS)))
     {
         return true;
     }
@@ -809,7 +809,7 @@ Spell* Object::findCurrentCastedSpellBySpellId(uint32_t spellId)
     {
         if (m_currentSpell[i] == nullptr)
             continue;
-        if (m_currentSpell[i]->GetSpellInfo()->getId() == spellId)
+        if (m_currentSpell[i]->getSpellInfo()->getId() == spellId)
             return m_currentSpell[i];
     }
     return nullptr;
@@ -1021,6 +1021,10 @@ void Object::removeObjectFromInRangeSameFactionSet(Object* obj)
     mInRangeSameFactionSet.erase(std::remove(mInRangeSameFactionSet.begin(), mInRangeSameFactionSet.end(), obj), mInRangeSameFactionSet.end());
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////
+// Owner
+//\ brief: is this really important in this class? Move it to class Unit otherwise
+Object* Object::getPlayerOwner() { return nullptr; }
 
 // MIT End
 
@@ -1068,14 +1072,22 @@ Object::Object() : m_position(0, 0, 0, 0), m_spawnLocation(0, 0, 0, 0)
     auto size_object = OBJECT_END * sizeof(uint32_t);
     auto size_object_struct = sizeof(WoWObject);
 
+    std::cout << "Struct size of object: " << size_object_struct << " enum: " << size_object << std::endl;
+
     auto size_player = PLAYER_END * sizeof(uint32_t);
     auto size_player_struct = sizeof(WoWPlayer);
+
+    std::cout << "Struct size of player: " << size_player_struct << " enum: " << size_player << std::endl;
 
     auto size_unit = UNIT_END * sizeof(uint32_t);
     auto size_unit_struct = sizeof(WoWUnit);
 
+    std::cout << "Struct size of unit: " << size_unit_struct << " enum: " << size_unit << std::endl;
+
     auto size_gobj = GAMEOBJECT_END * sizeof(uint32_t);
     auto size_gobj_struct = sizeof(WoWGameObject);
+
+    std::cout << "Struct size of gobj: " << size_gobj_struct << " enum: " << size_gobj << std::endl;
 #endif
 }
 
@@ -1210,7 +1222,7 @@ uint32 Object::buildCreateUpdateBlockForPlayer(ByteBuffer* data, Player* target)
     uint8 updatetype = UPDATETYPE_CREATE_OBJECT;
     uint16 updateflags = m_updateFlag;
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
     if (target == this)
     {
         updateflags |= UPDATEFLAG_SELF;
@@ -1356,7 +1368,7 @@ void Object::BuildFieldUpdatePacket(Player* Target, uint32 Index, uint32 Value)
     buf << (((uint32)(1)) << (Index % 32));
     buf << Value;
 
-    Target->PushUpdateData(&buf, 1);
+    Target->getUpdateMgr().pushUpdateData(&buf, 1);
 }
 
 void Object::BuildFieldUpdatePacket(ByteBuffer* buf, uint32 Index, uint32 Value)
@@ -1421,7 +1433,7 @@ void Object::buildMovementUpdate(ByteBuffer* data, uint8_t flags, Player* target
 {
     uint32_t flags2 = 0;
     // This is checked for nullptr later
-    const auto spline_buffer = m_objectTypeId == TYPEID_UNIT ? target->GetAndRemoveSplinePacket(getGuid()) : nullptr;
+    const auto spline_buffer = m_objectTypeId == TYPEID_UNIT ? target->getSplineMgr().popSplinePacket(getGuid()) : nullptr;
 
     *data << flags;
 
@@ -1562,7 +1574,7 @@ void Object::buildMovementUpdate(ByteBuffer* data, uint16 flags, Player* target)
 {
     uint32 flags2 = 0;
 
-    ByteBuffer* splinebuf = (m_objectTypeId == TYPEID_UNIT) ? target->GetAndRemoveSplinePacket(getGuid()) : 0;
+    ByteBuffer* splinebuf = (m_objectTypeId == TYPEID_UNIT) ? target->getSplineMgr().popSplinePacket(getGuid()) : 0;
 
     if (splinebuf != nullptr)
     {
@@ -1579,8 +1591,8 @@ void Object::buildMovementUpdate(ByteBuffer* data, uint16 flags, Player* target)
     if (isVehicle())
     {
         Unit* u = static_cast<Unit*>(this);
-        if (u->GetVehicleComponent() != nullptr)
-            moveflags2 |= u->GetVehicleComponent()->GetMoveFlags2();
+        if (u->getVehicleComponent() != nullptr)
+            moveflags2 |= u->getVehicleComponent()->GetMoveFlags2();
 
         if (isCreature())
         {
@@ -1612,9 +1624,9 @@ void Object::buildMovementUpdate(ByteBuffer* data, uint16 flags, Player* target)
             flags2 |= MOVEFLAG_TRANSPORT; //0x200*/
 
             // Zyres: If a unit has this flag, add it to the update packet, otherwise not.
-        if (pThis && pThis->HasUnitMovementFlag(MOVEFLAG_TRANSPORT))
+        if (pThis && pThis->hasUnitMovementFlag(MOVEFLAG_TRANSPORT))
             flags2 |= MOVEFLAG_TRANSPORT;
-        else if (uThis && uThis->HasUnitMovementFlag(MOVEFLAG_TRANSPORT))
+        else if (uThis && uThis->hasUnitMovementFlag(MOVEFLAG_TRANSPORT))
             flags2 |= MOVEFLAG_TRANSPORT;
 
         if ((pThis != nullptr) && pThis->isRooted())
@@ -1823,7 +1835,7 @@ void Object::buildMovementUpdate(ByteBuffer* data, uint16 flags, Player* target)
 }
 #endif
 
-#if VERSION_STRING == Cata
+#if VERSION_STRING >= Cata
 void Object::buildMovementUpdate(ByteBuffer* data, uint16 updateFlags, Player* /*target*/)
 {
     ObjectGuid Guid = getGuid();
@@ -2276,7 +2288,7 @@ void Object::buildValuesUpdate(ByteBuffer* data, UpdateMask* updateMask, Player*
 
                                         for (auto i = 0; i < 4; ++i)
                                         {
-                                            if (quest->required_mob_or_go[i] == this_go->getEntry())
+                                            if (quest->required_mob_or_go[i] == static_cast<int32_t>(this_go->getEntry()))
                                             {
                                                 if (quest_log->GetMobCount(i) < quest->required_mob_or_go_count[i])
                                                 {
@@ -2299,7 +2311,7 @@ void Object::buildValuesUpdate(ByteBuffer* data, UpdateMask* updateMask, Player*
                                         {
                                             if (const auto quest_log = target->GetQuestLogForEntry(quest_props.first->id))
                                             {
-                                                if (target->GetItemInterface()->GetItemCount(item_pair.first) < item_pair.second)
+                                                if (target->getItemInterface()->GetItemCount(item_pair.first) < item_pair.second)
                                                 {
                                                     activate_quest_object = true;
                                                     break;
@@ -2380,7 +2392,7 @@ bool Object::SetPosition(const LocationVector & v, bool allowPorting /* = false 
 
     m_position = const_cast<LocationVector &>(v);
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
     if (!allowPorting && v.z < -500)
     {
         m_position.z = 500;
@@ -2415,7 +2427,7 @@ bool Object::SetPosition(float newX, float newY, float newZ, float newOrientatio
 
     m_position.ChangeCoords(newX, newY, newZ, newOrientation);
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
     if (!allowPorting && newZ < -500)
     {
         m_position.z = 500;
@@ -2439,8 +2451,8 @@ bool Object::SetPosition(float newX, float newY, float newZ, float newOrientatio
     if (isCreatureOrPlayer())
     {
         Unit* u = static_cast<Unit*>(this);
-        if (u->GetVehicleComponent() != nullptr)
-            u->GetVehicleComponent()->MovePassengers(newX, newY, newZ, newOrientation);
+        if (u->getVehicleComponent() != nullptr)
+            u->getVehicleComponent()->MovePassengers(newX, newY, newZ, newOrientation);
     }
 
     return result;
@@ -2959,7 +2971,7 @@ void Object::SpellNonMeleeDamageLog(Unit* pVictim, uint32 spellID, uint32 damage
     if (pVictim == nullptr || !pVictim->isAlive())
         return;
 
-    SpellInfo* spellInfo = sSpellCustomizations.GetSpellInfo(spellID);
+    const auto spellInfo = sSpellMgr.getSpellInfo(spellID);
     if (spellInfo == nullptr)
         return;
 
@@ -3100,20 +3112,16 @@ void Object::SpellNonMeleeDamageLog(Unit* pVictim, uint32 spellID, uint32 damage
                 pctmod = 0.15f;
 
             uint32 hp = static_cast<uint32>(0.05f * pl->getMaxHealth());
-            uint32 spellpower = static_cast<uint32>(pctmod * pl->GetPosDamageDoneMod(SCHOOL_NORMAL));
+            uint32 spellpower = static_cast<uint32>(pctmod * pl->getModDamageDonePositive(SCHOOL_NORMAL));
 
             if (spellpower > hp)
                 spellpower = hp;
 
-            SpellInfo* entry = sSpellCustomizations.GetSpellInfo(44413);
+            SpellInfo const* entry = sSpellMgr.getSpellInfo(44413);
             if (!entry)
                 return;
 
-            Spell* sp = sSpellFactoryMgr.NewSpell(pl, entry, true, nullptr);
-            sp->GetSpellInfo()->setEffectBasePoints(spellpower, 0);
-            SpellCastTargets targets;
-            targets.m_unitTarget = pl->getGuid();
-            sp->prepare(&targets);
+            pl->castSpell(pl->getGuid(), entry, spellpower, true);
         }
     }
 
@@ -3137,7 +3145,7 @@ void Object::SpellNonMeleeDamageLog(Unit* pVictim, uint32 spellID, uint32 damage
     }
 
     //special states
-    if (pVictim->isPlayer() && static_cast<Player*>(pVictim)->GodModeCheat == true)
+    if (pVictim->isPlayer() && static_cast<Player*>(pVictim)->m_cheats.GodModeCheat == true)
     {
         res = static_cast<float>(dmg.full_damage);
         dmg.resisted_damage = dmg.full_damage;
@@ -3188,7 +3196,7 @@ void Object::SpellNonMeleeDamageLog(Unit* pVictim, uint32 spellID, uint32 damage
             {
                 Player* pl = static_cast<Player*>(pVictim);
 
-                uint32 maxmana = pl->GetMaxPower(POWER_TYPE_MANA);
+                uint32 maxmana = pl->getMaxPower(POWER_TYPE_MANA);
                 uint32 amount = static_cast<uint32>(maxmana * pl->m_RegenManaOnSpellResist);
 
                 pVictim->Energize(pVictim, 29442, amount, POWER_TYPE_MANA);
@@ -3508,7 +3516,7 @@ uint32 Object::GetTeam()
 
 Transporter* Object::GetTransport() const
 {
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
     return objmgr.GetTransporter(Arcemu::Util::GUID_LOPART(obj_movement_info.transport_data.transportGuid));
 #else
     return nullptr;
@@ -3693,7 +3701,7 @@ void Object::SendMonsterSayMessageInRange(Creature* creature, MySQLStructure::Np
 
                 // replace text with content
                 std::string newText = text;
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
 #if VERSION_STRING > Classic
                 static const char* races[NUM_RACES] = { "None", "Human", "Orc", "Dwarf", "Night Elf", "Undead", "Tauren", "Gnome", "Troll", "None", "Blood Elf", "Draenei" };
 #else
@@ -3877,11 +3885,6 @@ DynamicObject* Object::GetMapMgrDynamicObject(const uint64 & guid)
     return GetMapMgr()->GetDynamicObject(wowGuid.getGuidLowPart());
 }
 
-Object* Object::GetPlayerOwner()
-{
-    return nullptr;
-}
-
 MapCell* Object::GetMapCell() const
 {
     ARCEMU_ASSERT(m_mapMgr != NULL);
@@ -3999,8 +4002,12 @@ bool Object::GetPoint(float angle, float rad, float & outx, float & outy, float 
     return true;
 }
 
+#if VERSION_STRING >= Cata
 #if VERSION_STRING == Cata
-#include "GameCata/Movement/MovementStructures.h"
+    #include "GameCata/Movement/MovementStructures.h"
+#elif VERSION_STRING == Mop
+    #include "GameMop/Movement/MovementStructures.h"
+#endif
 
 void MovementInfo::readMovementInfo(ByteBuffer& data, uint16_t opcode)
 {
@@ -4065,11 +4072,11 @@ void MovementInfo::readMovementInfo(ByteBuffer& data, uint16_t opcode)
         {
             case MSEFlags:
                 if (hasMovementFlags)
-                    move_flags = data.readBits(30);
+                    flags = data.readBits(30);
                 break;
             case MSEFlags2:
                 if (hasMovementFlags2)
-                    move_flags2 = static_cast<uint16_t>(data.readBits(12));
+                    flags2 = static_cast<uint16_t>(data.readBits(12));
                 break;
             case MSEHasUnknownBit:
                 data.readBit();
@@ -4251,18 +4258,18 @@ void MovementInfo::writeMovementInfo(ByteBuffer& data, uint16_t opcode, float cu
         switch (element)
         {
             case MSEHasMovementFlags:
-                data.writeBit(!move_flags);
+                data.writeBit(!flags);
                 break;
             case MSEHasMovementFlags2:
-                data.writeBit(!move_flags2);
+                data.writeBit(!flags2);
                 break;
             case MSEFlags:
-                if (move_flags)
-                    data.writeBits(move_flags, 30);
+                if (flags)
+                    data.writeBits(flags, 30);
                 break;
             case MSEFlags2:
-                if (move_flags2)
-                    data.writeBits(move_flags2, 12);
+                if (flags2)
+                    data.writeBits(flags2, 12);
                 break;
             case MSETimestamp:
                 if (status_info.hasTimeStamp)

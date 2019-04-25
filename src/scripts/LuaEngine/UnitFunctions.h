@@ -1,8 +1,7 @@
 /*
- * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2007-2015 Moon++ Team <http://www.moonplusplus.info>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
- * Copyright (C) 2007 Moon++ <http://www.moonplusplus.info/>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +20,6 @@
 #pragma once
 
 #include "Units/Unit.h"
-#include "Spell/Customization/SpellCustomizations.hpp"
 #include "Units/Summons/SummonHandler.h"
 #include "Units/Creatures/Vehicle.h"
 #include "Units/Creatures/Creature.h"
@@ -428,7 +426,7 @@ public:
 
             Object* obj = itr;
             // Object Isn't a Unit, Unit is Dead
-            if (!obj->isCreatureOrPlayer() || static_cast<Unit*>(obj)->IsDead())
+            if (!obj->isCreatureOrPlayer() || static_cast<Unit*>(obj)->isDead())
                 continue;
 
             if (!isFriendly(obj, ptr))
@@ -520,7 +518,7 @@ public:
     {
         uint32 sp = CHECK_ULONG(L, 1);
         if (sp && ptr)
-            ptr->CastSpell(ptr, sSpellCustomizations.GetSpellInfo(sp), true);
+            ptr->castSpell(ptr, sSpellMgr.getSpellInfo(sp), true);
         return 0;
     }
 
@@ -528,7 +526,7 @@ public:
     {
         uint32 sp = CHECK_ULONG(L, 1);
         if (sp && ptr)
-            ptr->CastSpell(ptr, sSpellCustomizations.GetSpellInfo(sp), false);
+            ptr->castSpell(ptr, sSpellMgr.getSpellInfo(sp), false);
         return 0;
     }
     static int FullCastSpellOnTarget(lua_State* L, Unit* ptr)
@@ -538,7 +536,7 @@ public:
             uint32 sp = CHECK_ULONG(L, 1);
             Object* target = CHECK_OBJECT(L, 2);
             if (sp && target != NULL)
-                ptr->CastSpell(target->getGuid(), sp, false);
+                ptr->castSpell(target->getGuid(), sp, false);
         }
         return 0;
     }
@@ -547,7 +545,7 @@ public:
         uint32 sp = CHECK_ULONG(L, 1);
         Object* target = CHECK_OBJECT(L, 2);
         if (ptr != NULL && sp && target != NULL)
-            ptr->CastSpell(target->getGuid(), sp, true);
+            ptr->castSpell(target->getGuid(), sp, true);
         return 0;
     }
     static int SpawnCreature(lua_State* L, Unit* ptr)
@@ -927,7 +925,7 @@ public:
         uint32 id = static_cast<uint32>(luaL_checkinteger(L, 1));
         uint32 count = static_cast<uint32>(luaL_checkinteger(L, 2));
 
-        static_cast<Player*>(ptr)->GetItemInterface()->RemoveItemAmt(id, count);
+        static_cast<Player*>(ptr)->getItemInterface()->RemoveItemAmt(id, count);
         return 0;
     }
 
@@ -942,7 +940,7 @@ public:
         if (item_proto == nullptr)
             return 0;
 
-        auto item_add = player->GetItemInterface()->FindItemLessMax(id, count, false);
+        auto item_add = player->getItemInterface()->FindItemLessMax(id, count, false);
         if (item_add == nullptr)
         {
             item_add = objmgr.CreateItem(id, player);
@@ -950,17 +948,17 @@ public:
                 return 0;
 
             item_add->setStackCount(count);
-            if (player->GetItemInterface()->AddItemToFreeSlot(item_add))
-                player->SendItemPushResult(false, true, false, true, player->GetItemInterface()->LastSearchItemBagSlot(),
-                player->GetItemInterface()->LastSearchItemSlot(), count, item_add->getEntry(), item_add->getPropertySeed(),
+            if (player->getItemInterface()->AddItemToFreeSlot(item_add))
+                player->sendItemPushResultPacket(false, true, false, player->getItemInterface()->LastSearchItemBagSlot(),
+                player->getItemInterface()->LastSearchItemSlot(), count, item_add->getEntry(), item_add->getPropertySeed(),
                 item_add->getRandomPropertiesId(), item_add->getStackCount());
         }
         else
         {
             item_add->modStackCount(count);
             item_add->SetDirty();
-            player->SendItemPushResult(false, true, false, false,
-                                       static_cast<uint8>(player->GetItemInterface()->GetBagSlotByGuid(item_add->getGuid())), 0xFFFFFFFF,
+            player->sendItemPushResultPacket(false, true, false, 
+                                       static_cast<uint8>(player->getItemInterface()->GetBagSlotByGuid(item_add->getGuid())), 0,
                                        count, item_add->getEntry(), item_add->getPropertySeed(), item_add->getRandomPropertiesId(), item_add->getStackCount());
         }
         PUSH_ITEM(L, item_add);
@@ -1223,7 +1221,7 @@ public:
         int8 containerslot = static_cast<int8>(luaL_checkinteger(L, 1));
         int16 slot = static_cast<int16>(luaL_checkinteger(L, 2));
         Player* plr = static_cast<Player*>(ptr);
-        PUSH_ITEM(L, plr->GetItemInterface()->GetInventoryItem(containerslot, slot));
+        PUSH_ITEM(L, plr->getItemInterface()->GetInventoryItem(containerslot, slot));
         return 1;
     }
 
@@ -1232,12 +1230,12 @@ public:
         TEST_PLAYER()
             uint32 entry = CHECK_ULONG(L, 1);
         Player* plr = static_cast<Player*>(ptr);
-        int16 slot = plr->GetItemInterface()->GetInventorySlotById(entry);
+        int16 slot = plr->getItemInterface()->GetInventorySlotById(entry);
         if (slot == -1)  //check bags
         {
             for (uint8 contslot = INVENTORY_SLOT_BAG_START; contslot != INVENTORY_SLOT_BAG_END; contslot++)
             {
-                Container* bag = static_cast< Container* >(plr->GetItemInterface()->GetInventoryItem(contslot));
+                Container* bag = static_cast< Container* >(plr->getItemInterface()->GetInventoryItem(contslot));
                 if (bag == NULL)
                     continue;
                 for (uint8 bslot = 0; bslot != bag->getSlotCount(); bslot++)
@@ -1250,7 +1248,7 @@ public:
                 }
             }
         }
-        PUSH_ITEM(L, plr->GetItemInterface()->GetInventoryItem(slot));
+        PUSH_ITEM(L, plr->getItemInterface()->GetInventoryItem(slot));
         return 1;
     }
 
@@ -1348,12 +1346,12 @@ public:
         return 1;
     }
 
-    static int GetHealthPct(lua_State* L, Unit* ptr)
+    static int getHealthPct(lua_State* L, Unit* ptr)
     {
         if (!ptr)
             lua_pushinteger(L, 0);
         else
-            lua_pushinteger(L, ptr->GetHealthPct());
+            lua_pushinteger(L, ptr->getHealthPct());
         return 1;
     }
 
@@ -1369,7 +1367,7 @@ public:
     {
         TEST_PLAYER()
         uint32 itemid = static_cast<uint32>(luaL_checkinteger(L, 1));
-        lua_pushinteger(L, static_cast<Player*>(ptr)->GetItemInterface()->GetItemCount(itemid, false));
+        lua_pushinteger(L, static_cast<Player*>(ptr)->getItemInterface()->GetItemCount(itemid, false));
         return 1;
     }
 
@@ -1581,7 +1579,7 @@ public:
                                 if (item == NULL)
                                     return false;
 
-                                if (!plr->GetItemInterface()->AddItemToFreeSlot(item))
+                                if (!plr->getItemInterface()->AddItemToFreeSlot(item))
                                     item->DeleteMe();
                             }
                         }
@@ -1592,7 +1590,7 @@ public:
                             if (item)
                             {
                                 item->setStackCount(qst->srcitemcount ? qst->srcitemcount : 1);
-                                if (!plr->GetItemInterface()->AddItemToFreeSlot(item))
+                                if (!plr->getItemInterface()->AddItemToFreeSlot(item))
                                     item->DeleteMe();
                             }
                         }
@@ -1851,9 +1849,9 @@ public:
         uint32 val = static_cast<uint32>(luaL_checkinteger(L, 1));
         if (ptr != nullptr && val > 0)
         {
-            if (val < ptr->GetPower(POWER_TYPE_MANA))
-                ptr->SetPower(POWER_TYPE_MANA, val);
-            ptr->SetMaxPower(POWER_TYPE_MANA, val);
+            if (val < ptr->getPower(POWER_TYPE_MANA))
+                ptr->setPower(POWER_TYPE_MANA, val);
+            ptr->setMaxPower(POWER_TYPE_MANA, val);
         }
         return 1;
     }
@@ -2057,14 +2055,14 @@ public:
         uint32 quest_giver = unit->getEntry();
 
         char my_query1[200];
-        sprintf(my_query1, "SELECT id FROM creature_quest_starter WHERE id = %d AND quest = %d", quest_giver, quest_id);
+        sprintf(my_query1, "SELECT id FROM creature_quest_starter WHERE id = %d AND quest = %d AND min_build <= %u AND max_build >= %u", quest_giver, quest_id, VERSION_STRING, VERSION_STRING);
         QueryResult* selectResult1 = WorldDatabase.Query(my_query1);
         if (selectResult1)
             delete selectResult1; //already has quest
         else
         {
             char my_insert1[200];
-            sprintf(my_insert1, "INSERT INTO creature_quest_starter (id, quest) VALUES (%d,%d)", quest_giver, quest_id);
+            sprintf(my_insert1, "INSERT INTO creature_quest_starter (id, quest) VALUES (%d,%d,%u,%u)", quest_giver, quest_id, VERSION_STRING, VERSION_STRING);
             WorldDatabase.Execute(my_insert1);
         }
         sQuestMgr.LoadExtraQuestStuff();
@@ -2100,7 +2098,7 @@ public:
         uint32 quest_giver = unit->getEntry();
 
         char my_query1[200];
-        sprintf(my_query1, "SELECT id FROM creature_quest_finisher WHERE id = %d AND quest = %d", quest_giver, quest_id);
+        sprintf(my_query1, "SELECT id FROM creature_quest_finisher WHERE id = %d AND quest = %d AND min_build <= %u AND max_build >= %u", quest_giver, quest_id, VERSION_STRING, VERSION_STRING);
         QueryResult* selectResult1 = WorldDatabase.Query(my_query1);
         if (selectResult1)
         {
@@ -2109,7 +2107,7 @@ public:
         else
         {
             char my_insert1[200];
-            sprintf(my_insert1, "INSERT INTO creature_quest_finisher (id, quest) VALUES (%d,%d)", quest_giver, quest_id);
+            sprintf(my_insert1, "INSERT INTO creature_quest_finisher (id, quest, min_build, max_build) VALUES (%d,%d,%u,%u)", quest_giver, quest_id, VERSION_STRING, VERSION_STRING);
             WorldDatabase.Execute(my_insert1);
         }
         sQuestMgr.LoadExtraQuestStuff();
@@ -2128,7 +2126,7 @@ public:
         return 0;
     }
 
-    static int CastSpellAoF(lua_State* L, Unit* ptr)
+    static int castSpellLoc(lua_State* L, Unit* ptr)
     {
         float x = CHECK_FLOAT(L, 1);
         float y = CHECK_FLOAT(L, 2);
@@ -2136,7 +2134,7 @@ public:
         uint32 sp = CHECK_ULONG(L, 4);
         if (!sp || !ptr)
             return 0;
-        ptr->CastSpellAoF(LocationVector(x, y, z), sSpellCustomizations.GetSpellInfo(sp), true);
+        ptr->castSpellLoc(LocationVector(x, y, z), sSpellMgr.getSpellInfo(sp), true);
         return 0;
     }
 
@@ -2148,7 +2146,7 @@ public:
         uint32 sp = CHECK_ULONG(L, 4);
         if (!sp || !ptr)
             return 0;
-        ptr->CastSpellAoF(LocationVector(x, y, z), sSpellCustomizations.GetSpellInfo(sp), false);
+        ptr->castSpellLoc(LocationVector(x, y, z), sSpellMgr.getSpellInfo(sp), false);
         return 0;
     }
 
@@ -2364,7 +2362,7 @@ public:
         {
             if (ptr->getCurrentSpell(CurrentSpellType(i)) == nullptr)
                 continue;
-            spellId = ptr->getCurrentSpell(CurrentSpellType(i))->GetSpellInfo()->getId();
+            spellId = ptr->getCurrentSpell(CurrentSpellType(i))->getSpellInfo()->getId();
             break;
         }
         if (spellId != 0)
@@ -2598,7 +2596,7 @@ public:
         if (!ptr)
             return 0;
         if (ptr->getPowerType() == (uint8)POWER_TYPE_MANA)
-            lua_pushnumber(L, (int)(ptr->GetPower(POWER_TYPE_MANA) * 100.0f / ptr->GetMaxPower(POWER_TYPE_MANA)));
+            lua_pushnumber(L, (int)(ptr->getPower(POWER_TYPE_MANA) * 100.0f / ptr->getMaxPower(POWER_TYPE_MANA)));
         else
             lua_pushnil(L);
         return 1;
@@ -2617,7 +2615,7 @@ public:
         else
             powertype = static_cast<uint16>(luaL_optinteger(L, 1, -1));
 
-        lua_pushnumber(L, static_cast<int>(ptr->GetPower(powertype) * 100.0f / ptr->GetMaxPower(powertype)));
+        lua_pushnumber(L, static_cast<int>(ptr->getPower(powertype) * 100.0f / ptr->getMaxPower(powertype)));
         return 1;
     }
 
@@ -2626,7 +2624,7 @@ public:
         if (ptr == NULL)
             lua_pushinteger(L, 0);
         else
-            lua_pushinteger(L, ptr->GetPower(POWER_TYPE_MANA));
+            lua_pushinteger(L, ptr->getPower(POWER_TYPE_MANA));
 
         return 1;
     }
@@ -2644,7 +2642,7 @@ public:
         else
             powertype = static_cast<uint16>(luaL_optinteger(L, 1, -1));
 
-        lua_pushnumber(L, ptr->GetPower(powertype));
+        lua_pushnumber(L, ptr->getPower(powertype));
         return 1;
     }
 
@@ -2653,7 +2651,7 @@ public:
         if (ptr == NULL)
             lua_pushinteger(L, 0);
         else
-            lua_pushinteger(L, ptr->GetMaxPower(POWER_TYPE_MANA));
+            lua_pushinteger(L, ptr->getMaxPower(POWER_TYPE_MANA));
 
         return 1;
     }
@@ -2671,7 +2669,7 @@ public:
         else
             powertype = static_cast<uint16>(luaL_optinteger(L, 1, -1));
 
-        lua_pushnumber(L, ptr->GetMaxPower(powertype));
+        lua_pushnumber(L, ptr->getMaxPower(powertype));
         return 1;
     }
 
@@ -2711,7 +2709,7 @@ public:
         else
             powertype = static_cast<uint16>(luaL_optinteger(L, 2, -1));
 
-        ptr->SetMaxPower(powertype, amount);
+        ptr->setMaxPower(powertype, amount);
         return 0;
     }
 
@@ -2728,7 +2726,7 @@ public:
         else
             powertype = static_cast<uint32>(luaL_optinteger(L, 2, -1));
 
-        ptr->SetPower(powertype, amount);
+        ptr->setPower(powertype, amount);
         return 0;
     }
 
@@ -2745,7 +2743,7 @@ public:
         else
             powertype = static_cast<uint16>(luaL_optinteger(L, 2, -1));
 
-        ptr->SetPower(powertype, static_cast<int>(amount / 100) * (ptr->GetMaxPower(powertype)));
+        ptr->setPower(powertype, static_cast<int>(amount / 100) * (ptr->getMaxPower(powertype)));
         return 0;
     }
 
@@ -2772,7 +2770,7 @@ public:
 
         if (!target)
             return 0;
-        ptr->Strike(target, weapon_damage_type, sSpellCustomizations.GetSpellInfo(sp), adddmg, pct_dmg_mod, exclusive_damage, false, false);
+        ptr->Strike(target, weapon_damage_type, sSpellMgr.getSpellInfo(sp), adddmg, pct_dmg_mod, exclusive_damage, false, false);
         return 0;
     }
 
@@ -3524,7 +3522,7 @@ public:
         return 0;
     }
 
-    static int EventCastSpell(lua_State* L, Unit* ptr)
+    static int eventCastSpell(lua_State* L, Unit* ptr)
     {
         TEST_UNITPLAYER()
             Unit* target = CHECK_UNIT(L, 1);
@@ -3536,10 +3534,10 @@ public:
             switch (ptr->getObjectTypeId())
             {
                 case TYPEID_PLAYER:
-                    sEventMgr.AddEvent(ptr, &Player::EventCastSpell, target, sSpellCustomizations.GetSpellInfo(sp), EVENT_PLAYER_UPDATE, delay, repeats, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+                    sEventMgr.AddEvent(ptr, &Player::eventCastSpell, target, sSpellMgr.getSpellInfo(sp), EVENT_PLAYER_UPDATE, delay, repeats, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
                     break;
                 case TYPEID_UNIT:
-                    sEventMgr.AddEvent(ptr, &Unit::EventCastSpell, target, sSpellCustomizations.GetSpellInfo(sp), EVENT_CREATURE_UPDATE, delay, repeats, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
+                    sEventMgr.AddEvent(ptr, &Unit::eventCastSpell, target, sSpellMgr.getSpellInfo(sp), EVENT_CREATURE_UPDATE, delay, repeats, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
                     break;
             }
         }
@@ -3689,7 +3687,7 @@ public:
         uint32 itemid = static_cast<uint32>(luaL_checkinteger(L, 1));
         if (itemid)
         {
-            if (static_cast<Player*>(ptr)->GetItemInterface()->GetItemCount(itemid, false) > 0)
+            if (static_cast<Player*>(ptr)->getItemInterface()->GetItemCount(itemid, false) > 0)
                 lua_pushboolean(L, 1);
             else
                 lua_pushboolean(L, 0);
@@ -3765,7 +3763,7 @@ public:
     {
         TEST_PLAYER()
             bool enabled = CHECK_BOOL(L, 1);
-        static_cast<Player*>(ptr)->FlyCheat = enabled;
+        static_cast<Player*>(ptr)->m_cheats.FlyCheat = enabled;
         return 0;
     }
 
@@ -3810,7 +3808,7 @@ public:
         bool temp = CHECK_BOOL(L, 3);
         if (ptr && spellid)
         {
-            Aura* aura = sSpellFactoryMgr.NewAura(sSpellCustomizations.GetSpellInfo(spellid), duration, ptr, ptr, temp);
+            Aura* aura = sSpellMgr.newAura(sSpellMgr.getSpellInfo(spellid), duration, ptr, ptr, temp);
             ptr->AddAura(aura);
             lua_pushboolean(L, 1);
         }
@@ -3953,14 +3951,14 @@ public:
     {
         TEST_PLAYER()
         Player* plr = static_cast<Player*>(ptr);
-        int32 debt = static_cast<int32>(luaL_checkinteger(L, 1));
+        uint32 debt = static_cast<uint32>(luaL_checkinteger(L, 1));
         if (debt < 0)
             return 0;
-        if (!plr->HasGold(debt))
+        if (!plr->hasEnoughCoinage(debt))
             lua_pushboolean(L, 0);
         else
         {
-            plr->ModGold(-debt);
+            plr->modCoinage(-(int32)debt);
             lua_pushboolean(L, 1);
         }
         return 1;
@@ -3970,7 +3968,7 @@ public:
     {
         TEST_PLAYER()
             uint32 profit = CHECK_ULONG(L, 1);
-        static_cast<Player*>(ptr)->ModGold(profit);
+        static_cast<Player*>(ptr)->modCoinage(profit);
         return 0;
     }
 
@@ -4068,7 +4066,7 @@ public:
 
         for (i = 0; i < MAX_INVENTORY_SLOT; i++)
         {
-            pItem = plr->GetItemInterface()->GetInventoryItem(i);
+            pItem = plr->getItemInterface()->GetInventoryItem(i);
             if (pItem != NULL)
             {
                 if (pItem->isContainer())
@@ -4294,8 +4292,8 @@ public:
     {
         TEST_PLAYER()
             Player* plr = static_cast<Player*>(ptr);
-        if (plr != NULL && plr->IsPvPFlagged())
-            plr->RemovePvPFlag();
+        if (plr != NULL && plr->isPvpFlagSet())
+            plr->removePvpFlag();
         return 0;
     }
 
@@ -4446,7 +4444,7 @@ public:
         }
         else if (wowGuid.isItem())
         {
-            Item* pItem = plr->GetItemInterface()->GetItemByGUID(guid);
+            Item* pItem = plr->getItemInterface()->GetItemByGUID(guid);
             switch (loot_type)
             {
                 case 6:
@@ -4485,7 +4483,7 @@ public:
 
     static int VendorAddItem(lua_State* L, Unit* ptr)
     {
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
         TEST_UNIT()
         Creature* ctr = static_cast<Creature*>(ptr);
         uint32 itemid = (uint32)luaL_checknumber(L, 1);
@@ -4583,7 +4581,7 @@ public:
     {
         TEST_PLAYER()
             Player* plr = static_cast<Player*>(ptr);
-        lua_pushinteger(L, plr->GetTeam());
+        lua_pushinteger(L, plr->getTeam());
         return 1;
     }
 
@@ -4614,24 +4612,18 @@ public:
     static int SetPlayerLock(lua_State* L, Unit* ptr)
     {
         TEST_PLAYER()
-            bool lock = CHECK_BOOL(L, 1);
+        bool lock = CHECK_BOOL(L, 1);
         if (lock)
         {
             ptr->m_pacified = 1;
             ptr->addUnitFlags(UNIT_FLAG_PACIFIED | UNIT_FLAG_SILENCED);
-            WorldPacket data1(9);
-            data1.Initialize(SMSG_CLIENT_CONTROL_UPDATE);
-            data1 << ptr->GetNewGUID() << uint8(0x00);
-            static_cast<Player*>(ptr)->GetSession()->SendPacket(&data1);
+            static_cast<Player*>(ptr)->sendClientControlPacket(ptr, 0);
         }
         else
         {
             ptr->m_pacified = 0;
             ptr->removeUnitFlags(UNIT_FLAG_PACIFIED | UNIT_FLAG_SILENCED);
-            WorldPacket data1(9);
-            data1.Initialize(SMSG_CLIENT_CONTROL_UPDATE);
-            data1 << ptr->GetNewGUID() << uint8(0x01);
-            static_cast<Player*>(ptr)->GetSession()->SendPacket(&data1);
+            static_cast<Player*>(ptr)->sendClientControlPacket(ptr, 1);
         }
         return 0;
     }
@@ -4680,7 +4672,7 @@ public:
         Object* target = CHECK_OBJECT(L, 2);
         if (Csp && target != nullptr)
         {
-            ptr->CastSpell(target->getGuid(), sSpellCustomizations.GetSpellInfo(Csp), false);
+            ptr->castSpell(target->getGuid(), sSpellMgr.getSpellInfo(Csp), false);
             ptr->setChannelObjectGuid(target->getGuid());
             ptr->setChannelSpellId(Csp);
         }
@@ -4727,7 +4719,7 @@ public:
     {
         TEST_PLAYER()
             Player* plr = static_cast<Player*>(ptr);
-        lua_pushinteger(L, plr->GetGold());
+        lua_pushinteger(L, plr->getCoinage());
         return 1;
     }
 
@@ -4735,7 +4727,7 @@ public:
     {
         TEST_PLAYER()
             Player* plr = static_cast<Player*>(ptr);
-        plr->SetPvPFlag();
+        plr->setPvpFlag();
         return 0;
     }
 
@@ -5137,14 +5129,14 @@ public:
     static int IsPvPFlagged(lua_State* L, Unit* ptr)
     {
         TEST_PLAYER()
-            lua_pushboolean(L, static_cast<Player*>(ptr)->IsPvPFlagged() ? 1 : 0);
+            lua_pushboolean(L, static_cast<Player*>(ptr)->isPvpFlagSet() ? 1 : 0);
         return 1;
     }
 
     static int IsFFAPvPFlagged(lua_State* L, Unit* ptr)
     {
         TEST_PLAYER()
-            lua_pushboolean(L, static_cast<Player*>(ptr)->IsFFAPvPFlagged() ? 1 : 0);
+            lua_pushboolean(L, static_cast<Player*>(ptr)->isFfaPvpFlagSet() ? 1 : 0);
         return 1;
     }
 
@@ -5316,7 +5308,7 @@ public:
         if (movement_info != NULL)
         {
             lua_newtable(L);
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
             lua_pushstring(L, "x");
             lua_pushnumber(L, movement_info->position.x);
             lua_rawset(L, -3);
@@ -5354,7 +5346,7 @@ public:
         TEST_PLAYER()
             MovementInfo* move_info = static_cast<Player*>(ptr)->GetSession()->GetMovementInfo();
         if (move_info != NULL)
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
             lua_pushnumber(L, move_info->flags);
 #else
             lua_pushnumber(L, move_info->getMovementFlags());
@@ -5368,7 +5360,7 @@ public:
     {
         TEST_PLAYER()
             Player* plr = static_cast<Player*>(ptr);
-        if (plr->IsDead())
+        if (plr->isDead())
             plr->RepopRequestedPlayer();
         return 0;
     }
@@ -5450,7 +5442,7 @@ public:
         TEST_PLAYER()
         int16 slot = static_cast<int16>(luaL_checkinteger(L, 1));
         Player* plr = static_cast<Player*>(ptr);
-        Item* pItem = plr->GetItemInterface()->GetInventoryItem(slot);
+        Item* pItem = plr->getItemInterface()->GetInventoryItem(slot);
         if (pItem)
             PUSH_ITEM(L, pItem);
         else
@@ -5803,9 +5795,9 @@ public:
         TEST_UNITPLAYER();
         bool set = CHECK_BOOL(L, 1);
         if (set)
-            ptr->SetFFAPvPFlag();
+            ptr->setFfaPvpFlag();
         else
-            ptr->RemoveFFAPvPFlag();
+            ptr->removeFfaPvpFlag();
         return 0;
     }
     static int TeleportCreature(lua_State* L, Unit* ptr)
@@ -5929,7 +5921,7 @@ public:
     static int IsOnVehicle(lua_State *L, Unit *ptr){
         TEST_UNITPLAYER()
 
-            if ((ptr->GetCurrentVehicle() != NULL) || (ptr->isPlayer() && ptr->isVehicle()))
+            if ((ptr->getCurrentVehicle() != NULL) || (ptr->isPlayer() && ptr->isVehicle()))
                 lua_pushboolean(L, 1);
             else
                 lua_pushboolean(L, 0);
@@ -5955,7 +5947,7 @@ public:
         if (creature_entry == 0)
             return 0;
 
-        if ((ptr->GetCurrentVehicle() != NULL) && (!ptr->isPlayer() || !ptr->isVehicle()))
+        if ((ptr->getCurrentVehicle() != NULL) && (!ptr->isPlayer() || !ptr->isVehicle()))
             return 0;
 
         CreatureProperties const* cp = sMySQLStore.getCreatureProperties(creature_entry);
@@ -5977,7 +5969,7 @@ public:
         c->PushToWorld(ptr->GetMapMgr());
 
         // Need to delay this a bit since first the client needs to see the vehicle
-        ptr->EnterVehicle(c->getGuid(), delay);
+        ptr->addPassengerToVehicle(c->getGuid(), delay);
 
         return 0;
     }
@@ -5986,11 +5978,11 @@ public:
         TEST_UNITPLAYER()
 
         Vehicle* v = nullptr;
-        if (ptr->GetCurrentVehicle() != nullptr)
-            v = ptr->GetCurrentVehicle();
+        if (ptr->getCurrentVehicle() != nullptr)
+            v = ptr->getCurrentVehicle();
         else
-            if (ptr->isPlayer() && (ptr->GetVehicleComponent() != nullptr))
-                v = ptr->GetVehicleComponent();
+            if (ptr->isPlayer() && (ptr->getVehicleComponent() != nullptr))
+                v = ptr->getVehicleComponent();
 
         if (v == nullptr)
             return 0;
@@ -6012,11 +6004,11 @@ public:
 
             Vehicle *v = NULL;
 
-        if (ptr->GetCurrentVehicle() != NULL)
-            v = ptr->GetCurrentVehicle();
+        if (ptr->getCurrentVehicle() != NULL)
+            v = ptr->getCurrentVehicle();
         else
-            if (ptr->isPlayer() && (ptr->GetVehicleComponent() != NULL))
-                v = ptr->GetVehicleComponent();
+            if (ptr->isPlayer() && (ptr->getVehicleComponent() != NULL))
+                v = ptr->getVehicleComponent();
 
         if (v == NULL)
             return 0;
@@ -6038,7 +6030,7 @@ public:
         Creature* c = u->GetMapMgr()->CreateCreature(creature_entry);
         c->Load(cp, u->GetPositionX(), u->GetPositionY(), u->GetPositionZ(), u->GetOrientation());
         c->PushToWorld(u->GetMapMgr());
-        c->EnterVehicle(u->getGuid(), 1);
+        c->addPassengerToVehicle(u->getGuid(), 1);
 
         return 0;
     }
@@ -6048,11 +6040,11 @@ public:
 
         Vehicle *v = NULL;
 
-        if (ptr->GetCurrentVehicle() != NULL)
-            v = ptr->GetCurrentVehicle();
+        if (ptr->getCurrentVehicle() != NULL)
+            v = ptr->getCurrentVehicle();
         else
-            if (ptr->isPlayer() && (ptr->GetVehicleComponent() != NULL))
-                v = ptr->GetVehicleComponent();
+            if (ptr->isPlayer() && (ptr->getVehicleComponent() != NULL))
+                v = ptr->getVehicleComponent();
 
         if (v == NULL)
             return 0;
@@ -6074,7 +6066,7 @@ public:
         uint64 guid = CHECK_GUID(L, 1);
         uint32 delay = static_cast<uint32>(luaL_checkinteger(L, 2));
 
-        ptr->EnterVehicle(guid, delay);
+        ptr->addPassengerToVehicle(guid, delay);
 
         return 0;
     }
@@ -6082,10 +6074,10 @@ public:
     {
         TEST_UNITPLAYER()
 
-            if (ptr->GetCurrentVehicle() != nullptr)
-                ptr->GetCurrentVehicle()->EjectPassenger(ptr);
+            if (ptr->getCurrentVehicle() != nullptr)
+                ptr->getCurrentVehicle()->EjectPassenger(ptr);
             else
-                if (ptr->isPlayer() && ptr->GetVehicleComponent() != nullptr)
+                if (ptr->isPlayer() && ptr->getVehicleComponent() != nullptr)
                     ptr->RemoveAllAuraType(SPELL_AURA_MOUNTED);
 
         return 0;
@@ -6094,7 +6086,7 @@ public:
     {
         TEST_UNITPLAYER();
 
-        Unit *u = ptr->GetVehicleBase();
+        Unit *u = ptr->getVehicleBase();
 
         if (u != NULL)
             PUSH_UNIT(L, u);
@@ -6107,11 +6099,11 @@ public:
     {
         TEST_UNITPLAYER();
 
-        Unit* u = ptr->GetVehicleBase();
+        Unit* u = ptr->getVehicleBase();
         if (u == nullptr)
             return 0;
 
-        u->GetVehicleComponent()->EjectAllPassengers();
+        u->getVehicleComponent()->EjectAllPassengers();
 
         return 0;
     }
@@ -6119,7 +6111,7 @@ public:
     {
         TEST_UNITPLAYER();
 
-        Unit *u = ptr->GetVehicleBase();
+        Unit *u = ptr->getVehicleBase();
         if (u == NULL)
             return 0;
 
@@ -6128,7 +6120,7 @@ public:
 
         uint32 seat = static_cast<uint32>(luaL_checkinteger(L, 1));
 
-        u->GetVehicleComponent()->EjectPassengerFromSeat(seat);
+        u->getVehicleComponent()->EjectPassengerFromSeat(seat);
 
         return 0;
     }
@@ -6136,7 +6128,7 @@ public:
     {
         TEST_UNITPLAYER();
 
-        Unit *u = ptr->GetVehicleBase();
+        Unit *u = ptr->getVehicleBase();
         if (u == NULL)
             return 0;
 
@@ -6149,7 +6141,7 @@ public:
         if (passenger == NULL)
             return 0;
 
-        u->GetVehicleComponent()->MovePassengerToSeat(passenger, seat);
+        u->getVehicleComponent()->MovePassengerToSeat(passenger, seat);
 
         return 0;
     }

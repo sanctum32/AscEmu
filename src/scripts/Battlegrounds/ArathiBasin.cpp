@@ -1,6 +1,5 @@
 /*
- * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -27,7 +26,6 @@
 #include "Server/MainServerDefines.h"
 #include "Map/MapMgr.h"
 #include "Spell/SpellMgr.h"
-#include <Spell/Customization/SpellCustomizations.hpp>
 
 uint32 buffentries[3] = { 180380, 180362, 180146 };
 
@@ -483,7 +481,7 @@ void ArathiBasin::EventUpdateResources(uint32 Team)
         std::lock_guard<std::recursive_mutex> lock(m_mutex);
         for (std::set<Player*>::iterator itr = m_players[Team].begin(); itr != m_players[Team].end(); ++itr)
         {
-            uint32 fact = (*itr)->IsTeamHorde() ? 510 : 509; //The Defilers : The League of Arathor
+            uint32 fact = (*itr)->isTeamHorde() ? 510 : 509; //The Defilers : The League of Arathor
             (*itr)->ModStanding(fact, 10);
         }
         m_lastRepGainResources[Team] += resourcesToGainBR;
@@ -552,7 +550,7 @@ void ArathiBasin::OnAddPlayer(Player* plr)
 {
     if (!m_started && plr->IsInWorld())
     {
-        plr->CastSpell(plr, BG_PREPARATION, true);
+        plr->castSpell(plr, BG_PREPARATION, true);
         plr->m_bgScore.MiscData[BG_SCORE_AB_BASES_ASSAULTED] = 0;
         plr->m_bgScore.MiscData[BG_SCORE_AB_BASES_CAPTURED] = 0;
     }
@@ -609,14 +607,14 @@ void ArathiBasin::HookOnAreaTrigger(Player* plr, uint32 trigger)
 
         case 3948:            // alliance exits
         {
-            if (plr->GetTeam() != TEAM_ALLIANCE)
+            if (plr->getTeam() != TEAM_ALLIANCE)
                 plr->SendAreaTriggerMessage("Only The Alliance can use that portal");
             else
                 RemovePlayer(plr, false);
         }break;
         case 3949:           // horde exits
         {
-            if (plr->GetTeam() != TEAM_HORDE)
+            if (plr->getTeam() != TEAM_HORDE)
                 plr->SendAreaTriggerMessage("Only The Horde can use that portal");
             else
                 RemovePlayer(plr, false);
@@ -629,7 +627,7 @@ void ArathiBasin::HookOnAreaTrigger(Player* plr, uint32 trigger)
             return;
     }
 
-    if (plr->IsDead())        // don't apply to dead players... :P
+    if (plr->isDead())        // don't apply to dead players... :P
         return;
 
     if (buffslot >= 0 && buffslot <= 4)
@@ -644,10 +642,10 @@ void ArathiBasin::HookOnAreaTrigger(Player* plr, uint32 trigger)
             sEventMgr.AddEvent(this, &ArathiBasin::SpawnBuff, static_cast<uint32>(buffslot), EVENT_AB_RESPAWN_BUFF, AB_BUFF_RESPAWN_TIME, 1, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
 
             // cast the spell on the player
-            SpellInfo* sp = sSpellCustomizations.GetSpellInfo(spellid);
+            const auto sp = sSpellMgr.getSpellInfo(spellid);
             if (sp)
             {
-                Spell* pSpell = sSpellFactoryMgr.NewSpell(plr, sp, true, nullptr);
+                Spell* pSpell = sSpellMgr.newSpell(plr, sp, true, nullptr);
                 SpellCastTargets targets(plr->getGuid());
                 pSpell->prepare(&targets);
             }
@@ -658,17 +656,17 @@ void ArathiBasin::HookOnAreaTrigger(Player* plr, uint32 trigger)
 bool ArathiBasin::HookHandleRepop(Player* plr)
 {
     // our uber leet ab graveyard handler
-    LocationVector dest(NoBaseGYLocations[plr->m_bgTeam][0], NoBaseGYLocations[plr->m_bgTeam][1], NoBaseGYLocations[plr->m_bgTeam][2], 0.0f);
+    LocationVector dest(NoBaseGYLocations[plr->getBgTeam()][0], NoBaseGYLocations[plr->getBgTeam()][1], NoBaseGYLocations[plr->getBgTeam()][2], 0.0f);
     float current_distance = 999999.0f;
     float dist;
 
     for (uint8 i = 0; i < AB_NUM_CONTROL_POINTS; ++i)
     {
-        if (m_basesOwnedBy[2] == static_cast<int32>(plr->m_bgTeam))
+        if (m_basesOwnedBy[2] == static_cast<int32>(plr->getBgTeam()))
         {
             dest.ChangeCoords(GraveyardLocations[2][0], GraveyardLocations[2][1], GraveyardLocations[2][2]);
         }
-        else if (m_basesOwnedBy[i] == static_cast<int32>(plr->m_bgTeam))
+        else if (m_basesOwnedBy[i] == static_cast<int32>(plr->getBgTeam()))
         {
             dist = plr->GetPositionV()->Distance2DSq(GraveyardLocations[i][0], GraveyardLocations[i][1]);
             if (dist < current_distance)
@@ -781,7 +779,7 @@ void ArathiBasin::AssaultControlPoint(Player* pPlayer, uint32 Id)
     }
 #endif
 
-    uint32 Team = pPlayer->m_bgTeam;
+    uint32 Team = pPlayer->getBgTeam();
     uint32 Owner;
 
     pPlayer->m_bgScore.MiscData[BG_SCORE_AB_BASES_ASSAULTED]++;
@@ -809,7 +807,7 @@ void ArathiBasin::AssaultControlPoint(Player* pPlayer, uint32 Id)
                 for (std::set<uint32>::iterator it2 = itr->second.begin(); it2 != itr->second.end(); ++it2)
                 {
                     Player* r_plr = m_mapMgr->GetPlayer(*it2);
-                    if (r_plr != nullptr && r_plr->IsDead())
+                    if (r_plr != nullptr && r_plr->isDead())
                         HookHandleRepop(r_plr);
                 }
             }

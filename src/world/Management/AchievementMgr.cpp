@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -28,7 +28,7 @@
 #include "Map/MapMgr.h"
 #include "Objects/Faction.h"
 #include "Spell/Definitions/SpellMechanics.h"
-#include "Spell/Customization/SpellCustomizations.hpp"
+#include "Spell/SpellMgr.h"
 #include "Spell/Definitions/SpellEffects.h"
 #include "Guild.h"
 
@@ -382,7 +382,7 @@ void AchievementMgr::SendAchievementEarned(DBC::Structures::AchievementEntry con
     {
         // allocate enough space
         guidList = new uint32[sWorld.getSessionCount() + 256];
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
         // Send Achievement message to every guild member currently on the server
         if (GetPlayer()->IsInGuild())
         {
@@ -584,8 +584,8 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, in
             continue;
         }
 
-        if ((achievement->factionFlag == ACHIEVEMENT_FACTION_FLAG_HORDE && GetPlayer()->IsTeamHorde() == false) ||
-            (achievement->factionFlag == ACHIEVEMENT_FACTION_FLAG_ALLIANCE && GetPlayer()->IsTeamAlliance() == false))
+        if ((achievement->factionFlag == ACHIEVEMENT_FACTION_FLAG_HORDE && GetPlayer()->isTeamHorde() == false) ||
+            (achievement->factionFlag == ACHIEVEMENT_FACTION_FLAG_ALLIANCE && GetPlayer()->isTeamAlliance() == false))
         {
             // achievement requires a faction of which the player is not a member
             continue;
@@ -958,7 +958,7 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, in
                         case 247: // Make Love, Not Warcraft
                         {
                             Player* pTarget = objmgr.GetPlayer((uint32)selectedGUID);
-                            if (pTarget && pTarget->IsDead() && isHostile(pTarget, GetPlayer()))
+                            if (pTarget && pTarget->isDead() && isHostile(pTarget, GetPlayer()))
                             {
                                 UpdateCriteriaProgress(achievementCriteria, 1);
                             }
@@ -1233,8 +1233,8 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type)
         auto achievement = sAchievementStore.LookupEntry(achievementCriteria->referredAchievement);
         if (!achievement  //|| IsCompletedCriteria(achievementCriteria)
             || (achievement->flags & ACHIEVEMENT_FLAG_COUNTER)
-            || (achievement->factionFlag == ACHIEVEMENT_FACTION_FLAG_HORDE && !m_player->IsTeamHorde())
-            || (achievement->factionFlag == ACHIEVEMENT_FACTION_FLAG_ALLIANCE && !m_player->IsTeamAlliance()))
+            || (achievement->factionFlag == ACHIEVEMENT_FACTION_FLAG_HORDE && !m_player->isTeamHorde())
+            || (achievement->factionFlag == ACHIEVEMENT_FACTION_FLAG_ALLIANCE && !m_player->isTeamAlliance()))
         {
             continue;
         }
@@ -1308,7 +1308,7 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type)
                 uint32 nm = 0;
                 while (sl != GetPlayer()->mSpells.end())
                 {
-                    SpellInfo* sp = sSpellCustomizations.GetSpellInfo(*sl);
+                    SpellInfo const* sp = sSpellMgr.getSpellInfo(*sl);
                     if (achievementCriteria->number_of_mounts.unknown == 777 && sp && sp->getMechanicsType() == MECHANIC_MOUNTED)
                     {
                         // mount spell
@@ -1635,6 +1635,7 @@ void AchievementMgr::CompletedAchievement(DBC::Structures::AchievementEntry cons
 /// Sends all achievement data to the player. Also used for achievement inspection.
 void AchievementMgr::SendAllAchievementData(Player* player)
 {
+#if VERSION_STRING != Mop
     // maximum size for the SMSG_ALL_ACHIEVEMENT_DATA packet without causing client problems seems to be 0x7fff
     uint32 packetSize = 18 + ((uint32)m_completedAchievements.size() * 8) + (GetCriteriaProgressCount() * 36);
     bool doneCompleted = false;
@@ -1747,6 +1748,7 @@ void AchievementMgr::SendAllAchievementData(Player* player)
         // a SMSG_ALL_ACHIEVEMENT_DATA packet has been sent to the player, so the achievement manager can send SMSG_CRITERIA_UPDATE and SMSG_ACHIEVEMENT_EARNED when it gets them
         isCharacterLoading = false;
     }
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1779,7 +1781,7 @@ void AchievementMgr::GiveAchievementReward(DBC::Structures::AchievementEntry con
         return;
 
     //Reward Titel
-    if (GetPlayer()->GetTeam() == TEAM_ALLIANCE)
+    if (GetPlayer()->getTeam() == TEAM_ALLIANCE)
     {
         if (Reward->titel_A)
         {
@@ -1788,7 +1790,7 @@ void AchievementMgr::GiveAchievementReward(DBC::Structures::AchievementEntry con
                 GetPlayer()->SetKnownTitle(static_cast< RankTitles >(char_title->bit_index), true);
         }
     }
-    if (GetPlayer()->GetTeam() == TEAM_HORDE)
+    if (GetPlayer()->getTeam() == TEAM_HORDE)
     {
         if (Reward->titel_H)
         {
@@ -1871,8 +1873,8 @@ bool AchievementMgr::GMCompleteAchievement(WorldSession* gmSession, int32 achiev
             {
                 if (!(ach->flags & ACHIEVEMENT_FLAG_COUNTER))
                 {
-                    if ((ach->factionFlag == ACHIEVEMENT_FACTION_FLAG_HORDE && !m_player->IsTeamHorde()) ||
-                        (ach->factionFlag == ACHIEVEMENT_FACTION_FLAG_ALLIANCE && !m_player->IsTeamAlliance()))
+                    if ((ach->factionFlag == ACHIEVEMENT_FACTION_FLAG_HORDE && !m_player->isTeamHorde()) ||
+                        (ach->factionFlag == ACHIEVEMENT_FACTION_FLAG_ALLIANCE && !m_player->isTeamAlliance()))
                     {
                         continue;
                     }

@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -36,7 +36,7 @@
 #include "../shared/LocationVector.h"
 #include "Storage/MySQLStructures.h"
 #include "Storage/DBC/DBCStructures.hpp"
-#if VERSION_STRING == Cata
+#if VERSION_STRING >= Cata
     #include "Storage/DB2/DB2Structures.h"
 #endif
 #include "../shared/StackBuffer.h"
@@ -44,13 +44,10 @@
 #include "WorldPacket.h"
 #include "Units/Creatures/CreatureDefines.hpp"
 
-#if VERSION_STRING == Classic
-#include "GameClassic/Data/MovementInfoClassic.h"
-#elif VERSION_STRING == TBC
-#include "GameTBC/Data/MovementInfoTBC.h"
-#elif VERSION_STRING == WotLK
-#include "GameWotLK/Data/MovementInfoWotLK.h"
+#if VERSION_STRING < Cata
+#include "Data/MovementInfo.h"
 #endif
+
 
 struct WoWObject;
 
@@ -94,29 +91,34 @@ typedef struct
 	uint32 resisted_damage;
 } dealdamage;
 
+#if VERSION_STRING >= Cata
+
 #if VERSION_STRING == Cata
 #include "GameCata/Movement/MovementDefines.h"
+#elif VERSION_STRING == Mop
+#include "GameMop/Movement/MovementDefines.h"
+#endif
 #include "LocationVector.h"
 
 class SERVER_DECL MovementInfo
 {
     public:
 
-        MovementInfo() : move_flags(MOVEFLAG_NONE), move_flags2(MOVEFLAG2_NONE), update_time(0),
+        MovementInfo() : flags(MOVEFLAG_NONE), flags2(MOVEFLAG2_NONE), update_time(0),
             transport_time(0), transport_seat(-1), transport_time2(0), pitch_rate(0.0f), fall_time(0), spline_elevation(0.0f), byte_parameter(0) {}
 
         ObjectGuid const& getGuid() const { return guid; }
         ObjectGuid const& getGuid2() const { return guid2; }
 
-        MovementFlags getMovementFlags() const { return MovementFlags(move_flags); }
-        void addMovementFlag(MovementFlags flags) { move_flags |= flags; }
-        void setMovementFlags(MovementFlags flags) { move_flags = flags; }
-        bool hasMovementFlag(MovementFlags flags) const { return (move_flags & flags) != 0; }
-        void removeMovementFlag(MovementFlags flags) { move_flags &= ~flags; }
+        MovementFlags getMovementFlags() const { return MovementFlags(flags); }
+        void addMovementFlag(MovementFlags _flags) { flags |= _flags; }
+        void setMovementFlags(MovementFlags _flags) { flags = _flags; }
+        bool hasMovementFlag(MovementFlags _flags) const { return (flags & _flags) != 0; }
+        void removeMovementFlag(MovementFlags _flags) { flags &= ~_flags; }
 
-        MovementFlags2 getMovementFlags2() const { return MovementFlags2(move_flags2); }
-        void addMovementFlags2(MovementFlags2 flags2) { move_flags2 |= flags2; }
-        bool hasMovementFlag2(MovementFlags2 flags2) const { return (move_flags2 & flags2) != 0; }
+        MovementFlags2 getMovementFlags2() const { return MovementFlags2(flags2); }
+        void addMovementFlags2(MovementFlags2 _flags2) { flags2 |= _flags2; }
+        bool hasMovementFlag2(MovementFlags2 _flags2) const { return (flags2 & _flags2) != 0; }
 
         void setUpdateTime(uint32_t time) { update_time = time; }
         uint32_t getUpdateTime() { return update_time; }
@@ -194,13 +196,13 @@ class SERVER_DECL MovementInfo
         void readMovementInfo(ByteBuffer& data, uint16_t opcode);
         void writeMovementInfo(ByteBuffer& data, uint16_t opcode, float custom_speed = 0.f) const;
 
+        uint32_t flags;
+        uint16_t flags2;
+
     private:
 
         ObjectGuid guid;
         ObjectGuid guid2;
-
-        uint32_t move_flags;
-        uint16_t move_flags2;
 
         uint32_t update_time;
 
@@ -297,7 +299,7 @@ public:
     //\todo choose one function!
     uint32_t getOType() const;
     void setOType(uint32_t type);
-    void setObjectType(uint32_t objectTypeId);
+    void setObjectType(uint8_t objectTypeId);
 
     void setEntry(uint32_t entry);
     uint32_t getEntry() const;
@@ -446,6 +448,11 @@ public:
     void addInRangeSameFaction(Object* obj);
     void removeObjectFromInRangeSameFactionSet(Object* obj);
 
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Owner
+
+    virtual Object* getPlayerOwner();
+
     // MIT End
 
         Object();
@@ -514,7 +521,7 @@ public:
         LocationVector & GetPositionNC() { return m_position; }
         LocationVector* GetPositionV() { return &m_position; }
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
         // TransporterInfo
         float GetTransPositionX() const { return obj_movement_info.transport_data.relativePosition.x; }
         float GetTransPositionY() const { return obj_movement_info.transport_data.relativePosition.y; }
@@ -715,10 +722,10 @@ public:
 
         void EventSpellDamage(uint64 Victim, uint32 SpellID, uint32 Damage);
         void SpellNonMeleeDamageLog(Unit* pVictim, uint32 spellID, uint32 damage, bool allowProc, bool static_damage = false, bool no_remove_auras = false);
-        virtual bool IsCriticalDamageForSpell(Object* /*victim*/, SpellInfo* /*spell*/) { return false; }
-        virtual float GetCriticalDamageBonusForSpell(Object* /*victim*/, SpellInfo* /*spell*/, float /*amount*/) { return 0; }
-        virtual bool IsCriticalHealForSpell(Object* /*victim*/, SpellInfo* /*spell*/) { return false; }
-        virtual float GetCriticalHealBonusForSpell(Object* /*victim*/, SpellInfo* /*spell*/, float /*amount*/) { return 0; }
+        virtual bool IsCriticalDamageForSpell(Object* /*victim*/, SpellInfo const* /*spell*/) { return false; }
+        virtual float GetCriticalDamageBonusForSpell(Object* /*victim*/, SpellInfo const* /*spell*/, float /*amount*/) { return 0; }
+        virtual bool IsCriticalHealForSpell(Object* /*victim*/, SpellInfo const* /*spell*/) { return false; }
+        virtual float GetCriticalHealBonusForSpell(Object* /*victim*/, SpellInfo const* /*spell*/, float /*amount*/) { return 0; }
 
         // SpellLog packets just to keep the code cleaner and better to read
         void SendSpellLog(Object* Caster, Object* Target, uint32 Ability, uint8 SpellLogType);
@@ -827,7 +834,6 @@ public:
         bool m_loadedFromDB;
 
         // Andy's crap
-        virtual Object* GetPlayerOwner();
         std::set<Spell*> m_pendingSpells;
 
         bool GetPoint(float angle, float rad, float & outx, float & outy, float & outz, bool sloppypath = false);

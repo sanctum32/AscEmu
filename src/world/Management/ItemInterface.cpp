@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -30,6 +30,82 @@
 #include "Server/Packets/SmsgInventoryChangeFailure.h"
 
 using namespace AscEmu::Packets;
+
+// APGL End
+// MIT Start
+
+bool ItemInterface::hasItemForTotemCategory(uint32_t totemCategory)
+{
+    // If totem category is 0, the spell does not require any totems or tools
+    if (totemCategory == 0)
+        return true;
+
+#if VERSION_STRING == Classic
+    return false;
+#else
+    const auto spellTotemCategory = sTotemCategoryStore.LookupEntry(totemCategory);
+    if (spellTotemCategory == nullptr)
+        return false;
+
+    // Helper lambda
+    auto checkItem = [&](Item const* item) -> bool
+    {
+        if (item == nullptr)
+            return false;
+        // Item has no totem category
+        if (item->getItemProperties()->TotemCategory == 0)
+            return false;
+        const auto itemTotemCategory = sTotemCategoryStore.LookupEntry(item->getItemProperties()->TotemCategory);
+        // Item has invalid totem category
+        if (itemTotemCategory == nullptr)
+            return false;
+        // Totem category types do not match
+        if (spellTotemCategory->categoryType != itemTotemCategory->categoryType)
+            return false;
+        // Check if totem category masks match
+        if (itemTotemCategory->categoryMask & spellTotemCategory->categoryMask)
+            return true;
+        return false;
+    };
+
+    for (int16_t i = EQUIPMENT_SLOT_START; i < EQUIPMENT_SLOT_END; ++i)
+    {
+        if (checkItem(GetInventoryItem(i)))
+            return true;
+    }
+
+    for (int8_t i = INVENTORY_SLOT_BAG_START; i < INVENTORY_SLOT_BAG_END; ++i)
+    {
+        // Get bag from bag slot
+        const auto container = GetContainer(i);
+        if (container == nullptr)
+            continue;
+        // Loop through bag's content
+        for (uint16_t j = 0; j < container->getSlotCount(); ++j)
+        {
+            if (checkItem(container->GetItem(static_cast<int16_t>(j))))
+                return true;
+        }
+    }
+
+    for (int16_t i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
+    {
+        if (checkItem(GetInventoryItem(i)))
+            return true;
+    }
+
+    for (int16_t i = INVENTORY_KEYRING_START; i < CURRENCYTOKEN_SLOT_END; ++i)
+    {
+        if (checkItem(GetInventoryItem(i)))
+            return true;
+    }
+
+    return false;
+#endif
+}
+
+// MIT End
+// APGL Start
 
 ItemInterface::ItemInterface(Player* pPlayer) : m_EquipmentSets(pPlayer->getGuidLow())
 {
@@ -243,7 +319,7 @@ AddItemResult ItemInterface::m_AddItem(Item* item, int8 ContainerSlot, int16 slo
                 item->PushToWorld(m_pOwner->GetMapMgr());
                 ByteBuffer buf(2500);
                 uint32 count = item->buildCreateUpdateBlockForPlayer(&buf, m_pOwner);
-                m_pOwner->PushCreationData(&buf, count);
+                m_pOwner->getUpdateMgr().pushCreationData(&buf, count);
             }
             m_pOwner->SetInventorySlot(slot, item->getGuid());
         }
@@ -324,7 +400,7 @@ AddItemResult ItemInterface::m_AddItem(Item* item, int8 ContainerSlot, int16 slo
         uint32 subclass = item->getItemProperties()->SubClass;
         if (subclass == ITEM_SUBCLASS_WEAPON_TWOHAND_AXE || subclass == ITEM_SUBCLASS_WEAPON_TWOHAND_MACE || subclass == ITEM_SUBCLASS_WEAPON_TWOHAND_SWORD)
         {
-            m_pOwner->CastSpell(m_pOwner, 49152, true);
+            m_pOwner->castSpell(m_pOwner, 49152, true);
 
             ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         }
@@ -748,7 +824,7 @@ Item* ItemInterface::FindItemLessMax(uint32 itemid, uint32 cnt, bool IncBank)
         Item* item = GetInventoryItem(static_cast<int16>(i));
         if (item)
         {
-            uint32 itemMaxStack = (item->getOwner()->ItemStackCheat) ? 0x7fffffff : item->getItemProperties()->MaxCount;
+            uint32 itemMaxStack = (item->getOwner()->m_cheats.ItemStackCheat) ? 0x7fffffff : item->getItemProperties()->MaxCount;
             if ((item->getEntry() == itemid && item->wrapped_item_id == 0) && (itemMaxStack >= (item->getStackCount() + cnt)))
             {
                 return item;
@@ -766,7 +842,7 @@ Item* ItemInterface::FindItemLessMax(uint32 itemid, uint32 cnt, bool IncBank)
                 Item* item2 = static_cast<Container*>(item)->GetItem(static_cast<int16>(j));
                 if (item2)
                 {
-                    uint32 itemMaxStack = (item2->getOwner()->ItemStackCheat) ? 0x7fffffff : item2->getItemProperties()->MaxCount;
+                    uint32 itemMaxStack = (item2->getOwner()->m_cheats.ItemStackCheat) ? 0x7fffffff : item2->getItemProperties()->MaxCount;
                     if ((item2->getItemProperties()->ItemId == itemid && item2->wrapped_item_id == 0) && (itemMaxStack >= (item2->getStackCount() + cnt)))
                     {
                         return item2;
@@ -782,7 +858,7 @@ Item* ItemInterface::FindItemLessMax(uint32 itemid, uint32 cnt, bool IncBank)
         Item* item = GetInventoryItem(static_cast<int16>(i));
         if (item)
         {
-            uint32 itemMaxStack = (item->getOwner()->ItemStackCheat) ? 0x7fffffff : item->getItemProperties()->MaxCount;
+            uint32 itemMaxStack = (item->getOwner()->m_cheats.ItemStackCheat) ? 0x7fffffff : item->getItemProperties()->MaxCount;
             if ((item->getEntry() == itemid && item->wrapped_item_id == 0) && (itemMaxStack >= (item->getStackCount() + cnt)))
             {
                 return item;
@@ -797,7 +873,7 @@ Item* ItemInterface::FindItemLessMax(uint32 itemid, uint32 cnt, bool IncBank)
             Item* item = GetInventoryItem(static_cast<int16>(i));
             if (item)
             {
-                uint32 itemMaxStack = (item->getOwner()->ItemStackCheat) ? 0x7fffffff : item->getItemProperties()->MaxCount;
+                uint32 itemMaxStack = (item->getOwner()->m_cheats.ItemStackCheat) ? 0x7fffffff : item->getItemProperties()->MaxCount;
                 if ((item->getEntry() == itemid && item->wrapped_item_id == 0) && (itemMaxStack >= (item->getStackCount() + cnt)))
                 {
                     return item;
@@ -816,7 +892,7 @@ Item* ItemInterface::FindItemLessMax(uint32 itemid, uint32 cnt, bool IncBank)
                     Item* item2 = static_cast<Container*>(item)->GetItem(static_cast<int16>(j));
                     if (item2)
                     {
-                        uint32 itemMaxStack = (item2->getOwner()->ItemStackCheat) ? 0x7fffffff : item2->getItemProperties()->MaxCount;
+                        uint32 itemMaxStack = (item2->getOwner()->m_cheats.ItemStackCheat) ? 0x7fffffff : item2->getItemProperties()->MaxCount;
                         if ((item2->getItemProperties()->ItemId == itemid && item2->wrapped_item_id == 0) && (itemMaxStack >= (item2->getStackCount() + cnt)))
                         {
                             return item2;
@@ -1623,7 +1699,7 @@ AddItemResult ItemInterface::AddItemToFreeSlot(Item* item)
             for (i = CURRENCYTOKEN_SLOT_START; i < CURRENCYTOKEN_SLOT_END; ++i)
             {
                 if (m_pItems[i])
-                    itemMaxStack = (p->ItemStackCheat) ? 0x7fffffff : m_pItems[i]->getItemProperties()->MaxCount;
+                    itemMaxStack = (p->m_cheats.ItemStackCheat) ? 0x7fffffff : m_pItems[i]->getItemProperties()->MaxCount;
 
                 if (m_pItems[i] == nullptr)
                 {
@@ -1679,7 +1755,7 @@ AddItemResult ItemInterface::AddItemToFreeSlot(Item* item)
     for (i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_END; ++i)
     {
         if (m_pItems[i])
-            itemMaxStack = (p->ItemStackCheat) ? 0x7fffffff : m_pItems[i]->getItemProperties()->MaxCount;
+            itemMaxStack = (p->m_cheats.ItemStackCheat) ? 0x7fffffff : m_pItems[i]->getItemProperties()->MaxCount;
         if (m_pItems[i] == nullptr)
         {
             result3 = SafeAddItem(item, INVENTORY_SLOT_NOT_SET, static_cast<int16>(i));
@@ -1720,7 +1796,7 @@ AddItemResult ItemInterface::AddItemToFreeSlot(Item* item)
             {
                 Item* item2 = (static_cast<Container*>(m_pItems[i]))->GetItem(static_cast<int16>(j));
                 if (item2)
-                    itemMaxStack = (p->ItemStackCheat) ? 0x7fffffff : item2->getItemProperties()->MaxCount;
+                    itemMaxStack = (p->m_cheats.ItemStackCheat) ? 0x7fffffff : item2->getItemProperties()->MaxCount;
                 if (item2 == nullptr)
                 {
                     result3 = SafeAddItem(item, static_cast<int8>(i), static_cast<int16>(j));
@@ -2460,10 +2536,10 @@ void ItemInterface::BuyItem(ItemProperties const* item, uint32 total_amount, Cre
     if (item->BuyPrice)
     {
         uint32 itemprice = GetBuyPriceForItem(item, total_amount, m_pOwner, pVendor);
-        if (!m_pOwner->HasGold(itemprice))
-            m_pOwner->SetGold(0);
+        if (!m_pOwner->hasEnoughCoinage(itemprice))
+            m_pOwner->setCoinage(0);
         else
-            m_pOwner->ModGold(-(int32)itemprice);
+            m_pOwner->modCoinage(-(int32)itemprice);
     }
     auto item_extended_cost = pVendor->GetItemExtendedCostByItemId(item->ItemId);
     if (item_extended_cost != nullptr)
@@ -2471,7 +2547,7 @@ void ItemInterface::BuyItem(ItemProperties const* item, uint32 total_amount, Cre
         for (uint8 i = 0; i < 5; ++i)
         {
             if (item_extended_cost->item[i])
-                m_pOwner->GetItemInterface()->RemoveItemAmt(item_extended_cost->item[i], total_amount * item_extended_cost->count[i]);
+                m_pOwner->getItemInterface()->RemoveItemAmt(item_extended_cost->item[i], total_amount * item_extended_cost->count[i]);
         }
 
         if (m_pOwner->GetHonorCurrency() >= (item_extended_cost->honor_points * total_amount))
@@ -2479,11 +2555,16 @@ void ItemInterface::BuyItem(ItemProperties const* item, uint32 total_amount, Cre
             m_pOwner->ModHonorCurrency(-int32((item_extended_cost->honor_points * total_amount)));
             m_pOwner->m_honorPoints -= int32(item_extended_cost->honor_points * total_amount);
         }
-        if (m_pOwner->GetArenaCurrency() >= (item_extended_cost->arena_points * total_amount))
+
+#if VERSION_STRING > Classic
+#if VERSION_STRING < Cata
+        if (m_pOwner->getArenaCurrency() >= item_extended_cost->arena_points * total_amount)
         {
-            m_pOwner->ModArenaCurrency(-int32(item_extended_cost->arena_points * total_amount));
+            m_pOwner->modArenaCurrency(-int32(item_extended_cost->arena_points * total_amount));
             m_pOwner->m_arenaPoints -= int32(item_extended_cost->arena_points * total_amount);
         }
+#endif
+#endif
     }
 }
 
@@ -2496,23 +2577,28 @@ int8 ItemInterface::CanAffordItem(ItemProperties const* item, uint32 amount, Cre
         {
             if (item_extended_cost->item[i])
             {
-                if (m_pOwner->GetItemInterface()->GetItemCount(item_extended_cost->item[i], false) < (item_extended_cost->count[i] * amount))
+                if (m_pOwner->getItemInterface()->GetItemCount(item_extended_cost->item[i], false) < (item_extended_cost->count[i] * amount))
                     return INV_ERR_VENDOR_MISSING_TURNINS;
             }
         }
 
         if (m_pOwner->GetHonorCurrency() < (item_extended_cost->honor_points * amount))
             return INV_ERR_NOT_ENOUGH_HONOR_POINTS;
-        if (m_pOwner->GetArenaCurrency() < (item_extended_cost->arena_points * amount))
+
+#if VERSION_STRING > Classic
+#if VERSION_STRING < Cata
+        if (m_pOwner->getArenaCurrency() < item_extended_cost->arena_points * amount)
             return INV_ERR_NOT_ENOUGH_ARENA_POINTS;
+#endif
+#endif
         if (m_pOwner->GetMaxPersonalRating() < item_extended_cost->personalrating)
             return INV_ERR_PERSONAL_ARENA_RATING_TOO_LOW;
     }
 
     if (item->BuyPrice)
     {
-        int32 price = GetBuyPriceForItem(item, amount, m_pOwner, pVendor) * amount;
-        if (!m_pOwner->HasGold(price))
+        uint32 price = GetBuyPriceForItem(item, amount, m_pOwner, pVendor) * amount;
+        if (!m_pOwner->hasEnoughCoinage(price))
         {
             return INV_ERR_NOT_ENOUGH_MONEY;
         }
@@ -2905,7 +2991,7 @@ void ItemInterface::SwapItemSlots(int8 srcslot, int8 dstslot)
     uint32 srcItemMaxStack, dstItemMaxStack;
     if (SrcItem != nullptr)
     {
-        if (srcslot < INVENTORY_SLOT_BAG_END || !(SrcItem->getOwner()->ItemStackCheat))
+        if (srcslot < INVENTORY_SLOT_BAG_END || !(SrcItem->getOwner()->m_cheats.ItemStackCheat))
         {
             srcItemMaxStack = SrcItem->getItemProperties()->MaxCount;
         }
@@ -2920,7 +3006,7 @@ void ItemInterface::SwapItemSlots(int8 srcslot, int8 dstslot)
     }
     if (DstItem != nullptr)
     {
-        if (dstslot < INVENTORY_SLOT_BAG_END || !(DstItem->getOwner()->ItemStackCheat))
+        if (dstslot < INVENTORY_SLOT_BAG_END || !(DstItem->getOwner()->m_cheats.ItemStackCheat))
         {
             dstItemMaxStack = DstItem->getItemProperties()->MaxCount;
         }
@@ -2991,11 +3077,11 @@ void ItemInterface::SwapItemSlots(int8 srcslot, int8 dstslot)
         {
             tSrcItem = (static_cast<Container*>((m_pItems[(int)srcslot])))->GetItem(static_cast<int16>(Slot));
 
-            m_pOwner->GetItemInterface()->SafeRemoveAndRetreiveItemFromSlot(srcslot, static_cast<int16>(Slot), false);
+            m_pOwner->getItemInterface()->SafeRemoveAndRetreiveItemFromSlot(srcslot, static_cast<int16>(Slot), false);
 
             if (tSrcItem != nullptr)
             {
-                auto result = m_pOwner->GetItemInterface()->SafeAddItem(tSrcItem, dstslot, static_cast<int16>(Slot));
+                auto result = m_pOwner->getItemInterface()->SafeAddItem(tSrcItem, dstslot, static_cast<int16>(Slot));
                 if (!result)
                 {
                     LOG_ERROR("Error while adding item %u to player %s", tSrcItem->getEntry(), m_pOwner->getName().c_str());
@@ -3027,9 +3113,9 @@ void ItemInterface::SwapItemSlots(int8 srcslot, int8 dstslot)
             tDstItem = (static_cast<Container*>((m_pItems[(int)dstslot])))->GetItem(static_cast<int16>(Slot));
 
             if (tSrcItem != nullptr)
-                m_pOwner->GetItemInterface()->SafeRemoveAndRetreiveItemFromSlot(srcslot, static_cast<int16>(Slot), false);
+                m_pOwner->getItemInterface()->SafeRemoveAndRetreiveItemFromSlot(srcslot, static_cast<int16>(Slot), false);
             if (tDstItem != nullptr)
-                m_pOwner->GetItemInterface()->SafeRemoveAndRetreiveItemFromSlot(dstslot, static_cast<int16>(Slot), false);
+                m_pOwner->getItemInterface()->SafeRemoveAndRetreiveItemFromSlot(dstslot, static_cast<int16>(Slot), false);
 
             if (tSrcItem != nullptr)
                 (static_cast<Container*>(DstItem))->AddItem(static_cast<int16>(Slot), tSrcItem);
@@ -3235,7 +3321,7 @@ void ItemInterface::SwapItemSlots(int8 srcslot, int8 dstslot)
             uint32 subclass = m_pItems[EQUIPMENT_SLOT_OFFHAND]->getItemProperties()->SubClass;
             if (subclass == ITEM_SUBCLASS_WEAPON_TWOHAND_AXE || subclass == ITEM_SUBCLASS_WEAPON_TWOHAND_MACE || subclass == ITEM_SUBCLASS_WEAPON_TWOHAND_SWORD)
             {
-                m_pOwner->CastSpell(m_pOwner, 49152, true);
+                m_pOwner->castSpell(m_pOwner, 49152, true);
             }
             ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         }
@@ -3948,7 +4034,7 @@ bool ItemInterface::AddItemById(uint32 itemid, uint32 count, int32 randomprop)
         return false;
     }
 
-    uint32 maxStack = chr->ItemStackCheat ? 0x7fffffff : it->MaxCount;
+    uint32 maxStack = chr->m_cheats.ItemStackCheat ? 0x7fffffff : it->MaxCount;
     uint32 toadd;
     bool freeslots = true;
 
@@ -4047,7 +4133,7 @@ bool ItemInterface::AddItemById(uint32 itemid, uint32 count, int32 randomprop)
         {
             SlotResult* lr = LastSearchResult();
 
-            chr->SendItemPushResult(false, true, false, true, lr->ContainerSlot, lr->Slot, toadd, item->getEntry(), item->getPropertySeed(), item->getRandomPropertiesId(), item->getStackCount());
+            chr->sendItemPushResultPacket(false, true, false, lr->ContainerSlot, lr->Slot, toadd, item->getEntry(), item->getPropertySeed(), item->getRandomPropertiesId(), item->getStackCount());
 #if VERSION_STRING > TBC
             chr->GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_LOOT_ITEM, itemid, 1, 0);
 #endif
@@ -4230,8 +4316,8 @@ bool ItemInterface::SwapItems(int8 DstInvSlot, int8 DstSlot, int8 SrcInvSlot, in
     else
     {
         //Check for stacking
-        uint32 srcItemMaxStack = (SrcItem->getOwner()->ItemStackCheat) ? 0x7fffffff : SrcItem->getItemProperties()->MaxCount;
-        uint32 dstItemMaxStack = (DstItem) ? ((DstItem->getOwner()->ItemStackCheat) ? 0x7fffffff : DstItem->getItemProperties()->MaxCount) : 0;
+        uint32 srcItemMaxStack = (SrcItem->getOwner()->m_cheats.ItemStackCheat) ? 0x7fffffff : SrcItem->getItemProperties()->MaxCount;
+        uint32 dstItemMaxStack = (DstItem) ? ((DstItem->getOwner()->m_cheats.ItemStackCheat) ? 0x7fffffff : DstItem->getItemProperties()->MaxCount) : 0;
         if (DstItem && SrcItem && SrcItem->getEntry() == DstItem->getEntry() && srcItemMaxStack > 1 && SrcItem->wrapped_item_id == 0 && DstItem->wrapped_item_id == 0)
         {
             uint32 total = SrcItem->getStackCount() + DstItem->getStackCount();

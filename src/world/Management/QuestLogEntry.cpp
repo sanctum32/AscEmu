@@ -1,6 +1,6 @@
 /*
 * AscEmu Framework based on ArcEmu MMORPG Server
-* Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+* Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 *
 * This program is free software: you can redistribute it and/or modify
 * it under the terms of the GNU Affero General Public License as published by
@@ -230,7 +230,7 @@ bool QuestLogEntry::CanBeFinished()
     {
         if (m_quest->required_item[i])
         {
-            if (m_plr->GetItemInterface()->GetItemCount(m_quest->required_item[i]) < m_quest->required_itemcount[i])
+            if (m_plr->getItemInterface()->GetItemCount(m_quest->required_item[i]) < m_quest->required_itemcount[i])
             {
                 return false;
             }
@@ -238,7 +238,7 @@ bool QuestLogEntry::CanBeFinished()
     }
 
     //Check for Gold & AreaTrigger Requirements
-    if (m_quest->reward_money < 0 && m_plr->GetGold() < uint32(-m_quest->reward_money))
+    if (m_quest->reward_money < 0 && m_plr->getCoinage() < uint32(-m_quest->reward_money))
         return false;
 
     for (i = 0; i < 4; ++i)

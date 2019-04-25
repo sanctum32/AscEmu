@@ -1,6 +1,6 @@
 /*
 * AscEmu Framework based on ArcEmu MMORPG Server
-* Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+* Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
 * Copyright (C) 2005-2007 Ascent Team
 *
@@ -92,7 +92,7 @@ typedef void(*tOnDeath)(Player* pPlayer);
 typedef bool(*tOnRepop)(Player* pPlayer);
 typedef void(*tOnEmote)(Player* pPlayer, uint32 Emote, Unit* pUnit);
 typedef void(*tOnEnterCombat)(Player* pPlayer, Unit* pTarget);
-typedef bool(*tOnCastSpell)(Player* pPlayer, SpellInfo* pSpell, Spell* spell);
+typedef bool(*tOnCastSpell)(Player* pPlayer, SpellInfo const* pSpell, Spell* spell);
 typedef void(*tOnTick)();
 typedef bool(*tOnLogoutRequest)(Player* pPlayer);
 typedef void(*tOnLogout)(Player* pPlayer);
@@ -452,6 +452,12 @@ class SERVER_DECL EventScript
         virtual void UpdateEvent() {}
         virtual void Destroy() {}
 
+        // Data sharing between scripts
+        virtual void setInstanceData(uint32 /*dataType*/, uint32 /*value*/) {}
+        virtual uint32 getInstanceData(uint32 /*data*/) const { return 0;  }
+        virtual void setGuidData(uint32 /*guidType*/, uint64 /*guidData*/) {}
+        virtual uint64 getGuidData(uint32 /*guidType*/) const { return 0; }
+
         // UpdateEvent
         void RegisterUpdateEvent(uint32 pFrequency);
         void ModifyUpdateEvent(uint32 pNewFrequency);
@@ -474,6 +480,12 @@ class SERVER_DECL GameObjectAIScript
         virtual void OnDestroyed(){}
         virtual void AIUpdate() {}
         virtual void Destroy() { delete this; }
+
+        // Data sharing between scripts
+        virtual void setGameObjectData(uint32 /*type*/) {}
+        virtual uint32 getGameObjectData(uint32 /*type*/) const { return 0; }
+        virtual void setGuidData(uint32 /*guidType*/, uint64 /*guidData*/) {}
+        virtual uint64 getGuidData(uint32 /*guidType*/) const { return 0; }
 
         void RegisterAIUpdateEvent(uint32 frequency);
         void ModifyAIUpdateEvent(uint32 newfrequency);
@@ -538,7 +550,7 @@ class SERVER_DECL InstanceScript
         virtual ~InstanceScript() {}
 
         // Procedures that had been here before
-        virtual GameObject* GetObjectForOpenLock(Player* /*pCaster*/, Spell* /*pSpell*/, SpellInfo* /*pSpellEntry*/) { return NULL; }
+        virtual GameObject* GetObjectForOpenLock(Player* /*pCaster*/, Spell* /*pSpell*/, SpellInfo const* /*pSpellEntry*/) { return NULL; }
         virtual void SetLockOptions(uint32 /*pEntryId*/, GameObject* /*pGameObject*/) {}
         virtual uint32 GetRespawnTimeForCreature(uint32 /*pEntryId*/, Creature* /*pCreature*/) { return 240000; }
 
@@ -686,7 +698,7 @@ class SERVER_DECL HookInterface : public Singleton<HookInterface>
         bool OnRepop(Player* pPlayer);
         void OnEmote(Player* pPlayer, uint32 Emote, Unit* pUnit);
         void OnEnterCombat(Player* pPlayer, Unit* pTarget);
-        bool OnCastSpell(Player* pPlayer, SpellInfo* pSpell, Spell* spell);
+        bool OnCastSpell(Player* pPlayer, SpellInfo const* pSpell, Spell* spell);
         bool OnLogoutRequest(Player* pPlayer);
         void OnLogout(Player* pPlayer);
         void OnQuestAccept(Player* pPlayer, QuestProperties const* pQuest, Object* pQuestGiver);

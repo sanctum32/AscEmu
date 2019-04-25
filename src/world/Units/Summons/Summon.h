@@ -1,68 +1,41 @@
 /*
- * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (C) 2005-2007 Ascent Team
- * Copyright (C) 2008-2011 <http://www.ArcEmu.org/>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
- */
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
+This file is released under the MIT license. See README-MIT for more information.
+*/
 
-#ifndef SUMMON_HPP_
-#define SUMMON_HPP_
+#pragma once
 
 #include "SummonDefines.hpp"
 #include "Units/Creatures/Creature.h"
 
-// Base class for Summoned creatures
 class Summon : public Creature
 {
-    public:
+public:
+    Summon(uint64_t guid);
+    ~Summon();
 
-        Summon(uint64 GUID);
-        ~Summon();
+    virtual void Load(CreatureProperties const* creatureProperties, Unit* unitOwner, LocationVector& position, uint32_t spellId, int32_t summonSlot);
 
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //virtual void Load(CreatureProto *proto, Unit* owner, LocationVector &position, uint32 spellid, int32 summonslot);
-        //  Loads and sets up the basic properties of the summoned creature, like displayid, health, powers (mana and co.)
-        //
-        //Parameter(s)
-        //  CreatureProto *proto      -   Reference to the CreatureProto structure that belongs to this creature (basically a template)
-        //  Unit* owner               -   Owner unit of this Creature, usually the unit that summoned it, or the unit that summoned the summoner
-        //  LocationVector &position  -   Position of the summoned creature in the game world
-        //  uint32 spellid            -   The spell that summoned this creature
-        //  int32 summonslot          -   The summon slot of the creature, -1 means no slot
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        virtual void Load(CreatureProperties const* properties_, Unit* owner, LocationVector & position, uint32 spellid, int32 summonslot);
-        void OnPushToWorld();
-        void OnPreRemoveFromWorld();
-        bool SummonedToSlot()
-        {
-            if (summonslot != -1)
-                return true;
-            return false;
-        }
-        bool isSummon() const override { return true; }
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Override Object functions
+    void OnPushToWorld() override;
+    void OnPreRemoveFromWorld() override;
+    bool isSummon() const override;
+    void onRemoveInRangeObject(Object* object) override;
 
-        Unit* GetOwner() { return owner; }
-        Object* GetPlayerOwner();
-        void Die(Unit* pAttacker, uint32 damage, uint32 spellid);
-        void onRemoveInRangeObject(Object* object);
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Override Unit functions
+    void Die(Unit* pAttacker, uint32 damage, uint32 spellid) override;
 
-    private:
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Misc
+private:
+    int32_t m_summonSlot;
+    Unit* m_unitOwner;
 
-        int32 summonslot;  // Summon slot of the creature in the owner's summonhandler, -1 means no slot
-        Unit* owner;       // Summoner of the creature
+public:
+    bool isSummonedToSlot() const;
+
+    Unit* getUnitOwner() const { return m_unitOwner; }
+    Object* getPlayerOwner() override;
 };
-
-#endif      // SUMMON_HPP_

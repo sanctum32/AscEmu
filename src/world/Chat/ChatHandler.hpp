@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -50,8 +50,6 @@ class SERVER_DECL ChatHandler : public Singleton<ChatHandler>
         bool HandleHelpCommand(const char* args, WorldSession* m_session);
         bool HandleCommandsCommand(const char* args, WorldSession* m_session);
         bool HandleGetSkillLevelCommand(const char* args, WorldSession* m_session);
-        bool CmdSetValueField(WorldSession* m_session, uint16 field, uint16 fieldmax, const char* fieldname, const char* args);
-        bool CmdSetFloatField(WorldSession* m_session, uint16 field, uint16 fieldmax, const char* fieldname, const char* args);
 
 
         //helper
@@ -189,6 +187,7 @@ class SERVER_DECL ChatHandler : public Singleton<ChatHandler>
         bool HandleDebugSpeed(const char* args, WorldSession* m_session);
         bool HandleDebugPVPCreditCommand(const char* args, WorldSession* m_session);
         bool HandleSendCastFailed(const char* args, WorldSession* m_session);
+        bool HandleDebugSendCreatureMove(const char* args, WorldSession* m_session);
         bool HandleDebugSetUnitByteCommand(const char* args, WorldSession* m_session);
         bool HandleDebugSetPlayerFlagsCommand(const char* args, WorldSession* m_session);
         bool HandleDebugGetPlayerFlagsCommand(const char* /*args*/, WorldSession* m_session);
@@ -306,7 +305,7 @@ class SERVER_DECL ChatHandler : public Singleton<ChatHandler>
         //Guild Command
         bool HandleGuildCreateCommand(const char* args, WorldSession* m_session);
         bool HandleGuildDisbandCommand(const char* /*args*/, WorldSession* m_session);
-#if VERSION_STRING == Cata
+#if VERSION_STRING >= Cata
         bool HandleGuildInfoCommand(const char* /*args*/, WorldSession* m_session);
 #endif
         bool HandleGuildJoinCommand(const char* /*args*/, WorldSession* m_session);
@@ -334,8 +333,43 @@ class SERVER_DECL ChatHandler : public Singleton<ChatHandler>
         bool HandleLookupSpellCommand(const char* args, WorldSession* m_session);
         bool HandleLookupSkillCommand(const char* args, WorldSession* m_session);
 
+        // Modify Commands
+        bool HandleModifyHp(const char* args, WorldSession* session);
+        bool HandleModifyMana(const char* args, WorldSession* session);
+        bool HandleModifyRage(const char* args, WorldSession* session);
+        bool HandleModifyEnergy(const char* args, WorldSession* session);
+        bool HandleModifyRunicpower(const char* args, WorldSession* session);
+        bool HandleModifyStrength(const char* args, WorldSession* session);
+        bool HandleModifyAgility(const char* args, WorldSession* session);
+        bool HandleModifyIntelligence(const char* args, WorldSession* session);
+        bool HandleModifySpirit(const char* args, WorldSession* session);
+        bool HandleModifyArmor(const char* args, WorldSession* session);
+        bool HandleModifyHoly(const char* args, WorldSession* session);
+        bool HandleModifyFire(const char* args, WorldSession* session);
+        bool HandleModifyNature(const char* args, WorldSession* session);
+        bool HandleModifyFrost(const char* args, WorldSession* session);
+        bool HandleModifyShadow(const char* args, WorldSession* session);
+        bool HandleModifyArcane(const char* args, WorldSession* session);
+        bool HandleModifyDamage(const char* args, WorldSession* session);
+        bool HandleModifyAp(const char* args, WorldSession* session);
+        bool HandleModifyRangeap(const char* args, WorldSession* session);
+        bool HandleModifyScale(const char* args, WorldSession* session);
+        bool HandleModifyNativedisplayid(const char* args, WorldSession* session);
+        bool HandleModifyDisplayid(const char* args, WorldSession* session);
+        bool HandleModifyFlags(const char* args, WorldSession* session);
+        bool HandleModifyFaction(const char* args, WorldSession* session);
+        bool HandleModifyDynamicflags(const char* args, WorldSession* session);
+        bool HandleModifyHappiness(const char* args, WorldSession* session);
+        bool HandleModifyBoundingradius(const char* args, WorldSession* session);
+        bool HandleModifyCombatreach(const char* args, WorldSession* session);
+        bool HandleModifyEmotestate(const char* args, WorldSession* session);
+        bool HandleModifyBytes0(const char* args, WorldSession* session);
+        bool HandleModifyBytes1(const char* args, WorldSession* session);
+        bool HandleModifyBytes2(const char* args, WorldSession* session);
+
         // NPC Commands
         bool HandleNpcAddAgentCommand(const char* args, WorldSession* m_session);
+        bool HandleNpcAppearCommand(const char * _, WorldSession * __);
         bool HandleNpcAddTrainerSpellCommand(const char* args, WorldSession* m_session);
         bool HandleNpcCastCommand(const char* args, WorldSession* m_session);
         bool HandleNpcComeCommand(const char* /*args*/, WorldSession* m_session);

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -376,5 +376,5 @@ public:
     void sendGuildReputationWeeklyCap(WorldSession* session, uint32_t reputation) const;
     void sendGuildRanksUpdate(uint64_t setterGuid, uint64_t targetGuid, uint32_t rank);
 
-    void broadcastEvent(GuildEvents guildEvent, uint64_t guid, const char* var_1 = NULL, const char* var_2 = NULL, const char* var_3 = NULL) const;
+    void broadcastEvent(GuildEvents guildEvent, uint64_t guid, std::vector<std::string> vars) const;
 };

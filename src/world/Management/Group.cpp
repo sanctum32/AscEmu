@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -271,7 +271,7 @@ void Group::Update()
                 {
                     data << uint8(sLfgMgr.GetState(GetID()) == LFG_STATE_FINISHED_DUNGEON ? 2 : 0);
 					data << uint32(sLfgMgr.GetDungeon(GetID()));
-#if VERSION_STRING == Cata
+#if VERSION_STRING >= Cata
                     data << uint8(0);   //unk
 #endif
                 }
@@ -405,7 +405,7 @@ void SubGroup::Disband()
                     data2.put(5, uint32((*itr)->m_loggedInPlayer->iInstanceType));
                     (*itr)->m_loggedInPlayer->GetSession()->SendPacket(&data2);
                     (*itr)->m_loggedInPlayer->GetSession()->SendPacket(&data);
-#if VERSION_STRING == Cata
+#if VERSION_STRING >= Cata
                     (*itr)->m_loggedInPlayer->GetSession()->sendEmptyGroupList((*itr)->m_loggedInPlayer);
 #else
                     (*itr)->m_Group->SendNullUpdate((*itr)->m_loggedInPlayer);   // cebernic: panel refresh.
@@ -509,14 +509,14 @@ void Group::RemovePlayer(PlayerInfo* info)
     {
         if (pPlayer->GetSession() != NULL)
         {
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
             SendNullUpdate(pPlayer);
 #endif
 
             data.SetOpcode(SMSG_GROUP_DESTROYED);
             pPlayer->GetSession()->SendPacket(&data);
 
-#if VERSION_STRING == Cata
+#if VERSION_STRING >= Cata
             pPlayer->GetSession()->SendPacket(SmsgPartyCommandResult(2, pPlayer->getName().c_str(), ERR_PARTY_NO_ERROR).serialise().get());
             pPlayer->GetSession()->sendEmptyGroupList(pPlayer);
 #else
@@ -972,10 +972,10 @@ void Group::UpdateOutOfRangePlayer(Player* pPlayer, bool Distribute, WorldPacket
         *data << uint8(powerType);
 
     if (mask & GROUP_UPDATE_FLAG_CUR_POWER)
-        *data << uint16(pPlayer->GetPower(powerType));
+        *data << uint16(pPlayer->getPower(powerType));
 
     if (mask & GROUP_UPDATE_FLAG_MAX_POWER)
-        *data << uint16(pPlayer->GetMaxPower(powerType));
+        *data << uint16(pPlayer->getMaxPower(powerType));
 
     if (mask & GROUP_UPDATE_FLAG_LEVEL)
         *data << uint16(pPlayer->getLevel());
@@ -1056,7 +1056,7 @@ void Group::UpdateOutOfRangePlayer(Player* pPlayer, bool Distribute, WorldPacket
     if (mask & GROUP_UPDATE_FLAG_PET_CUR_POWER)
     {
         if (pet)
-            *data << uint16(pet->GetPower(pet->getPowerType()));
+            *data << uint16(pet->getPower(pet->getPowerType()));
         else
             *data << uint16(0);
     }
@@ -1064,17 +1064,17 @@ void Group::UpdateOutOfRangePlayer(Player* pPlayer, bool Distribute, WorldPacket
     if (mask & GROUP_UPDATE_FLAG_PET_MAX_POWER)
     {
         if (pet)
-            *data << uint16(pet->GetMaxPower(pet->getPowerType()));
+            *data << uint16(pet->getMaxPower(pet->getPowerType()));
         else
             *data << uint16(0);
     }
 
     if (mask & GROUP_UPDATE_FLAG_VEHICLE_SEAT)
     {
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
 #ifdef FT_VEHICLES
-        if (Vehicle* veh = pPlayer->GetCurrentVehicle())
-            *data << uint32(veh->GetVehicleInfo()->seatID[pPlayer->GetMovementInfo()->transport_seat]);
+        if (Vehicle* veh = pPlayer->getCurrentVehicle())
+            *data << uint32(veh->GetVehicleInfo()->seatID[pPlayer->getMovementInfo()->transport_seat]);
 #endif
 #endif
     }
@@ -1195,14 +1195,14 @@ void Group::UpdateAllOutOfRangePlayersFor(Player* pPlayer)
                     {
                         data.clear();
                         plr->BuildValuesUpdateBlockForPlayer(&data, &hisMask);
-                        pPlayer->PushUpdateData(&data, 1);
+                        pPlayer->getUpdateMgr().pushUpdateData(&data, 1);
                     }
 
                     if (u2)
                     {
                         data.clear();
                         pPlayer->BuildValuesUpdateBlockForPlayer(&data, &myMask);
-                        plr->PushUpdateData(&data, 1);
+                        plr->getUpdateMgr().pushUpdateData(&data, 1);
                     }
                 }
             }
@@ -1329,7 +1329,7 @@ void Group::SendLootUpdates(Object* o)
                         PlayerInfo* p = *itr2;
 
                         if (p->m_loggedInPlayer != NULL && p->m_loggedInPlayer->IsVisible(o->getGuid()))       // Save updates for non-existent creatures
-                            p->m_loggedInPlayer->PushUpdateData(&buf, 1);
+                            p->m_loggedInPlayer->getUpdateMgr().pushUpdateData(&buf, 1);
                     }
                 }
 
@@ -1347,7 +1347,7 @@ void Group::SendLootUpdates(Object* o)
                     Unit* victim = static_cast<Unit*>(o);
 
                     victim->Tag(pLooter->getGuid());
-                    pLooter->PushUpdateData(&buf, 1);
+                    pLooter->getUpdateMgr().pushUpdateData(&buf, 1);
                 }
 
                 break;

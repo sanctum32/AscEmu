@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -52,6 +52,8 @@ This file is released under the MIT license. See README-MIT for more information
 
 #if VERSION_STRING == Cata
 #include "GameCata/Management/GuildFinderMgr.h"
+#elif VERSION_STRING == Mop
+#include "GameMop/Management/GuildFinderMgr.h"
 #endif
 
 using namespace AscEmu::Packets;
@@ -66,7 +68,7 @@ void WorldSession::handleGuildQuery(WorldPacket& recvPacket)
     if (guild == nullptr)
         return;
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
     guild->handleQuery(this);
 #else
 
@@ -85,7 +87,7 @@ void WorldSession::handleInviteToGuild(WorldPacket& recvPacket)
         guild->sendGuildInvitePacket(_player->GetSession(), srlPacket.name);
 }
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
 void WorldSession::handleGuildInfo(WorldPacket& /*recvPacket*/)
 {
     if (const auto guild = _player->GetGuild())
@@ -247,7 +249,7 @@ void WorldSession::handleGuildRemove(WorldPacket& recvPacket)
     if (!srlPacket.deserialise(recvPacket))
         return;
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
     const auto targetPlayerInfo = objmgr.GetPlayerInfoByName(srlPacket.name.c_str());
     if (targetPlayerInfo == nullptr)
         return;
@@ -267,7 +269,7 @@ void WorldSession::handleGuildPromote(WorldPacket& recvPacket)
     if (!srlPacket.deserialise(recvPacket))
         return;
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
     const auto targetPlayerInfo = objmgr.GetPlayerInfoByName(srlPacket.name.c_str());
     if (targetPlayerInfo == nullptr)
         return;
@@ -287,7 +289,7 @@ void WorldSession::handleGuildDemote(WorldPacket& recvPacket)
     if (!srlPacket.deserialise(recvPacket))
         return;
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
     const auto targetPlayerInfo = objmgr.GetPlayerInfoByName(srlPacket.name.c_str());
     if (targetPlayerInfo == nullptr)
         return;
@@ -300,7 +302,7 @@ void WorldSession::handleGuildDemote(WorldPacket& recvPacket)
 #endif
 }
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
 void WorldSession::handleGuildSetPublicNote(WorldPacket& recvPacket)
 {
     CmsgGuildSetPublicNote srlPacket;
@@ -340,7 +342,7 @@ void WorldSession::handleGuildSetNoteOpcode(WorldPacket& recvPacket)
 }
 #endif
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
 void WorldSession::handleGuildDelRank(WorldPacket& /*recvPacket*/)
 {
     if (Guild* guild = _player->GetGuild())
@@ -375,7 +377,7 @@ void WorldSession::handleGuildBankDepositMoney(WorldPacket& recvPacket)
         return;
 
     //\todo HasGold requires an uint32_t
-    if (srlPacket.money && _player->HasGold(static_cast<uint32_t>(srlPacket.money)))
+    if (srlPacket.money && _player->hasEnoughCoinage(srlPacket.money))
         if (Guild* guild = _player->GetGuild())
             guild->handleMemberDepositMoney(this, srlPacket.money);
 }
@@ -410,7 +412,7 @@ void WorldSession::handleGuildBankSwapItems(WorldPacket& recvPacket)
         guild->swapItemsWithInventory(_player, srlPacket.toChar, srlPacket.tabId, srlPacket.slotId, srlPacket.playerBag, srlPacket.playerSlotId, srlPacket.splitedAmount);
 }
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
 void WorldSession::handleGuildBankQueryText(WorldPacket& recvPacket)
 {
     MsgQueryGuildBankText srlPacket;
@@ -446,7 +448,7 @@ void WorldSession::handleGuildBankQueryTab(WorldPacket& recvPacket)
     if (pTab == nullptr)
         return;
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
     guild->sendBankList(this, srlPacket.tabId, false, true);
 #else
     guild->sendBankList(this, srlPacket.tabId, true, false);
@@ -470,7 +472,7 @@ void WorldSession::handleGuildBankerActivate(WorldPacket& recvPacket)
         return;
     }
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
     guild->sendBankList(this, 0, false, false);
 #else
     guild->sendBankList(this, 0, true, true);
@@ -490,7 +492,7 @@ void WorldSession::handleGuildSetRank(WorldPacket& recvPacket)
         return;
 
     if (Guild* guild = _player->GetGuild())
-        guild->handleSetRankInfo(this, srlPacket.newRankId, srlPacket.rankName, srlPacket.newRights, srlPacket.moneyPerDay, srlPacket._rightsAndSlots);
+        guild->handleSetRankInfo(this, static_cast<uint8_t>(srlPacket.newRankId), srlPacket.rankName, srlPacket.newRights, srlPacket.moneyPerDay, srlPacket._rightsAndSlots);
 }
 
 
@@ -501,7 +503,7 @@ void WorldSession::handleCharterShowSignatures(WorldPacket& recvPacket)
         return;
 
     if (Charter* charter = objmgr.GetCharterByItemGuid(srlPacket.itemGuid))
-        _player->GetSession()->SendPacket(SmsgPetitionShowSignatures(srlPacket.itemGuid, charter->GetLeader(), charter->GetID(), charter->SignatureCount,
+        _player->GetSession()->SendPacket(SmsgPetitionShowSignatures(srlPacket.itemGuid, charter->GetLeader(), charter->GetID(), static_cast<uint8_t>(charter->SignatureCount),
             charter->Slots, charter->Signatures).serialise().get());
 }
 
@@ -519,7 +521,7 @@ void WorldSession::handleCharterOffer(WorldPacket& recvPacket)
         return;
     }
 
-    if (pTarget == nullptr || pTarget->GetTeam() != _player->GetTeam() || (pTarget == _player && !worldConfig.player.isInterfactionGuildEnabled))
+    if (pTarget == nullptr || pTarget->getTeam() != _player->getTeam() || (pTarget == _player && !worldConfig.player.isInterfactionGuildEnabled))
     {
         SendNotification(_player->GetSession()->LocalizedWorldSrv(77));
         return;
@@ -531,7 +533,7 @@ void WorldSession::handleCharterOffer(WorldPacket& recvPacket)
         return;
     }
 
-    pTarget->GetSession()->SendPacket(SmsgPetitionShowSignatures(srlPacket.itemGuid, pCharter->GetLeader(), pCharter->GetID(), pCharter->SignatureCount,
+    pTarget->GetSession()->SendPacket(SmsgPetitionShowSignatures(srlPacket.itemGuid, pCharter->GetLeader(), pCharter->GetID(), static_cast<uint8_t>(pCharter->SignatureCount),
         pCharter->Slots, pCharter->Signatures).serialise().get());
 }
 
@@ -635,7 +637,7 @@ void WorldSession::handleCharterTurnInCharter(WorldPacket& recvPacket)
         if (playerCharter == nullptr)
             return;
 
-        if (playerCharter->SignatureCount < 9 && worldConfig.server.requireAllSignatures)
+        if (playerCharter->SignatureCount < playerCharter->GetNumberOfSlotsByType() && worldConfig.guild.requireAllSignatures && !_player->GetSession()->HasGMPermissions())
         {
             Guild::sendTurnInPetitionResult(this, PETITION_ERROR_NEED_MORE_SIGNATURES);
             return;
@@ -651,7 +653,7 @@ void WorldSession::handleCharterTurnInCharter(WorldPacket& recvPacket)
         _player->m_charters[CHARTER_TYPE_GUILD] = nullptr;
         playerCharter->Destroy();
 
-        _player->GetItemInterface()->RemoveItemAmt(CharterEntry::Guild, 1);
+        _player->getItemInterface()->RemoveItemAmt(CharterEntry::Guild, 1);
         sHookInterface.OnGuildCreate(_player, guild);
     }
     else
@@ -683,8 +685,9 @@ void WorldSession::handleCharterTurnInCharter(WorldPacket& recvPacket)
             return;
         }
 
-        if (charter->SignatureCount < charter->GetNumberOfSlotsByType() && worldConfig.server.requireAllSignatures)
+        if (charter->SignatureCount < charter->GetNumberOfSlotsByType() && !_player->GetSession()->HasGMPermissions())
         {
+            ///\ todo: missing correct error message for arena charters
             Guild::sendTurnInPetitionResult(this, PETITION_ERROR_NEED_MORE_SIGNATURES);
             return;
         }
@@ -707,7 +710,7 @@ void WorldSession::handleCharterTurnInCharter(WorldPacket& recvPacket)
             if (PlayerInfo* info = objmgr.GetPlayerInfo(charter->Signatures[i]))
                 arenaTeam->AddMember(info);
 
-        _player->GetItemInterface()->SafeFullRemoveItemByGuid(srlPacket.itemGuid);
+        _player->getItemInterface()->SafeFullRemoveItemByGuid(srlPacket.itemGuid);
         _player->m_charters[charter->CharterType] = nullptr;
         charter->Destroy();
     }
@@ -777,9 +780,9 @@ void WorldSession::handleCharterBuy(WorldPacket& recvPacket)
         }
 
         static uint32_t item_ids[] = { CharterEntry::TwoOnTwo, CharterEntry::ThreeOnThree, CharterEntry::FiveOnFive };
-        static uint32_t costs[] = { worldConfig.charterCost._2V2, worldConfig.charterCost._3V3, worldConfig.charterCost._5V5 };
+        static uint32_t costs[] = { worldConfig.arena.charterCost2v2, worldConfig.arena.charterCost3v3, worldConfig.arena.charterCost5v5 };
 
-        if (!_player->HasGold(costs[arena_type]))
+        if (!_player->hasEnoughCoinage(costs[arena_type]))
         {
             SendNotification("You do not have enough gold to purchase this charter");
             return;
@@ -789,17 +792,17 @@ void WorldSession::handleCharterBuy(WorldPacket& recvPacket)
         if (itemProperties == nullptr)
             return;
 
-        const SlotResult slotResult = _player->GetItemInterface()->FindFreeInventorySlot(itemProperties);
+        const SlotResult slotResult = _player->getItemInterface()->FindFreeInventorySlot(itemProperties);
         if (slotResult.Result == 0)
         {
-            _player->GetItemInterface()->BuildInventoryChangeError(nullptr, nullptr, INV_ERR_INVENTORY_FULL);
+            _player->getItemInterface()->BuildInventoryChangeError(nullptr, nullptr, INV_ERR_INVENTORY_FULL);
             return;
         }
 
-        const uint8_t error = _player->GetItemInterface()->CanReceiveItem(itemProperties, 1);
+        const uint8_t error = _player->getItemInterface()->CanReceiveItem(itemProperties, 1);
         if (error)
         {
-            _player->GetItemInterface()->BuildInventoryChangeError(nullptr, nullptr, error);
+            _player->getItemInterface()->BuildInventoryChangeError(nullptr, nullptr, error);
         }
         else
         {
@@ -818,7 +821,7 @@ void WorldSession::handleCharterBuy(WorldPacket& recvPacket)
             item->addFlags(ITEM_FLAG_SOULBOUND);
             item->setEnchantmentId(0, charter->GetID());
             item->setPropertySeed(57813883);
-            if (!_player->GetItemInterface()->AddItemToFreeSlot(item))
+            if (!_player->getItemInterface()->AddItemToFreeSlot(item))
             {
                 charter->Destroy();
                 item->DeleteMe();
@@ -827,19 +830,19 @@ void WorldSession::handleCharterBuy(WorldPacket& recvPacket)
 
             charter->SaveToDB();
 
-            _player->SendItemPushResult(false, true, false, true, _player->GetItemInterface()->LastSearchItemBagSlot(),
-                _player->GetItemInterface()->LastSearchItemSlot(), 1, item->getEntry(), item->getPropertySeed(), item->getRandomPropertiesId(), item->getStackCount());
+            _player->sendItemPushResultPacket(false, true, false, _player->getItemInterface()->LastSearchItemBagSlot(),
+                _player->getItemInterface()->LastSearchItemSlot(), 1, item->getEntry(), item->getPropertySeed(), item->getRandomPropertiesId(), item->getStackCount());
 
-            _player->ModGold(-static_cast<int32_t>(costs[arena_type]));
+            _player->modCoinage(-static_cast<int32_t>(costs[arena_type]));
             _player->m_charters[srlPacket.arenaIndex] = charter;
             _player->SaveToDB(false);
         }
     }
     else
     {
-        if (!_player->HasGold(1000))
+        if (!_player->hasEnoughCoinage(worldConfig.guild.charterCost))
         {
-            _player->GetItemInterface()->BuildInventoryChangeError(nullptr, nullptr, INV_ERR_NOT_ENOUGH_MONEY);
+            _player->getItemInterface()->BuildInventoryChangeError(nullptr, nullptr, INV_ERR_NOT_ENOUGH_MONEY);
             return;
         }
 
@@ -861,17 +864,17 @@ void WorldSession::handleCharterBuy(WorldPacket& recvPacket)
         if (itemProperties == nullptr)
             return;
 
-        const SlotResult slotResult = _player->GetItemInterface()->FindFreeInventorySlot(itemProperties);
+        const SlotResult slotResult = _player->getItemInterface()->FindFreeInventorySlot(itemProperties);
         if (slotResult.Result == 0)
         {
-            _player->GetItemInterface()->BuildInventoryChangeError(0, 0, INV_ERR_INVENTORY_FULL);
+            _player->getItemInterface()->BuildInventoryChangeError(0, 0, INV_ERR_INVENTORY_FULL);
             return;
         }
 
-        const uint8_t error = _player->GetItemInterface()->CanReceiveItem(sMySQLStore.getItemProperties(CharterEntry::Guild), 1);
+        const uint8_t error = _player->getItemInterface()->CanReceiveItem(sMySQLStore.getItemProperties(CharterEntry::Guild), 1);
         if (error)
         {
-            _player->GetItemInterface()->BuildInventoryChangeError(nullptr, nullptr, error);
+            _player->getItemInterface()->BuildInventoryChangeError(nullptr, nullptr, error);
         }
         else
         {
@@ -892,7 +895,7 @@ void WorldSession::handleCharterBuy(WorldPacket& recvPacket)
             item->addFlags(ITEM_FLAG_SOULBOUND);
             item->setEnchantmentId(0, guildCharter->GetID());
             item->setPropertySeed(57813883);
-            if (!_player->GetItemInterface()->AddItemToFreeSlot(item))
+            if (!_player->getItemInterface()->AddItemToFreeSlot(item))
             {
                 guildCharter->Destroy();
                 item->DeleteMe();
@@ -901,17 +904,17 @@ void WorldSession::handleCharterBuy(WorldPacket& recvPacket)
 
             guildCharter->SaveToDB();
 
-            _player->SendItemPushResult(false, true, false, true, _player->GetItemInterface()->LastSearchItemBagSlot(),
-                _player->GetItemInterface()->LastSearchItemSlot(), 1, item->getEntry(), item->getPropertySeed(), item->getRandomPropertiesId(), item->getStackCount());
+            _player->sendItemPushResultPacket(false, true, false, _player->getItemInterface()->LastSearchItemBagSlot(),
+                _player->getItemInterface()->LastSearchItemSlot(), 1, item->getEntry(), item->getPropertySeed(), item->getRandomPropertiesId(), item->getStackCount());
 
             _player->m_charters[CHARTER_TYPE_GUILD] = guildCharter;
-            _player->ModGold(-1000);
+            _player->modCoinage(-1000);
             _player->SaveToDB(false);
         }
     }
 }
 
-#if VERSION_STRING == Cata
+#if VERSION_STRING >= Cata
 void WorldSession::handleGuildAssignRankOpcode(WorldPacket& recvPacket)
 {
     ObjectGuid targetGuid;
@@ -1283,7 +1286,7 @@ void WorldSession::handleGuildFinderBrowse(WorldPacket& recvPacket)
     Player* player = _player;
 
     LFGuildPlayer settings(player->getGuidLow(), static_cast<uint8_t>(classRoles), static_cast<uint8_t>(availability), static_cast<uint8_t>(guildInterests), ANY_FINDER_LEVEL);
-    LFGuildStore guildList = sGuildFinderMgr.getGuildsMatchingSetting(settings, player->GetTeam());
+    LFGuildStore guildList = sGuildFinderMgr.getGuildsMatchingSetting(settings, player->getTeam());
     uint32_t guildCount = static_cast<uint32_t>(guildList.size());
 
     if (guildCount == 0)
@@ -1643,7 +1646,7 @@ void WorldSession::handleGuildFinderSetGuildPost(WorldPacket& recvPacket)
             return;
     }
 
-    LFGuildSettings settings(listed, player->GetTeam(), player->getGuildId(), static_cast<uint8_t>(classRoles), static_cast<uint8_t>(availability), static_cast<uint8_t>(guildInterests), static_cast<uint8_t>(level), comment);
+    LFGuildSettings settings(listed, player->getTeam(), player->getGuildId(), static_cast<uint8_t>(classRoles), static_cast<uint8_t>(availability), static_cast<uint8_t>(guildInterests), static_cast<uint8_t>(level), comment);
     sGuildFinderMgr.setGuildSettings(player->getGuildId(), settings);
 }
 

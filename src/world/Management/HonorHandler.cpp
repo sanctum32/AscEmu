@@ -1,6 +1,6 @@
 /*
  * AscEmu Framework based on ArcEmu MMORPG Server
- * Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+ * Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
  * Copyright (C) 2008-2012 ArcEmu Team <http://www.ArcEmu.org/>
  * Copyright (C) 2005-2007 Ascent Team
  *
@@ -30,7 +30,7 @@
 #include "Server/World.h"
 #include "Server/World.Legacy.h"
 #include "Objects/ObjectMgr.h"
-#include "Spell/Customization/SpellCustomizations.hpp"
+#include "Spell/SpellMgr.h"
 
 
 void HonorHandler::AddHonorPointsToPlayer(Player* pPlayer, uint32 uAmount)
@@ -72,7 +72,7 @@ void HonorHandler::OnPlayerKilled(Player* pPlayer, Player* pVictim)
 
     if (pPlayer->m_bg)
     {
-        if (pVictim->m_bgTeam == pPlayer->m_bgTeam)
+        if (pVictim->getBgTeam() == pPlayer->getBgTeam())
             return;
 
         // patch 2.4, players killed >50 times in battlegrounds won't be worth honor for the rest of that bg
@@ -81,7 +81,7 @@ void HonorHandler::OnPlayerKilled(Player* pPlayer, Player* pVictim)
     }
     else
     {
-        if (pPlayer->GetTeam() == pVictim->GetTeam())
+        if (pPlayer->getTeam() == pVictim->getTeam())
             return;
     }
 
@@ -98,7 +98,7 @@ void HonorHandler::OnPlayerKilled(Player* pPlayer, Player* pVictim)
 
             // hackfix for battlegrounds (since the groups there are disabled, we need to do this manually)
             std::vector<Player*> toadd;
-            uint32 t = pPlayer->m_bgTeam;
+            uint32 t = pPlayer->getBgTeam();
             toadd.reserve(15);        // shouldn't have more than this
             std::set<Player*> * s = &pPlayer->m_bg->m_players[t];
 
@@ -194,17 +194,17 @@ void HonorHandler::OnPlayerKilled(Player* pPlayer, Player* pVictim)
                 data << uint32(pVictim->getPvpRank());
                 pAffectedPlayer->GetSession()->SendPacket(&data);
 
-                int PvPToken = Config.MainConfig.getIntDefault("Player", "EnablePvPToken", 0);
-                if (PvPToken > 0)
+                const auto PvPToken = worldConfig.player.enablePvPToken;
+                if (PvPToken)
                 {
-                    int PvPTokenID = Config.MainConfig.getIntDefault("Player", "PvPTokenID", 0);
+                    const auto PvPTokenID = worldConfig.player.pvpTokenId;
                     if (PvPTokenID > 0)
                     {
                         Item* PvPTokenItem = objmgr.CreateItem(PvPTokenID, pAffectedPlayer);
                         if (PvPTokenItem)
                         {
                             PvPTokenItem->addFlags(ITEM_FLAG_SOULBOUND);
-                            if (!pAffectedPlayer->GetItemInterface()->AddItemToFreeSlot(PvPTokenItem))
+                            if (!pAffectedPlayer->getItemInterface()->AddItemToFreeSlot(PvPTokenItem))
                                 PvPTokenItem->DeleteMe();
                         }
                     }
@@ -212,24 +212,24 @@ void HonorHandler::OnPlayerKilled(Player* pPlayer, Player* pVictim)
                 if (pAffectedPlayer->GetZoneId() == 3518)
                 {
                     // Add Halaa Battle Token
-                    SpellInfo* pvp_token_spell = sSpellCustomizations.GetSpellInfo(pAffectedPlayer->IsTeamHorde() ? 33004 : 33005);
-                    pAffectedPlayer->CastSpell(pAffectedPlayer, pvp_token_spell, true);
+                    SpellInfo const* pvp_token_spell = sSpellMgr.getSpellInfo(pAffectedPlayer->isTeamHorde() ? 33004 : 33005);
+                    pAffectedPlayer->castSpell(pAffectedPlayer, pvp_token_spell, true);
                 }
                 // If we are in Hellfire Peninsula <http://www.wowwiki.com/Hellfire_Peninsula#World_PvP_-_Hellfire_Fortifications>
                 if (pAffectedPlayer->GetZoneId() == 3483)
                 {
                     // Hellfire Horde Controlled Towers
-                    /*if (pAffectedPlayer->GetMapMgr()->GetWorldState(2478) != 3 && pAffectedPlayer->GetTeam() == TEAM_HORDE)
+                    /*if (pAffectedPlayer->GetMapMgr()->GetWorldState(2478) != 3 && pAffectedPlayer->getTeam() == TEAM_HORDE)
                         return;
 
                         // Hellfire Alliance Controlled Towers
-                        if (pAffectedPlayer->GetMapMgr()->GetWorldState(2476) != 3 && pAffectedPlayer->GetTeam() == TEAM_ALLIANCE)
+                        if (pAffectedPlayer->GetMapMgr()->GetWorldState(2476) != 3 && pAffectedPlayer->getTeam() == TEAM_ALLIANCE)
                         return;
                         */
 
                     // Add Mark of Thrallmar/Honor Hold
-                    SpellInfo* pvp_token_spell = sSpellCustomizations.GetSpellInfo(pAffectedPlayer->IsTeamHorde() ? 32158 : 32155);
-                    pAffectedPlayer->CastSpell(pAffectedPlayer, pvp_token_spell, true);
+                    SpellInfo const* pvp_token_spell = sSpellMgr.getSpellInfo(pAffectedPlayer->isTeamHorde() ? 32158 : 32155);
+                    pAffectedPlayer->castSpell(pAffectedPlayer, pvp_token_spell, true);
                 }
             }
         }

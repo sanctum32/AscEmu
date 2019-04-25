@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -424,6 +424,7 @@ ConfigFile::ConfigValueSetting* ConfigFile::getSavedSetting(std::string sectionN
             return &(it2->second);
     }
 
+    LOG_ERROR("Could not load config value: [%s].[%s]", sectionName.c_str(), confName.c_str());
     return nullptr;
 }
 
@@ -463,3 +464,74 @@ float ConfigFile::getFloatDefault(std::string sectionName, std::string confName,
     return confSetting->asFloat;
 }
 
+bool ConfigFile::tryGetBool(std::string sectionName, std::string confName, bool * b)
+{
+    const auto setting = getSavedSetting(sectionName, confName);
+    if (!setting)
+    {
+        return false;
+    }
+
+    *b = setting->asBool;
+    return true;
+}
+
+bool ConfigFile::tryGetFloat(std::string sectionName, std::string confName, float* f)
+{
+    const auto setting = getSavedSetting(sectionName, confName);
+    if (!setting)
+    {
+        return false;
+    }
+
+    *f = setting->asFloat;
+    return true;
+}
+
+bool ConfigFile::tryGetInt(std::string sectionName, std::string confName, int* i)
+{
+    const auto setting = getSavedSetting(sectionName, confName);
+    if (!setting)
+    {
+        return false;
+    }
+
+    *i = setting->asInt;
+    return true;
+}
+
+bool ConfigFile::tryGetInt(std::string sectionName, std::string confName, uint8_t* i)
+{
+    const auto setting = getSavedSetting(sectionName, confName);
+    if (!setting)
+    {
+        return false;
+    }
+
+    *i = setting->asInt;
+    return true;
+}
+
+bool ConfigFile::tryGetInt(std::string sectionName, std::string confName, uint32_t* i)
+{
+    const auto setting = getSavedSetting(sectionName, confName);
+    if (!setting)
+    {
+        return false;
+    }
+
+    *i = setting->asInt;
+    return true;
+}
+
+bool ConfigFile::tryGetString(std::string sectionName, std::string confName, std::string* s)
+{
+    const auto setting = getSavedSetting(sectionName, confName);
+    if (!setting)
+    {
+        return false;
+    }
+
+    *s = setting->asString;
+    return true;
+}

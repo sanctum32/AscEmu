@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
@@ -8,15 +8,10 @@ This file is released under the MIT license. See README-MIT for more information
 
 #include "ManagedPacket.h"
 
-#if VERSION_STRING != Cata
+#if VERSION_STRING < Cata
+#if VERSION_STRING != Mop
 
-#if VERSION_STRING == Classic
-#include "GameClassic/Data/MovementInfoClassic.h"
-#elif VERSION_STRING == TBC
-#include "GameTBC/Data/MovementInfoTBC.h"
-#elif VERSION_STRING == WotLK
-#include "GameWotLK/Data/MovementInfoWotLK.h"
-#endif
+#include "Data/MovementInfo.h"
 
 namespace AscEmu { namespace Packets
 {
@@ -208,4 +203,5 @@ namespace AscEmu { namespace Packets
     };
 }}
 
+#endif
 #endif

@@ -1,7 +1,7 @@
 /*
- Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
- This file is released under the MIT license. See README-MIT for more information.
- */
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
+This file is released under the MIT license. See README-MIT for more information.
+*/
 
 #include <StdAfx.h>
 
@@ -17,7 +17,7 @@
 #include "Map/MapMgr.h"
 #include "Server/Script/ScriptSetup.h"
 #include "../../world/WorldConf.h"
-#if VERSION_STRING == Cata
+#if VERSION_STRING >= Cata
 #include "../../world/Management/Guild.h"
 #endif
 
@@ -1105,7 +1105,7 @@ void LuaHookOnEnterCombat(Player* pPlayer, Unit* pTarget)
     RELEASE_LOCK
 }
 
-bool LuaHookOnCastSpell(Player* pPlayer, SpellInfo* pSpell, Spell* spell)
+bool LuaHookOnCastSpell(Player* pPlayer, SpellInfo const* pSpell, Spell* spell)
 {
     GET_LOCK
     bool result = true;
@@ -1522,7 +1522,7 @@ bool LuaHookOnResurrect(Player* pPlayer)
 bool LuaOnDummySpell(uint8_t effectIndex, Spell* pSpell)
 {
     GET_LOCK
-    LuaGlobal::instance()->luaEngine()->BeginCall(LuaGlobal::instance()->m_luaDummySpells[pSpell->GetSpellInfo()->getId()]);
+    LuaGlobal::instance()->luaEngine()->BeginCall(LuaGlobal::instance()->m_luaDummySpells[pSpell->getSpellInfo()->getId()]);
     LuaGlobal::instance()->luaEngine()->PUSH_UINT(effectIndex);
     LuaGlobal::instance()->luaEngine()->PushSpell(pSpell);
     LuaGlobal::instance()->luaEngine()->ExecuteCall(2);

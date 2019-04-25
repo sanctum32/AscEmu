@@ -1,7 +1,7 @@
 /*
- Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
- This file is released under the MIT license. See README-MIT for more information.
- */
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
+This file is released under the MIT license. See README-MIT for more information.
+*/
 
 // \todo move most defines to enum, text to db (use SendScriptTextChatMessage(ID))
 #include "Setup.h"
@@ -197,7 +197,7 @@ class MalganisAI : public CreatureAIScript
             getCreature()->Heal(getCreature(), 52723, fAmount / 2);
         }
 
-        if (getCreature()->GetHealthPct() < 2)
+        if (getCreature()->getHealthPct() < 2)
         {
             getCreature()->setMoveRoot(true);
             getCreature()->addUnitFlags(UNIT_FLAG_NOT_ATTACKABLE_2);

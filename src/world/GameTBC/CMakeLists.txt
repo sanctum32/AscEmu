@@ -1,6 +1,5 @@
-# Copyright (c) 2014-2018 AscEmu Team <http://www.ascemu.org>
+# Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 
-include(GameTBC/Data/CMakeLists.txt)
 include(GameTBC/Network/CMakeLists.txt)
 include(GameTBC/Storage/CMakeLists.txt)
 
