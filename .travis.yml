@@ -17,7 +17,7 @@ env:
 
 before_install:
   - if [[ $TRAVIS_OS_NAME == "linux" ]]; then
-    export CC=gcc-5 CXX=g++-5 ASC_VERSION=WotLK;
+    export CC=gcc-8 CXX=g++-8 ASC_VERSION=WotLK;
     fi
 
 install:
@@ -37,14 +37,14 @@ addons:
     - libbz2-dev
     - libmysqlclient-dev
     - libmysql++-dev
-    - gcc-5
-    - g++-5
+    - gcc-8
+    - g++-8
   coverity_scan:
     project:
       name: AscEmu/AscEmu
       description: MMORPG Framework
     notification_email: autokaori@gmail.com
-    build_command_prepend: cmake ../ -DCMAKE_BUILD_TYPE=Release -DBUILD_WITH_WARNINGS=0 -DBUILD_TOOLS=0 -DASCEMU_VERSION=${ASC_VERSION} && cov-configure --comptype gcc --compiler gcc-5 --template
+    build_command_prepend: cmake ../ -DCMAKE_BUILD_TYPE=Release -DBUILD_WITH_WARNINGS=0 -DBUILD_TOOLS=0 -DASCEMU_VERSION=${ASC_VERSION} -DWITH_EXPERIMENTAL_FILESYSTEM=1 && cov-configure --comptype gcc --compiler gcc-8 --template
     build_command: make -j 4
     branch_pattern: coverity_scan
 

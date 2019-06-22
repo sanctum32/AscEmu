@@ -20,7 +20,6 @@ set(sources
     WarriorSpells.cpp
     MiscSpells.cpp
     # Required for linker
-    ../../world/Server/LazyTimer.cpp
     ../../world/Server/ServerState.cpp
     ../../world/Spell/SpellCastTargets.cpp
     ../../shared/Util.cpp
@@ -49,8 +48,8 @@ add_definitions(-DSCRIPTLIB -DSKIP_ALLOCATOR_SHARING)
 
 target_link_libraries(${PROJECT_NAME} world)
 
-if(USE_PCH AND PCHSupport_FOUND)
-    ADD_NATIVE_PRECOMPILED_HEADER(${PROJECT_NAME} Setup.h ${CMAKE_CURRENT_SOURCE_DIR}/Setup.cpp)
+if(USE_PCH)
+    gen_cxx_pch(${PROJECT_NAME} Setup.h ${CMAKE_CURRENT_SOURCE_DIR}/Setup.cpp)
 endif()
 
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION ${ASCEMU_SCRIPTLIB_PATH} LIBRARY DESTINATION ${ASCEMU_SCRIPTLIB_PATH} )
