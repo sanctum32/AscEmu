@@ -166,7 +166,7 @@ class SERVER_DECL MailSystem : public Singleton<MailSystem>, public EventableObj
         {
             return (config_flags & flag) ? true : false;
         }
-        uint32 config_flags;
+        uint32 config_flags{};
 
 };
 

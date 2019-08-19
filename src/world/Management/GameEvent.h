@@ -90,7 +90,11 @@ class GameEvent
             mEventScript = nullptr;
         }
 
-        GameEvent(){}
+        GameEvent(): event_id(0), start(0), end(0), occurence(0), length(0), holiday_id(), state(), announce(0),
+                     nextstart(0),
+                     mEventScript(nullptr)
+        {
+        }
 
         bool isValid() const { return length > 0 && end > time(0); }
         void SpawnAllEntities();

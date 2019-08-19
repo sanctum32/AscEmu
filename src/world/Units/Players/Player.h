@@ -171,26 +171,26 @@ class SERVER_DECL PlayerInfo
 
         ~PlayerInfo();
 
-        uint32 guid;
-        uint32 acct;
-        char* name;
-        uint8_t race;
-        uint8_t gender;
-        uint8 cl;
-        uint32 team;
-        uint8 role;
+        uint32_t guid{};
+        uint32_t acct{};
+        char* name{};
+        uint8_t race{};
+        uint8_t gender{};
+        uint8_t cl{};
+        uint32_t team{};
+        uint8_t role{};
 
-        time_t lastOnline;
-        uint32 lastZone;
-        uint32 lastLevel;
-        Group* m_Group;
-        int8 subGroup;
+        time_t lastOnline{};
+        uint32_t lastZone{};
+        uint32_t lastLevel{};
+        Group* m_Group{};
+        int8_t subGroup{};
         Mutex savedInstanceIdsLock;
         PlayerInstanceMap savedInstanceIds[NUM_INSTANCE_MODES];
 
-        Player* m_loggedInPlayer;
-        uint32 m_guild;
-        uint32 guildRank;
+        Player* m_loggedInPlayer{};
+        uint32_t m_guild{};
+        uint32_t guildRank{};
 };
 
 struct PlayerPet
@@ -326,9 +326,9 @@ class PlayerSpec
 
         std::map<uint32, uint8> talents;
 #ifdef FT_GLYPHS
-        uint16 glyphs[GLYPHS_COUNT];
+        uint16 glyphs[GLYPHS_COUNT]{};
 #endif
-        ActionButton mActions[PLAYER_ACTION_BUTTON_COUNT];
+        ActionButton mActions[PLAYER_ACTION_BUTTON_COUNT]{};
     private:
 
         uint32 tp;

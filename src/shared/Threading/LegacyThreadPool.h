@@ -178,10 +178,10 @@ class ThreadController
 
 struct SERVER_DECL Thread
 {
-    ThreadBase* ExecutionTarget;
-    ThreadController ControlInterface;
+    ThreadBase* ExecutionTarget{};
+    ThreadController ControlInterface{};
     Mutex SetupMutex;
-    bool DeleteAfterExit;
+    bool DeleteAfterExit{};
 };
 
 class SERVER_DECL CThreadPool

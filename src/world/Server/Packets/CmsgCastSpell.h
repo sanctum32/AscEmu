@@ -23,10 +23,11 @@ namespace AscEmu::Packets
         }
 
         CmsgCastSpell(uint32_t spell_id, uint8_t cast_count, uint8_t flags) :
-            ManagedPacket(CMSG_CAST_SPELL, 0),
-            spell_id(spell_id),
-            cast_count(cast_count),
-            flags(flags)
+	        ManagedPacket(CMSG_CAST_SPELL, 0),
+	        spell_id(spell_id),
+	        cast_count(cast_count),
+	        flags(flags),
+    		glyphSlot(0)
         {
         }
 

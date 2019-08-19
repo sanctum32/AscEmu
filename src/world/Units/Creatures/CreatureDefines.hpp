@@ -443,7 +443,7 @@ struct GossipOptions
 
 struct GossipNpc
 {
-    GossipNpc() { pOptions = NULL; }
+    GossipNpc(): ID(0), EntryId(0), TextID(0), OptionCount(0) { pOptions = nullptr; }
     uint32 ID;
     uint32 EntryId;
     uint32 TextID;

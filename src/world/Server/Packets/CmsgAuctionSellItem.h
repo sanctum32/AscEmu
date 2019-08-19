@@ -29,12 +29,12 @@ namespace AscEmu::Packets
         }
 
         CmsgAuctionSellItem(uint64_t auctioneerGuid, uint64_t bidMoney, uint64_t buyoutPrice, uint32_t itemsCount, uint32_t expireTime) :
-            ManagedPacket(CMSG_AUCTION_SELL_ITEM, 0),
-            auctioneerGuid(auctioneerGuid),
-            bidMoney(bidMoney),
-            buyoutPrice(buyoutPrice),
-            itemsCount(itemsCount),
-            expireTime(expireTime)
+	        ManagedPacket(CMSG_AUCTION_SELL_ITEM, 0),
+	        auctioneerGuid(auctioneerGuid),
+	        bidMoney(bidMoney),
+	        buyoutPrice(buyoutPrice),
+	        itemsCount(itemsCount),
+	        expireTime(expireTime), itemGuids{}, count{}
         {
         }
 

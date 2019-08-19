@@ -93,7 +93,11 @@ class SERVER_DECL AscEmuLog : public Singleton<AscEmuLog>
 
     public:
 
-        AscEmuLog() : normal_log_file(nullptr), error_log_file(nullptr), aelog_file_log_level(0), aelog_debug_flags(0) {}
+        AscEmuLog() : normal_log_file(nullptr), error_log_file(nullptr), aelog_file_log_level(0), aelog_debug_flags(0),
+                      handle_stdout(nullptr)
+		{
+		}
+
         ~AscEmuLog()
         {
             if (normal_log_file != nullptr)

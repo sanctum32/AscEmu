@@ -41,18 +41,18 @@ class SERVER_DECL Instance
 {
     public:
 
-        uint32 m_instanceId;
-        uint32 m_mapId;
-        MapMgr* m_mapMgr;
-        uint32 m_creatorGuid;
-        uint32 m_creatorGroup;
-        bool m_persistent;
-        uint8 m_difficulty;
+        uint32 m_instanceId{};
+        uint32 m_mapId{};
+        MapMgr* m_mapMgr{};
+        uint32 m_creatorGuid{};
+        uint32 m_creatorGroup{};
+        bool m_persistent{};
+        uint8 m_difficulty{};
         std::set<uint32> m_killedNpcs;
-        time_t m_creation;
-        time_t m_expiration;
-        MySQLStructure::MapInfo const* m_mapInfo;
-        bool m_isBattleground;
+        time_t m_creation{};
+        time_t m_expiration{};
+        MySQLStructure::MapInfo const* m_mapInfo{};
+        bool m_isBattleground{};
 
         void LoadFromDB(Field* fields);
         void SaveToDB();

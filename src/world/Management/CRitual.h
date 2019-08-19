@@ -30,7 +30,9 @@ class CRitual
 {
     public:
 
-        CRitual() {}
+        CRitual(): CasterGUID(0), TargetGUID(0), SpellID(0), CurrentMembers(0), MaxMembers(0)
+        {
+        }
 
         CRitual(unsigned long MaxMembers) : Members(MaxMembers)
         {

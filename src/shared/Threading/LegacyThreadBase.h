@@ -23,7 +23,7 @@ class SERVER_DECL ThreadBase
         virtual bool runThread() = 0;
         virtual void onShutdown() {}
 #ifdef WIN32
-        HANDLE THREAD_HANDLE;
+        HANDLE THREAD_HANDLE{};
 #else
         pthread_t THREAD_HANDLE;
 #endif

@@ -859,7 +859,7 @@ enum AURA_CHECK_RESULT
 
 struct TransportData
 {
-    uint64 transportGuid;
+    uint64_t transportGuid{};
     LocationVector relativePosition;
 };
 

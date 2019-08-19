@@ -146,7 +146,10 @@ namespace Arcemu
 
         private:
 
-            EquipmentSetMgr(EquipmentSetMgr & /*other*/) {}
+            EquipmentSetMgr(EquipmentSetMgr & /*other*/): ownerGUID(0)
+            {
+            }
+
             EquipmentSetMgr & operator=(EquipmentSetMgr & /*other*/) { return *this; }
 
             /// GUID of the owner (player) of the equipment sets

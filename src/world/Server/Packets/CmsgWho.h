@@ -32,15 +32,15 @@ namespace AscEmu::Packets
 
         CmsgWho(uint32_t min_level, uint32_t max_level, uint32_t class_mask, uint32_t race_mask,
             uint32_t zone_count, uint32_t name_count, std::string chatname, std::string guildname) :
-            ManagedPacket(CMSG_WHO, 8),
-            min_level(min_level),
-            max_level(max_level),
-            class_mask(class_mask),
-            race_mask(race_mask),
-            zone_count(zone_count),
-            name_count(name_count),
-            player_name(chatname),
-            guild_name(guildname)
+	        ManagedPacket(CMSG_WHO, 8),
+	        min_level(min_level),
+	        max_level(max_level),
+	        class_mask(class_mask),
+	        race_mask(race_mask),
+	        zone_count(zone_count),
+	        name_count(name_count),
+	        player_name(chatname),
+	        guild_name(guildname), zones{}
         {
         }
 

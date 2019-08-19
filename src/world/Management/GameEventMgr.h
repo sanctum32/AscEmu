@@ -166,7 +166,7 @@ struct GameEventData
     {
     };
 
-    uint32 event_id;
+    uint32 event_id{};
     time_t start;
     time_t end;
     time_t nextstart;                   // after this time the follow-up events count this phase completed

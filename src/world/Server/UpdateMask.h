@@ -27,8 +27,8 @@
 class UpdateMask
 {
     uint32* mUpdateMask;
-    uint32 mCount; // in values
-    uint32 mBlocks; // in uint32 blocks
+    uint32 mCount{}; // in values
+    uint32 mBlocks{}; // in uint32 blocks
 
     public:
 
