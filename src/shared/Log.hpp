@@ -88,13 +88,12 @@ class SERVER_DECL AscEmuLog : public Singleton<AscEmuLog>
     uint32_t aelog_debug_flags;
 
 #ifdef _WIN32
-    HANDLE handle_stdout;
+    HANDLE handle_stdout{};
 #endif
 
     public:
 
-        AscEmuLog() : normal_log_file(nullptr), error_log_file(nullptr), aelog_file_log_level(0), aelog_debug_flags(0),
-                      handle_stdout(nullptr)
+        AscEmuLog() : normal_log_file(nullptr), error_log_file(nullptr), aelog_file_log_level(0), aelog_debug_flags(0)
 		{
 		}
 
