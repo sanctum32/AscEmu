@@ -60,22 +60,22 @@ class Baleheim : public CreatureAIScript
     }
 };
 
-class Plaguethis_Gossip : public Arcemu::Gossip::Script
+class Plaguethis_Gossip : public GossipScript
 {
 public:
 
-    void OnHello(Object* pObject, Player* plr) override
+    void onHello(Object* pObject, Player* plr) override
     {
-        Arcemu::Gossip::Menu menu(pObject->getGuid(), 40002, plr->GetSession()->language);
-        menu.AddItem(GOSSIP_ICON_CHAT, plr->GetSession()->LocalizedGossipOption(464), 2); // Where would you like to fly too ?
+        GossipMenu menu(pObject->getGuid(), 40002, plr->GetSession()->language);
+        menu.addItem(GOSSIP_ICON_CHAT, 464, 2); // Where would you like to fly too ?
 
         if (plr->HasQuest(11332))
-            menu.AddItem(GOSSIP_ICON_CHAT, plr->GetSession()->LocalizedGossipOption(465), 1); // Greer, i need a Gryphon to ride and some bombs to drop on New Agamand!
+            menu.addItem(GOSSIP_ICON_CHAT, 465, 1); // Greer, i need a Gryphon to ride and some bombs to drop on New Agamand!
 
-        menu.Send(plr);
+        menu.sendGossipPacket(plr);
     }
 
-    void OnSelectOption(Object* pObject, Player* plr, uint32 Id, const char* /*Code*/, uint32 /*gossipId*/) override
+    void onSelectOption(Object* pObject, Player* plr, uint32 Id, const char* /*Code*/, uint32 /*gossipId*/) override
     {
         Creature* pCreature = static_cast<Creature*>(pObject);
 
@@ -83,7 +83,7 @@ public:
         {
             case 1:
             {
-                Item* item = objmgr.CreateItem(33634, plr);
+                Item* item = sObjectMgr.CreateItem(33634, plr);
                 if (item == nullptr)
                     return;
 

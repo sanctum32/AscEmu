@@ -19,17 +19,17 @@
 
 #include "Setup.h"
 #include "Server/Script/ScriptSetup.h"
-#include "AlteracValley.h"
-#include "ArathiBasin.h"
-#include "CircleOfBlood.h"
-#include "DalaranSewers.h"
-#include "EyeOfTheStorm.h"
-#include "IsleOfConquest.h"
-#include "RingOfTrials.h"
-#include "RingOfValor.h"
-#include "RuinsOfLordaeron.h"
-#include "StrandOfTheAncient.h"
-#include "WarsongGulch.h"
+#include "AlteracValley/AlteracValley.h"
+#include "ArathiBasin/ArathiBasin.h"
+#include "CircleOfBlood/CircleOfBlood.h"
+#include "DalaranSewers/DalaranSewers.h"
+#include "EyeOfTheStorm/EyeOfTheStorm.h"
+#include "IsleOfConquest/IsleOfConquest.h"
+#include "RingOfTrials/RingOfTrials.h"
+#include "RingOfValor/RingOfValor.h"
+#include "RuinsOfLordaeron/RuinsOfLordaeron.h"
+#include "StrandOfTheAncient/StrandOfTheAncient.h"
+#include "WarsongGulch/WarsongGulch.h"
 #include "Server/Script/ScriptMgr.h"
 
 extern "C" SCRIPT_DECL void _exp_set_serverstate_singleton(ServerState* state)
@@ -37,36 +37,34 @@ extern "C" SCRIPT_DECL void _exp_set_serverstate_singleton(ServerState* state)
     ServerState::instance(state);
 }
 
-extern "C" SCRIPT_DECL uint32 _exp_get_script_type()
+extern "C" SCRIPT_DECL uint32_t _exp_get_script_type()
 {
     return SCRIPT_TYPE_MISC;
 }
 
 extern "C" SCRIPT_DECL void _exp_script_register(ScriptMgr* /*mgr*/)
 {
-    CBattlegroundManager &bgMgr = CBattlegroundManager::getSingleton();
-
     // Mapping Battleground type to map Id
-    bgMgr.RegisterMapForBgType(BATTLEGROUND_ALTERAC_VALLEY, 30);
-    bgMgr.RegisterMapForBgType(BATTLEGROUND_WARSONG_GULCH, 489);
-    bgMgr.RegisterMapForBgType(BATTLEGROUND_ARATHI_BASIN, 529);
-    bgMgr.RegisterMapForBgType(BATTLEGROUND_EYE_OF_THE_STORM, 566);
-    bgMgr.RegisterMapForBgType(BATTLEGROUND_STRAND_OF_THE_ANCIENT, 607);
-    bgMgr.RegisterMapForBgType(BATTLEGROUND_ISLE_OF_CONQUEST, 628);
+    sBattlegroundManager.RegisterMapForBgType(BATTLEGROUND_ALTERAC_VALLEY, 30);
+    sBattlegroundManager.RegisterMapForBgType(BATTLEGROUND_WARSONG_GULCH, 489);
+    sBattlegroundManager.RegisterMapForBgType(BATTLEGROUND_ARATHI_BASIN, 529);
+    sBattlegroundManager.RegisterMapForBgType(BATTLEGROUND_EYE_OF_THE_STORM, 566);
+    sBattlegroundManager.RegisterMapForBgType(BATTLEGROUND_STRAND_OF_THE_ANCIENT, 607);
+    sBattlegroundManager.RegisterMapForBgType(BATTLEGROUND_ISLE_OF_CONQUEST, 628);
 
     // Registering factory methods
-    bgMgr.RegisterBgFactory(30, &AlteracValley::Create);
-    bgMgr.RegisterBgFactory(489, &WarsongGulch::Create);
-    bgMgr.RegisterBgFactory(529, &ArathiBasin::Create);
-    bgMgr.RegisterBgFactory(566, &EyeOfTheStorm::Create);
-    bgMgr.RegisterBgFactory(607, &StrandOfTheAncient::Create);
-    bgMgr.RegisterBgFactory(628, &IsleOfConquest::Create);
+    sBattlegroundManager.RegisterBgFactory(30, &AlteracValley::Create);
+    sBattlegroundManager.RegisterBgFactory(489, &WarsongGulch::Create);
+    sBattlegroundManager.RegisterBgFactory(529, &ArathiBasin::Create);
+    sBattlegroundManager.RegisterBgFactory(566, &EyeOfTheStorm::Create);
+    sBattlegroundManager.RegisterBgFactory(607, &StrandOfTheAncient::Create);
+    sBattlegroundManager.RegisterBgFactory(628, &IsleOfConquest::Create);
 
-    bgMgr.RegisterArenaFactory(559, &RingOfTrials::Create);
-    bgMgr.RegisterArenaFactory(562, &CircleOfBlood::Create);
-    bgMgr.RegisterArenaFactory(572, &RuinsOfLordaeron::Create);
-    bgMgr.RegisterArenaFactory(617, &DalaranSewers::Create);
-    bgMgr.RegisterArenaFactory(618, &RingOfValor::Create);
+    sBattlegroundManager.RegisterArenaFactory(559, &RingOfTrials::Create);
+    sBattlegroundManager.RegisterArenaFactory(562, &CircleOfBlood::Create);
+    sBattlegroundManager.RegisterArenaFactory(572, &RuinsOfLordaeron::Create);
+    sBattlegroundManager.RegisterArenaFactory(617, &DalaranSewers::Create);
+    sBattlegroundManager.RegisterArenaFactory(618, &RingOfValor::Create);
 }
 
 #ifdef WIN32

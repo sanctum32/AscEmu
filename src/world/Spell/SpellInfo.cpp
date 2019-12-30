@@ -3,12 +3,12 @@ Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
 This file is released under the MIT license. See README-MIT for more information.
 */
 
-#include "StdAfx.h"
-#include "Management/Skill.h"
-#include "../../scripts/Battlegrounds/AlteracValley.h"
+#include "Definitions/PowerType.h"
+#include "Definitions/SpellEffects.h"
 #include "Definitions/SpellEffectTarget.h"
-#include "Spell/Definitions/SpellEffects.h"
-#include "Spell/SpellAuras.h"
+#include "SpellAuras.h"
+
+#include "Management/Skill.h"
 
 SpellInfo::SpellInfo()
 {
@@ -116,8 +116,10 @@ SpellInfo::SpellInfo()
     MaxTargets = 0;
     DmgClass = 0;
     PreventionType = 0;
+#if VERSION_STRING > Classic
     for (auto i = 0; i < MAX_SPELL_TOTEM_CATEGORIES; ++i)
         TotemCategory[i] = 0;
+#endif
     AreaGroupId = 0;
     School = 0;
     RuneCostID = 0;
@@ -171,6 +173,9 @@ SpellInfo::SpellInfo()
     // Script linkers
     spellScriptLink = nullptr;
     auraScriptLink = nullptr;
+
+    // New script system
+    spellScript = nullptr;
 }
 
 SpellInfo::~SpellInfo() {}
@@ -191,7 +196,12 @@ bool SpellInfo::hasEffectApplyAuraName(uint32_t auraType) const
 {
     for (auto i = 0; i < MAX_SPELL_EFFECTS; ++i)
     {
-        if ((Effect[i] == SPELL_EFFECT_APPLY_AURA || Effect[i] == SPELL_EFFECT_PERSISTENT_AREA_AURA) && EffectApplyAuraName[i] == auraType)
+        if (Effect[i] != SPELL_EFFECT_APPLY_AURA && Effect[i] != SPELL_EFFECT_PERSISTENT_AREA_AURA && Effect[i] != SPELL_EFFECT_APPLY_ENEMY_AREA_AURA &&
+            Effect[i] != SPELL_EFFECT_APPLY_FRIEND_AREA_AURA && Effect[i] != SPELL_EFFECT_APPLY_GROUP_AREA_AURA && Effect[i] != SPELL_EFFECT_APPLY_OWNER_AREA_AURA &&
+            Effect[i] != SPELL_EFFECT_APPLY_PET_AREA_AURA && Effect[i] != SPELL_EFFECT_APPLY_RAID_AREA_AURA)
+            continue;
+
+        if (EffectApplyAuraName[i] == auraType)
             return true;
     }
 
@@ -360,6 +370,20 @@ bool SpellInfo::isAffectingSpell(SpellInfo const* spellInfo) const
                 return true;
         }
     }
+    return false;
+}
+
+bool SpellInfo::hasValidPowerType() const
+{
+#if VERSION_STRING < WotLK
+    if (getPowerType() <= POWER_TYPE_HAPPINESS)
+#elif VERSION_STRING == WotLK
+    if (getPowerType() <= POWER_TYPE_RUNIC_POWER)
+#elif VERSION_STRING >= Cata
+    if (getPowerType() <= POWER_TYPE_ALTERNATIVE)
+#endif
+        return true;
+
     return false;
 }
 

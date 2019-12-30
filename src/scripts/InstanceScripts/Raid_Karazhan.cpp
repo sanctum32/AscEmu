@@ -9,26 +9,26 @@ This file is released under the MIT license. See README-MIT for more information
 #include <Spell/Definitions/PowerType.h>
 
 // Partially by Plexor (I used a spell before, but changed to his method)
-class Berthold : public Arcemu::Gossip::Script
+class Berthold : public GossipScript
 {
 public:
 
-    void OnHello(Object* pObject, Player* Plr) override
+    void onHello(Object* pObject, Player* Plr) override
     {
-        Arcemu::Gossip::Menu menu(pObject->getGuid(), 11224);
-        menu.AddItem(GOSSIP_ICON_CHAT, Plr->GetSession()->LocalizedGossipOption(428), 1);     // What is this place?
-        menu.AddItem(GOSSIP_ICON_CHAT, Plr->GetSession()->LocalizedGossipOption(429), 2);     // Where is Medivh?
-        menu.AddItem(GOSSIP_ICON_CHAT, Plr->GetSession()->LocalizedGossipOption(430), 3);     // How do you navigate the tower?
+        GossipMenu menu(pObject->getGuid(), 11224);
+        menu.addItem(GOSSIP_ICON_CHAT, 428, 1);     // What is this place?
+        menu.addItem(GOSSIP_ICON_CHAT, 429, 2);     // Where is Medivh?
+        menu.addItem(GOSSIP_ICON_CHAT, 430, 3);     // How do you navigate the tower?
 
         //Killing the Shade of Aran makes a teleport to medivh's available from Berthold the Doorman.
         Unit* soa = pObject->GetMapMgr()->GetInterface()->GetCreatureNearestCoords(-11165.2f, -1912.13f, 232.009f, 16524);
         if (!soa || !soa->isAlive())
-            menu.AddItem(GOSSIP_ICON_CHAT, Plr->GetSession()->LocalizedGossipOption(431), 4); // Please teleport me to the Guardian's Library.
+            menu.addItem(GOSSIP_ICON_CHAT, 431, 4); // Please teleport me to the Guardian's Library.
 
-        menu.Send(Plr);
+        menu.sendGossipPacket(Plr);
     }
 
-    void OnSelectOption(Object* /*pObject*/, Player* Plr, uint32 Id, const char* /*Code*/, uint32_t /*gossipId*/) override
+    void onSelectOption(Object* /*pObject*/, Player* Plr, uint32 Id, const char* /*Code*/, uint32_t /*gossipId*/) override
     {
         switch (Id)
         {
@@ -36,7 +36,7 @@ public:
                 Plr->SafeTeleport(Plr->GetMapId(), Plr->GetInstanceID(), -11165.123f, -1911.13f, 232.009f, 2.3255f);
                 break;
         }
-        Arcemu::Gossip::Menu::Complete(Plr);
+        GossipMenu::senGossipComplete(Plr);
     }
 
 };
@@ -429,34 +429,34 @@ class THEBIGBADWOLFAI : public CreatureAIScript
 
 
 uint32 WayStartBBW[1000000];
-class BarnesGS : public Arcemu::Gossip::Script
+class BarnesGS : public GossipScript
 {
 public:
 
-    void OnHello(Object* pObject, Player* Plr) override
+    void onHello(Object* pObject, Player* Plr) override
     {
         if (WayStartBBW[pObject->GetInstanceID()] == 5)
         {
-            Arcemu::Gossip::Menu menu(pObject->getGuid(), 8975, 0);
-            menu.Send(Plr);
+            GossipMenu menu(pObject->getGuid(), 8975, 0);
+            menu.sendGossipPacket(Plr);
         }
         else
         {
-            Arcemu::Gossip::Menu menu(pObject->getGuid(), 8970, 0);
-            menu.AddItem(GOSSIP_ICON_CHAT, Plr->GetSession()->LocalizedGossipOption(432), 1);     // I'm not an actor.
-            menu.Send(Plr);
+            GossipMenu menu(pObject->getGuid(), 8970, 0);
+            menu.addItem(GOSSIP_ICON_CHAT, 432, 1);     // I'm not an actor.
+            menu.sendGossipPacket(Plr);
         }
     }
 
-    void OnSelectOption(Object* pObject, Player* Plr, uint32 Id, const char* /*Code*/, uint32_t /*gossipId*/) override
+    void onSelectOption(Object* pObject, Player* Plr, uint32 Id, const char* /*Code*/, uint32_t /*gossipId*/) override
     {
         switch (Id)
         {
             case 1:
             {
-                Arcemu::Gossip::Menu menu(pObject->getGuid(), 8971, 0);
-                menu.AddItem(GOSSIP_ICON_CHAT, Plr->GetSession()->LocalizedGossipOption(433), 2);     // Ok, I'll give it a try, then.
-                menu.Send(Plr);
+                GossipMenu menu(pObject->getGuid(), 8971, 0);
+                menu.addItem(GOSSIP_ICON_CHAT, 433, 2);     // Ok, I'll give it a try, then.
+                menu.sendGossipPacket(Plr);
             }
             break;
             case 2:
@@ -471,25 +471,25 @@ public:
                 pCreature->setNpcFlags(UNIT_NPC_FLAG_NONE);
                 pCreature->PlaySoundToSet(9357);
                 WayStartBBW[pCreature->GetInstanceID()] = 2;
-                Arcemu::Gossip::Menu::Complete(Plr);
+                GossipMenu::senGossipComplete(Plr);
             }
             break;
         }
     }
 };
 
-class GrandMother : public Arcemu::Gossip::Script
+class GrandMother : public GossipScript
 {
 public:
 
-    void OnHello(Object* pObject, Player* Plr) override
+    void onHello(Object* pObject, Player* Plr) override
     {
-        Arcemu::Gossip::Menu menu(pObject->getGuid(), 7245, 0);         // Don't get too close, $N. I'm liable to fumble and bash your brains open with the face of my hammer.
-        menu.AddItem(GOSSIP_ICON_CHAT, Plr->GetSession()->LocalizedGossipOption(434), 1);         // What phat lewts you have Grandmother!
-        menu.Send(Plr);
+        GossipMenu menu(pObject->getGuid(), 7245, 0);         // Don't get too close, $N. I'm liable to fumble and bash your brains open with the face of my hammer.
+        menu.addItem(GOSSIP_ICON_CHAT, 434, 1);         // What phat lewts you have Grandmother!
+        menu.sendGossipPacket(Plr);
     }
 
-    void OnSelectOption(Object* pObject, Player* Plr, uint32 Id, const char* /*Code*/, uint32_t /*gossipId*/) override
+    void onSelectOption(Object* pObject, Player* Plr, uint32 Id, const char* /*Code*/, uint32_t /*gossipId*/) override
     {
         switch (Id)
         {
@@ -866,7 +866,7 @@ class CuratorAI : public CreatureAIScript
                 break;
         }
 
-        getCreature()->setUInt32Value(UNIT_FIELD_POWER1, getCreature()->getPower(POWER_TYPE_MANA) - (getCreature()->getMaxPower(POWER_TYPE_MANA) / 10));
+        getCreature()->setUInt32Value(UNIT_FIELD_POWER1, getCreature()->getPower(POWER_TYPE_MANA) - getCreature()->getMaxPower(POWER_TYPE_MANA) / 10);
         float dX = getCreature()->GetPositionX();
         float dY = getCreature()->GetPositionY();
         Creature* AstralFlare = NULL;
@@ -1225,8 +1225,8 @@ class ShadeofAranAI : public CreatureAIScript
         {
             sendDBChatMessage(2044);     // You've wasted enough of my time. Let these games be finished!
 
-            float ERX = 5 * cos(Util::getRandomFloat(6.28f)) + (getCreature()->GetPositionX());
-            float ERY = 5 * sin(Util::getRandomFloat(6.28f)) + (getCreature()->GetPositionY());
+            float ERX = 5 * cos(Util::getRandomFloat(6.28f)) + getCreature()->GetPositionX();
+            float ERY = 5 * sin(Util::getRandomFloat(6.28f)) + getCreature()->GetPositionY();
             float ERZ = getCreature()->GetPositionZ();
 
             for (uint8 i = 0; i < 4; i++)
@@ -1283,7 +1283,7 @@ class ShadeofAranAI : public CreatureAIScript
                 FlameWreathTarget[i] = (*itr)->getGuid();
                 FWTargPosX[i] = (*itr)->GetPositionX();
                 FWTargPosY[i] = (*itr)->GetPositionY();
-                getCreature()->castSpell((*itr), FLAME_WREATH, true);
+                getCreature()->castSpell(*itr, FLAME_WREATH, true);
             }
         }
 
@@ -1405,7 +1405,7 @@ class WaterEleAI : public CreatureAIScript
 
     void OnCombatStart(Unit* /*mTarget*/) override
     {
-        WaterBolt = (Util::getRandomUInt(3) + 5);
+        WaterBolt = Util::getRandomUInt(3) + 5;
         RegisterAIUpdateEvent(1250);
     }
 
@@ -1440,7 +1440,7 @@ class ShadowofAranAI : public CreatureAIScript
 
     void OnCombatStart(Unit* /*mTarget*/) override
     {
-        ShadowPyro = (Util::getRandomUInt(2) + 4);
+        ShadowPyro = Util::getRandomUInt(2) + 4;
         RegisterAIUpdateEvent(1250);
     }
 
@@ -1837,8 +1837,8 @@ class MalchezaarAI : public CreatureAIScript
     {
         m_phase = 1;
        
-        memset(Enfeeble_Targets, 0, sizeof(Enfeeble_Targets));
-        memset(Enfeeble_Health, 0, sizeof(Enfeeble_Health));
+        memset(Enfeeble_Targets, 0, sizeof Enfeeble_Targets);
+        memset(Enfeeble_Health, 0, sizeof Enfeeble_Health);
 
         /*spells[0].info = sSpellMgr.getSpellInfo(SW_PAIN);
         spells[0].targettype = TARGET_ATTACKING;
@@ -2659,9 +2659,9 @@ class NightbaneAI : public CreatureAIScript
             return;
 
         //Switch if needed
-        if ((m_phase == 0 && getCreature()->getHealthPct() <= 75)
-            || (m_phase == 2 && getCreature()->getHealthPct() <= 50)
-            || (m_phase == 4 && getCreature()->getHealthPct() <= 25))
+        if (m_phase == 0 && getCreature()->getHealthPct() <= 75
+            || m_phase == 2 && getCreature()->getHealthPct() <= 50
+            || m_phase == 4 && getCreature()->getHealthPct() <= 25)
         {
             if (getCreature()->isCastingSpell())
                 getCreature()->interruptSpell();
@@ -3320,7 +3320,7 @@ class JulianneAI : public CreatureAIScript
 
 void SetupKarazhan(ScriptMgr* mgr)
 {
-    Arcemu::Gossip::Script* KBerthold = new Berthold();
+    GossipScript* KBerthold = new Berthold();
     mgr->register_creature_gossip(16153, KBerthold);
 
     mgr->register_creature_script(CN_ATTUMEN, &AttumenTheHuntsmanAI::Create);
@@ -3334,8 +3334,8 @@ void SetupKarazhan(ScriptMgr* mgr)
     mgr->register_creature_script(CN_JULIANNE, &JulianneAI::Create);
     mgr->register_creature_script(19525, &StageLight::Create);
 
-    Arcemu::Gossip::Script* KGrandMother = new GrandMother;
-    Arcemu::Gossip::Script* KBarnes = new BarnesGS;
+    GossipScript* KGrandMother = new GrandMother;
+    GossipScript* KBarnes = new BarnesGS;
     mgr->register_creature_gossip(16812, KBarnes);
     mgr->register_creature_gossip(17603, KGrandMother);
 

@@ -20,7 +20,11 @@
 #include "Server/MainServerDefines.h"
 #include "Objects/ObjectMgr.h"
 
-initialiseSingleton(MailSystem);
+MailSystem& MailSystem::getInstance()
+{
+    static MailSystem mInstance;
+    return mInstance;
+}
 
 /// \todo refactoring
 void MailSystem::StartMailSystem()
@@ -29,9 +33,9 @@ void MailSystem::StartMailSystem()
 MailError MailSystem::DeliverMessage(uint64 recipent, MailMessage* message)
 {
     // assign a new id
-    message->message_id = objmgr.GenerateMailID();
+    message->message_id = sObjectMgr.GenerateMailID();
 
-    Player* plr = objmgr.GetPlayer((uint32)recipent);
+    Player* plr = sObjectMgr.GetPlayer((uint32)recipent);
     if (plr != NULL)
     {
         plr->m_mailBox.AddMessage(message);
@@ -132,14 +136,14 @@ void MailSystem::SendAutomatedMessage(uint32 type, uint64 sender, uint64 receive
     msg.money = money;
     msg.cod = cod;
     for (std::vector<uint64>::iterator itr = item_guids.begin(); itr != item_guids.end(); ++itr)
-        msg.items.push_back(Arcemu::Util::GUID_LOPART(*itr));
+        msg.items.push_back(WoWGuid::getGuidLowPartFromUInt64(*itr));
 
     msg.stationery = stationery;
     msg.delivery_time = (uint32)UNIXTIME + deliverdelay;
 
     // 30 days expiration time for unread mail + possible delivery delay.
     if (!sMailSystem.MailOption(MAIL_FLAG_NO_EXPIRY))
-        msg.expire_time = (uint32)UNIXTIME + deliverdelay + (TIME_DAY * MAIL_DEFAULT_EXPIRATION_TIME);
+        msg.expire_time = (uint32)UNIXTIME + deliverdelay + (TimeVars::Day * MAIL_DEFAULT_EXPIRATION_TIME);
     else
         msg.expire_time = 0;
 

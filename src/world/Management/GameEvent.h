@@ -21,6 +21,8 @@
 
 #include "GameEventMgr.h"
 #include <vector>
+#include <string>
+#include "Units/Creatures/Creature.h"
 
 struct EventNamesQueryResult;
 struct EventCreatureSpawnsQueryResult;

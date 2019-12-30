@@ -9,8 +9,6 @@ This file is released under the MIT license. See README-MIT for more information
 #include "Config/Config.h"
 #include "Spell/SpellMgr.h"
 
-initialiseSingleton(MySQLDataStore);
-
 SERVER_DECL std::set<std::string> CreaturePropertiesTables;
 SERVER_DECL std::set<std::string> CreatureQuestStarterTables;
 SERVER_DECL std::set<std::string> CreatureQuestFinisherTables;
@@ -22,9 +20,13 @@ SERVER_DECL std::set<std::string> GameObjectPropertiesTables;
 SERVER_DECL std::set<std::string> ItemPropertiesTables;
 SERVER_DECL std::set<std::string> QuestPropertiesTables;
 
-MySQLDataStore::MySQLDataStore() {}
+MySQLDataStore& MySQLDataStore::getInstance()
+{
+    static MySQLDataStore mInstance;
+    return mInstance;
+}
 
-MySQLDataStore::~MySQLDataStore()
+void MySQLDataStore::finalize()
 {
     for (int i = 0; i < NUM_MONSTER_SAY_EVENTS; ++i)
     {
@@ -574,8 +576,8 @@ void MySQLDataStore::loadCreaturePropertiesTable()
                                                                 "auras, boss, money, invisibility_type, walk_speed, run_speed, fly_speed, extra_a9_flags, spell1, spell2, spell3, "
         //                                                          55      56      57      58      59        60           61               62            63         64           65
                                                                 "spell4, spell5, spell6, spell7, spell8, spell_flags, modImmunities, isTrainingDummy, guardtype, summonguard, spelldataid, "
-        //                                                          66         67        68          69          70          71          72          73         74
-                                                                "vehicleid, rooted, questitem1, questitem2, questitem3, questitem4, questitem5, questitem6, waypointid FROM %s base "
+        //                                                          66         67        68          69          70          71          72          73         74         75
+                                                                "vehicleid, rooted, questitem1, questitem2, questitem3, questitem4, questitem5, questitem6, waypointid, gossipId FROM %s base "
         //
                                                                 "WHERE build=(SELECT MAX(build) FROM %s buildspecific WHERE base.entry = buildspecific.entry AND build <= %u)", table_name.c_str(), table_name.c_str(), VERSION_STRING);
 
@@ -720,7 +722,7 @@ void MySQLDataStore::loadCreaturePropertiesTable()
             creatureProperties.RangedMinDamage = fields[32].GetFloat();
             creatureProperties.RangedMaxDamage = fields[33].GetFloat();
             creatureProperties.RespawnTime = fields[34].GetUInt32();
-            for (uint8_t i = 0; i < SCHOOL_COUNT; ++i)
+            for (uint8_t i = 0; i < TOTAL_SPELL_SCHOOLS; ++i)
             {
                 creatureProperties.Resistances[i] = fields[35 + i].GetUInt32();
             }
@@ -795,6 +797,8 @@ void MySQLDataStore::loadCreaturePropertiesTable()
                 creatureProperties.QuestItems[i] = fields[68 + i].GetUInt32();
 
             creatureProperties.waypointid = fields[74].GetUInt32();
+
+            creatureProperties.gossipId = fields[75].GetUInt32();
 
             //process aura string
             if (creatureProperties.aura_string.size() != 0)
@@ -3689,6 +3693,36 @@ MySQLStructure::LocalesWorldStringTable const* MySQLDataStore::getLocalizedWorld
         }
     }
     return nullptr;
+}
+
+std::string MySQLDataStore::getLocaleGossipMenuOptionOrElse(uint32_t entry, uint32_t sessionLocale)
+{
+    const auto wst = sMySQLStore.getGossipMenuOption(entry);
+    const auto lpi = (sessionLocale > 0) ? sMySQLStore.getLocalizedGossipMenuOption(entry, sessionLocale) : nullptr;
+    if (lpi != nullptr)
+        return lpi->name;
+
+    if (wst)
+        return wst->text;
+
+    std::stringstream errorMsg;
+    errorMsg << "GossipMenuItem ID " << entry << "not available in database";
+    return errorMsg.str();
+}
+
+std::string MySQLDataStore::getLocaleGossipTitleOrElse(uint32_t entry, uint32_t sessionLocale)
+{
+    const auto wst = sMySQLStore.getQuestProperties(entry);
+    const auto lpi = (sessionLocale > 0) ? sMySQLStore.getLocalizedQuest(entry, sessionLocale) : nullptr;
+    if (lpi != nullptr)
+        return lpi->title;
+
+    if (wst)
+        return wst->title;
+
+    std::stringstream errorMsg;
+    errorMsg << "Quest ID " << entry << "not available in database";
+    return errorMsg.str();
 }
 
 void MySQLDataStore::loadNpcMonstersayTable()

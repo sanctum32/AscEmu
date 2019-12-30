@@ -36,10 +36,10 @@ int LuaGameObject::GossipCreateMenu(lua_State* L, GameObject* ptr)
     if (LuaGlobal::instance()->m_menu != NULL)
         delete LuaGlobal::instance()->m_menu;
 
-    LuaGlobal::instance()->m_menu = new Arcemu::Gossip::Menu(ptr->getGuid(), text_id);
+    LuaGlobal::instance()->m_menu = new GossipMenu(ptr->getGuid(), text_id);
 
     if (autosend)
-        LuaGlobal::instance()->m_menu->Send(target);
+        LuaGlobal::instance()->m_menu->sendGossipPacket(target);
 
     return 0;
 }
@@ -59,7 +59,7 @@ int LuaGameObject::GossipMenuAddItem(lua_State* L, GameObject* /*ptr*/)
         return 0;
     }
 
-    LuaGlobal::instance()->m_menu->AddItem(icon, menu_text, IntId, boxmoney, boxmessage, coded);
+    LuaGlobal::instance()->m_menu->addItem(icon, 0, IntId, menu_text, boxmoney, boxmessage, coded);
     return 0;
 }
 
@@ -75,7 +75,7 @@ int LuaGameObject::GossipSendMenu(lua_State* L, GameObject* /*ptr*/)
         return 0;
     }
 
-    LuaGlobal::instance()->m_menu->Send(target);
+    LuaGlobal::instance()->m_menu->sendGossipPacket(target);
 
     return 0;
 }
@@ -92,7 +92,7 @@ int LuaGameObject::GossipComplete(lua_State* L, GameObject* /*ptr*/)
         return 0;
     }
 
-    LuaGlobal::instance()->m_menu->Complete(target);
+    LuaGlobal::instance()->m_menu->senGossipComplete(target);
 
     return 0;
 }
@@ -129,7 +129,7 @@ int LuaGameObject::GossipSendQuickMenu(lua_State* L, GameObject* ptr)
     if (player == NULL)
         return 0;
 
-    Arcemu::Gossip::Menu::SendQuickMenu(ptr->getGuid(), text_id, player, itemid, itemicon, itemtext, requiredmoney, moneytext, extra);
+    GossipMenu::sendQuickMenu(ptr->getGuid(), text_id, player, itemid, itemicon, itemtext, requiredmoney, moneytext, extra);
 
     return 0;
 }
@@ -838,7 +838,7 @@ int LuaGameObject::AddLoot(lua_State* L, GameObject* ptr)
         WorldDatabase.Execute("REPLACE INTO loot_gameobjects VALUES (%u, %u, %f, 0, 0, 0, %u, %u )", ptr->getEntry(), itemid, chance, mincount, maxcount);
         delete result;
     }
-    lootmgr.AddLoot(&lt->loot, itemid, mincount, maxcount);
+    sLootMgr.AddLoot(&lt->loot, itemid, mincount, maxcount);
     return 0;
 }
 
@@ -871,7 +871,7 @@ int LuaGameObject::GetInstanceOwner(lua_State* L, GameObject* ptr)
             return 0;
         }
 
-        auto get_group_id = objmgr.GetGroupById(group_id);
+        auto get_group_id = sObjectMgr.GetGroupById(group_id);
         if (get_group_id == nullptr)
             return 0;
 
@@ -1058,7 +1058,7 @@ int LuaGameObject::CustomAnimate(lua_State* L, GameObject* ptr)
     uint32_t aindex = CHECK_ULONG(L, 1);
     if (aindex < 2 && ptr != NULL)
     {
-        ptr->SetCustomAnim(aindex);
+        ptr->sendGameobjectCustomAnim(aindex);
         RET_BOOL(true)
     }
     RET_BOOL(false)

@@ -1,32 +1,18 @@
 /*
-* AscEmu Framework based on ArcEmu MMORPG Server
-* Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program. If not, see <http://www.gnu.org/licenses/>.
+Copyright (c) 2014-2019 AscEmu Team <http://www.ascemu.org>
+This file is released under the MIT license. See README-MIT for more information.
 */
+
 #pragma once
 
-#include "CThreads.h"
+#include "Threading/AEThread.h"
 #include <set>
 #include <map>
 #include <ctime>
-
-#include "../../shared/Singleton.h"
+#include <string>
+#include "CommonTypes.hpp"
 
 class GameEvent;
-
-#define max_ge_check_delay TIME_DAY  // 1 day in seconds
 
 enum GameEventState
 {
@@ -201,26 +187,48 @@ typedef std::set<uint16> ActiveEvents;
 typedef std::map<uint32, uint32> NPCGuidList;
 typedef std::map<uint32, uint32> GOBGuidList;
 
-class GameEventMgr : public Singleton < GameEventMgr >
+class GameEventMgr
 {
+    private:
+
+        GameEventMgr() = default;
+        ~GameEventMgr() = default;
+
     public:
 
-        class GameEventMgrThread : public CThread, public Singleton < GameEventMgrThread >
+        class GameEventMgrThread
         {
+            private:
+
+                GameEventMgrThread() = default;
+                ~GameEventMgrThread() = default;
+
             public:
 
+                static GameEventMgrThread& getInstance();
+                void initialize();
+                void finalize();
+
+                GameEventMgrThread(GameEventMgrThread&&) = delete;
+                GameEventMgrThread(GameEventMgrThread const&) = delete;
+                GameEventMgrThread& operator=(GameEventMgrThread&&) = delete;
+                GameEventMgrThread& operator=(GameEventMgrThread const&) = delete;
+
                 bool m_IsActive = false;
-                bool Pause(int timeout = 1500);
-                void Resume();
-                bool runThread();
-                void onShutdown();
+
                 void Update();
-                void CleanupEntities();
-                void SpawnActiveEvents();
+
+                std::unique_ptr<AscEmu::Threading::AEThread> m_reloadThread;
+                uint32_t m_reloadTime;
         };
 
-        GameEventMgr();
-        ~GameEventMgr();
+        static GameEventMgr& getInstance();
+        void initialize();
+
+        GameEventMgr(GameEventMgr&&) = delete;
+        GameEventMgr(GameEventMgr const&) = delete;
+        GameEventMgr& operator=(GameEventMgr&&) = delete;
+        GameEventMgr& operator=(GameEventMgr const&) = delete;
 
         ActiveEvents const& GetActiveEventList() const { return mActiveEvents; }
         void StartArenaEvents();
@@ -233,5 +241,5 @@ class GameEventMgr : public Singleton < GameEventMgr >
         GOBGuidList mGOBGuidList;
 };
 
-#define sGameEventMgr GameEventMgr::getSingleton()
-#define sGameEventMgrThread GameEventMgr::GameEventMgrThread::getSingleton()
+#define sGameEventMgr GameEventMgr::getInstance()
+#define sGameEventMgrThread GameEventMgr::GameEventMgrThread::getInstance()

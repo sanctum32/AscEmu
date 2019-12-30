@@ -38,49 +38,33 @@ This file is released under the MIT license. See README-MIT for more information
 
 using namespace AscEmu::Packets;
 
-CharacterErrorCodes VerifyName(const char* name, size_t nlen)
+CharacterErrorCodes VerifyName(std::string name)
 {
-    const char* p;
-    size_t i;
+    static const wchar_t* bannedCharacters = L"\t\v\b\f\a\n\r\\\"\'\? <>[](){}_=+-|/!@#$%^&*~`.,0123456789\0";
+    static const wchar_t* allowedCharacters = L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-    static const char* bannedCharacters = "\t\v\b\f\a\n\r\\\"\'\? <>[](){}_=+-|/!@#$%^&*~`.,0123456789\0";
-    static const char* allowedCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    std::wstring wname;
+    if (!Util::Utf8toWStr(name, wname))
+        return E_CHAR_NAME_NO_NAME;
+
+
+    if (wname.find_first_of(bannedCharacters) != wname.npos)
+        return E_CHAR_NAME_INVALID_CHARACTER;
+
 
     if (worldConfig.server.enableLimitedNames)
     {
-        if (nlen == 0)
+        if (wname.find_first_not_of(allowedCharacters) != wname.npos)
+            return E_CHAR_NAME_INVALID_CHARACTER;
+
+        if (wname.length() == 0)
             return E_CHAR_NAME_NO_NAME;
 
-        if (nlen < 2)
+        if (wname.length() < 2)
             return E_CHAR_NAME_TOO_SHORT;
 
-        if (nlen > 12)
+        if (wname.length() > 12)
             return E_CHAR_NAME_TOO_LONG;
-
-        for (i = 0; i < nlen; ++i)
-        {
-            p = allowedCharacters;
-            for (; *p != 0; ++p)
-            {
-                if (name[i] == *p)
-                    goto cont;
-            }
-            return E_CHAR_NAME_INVALID_CHARACTER;
-        cont:
-            continue;
-        }
-    }
-    else
-    {
-        for (i = 0; i < nlen; ++i)
-        {
-            p = bannedCharacters;
-            while (*p != 0 && name[i] != *p && name[i] != 0)
-                ++p;
-
-            if (*p != 0)
-                return E_CHAR_NAME_INVALID_CHARACTER;
-        }
     }
 
     return E_CHAR_NAME_SUCCESS;
@@ -122,7 +106,7 @@ void WorldSession::handleCharFactionOrRaceChange(WorldPacket& recvPacket)
     if (!srlPacket.deserialise(recvPacket))
         return;
 
-    const auto playerInfoPacket = objmgr.GetPlayerInfo(srlPacket.guid.getGuidLow());
+    const auto playerInfoPacket = sObjectMgr.GetPlayerInfo(srlPacket.guid.getGuidLow());
     if (playerInfoPacket == nullptr)
     {
         SendPacket(SmsgCharFactionChange(E_CHAR_CREATE_ERROR).serialise().get());
@@ -150,7 +134,7 @@ void WorldSession::handleCharFactionOrRaceChange(WorldPacket& recvPacket)
         return;
     }
 
-    const auto loginErrorCode = VerifyName(srlPacket.charCreate.name.c_str(), srlPacket.charCreate.name.length());
+    const auto loginErrorCode = VerifyName(srlPacket.charCreate.name);
     if (loginErrorCode != E_CHAR_NAME_SUCCESS)
     {
         SendPacket(SmsgCharFactionChange(loginErrorCode).serialise().get());
@@ -171,7 +155,7 @@ void WorldSession::handleCharFactionOrRaceChange(WorldPacket& recvPacket)
         }
     }
 
-    const auto playerInfo = objmgr.GetPlayerInfoByName(srlPacket.charCreate.name.c_str());
+    const auto playerInfo = sObjectMgr.GetPlayerInfoByName(srlPacket.charCreate.name.c_str());
     if (playerInfo != nullptr && playerInfo->guid != srlPacket.guid.getGuidLow())
     {
         SendPacket(SmsgCharFactionChange(E_CHAR_CREATE_NAME_IN_USE).serialise().get());
@@ -184,7 +168,7 @@ void WorldSession::handleCharFactionOrRaceChange(WorldPacket& recvPacket)
     std::string newname = srlPacket.charCreate.name;
     Util::CapitalizeString(newname);
 
-    objmgr.RenamePlayerInfo(playerInfoPacket, playerInfoPacket->name, newname.c_str());
+    sObjectMgr.RenamePlayerInfo(playerInfoPacket, playerInfoPacket->name, newname.c_str());
 
     CharacterDatabase.Execute("UPDATE `characters` set name = '%s', login_flags = %u, race = %u WHERE guid = %u",
         newname.c_str(), newflags, static_cast<uint32_t>(srlPacket.charCreate._race), srlPacket.guid.getGuidLow());
@@ -201,7 +185,7 @@ void WorldSession::handlePlayerLoginOpcode(WorldPacket& recvPacket)
 
     LOG_DEBUG("Received CMSG_PLAYER_LOGIN %u (guidLow)", srlPacket.guid.getGuidLow());
 
-    if (objmgr.GetPlayer(srlPacket.guid.getGuidLow()) != nullptr || m_loggingInPlayer || _player)
+    if (sObjectMgr.GetPlayer(srlPacket.guid.getGuidLow()) != nullptr || m_loggingInPlayer || _player)
     {
         SendPacket(SmsgCharacterLoginFailed(E_CHAR_LOGIN_DUPLICATE_CHARACTER).serialise().get());
         return;
@@ -219,7 +203,7 @@ void WorldSession::handleCharRenameOpcode(WorldPacket& recvPacket)
     if (!srlPacket.deserialise(recvPacket))
         return;
 
-    const auto playerInfo = objmgr.GetPlayerInfo(srlPacket.guid.getGuidLow());
+    const auto playerInfo = sObjectMgr.GetPlayerInfo(srlPacket.guid.getGuidLow());
     if (playerInfo == nullptr)
         return;
 
@@ -228,7 +212,7 @@ void WorldSession::handleCharRenameOpcode(WorldPacket& recvPacket)
     if (result == nullptr)
         return;
 
-    const auto loginErrorCode = VerifyName(srlPacket.name.c_str(), srlPacket.name.length());
+    const auto loginErrorCode = VerifyName(srlPacket.name);
     if (loginErrorCode != E_CHAR_NAME_SUCCESS)
     {
         SendPacket(SmsgCharRename(srlPacket.size, loginErrorCode, srlPacket.guid, srlPacket.name).serialise().get());
@@ -246,7 +230,7 @@ void WorldSession::handleCharRenameOpcode(WorldPacket& recvPacket)
         }
     }
 
-    if (objmgr.GetPlayerInfoByName(srlPacket.name.c_str()) != nullptr)
+    if (sObjectMgr.GetPlayerInfoByName(srlPacket.name.c_str()) != nullptr)
     {
         SendPacket(SmsgCharRename(srlPacket.size, E_CHAR_CREATE_NAME_IN_USE, srlPacket.guid, srlPacket.name).serialise().get());
         return;
@@ -254,7 +238,7 @@ void WorldSession::handleCharRenameOpcode(WorldPacket& recvPacket)
 
     std::string newName = srlPacket.name;
     Util::CapitalizeString(newName);
-    objmgr.RenamePlayerInfo(playerInfo, playerInfo->name, newName.c_str());
+    sObjectMgr.RenamePlayerInfo(playerInfo, playerInfo->name, newName.c_str());
 
     sPlrLog.writefromsession(this, "renamed character %s, %u (guid), to %s.", playerInfo->name, playerInfo->guid, newName.c_str());
 
@@ -345,7 +329,7 @@ void WorldSession::loadPlayerFromDBProc(QueryResultVector& results)
 
 uint8_t WorldSession::deleteCharacter(WoWGuid guid)
 {
-    const auto playerInfo = objmgr.GetPlayerInfo(guid.getGuidLow());
+    const auto playerInfo = sObjectMgr.GetPlayerInfo(guid.getGuidLow());
     if (playerInfo != nullptr && playerInfo->m_loggedInPlayer == nullptr)
     {
         QueryResult* result = CharacterDatabase.Query("SELECT name FROM characters WHERE guid = %u AND acct = %u",
@@ -368,7 +352,7 @@ uint8_t WorldSession::deleteCharacter(WoWGuid guid)
 
         for (uint8_t i = 0; i < NUM_CHARTER_TYPES; ++i)
         {
-            const auto charter = objmgr.GetCharterByGuid(guid, static_cast<CharterTypes>(i));
+            const auto charter = sObjectMgr.GetCharterByGuid(guid, static_cast<CharterTypes>(i));
             if (charter != nullptr)
                 charter->RemoveSignature(guid.getGuidLow());
         }
@@ -376,7 +360,7 @@ uint8_t WorldSession::deleteCharacter(WoWGuid guid)
 
         for (uint8_t i = 0; i < NUM_ARENA_TEAM_TYPES; ++i)
         {
-            const auto arenaTeam = objmgr.GetArenaTeamByGuid(guid.getGuidLow(), i);
+            const auto arenaTeam = sObjectMgr.GetArenaTeamByGuid(guid.getGuidLow(), i);
             if (arenaTeam != nullptr && arenaTeam->m_leader == guid.getGuidLow())
                 return E_CHAR_DELETE_FAILED_ARENA_CAPTAIN;
 
@@ -388,7 +372,7 @@ uint8_t WorldSession::deleteCharacter(WoWGuid guid)
 
         CharacterDatabase.WaitExecute("DELETE FROM characters WHERE guid = %u", guid.getGuidLow());
 
-        const auto corpse = objmgr.GetCorpseByOwner(guid.getGuidLow());
+        const auto corpse = sObjectMgr.GetCorpseByOwner(guid.getGuidLow());
         if (corpse)
             CharacterDatabase.Execute("DELETE FROM corpses WHERE guid = %u", corpse->getGuidLow());
 
@@ -414,7 +398,7 @@ uint8_t WorldSession::deleteCharacter(WoWGuid guid)
         CharacterDatabase.Execute("DELETE FROM playerreputations WHERE guid = %u", guid.getGuidLow());
         CharacterDatabase.Execute("DELETE FROM playerskills WHERE GUID = %u", guid.getGuidLow());
 
-        objmgr.DeletePlayerInfo(guid.getGuidLow());
+        sObjectMgr.DeletePlayerInfo(guid.getGuidLow());
         return E_CHAR_DELETE_SUCCESS;
     }
     return E_CHAR_DELETE_FAILED;
@@ -426,7 +410,7 @@ void WorldSession::handleCharCreateOpcode(WorldPacket& recvPacket)
     if (!srlPacket.deserialise(recvPacket))
         return;
 
-    const auto loginErrorCode = VerifyName(srlPacket.createStruct.name.c_str(), srlPacket.createStruct.name.length());
+    const auto loginErrorCode = VerifyName(srlPacket.createStruct.name);
     if (loginErrorCode != E_CHAR_NAME_SUCCESS)
     {
         SendPacket(SmsgCharCreate(loginErrorCode).serialise().get());
@@ -440,7 +424,7 @@ void WorldSession::handleCharCreateOpcode(WorldPacket& recvPacket)
         return;
     }
 
-    if (objmgr.GetPlayerInfoByName(srlPacket.createStruct.name.c_str()) != nullptr)
+    if (sObjectMgr.GetPlayerInfoByName(srlPacket.createStruct.name.c_str()) != nullptr)
     {
         SendPacket(SmsgCharCreate(E_CHAR_CREATE_NAME_IN_USE).serialise().get());
         return;
@@ -483,7 +467,7 @@ void WorldSession::handleCharCreateOpcode(WorldPacket& recvPacket)
         }
     }
 
-    const auto newPlayer = objmgr.CreatePlayer(srlPacket.createStruct._class);
+    const auto newPlayer = sObjectMgr.CreatePlayer(srlPacket.createStruct._class);
     newPlayer->SetSession(this);
 
     if (!newPlayer->Create(srlPacket.createStruct))
@@ -547,7 +531,7 @@ void WorldSession::handleCharCreateOpcode(WorldPacket& recvPacket)
     playerInfo->guildRank = GUILD_RANK_NONE;
     playerInfo->lastOnline = UNIXTIME;
 
-    objmgr.AddPlayerInfo(playerInfo);
+    sObjectMgr.AddPlayerInfo(playerInfo);
 
     newPlayer->ok_to_remove = true;
     delete newPlayer;
@@ -564,7 +548,7 @@ void WorldSession::handleCharCustomizeLooksOpcode(WorldPacket& recvPacket)
     if (!srlPacket.deserialise(recvPacket))
         return;
 
-    const auto loginErrorCode = VerifyName(srlPacket.createStruct.name.c_str(), srlPacket.createStruct.name.length());
+    const auto loginErrorCode = VerifyName(srlPacket.createStruct.name);
     if (loginErrorCode != E_CHAR_NAME_SUCCESS)
     {
         SendPacket(SmsgCharCustomize(loginErrorCode).serialise().get());
@@ -582,7 +566,7 @@ void WorldSession::handleCharCustomizeLooksOpcode(WorldPacket& recvPacket)
         }
     }
 
-    const auto playerInfo = objmgr.GetPlayerInfoByName(srlPacket.createStruct.name.c_str());
+    const auto playerInfo = sObjectMgr.GetPlayerInfoByName(srlPacket.createStruct.name.c_str());
     if (playerInfo != nullptr && playerInfo->guid != srlPacket.guid.getGuidLow())
     {
         SendPacket(SmsgCharCustomize(E_CHAR_CREATE_NAME_IN_USE).serialise().get());
@@ -607,11 +591,11 @@ void WorldSession::handleCharCustomizeLooksOpcode(WorldPacket& recvPacket)
 void WorldSession::initGMMyMaster()
 {
 #ifndef GM_TICKET_MY_MASTER_COMPATIBLE
-    GM_Ticket* ticket = objmgr.GetGMTicketByPlayer(_player->getGuid());
+    GM_Ticket* ticket = sObjectMgr.GetGMTicketByPlayer(_player->getGuid());
     if (ticket)
     {
         //Send status change to gm_sync_channel
-        const auto channel = channelmgr.GetChannel(sWorld.getGmClientChannel().c_str(), _player);
+        const auto channel = sChannelMgr.GetChannel(sWorld.getGmClientChannel().c_str(), _player);
         if (channel)
         {
             std::stringstream ss;
@@ -786,7 +770,7 @@ void WorldSession::fullLogin(Player* player)
 
     sHookInterface.OnFullLogin(player);
 
-    objmgr.AddPlayer(player);
+    sObjectMgr.AddPlayer(player);
 }
 
 void WorldSession::handleDeclinedPlayerNameOpcode(WorldPacket& recvPacket)
@@ -892,7 +876,7 @@ void WorldSession::characterEnumProc(QueryResult* result)
             if (charEnum.Class == WARLOCK || charEnum.Class == HUNTER)
             {
                 QueryResult* player_pet_db_result = CharacterDatabase.Query("SELECT entry, level FROM playerpets WHERE ownerguid = %u "
-                    "AND MOD(active, 10) = 1 AND alive = TRUE;", Arcemu::Util::GUID_LOPART(charEnum.guid));
+                    "AND MOD(active, 10) = 1 AND alive = TRUE;", WoWGuid::getGuidLowPartFromUInt64(charEnum.guid));
                 if (player_pet_db_result)
                 {
                     petLevel = player_pet_db_result->Fetch()[1].GetUInt32();
@@ -914,7 +898,7 @@ void WorldSession::characterEnumProc(QueryResult* result)
 
             QueryResult* item_db_result = CharacterDatabase.Query("SELECT slot, entry, enchantments FROM playeritems "
                 "WHERE ownerguid=%u AND containerslot = '-1' AND slot BETWEEN '0' AND '20'",
-                Arcemu::Util::GUID_LOPART(charEnum.guid));
+                WoWGuid::getGuidLowPartFromUInt64(charEnum.guid));
 #if VERSION_STRING >= WotLK
             memset(charEnum.player_items, 0, sizeof(PlayerItem) * INVENTORY_SLOT_BAG_END);
 #else
@@ -962,7 +946,7 @@ void WorldSession::characterEnumProc(QueryResult* result)
 
 void WorldSession::handleCharEnumOpcode(WorldPacket& /*recvPacket*/)
 {
-    const auto asyncQuery = new AsyncQuery(new SQLClassCallbackP1<World, uint32_t>(World::getSingletonPtr(),
+    const auto asyncQuery = new AsyncQuery(new SQLClassCallbackP1<World, uint32_t>(&sWorld,
         &World::sendCharacterEnumToAccountSession, GetAccountId()));
 
     asyncQuery->AddQuery("SELECT guid, level, race, class, gender, bytes, bytes2, name, positionX, positionY, "

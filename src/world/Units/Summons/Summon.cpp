@@ -53,7 +53,6 @@ void Summon::Load(CreatureProperties const* creatureProperties, Unit* unitOwner,
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Override Object functions
-
 void Summon::OnPushToWorld()
 {
     if (m_summonSlot != -1)
@@ -118,10 +117,10 @@ bool Summon::isSummonedToSlot() const
     return m_summonSlot != -1;
 }
 
-Object* Summon::getPlayerOwner()
+Player* Summon::getPlayerOwner()
 {
-    if (m_unitOwner && m_unitOwner->isPlayer())
-        return m_unitOwner;
+    if (m_unitOwner != nullptr && m_unitOwner->isPlayer())
+        return dynamic_cast<Player*>(m_unitOwner);
 
     return nullptr;
 }

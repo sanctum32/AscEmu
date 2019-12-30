@@ -20,6 +20,10 @@ This file is released under the MIT license. See README-MIT for more information
 #include "Map/MapMgr.h"
 #include "Objects/ObjectMgr.h"
 #include "Storage/MySQLDataStore.hpp"
+#include "Server/Packets/CmsgRequestRatedBgInfo.h"
+#include "Server/Packets/SmsgRatedBgInfo.h"
+#include "Server/Packets/SmsgRatedBgStats.h"
+#include "Server/Packets/SmsgPvpOptionsEnabled.h"
 
 using namespace AscEmu::Packets;
 
@@ -68,7 +72,7 @@ void WorldSession::handleArenaJoinOpcode(WorldPacket& recvPacket)
     }
 
     if (_player->m_bgIsQueued)
-        BattlegroundManager.RemovePlayerFromQueues(_player);
+        sBattlegroundManager.RemovePlayerFromQueues(_player);
 
     CmsgBattlemasterJoinArena srlPacket;
     if (!srlPacket.deserialise(recvPacket))
@@ -94,7 +98,7 @@ void WorldSession::handleArenaJoinOpcode(WorldPacket& recvPacket)
     }
 
     if (battlegroundType != 0)
-        BattlegroundManager.HandleArenaJoin(this, battlegroundType, srlPacket.asGroup, srlPacket.ratedMatch);
+        sBattlegroundManager.HandleArenaJoin(this, battlegroundType, srlPacket.asGroup, srlPacket.ratedMatch);
 }
 
 void WorldSession::handleBattlefieldPortOpcode(WorldPacket& recvPacket)
@@ -110,7 +114,7 @@ void WorldSession::handleBattlefieldPortOpcode(WorldPacket& recvPacket)
     }
     else
     {
-        BattlegroundManager.RemovePlayerFromQueues(_player);
+        sBattlegroundManager.RemovePlayerFromQueues(_player);
     }
 }
 
@@ -128,7 +132,7 @@ void WorldSession::handleBattlefieldListOpcode(WorldPacket& recvPacket)
 
     LogDebugFlag(LF_OPCODE, "Received CMSG_BATTLEFIELD_LIST: %u (bgType), %u (fromType)", srlPacket.bgType, srlPacket.fromType);
 
-    BattlegroundManager.HandleBattlegroundListPacket(this, srlPacket.bgType, srlPacket.fromType);
+    sBattlegroundManager.HandleBattlegroundListPacket(this, srlPacket.bgType, srlPacket.fromType);
 }
 
 void WorldSession::handleBattleMasterHelloOpcode(WorldPacket& recvPacket)
@@ -154,11 +158,11 @@ void WorldSession::handleBattlegroundPlayerPositionsOpcode(WorldPacket& /*recvPa
 
     uint32_t flagHolders = 0;
 
-    const auto alliancePlayer = objmgr.GetPlayer(static_cast<uint32_t>(cBattleground->GetFlagHolderGUID(TEAM_ALLIANCE)));
+    const auto alliancePlayer = sObjectMgr.GetPlayer(static_cast<uint32_t>(cBattleground->GetFlagHolderGUID(TEAM_ALLIANCE)));
     if (alliancePlayer)
         ++flagHolders;
 
-    const auto hordePlayer = objmgr.GetPlayer(static_cast<uint32_t>(cBattleground->GetFlagHolderGUID(TEAM_HORDE)));
+    const auto hordePlayer = sObjectMgr.GetPlayer(static_cast<uint32_t>(cBattleground->GetFlagHolderGUID(TEAM_HORDE)));
     if (hordePlayer)
         ++flagHolders;
 
@@ -216,11 +220,11 @@ void WorldSession::handleBattlefieldStatusOpcode(WorldPacket& /*recvPacket*/)
     const auto cBattleground = _player->m_bg;
 
     if (cBattleground)
-        BattlegroundManager.SendBattlefieldStatus(_player, BGSTATUS_TIME, cBattleground->GetType(), cBattleground->GetId(), static_cast<uint32_t>(UNIXTIME) - cBattleground->GetStartTime(), _player->GetMapId(), cBattleground->Rated());
+        sBattlegroundManager.SendBattlefieldStatus(_player, BGSTATUS_TIME, cBattleground->GetType(), cBattleground->GetId(), static_cast<uint32_t>(UNIXTIME) - cBattleground->GetStartTime(), _player->GetMapId(), cBattleground->Rated());
     else if (pendingBattleground)
-        BattlegroundManager.SendBattlefieldStatus(_player, BGSTATUS_READY, pendingBattleground->GetType(), pendingBattleground->GetId(), 120000, 0, pendingBattleground->Rated());
+        sBattlegroundManager.SendBattlefieldStatus(_player, BGSTATUS_READY, pendingBattleground->GetType(), pendingBattleground->GetId(), 120000, 0, pendingBattleground->Rated());
     else
-        BattlegroundManager.SendBattlefieldStatus(_player, BGSTATUS_NOFLAGS, 0, 0, 0, 0, 0);
+        sBattlegroundManager.SendBattlefieldStatus(_player, BGSTATUS_NOFLAGS, 0, 0, 0, 0, 0);
 }
 
 void WorldSession::handleBattleMasterJoinOpcode(WorldPacket& recvPacket)
@@ -240,10 +244,10 @@ void WorldSession::handleBattleMasterJoinOpcode(WorldPacket& recvPacket)
     }
 
     if (_player->m_bgIsQueued)
-        BattlegroundManager.RemovePlayerFromQueues(_player);
+        sBattlegroundManager.RemovePlayerFromQueues(_player);
 
     if (_player->IsInWorld())
-        BattlegroundManager.HandleBattlegroundJoin(this, recvPacket);
+        sBattlegroundManager.HandleBattlegroundJoin(this, recvPacket);
 }
 
 void WorldSession::sendBattlegroundList(Creature* creature, uint32_t mapId)
@@ -269,41 +273,26 @@ void WorldSession::sendBattlegroundList(Creature* creature, uint32_t mapId)
         battlegroundType = mapId;
     }
 
-    BattlegroundManager.HandleBattlegroundListPacket(this, battlegroundType);
+    sBattlegroundManager.HandleBattlegroundListPacket(this, battlegroundType);
 }
 
 #if VERSION_STRING >= Cata
 void WorldSession::handleRequestRatedBgInfoOpcode(WorldPacket & recvPacket)
 {
-    uint8_t unk_type;
-    recvPacket >> unk_type;
+    CmsgRequestRatedBgInfo srlPacket;
+    if (!srlPacket.deserialise(recvPacket))
+        return;
 
-    LogDebugFlag(LF_OPCODE, "Received CMSG_REQUEST_RATED_BG_INFO received with unk_type = %u", unk_type);
+    LogDebugFlag(LF_OPCODE, "Received CMSG_REQUEST_RATED_BG_INFO received with unk_type = %u", srlPacket.type);
 
-    WorldPacket data(SMSG_RATED_BG_INFO, 72);
-    for (int i = 0; i < 18; ++i)
-    {
-        data << uint32_t(0);    // unknown
-    }
-
-    SendPacket(&data);
+    SendPacket(SmsgRatedBgInfo(0).serialise().get());
 }
 
 void WorldSession::handleRequestRatedBgStatsOpcode(WorldPacket& /*recvPacket*/)
 {
     LogDebugFlag(LF_OPCODE, "Received CMSG_REQUEST_RATED_BG_STATS received");
 
-    WorldPacket data(SMSG_RATED_BG_STATS, 29);
-    data << uint32_t(0);    // unknown
-    data << uint8_t(3);     // unknown - always 3?... type?
-    data << uint32_t(0);    // unknown
-    data << uint32_t(0);    // unknown
-    data << uint32_t(0);    // unknown
-    data << uint32_t(0);    // unknown
-    data << uint32_t(0);    // unknown
-    data << uint32_t(0);    // unknown
-
-    SendPacket(&data);
+    SendPacket(SmsgRatedBgStats(3).serialise().get());
 }
 
 void WorldSession::handleRequestPvPRewardsOpcode(WorldPacket& /*recvPacket*/)
@@ -325,15 +314,6 @@ void WorldSession::handleRequestPvpOptionsOpcode(WorldPacket& /*recvPacket*/)
 {
     LogDebugFlag(LF_OPCODE, "Received CMSG_REQUEST_RATED_BG_STATS received");
 
-    WorldPacket data(SMSG_PVP_OPTIONS_ENABLED, 1);
-    data.writeBit(1);       // unknown 
-    data.writeBit(1);       // unknown wargames enabled
-    data.writeBit(1);       // unknown 
-    data.writeBit(1);       // unknown rated battlegrounds enabled
-    data.writeBit(1);       // unknown rated arenas enabled
-
-    data.flushBits();
-
-    SendPacket(&data);
+    SendPacket(SmsgPvpOptionsEnabled(true, true, true).serialise().get());
 }
 #endif

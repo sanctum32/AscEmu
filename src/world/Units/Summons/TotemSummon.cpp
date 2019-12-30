@@ -45,7 +45,7 @@ void TotemSummon::Load(CreatureProperties const* creatureProperties, Unit* unitO
 
     InheritSMMods(unitOwner);
 
-    for (uint8_t school = 0; school < SCHOOL_COUNT; school++)
+    for (uint8_t school = 0; school < TOTAL_SPELL_SCHOOLS; school++)
     {
         ModDamageDone[school] = unitOwner->GetDamageDoneMod(school);
         HealDoneMod[school] = unitOwner->HealDoneMod[school];
@@ -73,7 +73,7 @@ bool TotemSummon::isTotem() const { return true; }
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Override Unit functions
-void TotemSummon::Die(Unit* /*pAttacker*/, uint32 /*damage*/, uint32 /*spellid*/)
+void TotemSummon::Die(Unit* /*pAttacker*/, uint32_t /*damage*/, uint32_t /*spellid*/)
 {
     Despawn(1, 0);
 }
@@ -125,6 +125,6 @@ void TotemSummon::SetupSpells()
         EnableAI();
         m_aiInterface->totemspell = totemSpell;
         m_aiInterface->m_totemspelltimer = 0;
-        m_aiInterface->m_totemspelltime = 3 * MSTIME_SECOND;
+        m_aiInterface->m_totemspelltime = 3 * TimeVarsMs::Second;
     }
 }

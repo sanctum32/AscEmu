@@ -21,10 +21,7 @@
 
 #include "StdAfx.h"
 #include "SpellMgr.h"
-#include "../../scripts/Battlegrounds/EyeOfTheStorm.h"
 #include "Definitions/ProcFlags.h"
-
-initialiseSingleton(SpellProcMgr);
 
 bool SpellProc::CanProc(Unit* /*victim*/, SpellInfo const* /*CastingSpell*/)
 {

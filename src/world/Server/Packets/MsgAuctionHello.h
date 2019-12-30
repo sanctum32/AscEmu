@@ -9,7 +9,7 @@ This file is released under the MIT license. See README-MIT for more information
 #include "ManagedPacket.h"
 #include "WorldPacket.h"
 
-namespace AscEmu { namespace Packets
+namespace AscEmu::Packets
 {
     class MsgAuctionHello : public ManagedPacket
     {
@@ -23,7 +23,7 @@ namespace AscEmu { namespace Packets
         }
 
         MsgAuctionHello(uint64_t guid, uint32_t auctionHouseId, uint8_t isAuctionHouseEnabled) :
-            ManagedPacket(MSG_AUCTION_HELLO, 12),
+            ManagedPacket(MSG_AUCTION_HELLO, 8),
             guid(guid),
             auctionHouseId(auctionHouseId),
             isAuctionHouseEnabled(isAuctionHouseEnabled)
@@ -45,4 +45,4 @@ namespace AscEmu { namespace Packets
             return true;
         }
     };
-}}
+}

@@ -203,9 +203,6 @@ void PrintCrashInformation(PEXCEPTION_POINTERS except)
     echo("Server has crashed. Reason was:\n");
     echo("   %s at 0x%08X\n", GetExceptionDescription(except->ExceptionRecord->ExceptionCode),
          except->ExceptionRecord->ExceptionAddress);
-#ifdef REPACK
-    echo("%s repack by %s has crashed. Visit %s for support.", REPACK, REPACK_AUTHOR, REPACK_WEBSITE);
-#endif
     echo("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n");
 }
 
@@ -351,7 +348,7 @@ int __cdecl HandleCrash(PEXCEPTION_POINTERS pExceptPtrs)
     SetPriorityClass(GetCurrentProcess(), BELOW_NORMAL_PRIORITY_CLASS);
     OnCrash(!ON_CRASH_BREAK_DEBUGGER);
 
-    AscLog.~AscEmuLog();
+    AscLog.finalize();
     return EXCEPTION_CONTINUE_SEARCH;
 }
 #endif

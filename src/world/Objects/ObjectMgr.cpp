@@ -41,29 +41,33 @@
 #include "Management/Guild.h"
 #endif
 
-initialiseSingleton(ObjectMgr);
-
 const char* NormalTalkMessage = "DMSG";
 
-ObjectMgr::ObjectMgr() :
-m_hiItemGuid(0),
-m_hiGroupId(0),
-m_mailid(0),
-m_reportID(0),
-m_ticketid(0),
-m_setGUID(0),
-m_hiCorpseGuid(0),
-m_hiGuildId(0),
-m_hiPetGuid(0),
-m_hiArenaTeamId(0),
-TransportersCount(0),
-m_hiPlayerGuid(1)
+ObjectMgr& ObjectMgr::getInstance()
 {
+    static ObjectMgr mInstance;
+    return mInstance;
+}
+
+void ObjectMgr::initialize()
+{
+    m_hiItemGuid = 0;
+    m_hiGroupId = 0;
+    m_mailid = 0;
+    m_reportID = 0;
+    m_ticketid = 0;
+    m_setGUID = 0;
+    m_hiCorpseGuid = 0;
+    m_hiGuildId = 0;
+    m_hiPetGuid = 0;
+    m_hiArenaTeamId = 0;
+    TransportersCount = 0;
+    m_hiPlayerGuid = 1;
+
     memset(m_InstanceBossInfoMap, 0, sizeof(InstanceBossInfoMap*) * MAX_NUM_MAPS);
 }
 
-
-ObjectMgr::~ObjectMgr()
+void ObjectMgr::finalize()
 {
     LogNotice("ObjectMgr : Deleting Corpses...");
     CorpseCollectorUnload();
@@ -1496,17 +1500,17 @@ void ObjectMgr::createGuardGossipMenuForPlayer(uint64_t senderGuid, uint32_t gos
         textId = forcedTextId;
     }
 
-    Arcemu::Gossip::Menu menu(senderGuid, textId, player->GetSession()->language, gossipMenuId);
+    GossipMenu menu(senderGuid, textId, player->GetSession()->language, gossipMenuId);
 
     typedef MySQLDataStore::GossipMenuItemsContainer::iterator GossipMenuItemsIterator;
     std::pair<GossipMenuItemsIterator, GossipMenuItemsIterator> gossipEqualRange = sMySQLStore._gossipMenuItemsStores.equal_range(gossipMenuId);
     for (GossipMenuItemsIterator itr = gossipEqualRange.first; itr != gossipEqualRange.second; ++itr)
     {
         if (itr->first == gossipMenuId)
-            menu.AddItem(itr->second.icon, player->GetSession()->LocalizedGossipOption(itr->second.menuOptionText), itr->second.itemOrder);
+            menu.addItem(itr->second.icon, itr->second.menuOptionText, itr->second.itemOrder);
     }
 
-    menu.Send(player);
+    menu.sendGossipPacket(player);
 }
 
 //MIT
@@ -2323,7 +2327,7 @@ Pet* ObjectMgr::CreatePet(uint32 entry)
 {
     uint32 guid;
     guid = ++m_hiPetGuid;
-    return new Pet(Arcemu::Util::MAKE_PET_GUID(entry, guid));
+    return new Pet(WoWGuid::createPetGuid(entry, guid));
 }
 
 Player* ObjectMgr::CreatePlayer(uint8 _class)
@@ -2550,7 +2554,7 @@ void Charter::RemoveSignature(uint32 PlayerGuid)
 
 void Charter::Destroy()
 {
-    objmgr.RemoveCharter(this);
+    sObjectMgr.RemoveCharter(this);
 
     CharacterDatabase.Execute("DELETE FROM charters WHERE charterId = %u", CharterId);
 
@@ -2559,7 +2563,7 @@ void Charter::Destroy()
         if (!Signatures[i])
             continue;
 
-        Player* p = objmgr.GetPlayer(Signatures[i]);
+        Player* p = sObjectMgr.GetPlayer(Signatures[i]);
         if (p != nullptr)
             p->m_charters[CharterType] = nullptr;
     }
@@ -2936,12 +2940,12 @@ class ArenaSorter
 
         bool operator()(ArenaTeam* const & a, ArenaTeam* const & b)
         {
-            return (a->m_stat_rating > b->m_stat_rating);
+            return (a->m_stats.rating > b->m_stats.rating);
         }
 
         bool operator()(ArenaTeam*& a, ArenaTeam*& b)
         {
-            return (a->m_stat_rating > b->m_stat_rating);
+            return (a->m_stats.rating > b->m_stats.rating);
         }
 };
 
@@ -2959,9 +2963,9 @@ void ObjectMgr::UpdateArenaTeamRankings()
         uint32 rank = 1;
         for (std::vector<ArenaTeam*>::iterator itr = ranking.begin(); itr != ranking.end(); ++itr)
         {
-            if ((*itr)->m_stat_ranking != rank)
+            if ((*itr)->m_stats.ranking != rank)
             {
-                (*itr)->m_stat_ranking = rank;
+                (*itr)->m_stats.ranking = rank;
                 (*itr)->SaveToDB();
             }
             ++rank;
@@ -2980,11 +2984,11 @@ void ObjectMgr::ResetArenaTeamRatings()
             ArenaTeam* team = itr->second;
             if (team)
             {
-                team->m_stat_gamesplayedseason = 0;
-                team->m_stat_gamesplayedweek = 0;
-                team->m_stat_gameswonseason = 0;
-                team->m_stat_gameswonweek = 0;
-                team->m_stat_rating = 1500;
+                team->m_stats.played_season = 0;
+                team->m_stats.played_week = 0;
+                team->m_stats.won_season = 0;
+                team->m_stats.won_week = 0;
+                team->m_stats.rating = 1500;
                 for (uint32 j = 0; j < team->m_memberCount; ++j)
                 {
                     team->m_members[j].Played_ThisSeason = 0;
@@ -3013,8 +3017,8 @@ void ObjectMgr::UpdateArenaTeamWeekly()
             ArenaTeam* team = itr->second;
             if (team)
             {
-                team->m_stat_gamesplayedweek = 0;
-                team->m_stat_gameswonweek = 0;
+                team->m_stats.played_week = 0;
+                team->m_stats.won_week = 0;
                 for (uint32 j = 0; j < team->m_memberCount; ++j)
                 {
                     team->m_members[j].Played_ThisWeek = 0;
@@ -3043,8 +3047,6 @@ void ObjectMgr::ResetDailies()
 
 void ObjectMgr::LoadSpellTargetConstraints()
 {
-    enum { CREATURE_FOCUS_TYPE, GAMEOBJECT_FOCUS_TYPE, CREATURE_TYPE, GAMEOBJECT_TYPE };
-
     LogNotice("ObjectMgr : Loading spell target constraints...");
 
     // Let's try to be idiot proof :/
@@ -3069,39 +3071,37 @@ void ObjectMgr::LoadSpellTargetConstraints()
                     m_spelltargetconstraints.insert(std::pair< uint32, SpellTargetConstraint* >(spellid, stc));
                 }
 
-                uint32 type = fields[1].GetUInt32();
+                uint8_t type = fields[1].GetUInt8();
                 uint32 value = fields[2].GetUInt32();
 
-                if (type == CREATURE_FOCUS_TYPE)
+                if (type == SPELL_CONSTRAINT_EXPLICIT_CREATURE)
                 {
                     if (stc != nullptr)
                     {
                         stc->addCreature(value);
-                        stc->addFocused(value, 1);
+                        stc->addExplicitTarget(value);
                     }
                 }
-                else if (type == GAMEOBJECT_FOCUS_TYPE)
+                else if (type == SPELL_CONSTRAINT_EXPLICIT_GAMEOBJECT)
                 {
                     if (stc != nullptr)
                     {
                         stc->addGameObject(value);
-                        stc->addFocused(value, 1);
+                        stc->addExplicitTarget(value);
                     }
                 }
-                else if (type == CREATURE_TYPE)
+                else if (type == SPELL_CONSTRAINT_IMPLICIT_CREATURE)
                 {
                     if (stc != nullptr)
                     {
                         stc->addCreature(value);
-                        stc->addFocused(value, 0);
                     }
                 }
-                else if (type == GAMEOBJECT_TYPE)
+                else if (type == SPELL_CONSTRAINT_IMPLICIT_GAMEOBJECT)
                 {
                     if (stc != nullptr)
                     {
-                        stc->addCreature(value);
-                        stc->addFocused(value, 0);
+                        stc->addGameObject(value);
                     }
                 }
 
@@ -3421,7 +3421,7 @@ SpellEffectMapBounds ObjectMgr::GetSpellEffectBounds(uint32 data_1) const
 
 bool ObjectMgr::CheckforScripts(Player* plr, uint32 event_id)
 {
-    EventScriptBounds EventScript = objmgr.GetEventScripts(event_id);
+    EventScriptBounds EventScript = sObjectMgr.GetEventScripts(event_id);
     if (EventScript.first == EventScript.second)
         return false;
 
@@ -3435,7 +3435,7 @@ bool ObjectMgr::CheckforScripts(Player* plr, uint32 event_id)
 
 bool ObjectMgr::CheckforDummySpellScripts(Player* plr, uint32 data_1)
 {
-    SpellEffectMapBounds EventScript = objmgr.GetSpellEffectBounds(data_1);
+    SpellEffectMapBounds EventScript = sObjectMgr.GetSpellEffectBounds(data_1);
     if (EventScript.first == EventScript.second)
         return false;
 
@@ -3449,7 +3449,7 @@ bool ObjectMgr::CheckforDummySpellScripts(Player* plr, uint32 data_1)
 
 void ObjectMgr::EventScriptsUpdate(Player* plr, uint32 next_event)
 {
-    EventScriptBounds EventScript = objmgr.GetEventScripts(next_event);
+    EventScriptBounds EventScript = sObjectMgr.GetEventScripts(next_event);
 
     for (EventScriptMaps::const_iterator itr = EventScript.first; itr != EventScript.second; ++itr)
     {
@@ -3532,7 +3532,7 @@ void ObjectMgr::EventScriptsUpdate(Player* plr, uint32 next_event)
 
         if (itr->second.nextevent != 0)
         {
-            objmgr.CheckforScripts(plr, itr->second.nextevent);
+            sObjectMgr.CheckforScripts(plr, itr->second.nextevent);
         }
     }
 }

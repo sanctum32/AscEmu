@@ -23,7 +23,6 @@
 
 #include "Threading/RWLock.h"
 #include "CallBack.h"
-#include "Singleton.h"
 #include <map>
 
 enum EventTypes
@@ -143,15 +142,15 @@ enum EventTypes
     EVENT_AURA_REGEN,
     EVENT_AURA_PERIODIC_REGEN,
     EVENT_AURA_PERIODIC_HEALPERC,
-    EVENT_ATTACK_TIMEOUT,		            /// Zack 2007 05 05: if no action is taken then combat should be exited after 5 seconds.
-    EVENT_SUMMON_EXPIRE,		            /// Zack 2007 05 28: similar to pet expire but we can have multiple guardians
-    EVENT_MUTE_PLAYER,			            /// Zack 2007 06 05: player gains his voice back
-    EVENT_PLAYER_FORCED_RESURRECT,		    /// Zack 2007 06 08: After player not pushing release spirit for 6 minutes while dead
-    EVENT_PLAYER_SOFT_DISCONNECT,		    /// Zack 2007 06 12: Kick AFK players to not eat resources
+    EVENT_ATTACK_TIMEOUT,                       /// Zack 2007 05 05: if no action is taken then combat should be exited after 5 seconds.
+    EVENT_SUMMON_EXPIRE,                        /// Zack 2007 05 28: similar to pet expire but we can have multiple guardians
+    EVENT_MUTE_PLAYER,                          /// Zack 2007 06 05: player gains his voice back
+    EVENT_PLAYER_FORCED_RESURRECT,              /// Zack 2007 06 08: After player not pushing release spirit for 6 minutes while dead
+    EVENT_PLAYER_SOFT_DISCONNECT,               /// Zack 2007 06 12: Kick AFK players to not eat resources
     EVENT_BATTLEGROUND_WSG_AUTO_RETURN_FLAG,
     EVENT_BATTLEGROUND_WSG_AUTO_RETURN_FLAG_1,
     EVENT_CORPSE_SPAWN_BONES,
-    EVENT_DODGE_BLOCK_FLAG_EXPIRE,	        /// yeah, there are more then 1 flags
+    EVENT_DODGE_BLOCK_FLAG_EXPIRE,              /// yeah, there are more then 1 flags
     EVENT_REJUVENATION_FLAG_EXPIRE,
     EVENT_PARRY_FLAG_EXPIRE,
     EVENT_CRIT_FLAG_EXPIRE,
@@ -288,11 +287,23 @@ class EventMgr;
 class EventableObjectHolder;
 typedef std::map<int32, EventableObjectHolder*> HolderMap;
 
-class SERVER_DECL EventMgr : public Singleton < EventMgr >
+class SERVER_DECL EventMgr
 {
     friend class MiniEventMgr;
 
+    private:
+
+        EventMgr() = default;
+        ~EventMgr() = default;
+
     public:
+
+        static EventMgr& getInstance();
+
+        EventMgr(EventMgr&&) = delete;
+        EventMgr(EventMgr const&) = delete;
+        EventMgr& operator=(EventMgr&&) = delete;
+        EventMgr& operator=(EventMgr const&) = delete;
 
         template <class Class>
         void AddEvent(Class* obj, void (Class::*method)(), uint32 type, time_t time, uint32 repeats, uint32 flags)
@@ -426,6 +437,6 @@ class SERVER_DECL EventMgr : public Singleton < EventMgr >
         RWLock holderLock;
 };
 
-#define sEventMgr EventMgr::getSingleton()
+#define sEventMgr EventMgr::getInstance()
 
 #endif // EVENTMGR_H

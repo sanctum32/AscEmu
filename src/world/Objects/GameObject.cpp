@@ -32,8 +32,12 @@
 #include "Spell/SpellMgr.h"
 #include "Data/WoWGameObject.h"
 #include "Server/Packets/SmsgStandstateUpdate.h"
+#include "Management/Battleground/Battleground.h"
+#include "Server/Packets/SmsgGameobjectCustomAnim.h"
 
 // MIT
+
+using namespace AscEmu::Packets;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // WoWData
@@ -136,6 +140,14 @@ void GameObject::setAnimationProgress(uint8_t progress)
 
 bool GameObject::isQuestGiver() const { return getGoType() == GAMEOBJECT_TYPE_QUESTGIVER; }
 bool GameObject::isFishingNode() const { return getGoType() == GAMEOBJECT_TYPE_FISHINGNODE; }
+
+Player* GameObject::getPlayerOwner()
+{
+    if (m_summoner != nullptr && m_summoner->isPlayer())
+        return dynamic_cast<Player*>(m_summoner);
+
+    return nullptr;
+}
 // MIT End
 
 GameObject::GameObject(uint64 guid)
@@ -194,7 +206,7 @@ GameObject::~GameObject()
     uint32 guid = static_cast<uint32_t>(getCreatedByGuid());
     if (guid)
     {
-        Player* plr = objmgr.GetPlayer(guid);
+        Player* plr = sObjectMgr.GetPlayer(guid);
         if (plr && plr->GetSummonedObject() == this)
             plr->SetSummonedObject(NULL);
 
@@ -308,7 +320,7 @@ void GameObject::SaveToDB()
         // Create spawn instance
         m_spawn = new MySQLStructure::GameobjectSpawn;
         m_spawn->entry = getEntry();
-        m_spawn->id = objmgr.GenerateGameObjectSpawnID();
+        m_spawn->id = sObjectMgr.GenerateGameObjectSpawnID();
         m_spawn->map = GetMapId();
         m_spawn->position_x = GetPositionX();
         m_spawn->position_y = GetPositionY();
@@ -447,7 +459,7 @@ void GameObject::_Expire()
     if (IsInWorld())
         RemoveFromWorld(true);
 
-    //sEventMgr.AddEvent(World::getSingletonPtr(), &World::DeleteObject, ((Object*)this), EVENT_DELETE_TIMER, 1000, 1);
+    //sEventMgr.AddEvent(sWorld, &World::DeleteObject, ((Object*)this), EVENT_DELETE_TIMER, 1000, 1);
     delete this;
     //this = NULL;
 }
@@ -522,9 +534,7 @@ void GameObject::onRemoveInRangeObject(Object* pObj)
 // Remove gameobject from world, using their despawn animation.
 void GameObject::RemoveFromWorld(bool free_guid)
 {
-    WorldPacket data(SMSG_GAMEOBJECT_DESPAWN_ANIM, 8);
-    data << uint64(getGuid());
-    SendMessageToSet(&data, true);
+    sendGameobjectDespawnAnim();
 
     sEventMgr.RemoveEvents(this);
     Object::RemoveFromWorld(free_guid);
@@ -628,12 +638,9 @@ void GameObject::CastSpell(uint64 TargetGUID, uint32 SpellID)
 }
 
 //MIT
-void GameObject::SetCustomAnim(uint32_t anim)
+void GameObject::sendGameobjectCustomAnim(uint32_t anim)
 {
-    WorldPacket data(SMSG_GAMEOBJECT_CUSTOM_ANIM, 12);
-    data << uint64_t(getGuid());
-    data << uint32_t(anim);
-    SendMessageToSet(&data, false, false);
+    SendMessageToSet(SmsgGameobjectCustomAnim(getGuid(), anim).serialise().get(), false, false);
 }
 
 
@@ -1005,7 +1012,7 @@ void GameObject_Trap::Update(unsigned long time_passed)
 
                 if (spell->getEffectImplicitTargetA(0) == EFF_TARGET_ALL_ENEMY_IN_AREA_INSTANT || spell->getEffectImplicitTargetA(0) == EFF_TARGET_ALL_ENEMY_IN_AREA_INSTANT)
                 {
-                    return;	 // on area don't continue.
+                    return; // on area don't continue.
                 }
             }
         }
@@ -1154,7 +1161,7 @@ void GameObject_FishingNode::OnPushToWorld()
         zone = GetZoneId();
 
     // Only set a 'splash' if there is any loot in this area / zone
-    if (lootmgr.IsFishable(zone))
+    if (sLootMgr.IsFishable(zone))
     {
         uint32 seconds[] = { 0, 4, 10, 14 };
         uint32 rnd = Util::getRandomUInt(3);
@@ -1203,9 +1210,9 @@ void GameObject_FishingNode::onUse(Player* player)
         if (school != nullptr)
         {
             if (school->GetMapMgr() != nullptr)
-                lootmgr.FillGOLoot(&school->loot, school->GetGameObjectProperties()->raw.parameter_1, school->GetMapMgr()->iInstanceMode);
+                sLootMgr.FillGOLoot(&school->loot, school->GetGameObjectProperties()->raw.parameter_1, school->GetMapMgr()->iInstanceMode);
             else
-                lootmgr.FillGOLoot(&school->loot, school->GetGameObjectProperties()->raw.parameter_1, 0);
+                sLootMgr.FillGOLoot(&school->loot, school->GetGameObjectProperties()->raw.parameter_1, 0);
 
             player->SendLoot(school->getGuid(), LOOT_FISHING, school->GetMapId());
             EndFishing(false);
@@ -1214,7 +1221,7 @@ void GameObject_FishingNode::onUse(Player* player)
         }
         else if (maxskill != 0 && Rand(((player->_GetSkillLineCurrent(SKILL_FISHING, true) - minskill) * 100) / maxskill))
         {
-            lootmgr.FillFishingLoot(&this->loot, zone);
+            sLootMgr.FillFishingLoot(&this->loot, zone);
             player->SendLoot(getGuid(), LOOT_FISHING, GetMapId());
             EndFishing(false);
         }
@@ -1269,7 +1276,7 @@ void GameObject_FishingNode::EndFishing(bool abort)
 
 void GameObject_FishingNode::EventFishHooked()
 {
-    SetCustomAnim();
+    sendGameobjectCustomAnim();
     FishHooked = true;
 }
 
@@ -1354,7 +1361,7 @@ void GameObject_Ritual::onUse(Player* player)
             if (info == nullptr)
                 return;
 
-            Player* target = objmgr.GetPlayer(GetRitual()->GetTargetGUID());
+            Player* target = sObjectMgr.GetPlayer(GetRitual()->GetTargetGUID());
             if (target == nullptr || !target->IsInWorld())
                 return;
 
@@ -1471,7 +1478,7 @@ void GameObject_SpellCaster::onUse(Player* player)
 void GameObject_Meetingstone::onUse(Player* player)
 {
     // Use selection
-    Player* pPlayer = objmgr.GetPlayer(static_cast<uint32>(player->GetSelection()));
+    Player* pPlayer = sObjectMgr.GetPlayer(static_cast<uint32>(player->GetSelection()));
     if (pPlayer == nullptr)
         return;
 
@@ -1507,7 +1514,7 @@ void GameObject_Meetingstone::onUse(Player* player)
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Class functions for GameObject_FlagStand
-void GameObject_FlagStand::onUse(Player* player)
+void GameObject_FlagStand::onUse(Player* /*player*/)
 {
 
 }

@@ -26,6 +26,7 @@
 #include "Management/Group.h"
 #include "Server/World.h"
 #include "Server/World.Legacy.h"
+#include "Instance.h"
 
 extern const char* InstanceAbortMessages[];
 
@@ -37,52 +38,25 @@ class Group;
 class Player;
 class Battleground;
 
-class SERVER_DECL Instance
-{
-    public:
-
-        uint32 m_instanceId;
-        uint32 m_mapId;
-        MapMgr* m_mapMgr;
-        uint32 m_creatorGuid;
-        uint32 m_creatorGroup;
-        bool m_persistent;
-        uint8 m_difficulty;
-        std::set<uint32> m_killedNpcs;
-        time_t m_creation;
-        time_t m_expiration;
-        MySQLStructure::MapInfo const* m_mapInfo;
-        bool m_isBattleground;
-
-        void LoadFromDB(Field* fields);
-        void SaveToDB();
-        void DeleteFromDB();
-};
-
-typedef std::unordered_map<uint32, Instance*> InstanceMap;
-
 class SERVER_DECL InstanceMgr
 {
     friend class MapMgr;
 
+    typedef std::unordered_map<uint32_t, Instance*> InstanceMap;
+
     public:
 
-        InstanceMgr();
-        ~InstanceMgr();
+        InstanceMgr() {}
+        ~InstanceMgr() {}
 
-        inline Map* GetMap(uint32 mapid)
-        {
-            if (mapid >= MAX_NUM_MAPS)
-                return NULL;
-            else
-                return m_maps[mapid];
-        }
+        Map* GetMap(uint32_t mapid);
 
-        uint32 PreTeleport(uint32 mapid, Player* plr, uint32 instanceid);
+        uint32_t PreTeleport(uint32_t mapid, Player* plr, uint32_t instanceid);
         MapMgr* GetInstance(Object* obj);
-        uint32 GenerateInstanceID();
 
-        void Load(TaskList* l);
+        void Load();
+
+        void SaveInstanceToDB(Instance* instance);
 
         // deletes all instances owned by this player.
         void ResetSavedInstances(Player* plr);
@@ -95,38 +69,10 @@ class SERVER_DECL InstanceMgr
 
         // has an instance expired?
         // can a player join?
-        inline bool PlayerOwnsInstance(Instance* pInstance, Player* pPlayer)
-        {
-            // Expired?
-            if (pInstance->m_expiration && (UNIXTIME + 20) >= pInstance->m_expiration)
-            {
-                _DeleteInstance(pInstance, true);
-                return false;
-            }
-
-            // Persistent instance handling
-            if (pInstance->m_persistent)
-            {
-                return (pPlayer->GetPersistentInstanceId(pInstance->m_mapId, pInstance->m_difficulty) == pInstance->m_instanceId);
-            }
-            // Default instance handling
-            else if ((pPlayer->GetGroup() && pInstance->m_creatorGroup == pPlayer->GetGroup()->GetID()) || pPlayer->getGuidLow() == pInstance->m_creatorGuid)
-            {
-                return true;
-            }
-
-            return false;
-        }
+        bool PlayerOwnsInstance(Instance* pInstance, Player* pPlayer);
 
         // has an instance expired?
-        inline bool HasInstanceExpired(Instance* pInstance)
-        {
-            // expired?
-            if (pInstance->m_expiration && (UNIXTIME + 20) >= pInstance->m_expiration)
-                return true;
-
-            return false;
-        }
+        bool HasInstanceExpired(Instance* pInstance);
 
         // check for expired instances
         void CheckForExpiredInstances();
@@ -137,60 +83,50 @@ class SERVER_DECL InstanceMgr
         // packets, w000t! we all love packets!
         void BuildRaidSavedInstancesForPlayer(Player* plr);
         void BuildSavedInstancesForPlayer(Player* plr);
-        MapMgr* CreateBattlegroundInstance(uint32 mapid);
+        MapMgr* CreateBattlegroundInstance(uint32_t mapid);
 
         // Create an instance for Level 3 gm command
-        MapMgr* CreateInstance(uint32 instanceType, uint32 mapid);
+        MapMgr* CreateInstance(uint32_t instanceType, uint32_t mapid);
 
         // A (should be) safe way for scripts to delete an active instance
         void SafeDeleteInstance(MapMgr* mgr);
 
         // this only frees the instance pointer, not the mapmgr itself
-        void DeleteBattlegroundInstance(uint32 mapid, uint32 instanceid);
-        MapMgr* GetMapMgr(uint32 mapId);
+        void DeleteBattlegroundInstance(uint32_t mapid, uint32_t instanceid);
+        MapMgr* GetMapMgr(uint32_t mapId);
 
-        bool InstanceExists(uint32 mapid, uint32 instanceId)
-        {
-            return GetInstanceByIds(mapid, instanceId) != NULL;
-        }
+        bool InstanceExists(uint32_t mapid, uint32_t instanceId);
 
-        Instance* GetInstanceByIds(uint32 mapid, uint32 instanceId)
-        {
-            if (mapid > MAX_NUM_MAPS)
-                return NULL;
-            if (mapid == MAX_NUM_MAPS)
-            {
-                Instance* in;
-                for (uint32 i = 0; i < MAX_NUM_MAPS; ++i)
-                {
-                    in = GetInstanceByIds(i, instanceId);
-                    if (in != NULL)
-                        return in;
-                }
-                return NULL;
-            }
-            InstanceMap* map = m_instances[mapid];
-            if (map == NULL)
-                return NULL;
-            InstanceMap::iterator instance = map->find(instanceId);
-            return instance == map->end() ? NULL : instance->second;
-        }
+        Instance* GetInstanceByIds(uint32_t mapid, uint32_t instanceId);
 
     private:
 
-        void _LoadInstances();
-        void _CreateMap(uint32 mapid);
+        void _CreateMap(uint32_t mapid);
         MapMgr* _CreateInstance(Instance* in);
-        MapMgr* _CreateInstance(uint32 mapid, uint32 instanceid);        // only used on main maps!
+        MapMgr* _CreateInstance(uint32_t mapid, uint32_t instanceid);        // only used on main maps!
         bool _DeleteInstance(Instance* in, bool ForcePlayersOut);
 
-        uint32 m_InstanceHigh;
-
         Mutex m_mapLock;
-        Map* m_maps[MAX_NUM_MAPS];
-        InstanceMap* m_instances[MAX_NUM_MAPS];
-        MapMgr* m_singleMaps[MAX_NUM_MAPS];
-        time_t m_nextInstanceReset[MAX_NUM_MAPS];
+
+        //\brief: rewrite the stuff above. 1) data handling. 2) clear packet handling. 3) helper funtions. 4) optimization.
+        //MIT starts
+
+        uint32_t m_InstanceHigh {0};
+
+        Map* m_maps[MAX_NUM_MAPS] {nullptr};
+        InstanceMap* m_instances[MAX_NUM_MAPS] {nullptr};
+        MapMgr* m_singleMaps[MAX_NUM_MAPS] {nullptr};
+        time_t m_nextInstanceReset[MAX_NUM_MAPS] {0};
+
+public:
+
+    void generateInstances();
+    void loadInstanceResetTimes();
+    void deleteExpiredAndInvalidInstances();
+    void loadAndApplySavedInstanceValues();
+
+    uint32_t getNextInstanceId();
+    //MIT ends
 };
 
 extern SERVER_DECL InstanceMgr sInstanceMgr;

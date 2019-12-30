@@ -631,7 +631,7 @@ void WorldSession::handleSplitOpcode(WorldPacket& recvPacket)
         {
             inventoryItem1->modStackCount(-srlPacket.itemCount);
 
-            inventoryItem2 = objmgr.CreateItem(inventoryItem1->getEntry(), _player);
+            inventoryItem2 = sObjectMgr.CreateItem(inventoryItem1->getEntry(), _player);
             if (inventoryItem2 == nullptr)
                 return;
 
@@ -1781,7 +1781,7 @@ void WorldSession::handleBuyItemInSlotOpcode(WorldPacket& recvPacket)
             return;
         }
 
-        pItem = objmgr.CreateItem(it->ItemId, _player);
+        pItem = sObjectMgr.CreateItem(it->ItemId, _player);
         if (pItem)
         {
             pItem->setStackCount(count_per_stack);
@@ -1905,7 +1905,7 @@ void WorldSession::handleBuyItemOpcode(WorldPacket& recvPacket)
 
     if (!addItem)
     {
-        Item* item = objmgr.CreateItem(creature_item.itemid, _player);
+        Item* item = sObjectMgr.CreateItem(creature_item.itemid, _player);
         if (!item)
         {
             _player->getItemInterface()->BuildInventoryChangeError(nullptr, nullptr, INV_ERR_DONT_OWN_THAT_ITEM);
@@ -2012,7 +2012,7 @@ void WorldSession::handleListInventoryOpcode(WorldPacket& recvPacket)
     if (_player->CanBuyAt(vendor))
         sendInventoryList(unit);
     else
-        Arcemu::Gossip::Menu::SendSimpleMenu(unit->getGuid(), vendor->cannotbuyattextid, _player);
+        GossipMenu::sendSimpleMenu(unit->getGuid(), vendor->cannotbuyattextid, _player);
 }
 
 void WorldSession::sendInventoryList(Creature* unit)
@@ -2024,7 +2024,7 @@ void WorldSession::sendInventoryList(Creature* unit)
             unit->getEntry(), unit->GetCreatureProperties()->Name.c_str());
         LOG_ERROR("'%s' discovered that a creature with entry %u (%s) has no sell template.",
             _player->getName().c_str(), unit->getEntry(), unit->GetCreatureProperties()->Name.c_str());
-        Arcemu::Gossip::Menu::Complete(_player);
+        GossipMenu::senGossipComplete(_player);
         return;
     }
 
@@ -2044,7 +2044,7 @@ void WorldSession::sendInventoryList(Creature* unit)
     uint32_t counter = 0;
     for (auto sellItem : *unit->getSellItems())
     {
-        if (sellItem.itemid && (sellItem.max_amount == 0 || sellItem.max_amount > 0 && sellItem.available_amount > 0))
+        if (sellItem.itemid)
         {
             if (const auto curItem = sMySQLStore.getItemProperties(sellItem.itemid))
             {
@@ -2822,7 +2822,7 @@ void WorldSession::handleEquipmentSetSave(WorldPacket& data)
     uint32_t setGUID = guid.getGuidLowPart();
 
     if (setGUID == 0)
-        setGUID = objmgr.GenerateEquipmentSetID();
+        setGUID = sObjectMgr.GenerateEquipmentSetID();
 
     auto equipmentSet = new Arcemu::EquipmentSet();
 

@@ -41,10 +41,10 @@ namespace luaItem
         if (LuaGlobal::instance()->m_menu != nullptr)
             delete LuaGlobal::instance()->m_menu;
 
-        LuaGlobal::instance()->m_menu = new Arcemu::Gossip::Menu(ptr->getGuid(), text_id);
+        LuaGlobal::instance()->m_menu = new GossipMenu(ptr->getGuid(), text_id);
 
         if (autosend != 0)
-            LuaGlobal::instance()->m_menu->Send(player);
+            LuaGlobal::instance()->m_menu->sendGossipPacket(player);
 
         return 1;
     }
@@ -64,7 +64,7 @@ namespace luaItem
             return 0;
         }
 
-        LuaGlobal::instance()->m_menu->AddItem(icon, menu_text, IntId, boxmoney, boxmessage, coded);
+        LuaGlobal::instance()->m_menu->addItem(icon, 0, IntId, menu_text,boxmoney, boxmessage, coded);
 
         return 0;
     }
@@ -79,7 +79,7 @@ namespace luaItem
             return 0;
         }
 
-        LuaGlobal::instance()->m_menu->Send(plr);
+        LuaGlobal::instance()->m_menu->sendGossipPacket(plr);
 
         return 1;
     }
@@ -94,7 +94,7 @@ namespace luaItem
             return 0;
         }
 
-        LuaGlobal::instance()->m_menu->Complete(plr);
+        LuaGlobal::instance()->m_menu->senGossipComplete(plr);
 
         return 1;
     }
@@ -130,7 +130,7 @@ namespace luaItem
         if (player == NULL)
             return 0;
 
-        Arcemu::Gossip::Menu::SendQuickMenu(ptr->getGuid(), text_id, player, itemid, itemicon, itemtext, requiredmoney, moneytext, extra);
+        GossipMenu::sendQuickMenu(ptr->getGuid(), text_id, player, itemid, itemicon, itemtext, requiredmoney, moneytext, extra);
 
         return 0;
     }
@@ -255,7 +255,7 @@ namespace luaItem
                 WorldDatabase.Execute("REPLACE INTO loot_items VALUES (%u, %u, %f, 0, 0, 0, %u, %u )", ptr->getEntry(), itemid, chance, mincount, maxcount);
             delete result;
         }
-        lootmgr.AddLoot(ptr->loot, itemid, mincount, maxcount);
+        sLootMgr.AddLoot(ptr->loot, itemid, mincount, maxcount);
         return 1;
     }
 
@@ -447,7 +447,7 @@ namespace luaItem
     {
         uint32 id = CHECK_ULONG(L, 1);
         uint32 stackcount = CHECK_ULONG(L, 2);
-        Item* pItem = objmgr.CreateItem(id, NULL);
+        Item* pItem = sObjectMgr.CreateItem(id, NULL);
         if (!pItem)
             RET_NIL();
         pItem->setStackCount(stackcount);

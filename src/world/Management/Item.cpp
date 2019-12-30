@@ -8,7 +8,6 @@ This file is released under the MIT license. See README-MIT for more information
 #include "Data/WoWItem.h"
 #include "Item.h"
 #include "Map/MapMgrDefines.hpp"
-#include "Server/WUtil.h"
 #include "Spell/Definitions/SpellEffects.h"
 #include "Storage/MySQLDataStore.hpp"
 
@@ -99,7 +98,7 @@ void Item::modStackCount(int32_t mod)
 #ifdef AE_TBC
 void Item::setTextId(const uint32 textId)
 {
-	write(itemData()->item_text_id, textId);
+    write(itemData()->item_text_id, textId);
 }
 #endif
 

@@ -244,7 +244,7 @@ uint8 WorldSession::Update(uint32 InstanceID)
             _socket = nullptr;
         }
 
-        m_lastPing = static_cast<uint32>(UNIXTIME);	// Prevent calling this code over and
+        m_lastPing = static_cast<uint32>(UNIXTIME); // Prevent calling this code over and
         // over.
         if (!_logoutTime)
             _logoutTime = m_currMsTime + PLAYER_LOGOUT_DELAY;
@@ -266,7 +266,7 @@ void WorldSession::LogoutPlayer(bool Save)
     {
         _player->SetFaction(_player->GetInitialFactionId());
 
-        objmgr.RemovePlayer(_player);
+        sObjectMgr.RemovePlayer(_player);
         _player->ok_to_remove = true;
 
         sHookInterface.OnLogout(pPlayer);
@@ -298,11 +298,11 @@ void WorldSession::LogoutPlayer(bool Save)
         }
 
 #ifndef GM_TICKET_MY_MASTER_COMPATIBLE
-        GM_Ticket* ticket = objmgr.GetGMTicketByPlayer(_player->getGuid());
+        GM_Ticket* ticket = sObjectMgr.GetGMTicketByPlayer(_player->getGuid());
         if (ticket != NULL)
         {
             // Send status change to gm_sync_channel
-            Channel* chn = channelmgr.GetChannel(sWorld.getGmClientChannel().c_str(), _player);
+            Channel* chn = sChannelMgr.GetChannel(sWorld.getGmClientChannel().c_str(), _player);
             if (chn)
             {
                 std::stringstream ss;
@@ -336,7 +336,7 @@ void WorldSession::LogoutPlayer(bool Save)
         sWorld.decrementPlayerCount(_player->getTeam());
 
         if (_player->m_bgIsQueued)
-            BattlegroundManager.RemovePlayerFromQueues(_player);
+            sBattlegroundManager.RemovePlayerFromQueues(_player);
 
         // Repop or Resurrect and remove from battlegrounds
         if (_player->m_bg)
@@ -454,7 +454,7 @@ void WorldSession::LoadSecurity(std::string securitystring)
         char c = securitystring.at(i);
         c = static_cast<char>(tolower(c));
         if (c == '4' || c == '3')
-            c = 'a';			// for the lazy people
+            c = 'a'; // for the lazy people
 
         if (c == 'a')
         {
@@ -496,7 +496,7 @@ bool WorldSession::CanUseCommand(char cmdstr)
         return false;
     if (cmdstr == 0)
         return true;
-    if (permissions[0] == 'a' && cmdstr != 'z')	// all
+    if (permissions[0] == 'a' && cmdstr != 'z') // all
         return true;
 
     for (int i = 0; i < permissioncount; ++i)

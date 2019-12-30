@@ -317,7 +317,7 @@ bool ChatHandler::HandleNpcInfoCommand(const char* /*args*/, WorldSession* m_ses
     if (creature_target == nullptr)
         return true;
 
-    uint32 guid = Arcemu::Util::GUID_LOPART(m_session->GetPlayer()->GetSelection());
+    uint32 guid = WoWGuid::getGuidLowPartFromUInt64(m_session->GetPlayer()->GetSelection());
 
     SystemMessage(m_session, "Showing Creature info of %s =============", creature_target->GetCreatureProperties()->Name.c_str());
     RedSystemMessage(m_session, "EntryID: %d", creature_target->getEntry());
@@ -494,13 +494,13 @@ bool ChatHandler::HandleNpcInfoCommand(const char* /*args*/, WorldSession* m_ses
         }
 
         if (creature_target->getCreatedByGuid())
-            SystemMessage(m_session, "Creator GUID: %u", Arcemu::Util::GUID_LOPART(creature_target->getCreatedByGuid()));
+            SystemMessage(m_session, "Creator GUID: %u", WoWGuid::getGuidLowPartFromUInt64(creature_target->getCreatedByGuid()));
         if (creature_target->getSummonedByGuid())
-            SystemMessage(m_session, "Summoner GUID: %u", Arcemu::Util::GUID_LOPART(creature_target->getSummonedByGuid()));
+            SystemMessage(m_session, "Summoner GUID: %u", WoWGuid::getGuidLowPartFromUInt64(creature_target->getSummonedByGuid()));
         if (creature_target->getCharmedByGuid())
-            SystemMessage(m_session, "Charmer GUID: %u", Arcemu::Util::GUID_LOPART(creature_target->getCharmedByGuid()));
+            SystemMessage(m_session, "Charmer GUID: %u", WoWGuid::getGuidLowPartFromUInt64(creature_target->getCharmedByGuid()));
         if (creature_target->getCreatedBySpellId())
-            SystemMessage(m_session, "Creator Spell: %u", Arcemu::Util::GUID_LOPART(creature_target->getCreatedBySpellId()));
+            SystemMessage(m_session, "Creator Spell: %u", WoWGuid::getGuidLowPartFromUInt64(creature_target->getCreatedBySpellId()));
     }
 
     if (owner_header_set)
@@ -518,6 +518,15 @@ bool ChatHandler::HandleNpcInfoCommand(const char* /*args*/, WorldSession* m_ses
     GreenSystemMessage(m_session, "-- Offhand: %u (displayid)", creature_target->getVirtualItemSlotId(OFFHAND));
     GreenSystemMessage(m_session, "-- Ranged: %u (displayid)", creature_target->getVirtualItemSlotId(RANGED));
 
+    if (sScriptMgr.has_creature_script(creature_target->getEntry()))
+        SystemMessage(m_session, "Creature has C++/LUA script");
+    else
+        SystemMessage(m_session, "Creature doesn't have C++/LUA script");
+
+    if (sScriptMgr.has_creature_gossip(creature_target->getEntry()))
+        SystemMessage(m_session, "Creature has C++/LUA gossip script");
+    else
+        SystemMessage(m_session, "Creature doesn't have C++/LUA gossip script");
 
     return true;
 }
@@ -729,7 +738,7 @@ bool ChatHandler::HandleNpcSpawnCommand(const char* args, WorldSession* m_sessio
     uint8 gender = creature_properties->GetGenderAndCreateRandomDisplayID(&creature_spawn->displayid);
     creature_spawn->entry = entry;
     creature_spawn->form = 0;
-    creature_spawn->id = objmgr.GenerateCreatureSpawnID();
+    creature_spawn->id = sObjectMgr.GenerateCreatureSpawnID();
     creature_spawn->movetype = 0;
     creature_spawn->x = m_session->GetPlayer()->GetPositionX();
     creature_spawn->y = m_session->GetPlayer()->GetPositionY();

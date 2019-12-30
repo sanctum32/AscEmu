@@ -17,17 +17,12 @@ option(BUILD_QUESTSCRIPTS "Build ascQuestScripts." ON)
 option(BUILD_MAPSCRIPTS "Build ascMapScripts." ON)
 option(BUILD_MISCSCRIPTS "Build ascMiscScripts." ON)
 option(BUILD_LUAENGINE "Build LuaEngine." ON)
-option(WITH_EXPERIMENTAL_FILESYSTEM "Use experiemntal file system" OFF)
 set(ASCEMU_TOOLS_PATH "tools" CACHE PATH "The directory where you want the tools installed.")
 option(BUILD_WITH_WARNINGS "Enable/Disable warnings on compilation" ON)
 option(USE_PCH "Enable precompiled headers - it will reduce compilation time" ON)
 
 if(NOT USE_PCH)
     set(ASCEMU_COMMENT_PCH //)
-endif()
-
-if(NOT WITH_EXPERIMENTAL_FILESYSTEM)
-    set(ASCEMU_COMMENT_WITH_EXPERIMENTAL_FILESYSTEM //)
 endif()
 
 # platform specific

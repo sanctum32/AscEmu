@@ -49,7 +49,7 @@
 #define DANCINGRUNEWEAPON       27893
 
 //MIT START
-Object* Pet::getPlayerOwner() { return m_Owner; }
+Player* Pet::getPlayerOwner() { return m_Owner; }
 
 //MIT END
 
@@ -818,7 +818,7 @@ AI_Spell* Pet::CreateAISpell(SpellInfo const* info)
     sp->Misc2 = 0;
     sp->procChance = 0;
     sp->spell = info;
-    sp->cooldown = objmgr.GetPetSpellCooldown(info->getId());
+    sp->cooldown = sObjectMgr.GetPetSpellCooldown(info->getId());
     if (sp->cooldown == 0)
         sp->cooldown = info->getRecoveryTime();          //still 0 ?
 
@@ -2242,7 +2242,7 @@ void Pet::DealDamage(Unit* pVictim, uint32 damage, uint32 /*targetEvent*/, uint3
         //Loot
         if (pVictim->isLootable())
         {
-            Player* tagger = GetMapMgr()->GetPlayer(Arcemu::Util::GUID_LOPART(pVictim->GetTaggerGUID()));
+            Player* tagger = GetMapMgr()->GetPlayer(WoWGuid::getGuidLowPartFromUInt64(pVictim->GetTaggerGUID()));
 
             // Tagger might have left the map so we need to check
             if (tagger != NULL)
@@ -2268,7 +2268,7 @@ void Pet::DealDamage(Unit* pVictim, uint32 damage, uint32 /*targetEvent*/, uint3
                     player_tagger = static_cast<Player*>(unit_tagger);
 
                 if ((unit_tagger->isPet() || unit_tagger->isSummon()) && unit_tagger->getPlayerOwner())
-                    player_tagger = static_cast<Player*>(unit_tagger->getPlayerOwner());
+                    player_tagger = unit_tagger->getPlayerOwner();
 
                 if (player_tagger != nullptr)
                 {
@@ -2401,7 +2401,7 @@ void Pet::Die(Unit* pAttacker, uint32 /*damage*/, uint32 spellid)
                 if (spl->getSpellInfo()->getEffect(i) == SPELL_EFFECT_PERSISTENT_AREA_AURA)
                 {
                     uint64 guid = getChannelObjectGuid();
-                    DynamicObject* dObj = GetMapMgr()->GetDynamicObject(Arcemu::Util::GUID_LOPART(guid));
+                    DynamicObject* dObj = GetMapMgr()->GetDynamicObject(WoWGuid::getGuidLowPartFromUInt64(guid));
                     if (!dObj)
                         return;
 

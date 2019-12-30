@@ -31,7 +31,7 @@ MovementAI & Unit::getMovementAI()
 
 void Unit::setLocationWithoutUpdate(LocationVector & location)
 {
-    m_position.ChangeCoords(location.x, location.y, location.z);
+    m_position.ChangeCoords({ location.x, location.y, location.z });
 }
 
 uint64_t Unit::getCharmGuid() const { return unitData()->charm_guid.guid; };
@@ -411,6 +411,15 @@ void Unit::setMinRangedDamage(float damage) { write(unitData()->minimum_ranged_d
 
 float Unit::getMaxRangedDamage() const { return unitData()->maximum_ranged_ddamage; }
 void Unit::setMaxRangedDamage(float damage) { write(unitData()->maximum_ranged_ddamage, damage); }
+
+uint32_t Unit::getPowerCostModifier(uint16_t school) const { return unitData()->power_cost_modifier[school]; }
+void Unit::setPowerCostModifier(uint16_t school, uint32_t modifier) { write(unitData()->power_cost_modifier[school], modifier); }
+void Unit::modPowerCostModifier(uint16_t school, int32_t modifier)
+{
+    uint32_t currentModifier = getPowerCostModifier(school);
+    currentModifier += modifier;
+    setPowerCostModifier(school, currentModifier);
+}
 
 float Unit::getPowerCostMultiplier(uint16_t school) const { return unitData()->power_cost_multiplier[school]; }
 void Unit::setPowerCostMultiplier(uint16_t school, float multiplier) { write(unitData()->power_cost_multiplier[school], multiplier); }
@@ -2274,6 +2283,24 @@ uint8_t Unit::getPowerPct(PowerType powerType) const
     return static_cast<uint8_t>(getPower(powerIndex) * 100 / getMaxPower(powerIndex));
 }
 
+bool Unit::isTaggedByPlayerOrItsGroup(Player* tagger)
+{
+    if (!IsTagged() || tagger == nullptr)
+        return false;
+
+    if (GetTaggerGUID() == tagger->getGuid())
+        return true;
+
+    if (tagger->InGroup())
+    {
+        const auto playerTagger = GetMapMgrPlayer(GetTaggerGUID());
+        if (playerTagger != nullptr && tagger->GetGroup()->HasMember(playerTagger))
+            return true;
+    }
+
+    return false;
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////
 // Death
 bool Unit::isAlive() const { return m_deathState == ALIVE; }
@@ -2385,8 +2412,8 @@ bool Unit::isUnitOwnerInParty(Unit* unit)
 {
     if (unit)
     {
-        Player* playOwner = static_cast<Player*>(getPlayerOwner());
-        Player* playerOwnerFromUnit = static_cast<Player*>(unit->getPlayerOwner());
+        Player* playOwner = getPlayerOwner();
+        Player* playerOwnerFromUnit = unit->getPlayerOwner();
         if (playOwner == nullptr || playerOwnerFromUnit == nullptr)
             return false;
 
@@ -2407,8 +2434,8 @@ bool Unit::isUnitOwnerInRaid(Unit* unit)
 {
     if (unit)
     {
-        Player* playerOwner = static_cast<Player*>(getPlayerOwner());
-        Player* playerOwnerFromUnit = static_cast<Player*>(unit->getPlayerOwner());
+        Player* playerOwner = getPlayerOwner();
+        Player* playerOwnerFromUnit = unit->getPlayerOwner();
         if (playerOwner == nullptr || playerOwnerFromUnit == nullptr)
             return false;
 

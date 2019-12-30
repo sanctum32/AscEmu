@@ -78,7 +78,7 @@ SpellCastTargets::~SpellCastTargets()
     m_strTarget.clear();
 }
 
-uint32 SpellCastTargets::GetTargetMask() const
+uint32_t SpellCastTargets::GetTargetMask() const
 {
     return m_targetMask;
 }
@@ -96,7 +96,7 @@ void SpellCastTargets::reset()
     m_strTarget = std::string();
 }
 
-void SpellCastTargets::read(WorldPacket& data, uint64 caster)
+void SpellCastTargets::read(WorldPacket& data, uint64_t caster)
 {
     reset();
 
@@ -125,7 +125,7 @@ void SpellCastTargets::read(WorldPacket& data, uint64 caster)
             case 48156: // Mind Flay (Rank 9)
             {
                 m_targetMask = TARGET_FLAG_UNIT;
-                auto player = objmgr.GetPlayer(static_cast<uint32_t>(caster));
+                auto player = sObjectMgr.GetPlayer(static_cast<uint32_t>(caster));
                 if (player)
                 {
                     m_unitTarget = player->getTargetGuid();

@@ -15,6 +15,7 @@ This file is released under the MIT license. See README-MIT for more information
 #include "Spell/Definitions/SpellMechanics.h"
 #include "Spell/SpellMgr.h"
 #include "Spell/Definitions/SpellEffects.h"
+#include "Server/Definitions.h"
 #include "Guild.h"
 
 #if VERSION_STRING > TBC
@@ -375,7 +376,6 @@ void AchievementMgr::SendAchievementEarned(DBC::Structures::AchievementEntry con
         // Send Achievement message to every guild member currently on the server
         if (GetPlayer()->IsInGuild())
         {
-            Guild* guild = GetPlayer()->GetGuild();
             WorldPacket data(SMSG_MESSAGECHAT, 200);
             data << uint8_t(CHAT_MSG_GUILD_ACHIEVEMENT);
             data << uint32_t(LANG_UNIVERSAL);
@@ -549,7 +549,7 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, in
     {
         selectedGUID = GetPlayer()->GetSelection();
     }
-    AchievementCriteriaEntryList const & achievementCriteriaList = objmgr.GetAchievementCriteriaByType(type);
+    AchievementCriteriaEntryList const & achievementCriteriaList = sObjectMgr.GetAchievementCriteriaByType(type);
     for (AchievementCriteriaEntryList::const_iterator i = achievementCriteriaList.begin(); i != achievementCriteriaList.end(); ++i)
     {
         DBC::Structures::AchievementCriteriaEntry const* achievementCriteria = (*i);
@@ -946,7 +946,7 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, in
                             break;
                         case 247: // Make Love, Not Warcraft
                         {
-                            Player* pTarget = objmgr.GetPlayer((uint32_t)selectedGUID);
+                            Player* pTarget = sObjectMgr.GetPlayer((uint32_t)selectedGUID);
                             if (pTarget && pTarget->isDead() && isHostile(pTarget, GetPlayer()))
                             {
                                 UpdateCriteriaProgress(achievementCriteria, 1);
@@ -1214,7 +1214,7 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type)
     if (m_player->GetSession()->HasGMPermissions() && worldConfig.gm.disableAchievements)
         return;
 
-    AchievementCriteriaEntryList const & achievementCriteriaList = objmgr.GetAchievementCriteriaByType(type);
+    AchievementCriteriaEntryList const & achievementCriteriaList = sObjectMgr.GetAchievementCriteriaByType(type);
     for (AchievementCriteriaEntryList::const_iterator i = achievementCriteriaList.begin(); i != achievementCriteriaList.end(); ++i)
     {
         DBC::Structures::AchievementCriteriaEntry const* achievementCriteria = (*i);
@@ -1356,7 +1356,7 @@ bool AchievementMgr::IsCompletedCriteria(DBC::Structures::AchievementCriteriaEnt
 
     if (achievement->flags & (ACHIEVEMENT_FLAG_REALM_FIRST_REACH | ACHIEVEMENT_FLAG_REALM_FIRST_KILL))
     {
-        if (objmgr.allCompletedAchievements.find(achievement->ID) != objmgr.allCompletedAchievements.end())
+        if (sObjectMgr.allCompletedAchievements.find(achievement->ID) != sObjectMgr.allCompletedAchievements.end())
         {
             return false;
         }
@@ -1613,7 +1613,7 @@ void AchievementMgr::CompletedAchievement(DBC::Structures::AchievementEntry cons
     }
     m_completedAchievements[achievement->ID] = time(nullptr);
 
-    objmgr.allCompletedAchievements.insert(achievement->ID);
+    sObjectMgr.allCompletedAchievements.insert(achievement->ID);
     UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_ACHIEVEMENT);
 
     // check for reward
@@ -1764,7 +1764,7 @@ void AchievementMgr::GiveAchievementReward(DBC::Structures::AchievementEntry con
     {
         return;
     }
-    AchievementReward const * Reward = objmgr.GetAchievementReward(entry->ID, GetPlayer()->getGender());
+    AchievementReward const * Reward = sObjectMgr.GetAchievementReward(entry->ID, GetPlayer()->getGender());
 
     if (!Reward)
         return;
@@ -1805,7 +1805,7 @@ void AchievementMgr::GiveAchievementReward(DBC::Structures::AchievementEntry con
         std::string messagebody = Reward->text;
 
         //Create Item
-        Item* pItem = objmgr.CreateItem(Reward->itemId, GetPlayer());
+        Item* pItem = sObjectMgr.CreateItem(Reward->itemId, GetPlayer());
 
         if (Reward->itemId == 0)
         {

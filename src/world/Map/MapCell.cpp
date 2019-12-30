@@ -212,7 +212,7 @@ void MapCell::LoadObjects(CellSpawns* sp)
 
     _loaded = true;
     Instance* pInstance = _mapmgr->pInstance;
-    InstanceBossInfoMap* bossInfoMap = objmgr.m_InstanceBossInfoMap[_mapmgr->GetMapId()];
+    InstanceBossInfoMap* bossInfoMap = sObjectMgr.m_InstanceBossInfoMap[_mapmgr->GetMapId()];
 
     if (sp->CreatureSpawns.size())      //got creatures
     {
@@ -221,7 +221,7 @@ void MapCell::LoadObjects(CellSpawns* sp)
             uint32 respawnTimeOverride = 0;
             if (pInstance)
             {
-                if (bossInfoMap != NULL && IS_PERSISTENT_INSTANCE(pInstance))
+                if (bossInfoMap != NULL && pInstance->isPersistent())
                 {
                     bool skip = false;
                     for (std::set<uint32>::iterator killedNpc = pInstance->m_killedNpcs.begin(); killedNpc != pInstance->m_killedNpcs.end(); ++killedNpc)

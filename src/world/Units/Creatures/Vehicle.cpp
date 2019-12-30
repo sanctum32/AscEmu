@@ -499,7 +499,7 @@ bool Vehicle::IsControler(Unit* aura)
         if ((seats[i] != nullptr) && (seats[i]->GetPassengerGUID() == aura->getGuid()))
             return seats[i]->GetSeatInfo()->IsController();
 
-	return 0;
+    return 0;
 }
 
 void Vehicle::MovePassengers(float x, float y, float z, float o)
@@ -562,7 +562,7 @@ void Vehicle::InstallAccessories()
     if (!installed_accessories.empty())
         return;
 
-    std::vector< VehicleAccessoryEntry* >* v = objmgr.GetVehicleAccessories(creature_entry);
+    std::vector< VehicleAccessoryEntry* >* v = sObjectMgr.GetVehicleAccessories(creature_entry);
     if (v == nullptr)
         return;
 

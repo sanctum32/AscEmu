@@ -125,7 +125,17 @@ void Creature::removeSanctuaryFlag()
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Owner
-Object* Creature::getPlayerOwner() { return nullptr; }
+Player* Creature::getPlayerOwner()
+{
+    if (getCharmedByGuid() != 0)
+    {
+        const auto charmerUnit = GetMapMgrUnit(getCharmedByGuid());
+        if (charmerUnit != nullptr && charmerUnit->isPlayer())
+            return dynamic_cast<Player*>(charmerUnit);
+    }
+
+    return nullptr;
+}
 
 //MIT end
 
@@ -311,7 +321,7 @@ void Creature::OnRespawn(MapMgr* m)
     if (m_noRespawn)
         return;
 
-    InstanceBossInfoMap* bossInfoMap = objmgr.m_InstanceBossInfoMap[m->GetMapId()];
+    InstanceBossInfoMap* bossInfoMap = sObjectMgr.m_InstanceBossInfoMap[m->GetMapId()];
     Instance* pInstance = m->pInstance;
     if (bossInfoMap != NULL && pInstance != NULL)
     {
@@ -398,9 +408,9 @@ void Creature::generateLoot()
         return;
 
     if (m_mapMgr != NULL)
-        lootmgr.FillCreatureLoot(&loot, getEntry(), m_mapMgr->iInstanceMode);
+        sLootMgr.FillCreatureLoot(&loot, getEntry(), m_mapMgr->iInstanceMode);
     else
-        lootmgr.FillCreatureLoot(&loot, getEntry(), 0);
+        sLootMgr.FillCreatureLoot(&loot, getEntry(), 0);
 
     loot.gold = creature_properties->money;
 
@@ -418,7 +428,7 @@ void Creature::generateLoot()
     // Master Looting Ninja Checker
     if (worldConfig.player.deactivateMasterLootNinja)
     {
-        Player* looter = objmgr.GetPlayer((uint32)this->TaggerGuid);
+        Player* looter = sObjectMgr.GetPlayer((uint32)this->TaggerGuid);
         if (looter && looter->GetGroup() && looter->GetGroup()->GetMethod() == PARTY_LOOT_MASTER)
         {
             uint16 lootThreshold = looter->GetGroup()->GetThreshold();
@@ -489,7 +499,7 @@ void Creature::SaveToDB()
         m_spawn = new MySQLStructure::CreatureSpawn;
         m_spawn->entry = getEntry();
         m_spawn->form = 0;
-        m_spawn->id = spawnid = objmgr.GenerateCreatureSpawnID();
+        m_spawn->id = spawnid = sObjectMgr.GenerateCreatureSpawnID();
         m_spawn->movetype = (uint8)m_aiInterface->getWaypointScriptType();
         m_spawn->displayid = getDisplayId();
         m_spawn->x = m_position.x;
@@ -593,6 +603,39 @@ void Creature::SaveToDB()
     WorldDatabase.Execute(ss.str().c_str());
 }
 
+//MIT
+//! brief: used to generate gossip menu based on db values from table gossip_menu, gossip_menu_item and gossip_menu_option. WIP.
+class DatabaseGossip : public GossipScript
+{
+    uint32_t m_gossipMenuId;
+
+public:
+
+    DatabaseGossip(uint32_t gossipId) : m_gossipMenuId(gossipId) {}
+
+    void onHello(Object* object, Player* player) override
+    {
+        sObjectMgr.createGuardGossipMenuForPlayer(object->getGuid(), m_gossipMenuId, player);
+    }
+
+    void onSelectOption(Object* object, Player* player, uint32_t intId, const char* /*Code*/, uint32_t gossipId) override
+    {
+        if (intId > 0)
+        {
+            if (gossipId != 0)
+                sObjectMgr.createGuardGossipOptionAndSubMenu(object->getGuid(), player, intId, gossipId);
+            else
+                sObjectMgr.createGuardGossipOptionAndSubMenu(object->getGuid(), player, intId, m_gossipMenuId);
+        }
+    }
+};
+
+//MIT
+void Creature::registerDatabaseGossip()
+{
+    if (GetCreatureProperties()->gossipId)
+        sScriptMgr.register_creature_gossip(getEntry(), new DatabaseGossip(GetCreatureProperties()->gossipId));
+}
 
 void Creature::LoadScript()
 {
@@ -736,7 +779,7 @@ void Creature::setDeathState(DeathState s)
         }
 
         // if it's not a Pet, and not a summon and it has skinningloot then we will allow skinning
-        if ((getCreatedByGuid() == 0) && (getSummonedByGuid() == 0) && lootmgr.IsSkinnable(creature_properties->Id))
+        if ((getCreatedByGuid() == 0) && (getSummonedByGuid() == 0) && sLootMgr.IsSkinnable(creature_properties->Id))
             addUnitFlags(UNIT_FLAG_SKINNABLE);
 
 
@@ -818,7 +861,7 @@ void Creature::EnslaveExpire()
 
     uint64 charmer = getCharmedByGuid();
 
-    Player* caster = objmgr.GetPlayer(Arcemu::Util::GUID_LOPART(charmer));
+    Player* caster = sObjectMgr.GetPlayer(WoWGuid::getGuidLowPartFromUInt64(charmer));
     if (caster)
     {
         caster->setCharmGuid(0);
@@ -915,7 +958,7 @@ void Creature::CalcResistance(uint8_t type)
 
     if (isPet() && isAlive() && IsInWorld())
     {
-        Player* owner = dynamic_cast<Player*>(static_cast<Pet*>(this)->getPlayerOwner());
+        Player* owner = static_cast<Pet*>(this)->getPlayerOwner();
         if (type == 0 && owner)
             pos += int32(0.35f * owner->getResistance(type));
         else if (owner)
@@ -954,7 +997,7 @@ void Creature::CalcStat(uint8_t type)
 
     if (isPet())
     {
-        Player* owner = dynamic_cast<Player*>(static_cast<Pet*>(this)->getPlayerOwner());
+        Player* owner = static_cast<Pet*>(this)->getPlayerOwner();
         if (type == STAT_STAMINA && owner)
             pos += int32(0.45f * owner->getStat(STAT_STAMINA));
         else if (type == STAT_INTELLECT && owner && getCreatedBySpellId())
@@ -1150,7 +1193,7 @@ void Creature::AddVendorItem(uint32 itemid, uint32 amount, DB2::Structures::Item
     if (!m_SellItems)
     {
         m_SellItems = new std::vector < CreatureItem > ;
-        objmgr.SetVendorList(getEntry(), m_SellItems);
+        sObjectMgr.SetVendorList(getEntry(), m_SellItems);
     }
     m_SellItems->push_back(ci);
 }
@@ -1372,12 +1415,12 @@ bool Creature::Load(MySQLStructure::CreatureSpawn* spawn, uint8 mode, MySQLStruc
     original_emotestate = spawn->emote_state;
 
     // set position
-    m_position.ChangeCoords(spawn->x, spawn->y, spawn->z, spawn->o);
-    m_spawnLocation.ChangeCoords(spawn->x, spawn->y, spawn->z, spawn->o);
+    m_position.ChangeCoords({ spawn->x, spawn->y, spawn->z, spawn->o });
+    m_spawnLocation.ChangeCoords({ spawn->x, spawn->y, spawn->z, spawn->o });
     m_aiInterface->setWaypointScriptType((Movement::WaypointMovementScript)spawn->movetype);
     m_aiInterface->LoadWaypointMapFromDB(spawn->id);
 
-    m_aiInterface->timed_emotes = objmgr.GetTimedEmoteList(spawn->id);
+    m_aiInterface->timed_emotes = sObjectMgr.GetTimedEmoteList(spawn->id);
 
     // not a neutral creature
     if (!(m_factionEntry != nullptr && m_factionEntry->RepListId == -1 && m_factionTemplate->HostileMask == 0 && m_factionTemplate->FriendlyMask == 0))
@@ -1395,19 +1438,19 @@ bool Creature::Load(MySQLStructure::CreatureSpawn* spawn, uint8 mode, MySQLStruc
     setNpcFlags(creature_properties->NPCFLags);
 
     if (isVendor())
-        m_SellItems = objmgr.GetVendorList(getEntry());
+        m_SellItems = sObjectMgr.GetVendorList(getEntry());
 
     if (isQuestGiver())
         _LoadQuests();
 
     if (isTrainer() | isProfessionTrainer())
-        mTrainer = objmgr.GetTrainer(getEntry());
+        mTrainer = sObjectMgr.GetTrainer(getEntry());
 
     if (isAuctioneer())
         auctionHouse = sAuctionMgr.GetAuctionHouse(getEntry());
 
     //load resistances
-    for (uint8 x = 0; x < SCHOOL_COUNT; ++x)
+    for (uint8 x = 0; x < TOTAL_SPELL_SCHOOLS; ++x)
         BaseResistance[x] = getResistance(x);
     for (uint8 x = 0; x < STAT_COUNT; ++x)
         BaseStats[x] = getStat(x);
@@ -1613,8 +1656,8 @@ void Creature::Load(CreatureProperties const* properties_, float x, float y, flo
     original_emotestate = 0;
 
     // set position
-    m_position.ChangeCoords(x, y, z, o);
-    m_spawnLocation.ChangeCoords(x, y, z, o);
+    m_position.ChangeCoords({ x, y, z, o });
+    m_spawnLocation.ChangeCoords({ x, y, z, o });
 
     // not a neutral creature
     if (m_factionEntry && !(m_factionEntry->RepListId == -1 && m_factionTemplate->HostileMask == 0 && m_factionTemplate->FriendlyMask == 0))
@@ -1632,19 +1675,19 @@ void Creature::Load(CreatureProperties const* properties_, float x, float y, flo
     setNpcFlags(creature_properties->NPCFLags);
 
     if (isVendor())
-        m_SellItems = objmgr.GetVendorList(getEntry());
+        m_SellItems = sObjectMgr.GetVendorList(getEntry());
 
     if (isQuestGiver())
         _LoadQuests();
 
     if (isTrainer() | isProfessionTrainer())
-        mTrainer = objmgr.GetTrainer(getEntry());
+        mTrainer = sObjectMgr.GetTrainer(getEntry());
 
     if (isAuctioneer())
         auctionHouse = sAuctionMgr.GetAuctionHouse(getEntry());
 
     //load resistances
-    for (uint8 j = 0; j < SCHOOL_COUNT; ++j)
+    for (uint8 j = 0; j < TOTAL_SPELL_SCHOOLS; ++j)
         BaseResistance[j] = getResistance(j);
     for (uint8 j = 0; j < STAT_COUNT; ++j)
         BaseStats[j] = getStat(j);
@@ -1743,6 +1786,9 @@ void Creature::OnPushToWorld()
 
         castSpell(this, sp, 0);
     }
+
+    if (!sScriptMgr.has_creature_gossip(getEntry()))
+        registerDatabaseGossip();
 
     if (GetScript() == NULL)
     {
@@ -2006,7 +2052,7 @@ Group* Creature::GetGroup()
 
 int32 Creature::GetDamageDoneMod(uint16_t school)
 {
-    if (school >= SCHOOL_COUNT)
+    if (school >= TOTAL_SPELL_SCHOOLS)
         return 0;
 
     return ModDamageDone[ school ];
@@ -2014,7 +2060,7 @@ int32 Creature::GetDamageDoneMod(uint16_t school)
 
 float Creature::GetDamageDonePctMod(uint16_t school)
 {
-    if (school >= SCHOOL_COUNT)
+    if (school >= TOTAL_SPELL_SCHOOLS)
         return 0;
 
     return ModDamageDonePct[ school ];
@@ -2238,7 +2284,7 @@ void Creature::DealDamage(Unit* pVictim, uint32 damage, uint32 /*targetEvent*/, 
 
     if (pVictim->isPvpFlagSet())
     {
-        if (auto p = static_cast<Player*>(getPlayerOwner()))
+        if (auto p = getPlayerOwner())
         {
             if (!p->isPvpFlagSet())
                 p->PvPToggle();
@@ -2250,7 +2296,7 @@ void Creature::DealDamage(Unit* pVictim, uint32 damage, uint32 /*targetEvent*/, 
     // Bg dmg counter
     if (pVictim != this)
     {
-        Player* p = static_cast< Player* >(getPlayerOwner());
+        Player* p = getPlayerOwner();
         if (p != NULL)
         {
             if (p->m_bg != NULL && GetMapMgr() == pVictim->GetMapMgr())
@@ -2350,7 +2396,7 @@ void Creature::Die(Unit* pAttacker, uint32 /*damage*/, uint32 spellid)
                 if (spl->getSpellInfo()->getEffect(i) == SPELL_EFFECT_PERSISTENT_AREA_AURA)
                 {
                     uint64 guid = getChannelObjectGuid();
-                    DynamicObject* dObj = GetMapMgr()->GetDynamicObject(Arcemu::Util::GUID_LOPART(guid));
+                    DynamicObject* dObj = GetMapMgr()->GetDynamicObject(WoWGuid::getGuidLowPartFromUInt64(guid));
                     if (!dObj)
                         return;
 
@@ -2558,37 +2604,38 @@ void Creature::SetType(uint32 t)
 
 void Creature::BuildPetSpellList(WorldPacket& data)
 {
-    data << uint64(getGuid());
-    data << uint16(creature_properties->Family);
-    data << uint32(0);
+    data << uint64_t(getGuid());
+    data << uint16_t(creature_properties->Family);
+    data << uint32_t(0);
 
     if (!isVehicle())
-        data << uint32(0);
+        data << uint32_t(0);
     else
-        data << uint32(0x8000101);
+        data << uint32_t(0x8000101);
 
-    std::vector< uint32 >::const_iterator itr = creature_properties->castable_spells.begin();
+    std::vector<uint32_t>::const_iterator itr = creature_properties->castable_spells.begin();
 
     // Send the actionbar
-    for (uint8 i = 0; i < 10; ++i)
+    for (uint8_t i = 0; i < 10; ++i)
     {
         if (itr != creature_properties->castable_spells.end())
         {
-            uint32 spell = *itr;
-            data << uint32(Arcemu::Util::MAKE_UNIT_ACTION_BUTTON(spell, i + 8));
+            const auto spell = *itr;
+            const uint32_t actionButton = uint32_t(spell) | uint32_t(i + 8) << 24;
+            data << uint32_t(actionButton);
             ++itr;
         }
         else
         {
-            data << uint16(0);
-            data << uint8(0);
-            data << uint8(i + 8);
+            data << uint16_t(0);
+            data << uint8_t(0);
+            data << uint8_t(i + 8);
         }
     }
 
-    data << uint8(0);
+    data << uint8_t(0);
     // cooldowns
-    data << uint8(0);
+    data << uint8_t(0);
 }
 
 void Creature::addVehicleComponent(uint32 creature_entry, uint32 vehicleid)

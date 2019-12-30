@@ -249,8 +249,8 @@ void Spell::AddChainTargets(uint32 i, uint32 targetType, float /*r*/, uint32 /*m
     range *= range;
 
     //is this party only?
-    Player* casterFrom = static_cast< Player* >(u_caster->getPlayerOwner());
-    Player* pfirstTargetFrom = static_cast< Player* >(firstTarget->getPlayerOwner());
+    Player* casterFrom = u_caster->getPlayerOwner();
+    Player* pfirstTargetFrom = firstTarget->getPlayerOwner();
     if (casterFrom != nullptr && pfirstTargetFrom != nullptr && casterFrom->GetGroup() == pfirstTargetFrom->GetGroup())
         RaidOnly = true;
 
@@ -259,7 +259,7 @@ void Spell::AddChainTargets(uint32 i, uint32 targetType, float /*r*/, uint32 /*m
     //range
     range /= jumps; //hacky, needs better implementation!
 
-    ascemu::World::Spell::Helpers::spellModFlatIntValue(u_caster->SM_FAdditionalTargets, (int32*)&jumps, m_spellInfo->getSpellFamilyFlags());
+    AscEmu::World::Spell::Helpers::spellModFlatIntValue(u_caster->SM_FAdditionalTargets, (int32*)&jumps, m_spellInfo->getSpellFamilyFlags());
 
     AddTarget(i, targetType, firstTarget);
 
@@ -295,7 +295,7 @@ void Spell::AddPartyTargets(uint32 i, uint32 targetType, float r, uint32 /*maxta
     if (u == nullptr)
         u = m_caster;
 
-    Player* p = dynamic_cast< Player* >(u->getPlayerOwner());
+    Player* p = u->getPlayerOwner();
     if (p == nullptr || u_caster == nullptr)
         return;
 
@@ -326,7 +326,7 @@ void Spell::AddRaidTargets(uint32 i, uint32 targetType, float r, uint32 /*maxtar
     if (u == nullptr)
         u = m_caster;
 
-    Player* p = dynamic_cast< Player* >(u->getPlayerOwner());
+    Player* p = u->getPlayerOwner();
     if (p == nullptr || u_caster == nullptr)
         return;
 

@@ -1,9 +1,6 @@
 sudo: false
-dist: trusty
-language: cpp
-
-os:
-  - linux
+dist: xenial
+language: c++
 
 compiler:
   - gcc
@@ -30,7 +27,6 @@ addons:
     sources:
     - ubuntu-toolchain-r-test
     packages:
-    - cmake
     - zlib1g-dev
     - libssl-dev
     - libpcre3-dev
@@ -44,7 +40,7 @@ addons:
       name: AscEmu/AscEmu
       description: MMORPG Framework
     notification_email: autokaori@gmail.com
-    build_command_prepend: cmake ../ -DCMAKE_BUILD_TYPE=Release -DBUILD_WITH_WARNINGS=0 -DBUILD_TOOLS=0 -DASCEMU_VERSION=${ASC_VERSION} -DWITH_EXPERIMENTAL_FILESYSTEM=1 && cov-configure --comptype gcc --compiler gcc-8 --template
+    build_command_prepend: cmake ../ -DCMAKE_BUILD_TYPE=Release -DBUILD_WITH_WARNINGS=0 -DBUILD_TOOLS=0 -DASCEMU_VERSION=${ASC_VERSION} && cov-configure --comptype gcc --compiler gcc-8 --template
     build_command: make -j 4
     branch_pattern: coverity_scan
 

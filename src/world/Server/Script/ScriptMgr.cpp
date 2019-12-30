@@ -36,15 +36,46 @@
 #include "ScriptMgr.h"
 #include "Map/MapScriptInterface.h"
 #include "Objects/Faction.h"
+#include "Common.hpp"
 
-initialiseSingleton(ScriptMgr);
-initialiseSingleton(HookInterface);
+// APGL End
+// MIT Start
 
-ScriptMgr::ScriptMgr()
-{}
+ScriptMgr& ScriptMgr::getInstance()
+{
+    static ScriptMgr mInstance;
+    return mInstance;
+}
 
-ScriptMgr::~ScriptMgr()
-{}
+SpellCastResult ScriptMgr::callScriptedSpellCanCast(Spell* spell, uint32_t* parameter1, uint32_t* parameter2) const
+{
+    if (spell->getSpellInfo()->spellScript == nullptr)
+        return SPELL_CANCAST_OK;
+
+    return spell->getSpellInfo()->spellScript->onCanCast(spell, parameter1, parameter2);
+}
+
+void ScriptMgr::register_spell_script(uint32_t spellId, SpellScript* ss)
+{
+    const auto spellInfo = sSpellMgr.getSpellInfo(spellId);
+    if (spellInfo == nullptr)
+    {
+        LogError("ScriptMgr tried to register a script for spell id %u but spell does not exist!", spellId);
+        return;
+    }
+
+    if (spellInfo->spellScript != nullptr)
+    {
+        LogDebugFlag(LF_SCRIPT_MGR, "ScriptMgr tried to register a script for spell id %u but this spell has already one.", spellId);
+        return;
+    }
+
+    const_cast<SpellInfo*>(spellInfo)->spellScript = ss;
+    _spellscripts.insert(ss);
+}
+
+// MIT End
+// APGL Start
 
 struct ScriptingEngine_dl
 {
@@ -62,129 +93,105 @@ struct ScriptingEngine_dl
 
 void ScriptMgr::LoadScripts()
 {
-    if (HookInterface::getSingletonPtr() == NULL)
-        new HookInterface;
-
     LogNotice("ScriptMgr : Loading External Script Libraries...");
 
-    std::string Path;
-    std::string FileMask;
-    Path = PREFIX;
-    Path += '/';
-#ifdef WIN32
-    FileMask = ".dll";
-#else
-#ifndef __APPLE__
-    FileMask = ".so";
-#else
-    FileMask = ".dylib";
-#endif
-#endif
+    std::string modulePath = PREFIX;
+    modulePath += '/';
 
-    Arcemu::FindFilesResult findres;
-    std::vector< ScriptingEngine_dl > Engines;
+    std::string libMask = LIBMASK;
 
-    Arcemu::FindFiles(Path.c_str(), FileMask.c_str(), findres);
-    uint32 count = 0;
+    std::vector<ScriptingEngine_dl> scriptingEngineDls;
 
-    while (findres.HasNext())
+    uint32_t dllCount = 0;
+
+    auto directoryContentMap = Util::getDirectoryContent(modulePath, libMask);
+    for (const auto content : directoryContentMap)
     {
-        std::stringstream loadmessage;
-        std::string fname = Path + findres.GetNext();
-        Arcemu::DynLib* dl = new Arcemu::DynLib(fname.c_str());
+        std::stringstream loadMessageStream;
+        auto fileName = modulePath + content.second;
+        auto dynLib = new Arcemu::DynLib(fileName.c_str());
 
-        loadmessage << dl->GetName() << " : ";
+        loadMessageStream << dynLib->GetName() << " : ";
 
-        if (!dl->Load())
+        if (!dynLib->Load())
         {
-            loadmessage << "ERROR: Cannot open library.";
-            LOG_ERROR(loadmessage.str().c_str());
-            delete dl;
+            loadMessageStream << "ERROR: Cannot open library.";
+            LOG_ERROR(loadMessageStream.str().c_str());
+            delete dynLib;
             continue;
+        }
 
+        auto serverStateCall = reinterpret_cast<exp_set_serverstate_singleton>(dynLib->GetAddressForSymbol("_exp_set_serverstate_singleton"));
+        if (!serverStateCall)
+        {
+            loadMessageStream << "ERROR: Cannot find set_serverstate_call function.";
+            LOG_ERROR(loadMessageStream.str().c_str());
+            delete dynLib;
+            continue;
+        }
+
+        serverStateCall(ServerState::instance());
+
+        auto versionCall = reinterpret_cast<exp_get_version>(dynLib->GetAddressForSymbol("_exp_get_version"));
+        auto registerCall = reinterpret_cast<exp_script_register>(dynLib->GetAddressForSymbol("_exp_script_register"));
+        auto typeCall = reinterpret_cast<exp_get_script_type>(dynLib->GetAddressForSymbol("_exp_get_script_type"));
+        if (!versionCall || !registerCall || !typeCall)
+        {
+            loadMessageStream << "ERROR: Cannot find version functions.";
+            LOG_ERROR(loadMessageStream.str().c_str());
+            delete dynLib;
+            continue;
+        }
+
+        std::string dllVersion = versionCall();
+        uint32_t scriptType = typeCall();
+
+        if (dllVersion != BUILD_HASH_STR)
+        {
+            loadMessageStream << "ERROR: Version mismatch.";
+            LOG_ERROR(loadMessageStream.str().c_str());
+            delete dynLib;
+            continue;
+        }
+
+        loadMessageStream << std::string(BUILD_HASH_STR) << " : ";
+
+        if ((scriptType & SCRIPT_TYPE_SCRIPT_ENGINE) != 0)
+        {
+            ScriptingEngine_dl scriptingEngineDl;
+            scriptingEngineDl.dl = dynLib;
+            scriptingEngineDl.InitializeCall = registerCall;
+            scriptingEngineDl.Type = scriptType;
+
+            scriptingEngineDls.push_back(scriptingEngineDl);
+
+            loadMessageStream << "delayed load";
         }
         else
         {
-            exp_get_version vcall = reinterpret_cast<exp_get_version>(dl->GetAddressForSymbol("_exp_get_version"));
-            exp_script_register rcall = reinterpret_cast<exp_script_register>(dl->GetAddressForSymbol("_exp_script_register"));
-            exp_get_script_type scall = reinterpret_cast<exp_get_script_type>(dl->GetAddressForSymbol("_exp_get_script_type"));
-            exp_set_serverstate_singleton set_serverstate_call = reinterpret_cast<exp_set_serverstate_singleton>(dl->GetAddressForSymbol("_exp_set_serverstate_singleton"));
+            registerCall(this);
+            dynamiclibs.push_back(dynLib);
 
-            if (!set_serverstate_call)
-            {
-                loadmessage << "ERROR: Cannot find set_serverstate_call function.";
-                LOG_ERROR(loadmessage.str().c_str());
-                delete dl;
-                continue;
-            }
-
-            // Make sure we use the same ServerState singleton
-            set_serverstate_call(ServerState::instance());
-
-            if (!vcall || !rcall || !scall)
-            {
-                loadmessage << "ERROR: Cannot find version functions.";
-                LOG_ERROR(loadmessage.str().c_str());
-                delete dl;
-                continue;
-            }
-            else
-            {
-                const char *version = vcall();
-                uint32 stype = scall();
-
-                if (strcmp(version, BUILD_HASH_STR) != 0)
-                {
-                    loadmessage << "ERROR: Version mismatch.";
-                    LOG_ERROR(loadmessage.str().c_str());
-                    delete dl;
-                    continue;
-
-                }
-                else
-                {
-                    loadmessage << std::string(BUILD_HASH_STR) << " : ";
-
-                    if ((stype & SCRIPT_TYPE_SCRIPT_ENGINE) != 0)
-                    {
-                        ScriptingEngine_dl se;
-
-                        se.dl = dl;
-                        se.InitializeCall = rcall;
-                        se.Type = stype;
-
-                        Engines.push_back(se);
-
-                        loadmessage << "delayed load";
-
-                    }
-                    else
-                    {
-                        rcall(this);
-                        dynamiclibs.push_back(dl);
-
-                        loadmessage << "loaded";
-                    }
-                    LogDetail(loadmessage.str().c_str());
-                    count++;
-                }
-            }
+            loadMessageStream << "loaded";
         }
+        LogDetail(loadMessageStream.str().c_str());
+
+        dllCount++;
     }
 
-    if (count == 0)
+    if (dllCount == 0)
     {
         LOG_ERROR("No external scripts found! Server will continue to function with limited functionality.");
     }
     else
     {
-        LogDetail("ScriptMgr : Loaded %u external libraries.", count);
+        LogDetail("ScriptMgr : Loaded %u external libraries.", dllCount);
         LogNotice("ScriptMgr : Loading optional scripting engine(s)...");
 
-        for (std::vector< ScriptingEngine_dl >::iterator itr = Engines.begin(); itr != Engines.end(); ++itr)
+        for (auto& engineDl : scriptingEngineDls)
         {
-            itr->InitializeCall(this);
-            dynamiclibs.push_back(itr->dl);
+            engineDl.InitializeCall(this);
+            dynamiclibs.push_back(engineDl.dl);
         }
 
         LogDetail("ScriptMgr : Done loading scripting engine(s)...");
@@ -193,16 +200,17 @@ void ScriptMgr::LoadScripts()
 
 void ScriptMgr::UnloadScripts()
 {
-    if (HookInterface::getSingletonPtr())
-        delete HookInterface::getSingletonPtr();
-
     for (CustomGossipScripts::iterator itr = _customgossipscripts.begin(); itr != _customgossipscripts.end(); ++itr)
-        (*itr)->Destroy();
+        (*itr)->destroy();
     _customgossipscripts.clear();
 
     for (QuestScripts::iterator itr = _questscripts.begin(); itr != _questscripts.end(); ++itr)
         delete *itr;
     _questscripts.clear();
+
+    for (auto itr : _spellscripts)
+        delete itr;
+    _spellscripts.clear();
 
     UnloadScriptEngines();
 
@@ -287,14 +295,14 @@ void ScriptMgr::DumpUnimplementedSpells()
 
 void ScriptMgr::register_creature_script(uint32 entry, exp_create_creature_ai callback)
 {
-	m_creaturesMutex.Acquire();
+    m_creaturesMutex.Acquire();
 
     if (_creatures.find(entry) != _creatures.end())
         LogDebugFlag(LF_SCRIPT_MGR, "ScriptMgr tried to register a script for Creature ID: %u but this creature has already one!", entry);
 
     _creatures.insert(CreatureCreateMap::value_type(entry, callback));
 
-	m_creaturesMutex.Release();
+    m_creaturesMutex.Release();
 }
 
 void ScriptMgr::register_gameobject_script(uint32 entry, exp_create_gameobject_ai callback)
@@ -450,11 +458,11 @@ void ScriptMgr::register_script_effect(uint32 entry, exp_handle_script_effect ca
 
 CreatureAIScript* ScriptMgr::CreateAIScriptClassForEntry(Creature* pCreature)
 {
-	uint32 entry = pCreature->getEntry();
+    uint32 entry = pCreature->getEntry();
 
-	m_creaturesMutex.Acquire();
+    m_creaturesMutex.Acquire();
     CreatureCreateMap::iterator itr = _creatures.find(entry);
-	m_creaturesMutex.Release();
+    m_creaturesMutex.Release();
 
     if (itr == _creatures.end())
         return NULL;
@@ -514,10 +522,10 @@ bool ScriptMgr::CallScriptedDummyAura(uint32 uSpellId, uint8_t effectIndex, Aura
 
 bool ScriptMgr::CallScriptedItem(Item* pItem, Player* pPlayer)
 {
-    Arcemu::Gossip::Script* script = this->get_item_gossip(pItem->getEntry());
-    if (script != NULL)
+    auto script = this->get_item_gossip(pItem->getEntry());
+    if (script)
     {
-        script->OnHello(pItem, pPlayer);
+        script->onHello(pItem, pPlayer);
         return true;
     }
     return false;
@@ -633,7 +641,7 @@ std::string InstanceScript::getDataStateString(uint32_t bossEntry)
 // encounters
 void InstanceScript::generateBossDataState()
 {
-    InstanceBossInfoMap* bossInfoMap = objmgr.m_InstanceBossInfoMap[mInstance->GetMapId()];
+    InstanceBossInfoMap* bossInfoMap = sObjectMgr.m_InstanceBossInfoMap[mInstance->GetMapId()];
     if (bossInfoMap != nullptr)
     {
         for (const auto& encounter : *bossInfoMap)
@@ -1072,9 +1080,9 @@ bool ScriptMgr::has_quest_script(uint32 entry) const
     return (q == NULL || q->pQuestScript != NULL);
 }
 
-void ScriptMgr::register_creature_gossip(uint32 entry, Arcemu::Gossip::Script* script)
+void ScriptMgr::register_creature_gossip(uint32 entry, GossipScript* script)
 {
-    GossipMap::iterator itr = creaturegossip_.find(entry);
+    const auto itr = creaturegossip_.find(entry);
     if (itr == creaturegossip_.end())
         creaturegossip_.insert(std::make_pair(entry, script));
     //keeping track of all created gossips to delete them all on shutdown
@@ -1086,26 +1094,26 @@ bool ScriptMgr::has_creature_gossip(uint32 entry) const
     return creaturegossip_.find(entry) != creaturegossip_.end();
 }
 
-Arcemu::Gossip::Script* ScriptMgr::get_creature_gossip(uint32 entry) const
+GossipScript* ScriptMgr::get_creature_gossip(uint32 entry) const
 {
-    GossipMap::const_iterator itr = creaturegossip_.find(entry);
+    const auto itr = creaturegossip_.find(entry);
     if (itr != creaturegossip_.end())
         return itr->second;
-    return NULL;
+    return nullptr;
 }
 
-void ScriptMgr::register_item_gossip(uint32 entry, Arcemu::Gossip::Script* script)
+void ScriptMgr::register_item_gossip(uint32 entry, GossipScript* script)
 {
-    GossipMap::iterator itr = itemgossip_.find(entry);
+    const auto itr = itemgossip_.find(entry);
     if (itr == itemgossip_.end())
         itemgossip_.insert(std::make_pair(entry, script));
     //keeping track of all created gossips to delete them all on shutdown
     _customgossipscripts.insert(script);
 }
 
-void ScriptMgr::register_go_gossip(uint32 entry, Arcemu::Gossip::Script* script)
+void ScriptMgr::register_go_gossip(uint32 entry, GossipScript* script)
 {
-    GossipMap::iterator itr = gogossip_.find(entry);
+    const auto itr = gogossip_.find(entry);
     if (itr == gogossip_.end())
         gogossip_.insert(std::make_pair(entry, script));
     //keeping track of all created gossips to delete them all on shutdown
@@ -1122,20 +1130,20 @@ bool ScriptMgr::has_go_gossip(uint32 entry) const
     return gogossip_.find(entry) != gogossip_.end();
 }
 
-Arcemu::Gossip::Script* ScriptMgr::get_go_gossip(uint32 entry) const
+GossipScript* ScriptMgr::get_go_gossip(uint32 entry) const
 {
-    GossipMap::const_iterator itr = gogossip_.find(entry);
+    const auto itr = gogossip_.find(entry);
     if (itr != gogossip_.end())
         return itr->second;
-    return NULL;
+    return nullptr;
 }
 
-Arcemu::Gossip::Script* ScriptMgr::get_item_gossip(uint32 entry) const
+GossipScript* ScriptMgr::get_item_gossip(uint32 entry) const
 {
-    GossipMap::const_iterator itr = itemgossip_.find(entry);
+    const auto itr = itemgossip_.find(entry);
     if (itr != itemgossip_.end())
         return itr->second;
-    return NULL;
+    return nullptr;
 }
 
 void ScriptMgr::ReloadScriptEngines()
@@ -1185,6 +1193,12 @@ void ScriptMgr::UnloadScriptEngines()
 }
 
 /* Hook Implementations */
+HookInterface& HookInterface::getInstance()
+{
+    static HookInterface mInstance;
+    return mInstance;
+}
+
 bool HookInterface::OnNewCharacter(uint32 Race, uint32 Class, WorldSession* Session, const char* Name)
 {
     ServerHookList hookList = sScriptMgr._hooks[SERVER_HOOK_EVENT_ON_NEW_CHARACTER];

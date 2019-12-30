@@ -5,8 +5,6 @@ This file is released under the MIT license. See README-MIT for more information
 
 #pragma once
 
-#include "Singleton.h"
-#include "../../scripts/Battlegrounds/IsleOfConquest.h"
 #include "Objects/ObjectMgr.h"
 #include "Spell/Definitions/SpellClickSpell.h"
 #include "Spell/Definitions/TeleportCoords.h"
@@ -24,12 +22,22 @@ extern SERVER_DECL std::set<std::string> ItemPropertiesTables;
 extern SERVER_DECL std::set<std::string> QuestPropertiesTables;
 
 
-class SERVER_DECL MySQLDataStore : public Singleton <MySQLDataStore>
+class SERVER_DECL MySQLDataStore
 {
+private:
+
+    MySQLDataStore() = default;
+    ~MySQLDataStore() = default;
+
 public:
 
-    MySQLDataStore();
-    ~MySQLDataStore();
+    static MySQLDataStore& getInstance();
+    void finalize();
+
+    MySQLDataStore(MySQLDataStore&&) = delete;
+    MySQLDataStore(MySQLDataStore const&) = delete;
+    MySQLDataStore& operator=(MySQLDataStore&&) = delete;
+    MySQLDataStore& operator=(MySQLDataStore const&) = delete;
 
     //maps
     typedef std::unordered_map<uint32_t, MySQLStructure::ItemPage> ItemPageContainer;
@@ -201,6 +209,10 @@ public:
     MySQLStructure::LocalesWorldmapInfo const* getLocalizedWorldmapInfo(uint32_t entry, uint32_t sessionLocale);
     MySQLStructure::LocalesWorldStringTable const* getLocalizedWorldStringTable(uint32_t entry, uint32_t sessionLocale);
 
+    // locales helper
+    std::string getLocaleGossipMenuOptionOrElse(uint32_t entry, uint32_t sessionLocale);
+    std::string getLocaleGossipTitleOrElse(uint32_t entry, uint32_t sessionLocale);
+
     MySQLStructure::NpcMonsterSay* getMonstersayEventForCreature(uint32_t entry, MONSTER_SAY_EVENTS Event);
     //std::set<SpellInfo const*>* getDefaultPetSpellsByEntry(uint32_t entry);     Zyres 2017/07/16 not used
 
@@ -370,4 +382,4 @@ public:
     GossipMenuItemsContainer _gossipMenuItemsStores;
 };
 
-#define sMySQLStore MySQLDataStore::getSingleton()
+#define sMySQLStore MySQLDataStore::getInstance()

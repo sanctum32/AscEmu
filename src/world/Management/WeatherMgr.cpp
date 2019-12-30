@@ -24,8 +24,6 @@
 #include "Server/MainServerDefines.h"
 #include "Server/WorldSession.h"
 #include "Server/World.h"
-#include "Server/World.Legacy.h"
-#include "WorldPacket.h"
 #include "Units/Players/Player.h"
 #include "Server/Packets/SmsgWeather.h"
 
@@ -53,8 +51,6 @@ enum WeatherSounds
     WEATHER_SANDSTORMMEDIUM     = 8557,
     WEATHER_SANDSTORMHEAVY      = 8558
 };
-
-initialiseSingleton(WeatherMgr);
 
 uint32 GetSound(uint32 Effect, float Density)
 {
@@ -96,10 +92,13 @@ uint32 GetSound(uint32 Effect, float Density)
     return sound;
 }
 
-WeatherMgr::WeatherMgr()
-{}
+WeatherMgr& WeatherMgr::getInstance()
+{
+    static WeatherMgr mInstance;
+    return mInstance;
+}
 
-WeatherMgr::~WeatherMgr()
+void WeatherMgr::finalize()
 {
     std::map<uint32, WeatherInfo*>::iterator itr;
     for (itr = m_zoneWeathers.begin(); itr != m_zoneWeathers.end(); ++itr)

@@ -204,7 +204,7 @@ Item* ItemInterface::SafeAddItem(uint32 ItemId, int8 ContainerSlot, int16 slot)
 
     if (pProto->InventoryType == INVTYPE_BAG)
     {
-        pItem = static_cast<Item*>(new Container(HIGHGUID_TYPE_CONTAINER, objmgr.GenerateLowGuid(HIGHGUID_TYPE_CONTAINER)));
+        pItem = static_cast<Item*>(new Container(HIGHGUID_TYPE_CONTAINER, sObjectMgr.GenerateLowGuid(HIGHGUID_TYPE_CONTAINER)));
         static_cast<Container*>(pItem)->Create(ItemId, m_pOwner);
         if (m_AddItem(pItem, ContainerSlot, slot))
         {
@@ -219,7 +219,7 @@ Item* ItemInterface::SafeAddItem(uint32 ItemId, int8 ContainerSlot, int16 slot)
     else
     {
         pItem = new Item;
-        pItem->init(HIGHGUID_TYPE_ITEM, objmgr.GenerateLowGuid(HIGHGUID_TYPE_ITEM));
+        pItem->init(HIGHGUID_TYPE_ITEM, sObjectMgr.GenerateLowGuid(HIGHGUID_TYPE_ITEM));
         pItem->create(ItemId, m_pOwner);
         if (m_AddItem(pItem, ContainerSlot, slot))
         {
@@ -3176,20 +3176,20 @@ void ItemInterface::SwapItemSlots(int8 srcslot, int8 dstslot)
                 int VisibleBase = PLAYER_VISIBLE_ITEM_1_ENTRYID + (srcslot * 2);
                 m_pOwner->setUInt32Value(static_cast<uint16_t>(VisibleBase), 0);
                 m_pOwner->setUInt32Value(static_cast<uint16_t>(VisibleBase + 1), 0);
-                /*                m_pOwner->SetUInt32Value(VisibleBase + 2, 0);
-                                m_pOwner->SetUInt32Value(VisibleBase + 3, 0);
-                                m_pOwner->SetUInt32Value(VisibleBase + 4, 0);
-                                m_pOwner->SetUInt32Value(VisibleBase + 5, 0);
-                                m_pOwner->SetUInt32Value(VisibleBase + 6, 0);
-                                m_pOwner->SetUInt32Value(VisibleBase + 7, 0);
-                                m_pOwner->SetUInt32Value(VisibleBase + 8, 0);*/
+                /*  m_pOwner->SetUInt32Value(VisibleBase + 2, 0);
+                    m_pOwner->SetUInt32Value(VisibleBase + 3, 0);
+                    m_pOwner->SetUInt32Value(VisibleBase + 4, 0);
+                    m_pOwner->SetUInt32Value(VisibleBase + 5, 0);
+                    m_pOwner->SetUInt32Value(VisibleBase + 6, 0);
+                    m_pOwner->SetUInt32Value(VisibleBase + 7, 0);
+                    m_pOwner->SetUInt32Value(VisibleBase + 8, 0);*/
             }
         }
     }
 #else
-    if (srcslot < INVENTORY_SLOT_BAG_END)	// source item is equiped
+    if (srcslot < INVENTORY_SLOT_BAG_END)   // source item is equiped
     {
-        if (m_pItems[(int)srcslot]) // dstitem goes into here.
+        if (m_pItems[(int)srcslot])         // dstitem goes into here.
         {
             // Bags aren't considered "visible".
             if (srcslot < EQUIPMENT_SLOT_END)
@@ -4057,7 +4057,7 @@ bool ItemInterface::AddItemById(uint32 itemid, uint32 count, int32 randomprop)
         }
 
         // create new item
-        Item* item = objmgr.CreateItem(itemid, chr);
+        Item* item = sObjectMgr.CreateItem(itemid, chr);
         if (item == nullptr)
             return false;
 
@@ -4080,7 +4080,7 @@ bool ItemInterface::AddItemById(uint32 itemid, uint32 count, int32 randomprop)
 
             if (it->RandomPropId != 0)
             {
-                auto item_random_properties = lootmgr.GetRandomProperties(it);
+                auto item_random_properties = sLootMgr.GetRandomProperties(it);
 
                 if (item_random_properties != nullptr)
                 {
@@ -4094,7 +4094,7 @@ bool ItemInterface::AddItemById(uint32 itemid, uint32 count, int32 randomprop)
 
             if (it->RandomSuffixId != 0)
             {
-                auto item_random_suffix = lootmgr.GetRandomSuffix(it);
+                auto item_random_suffix = sLootMgr.GetRandomSuffix(it);
 
                 if (item_random_suffix != nullptr)
                 {

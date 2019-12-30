@@ -33,6 +33,25 @@ struct ArenaTeamMember
     uint32 PersonalRating;
 };
 
+struct ArenaTeamEmblem
+{
+    uint32_t emblemStyle;
+    uint32_t emblemColour;
+    uint32_t borderStyle;
+    uint32_t borderColour;
+    uint32_t backgroundColour;
+};
+
+struct ArenaTeamStats
+{
+    uint32_t rating;
+    uint32_t played_week;
+    uint32_t won_week;
+    uint32_t played_season;
+    uint32_t won_season;
+    uint32_t ranking;
+};
+
 class SERVER_DECL ArenaTeam
 {
         void AllocateSlots(uint16 Type)
@@ -61,18 +80,9 @@ class SERVER_DECL ArenaTeam
         uint32 m_memberCount;
         ArenaTeamMember* m_members;
 
-        uint32 m_emblemStyle;
-        uint32 m_emblemColour;
-        uint32 m_borderStyle;
-        uint32 m_borderColour;
-        uint32 m_backgroundColour;
+        ArenaTeamEmblem m_emblem;
 
-        uint32 m_stat_rating;
-        uint32 m_stat_gamesplayedweek;
-        uint32 m_stat_gameswonweek;
-        uint32 m_stat_gamesplayedseason;
-        uint32 m_stat_gameswonseason;
-        uint32 m_stat_ranking;
+        ArenaTeamStats m_stats;
 
         ArenaTeam(uint16 Type, uint32 Id);
         ArenaTeam(Field* f);
@@ -82,8 +92,6 @@ class SERVER_DECL ArenaTeam
         }
 
         void SendPacket(WorldPacket* data);
-        void Query(WorldPacket& data);
-        void Stat(WorldPacket& data);
         void Roster(WorldPacket& data);
         void Inspect(WorldPacket& data);
         void Destroy();

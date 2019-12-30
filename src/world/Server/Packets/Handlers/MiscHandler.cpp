@@ -92,9 +92,9 @@ void WorldSession::handleWhoOpcode(WorldPacket& recvPacket)
     data.SetOpcode(SMSG_WHO);
     data << uint64_t(0);
 
-    objmgr._playerslock.AcquireReadLock();
-    PlayerStorageMap::const_iterator iend = objmgr._players.end();
-    PlayerStorageMap::const_iterator itr = objmgr._players.begin();
+    sObjectMgr._playerslock.AcquireReadLock();
+    PlayerStorageMap::const_iterator iend = sObjectMgr._players.end();
+    PlayerStorageMap::const_iterator itr = sObjectMgr._players.begin();
     while (itr != iend && sent_count < 49)
     {
         Player* plr = itr->second;
@@ -191,7 +191,7 @@ void WorldSession::handleWhoOpcode(WorldPacket& recvPacket)
         data << uint32_t(plr->GetZoneId());
         ++sent_count;
     }
-    objmgr._playerslock.ReleaseReadLock();
+    sObjectMgr._playerslock.ReleaseReadLock();
     data.wpos(0);
     data << sent_count;
     data << sent_count;
@@ -645,7 +645,7 @@ void WorldSession::handleOpenItemOpcode(WorldPacket& recvPacket)
     if (item->loot == nullptr)
     {
         item->loot = new Loot; //eeeeeek
-        lootmgr.FillItemLoot(item->loot, item->getEntry());
+        sLootMgr.FillItemLoot(item->loot, item->getEntry());
     }
     _player->SendLoot(item->getGuid(), LOOT_DISENCHANTING, _player->GetMapId());
 }
@@ -722,7 +722,7 @@ void WorldSession::handleResurrectResponse(WorldPacket& recvPacket)
 
     auto player = _player->GetMapMgr()->GetPlayer(srlPacket.guid.getGuidLow());
     if (player == nullptr)
-        player = objmgr.GetPlayer(srlPacket.guid.getGuidLow());
+        player = sObjectMgr.GetPlayer(srlPacket.guid.getGuidLow());
 
     if (player == nullptr)
         return;
@@ -894,7 +894,7 @@ void WorldSession::handleBugOpcode(WorldPacket& recv_data)
 
     uint64_t accountId = GetAccountId();
     uint32_t timeStamp = uint32(UNIXTIME);
-    uint32_t reportId = objmgr.GenerateReportID();
+    uint32_t reportId = sObjectMgr.GenerateReportID();
 
     std::stringstream ss;
 
@@ -928,7 +928,7 @@ void WorldSession::handleBugOpcode(WorldPacket& recv_data)
 
     uint64_t accountId = GetAccountId();
     uint32_t timeStamp = uint32_t(UNIXTIME);
-    uint32_t reportId = objmgr.GenerateReportID();
+    uint32_t reportId = sObjectMgr.GenerateReportID();
 
     std::stringstream ss;
 
@@ -964,7 +964,7 @@ void WorldSession::handleSuggestionOpcode(WorldPacket& recvPacket)
 
     uint64_t accountId = GetAccountId();
     uint32_t timeStamp = uint32_t(UNIXTIME);
-    uint32_t reportId = objmgr.GenerateReportID();
+    uint32_t reportId = sObjectMgr.GenerateReportID();
 
     std::stringstream ss;
 
@@ -1098,7 +1098,7 @@ void WorldSession::handleCorpseReclaimOpcode(WorldPacket& recvPacket)
     if (srlPacket.guid.GetOldGuid() == 0)
         return;
 
-    auto corpse = objmgr.GetCorpse(srlPacket.guid.getGuidLow());
+    auto corpse = sObjectMgr.GetCorpse(srlPacket.guid.getGuidLow());
     if (corpse == nullptr)
         return;
 
@@ -1193,7 +1193,7 @@ void WorldSession::handleObjectUpdateFailedOpcode(WorldPacket& recvPacket)
     recvPacket.ReadByteSeq(guid[4]);
 #endif
 
-    LogError("handleObjectUpdateFailedOpcode : Object update failed for playerguid %u", Arcemu::Util::GUID_LOPART(guid));
+    LogError("handleObjectUpdateFailedOpcode : Object update failed for playerguid %u", WoWGuid::getGuidLowPartFromUInt64(guid));
 
     if (_player == nullptr)
         return;
@@ -1642,7 +1642,7 @@ void WorldSession::handleGameObjectUse(WorldPacket& recvPacket)
     //////////////////////////////////////////////////////////////////////////////////////////
     //\brief: the following lines are handled in gobj class
 
-    objmgr.CheckforScripts(_player, gameObjectProperties->raw.parameter_9);
+    sObjectMgr.CheckforScripts(_player, gameObjectProperties->raw.parameter_9);
 
     CALL_GO_SCRIPT_EVENT(gameObject, OnActivate)(_player);
     CALL_INSTANCE_SCRIPT_EVENT(_player->GetMapMgr(), OnGameObjectActivate)(gameObject, _player);
@@ -1996,7 +1996,7 @@ void WorldSession::handleReportOpcode(WorldPacket& recvPacket)
             recvPacket >> unk2;                              // probably mail id
             recvPacket >> unk3;                              // const 0
 
-            LogDebugFlag(LF_OPCODE, "Received REPORT SPAM: type %u, guid %u, unk1 %u, unk2 %u, unk3 %u", spam_type, Arcemu::Util::GUID_LOPART(spammer_guid), unk1, unk2, unk3);
+            LogDebugFlag(LF_OPCODE, "Received REPORT SPAM: type %u, guid %u, unk1 %u, unk2 %u, unk3 %u", spam_type, WoWGuid::getGuidLowPartFromUInt64(spammer_guid), unk1, unk2, unk3);
 
         } break;
         case 1:
@@ -2007,7 +2007,7 @@ void WorldSession::handleReportOpcode(WorldPacket& recvPacket)
             recvPacket >> unk4;                              // unk random value
             recvPacket >> description;                       // spam description string (messagetype, channel name, player name, message)
 
-            LogDebugFlag(LF_OPCODE, "Received REPORT SPAM: type %u, guid %u, unk1 %u, unk2 %u, unk3 %u, unk4 %u, message %s", spam_type, Arcemu::Util::GUID_LOPART(spammer_guid), unk1, unk2, unk3, unk4, description.c_str());
+            LogDebugFlag(LF_OPCODE, "Received REPORT SPAM: type %u, guid %u, unk1 %u, unk2 %u, unk3 %u, unk4 %u, message %s", spam_type, WoWGuid::getGuidLowPartFromUInt64(spammer_guid), unk1, unk2, unk3, unk4, description.c_str());
 
         } break;
     }
@@ -2087,7 +2087,7 @@ void WorldSession::HandleMirrorImageOpcode(WorldPacket& recv_data)
 
     Unit* Image = _player->GetMapMgr()->GetUnit(GUID);
     if (Image == nullptr)
-        return;					// ups no unit found with that GUID on the map. Spoofed packet?
+        return; // ups no unit found with that GUID on the map. Spoofed packet?
 
     if (Image->getCreatedByGuid() == 0)
         return;
@@ -2096,7 +2096,7 @@ void WorldSession::HandleMirrorImageOpcode(WorldPacket& recv_data)
     Unit* Caster = _player->GetMapMgr()->GetUnit(CasterGUID);
 
     if (Caster == nullptr)
-        return;					// apperantly this mirror image mirrors nothing, poor lonely soul :(Maybe it's the Caster's ghost called Casper
+        return; // apperantly this mirror image mirrors nothing, poor lonely soul :(Maybe it's the Caster's ghost called Casper
 
     WorldPacket data(SMSG_MIRRORIMAGE_DATA, 68);
 

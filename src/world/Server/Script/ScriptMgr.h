@@ -22,11 +22,12 @@
 #pragma once
 
 #include <mutex>
-#include "Management/Gossip/Gossip.h"
+#include "Management/Gossip/GossipScript.h"
 #include "Management/GameEventMgr.h"
 #include "Units/Unit.h"
 #include "Management/ArenaTeam.h"
 #include "Server/ServerState.h"
+#include "Spell/SpellScript.h"
 
 #define ADD_CREATURE_FACTORY_FUNCTION(cl) public:\
 static CreatureAIScript* Create(Creature* c) { return new cl(c); }
@@ -153,19 +154,36 @@ typedef std::unordered_map<uint32, exp_handle_dummy_aura> HandleDummyAuraMap;
 typedef std::unordered_map<uint32, exp_handle_dummy_spell> HandleDummySpellMap;
 typedef std::unordered_map< uint32, exp_handle_script_effect > HandleScriptEffectMap;
 typedef std::unordered_map<uint32, exp_create_instance_ai> InstanceCreateMap;
-typedef std::set<Arcemu::Gossip::Script*> CustomGossipScripts;
-typedef std::unordered_map<uint32, Arcemu::Gossip::Script*> GossipMap;
+typedef std::set<GossipScript*> CustomGossipScripts;
+typedef std::unordered_map<uint32, GossipScript*> GossipMap;
 typedef std::set<EventScript*> EventScripts;
 typedef std::set<QuestScript*> QuestScripts;
+typedef std::set<SpellScript*> SpellScripts;
 typedef std::set<void*> ServerHookList;
 typedef std::list< Arcemu::DynLib* > DynamicLibraryMap;
 
 
-class SERVER_DECL ScriptMgr : public Singleton<ScriptMgr>
+class SERVER_DECL ScriptMgr
 {
+    private:
+        // APGL End
+        // MIT Start
+        ScriptMgr() = default;
+        ~ScriptMgr() = default;
+
     public:
-        ScriptMgr();
-        ~ScriptMgr();
+        static ScriptMgr& getInstance();
+
+        ScriptMgr(ScriptMgr&&) = delete;
+        ScriptMgr(ScriptMgr const&) = delete;
+        ScriptMgr& operator=(ScriptMgr&&) = delete;
+        ScriptMgr& operator=(ScriptMgr const&) = delete;
+
+        SpellCastResult callScriptedSpellCanCast(Spell* spell, uint32_t* parameter1, uint32_t* parameter2) const;
+        void register_spell_script(uint32_t spellId, SpellScript* ss);
+
+        // MIT End
+        // APGL Start
 
         friend class HookInterface;
 
@@ -202,9 +220,9 @@ class SERVER_DECL ScriptMgr : public Singleton<ScriptMgr>
         void register_event_script(uint32 entry, EventScript* es);
 
         // GOSSIP INTERFACE REGISTRATION
-        void register_creature_gossip(uint32, Arcemu::Gossip::Script*);
-        void register_item_gossip(uint32, Arcemu::Gossip::Script*);
-        void register_go_gossip(uint32, Arcemu::Gossip::Script*);
+        void register_creature_gossip(uint32, GossipScript*);
+        void register_item_gossip(uint32, GossipScript*);
+        void register_go_gossip(uint32, GossipScript*);
 
         // Mutliple Entry Registers
         void register_creature_script(uint32* entries, exp_create_creature_ai callback);
@@ -269,25 +287,25 @@ class SERVER_DECL ScriptMgr : public Singleton<ScriptMgr>
         bool has_item_gossip(uint32) const;
         bool has_go_gossip(uint32) const;
 
-        Arcemu::Gossip::Script* get_creature_gossip(uint32) const;
-        Arcemu::Gossip::Script* get_go_gossip(uint32) const;
-        Arcemu::Gossip::Script* get_item_gossip(uint32) const;
+        GossipScript* get_creature_gossip(uint32) const;
+        GossipScript* get_go_gossip(uint32) const;
+        GossipScript* get_item_gossip(uint32) const;
 
         // Default Gossip Script Interfaces
-        Arcemu::Gossip::Trainer trainerScript_;
-        Arcemu::Gossip::SpiritHealer spirithealerScript_;
-        Arcemu::Gossip::Banker bankerScript_;
-        Arcemu::Gossip::Vendor vendorScript_;
-        Arcemu::Gossip::ClassTrainer classtrainerScript_;
-        Arcemu::Gossip::PetTrainer pettrainerScript_;
-        Arcemu::Gossip::FlightMaster flightmasterScript_;
-        Arcemu::Gossip::Auctioneer auctioneerScript_;
-        Arcemu::Gossip::InnKeeper innkeeperScript_;
-        Arcemu::Gossip::BattleMaster battlemasterScript_;
-        Arcemu::Gossip::CharterGiver chartergiverScript_;
-        Arcemu::Gossip::TabardDesigner tabardScript_;
-        Arcemu::Gossip::StableMaster stablemasterScript_;
-        Arcemu::Gossip::Generic genericScript_;
+        GossipTrainer trainerScript_;
+        GossipSpiritHealer spirithealerScript_;
+        GossipBanker bankerScript_;
+        GossipVendor vendorScript_;
+        GossipClassTrainer classtrainerScript_;
+        GossipPetTrainer pettrainerScript_;
+        GossipFlightMaster flightmasterScript_;
+        GossipAuctioneer auctioneerScript_;
+        GossipInnKeeper innkeeperScript_;
+        GossipBattleMaster battlemasterScript_;
+        GossipCharterGiver chartergiverScript_;
+        GossipTabardDesigner tabardScript_;
+        GossipStableMaster stablemasterScript_;
+        GossipGeneric genericScript_;
 
     protected:
 
@@ -303,6 +321,7 @@ class SERVER_DECL ScriptMgr : public Singleton<ScriptMgr>
         CustomGossipScripts _customgossipscripts;
         EventScripts _eventscripts;
         QuestScripts _questscripts;
+        SpellScripts _spellscripts;
         GossipMap creaturegossip_, gogossip_, itemgossip_;
 };
 
@@ -590,6 +609,12 @@ class SERVER_DECL InstanceScript
         uint32_t getData(uint32_t data);
         bool isDataStateFinished(uint32_t data);
 
+        // not saved to database, only for scripting
+        virtual void setLocalData(uint32_t /*type*/, uint32_t /*data*/) {}
+        virtual void setLocalData64(uint32_t /*type*/, uint64_t /*data*/) {}
+        virtual uint32_t getLocalData(uint32_t /*type*/) const { return 0; }
+        virtual uint64_t getLocalData64(uint32_t /*type*/) const { return 0; }
+        
         //used for debug
         std::string getDataStateString(uint32_t bossEntry);
 
@@ -685,9 +710,21 @@ class SERVER_DECL InstanceScript
 };
 
 
-class SERVER_DECL HookInterface : public Singleton<HookInterface>
+class SERVER_DECL HookInterface
 {
+    private:
+
+        HookInterface() = default;
+        ~HookInterface() = default;
+
     public:
+
+        static HookInterface& getInstance();
+
+        HookInterface(HookInterface&&) = delete;
+        HookInterface(HookInterface const&) = delete;
+        HookInterface& operator=(HookInterface&&) = delete;
+        HookInterface& operator=(HookInterface const&) = delete;
 
         friend class ScriptMgr;
 
@@ -724,5 +761,5 @@ class SERVER_DECL HookInterface : public Singleton<HookInterface>
         bool OnResurrect(Player* pPlayer);
 };
 
-#define sScriptMgr ScriptMgr::getSingleton()
-#define sHookInterface HookInterface::getSingleton()
+#define sScriptMgr ScriptMgr::getInstance()
+#define sHookInterface HookInterface::getInstance()

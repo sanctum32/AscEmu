@@ -17,38 +17,38 @@ public:
     static InstanceScript* Create(MapMgr* pMapMgr) { return new IceCrownCitadel(pMapMgr); }
 };
 
-class ICCTeleporterGossip : public Arcemu::Gossip::Script
+class ICCTeleporterGossip : public GossipScript
 {
 public:
 
-    void OnHello(Object* object, Player* player) override
+    void onHello(Object* object, Player* player) override
     {
         IceCrownCitadel* pInstance = (IceCrownCitadel*)object->GetMapMgr()->GetScript();
         if (!pInstance)
             return;
 
-        Arcemu::Gossip::Menu menu(object->getGuid(), 15221, player->GetSession()->language);
-        menu.AddItem(GOSSIP_ICON_CHAT, player->GetSession()->LocalizedGossipOption(515), 0);          // Teleport to Light's Hammer.
+        GossipMenu menu(object->getGuid(), 15221, player->GetSession()->language);
+        menu.addItem(GOSSIP_ICON_CHAT, 515, 0);          // Teleport to Light's Hammer.
 
         if (pInstance->isDataStateFinished(CN_LORD_MARROWGAR))
-            menu.AddItem(GOSSIP_ICON_CHAT, player->GetSession()->LocalizedGossipOption(516), 1);      // Teleport to Oratory of The Damned.
+            menu.addItem(GOSSIP_ICON_CHAT, 516, 1);      // Teleport to Oratory of The Damned.
 
         if (pInstance->isDataStateFinished(CN_LADY_DEATHWHISPER))
-            menu.AddItem(GOSSIP_ICON_CHAT, player->GetSession()->LocalizedGossipOption(517), 2);      // Teleport to Rampart of Skulls.
+            menu.addItem(GOSSIP_ICON_CHAT, 517, 2);      // Teleport to Rampart of Skulls.
 
         // GunshipBattle has to be finished...
-        //menu.AddItem(GOSSIP_ICON_CHAT, player->GetSession()->LocalizedGossipOption(518), 3);        // Teleport to Deathbringer's Rise.
+        //menu.addItem(GOSSIP_ICON_CHAT, 518, 3);        // Teleport to Deathbringer's Rise.
 
         if (pInstance->isDataStateFinished(CN_VALITHRIA_DREAMWALKER))
-            menu.AddItem(GOSSIP_ICON_CHAT, player->GetSession()->LocalizedGossipOption(519), 4);      // Teleport to the Upper Spire.
+            menu.addItem(GOSSIP_ICON_CHAT, 519, 4);      // Teleport to the Upper Spire.
 
         if (pInstance->isDataStateFinished(CN_COLDFLAME))
-            menu.AddItem(GOSSIP_ICON_CHAT, player->GetSession()->LocalizedGossipOption(520), 5);      // Teleport to Sindragosa's Lair.
+            menu.addItem(GOSSIP_ICON_CHAT, 520, 5);      // Teleport to Sindragosa's Lair.
 
-        menu.Send(player);
+        menu.sendGossipPacket(player);
     }
 
-    void OnSelectOption(Object* /*object*/, Player* player, uint32 Id, const char* /*enteredcode*/, uint32 /*gossipId*/) override
+    void onSelectOption(Object* /*object*/, Player* player, uint32 Id, const char* /*enteredcode*/, uint32 /*gossipId*/) override
     {
         switch (Id)
         {
@@ -71,7 +71,7 @@ public:
                 player->castSpell(player, 70861, true);     // Sindragosa's Lair
                 break;
         }
-        Arcemu::Gossip::Menu::Complete(player);
+        GossipMenu::senGossipComplete(player);
     }
 };
 
@@ -93,7 +93,7 @@ public:
     void OnActivate(Player* player) override
     {
         ICCTeleporterGossip gossip;
-        gossip.OnHello(_gameobject, player);
+        gossip.onHello(_gameobject, player);
     }
 
 };

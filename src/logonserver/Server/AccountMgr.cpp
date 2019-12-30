@@ -6,15 +6,30 @@ This file is released under the MIT license. See README-MIT for more information
 #include "LogonStdAfx.h"
 #include "AccountMgr.h"
 
-initialiseSingleton(AccountMgr);
+AccountMgr& AccountMgr::getInstance()
+{
+    static AccountMgr mInstance;
+    return mInstance;
+}
 
-AccountMgr::AccountMgr()
+void AccountMgr::initialize(uint32_t reloadTime)
 {
     LogNotice("AccountMgr : Started precaching accounts...");
+    m_reloadThread = nullptr;
+    m_reloadTime = reloadTime;
 
     reloadAccounts(true);
 
     LogDetail("AccountMgr : loaded %u accounts.", static_cast<uint32_t>(getCount()));
+
+    m_reloadThread = std::make_unique<AscEmu::Threading::AEThread>("ReloadAccounts", [this](AscEmu::Threading::AEThread& thread) { this->reloadAccounts(false); }, std::chrono::seconds(m_reloadTime));
+}
+
+void AccountMgr::finalize()
+{
+    LogNotice("AccountMgr : Stop Manager...");
+
+    m_reloadThread->killAndJoin();
 }
 
 void AccountMgr::addAccount(Field* field)
@@ -60,12 +75,12 @@ void AccountMgr::addAccount(Field* field)
             for (auto n = bn.GetNumBytes(); n <= 19; n++)
                 account->SrpHash[n] = static_cast<uint8_t>(0);
 
-            reverse_array(account->SrpHash, 20);
+            std::reverse(std::begin(account->SrpHash), std::end(account->SrpHash));
         }
         else
         {
             memcpy(account->SrpHash, bn.AsByteArray(), 20);
-            reverse_array(account->SrpHash, 20);
+            std::reverse(std::begin(account->SrpHash), std::end(account->SrpHash));
         }
     }
     else
@@ -136,12 +151,12 @@ void AccountMgr::updateAccount(std::shared_ptr<Account> account, Field* field)
             for (auto n = bn.GetNumBytes(); n <= 19; n++)
                 account->SrpHash[n] = static_cast<uint8_t>(0);
 
-            reverse_array(account->SrpHash, 20);
+            std::reverse(std::begin(account->SrpHash), std::end(account->SrpHash));
         }
         else
         {
             memcpy(account->SrpHash, bn.AsByteArray(), 20);
-            reverse_array(account->SrpHash, 20);
+            std::reverse(std::begin(account->SrpHash), std::end(account->SrpHash));
         }
     }
     else
@@ -198,11 +213,6 @@ void AccountMgr::reloadAccounts(bool silent)
         LogDefault("[AccountMgr] Found %u accounts.", _accountMap.size());
 
     accountMgrMutex.Release();
-}
-
-void AccountMgr::reloadAccountsCallback()
-{
-    reloadAccounts(true);
 }
 
 size_t AccountMgr::getCount() const

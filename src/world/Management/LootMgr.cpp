@@ -29,8 +29,6 @@
 #include "Map/MapMgr.h"
 #include "Server/Packets/SmsgLootRemoved.h"
 
-initialiseSingleton(LootMgr);
-
 struct loot_tb
 {
     uint32 itemid;
@@ -99,7 +97,13 @@ bool Loot::any() const
     return gold > 0 || items.size() > 0;
 }
 
-LootMgr::LootMgr()
+LootMgr& LootMgr::getInstance()
+{
+    static LootMgr mInstance;
+    return mInstance;
+}
+
+void LootMgr::initialize()
 {
     is_loading = false;
 }
@@ -215,7 +219,7 @@ void LootMgr::LoadLootProp()
     }
 }
 
-LootMgr::~LootMgr()
+void LootMgr::finalize()
 {
     LOG_DETAIL(" Deleting Loot Tables...");
     for (LootStore::iterator iter = CreatureLoot.begin(); iter != CreatureLoot.end(); ++iter)
@@ -802,7 +806,7 @@ void LootRoll::Finalize()
         }
         LOG_DEBUG("AutoLootItem MISC");
 
-        Item* item = objmgr.CreateItem(itemid, _player);
+        Item* item = sObjectMgr.CreateItem(itemid, _player);
         if (item == nullptr)
             return;
         item->setStackCount(amt);
@@ -881,7 +885,7 @@ void LootRoll::PlayerRolled(Player* player, uint8 choice)
         data << uint8(128);
         data << uint8(128);
     }
-    data << uint8(0);	// Requires research - possibly related to disenchanting of loot
+    data << uint8(0); // Requires research - possibly related to disenchanting of loot
     if (player->InGroup())
         player->GetGroup()->SendPacketToAll(&data);
     else

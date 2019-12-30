@@ -15,7 +15,6 @@ using std::chrono::milliseconds;
 
 // Database impl
 Database* sLogonSQL;
-initialiseSingleton(MasterLogon);
 std::atomic<bool> mrunning(true);
 Mutex _authSocketLock;
 std::set<AuthSocket*> _authSockets;
@@ -23,6 +22,12 @@ std::set<AuthSocket*> _authSockets;
 ConfigMgr Config;
 
 static const char* REQUIRED_LOGON_DB_VERSION = "20180810-00_realms";
+
+MasterLogon& MasterLogon::getInstance()
+{
+    static MasterLogon mInstance;
+    return mInstance;
+}
 
 void MasterLogon::Run(int /*argc*/, char** /*argv*/)
 {
@@ -35,17 +40,16 @@ void MasterLogon::Run(int /*argc*/, char** /*argv*/)
 
     LogDefault("The key combination <Ctrl-C> will safely shut down the server.");
 
-    new Logon;
     LogDetail("Config : Loading Config Files...");
     if (!LoadLogonConfiguration())
     {
-        AscLog.~AscEmuLog();
+        AscLog.finalize();
         return;
     }
 
     if (!SetLogonConfiguration())
     {
-        AscLog.~AscEmuLog();
+        AscLog.finalize();
         return;
     }
 
@@ -56,40 +60,27 @@ void MasterLogon::Run(int /*argc*/, char** /*argv*/)
 
     if (!StartDb())
     {
-        AscLog.~AscEmuLog();
+        AscLog.finalize();
         return;
     }
 
-#ifdef USE_EXPERIMENTAL_FILESYSTEM
     DatabaseUpdater::initBaseIfNeeded(logonConfig.logonDb.db, "logon", *sLogonSQL);
 
     DatabaseUpdater::checkAndApplyDBUpdatesIfNeeded("logon", *sLogonSQL);
-#endif
 
     if (!CheckDBVersion())
     {
-        AscLog.~AscEmuLog();
+        AscLog.finalize();
         return;
     }
 
-    new IpBanMgr;
-    new AccountMgr;
+    sIpBanMgr.initialize();
 
-    new PatchMgr;
-    
+    sAccountMgr.initialize(logonConfig.rates.accountRefreshTime); // time in seconds
 
-    new RealmsMgr;
-    
+    PatchMgr::getInstance().initialize();
 
-    // Spawn periodic function caller thread for account reload every 10mins
-    const uint32 accountReloadPeriod = logonConfig.rates.accountRefreshTime * 1000;
-
-    auto periodicReloadAccounts = new PeriodicFunctionCaller<AccountMgr>(AccountMgr::getSingletonPtr(), &AccountMgr::reloadAccountsCallback, accountReloadPeriod);
-    ThreadPool.ExecuteTask(periodicReloadAccounts);
-
-    // periodic ping check for realm status
-    const auto checkRealmStatusFromPing = new PeriodicFunctionCaller<RealmsMgr>(RealmsMgr::getSingletonPtr(), &RealmsMgr::checkRealmStatus, 60000);
-    ThreadPool.ExecuteTask(checkRealmStatusFromPing);
+    sRealmsMgr.initialize(300); // time in seconds
 
     // Load conf settings..
     clientMinBuild = 5875;
@@ -97,8 +88,7 @@ void MasterLogon::Run(int /*argc*/, char** /*argv*/)
 
     ThreadPool.ExecuteTask(new LogonConsoleThread);
 
-    new SocketMgr;
-    new SocketGarbageCollector;
+    sSocketMgr.initialize();
 
     auto realmlistSocket = new ListenSocket<AuthSocket>(logonConfig.listen.host.c_str(), logonConfig.listen.realmListPort);
     auto logonServerSocket = new ListenSocket<LogonCommServerSocket>(logonConfig.listen.interServerHost.c_str(), logonConfig.listen.port);
@@ -139,7 +129,7 @@ void MasterLogon::Run(int /*argc*/, char** /*argv*/)
                 g_localTime = *localtime(&UNIXTIME);
             }
 
-            PatchMgr::getSingleton().UpdateJobs();
+            PatchMgr::getInstance().UpdateJobs();
             Arcemu::Sleep(1000);
         }
 
@@ -152,9 +142,6 @@ void MasterLogon::Run(int /*argc*/, char** /*argv*/)
         LOG_ERROR("Error creating sockets. Shutting down...");
     }
 
-    periodicReloadAccounts->kill();
-    checkRealmStatusFromPing->kill();
-
     realmlistSocket->Close();
     logonServerSocket->Close();
     sSocketMgr.CloseAll();
@@ -162,7 +149,8 @@ void MasterLogon::Run(int /*argc*/, char** /*argv*/)
     sSocketMgr.ShutdownThreads();
 #endif
     sLogonConsole.Kill();
-    delete LogonConsole::getSingletonPtr();
+    sAccountMgr.finalize();
+    sRealmsMgr.finalize();
 
     // kill db
     LogDefault("Waiting for database to close..");
@@ -178,16 +166,13 @@ void MasterLogon::Run(int /*argc*/, char** /*argv*/)
     else
         LOG_DEBUG("File logonserver.pid successfully deleted");
 
-    delete AccountMgr::getSingletonPtr();
-    delete PatchMgr::getSingletonPtr();
-    delete IpBanMgr::getSingletonPtr();
-    delete SocketMgr::getSingletonPtr();
-    delete SocketGarbageCollector::getSingletonPtr();
-    delete periodicReloadAccounts;
+    sSocketMgr.finalize();
+    sSocketGarbageCollector.finalize();
+    //delete periodicReloadAccounts;
     delete realmlistSocket;
     delete logonServerSocket;
     LOG_BASIC("Shutdown complete.");
-    AscLog.~AscEmuLog();
+    AscLog.finalize();
 }
 
 void OnCrash(bool /*Terminate*/)
@@ -463,10 +448,7 @@ bool MasterLogon::SetLogonConfiguration()
         m_allowedModIps.push_back(tmp);
     }
 
-    //\todo always nullptr!
-    if (RealmsMgr::getSingletonPtr() != nullptr)
-        sRealmsMgr.checkServers();
-
+    sRealmsMgr.checkServers();
     m_allowedIpLock.Release();
 
     return true;
@@ -510,7 +492,7 @@ void MasterLogon::_OnSignal(int s)
         case SIGHUP:
         {
             LOG_DETAIL("Received SIGHUP signal, reloading accounts.");
-            AccountMgr::getSingleton().reloadAccounts(true);
+            sAccountMgr.reloadAccounts(true);
         }
         break;
 #endif

@@ -141,7 +141,7 @@ bool ChatHandler::HandleGetInstanceInfoCommand(const char* args, WorldSession* m
 
         ss << "\n";
     }
-    ss << "Created: " << MSG_COLOR_CYAN << Util::GetDateTimeStringFromTimeStamp((uint32)instance->m_creation) << "|r\n";
+    ss << "Created: " << MSG_COLOR_CYAN << Util::GetDateTimeStringFromTimeStamp(instance->m_creation) << "|r\n";
     if (instance->m_expiration != 0)
         ss << "Expires: " << MSG_COLOR_CYAN << Util::GetDateTimeStringFromTimeStamp((uint32)instance->m_expiration) << "|r\n";
 
@@ -200,7 +200,7 @@ bool ChatHandler::HandleResetInstanceCommand(const char* args, WorldSession* m_s
     if (argc == 1)
         plr = GetSelectedPlayer(m_session, true, true);
     else
-        plr = objmgr.GetPlayer((const char*)playername, false);
+        plr = sObjectMgr.GetPlayer((const char*)playername, false);
 
     if (!plr)
     {
@@ -215,7 +215,7 @@ bool ChatHandler::HandleResetInstanceCommand(const char* args, WorldSession* m_s
         return true;
     }
 
-    if (IS_PERSISTENT_INSTANCE(instance))
+    if (instance->isPersistent())
     {
         if (m_session->CanUseCommand('z'))
         {
@@ -286,7 +286,7 @@ bool ChatHandler::HandleResetAllInstancesCommand(const char* args, WorldSession*
 
     if (is_name_set)
     {
-        player = objmgr.GetPlayer(args, false);
+        player = sObjectMgr.GetPlayer(args, false);
         if (player == nullptr)
         {
             RedSystemMessage(m_session, "Player %s is not online or does not exist!", args);

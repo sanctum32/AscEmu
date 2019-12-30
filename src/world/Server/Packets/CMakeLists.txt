@@ -36,6 +36,7 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/CmsgBattlefieldList.h
    ${PATH_PREFIX}/CmsgBattlefieldPort.h
    ${PATH_PREFIX}/CmsgBattlemasterHello.h
+   ${PATH_PREFIX}/CmsgBattlemasterJoin.h
    ${PATH_PREFIX}/CmsgBattlemasterJoinArena.h
    ${PATH_PREFIX}/CmsgBinderActivate.h
    ${PATH_PREFIX}/CmsgBug.h
@@ -186,6 +187,7 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/CmsgRemoveGlyph.h
    ${PATH_PREFIX}/CmsgRepairItem.h
    ${PATH_PREFIX}/CmsgRequestPartyMemberStats.h
+   ${PATH_PREFIX}/CmsgRequestRatedBgInfo.h
    ${PATH_PREFIX}/CmsgRequestVehicleSwitchSeat.h
    ${PATH_PREFIX}/CmsgResurrectResponse.h
    ${PATH_PREFIX}/CmsgSearchLfgJoin.h
@@ -263,6 +265,8 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/SmsgAreaSpiritHealerTime.h
    ${PATH_PREFIX}/SmsgAreaTriggerMessage.h
    ${PATH_PREFIX}/SmsgArenaError.h
+   ${PATH_PREFIX}/SmsgArenaTeamQueryResponse.h
+   ${PATH_PREFIX}/SmsgArenaTeamStats.h
    ${PATH_PREFIX}/SmsgAttackStart.h
    ${PATH_PREFIX}/SmsgAttackStop.h
    ${PATH_PREFIX}/SmsgAuctionCommandResult.h
@@ -301,12 +305,15 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/SmsgExplorationExperience.h
    ${PATH_PREFIX}/SmsgFeatureSystemStatus.h
    ${PATH_PREFIX}/SmsgFriendStatus.h
+   ${PATH_PREFIX}/SmsgGameobjectCustomAnim.h
+   ${PATH_PREFIX}/SmsgGameobjectDespawnAnim.h
    ${PATH_PREFIX}/SmsgGameobjectQueryResponse.h
    ${PATH_PREFIX}/SmsgGmTicketCreate.h
    ${PATH_PREFIX}/SmsgGmTicketDeleteTicket.h
    ${PATH_PREFIX}/SmsgGmTicketGetTicket.h
    ${PATH_PREFIX}/SmsgGmTicketSystemstatus.h
    ${PATH_PREFIX}/SmsgGmTicketUpdateText.h
+   ${PATH_PREFIX}/SmsgGossipMessage.h
    ${PATH_PREFIX}/SmsgGossipPoi.h
    ${PATH_PREFIX}/SmsgGroupDecline.h
    ${PATH_PREFIX}/SmsgGroupInvite.h
@@ -359,9 +366,14 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/SmsgPlayObjectSound.h
    ${PATH_PREFIX}/SmsgPlaySound.h
    ${PATH_PREFIX}/SmsgPowerUpdate.h
+   ${PATH_PREFIX}/SmsgPvpCredit.h
+   ${PATH_PREFIX}/SmsgPvpOptionsEnabled.h
    ${PATH_PREFIX}/SmsgQueryTimeResponse.h
    ${PATH_PREFIX}/SmsgQuestgiverStatus.h
    ${PATH_PREFIX}/SmsgQuestgiverStatusMultiple.h
+   ${PATH_PREFIX}/SmsgRaidGroupOnly.h
+   ${PATH_PREFIX}/SmsgRatedBgInfo.h
+   ${PATH_PREFIX}/SmsgRatedBgStats.h
    ${PATH_PREFIX}/SmsgReadItemFailed.h
    ${PATH_PREFIX}/SmsgReadItemOk.h
    ${PATH_PREFIX}/SmsgRealmSplit.h

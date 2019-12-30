@@ -56,6 +56,8 @@ This file is released under the MIT license. See README-MIT for more information
 #include "Server/Packets/SmsgDestoyObject.h"
 #include "Storage/MySQLDataStore.hpp"
 #include "Spell/Definitions/AuraInterruptFlags.h"
+#include "Server/Packets/SmsgPvpCredit.h"
+#include "Server/Packets/SmsgRaidGroupOnly.h"
 
 using namespace AscEmu::Packets;
 
@@ -972,7 +974,7 @@ bool Player::isSpellFitByClassAndRace(uint32_t spell_id)
     auto racemask = getRaceMask();
     auto classmask = getClassMask();
 
-    auto bounds = objmgr.GetSkillLineAbilityMapBounds(spell_id);
+    auto bounds = sObjectMgr.GetSkillLineAbilityMapBounds(spell_id);
     if (bounds.first == bounds.second)
     {
         return true;
@@ -1148,6 +1150,18 @@ bool Player::isClassWarrior() { return false; }
 bool Player::isClassPaladin() { return false; }
 bool Player::isClassDruid() { return false; }
 
+Player* Player::getPlayerOwner()
+{
+    if (getCharmedByGuid() != 0)
+    {
+        const auto charmerUnit = GetMapMgrUnit(getCharmedByGuid());
+        if (charmerUnit != nullptr && charmerUnit->isPlayer())
+            return dynamic_cast<Player*>(charmerUnit);
+    }
+
+    return this;
+}
+
 void Player::toggleAfk()
 {
     if (hasPlayerFlags(PLAYER_FLAG_AFK))
@@ -1221,17 +1235,11 @@ void Player::updateAutoRepeatSpell()
 
     if (isAttackReady(RANGED))
     {
-        // TODO: implement ::CanShootRangedWeapon() into new Spell::canCast()
-        // also currently if target gets too far away, your autorepeat spell will get interrupted
-        // it's related most likely to ::CanShootRangedWeapon()
-        const auto target = GetMapMgr()->GetUnit(autoRepeatSpell->m_targets.m_unitTarget);
-        const auto canCastAutoRepeatSpell = CanShootRangedWeapon(autoRepeatSpell->getSpellInfo()->getId(), target, isAutoShot);
+        const auto canCastAutoRepeatSpell = autoRepeatSpell->canCast(true, 0, 0);
         if (canCastAutoRepeatSpell != SPELL_CANCAST_OK)
         {
             if (!isAutoShot)
-            {
                 interruptSpellWithSpellType(CURRENT_AUTOREPEAT_SPELL);
-            }
             else if (isPlayer())
                 autoRepeatSpell->sendCastResult(static_cast<SpellCastResult>(canCastAutoRepeatSpell));
             return;
@@ -1321,7 +1329,7 @@ void Player::learnTalent(uint32_t talentId, uint32_t talentRank)
     if (talentInfo == nullptr)
         return;
 
-    if (objmgr.IsSpellDisabled(talentInfo->RankID[talentRank]))
+    if (sObjectMgr.IsSpellDisabled(talentInfo->RankID[talentRank]))
     {
         if (IsInWorld())
             sendCastFailedPacket(talentInfo->RankID[talentRank], SPELL_FAILED_SPELL_UNAVAILABLE, 0, 0);
@@ -1975,12 +1983,12 @@ void Player::logIntoBattleground()
         {
             if (!IS_INSTANCE(m_bgEntryPointMap))
             {
-                m_position.ChangeCoords(m_bgEntryPointX, m_bgEntryPointY, m_bgEntryPointZ, m_bgEntryPointO);
+                m_position.ChangeCoords({ m_bgEntryPointX, m_bgEntryPointY, m_bgEntryPointZ, m_bgEntryPointO });
                 m_mapId = m_bgEntryPointMap;
             }
             else
             {
-                m_position.ChangeCoords(GetBindPositionX(), GetBindPositionY(), GetBindPositionZ(), 0.0f);
+                m_position.ChangeCoords({ GetBindPositionX(), GetBindPositionY(), GetBindPositionZ() });
                 m_mapId = GetBindMapId();
             }
         }
@@ -1997,9 +2005,9 @@ bool Player::logOntoTransport()
 #endif
     {
 #if VERSION_STRING < Cata
-        const auto transporter = objmgr.GetTransporter(Arcemu::Util::GUID_LOPART(obj_movement_info.transport_data.transportGuid));
+        const auto transporter = sObjectMgr.GetTransporter(WoWGuid::getGuidLowPartFromUInt64(obj_movement_info.transport_data.transportGuid));
 #else
-        const auto transporter = objmgr.GetTransporter(Arcemu::Util::GUID_LOPART(static_cast<uint32>(obj_movement_info.getTransportGuid())));
+        const auto transporter = sObjectMgr.GetTransporter(WoWGuid::getGuidLowPartFromUInt64(static_cast<uint32>(obj_movement_info.getTransportGuid())));
 #endif
         if (transporter)
         {
@@ -2046,7 +2054,7 @@ void Player::setLoginPosition()
 
     if (startOnGMIsland)
     {
-        m_position.ChangeCoords(position_x, position_y, position_z, orientation);
+        m_position.ChangeCoords({ position_x, position_y, position_z, orientation });
         m_mapId = mapId;
 
         SetBindPoint(GetPositionX(), GetPositionY(), GetPositionZ(), GetMapId(), GetZoneId());
@@ -2065,7 +2073,7 @@ void Player::setLoginPosition()
 
 void Player::setPlayerInfoIfNeeded()
 {
-    auto playerInfo = objmgr.GetPlayerInfo(getGuidLow());
+    auto playerInfo = sObjectMgr.GetPlayerInfo(getGuidLow());
     if (playerInfo == nullptr)
     {
         playerInfo = new PlayerInfo;
@@ -2082,11 +2090,10 @@ void Player::setPlayerInfoIfNeeded()
         playerInfo->m_Group = nullptr;
         playerInfo->subGroup = 0;
 
-        playerInfo->m_loggedInPlayer = this;
-
-        objmgr.AddPlayerInfo(playerInfo);
+        sObjectMgr.AddPlayerInfo(playerInfo);
     }
 
+    playerInfo->m_loggedInPlayer = this;
     m_playerInfo = playerInfo;
 }
 
@@ -2394,4 +2401,14 @@ void Player::removeSanctuaryFlag()
     summonhandler.RemoveSanctuaryFlags();
     for (auto& summon : GetSummons())
         summon->removeSanctuaryFlag();
+}
+
+void Player::sendPvpCredit(uint32_t honor, uint64_t victimGuid, uint32_t victimRank)
+{
+    this->SendPacket(SmsgPvpCredit(honor, victimGuid, victimRank).serialise().get());
+}
+
+void Player::sendRaidGroupOnly(uint32_t timeInMs, uint32_t type)
+{
+    this->SendPacket(SmsgRaidGroupOnly(timeInMs, type).serialise().get());
 }

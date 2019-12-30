@@ -4,6 +4,21 @@ This file is released under the MIT license. See README-MIT for more information
 */
 
 #pragma once
+
+#include "WorldConf.h"
+
+#if VERSION_STRING == Classic
+#include "GameClassic/Storage/DBCStructures.h"
+#elif VERSION_STRING == TBC
+#include "GameTBC/Storage/DBCStructures.h"
+#elif VERSION_STRING == WotLK
+#include "GameWotLK/Storage/DBCStructures.h"
+#elif VERSION_STRING == Cata
+#include "GameCata/Storage/DBCStructures.h"
+#elif VERSION_STRING == Mop
+#include "GameMop/Storage/DBCStructures.h"
+#endif
+
 #include <cstdint>
 
 struct DamageProc
@@ -65,7 +80,7 @@ enum SpellAttributes
 enum SpellAttributesEx
 {
     ATTRIBUTESEX_NULL                               = 0x00000000,   // 0
-    ATTRIBUTESEX_UNK2                               = 0x00000001,   // 1 pet summonings
+    ATTRIBUTESEX_DISMISS_CURRENT_PET                = 0x00000001,   // 1 Dismisses current pet
     ATTRIBUTESEX_DRAIN_WHOLE_POWER                  = 0x00000002,   // 2 Uses all power / health
     ATTRIBUTESEX_CHANNELED_1                        = 0x00000004,   // 3 Channeled
     ATTRIBUTESEX_UNK5                               = 0x00000008,   // 4
@@ -80,7 +95,7 @@ enum SpellAttributesEx
     ATTRIBUTESEX_UNK14                              = 0x00001000,   // 13 related to pickpocket
     ATTRIBUTESEX_UNK15                              = 0x00002000,   // 14 related to remote control
     ATTRIBUTESEX_CHANNEL_FACE_TARGET                = 0x00004000,   // 15 Channeling makes you face target
-    ATTRIBUTESEX_DISPEL_AURAS_ON_IMMUNITY           = 0x00008000,   // 16 remove auras on immunity - something like "grant immunity"
+    ATTRIBUTESEX_DISPEL_AURAS_ON_IMMUNITY           = 0x00008000,   // 16 Removes and grants immunity to a mechanic (Blink (stun), Divine Shield, Ice Block etc)
     ATTRIBUTESEX_UNAFFECTED_BY_SCHOOL_IMMUNE        = 0x00010000,   // 17 unaffected by school immunity - something like "grant immunity" too
     ATTRIBUTESEX_REMAIN_OOC                         = 0x00020000,   // 18
     ATTRIBUTESEX_UNK20                              = 0x00040000,   // 19
@@ -112,7 +127,7 @@ enum SpellAttributesExB
     ATTRIBUTESEXB_UNK9                              = 0x00000080,   // 8
     ATTRIBUTESEXB_UNUSED1                           = 0x00000100,   // 9 not set in 3.0.3
     ATTRIBUTESEXB_UNK11                             = 0x00000200,   // 10 used by 2 spells, 30421 | Nether Portal - Perseverence and  30466 | Nether Portal - Perseverence
-    ATTRIBUTESEXB_TAME_X                            = 0x00000400,   // 11 tame [creature]
+    ATTRIBUTESEXB_TAME_BEAST                        = 0x00000400,   // 11 Hunter's Tame Beast and its pre-quest spells
     ATTRIBUTESEXB_FUNNEL                            = 0x00000800,   // 12 only funnel spells
     ATTRIBUTESEXB_UNK14                             = 0x00001000,   // 13 swipe / Cleave spells
     ATTRIBUTESEXB_ENCHANT_OWN_ONLY                  = 0x00002000,   // 14 no trade window targets, BoE items get soulbound to you
@@ -239,7 +254,7 @@ enum SpellAttributesExE
     ATTRIBUTESEXE_UNK25                             = 0x00800000,
     ATTRIBUTESEXE_UNK26                             = 0x01000000,
     ATTRIBUTESEXE_UNK27                             = 0x02000000,
-    ATTRIBUTESEXE_SKIP_LINE_OF_SIGHT_CHECK          = 0x04000000, // Used for spells which explode around target
+    ATTRIBUTESEXE_SKIP_LINE_OF_SIGHT_CHECK          = 0x04000000,   // Used for spells which explode around target
     ATTRIBUTESEXE_UNK29                             = 0x08000000,
     ATTRIBUTESEXE_UNK30                             = 0x10000000,
     ATTRIBUTESEXE_UNK31                             = 0x20000000,
@@ -252,7 +267,7 @@ enum SpellAttributesExF
     ATTRIBUTESEXF_NULL                              = 0x00000000,
     ATTRIBUTESEXF_UNK2                              = 0x00000001,   // cooldown in tooltyp (not displayed)
     ATTRIBUTESEXF_UNUSED1                           = 0x00000002,   // only arena
-    ATTRIBUTESEXF_UNK4                              = 0x00000004,
+    ATTRIBUTESEXF_IGNORE_CASTER_STATE_AND_AURAS     = 0x00000004,
     ATTRIBUTESEXF_UNK5                              = 0x00000008,
     ATTRIBUTESEXF_UNK6                              = 0x00000010,
     ATTRIBUTESEXF_UNK7                              = 0x00000020,
@@ -431,8 +446,11 @@ enum SpellAttributesExJ
 };
 #endif
 
-#define MAX_SPELL_EFFECTS 3
-#define MAX_SPELL_TOTEMS 2
-#define MAX_SPELL_TOTEM_CATEGORIES 2
-#define MAX_SPELL_REAGENTS 8
+enum SpellRangeTypeMask : uint8_t
+{
+    SPELL_RANGE_TYPE_MASK_MELEE                     = 1,
+    SPELL_RANGE_TYPE_MASK_RANGED                    = 2
+};
+
+// todo: move this to each dbc structure file
 #define MAX_SPELL_ID 121820

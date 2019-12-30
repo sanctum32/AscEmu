@@ -154,7 +154,7 @@ enum AuraEffect
     SPELL_AURA_SAFE_FALL = 144,                                         // Safe Fall
     SPELL_AURA_CHARISMA = 145,                                          // Charisma
     SPELL_AURA_PERSUADED = 146,                                         // Persuaded
-    SPELL_AURA_ADD_CREATURE_IMMUNITY = 147,                             // Add Creature Immunity
+    SPELL_AURA_MECHANIC_IMMUNITY_MASK = 147,                            // Mechanic Immunity Mask
     SPELL_AURA_RETAIN_COMBO_POINTS = 148,                               // Retain Combo Points
     SPELL_AURA_RESIST_PUSHBACK = 149,                                   // Resist Pushback
     SPELL_AURA_MOD_SHIELD_BLOCK_PCT = 150,                              // Mod Shield Block %
@@ -196,7 +196,7 @@ enum AuraEffect
     SPELL_AURA_MELEE_SLOW_PCT = 192,
     SPELL_AURA_INCREASE_TIME_BETWEEN_ATTACKS = 193,
     SPELL_AURA_INREASE_SPELL_DAMAGE_PCT_OF_INTELLECT = 194,             // NOT USED ANYMORE - 174 used instead
-    SPELL_AURA_INCREASE_HEALING_PCT_OF_INTELLECT = 195,		            // NOT USED ANYMORE - 175 used instead
+    SPELL_AURA_INCREASE_HEALING_PCT_OF_INTELLECT = 195,                 // NOT USED ANYMORE - 175 used instead
     SPELL_AURA_MOD_ALL_WEAPON_SKILLS = 196,
     SPELL_AURA_REDUCE_ATTACKER_CRICTICAL_HIT_CHANCE_PCT = 197,
     SPELL_AURA_198 = 198,
@@ -229,7 +229,7 @@ enum AuraEffect
     SPELL_AURA_COMPREHEND_LANG = 244,
     SPELL_AURA_MOD_DURATION_OF_MAGIC_EFFECTS = 245,
     SPELL_AURA_246 = 246,
-    SPELL_AURA_247 = 247,
+    SPELL_AURA_MIRROR_IMAGE = 247,
     SPELL_AURA_MOD_COMBAT_RESULT_CHANCE = 248,
     SPELL_AURA_CONVERT_RUNE = 249,
     SPELL_AURA_MOD_INCREASE_HEALTH_2 = 250,

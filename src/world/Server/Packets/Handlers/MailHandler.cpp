@@ -38,7 +38,7 @@ void WorldSession::handleMarkAsReadOpcode(WorldPacket& recvPacket)
     mailMessage->checked_flag |= MAIL_CHECK_MASK_READ;
 
     if (!sMailSystem.MailOption(MAIL_FLAG_NO_EXPIRY))
-        mailMessage->expire_time = static_cast<uint32_t>(UNIXTIME) + (TIME_DAY * 30);
+        mailMessage->expire_time = static_cast<uint32_t>(UNIXTIME) + (TimeVars::Day * 30);
 
     CharacterDatabase.WaitExecute("UPDATE mailbox SET checked_flag = %u, expiry_time = %u WHERE message_id = %u",
         mailMessage->checked_flag, mailMessage->expire_time, mailMessage->message_id);
@@ -153,7 +153,7 @@ void WorldSession::handleMailCreateTextItemOpcode(WorldPacket& recvPacket)
         return;
     }
 
-    auto item = objmgr.CreateItem(8383, _player);
+    auto item = sObjectMgr.CreateItem(8383, _player);
     if (item == nullptr)
         return;
 
@@ -266,7 +266,7 @@ void WorldSession::handleGetMailOpcode(WorldPacket& /*recvPacket*/)
             case MAIL_TYPE_COD:
             case MAIL_TYPE_AUCTION:
             case MAIL_TYPE_ITEM:
-                data << uint32_t(Arcemu::Util::GUID_LOPART(message.second.sender_guid));
+                data << uint32_t(WoWGuid::getGuidLowPartFromUInt64(message.second.sender_guid));
                 break;
             case MAIL_TYPE_GAMEOBJECT:
             case MAIL_TYPE_CREATURE:
@@ -299,7 +299,7 @@ void WorldSession::handleGetMailOpcode(WorldPacket& /*recvPacket*/)
         {
             for (auto itemEntry : message.second.items)
             {
-                const auto item = objmgr.LoadItem(itemEntry);
+                const auto item = sObjectMgr.LoadItem(itemEntry);
                 if (item == nullptr)
                     continue;
 
@@ -369,7 +369,7 @@ void WorldSession::handleTakeItemOpcode(WorldPacket& recvPacket)
         }
     }
 
-    auto item = objmgr.LoadItem(srlPacket.lowGuid);
+    auto item = sObjectMgr.LoadItem(srlPacket.lowGuid);
     if (item == nullptr)
     {
         SendPacket(SmsgSendMailResult(srlPacket.messageId, MAIL_RES_ITEM_TAKEN, MAIL_ERR_INTERNAL_ERROR).serialise().get());
@@ -440,7 +440,7 @@ void WorldSession::handleSendMailOpcode(WorldPacket& recvPacket)
         return;
     }
 
-    const auto playerReceiverInfo = objmgr.GetPlayerInfoByName(srlPacket.receiverName.c_str());
+    const auto playerReceiverInfo = sObjectMgr.GetPlayerInfoByName(srlPacket.receiverName.c_str());
     if (playerReceiverInfo == nullptr)
     {
         SendPacket(SmsgSendMailResult(0, MAIL_RES_MAIL_SENT, MAIL_ERR_RECIPIENT_NOT_FOUND).serialise().get());
@@ -542,7 +542,7 @@ void WorldSession::handleSendMailOpcode(WorldPacket& recvPacket)
     msg.body = srlPacket.body;
 
     if (!sMailSystem.MailOption(MAIL_FLAG_NO_EXPIRY))
-        msg.expire_time = static_cast<uint32_t>(UNIXTIME) + (TIME_DAY * MAIL_DEFAULT_EXPIRATION_TIME);
+        msg.expire_time = static_cast<uint32_t>(UNIXTIME) + (TimeVars::Day * MAIL_DEFAULT_EXPIRATION_TIME);
     else
         msg.expire_time = 0;
 

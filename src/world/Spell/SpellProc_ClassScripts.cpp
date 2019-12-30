@@ -31,8 +31,8 @@
 #include "Definitions/SpellEffectTarget.h"
 #include "SpellHelpers.h"
 
-using ascemu::World::Spell::Helpers::spellModFlatIntValue;
-using ascemu::World::Spell::Helpers::spellModPercentageIntValue;
+using AscEmu::World::Spell::Helpers::spellModFlatIntValue;
+using AscEmu::World::Spell::Helpers::spellModPercentageIntValue;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Warrior ProcScripts
@@ -427,7 +427,7 @@ public:
         if (aura)
         {
             // Duration of 5 combo maximum
-            int32 dur = 21 * MSTIME_SECOND;
+            int32 dur = 21 * TimeVarsMs::Second;
 
             spellModFlatIntValue(mTarget->SM_FDur, &dur, aura->GetSpellInfo()->getSpellFamilyFlags());
             spellModPercentageIntValue(mTarget->SM_PDur, &dur, aura->GetSpellInfo()->getSpellFamilyFlags());

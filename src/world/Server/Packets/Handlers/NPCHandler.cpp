@@ -257,9 +257,8 @@ void WorldSession::handleGossipHelloOpcode(WorldPacket& recvPacket)
 
         _player->Reputation_OnTalk(creature->m_factionEntry);
 
-        const auto script = Arcemu::Gossip::Script::GetInterface(creature);
-        if (script != nullptr)
-            script->OnHello(creature, _player);
+        if (const auto script = GossipScript::getInterface(creature))
+            script->onHello(creature, _player);
     }
 }
 
@@ -273,14 +272,14 @@ void WorldSession::handleGossipSelectOptionOpcode(WorldPacket& recvPacket)
     LogDebugFlag(LF_OPCODE, "Received CMSG_GOSSIP_SELECT_OPTION: %u (gossipId), %i (option), %u (guidLow)",
         srlPacket.gossip_id, srlPacket.option, srlPacket.guid.getGuidLow());
 
-    Arcemu::Gossip::Script* script = nullptr;
+    GossipScript* script = nullptr;
 
     Object* object;
     if (srlPacket.guid.isItem())
     {
         object = _player->getItemInterface()->GetItemByGUID(srlPacket.guid);
         if (object != nullptr)
-            script = Arcemu::Gossip::Script::GetInterface(static_cast<Item*>(object));
+            script = GossipScript::getInterface(dynamic_cast<Item*>(object));
     }
     else
     {
@@ -290,17 +289,17 @@ void WorldSession::handleGossipSelectOptionOpcode(WorldPacket& recvPacket)
     if (object != nullptr)
     {
         if (srlPacket.guid.isUnit())
-            script = Arcemu::Gossip::Script::GetInterface(static_cast<Creature*>(object));
+            script = GossipScript::getInterface(dynamic_cast<Creature*>(object));
         else if (srlPacket.guid.isGameObject())
-            script = Arcemu::Gossip::Script::GetInterface(static_cast<GameObject*>(object));
+            script = GossipScript::getInterface(dynamic_cast<GameObject*>(object));
     }
 
     if (script != nullptr)
     {
         if (srlPacket.input.length() > 0)
-            script->OnSelectOption(object, _player, srlPacket.option, srlPacket.input.c_str(), srlPacket.gossip_id);
+            script->onSelectOption(object, _player, srlPacket.option, srlPacket.input.c_str(), srlPacket.gossip_id);
         else
-            script->OnSelectOption(object, _player, srlPacket.option, nullptr, srlPacket.gossip_id);
+            script->onSelectOption(object, _player, srlPacket.option, nullptr, srlPacket.gossip_id);
     }
 }
 
@@ -369,7 +368,7 @@ void WorldSession::handleStabledPetList(WorldPacket& recvPacket)
 
     if (_player->getClass() != HUNTER)
     {
-        Arcemu::Gossip::Menu::SendSimpleMenu(srlPacket.guid, 13584, _player);
+        GossipMenu::sendSimpleMenu(srlPacket.guid, 13584, _player);
         return;
     }
 
@@ -407,7 +406,7 @@ void WorldSession::sendTrainerList(Creature* creature)
 
     if (!_player->CanTrainAt(trainer))
     {
-        Arcemu::Gossip::Menu::SendSimpleMenu(creature->getGuid(), trainer->Cannot_Train_GossipTextId, _player);
+        GossipMenu::sendSimpleMenu(creature->getGuid(), trainer->Cannot_Train_GossipTextId, _player);
     }
     else
     {
@@ -488,7 +487,7 @@ void WorldSession::sendTrainerList(Creature* creature)
 
     if (!_player->CanTrainAt(trainer))
     {
-        Arcemu::Gossip::Menu::SendSimpleMenu(creature->getGuid(), trainer->Cannot_Train_GossipTextId, _player);
+        GossipMenu::sendSimpleMenu(creature->getGuid(), trainer->Cannot_Train_GossipTextId, _player);
     }
     else
     {
@@ -553,7 +552,7 @@ void WorldSession::sendTrainerList(Creature* creature)
                 if (maxReq == 2)
                     break;
 
-                SpellsRequiringSpellMapBounds spellsRequired = objmgr.GetSpellsRequiredForSpellBounds(pSpell->learnedSpell[i]);
+                SpellsRequiringSpellMapBounds spellsRequired = sObjectMgr.GetSpellsRequiredForSpellBounds(pSpell->learnedSpell[i]);
                 for (auto itr2 = spellsRequired.first; itr2 != spellsRequired.second && maxReq < 3; ++itr2)
                 {
                     data << uint32_t(itr2->second);
@@ -626,7 +625,7 @@ TrainerSpellState WorldSession::trainerGetSpellStatus(TrainerSpell* trainerSpell
         if (!_player->isSpellFitByClassAndRace(spellId))
             return TRAINER_SPELL_RED;
 
-        SpellsRequiringSpellMapBounds spellsRequired = objmgr.GetSpellsRequiredForSpellBounds(spellId);
+        SpellsRequiringSpellMapBounds spellsRequired = sObjectMgr.GetSpellsRequiredForSpellBounds(spellId);
         for (auto itr = spellsRequired.first; itr != spellsRequired.second; ++itr)
         {
             if (!_player->HasSpell(itr->second))

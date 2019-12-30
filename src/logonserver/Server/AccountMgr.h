@@ -63,11 +63,21 @@ struct Account
 
 };
 
-class AccountMgr : public Singleton <AccountMgr>
+class AccountMgr
 {
-public:
+private:
+    AccountMgr() = default;
+    ~AccountMgr() = default;
 
-    AccountMgr();
+public:
+    static AccountMgr& getInstance();
+    void initialize(uint32_t reloadTime);
+    void finalize();
+
+    AccountMgr(AccountMgr&&) = delete;
+    AccountMgr(AccountMgr const&) = delete;
+    AccountMgr& operator=(AccountMgr&&) = delete;
+    AccountMgr& operator=(AccountMgr const&) = delete;
 
     void addAccount(Field* field);
 
@@ -75,7 +85,6 @@ public:
 
     void updateAccount(std::shared_ptr<Account> account, Field* field);
     void reloadAccounts(bool silent);
-    void reloadAccountsCallback();
 
     size_t getCount() const;
 
@@ -87,9 +96,12 @@ private:
 
     std::map<std::string, std::shared_ptr<Account>> _accountMap;
 
+    std::unique_ptr<AscEmu::Threading::AEThread> m_reloadThread;
+    uint32_t m_reloadTime;
+
 protected:
 
     Mutex accountMgrMutex;
 };
 
-#define sAccountMgr AccountMgr::getSingleton()
+#define sAccountMgr AccountMgr::getInstance()

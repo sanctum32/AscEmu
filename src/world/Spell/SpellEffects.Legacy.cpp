@@ -63,10 +63,10 @@
 #include "Server/Packets/SmsgTaxinodeStatus.h"
 #include "Server/Packets/SmsgMoveKnockBack.h"
 
-using ascemu::World::Spell::Helpers::spellModFlatIntValue;
-using ascemu::World::Spell::Helpers::spellModPercentageIntValue;
-using ascemu::World::Spell::Helpers::spellModFlatFloatValue;
-using ascemu::World::Spell::Helpers::spellModPercentageFloatValue;
+using AscEmu::World::Spell::Helpers::spellModFlatIntValue;
+using AscEmu::World::Spell::Helpers::spellModPercentageIntValue;
+using AscEmu::World::Spell::Helpers::spellModFlatFloatValue;
+using AscEmu::World::Spell::Helpers::spellModPercentageFloatValue;
 
 using namespace AscEmu::Packets;
 
@@ -1426,7 +1426,7 @@ void Spell::SpellEffectSchoolDMG(uint8_t effectIndex) // dmg school
 
 void Spell::SpellEffectDummy(uint8_t effectIndex) // Dummy(Scripted events)
 {
-    if (objmgr.CheckforDummySpellScripts(static_cast<Player*>(u_caster), m_spellInfo->getId()))
+    if (sObjectMgr.CheckforDummySpellScripts(static_cast<Player*>(u_caster), m_spellInfo->getId()))
         return;
 
     if (sScriptMgr.CallScriptedDummySpell(m_spellInfo->getId(), effectIndex, this))
@@ -2351,7 +2351,7 @@ void Spell::SpellEffectResurrect(uint8_t effectIndex) // Resurrect (Flat)
         WoWGuid wowGuid;
         wowGuid.Init(corpseTarget->getOwnerGuid());
 
-        playerTarget = objmgr.GetPlayer(wowGuid.getGuidLowPart());
+        playerTarget = sObjectMgr.GetPlayer(wowGuid.getGuidLowPart());
         if (!playerTarget) return;
     }
 
@@ -2461,7 +2461,7 @@ void Spell::SpellEffectCreateItem(uint8_t effectIndex)
 
     if (p_caster != nullptr)
     {
-        auto skill_line_ability = objmgr.GetSpellSkill(spellid);
+        auto skill_line_ability = sObjectMgr.GetSpellSkill(spellid);
 
         // potions learned by discovery variables
         uint32 cast_chance = 5;
@@ -2976,7 +2976,7 @@ void Spell::SpellEffectSummonWild(uint8_t effectIndex)  // Summon Wild
     //these are some creatures that have your faction and do not respawn
     //number of creatures is actually dmg (the usual formula), sometimes =3 sometimes =1
     //if( u_caster == NULL || !u_caster->IsInWorld() )
-    //	return;
+    //  return;
 
     if ((!m_caster->isGameObject() && !m_caster->isCreatureOrPlayer()) || !m_caster->IsInWorld())
         return;
@@ -3111,7 +3111,7 @@ void Spell::SpellEffectSummonTemporaryPet(uint32 /*i*/, DBC::Structures::SummonP
         v.x += x;
         v.y += y;
 
-        Pet* pet = objmgr.CreatePet(properties_->Id);
+        Pet* pet = sObjectMgr.CreatePet(properties_->Id);
 
         if (!pet->CreateAsSummon(properties_->Id, ci, nullptr, p_caster, m_spellInfo, 1, GetDuration(), &v, false))
         {
@@ -3518,9 +3518,9 @@ void Spell::SpellEffectOpenLock(uint8_t effectIndex)
                             if (pLGO->loot.items.size() == 0)
                             {
                                 if (gameObjTarget->GetMapMgr() != nullptr)
-                                    lootmgr.FillGOLoot(&pLGO->loot, gameObjTarget->GetGameObjectProperties()->raw.parameter_1, gameObjTarget->GetMapMgr()->iInstanceMode);
+                                    sLootMgr.FillGOLoot(&pLGO->loot, gameObjTarget->GetGameObjectProperties()->raw.parameter_1, gameObjTarget->GetMapMgr()->iInstanceMode);
                                 else
-                                    lootmgr.FillGOLoot(&pLGO->loot, gameObjTarget->GetGameObjectProperties()->raw.parameter_1, 0);
+                                    sLootMgr.FillGOLoot(&pLGO->loot, gameObjTarget->GetGameObjectProperties()->raw.parameter_1, 0);
 
                                 DetermineSkillUp(SKILL_LOCKPICKING, v / 5);     //to prevent free skill up
                             }
@@ -3554,9 +3554,9 @@ void Spell::SpellEffectOpenLock(uint8_t effectIndex)
                     if (pLGO->loot.items.size() == 0)
                     {
                         if (gameObjTarget->GetMapMgr() != nullptr)
-                            lootmgr.FillGOLoot(&pLGO->loot, gameObjTarget->GetGameObjectProperties()->raw.parameter_1, gameObjTarget->GetMapMgr()->iInstanceMode);
+                            sLootMgr.FillGOLoot(&pLGO->loot, gameObjTarget->GetGameObjectProperties()->raw.parameter_1, gameObjTarget->GetMapMgr()->iInstanceMode);
                         else
-                            lootmgr.FillGOLoot(&pLGO->loot, gameObjTarget->GetGameObjectProperties()->raw.parameter_1, 0);
+                            sLootMgr.FillGOLoot(&pLGO->loot, gameObjTarget->GetGameObjectProperties()->raw.parameter_1, 0);
                     }
                     else
                     {
@@ -3590,9 +3590,9 @@ void Spell::SpellEffectOpenLock(uint8_t effectIndex)
                 if (pLGO->loot.items.size() == 0)
                 {
                     if (gameObjTarget->GetMapMgr() != nullptr)
-                        lootmgr.FillGOLoot(&pLGO->loot, gameObjTarget->GetGameObjectProperties()->raw.parameter_1, gameObjTarget->GetMapMgr()->iInstanceMode);
+                        sLootMgr.FillGOLoot(&pLGO->loot, gameObjTarget->GetGameObjectProperties()->raw.parameter_1, gameObjTarget->GetMapMgr()->iInstanceMode);
                     else
-                        lootmgr.FillGOLoot(&pLGO->loot, gameObjTarget->GetGameObjectProperties()->raw.parameter_1, 0);
+                        sLootMgr.FillGOLoot(&pLGO->loot, gameObjTarget->GetGameObjectProperties()->raw.parameter_1, 0);
                 }
             }
             else
@@ -3666,9 +3666,9 @@ void Spell::SpellEffectOpenLock(uint8_t effectIndex)
                 if (pLGO->loot.items.size() == 0)
                 {
                     if (gameObjTarget->GetMapMgr() != nullptr)
-                        lootmgr.FillGOLoot(&pLGO->loot, gameObjTarget->GetGameObjectProperties()->raw.parameter_1, gameObjTarget->GetMapMgr()->iInstanceMode);
+                        sLootMgr.FillGOLoot(&pLGO->loot, gameObjTarget->GetGameObjectProperties()->raw.parameter_1, gameObjTarget->GetMapMgr()->iInstanceMode);
                     else
-                        lootmgr.FillGOLoot(&pLGO->loot, gameObjTarget->GetGameObjectProperties()->raw.parameter_1, 0);
+                        sLootMgr.FillGOLoot(&pLGO->loot, gameObjTarget->GetGameObjectProperties()->raw.parameter_1, 0);
                 }
             }
             loottype = LOOT_CORPSE;
@@ -3701,7 +3701,7 @@ void Spell::SpellEffectTransformItem(uint8_t effectIndex)
 
     i_caster = nullptr;
 
-    Item* it = objmgr.CreateItem(itemid, owner);
+    Item* it = sObjectMgr.CreateItem(itemid, owner);
     if (!it) return;
 
     it->setDurability(dur);
@@ -4041,7 +4041,7 @@ void Spell::SpellEffectSkillStep(uint8_t effectIndex) // Skill Step
         // Check targets
         if (m_targets.m_unitTarget)
         {
-            target = objmgr.GetPlayer((uint32)m_targets.m_unitTarget);
+            target = sObjectMgr.GetPlayer((uint32)m_targets.m_unitTarget);
             if (!target)
                 return;
         }
@@ -4113,11 +4113,7 @@ void Spell::SpellEffectAddHonor(uint8_t effectIndex)
 
     HonorHandler::AddHonorPointsToPlayer(playerTarget, val);
 
-    WorldPacket data(SMSG_PVP_CREDIT, 16);
-    data << val;
-    data << uint64(0);
-    data << uint32(5);
-    playerTarget->GetSession()->SendPacket(&data);
+    playerTarget->sendPvpCredit(val, 0, 5);
 }
 
 void Spell::SpellEffectSpawn(uint8_t /*effectIndex*/)
@@ -4255,7 +4251,7 @@ void Spell::SpellEffectEnchantItem(uint8_t effectIndex) // Enchant Item Permanen
             return;
         }
 
-        Item* pItem = objmgr.CreateItem(itemid, p_caster);
+        Item* pItem = sObjectMgr.CreateItem(itemid, p_caster);
         if (pItem == nullptr)
             return;
 
@@ -4324,7 +4320,7 @@ void Spell::SpellEffectEnchantItemTemporary(uint8_t effectIndex)  // Enchant Ite
     if (Slot < 0)
         return; // Apply failed
 
-    auto skill_line_ability = objmgr.GetSpellSkill(getSpellInfo()->getId());
+    auto skill_line_ability = sObjectMgr.GetSpellSkill(getSpellInfo()->getId());
     if (skill_line_ability != nullptr)
         DetermineSkillUp(skill_line_ability->skilline, itemTarget->getItemProperties()->ItemLevel);
 }
@@ -4337,7 +4333,7 @@ void Spell::SpellEffectTameCreature(uint8_t /*effectIndex*/)
 
     // Remove target
     tame->GetAIInterface()->HandleEvent(EVENT_LEAVECOMBAT, p_caster, 0);
-    Pet* pPet = objmgr.CreatePet(tame->getEntry());
+    Pet* pPet = sObjectMgr.CreatePet(tame->getEntry());
     if (!pPet->CreateAsSummon(tame->getEntry(), tame->GetCreatureProperties(), tame, p_caster, nullptr, 2, 0))
     {
         pPet->DeleteMe();//CreateAsSummon() returns false if an error occurred.
@@ -4407,7 +4403,7 @@ void Spell::SpellEffectSummonPet(uint8_t effectIndex) //summon - pet
             p_caster->RemoveAura(35701);
         }
 
-        Pet* summon = objmgr.CreatePet(getSpellInfo()->getEffectMiscValue(effectIndex));
+        Pet* summon = sObjectMgr.CreatePet(getSpellInfo()->getEffectMiscValue(effectIndex));
         if (!summon->CreateAsSummon(getSpellInfo()->getEffectMiscValue(effectIndex), ci, nullptr, p_caster, getSpellInfo(), 2, 0))
         {
             summon->DeleteMe();//CreateAsSummon() returns false if an error occurred.
@@ -4493,7 +4489,7 @@ void Spell::SpellEffectProficiency(uint8_t /*effectIndex*/)
 {
     uint32 skill = 0;
 
-    auto skill_line_ability = objmgr.GetSpellSkill(getSpellInfo()->getId());
+    auto skill_line_ability = sObjectMgr.GetSpellSkill(getSpellInfo()->getId());
     if (skill_line_ability != nullptr)
         skill = skill_line_ability->skilline;
 
@@ -4766,7 +4762,7 @@ void Spell::SpellEffectPickpocket(uint8_t /*effectIndex*/) // pickpocket
         return;
     }
 
-    lootmgr.FillPickpocketingLoot(&static_cast< Creature* >(unitTarget)->loot, unitTarget->getEntry());
+    sLootMgr.FillPickpocketingLoot(&static_cast< Creature* >(unitTarget)->loot, unitTarget->getEntry());
 
     uint32 _rank = static_cast< Creature* >(unitTarget)->GetCreatureProperties()->Rank;
     unitTarget->loot.gold = float2int32((_rank + 1) * unitTarget->getLevel() * (Util::getRandomUInt(5) + 1) * worldConfig.getFloatRate(RATE_MONEY));
@@ -5160,7 +5156,7 @@ void Spell::SpellEffectSkinning(uint8_t /*effectIndex*/)
     if ((sk >= lvl * 5) || ((sk + 100) >= lvl * 10))
     {
         //Fill loot for Skinning
-        lootmgr.FillSkinningLoot(&cr->loot, unitTarget->getEntry());
+        sLootMgr.FillSkinningLoot(&cr->loot, unitTarget->getEntry());
         static_cast<Player*>(m_caster)->SendLoot(unitTarget->getGuid(), LOOT_SKINNING, unitTarget->GetMapId());
 
         //Not skinable again
@@ -5219,7 +5215,7 @@ void Spell::SpellEffectDisenchant(uint8_t /*effectIndex*/)
     if (!it->loot)
     {
         it->loot = new Loot;
-        lootmgr.FillItemLoot(it->loot, it->getEntry());
+        sLootMgr.FillItemLoot(it->loot, it->getEntry());
     }
 
     LogDebugFlag(LF_SPELL_EFF, "Successfully disenchanted item %d", uint32(it->getEntry()));
@@ -5501,7 +5497,7 @@ void Spell::SpellEffectResurrectNew(uint8_t effectIndex)
         WoWGuid wowGuid;
         wowGuid.Init(corpseTarget->getOwnerGuid());
 
-        playerTarget = objmgr.GetPlayer(wowGuid.getGuidLowPart());
+        playerTarget = sObjectMgr.GetPlayer(wowGuid.getGuidLowPart());
         if (!playerTarget) return;
     }
 
@@ -5531,11 +5527,11 @@ void Spell::SpellEffectSkinPlayerCorpse(uint8_t /*effectIndex*/)
     if (!playerTarget)
     {
         // means we're "skinning" a corpse
-        corpse = objmgr.GetCorpse((uint32)m_targets.m_unitTarget);  // hacky
+        corpse = sObjectMgr.GetCorpse((uint32)m_targets.m_unitTarget);  // hacky
     }
     else if (playerTarget->getDeathState() == CORPSE)   // repopped while we were casting
     {
-        corpse = objmgr.GetCorpse(playerTarget->getGuidLow());
+        corpse = sObjectMgr.GetCorpse(playerTarget->getGuidLow());
     }
 
     if (p_caster == nullptr)
@@ -5575,7 +5571,7 @@ void Spell::SpellEffectSkinPlayerCorpse(uint8_t /*effectIndex*/)
         WoWGuid wowGuid;
         wowGuid.Init(corpse->getOwnerGuid());
 
-        Player* owner = objmgr.GetPlayer(wowGuid.getGuidLowPart());
+        Player* owner = sObjectMgr.GetPlayer(wowGuid.getGuidLowPart());
         if (owner)
         {
             if (!owner->m_bg) return;
@@ -5598,7 +5594,7 @@ void Spell::SpellEffectSkinPlayerCorpse(uint8_t /*effectIndex*/)
         p_caster->SendLoot(corpse->getGuid(), LOOT_SKINNING, corpse->GetMapId());
 
         corpse->DeleteFromDB();
-        objmgr.CorpseAddEventDespawn(corpse);
+        sObjectMgr.CorpseAddEventDespawn(corpse);
     }
 }
 
@@ -5912,7 +5908,7 @@ void Spell::SpellEffectStartTaxi(uint8_t /*effectIndex*/)
     if (!taxipath)
         return;
 
-    TaxiNode* taxinode = sTaxiMgr.GetTaxiNode(taxipath->GetSourceNode());
+    TaxiNode* taxinode = sTaxiMgr.GetTaxiNode(taxipath->getSourceNode());
 
     if (!taxinode)
         return;
@@ -5921,7 +5917,7 @@ void Spell::SpellEffectStartTaxi(uint8_t /*effectIndex*/)
 
     if (playerTarget->isTeamHorde())
     {
-        CreatureProperties const* ci = sMySQLStore.getCreatureProperties(taxinode->horde_mount);
+        CreatureProperties const* ci = sMySQLStore.getCreatureProperties(taxinode->hordeMount);
         if (!ci)
             return;
         modelid = ci->Male_DisplayID;
@@ -5930,7 +5926,7 @@ void Spell::SpellEffectStartTaxi(uint8_t /*effectIndex*/)
     }
     else
     {
-        CreatureProperties const* ci = sMySQLStore.getCreatureProperties(taxinode->alliance_mount);
+        CreatureProperties const* ci = sMySQLStore.getCreatureProperties(taxinode->allianceMount);
         if (!ci)
             return;
         modelid = ci->Male_DisplayID;
@@ -6093,7 +6089,7 @@ void Spell::SpellEffectProspecting(uint8_t /*effectIndex*/)
     if (!itemTarget->loot)
     {
         itemTarget->loot = new Loot;
-        lootmgr.FillItemLoot(itemTarget->loot, itemTarget->getEntry());
+        sLootMgr.FillItemLoot(itemTarget->loot, itemTarget->getEntry());
     }
 
     if (itemTarget->loot->items.size() > 0)
@@ -6214,7 +6210,7 @@ void Spell::SpellEffectCreatePet(uint8_t effectIndex)
     CreatureProperties const* ci = sMySQLStore.getCreatureProperties(getSpellInfo()->getEffectMiscValue(effectIndex));
     if (ci)
     {
-        Pet* pPet = objmgr.CreatePet(getSpellInfo()->getEffectMiscValue(effectIndex));
+        Pet* pPet = sObjectMgr.CreatePet(getSpellInfo()->getEffectMiscValue(effectIndex));
         if (!pPet->CreateAsSummon(getSpellInfo()->getEffectMiscValue(effectIndex), ci, nullptr, playerTarget, getSpellInfo(), 1, 0))
         {
             pPet->DeleteMe();//CreateAsSummon() returns false if an error occurred.
@@ -6313,7 +6309,7 @@ void Spell::SpellEffectMilling(uint8_t /*effectIndex*/)
     if (!itemTarget->loot)
     {
         itemTarget->loot = new Loot;
-        lootmgr.FillItemLoot(itemTarget->loot, itemTarget->getEntry());
+        sLootMgr.FillItemLoot(itemTarget->loot, itemTarget->getEntry());
     }
 
     if (itemTarget->loot->items.size() > 0)
@@ -6331,7 +6327,7 @@ void Spell::SpellEffectMilling(uint8_t /*effectIndex*/)
 void Spell::SpellEffectRenamePet(uint8_t /*effectIndex*/)
 {
     if (!unitTarget || !unitTarget->isPet() ||
-        !static_cast< Pet* >(unitTarget)->getPlayerOwner() || dynamic_cast<Player*>(static_cast< Pet* >(unitTarget)->getPlayerOwner())->getClass() != HUNTER)
+        !static_cast< Pet* >(unitTarget)->getPlayerOwner() || static_cast< Pet* >(unitTarget)->getPlayerOwner()->getClass() != HUNTER)
         return;
 
     unitTarget->setPetFlags(unitTarget->getPetFlags() | PET_RENAME_ALLOWED);

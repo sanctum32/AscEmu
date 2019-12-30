@@ -22,7 +22,6 @@
 #define LOOTMGR_H
 
 #include "Server/EventableObject.h"
-#include "Singleton.h"
 #include "Storage/DBC/DBCStructures.hpp"
 #if VERSION_STRING >= Cata
     #include "Storage/DB2/DB2Structures.h"
@@ -34,10 +33,10 @@
 
 enum LOOTTYPE
 {
-    LOOT_NORMAL10,	    // normal dungeon / old raid (10/25/40 men) / normal 10 raid
-    LOOT_NORMAL25,	    // heroic dungeon / normal 25 raid
-    LOOT_HEROIC10,	    // heroic 10 men raid
-    LOOT_HEROIC25,	    // heroic 25 men raid
+    LOOT_NORMAL10,      // normal dungeon / old raid (10/25/40 men) / normal 10 raid
+    LOOT_NORMAL25,      // heroic dungeon / normal 25 raid
+    LOOT_HEROIC10,      // heroic 10 men raid
+    LOOT_HEROIC25,      // heroic 25 men raid
     NUM_LOOT_TYPES
 };
 
@@ -138,14 +137,14 @@ class ItemIsNotLooted
 
 struct StoreLootItem
 {
-    _LootItem item;	    /// the item that drops
-    float chance;	    /// normal dungeon / normal 10men raid / old raid (10,25, or 40 men)
-    float chance2;	    /// heroic dungeon / normal 25men raid
-    float chance3;	    /// heroic 10men raid
-    float chance4;	    /// heroic 25men raid
-    uint32 mincount;	/// minimum quantity to drop
-    uint32 maxcount;	/// maximum quantity to drop
-    uint32 ffa_loot;	/// can everyone from the group loot the item?
+    _LootItem item;     /// the item that drops
+    float chance;       /// normal dungeon / normal 10men raid / old raid (10,25, or 40 men)
+    float chance2;      /// heroic dungeon / normal 25men raid
+    float chance3;      /// heroic 10men raid
+    float chance4;      /// heroic 25men raid
+    uint32 mincount;    /// minimum quantity to drop
+    uint32 maxcount;    /// maximum quantity to drop
+    uint32 ffa_loot;    /// can everyone from the group loot the item?
 };
 
 struct StoreLootList
@@ -198,12 +197,23 @@ typedef std::map<uint32, StoreLootList> LootStore;
 #define PARTY_LOOT_GROUP 3
 
 
-class SERVER_DECL LootMgr : public Singleton <LootMgr>
+class SERVER_DECL LootMgr
 {
+    private:
+
+        LootMgr() = default;
+        ~LootMgr() = default;
+
     public:
 
-        LootMgr();
-        ~LootMgr();
+        static LootMgr& getInstance();
+        void initialize();
+        void finalize();
+
+        LootMgr(LootMgr&&) = delete;
+        LootMgr(LootMgr const&) = delete;
+        LootMgr& operator=(LootMgr&&) = delete;
+        LootMgr& operator=(LootMgr const&) = delete;
 
         void AddLoot(Loot* loot, uint32 itemid, uint32 mincount, uint32 maxcount);
 
@@ -255,6 +265,6 @@ class SERVER_DECL LootMgr : public Singleton <LootMgr>
         std::map<uint32, RandomSuffixVector> _randomsuffix;
 };
 
-#define lootmgr LootMgr::getSingleton()
+#define sLootMgr LootMgr::getInstance()
 
 #endif // LOOTMGR_H

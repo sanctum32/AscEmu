@@ -49,8 +49,11 @@
 #include "Data/WoWGameObject.h"
 #include "Server/Packets/SmsgDestoyObject.h"
 #include "Server/Packets/SmsgPlaySound.h"
+#include "Server/Packets/SmsgGameobjectDespawnAnim.h"
 
 // MIT Start
+
+using namespace AscEmu::Packets;
 
 bool Object::write(const uint8_t& member, uint8_t val)
 {
@@ -628,7 +631,7 @@ float Object::getDistanceSq(LocationVector comp) const
 
 float Object::getDistanceSq(float x, float y, float z) const
 {
-    return m_position.distanceSquare(x, y, z);
+    return m_position.distanceSquare({ x, y, z });
 }
 
 Player* Object::asPlayer()
@@ -1023,8 +1026,14 @@ void Object::removeObjectFromInRangeSameFactionSet(Object* obj)
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Owner
-//\ brief: is this really important in this class? Move it to class Unit otherwise
-Object* Object::getPlayerOwner() { return nullptr; }
+Player* Object::getPlayerOwner() { return nullptr; }
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Misc
+void Object::sendGameobjectDespawnAnim()
+{
+    SendMessageToSet(SmsgGameobjectDespawnAnim(this->getGuid()).serialise().get(), true);
+}
 
 // MIT End
 
@@ -1131,9 +1140,9 @@ Object::~Object()
 void Object::_Create(uint32 mapid, float x, float y, float z, float ang)
 {
     m_mapId = mapid;
-    m_position.ChangeCoords(x, y, z, ang);
-    m_spawnLocation.ChangeCoords(x, y, z, ang);
-    m_lastMapUpdatePosition.ChangeCoords(x, y, z, ang);
+    m_position.ChangeCoords({ x, y, z, ang });
+    m_spawnLocation.ChangeCoords({ x, y, z, ang });
+    m_lastMapUpdatePosition.ChangeCoords({ x, y, z, ang });
 }
 
 #if VERSION_STRING <= TBC
@@ -1578,7 +1587,7 @@ void Object::buildMovementUpdate(ByteBuffer* data, uint16 flags, Player* target)
 
     if (splinebuf != nullptr)
     {
-        flags2 |= MOVEFLAG_SPLINE_ENABLED | MOVEFLAG_MOVE_FORWARD;	   //1=move forward
+        flags2 |= MOVEFLAG_SPLINE_ENABLED | MOVEFLAG_MOVE_FORWARD; //1=move forward
         if (isCreature())
         {
             if (static_cast<Unit*>(this)->GetAIInterface()->hasWalkMode(WALKMODE_WALK))
@@ -1803,7 +1812,7 @@ void Object::buildMovementUpdate(ByteBuffer* data, uint16 flags, Player* target)
     if (flags & UPDATEFLAG_HAS_TARGET)  //0x04
     {
         if (isCreatureOrPlayer())
-            FastGUIDPack(*data, static_cast<Unit*>(this)->getTargetGuid());	//some compressed GUID
+            FastGUIDPack(*data, static_cast<Unit*>(this)->getTargetGuid()); //some compressed GUID
         else
             *data << uint64(0);
     }
@@ -2422,10 +2431,10 @@ bool Object::SetPosition(float newX, float newY, float newZ, float newOrientatio
 
     //if (m_position.x != newX || m_position.y != newY)
     //updateMap = true;
-    if (m_lastMapUpdatePosition.Distance2DSq(newX, newY) > 4.0f)		/* 2.0f */
+    if (m_lastMapUpdatePosition.Distance2DSq({ newX, newY }) > 4.0f) /* 2.0f */
         updateMap = true;
 
-    m_position.ChangeCoords(newX, newY, newZ, newOrientation);
+    m_position.ChangeCoords({ newX, newY, newZ, newOrientation });
 
 #if VERSION_STRING < Cata
     if (!allowPorting && newZ < -500)
@@ -2439,7 +2448,7 @@ bool Object::SetPosition(float newX, float newY, float newZ, float newOrientatio
 
     if (IsInWorld() && updateMap)
     {
-        m_lastMapUpdatePosition.ChangeCoords(newX, newY, newZ, newOrientation);
+        m_lastMapUpdatePosition.ChangeCoords({ newX, newY, newZ, newOrientation });
         m_mapMgr->ChangeObjectLocation(this);
 
         if (isPlayer() && static_cast<Player*>(this)->GetGroup() && static_cast<Player*>(this)->m_last_group_position.Distance2DSq(m_position) > 25.0f)       // distance of 5.0
@@ -2975,9 +2984,6 @@ void Object::SpellNonMeleeDamageLog(Unit* pVictim, uint32 spellID, uint32 damage
     if (spellInfo == nullptr)
         return;
 
-    if (this->isPlayer() && !static_cast<Player*>(this)->canCast(spellInfo))
-        return;
-
     //////////////////////////////////////////////////////////////////////////////////////////
     //Variables Initialization
     float res = static_cast<float>(damage);
@@ -3466,7 +3472,7 @@ void Object::SetZoneId(uint32 newZone)
 
 void Object::PlaySoundToSet(uint32 sound_entry)
 {
-    SendMessageToSet(AscEmu::Packets::SmsgPlaySound(sound_entry).serialise().get(), true);
+    SendMessageToSet(SmsgPlaySound(sound_entry).serialise().get(), true);
 }
 
 bool Object::IsInBg()
@@ -3517,7 +3523,7 @@ uint32 Object::GetTeam()
 Transporter* Object::GetTransport() const
 {
 #if VERSION_STRING < Cata
-    return objmgr.GetTransporter(Arcemu::Util::GUID_LOPART(obj_movement_info.transport_data.transportGuid));
+    return sObjectMgr.GetTransporter(WoWGuid::getGuidLowPartFromUInt64(obj_movement_info.transport_data.transportGuid));
 #else
     return nullptr;
 #endif

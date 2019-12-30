@@ -434,6 +434,9 @@ public:
     uint8_t invisibilityFlag;
     uint8_t stealthFlag;
 
+    // Owner
+    Player* getPlayerOwner() override;
+
     // MIT End
 
         GameObject(uint64 guid);
@@ -525,7 +528,7 @@ public:
     //MIT
     public:
 
-        void SetCustomAnim(uint32_t anim = 0);
+        void sendGameobjectCustomAnim(uint32_t anim = 0);
         virtual void onUse(Player* /*player*/) {}
 };
 
@@ -545,7 +548,7 @@ class GameObject_Lootable : public GameObject
             if (loot.items.empty() || !loot.looters.empty() || loot.HasRoll())
                 return;
 
-            lootmgr.FillGOLoot(&loot, gameobject_properties->raw.parameter_1, 0);
+            sLootMgr.FillGOLoot(&loot, gameobject_properties->raw.parameter_1, 0);
         }
 
         Loot loot;

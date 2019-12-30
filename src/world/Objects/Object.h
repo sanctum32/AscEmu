@@ -86,9 +86,9 @@ enum CurrentSpellType : uint8_t
 
 typedef struct
 {
-	uint32 school_type;
-	int32 full_damage;
-	uint32 resisted_damage;
+    uint32 school_type;
+    int32 full_damage;
+    uint32 resisted_damage;
 } dealdamage;
 
 #if VERSION_STRING >= Cata
@@ -451,7 +451,13 @@ public:
     //////////////////////////////////////////////////////////////////////////////////////////
     // Owner
 
-    virtual Object* getPlayerOwner();
+    // Returns player charmer, player owner or self
+    virtual Player* getPlayerOwner();
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    // Misc
+
+    void sendGameobjectDespawnAnim();
 
     // MIT End
 
@@ -790,7 +796,7 @@ public:
 #else
         void buildMovementUpdate(ByteBuffer* data, uint16 flags, Player* target);
 #endif
-	
+
         void buildValuesUpdate(ByteBuffer* data, UpdateMask* updateMask, Player* target);
 
         // WoWGuid class

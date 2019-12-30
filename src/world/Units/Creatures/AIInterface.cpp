@@ -31,7 +31,6 @@
 #include "Spell/SpellMgr.h"
 #include "Map/WorldCreatorDefines.hpp"
 #include "Map/WorldCreator.h"
-#include "scripts/Battlegrounds/AlteracValley.h"
 #include "Spell/Definitions/SpellCastTargetFlags.h"
 #include "Spell/Definitions/SpellRanged.h"
 #include "Spell/Definitions/LockTypes.h"
@@ -2435,7 +2434,7 @@ Unit* AIInterface::FindTarget()
         {
             uint64 charmer = target->getCharmedByGuid();
 
-            Unit* target2 = m_Unit->GetMapMgr()->GetPlayer(Arcemu::Util::GUID_LOPART(charmer));
+            Unit* target2 = m_Unit->GetMapMgr()->GetPlayer(WoWGuid::getGuidLowPartFromUInt64(charmer));
 
             if (target2)
             {
@@ -3691,8 +3690,8 @@ uint32 AIInterface::_CalcThreat(uint32 damage, SpellInfo const* sp, Unit* Attack
 
     if (sp != nullptr)
     {
-        ascemu::World::Spell::Helpers::spellModFlatIntValue(Attacker->SM_FThreat, &mod, sp->getSpellFamilyFlags());
-        ascemu::World::Spell::Helpers::spellModPercentageIntValue(Attacker->SM_PThreat, &mod, sp->getSpellFamilyFlags());
+        AscEmu::World::Spell::Helpers::spellModFlatIntValue(Attacker->SM_FThreat, &mod, sp->getSpellFamilyFlags());
+        AscEmu::World::Spell::Helpers::spellModPercentageIntValue(Attacker->SM_PThreat, &mod, sp->getSpellFamilyFlags());
     }
 
     if (Attacker->getClass() == ROGUE)
@@ -3883,7 +3882,7 @@ Creature* AIInterface::getFormationLinkTarget()
 
 void AIInterface::LoadWaypointMapFromDB(uint32 spawnid)
 {
-    mWayPointMap = objmgr.GetWayPointMap(spawnid);
+    mWayPointMap = sObjectMgr.GetWayPointMap(spawnid);
     if (mWayPointMap != nullptr && mWayPointMap->size() != 0)
         mWaypointMapIsLoadedFromDB = true;
 }
@@ -4779,11 +4778,11 @@ void AIInterface::EventUnitDied(Unit* pUnit, uint32 /*misc1*/)
         || pInstance->m_mapInfo->type == INSTANCE_NONRAID
         || pInstance->m_mapInfo->type == INSTANCE_MULTIMODE))
     {
-        InstanceBossInfoMap* bossInfoMap = objmgr.m_InstanceBossInfoMap[m_Unit->GetMapMgr()->GetMapId()];
+        InstanceBossInfoMap* bossInfoMap = sObjectMgr.m_InstanceBossInfoMap[m_Unit->GetMapMgr()->GetMapId()];
         Creature* pCreature = static_cast< Creature* >(m_Unit);
         bool found = false;
 
-        if (IS_PERSISTENT_INSTANCE(pInstance) && bossInfoMap != NULL)
+        if (pInstance->isPersistent() && bossInfoMap != NULL)
         {
             uint32 npcGuid = pCreature->GetCreatureProperties()->Id;
             InstanceBossInfoMap::const_iterator bossInfo = bossInfoMap->find(npcGuid);
@@ -4791,7 +4790,9 @@ void AIInterface::EventUnitDied(Unit* pUnit, uint32 /*misc1*/)
             {
                 found = true;
                 m_Unit->GetMapMgr()->pInstance->m_killedNpcs.insert(npcGuid);
-                m_Unit->GetMapMgr()->pInstance->SaveToDB();
+
+                sInstanceMgr.SaveInstanceToDB(m_Unit->GetMapMgr()->pInstance);
+
                 for (InstanceBossTrashList::iterator trash = bossInfo->second->trash.begin(); trash != bossInfo->second->trash.end(); ++trash)
                 {
                     Creature* c = m_Unit->GetMapMgr()->GetSqlIdCreature((*trash));
@@ -4801,7 +4802,7 @@ void AIInterface::EventUnitDied(Unit* pUnit, uint32 /*misc1*/)
                 if (!pInstance->m_persistent)
                 {
                     pInstance->m_persistent = true;
-                    pInstance->SaveToDB();
+                    sInstanceMgr.SaveInstanceToDB(pInstance);
                     for (PlayerStorageMap::iterator itr = m_Unit->GetMapMgr()->m_PlayerStorage.begin(); itr != m_Unit->GetMapMgr()->m_PlayerStorage.end(); ++itr)
                     {
                         (*itr).second->SetPersistentInstanceId(pInstance);
@@ -4815,7 +4816,7 @@ void AIInterface::EventUnitDied(Unit* pUnit, uint32 /*misc1*/)
             // No instance boss information ... so fallback ...
             uint32 npcGuid = pCreature->GetSQL_id();
             m_Unit->GetMapMgr()->pInstance->m_killedNpcs.insert(npcGuid);
-            m_Unit->GetMapMgr()->pInstance->SaveToDB();
+            sInstanceMgr.SaveInstanceToDB(m_Unit->GetMapMgr()->pInstance);
         }
     }
     if (m_Unit->GetMapMgr() && m_Unit->GetMapMgr()->GetMapInfo() && m_Unit->GetMapMgr()->GetMapInfo()->type == INSTANCE_RAID)
@@ -4932,7 +4933,7 @@ void AIInterface::SetCreatureProtoDifficulty(uint32 entry)
 
             m_Unit->setLevel(properties_difficulty->MinLevel + (Util::getRandomUInt(properties_difficulty->MaxLevel - properties_difficulty->MinLevel)));
 
-            for (uint8 i = 0; i < SCHOOL_COUNT; ++i)
+            for (uint8 i = 0; i < TOTAL_SPELL_SCHOOLS; ++i)
             {
                 m_Unit->setResistance(i, properties_difficulty->Resistances[i]);
             }
@@ -4966,7 +4967,7 @@ void AIInterface::SetCreatureProtoDifficulty(uint32 entry)
             m_Unit->setNpcFlags(properties_difficulty->NPCFLags);
 
             // resistances
-            for (uint8 j = 0; j < SCHOOL_COUNT; ++j)
+            for (uint8 j = 0; j < TOTAL_SPELL_SCHOOLS; ++j)
             {
                 m_Unit->BaseResistance[j] = m_Unit->getResistance(j);
             }

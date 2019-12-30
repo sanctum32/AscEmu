@@ -593,25 +593,25 @@ public:
     bool eventStarted;
 };
 
-class AdamantGossip : public Arcemu::Gossip::Script
+class AdamantGossip : public GossipScript
 {
 public:
 
-    void OnHello(Object* pObject, Player* plr) override
+    void onHello(Object* pObject, Player* plr) override
     {
         //TODO: correct text id
-        Arcemu::Gossip::Menu menu(pObject->getGuid(), sMySQLStore.getGossipTextIdForNpc(pObject->getEntry()));
+        GossipMenu menu(pObject->getGuid(), sMySQLStore.getGossipTextIdForNpc(pObject->getEntry()));
 
         ShadowfangKeepInstance* pInstance = static_cast<ShadowfangKeepInstance*>(pObject->GetMapMgr()->GetScript());
         if (pInstance != nullptr && pInstance->GetInstanceData(0, INDEX_RETHILGORE) == Finished && pInstance->GetInstanceData(0, INDEX_PRISONER_EVENT) == NotStarted)
         {
             //TODO: move this to database
-            menu.AddItem(GOSSIP_ICON_CHAT, plr->GetSession()->LocalizedGossipOption(prisonerGossipOptionID), 1);
+            menu.addItem(GOSSIP_ICON_CHAT, prisonerGossipOptionID, 1);
         }
-        menu.Send(plr);
+        menu.sendGossipPacket(plr);
     }
 
-    void OnSelectOption(Object* pObject, Player* plr, uint32 Id, const char* /*Code*/, uint32 /*gossipId*/) override
+    void onSelectOption(Object* pObject, Player* plr, uint32 Id, const char* /*Code*/, uint32 /*gossipId*/) override
     {
         if (Id == 1)
         {
@@ -628,7 +628,7 @@ public:
                     pInstance->SetLocaleInstanceData(0, INDEX_PRISONER_EVENT, InProgress);
             }
         }
-        Arcemu::Gossip::Menu::Complete(plr);
+        GossipMenu::senGossipComplete(plr);
     }
 };
 
@@ -762,23 +762,23 @@ public:
     bool eventStarted;
 };
 
-class AshcrombeGossip : public Arcemu::Gossip::Script
+class AshcrombeGossip : public GossipScript
 {
 public:
 
-    void OnHello(Object* pObject, Player* plr) override
+    void onHello(Object* pObject, Player* plr) override
     {
-        Arcemu::Gossip::Menu menu(pObject->getGuid(), sMySQLStore.getGossipTextIdForNpc(pObject->getEntry()));
+        GossipMenu menu(pObject->getGuid(), sMySQLStore.getGossipTextIdForNpc(pObject->getEntry()));
 
         ShadowfangKeepInstance* pInstance = static_cast<ShadowfangKeepInstance*>(pObject->GetMapMgr()->GetScript());
         if (pInstance != nullptr && pInstance->GetInstanceData(0, INDEX_RETHILGORE) == Finished && pInstance->GetInstanceData(0, INDEX_PRISONER_EVENT) == NotStarted)
         {
-            menu.AddItem(GOSSIP_ICON_CHAT, plr->GetSession()->LocalizedGossipOption(prisonerGossipOptionID), 1);
+            menu.addItem(GOSSIP_ICON_CHAT, prisonerGossipOptionID, 1);
         }
-        menu.Send(plr);
+        menu.sendGossipPacket(plr);
     }
 
-    void OnSelectOption(Object* pObject, Player* plr, uint32 Id, const char* /*Code*/, uint32 /*gossipId*/) override
+    void onSelectOption(Object* pObject, Player* plr, uint32 Id, const char* /*Code*/, uint32 /*gossipId*/) override
     {
         if (Id == 1)
         {
@@ -795,7 +795,7 @@ public:
                     pInstance->SetLocaleInstanceData(0, INDEX_PRISONER_EVENT, InProgress);
             }
         }
-        Arcemu::Gossip::Menu::Complete(plr);
+        GossipMenu::senGossipComplete(plr);
     }
 };
 

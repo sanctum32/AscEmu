@@ -30,7 +30,6 @@ set(sources
     CThreads.cpp
     DatabaseUpdater.cpp
     DynLib.cpp
-    FindFiles.cpp
     LocationVector.cpp
     Log.cpp
     MapFile.cpp
@@ -62,8 +61,6 @@ set(headers
     DynLib.hpp
     Errors.h
     FastQueue.h
-    FindFiles.hpp
-    FindFilesResult.hpp
     LocationVector.h
     LogonCommDefines.h
     MapFile.h
@@ -73,7 +70,6 @@ set(headers
     printStackTrace.h
     Database/DatabaseEnv.h
     RC4Engine.h
-    Singleton.h
     SysInfo.hpp
     StackBuffer.h
     StackTrace.h
@@ -137,6 +133,7 @@ include_directories(
     ${ZLIB_INCLUDE_DIRS}
     ${MYSQL_INCLUDE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/dep/utf8cpp
 )
 
 add_library(${PROJECT_NAME} STATIC ${sources} ${headers})
