@@ -17,6 +17,12 @@ This file is released under the MIT license. See README-MIT for more information
 #include "Spell/Definitions/SpellEffects.h"
 #include "Server/Definitions.h"
 #include "Guild.h"
+#include "Server/Packets/SmsgServerFirstAchievement.h"
+#include "Server/Packets/SmsgAchievementDeleted.h"
+#include "Server/Packets/SmsgCriteriaDeleted.h"
+#include "Server/Packets/SmsgCriteriaUpdate.h"
+
+using namespace AscEmu::Packets;
 
 #if VERSION_STRING > TBC
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -361,12 +367,13 @@ void AchievementMgr::SendAchievementEarned(DBC::Structures::AchievementEntry con
     // Send Achievement message to everyone currently on the server
     if (achievement->flags & (ACHIEVEMENT_FLAG_REALM_FIRST_KILL | ACHIEVEMENT_FLAG_REALM_FIRST_REACH))
     {
-        WorldPacket data(SMSG_SERVER_FIRST_ACHIEVEMENT, 200);
-        data << GetPlayer()->getName().c_str();
-        data << uint64_t(GetPlayer()->getGuid());
-        data << uint32_t(achievement->ID);
-        data << uint32_t(0);
-        sWorld.sendGlobalMessage(&data);
+        std::string playerName = GetPlayer()->getName();
+        uint64_t guid = GetPlayer()->getGuid();
+
+        // own team = clickable name
+        sWorld.sendGlobalMessage(SmsgServerFirstAchievement(playerName, guid, achievement->ID, 1).serialise().get(), nullptr, GetPlayer()->GetTeam());
+        
+        sWorld.sendGlobalMessage(SmsgServerFirstAchievement(playerName, guid, achievement->ID, 0).serialise().get(), nullptr, GetPlayer()->GetTeam() == TEAM_ALLIANCE ? TEAM_HORDE : TEAM_ALLIANCE);
     }
     else
     {
@@ -502,24 +509,9 @@ void AchievementMgr::SendAchievementEarned(DBC::Structures::AchievementEntry con
 void AchievementMgr::SendCriteriaUpdate(CriteriaProgress* progress)
 {
     if (progress == nullptr || isCharacterLoading)
-    {
         return;
-    }
 
-    WorldPacket data(SMSG_CRITERIA_UPDATE, 32);
-    data << uint32_t(progress->id);
-
-    data.appendPackGUID(progress->counter);
-
-    data << GetPlayer()->GetNewGUID();
-    data << uint32_t(0);
-    data << uint32_t(secsToTimeBitFields(progress->date));
-    data << uint32_t(0);                                   // timer 1
-    data << uint32_t(0);                                   // timer 2
-    if (!GetPlayer()->IsInWorld())                         //VLack: maybe we should NOT send these delayed, for 3.1.1, but seems logical
-        GetPlayer()->CopyAndSendDelayedPacket(&data);
-    else
-        GetPlayer()->GetSession()->SendPacket(&data);
+    GetPlayer()->SendPacket(SmsgCriteriaUpdate(progress->id, progress->counter, GetPlayer()->GetNewGUID(), secsToTimeBitFields(progress->date)).serialise().get());
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1856,7 +1848,7 @@ bool AchievementMgr::GMCompleteAchievement(WorldSession* gmSession, int32_t achi
             auto ach = sAchievementStore.LookupEntry(i);
             if (ach == nullptr)
             {
-                m_player->GetSession()->SystemMessage("Achievement %lu entry not found.", i);
+                m_player->GetSession()->SystemMessage("Achievement %u entry not found.", i);
             }
             else
             {
@@ -1882,12 +1874,12 @@ bool AchievementMgr::GMCompleteAchievement(WorldSession* gmSession, int32_t achi
     auto achievement = sAchievementStore.LookupEntry(achievementID);
     if (!achievement)
     {
-        gmSession->SystemMessage("Achievement %lu entry not found.", achievementID);
+        gmSession->SystemMessage("Achievement %d entry not found.", achievementID);
         return false;
     }
     if (achievement->flags & ACHIEVEMENT_FLAG_COUNTER)
     {
-        gmSession->SystemMessage("Achievement (%lu) |Hachievement:%lu:" I64FMT ":0:0:0:-1:0:0:0:0|h[%s]|h is a counter and cannot be completed.",
+        gmSession->SystemMessage("Achievement (%u) |Hachievement:%u:" I64FMT ":0:0:0:-1:0:0:0:0|h[%s]|h is a counter and cannot be completed.",
                                  achievement->ID, achievement->ID, gmSession->GetPlayer()->getGuid(), achievement->name);
         return false;
     }
@@ -1926,25 +1918,25 @@ bool AchievementMgr::GMCompleteCriteria(WorldSession* gmSession, int32_t criteri
     auto criteria = sAchievementCriteriaStore.LookupEntry(criteriaID);
     if (!criteria)
     {
-        gmSession->SystemMessage("Achievement criteria %lu not found.", criteriaID);
+        gmSession->SystemMessage("Achievement criteria %d not found.", criteriaID);
         return false;
     }
     if (IsCompletedCriteria(criteria))
     {
-        gmSession->SystemMessage("Achievement criteria %lu already completed.", criteriaID);
+        gmSession->SystemMessage("Achievement criteria %d already completed.", criteriaID);
         return false;
     }
     auto achievement = sAchievementStore.LookupEntry(criteria->referredAchievement);
     if (!achievement)
     {
         // achievement not found
-        gmSession->SystemMessage("Referred achievement (%lu) entry not found.", criteria->referredAchievement);
+        gmSession->SystemMessage("Referred achievement (%u) entry not found.", criteria->referredAchievement);
         return false;
     }
     if (achievement->flags & ACHIEVEMENT_FLAG_COUNTER)
     {
         // can't complete this type of achivement (counter)
-        gmSession->SystemMessage("Referred achievement (%lu) |Hachievement:%lu:" I64FMT ":0:0:0:-1:0:0:0:0|h[%s]|h is a counter and cannot be completed.",
+        gmSession->SystemMessage("Referred achievement (%u) |Hachievement:%u:" I64FMT ":0:0:0:-1:0:0:0:0|h[%s]|h is a counter and cannot be completed.",
                                  achievement->ID, achievement->ID, gmSession->GetPlayer()->getGuid(), achievement->name);
         return false;
     }
@@ -1992,7 +1984,7 @@ bool AchievementMgr::UpdateAchievementCriteria(Player* player, int32_t criteriaI
     if (achievement->flags & ACHIEVEMENT_FLAG_COUNTER)
     {
         // can't complete this type of achivement (counter)
-        LogDebug("AchievementMgr Referred achievement (%lu) |Hachievement:%lu:" I64FMT ":0:0:0:-1:0:0:0:0|h[%s]|h is a counter and cannot be completed.",
+        LogDebug("AchievementMgr Referred achievement (%u) |Hachievement:%u:" I64FMT ":0:0:0:-1:0:0:0:0|h[%s]|h is a counter and cannot be completed.",
             achievement->ID, achievement->ID, player->getGuid(), achievement->name);
         return false;
     }
@@ -2021,29 +2013,20 @@ bool AchievementMgr::UpdateAchievementCriteria(Player* player, int32_t criteriaI
 /// achievementID is -1, all achievements get reset, otherwise the one specified gets reset
 void AchievementMgr::GMResetAchievement(int32_t achievementID)
 {
-    std::ostringstream ss;
     if (achievementID == -1)
     {
-        // reset all achievements
-        CompletedAchievementMap::iterator itr = m_completedAchievements.begin();
-        for (; itr != m_completedAchievements.end(); ++itr)
-        {
-            WorldPacket resetData(SMSG_ACHIEVEMENT_DELETED, 4);
-            resetData << uint32_t(itr->first);
-            GetPlayer()->GetSession()->SendPacket(&resetData);
-        }
+        for (auto& m_completedAchievement : m_completedAchievements)
+            GetPlayer()->SendPacket(SmsgAchievementDeleted(m_completedAchievement.first).serialise().get());
+
         m_completedAchievements.clear();
-        ss << "DELETE FROM character_achievement WHERE guid = " << m_player->getGuidLow();
-        CharacterDatabase.Execute(ss.str().c_str());
+        CharacterDatabase.Execute("DELETE FROM character_achievement WHERE guid = %u", m_player->getGuidLow());
     }
-    else // reset a single achievement
+    else
     {
-        WorldPacket resetData(SMSG_ACHIEVEMENT_DELETED, 4);
-        resetData << uint32_t(achievementID);
-        GetPlayer()->GetSession()->SendPacket(&resetData);
+        GetPlayer()->SendPacket(SmsgAchievementDeleted(achievementID).serialise().get());
+
         m_completedAchievements.erase(achievementID);
-        ss << "DELETE FROM character_achievement WHERE guid = " << m_player->getGuidLow() << " AND achievement = " << achievementID;
-        CharacterDatabase.Execute(ss.str().c_str());
+        CharacterDatabase.Execute("DELETE FROM character_achievement WHERE guid = %u AND achievement = %u", m_player->getGuidLow(), static_cast<uint32_t>(achievementID));
     }
 }
 
@@ -2052,30 +2035,25 @@ void AchievementMgr::GMResetAchievement(int32_t achievementID)
 /// is -1, all achievement criteria get reset, otherwise only the one specified gets reset
 void AchievementMgr::GMResetCriteria(int32_t criteriaID)
 {
-    std::ostringstream ss;
     if (criteriaID == -1)
     {
-        // reset all achievement criteria
-        for (auto iterCriteriaProgress : m_criteriaProgress)
+        for (auto criteriaProgress : m_criteriaProgress)
         {
-            WorldPacket resetData(SMSG_CRITERIA_DELETED, 4);
-            resetData << uint32_t(iterCriteriaProgress.first);
-            GetPlayer()->GetSession()->SendPacket(&resetData);
-            delete iterCriteriaProgress.second;
+            GetPlayer()->SendPacket(SmsgCriteriaDeleted(criteriaProgress.first).serialise().get());
+            delete criteriaProgress.second;
         }
+
         m_criteriaProgress.clear();
-        ss << "DELETE FROM character_achievement_progress WHERE guid = " << m_player->getGuidLow();
-        CharacterDatabase.Execute(ss.str().c_str());
+        CharacterDatabase.Execute("DELETE FROM character_achievement_progress WHERE guid = %u", m_player->getGuidLow());
     }
-    else // reset a single achievement criteria
+    else
     {
-        WorldPacket resetData(SMSG_CRITERIA_DELETED, 4);
-        resetData << uint32_t(criteriaID);
-        GetPlayer()->GetSession()->SendPacket(&resetData);
+        GetPlayer()->SendPacket(SmsgCriteriaDeleted(criteriaID).serialise().get());
+
         m_criteriaProgress.erase(criteriaID);
-        ss << "DELETE FROM character_achievement_progress WHERE guid = " << m_player->getGuidLow() << " AND criteria = " << criteriaID;
-        CharacterDatabase.Execute(ss.str().c_str());
+        CharacterDatabase.Execute("DELETE FROM character_achievement_progress WHERE guid = %u AND criteria = %u", m_player->getGuidLow(), static_cast<uint32_t>(criteriaID));
     }
+
     CheckAllAchievementCriteria();
 }
 

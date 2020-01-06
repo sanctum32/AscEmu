@@ -127,7 +127,7 @@ void ObjectMgr::finalize()
         delete i->second;
     }
 
-    LogNotice("ObjectMgr", "Deleting Charters...");
+    LogNotice("ObjectMgr : Deleting Charters...");
     for (uint8 i = 0; i < NUM_CHARTER_TYPES; ++i)
     {
         for (std::unordered_map<uint32, Charter*>::iterator itr = m_charters[i].begin(); itr != m_charters[i].end(); ++itr)
@@ -366,7 +366,7 @@ void ObjectMgr::LoadSpellSkills()
             mSpellSkills[skill_line_ability->spell] = skill_line_ability;
         }
     }
-    LogDetail("ObjectMgr : %u spell skills loaded.", mSpellSkills.size());
+    LogDetail("ObjectMgr : %u spell skills loaded.", static_cast<uint32_t>(mSpellSkills.size()));
 }
 
 DBC::Structures::SkillLineAbilityEntry const* ObjectMgr::GetSpellSkill(uint32 id)
@@ -484,7 +484,7 @@ void ObjectMgr::LoadPlayersInfo()
         while (result->NextRow());
         delete result;
     }
-    LogDetail("ObjectMgr : %u players loaded.", m_playersinfo.size());
+    LogDetail("ObjectMgr : %u players loaded.", static_cast<uint32_t>(m_playersinfo.size()));
 }
 
 PlayerInfo* ObjectMgr::GetPlayerInfoByName(const char* name)
@@ -930,15 +930,15 @@ void ObjectMgr::SetHighestGuids()
 
 
 
-    LogNotice("ObjectMgr : HighGuid(CORPSE) = %u", m_hiCorpseGuid.load());
-    LogNotice("ObjectMgr : HighGuid(PLAYER) = %u", m_hiPlayerGuid.load());
-    LogNotice("ObjectMgr : HighGuid(GAMEOBJ) = %u", m_hiGameObjectSpawnId.load());
-    LogNotice("ObjectMgr : HighGuid(UNIT) = %u", m_hiCreatureSpawnId.load());
-    LogNotice("ObjectMgr : HighGuid(ITEM) = %u", m_hiItemGuid.load());
-    LogNotice("ObjectMgr : HighGuid(CONTAINER) = %u", m_hiItemGuid.load());
-    LogNotice("ObjectMgr : HighGuid(GROUP) = %u", m_hiGroupId.load());
-    LogNotice("ObjectMgr : HighGuid(CHARTER) = %u", m_hiCharterId.load());
-    LogNotice("ObjectMgr : HighGuid(GUILD) = %u", m_hiGuildId.load());
+    LogNotice("ObjectMgr : HighGuid(CORPSE) = %lu", m_hiCorpseGuid.load());
+    LogNotice("ObjectMgr : HighGuid(PLAYER) = %lu", m_hiPlayerGuid.load());
+    LogNotice("ObjectMgr : HighGuid(GAMEOBJ) = %lu", m_hiGameObjectSpawnId.load());
+    LogNotice("ObjectMgr : HighGuid(UNIT) = %lu", m_hiCreatureSpawnId.load());
+    LogNotice("ObjectMgr : HighGuid(ITEM) = %lu", m_hiItemGuid.load());
+    LogNotice("ObjectMgr : HighGuid(CONTAINER) = %lu", m_hiItemGuid.load());
+    LogNotice("ObjectMgr : HighGuid(GROUP) = %lu", m_hiGroupId.load());
+    LogNotice("ObjectMgr : HighGuid(CHARTER) = %lu", m_hiCharterId.load());
+    LogNotice("ObjectMgr : HighGuid(GUILD) = %lu", m_hiGuildId.load());
     LogNotice("ObjectMgr : HighGuid(BUGREPORT) = %u", uint32(m_reportID.load() - 1));
     LogNotice("ObjectMgr : HighGuid(TICKET) = %u", uint32(m_ticketid.load() - 1));
     LogNotice("ObjectMgr : HighGuid(MAIL) = %u", uint32(m_mailid.load()));
@@ -1210,7 +1210,7 @@ void ObjectMgr::LoadVendors()
 
         delete result;
     }
-    LogDetail("ObjectMgr : %u vendors loaded.", mVendors.size());
+    LogDetail("ObjectMgr : %u vendors loaded.", static_cast<uint32_t>(mVendors.size()));
 }
 
 void ObjectMgr::ReloadVendors()
@@ -1378,7 +1378,7 @@ void ObjectMgr::LoadSkillLineAbilityMap()
         ++count;
     }
 
-    LogDetail("ObjectMgr : Loaded %u SkillLineAbility MultiMap Data in %u ms", count, Util::GetTimeDifferenceToNow(startTime));
+    LogDetail("ObjectMgr : Loaded %u SkillLineAbility MultiMap Data in %u ms", count, static_cast<uint32_t>(Util::GetTimeDifferenceToNow(startTime)));
 }
 
 SkillLineAbilityMapBounds ObjectMgr::GetSkillLineAbilityMapBounds(uint32_t spell_id) const
@@ -1437,7 +1437,7 @@ void ObjectMgr::LoadSpellRequired()
 
     } while (result->NextRow());
 
-    LogNotice("ObjectMgr: Loaded %u spell required records in %u ms", count, Util::GetTimeDifferenceToNow(startTime));
+    LogNotice("ObjectMgr: Loaded %u spell required records in %u ms", count, static_cast<uint32_t>(Util::GetTimeDifferenceToNow(startTime)));
 }
 
 
@@ -1688,7 +1688,7 @@ void ObjectMgr::LoadTrainers()
 
     } while (result->NextRow());
     delete result;
-    LogDetail("ObjectMgr : %u trainers loaded.", mTrainers.size());
+    LogDetail("ObjectMgr : %u trainers loaded.", static_cast<uint32_t>(mTrainers.size()));
 }
 #else
 void ObjectMgr::LoadTrainers()
@@ -1848,7 +1848,7 @@ void ObjectMgr::LoadTrainers()
     }
     while (result->NextRow());
     delete result;
-    LogDetail("ObjectMgr : %u trainers loaded.", mTrainers.size());
+    LogDetail("ObjectMgr : %u trainers loaded.", static_cast<uint32_t>(mTrainers.size()));
 #endif
 }
 #endif
@@ -2090,7 +2090,7 @@ void ObjectMgr::GenerateLevelUpInfo()
             mLevelInfo.insert(LevelInfoMap::value_type(p, lMap));
         }
     }
-    LogNotice("ObjectMgr : %u level up information generated.", mLevelInfo.size());
+    LogNotice("ObjectMgr : %u level up information generated.", static_cast<uint32_t>(mLevelInfo.size()));
 }
 
 LevelInfo* ObjectMgr::GetLevelInfo(uint32 Race, uint32 Class, uint32 Level)
@@ -2472,7 +2472,7 @@ void ObjectMgr::LoadGuildCharters()
     }
     while (result->NextRow());
     delete result;
-    LogDetail("ObjectMgr : %u charters loaded.", m_charters[0].size());
+    LogDetail("ObjectMgr : %u charters loaded.", static_cast<uint32_t>(m_charters[0].size()));
 }
 
 Charter* ObjectMgr::GetCharter(uint32 CharterId, CharterTypes Type)
@@ -2701,7 +2701,7 @@ void ObjectMgr::LoadReputationModifierTable(const char* tablename, ReputationMod
         while (result->NextRow());
         delete result;
     }
-    LogNotice("ObjectMgr : %u reputation modifiers on %s.", dmap->size(), tablename);
+    LogNotice("ObjectMgr : %u reputation modifiers on %s.", static_cast<uint32_t>(dmap->size()), tablename);
 }
 
 void ObjectMgr::LoadReputationModifiers()
@@ -2759,7 +2759,7 @@ void ObjectMgr::LoadInstanceReputationModifiers()
     while (result->NextRow());
     delete result;
 
-    LogDetail("ObjectMgr : %u instance reputation modifiers loaded.", m_reputation_instance.size());
+    LogDetail("ObjectMgr : %u instance reputation modifiers loaded.", static_cast<uint32_t>(m_reputation_instance.size()));
 }
 
 bool ObjectMgr::HandleInstanceReputationModifiers(Player* pPlayer, Unit* pVictim)
@@ -2822,7 +2822,7 @@ void ObjectMgr::LoadDisabledSpells()
         delete result;
     }
 
-    LogNotice("ObjectMgr : %u disabled spells.", m_disabled_spells.size());
+    LogNotice("ObjectMgr : %u disabled spells.", static_cast<uint32_t>(m_disabled_spells.size()));
 }
 
 void ObjectMgr::ReloadDisabledSpells()
@@ -2850,7 +2850,7 @@ void ObjectMgr::LoadGroups()
         delete result;
     }
 
-    LogDetail("ObjectMgr : %u groups loaded.", this->m_groups.size());
+    LogDetail("ObjectMgr : %u groups loaded.", static_cast<uint32_t>(this->m_groups.size()));
 }
 
 void ObjectMgr::LoadArenaTeams()
@@ -3112,7 +3112,7 @@ void ObjectMgr::LoadSpellTargetConstraints()
 
     delete result;
 
-    LogNotice("ObjectMgr : Loaded constraints for %u spells...", m_spelltargetconstraints.size());
+    LogNotice("ObjectMgr : Loaded constraints for %u spells...", static_cast<uint32_t>(m_spelltargetconstraints.size()));
 }
 
 SpellTargetConstraint* ObjectMgr::GetSpellTargetConstraintForSpell(uint32 spellid)

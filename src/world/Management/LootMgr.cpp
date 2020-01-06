@@ -123,7 +123,7 @@ void LootMgr::LoadLoot()
     LoadLootTables("loot_pickpocketing", &PickpocketingLoot);
     is_loading = false;
 
-    LOG_DEBUG("Loaded loot tables in %u ms", Util::GetTimeDifferenceToNow(startTime));
+    LOG_DEBUG("Loaded loot tables in %u ms", static_cast<uint32_t>(Util::GetTimeDifferenceToNow(startTime)));
 }
 
 DBC::Structures::ItemRandomPropertiesEntry const* LootMgr::GetRandomProperties(ItemProperties const* proto)
@@ -334,7 +334,7 @@ void LootMgr::LoadLootTables(const char* szTableName, LootStore* LootTable)
             (*LootTable)[entry_id] = list;
         }
     }
-    LogDetail("%d loot templates loaded from %s", db_cache.size(), szTableName);
+    LogDetail("%u loot templates loaded from %s", static_cast<uint32_t>(db_cache.size()), szTableName);
     delete result;
 }
 

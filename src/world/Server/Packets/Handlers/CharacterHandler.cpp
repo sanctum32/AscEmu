@@ -595,7 +595,7 @@ void WorldSession::initGMMyMaster()
     if (ticket)
     {
         //Send status change to gm_sync_channel
-        const auto channel = sChannelMgr.GetChannel(sWorld.getGmClientChannel().c_str(), _player);
+        const auto channel = sChannelMgr.getChannel(sWorld.getGmClientChannel(), _player);
         if (channel)
         {
             std::stringstream ss;
@@ -620,7 +620,7 @@ void WorldSession::sendServerStats()
 
         _player->BroadcastMessage("Build hash: %s%s", MSG_COLOR_CYAN, BUILD_HASH_STR);
         _player->BroadcastMessage("Online Players: %s%u |rPeak: %s%u|r Accepted Connections: %s%u",
-            MSG_COLOR_SEXGREEN, sWorld.getSessionCount(), MSG_COLOR_SEXBLUE, sWorld.getPeakSessionCount(),
+            MSG_COLOR_SEXGREEN, static_cast<uint32_t>(sWorld.getSessionCount()), MSG_COLOR_SEXBLUE, sWorld.getPeakSessionCount(),
             MSG_COLOR_SEXBLUE, sWorld.getAcceptedConnections());
 
         _player->BroadcastMessage("Server Uptime: |r%s", sWorld.getWorldUptimeString().c_str());
@@ -940,7 +940,7 @@ void WorldSession::characterEnumProc(QueryResult* result)
         } while (result->NextRow());
     }
 
-    LogDebugFlag(LF_OPCODE, "Character Enum Built in %u ms.", Util::GetTimeDifferenceToNow(startTime));
+    LogDebugFlag(LF_OPCODE, "Character Enum Built in %u ms.", static_cast<uint32_t>(Util::GetTimeDifferenceToNow(startTime)));
     SendPacket(SmsgCharEnum(charRealCount, enumData).serialise().get());
 }
 

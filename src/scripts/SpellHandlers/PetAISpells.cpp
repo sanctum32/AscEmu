@@ -41,12 +41,13 @@ class ArmyOfTheDeadGhoulAI : public CreatureAIScript
 
         if (getCreature()->isSummon())
         {
-            auto summon = dynamic_cast<Summon*>(getCreature());
+            if (auto summon = dynamic_cast<Summon*>(getCreature()))
+            {
+                const auto parentBonus = summon->getUnitOwner()->GetDamageDoneMod(SCHOOL_NORMAL) * 0.04f;
 
-            const auto parentBonus = summon->getUnitOwner()->GetDamageDoneMod(SCHOOL_NORMAL) * 0.04f;
-
-            summon->setMinDamage(summon->getMinDamage() + parentBonus);
-            summon->setMaxDamage(summon->getMaxDamage() + parentBonus);
+                summon->setMinDamage(summon->getMinDamage() + parentBonus);
+                summon->setMaxDamage(summon->getMaxDamage() + parentBonus);
+            }
         }
     }
 
@@ -69,22 +70,24 @@ class ShadowFiendAI : public CreatureAIScript
     {
         if (getCreature()->isPet())
         {
-            auto pet = dynamic_cast<Pet*>(getCreature());
-            auto playerOwner = pet->getPlayerOwner();
-
-            const auto ownerBonus = static_cast<float>(playerOwner->GetDamageDoneMod(SCHOOL_SHADOW) * 0.375f); // 37.5%
-            pet->BaseAttackType = SCHOOL_SHADOW; // Melee hits are supposed to do damage with the shadow school
-            pet->setBaseAttackTime(MELEE, 1500); // Shadowfiend is supposed to do 10 attacks, sometimes it can be 11
-            pet->setMinDamage(pet->getMinDamage() + ownerBonus);
-            pet->setMaxDamage(pet->getMaxDamage() + ownerBonus);
-            pet->BaseDamage[0] += ownerBonus;
-            pet->BaseDamage[1] += ownerBonus;
-
-            const auto unitTarget = pet->GetMapMgr()->GetUnit(playerOwner->getTargetGuid());
-            if (unitTarget != nullptr && isAttackable(playerOwner, unitTarget))
+            if (auto pet = dynamic_cast<Pet*>(getCreature()))
             {
-                pet->GetAIInterface()->AttackReaction(unitTarget, 1);
-                pet->GetAIInterface()->setNextTarget(unitTarget);
+                auto playerOwner = pet->getPlayerOwner();
+
+                const auto ownerBonus = static_cast<float>(playerOwner->GetDamageDoneMod(SCHOOL_SHADOW) * 0.375f); // 37.5%
+                pet->BaseAttackType = SCHOOL_SHADOW; // Melee hits are supposed to do damage with the shadow school
+                pet->setBaseAttackTime(MELEE, 1500); // Shadowfiend is supposed to do 10 attacks, sometimes it can be 11
+                pet->setMinDamage(pet->getMinDamage() + ownerBonus);
+                pet->setMaxDamage(pet->getMaxDamage() + ownerBonus);
+                pet->BaseDamage[0] += ownerBonus;
+                pet->BaseDamage[1] += ownerBonus;
+
+                const auto unitTarget = pet->GetMapMgr()->GetUnit(playerOwner->getTargetGuid());
+                if (unitTarget != nullptr && isAttackable(playerOwner, unitTarget))
+                {
+                    pet->GetAIInterface()->AttackReaction(unitTarget, 1);
+                    pet->GetAIInterface()->setNextTarget(unitTarget);
+                }
             }
         }
     }
@@ -101,61 +104,63 @@ class MirrorImageAI : public CreatureAIScript
     {
         if (getCreature()->isSummon())
         {
-            auto summon = dynamic_cast<Summon*>(getCreature());
-            auto unitOwner = summon->getUnitOwner();
-
-            unitOwner->castSpell(getCreature(), 45204, true);   // clone me
-            unitOwner->castSpell(getCreature(), 58838, true);   // inherit threat list
-
-            // Mage mirror image spell
-            if (getCreature()->getCreatedBySpellId() == 58833)
+            if (const auto summon = dynamic_cast<Summon*>(getCreature()))
             {
-                getCreature()->setMaxHealth(2500);
-                getCreature()->setHealth(2500);
-                getCreature()->setMaxPower(POWER_TYPE_MANA, unitOwner->getMaxPower(POWER_TYPE_MANA));
-                getCreature()->setPower(POWER_TYPE_MANA, unitOwner->getPower(POWER_TYPE_MANA));
+                auto unitOwner = summon->getUnitOwner();
 
-                DBC::Structures::SpellRangeEntry const* range = nullptr;
+                unitOwner->castSpell(getCreature(), 45204, true);   // clone me
+                unitOwner->castSpell(getCreature(), 58838, true);   // inherit threat list
 
-                AI_Spell sp1{};
-                sp1.entryId = 59638;
-                sp1.spell = sSpellMgr.getSpellInfo(sp1.entryId);
-                if (!sp1.spell)
-                    return;
+                // Mage mirror image spell
+                if (getCreature()->getCreatedBySpellId() == 58833)
+                {
+                    getCreature()->setMaxHealth(2500);
+                    getCreature()->setHealth(2500);
+                    getCreature()->setMaxPower(POWER_TYPE_MANA, unitOwner->getMaxPower(POWER_TYPE_MANA));
+                    getCreature()->setPower(POWER_TYPE_MANA, unitOwner->getPower(POWER_TYPE_MANA));
 
-                sp1.spellType = STYPE_DAMAGE;
-                sp1.agent = AGENT_SPELL;
-                sp1.spelltargetType = TTYPE_SINGLETARGET;
-                sp1.cooldown = 0;
-                sp1.cooldowntime = 0;
-                sp1.Misc2 = 0;
-                sp1.procCount = 0;
-                sp1.procChance = 100;
-                range = sSpellRangeStore.LookupEntry(sp1.spell->getRangeIndex());
-                sp1.minrange = GetMinRange(range);
-                sp1.maxrange = GetMaxRange(range);
+                    DBC::Structures::SpellRangeEntry const* range = nullptr;
 
-                getCreature()->GetAIInterface()->addSpellToList(&sp1);
+                    AI_Spell sp1{};
+                    sp1.entryId = 59638;
+                    sp1.spell = sSpellMgr.getSpellInfo(sp1.entryId);
+                    if (!sp1.spell)
+                        return;
 
-                AI_Spell sp2{};
-                sp2.entryId = 59637;
-                sp2.spell = sSpellMgr.getSpellInfo(sp2.entryId);
-                if (!sp2.spell)
-                    return;
+                    sp1.spellType = STYPE_DAMAGE;
+                    sp1.agent = AGENT_SPELL;
+                    sp1.spelltargetType = TTYPE_SINGLETARGET;
+                    sp1.cooldown = 0;
+                    sp1.cooldowntime = 0;
+                    sp1.Misc2 = 0;
+                    sp1.procCount = 0;
+                    sp1.procChance = 100;
+                    range = sSpellRangeStore.LookupEntry(sp1.spell->getRangeIndex());
+                    sp1.minrange = GetMinRange(range);
+                    sp1.maxrange = GetMaxRange(range);
 
-                sp2.spellType = STYPE_DAMAGE;
-                sp2.agent = AGENT_SPELL;
-                sp2.spelltargetType = TTYPE_SINGLETARGET;
-                sp2.cooldown = 0;
-                sp2.cooldowntime = 0;
-                sp2.Misc2 = 0;
-                sp2.procCount = 0;
-                sp2.procChance = 100;
-                range = sSpellRangeStore.LookupEntry(sp2.spell->getRangeIndex());
-                sp2.minrange = GetMinRange(range);
-                sp2.maxrange = GetMaxRange(range);
+                    getCreature()->GetAIInterface()->addSpellToList(&sp1);
 
-                getCreature()->GetAIInterface()->addSpellToList(&sp2);
+                    AI_Spell sp2{};
+                    sp2.entryId = 59637;
+                    sp2.spell = sSpellMgr.getSpellInfo(sp2.entryId);
+                    if (!sp2.spell)
+                        return;
+
+                    sp2.spellType = STYPE_DAMAGE;
+                    sp2.agent = AGENT_SPELL;
+                    sp2.spelltargetType = TTYPE_SINGLETARGET;
+                    sp2.cooldown = 0;
+                    sp2.cooldowntime = 0;
+                    sp2.Misc2 = 0;
+                    sp2.procCount = 0;
+                    sp2.procChance = 100;
+                    range = sSpellRangeStore.LookupEntry(sp2.spell->getRangeIndex());
+                    sp2.minrange = GetMinRange(range);
+                    sp2.maxrange = GetMaxRange(range);
+
+                    getCreature()->GetAIInterface()->addSpellToList(&sp2);
+                }
             }
         }
     }
@@ -178,35 +183,39 @@ class DancingRuneWeaponAI : public CreatureAIScript
 
         if (getCreature()->isSummon())
         {
-            auto summon = dynamic_cast<Summon*>(getCreature());
-            auto unitOwner = summon->getUnitOwner();
-
-            if (unitOwner->isPlayer())
+            if (auto summon = dynamic_cast<Summon*>(getCreature()))
             {
-                auto playerOwner = dynamic_cast<Player*>(unitOwner);
-                const auto item = playerOwner->getItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_MAINHAND);
-                if (item != nullptr)
+                auto unitOwner = summon->getUnitOwner();
+
+                if (unitOwner->isPlayer())
                 {
-                    for (uint8 si = 0; si < 5; si++)
+                    if (auto playerOwner = dynamic_cast<Player*>(unitOwner))
                     {
-                        if (item->getItemProperties()->Spells[si].Id == 0)
-                            continue;
+                        const auto item = playerOwner->getItemInterface()->GetInventoryItem(EQUIPMENT_SLOT_MAINHAND);
+                        if (item != nullptr)
+                        {
+                            for (uint8 si = 0; si < 5; si++)
+                            {
+                                if (item->getItemProperties()->Spells[si].Id == 0)
+                                    continue;
 
-                        if (item->getItemProperties()->Spells[si].Trigger == CHANCE_ON_HIT)
-                            procSpell[si] = item->getItemProperties()->Spells[si].Id;
-                    }
+                                if (item->getItemProperties()->Spells[si].Trigger == CHANCE_ON_HIT)
+                                    procSpell[si] = item->getItemProperties()->Spells[si].Id;
+                            }
 
-                    summon->setVirtualItemSlotId(MELEE, item->getEntry());
-                    summon->setBaseAttackTime(MELEE, item->getItemProperties()->Delay);
-                }
+                            summon->setVirtualItemSlotId(MELEE, item->getEntry());
+                            summon->setBaseAttackTime(MELEE, item->getItemProperties()->Delay);
+                        }
 
 #if VERSION_STRING == WotLK
-                playerOwner->setPower(POWER_TYPE_RUNIC_POWER, 0);
+                        playerOwner->setPower(POWER_TYPE_RUNIC_POWER, 0);
 #endif
-            }
+                    }
+                }
 
-            summon->setMinDamage(float(unitOwner->GetDamageDoneMod(SCHOOL_NORMAL)));
-            summon->setMaxDamage(float(unitOwner->GetDamageDoneMod(SCHOOL_NORMAL)));
+                summon->setMinDamage(float(unitOwner->GetDamageDoneMod(SCHOOL_NORMAL)));
+                summon->setMaxDamage(float(unitOwner->GetDamageDoneMod(SCHOOL_NORMAL)));
+            }
         }
     }
 

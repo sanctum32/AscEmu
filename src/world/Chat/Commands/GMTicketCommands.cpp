@@ -30,14 +30,13 @@
 
 using namespace AscEmu::Packets;
 
-#define  SENDSURVEY "\x03"
 #ifdef GM_TICKET_MY_MASTER_COMPATIBLE
 
 bool ChatHandler::HandleGMTicketListCommand(const char* /*args*/, WorldSession* m_session)
 {
     Player* cplr = m_session->GetPlayer();
 
-    Channel* chn = sChannelMgr.GetChannel(worldConfig.getGmClientChannelName().c_str(), cplr);
+    Channel* chn = sChannelMgr.getChannel(worldConfig.getGmClientChannelName(), cplr);
     if (!chn)
         return false;
 
@@ -75,7 +74,7 @@ bool ChatHandler::HandleGMTicketGetByIdCommand(const char* args, WorldSession* m
         return false;
 
     Player* cplr = m_session->GetPlayer();
-    Channel* chn = sChannelMgr.GetChannel(worldConfig.getGmClientChannelName().c_str(), cplr);
+    Channel* chn = sChannelMgr.getChannel(worldConfig.getGmClientChannelName(), cplr);
     if (!chn)
         return false;
 
@@ -129,7 +128,7 @@ bool ChatHandler::HandleGMTicketRemoveByIdCommand(const char* args, WorldSession
         return false;
 
     Player* cplr = m_session->GetPlayer();
-    Channel* chn = sChannelMgr.GetChannel(worldConfig.getGmClientChannelName().c_str(), cplr);
+    Channel* chn = sChannelMgr.getChannel(worldConfig.getGmClientChannelName(), cplr);
     if (!chn)
         return false;
 
@@ -175,7 +174,7 @@ bool ChatHandler::HandleGMTicketListCommand(const char* args, WorldSession* m_se
 {
     Player* cplr = m_session->GetPlayer();
 
-    Channel* chn = sChannelMgr.GetChannel(sWorld.getGmClientChannel().c_str(), cplr);
+    Channel* chn = sChannelMgr.getChannel(sWorld.getGmClientChannel(), cplr);
     if (!chn)
         return false;
 
@@ -223,7 +222,7 @@ bool ChatHandler::HandleGMTicketGetByIdCommand(const char* args, WorldSession* m
     }
 
     Player* cplr = m_session->GetPlayer();
-    Channel* chn = sChannelMgr.GetChannel(sWorld.getGmClientChannel().c_str(), cplr);
+    Channel* chn = sChannelMgr.getChannel(sWorld.getGmClientChannel(), cplr);
     if (!chn)
         return false;
 
@@ -279,7 +278,7 @@ bool ChatHandler::HandleGMTicketRemoveByIdCommand(const char* args, WorldSession
     }
 
     Player* cplr = m_session->GetPlayer();
-    Channel* chn = sChannelMgr.GetChannel(sWorld.getGmClientChannel().c_str(), cplr);
+    Channel* chn = sChannelMgr.getChannel(sWorld.getGmClientChannel(), cplr);
     if (!chn)
         return false;
 
@@ -338,7 +337,7 @@ bool ChatHandler::HandleGMTicketAssignToCommand(const char* args, WorldSession* 
     }
 
     Player* cplr = m_session->GetPlayer();
-    Channel* chn = sChannelMgr.GetChannel(sWorld.getGmClientChannel().c_str(), cplr);
+    Channel* chn = sChannelMgr.getChannel(sWorld.getGmClientChannel(), cplr);
     if (!chn)
         return false;
 
@@ -419,7 +418,7 @@ bool ChatHandler::HandleGMTicketReleaseCommand(const char* args, WorldSession* m
     }
 
     Player* cplr = m_session->GetPlayer();
-    Channel* chn = sChannelMgr.GetChannel(sWorld.getGmClientChannel().c_str(), cplr);
+    Channel* chn = sChannelMgr.getChannel(sWorld.getGmClientChannel(), cplr);
     if (!chn)
         return false;
 
@@ -478,7 +477,7 @@ bool ChatHandler::HandleGMTicketCommentCommand(const char* args, WorldSession* m
     }
 
     Player* cplr = m_session->GetPlayer();
-    Channel* chn = sChannelMgr.GetChannel(sWorld.getGmClientChannel().c_str(), cplr);
+    Channel* chn = sChannelMgr.getChannel(sWorld.getGmClientChannel(), cplr);
     if (!chn)
         return false;
 
@@ -518,7 +517,7 @@ bool ChatHandler::HandleGMTicketDeletePermanentCommand(const char* args, WorldSe
     }
 
     Player* cplr = m_session->GetPlayer();
-    Channel* chn = sChannelMgr.GetChannel(sWorld.getGmClientChannel().c_str(), cplr);
+    Channel* chn = sChannelMgr.getChannel(sWorld.getGmClientChannel(), cplr);
     if (!chn)
         return false;
 

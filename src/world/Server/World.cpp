@@ -137,7 +137,7 @@ void World::loadWorldConfigValues(bool reload /*false*/)
     settings.loadWorldConfigValues(reload);
 
     if (reload)
-        Channel::LoadConfSettings();
+        sChannelMgr.loadConfigSettings();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -621,13 +621,14 @@ void World::sendAreaTriggerMessage(const std::string& message, WorldSession* sen
     sendGlobalMessage(AscEmu::Packets::SmsgAreaTriggerMessage(0, message.c_str(), 0).serialise().get(), sendToSelf);
 }
 
-void World::sendGlobalMessage(WorldPacket* worldPacket, WorldSession* sendToSelf /*nullptr*/)
+void World::sendGlobalMessage(WorldPacket* worldPacket, WorldSession* sendToSelf /*nullptr*/, int32_t team /*-1*/)
 {
     mSessionLock.AcquireReadLock();
 
     for (auto activeSessions = mActiveSessionMapStore.begin(); activeSessions != mActiveSessionMapStore.end(); ++activeSessions)
     {
-        if (activeSessions->second->GetPlayer() && activeSessions->second->GetPlayer()->IsInWorld() && activeSessions->second != sendToSelf)
+        if (activeSessions->second->GetPlayer() && activeSessions->second->GetPlayer()->IsInWorld()
+            && activeSessions->second != sendToSelf && (team == -1 || activeSessions->second->GetPlayer()->GetTeam() == team))
             activeSessions->second->SendPacket(worldPacket);
     }
 
@@ -779,7 +780,7 @@ bool World::setInitialWorldSettings()
     sLootMgr.initialize();
     sLootMgr.LoadLoot();
 
-    Channel::LoadConfSettings();
+    sChannelMgr.loadConfigSettings();
 
     LogDetail("World : Starting CsBattlegroundManager...");
     sBattlegroundManager.initialize();
@@ -958,7 +959,7 @@ void World::loadMySQLTablesByTask()
 
     g_chatFilter = new WordFilter();
 
-    LogDetail("Done. Database loaded in %u ms.", Util::GetTimeDifferenceToNow(startTime));
+    LogDetail("Done. Database loaded in %u ms.", static_cast<uint32_t>(Util::GetTimeDifferenceToNow(startTime)));
 
     // calling this puts all maps into our task list.
     sInstanceMgr.Load();
@@ -973,11 +974,11 @@ void World::loadMySQLTablesByTask()
 
 void World::logEntitySize()
 {
-    LogNotice("World : Object size: %u bytes", sizeof(Object));
-    LogNotice("World : Unit size: %u bytes", sizeof(Unit) + sizeof(AIInterface));
-    LogNotice("World : Creature size: %u bytes", sizeof(Creature) + sizeof(AIInterface));
-    LogNotice("World : Player size: %u bytes", sizeof(Player) + sizeof(ItemInterface) + 50000 + 30000 + 1000 + sizeof(AIInterface));
-    LogNotice("World : GameObject size: %u bytes", sizeof(GameObject));
+    LogNotice("World : Object size: %lu bytes", sizeof(Object));
+    LogNotice("World : Unit size: %lu bytes", sizeof(Unit) + sizeof(AIInterface));
+    LogNotice("World : Creature size: %lu bytes", sizeof(Creature) + sizeof(AIInterface));
+    LogNotice("World : Player size: %lu bytes", sizeof(Player) + sizeof(ItemInterface) + 50000 + 30000 + 1000 + sizeof(AIInterface));
+    LogNotice("World : GameObject size: %lu bytes", sizeof(GameObject));
 }
 
 void World::Update(unsigned long timePassed)
@@ -1004,7 +1005,7 @@ void World::saveAllPlayersToDb()
         {
             auto startTime = Util::TimeNow();
             itr->second->SaveToDB(false);
-            LogDetail("Saved player `%s` (level %u) in %u ms.", itr->second->getName().c_str(), itr->second->getLevel(), Util::GetTimeDifferenceToNow(startTime));
+            LogDetail("Saved player `%s` (level %u) in %u ms.", itr->second->getName().c_str(), itr->second->getLevel(), static_cast<uint32_t>(Util::GetTimeDifferenceToNow(startTime)));
             ++count;
         }
     }
@@ -1033,7 +1034,7 @@ void World::logoutAllPlayers()
     for (activeSessionMap::iterator i = mActiveSessionMapStore.begin(); i != mActiveSessionMapStore.end(); ++i)
         (i->second)->LogoutPlayer(true);
 
-    LogNotice("World", "Deleting sessions...");
+    LogNotice("World : Deleting sessions...");
     for (activeSessionMap::iterator i = mActiveSessionMapStore.begin(); i != mActiveSessionMapStore.end();)
     {
         WorldSession* worldSession = i->second;

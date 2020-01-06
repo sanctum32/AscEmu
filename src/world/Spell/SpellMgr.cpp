@@ -125,10 +125,16 @@ Spell* SpellMgr::newSpell(Object* caster, SpellInfo const* info, bool triggered,
     // This will of course be changed later
     auto spellInfo = info != nullptr ? getMutableSpellInfo(info->getId()) : nullptr;
 
+    if (spellInfo == nullptr)
+    {
+        LogError("You tried to create a Spell without SpellInfo. This is not possible!");
+        return nullptr;
+    }
+
     // Spells with a script
     if (info->spellScriptLink != nullptr)
         return (*SpellScriptLinker(info->spellScriptLink))(caster, spellInfo, triggered, aur);
-    
+
     // Standard spells without a script
     return new Spell(caster, spellInfo, triggered, aur);
 }
@@ -140,6 +146,12 @@ Aura* SpellMgr::newAura(SpellInfo const* proto, int32_t duration, Object* caster
     // For now we send non-const spellinfo to Aura class
     // This will of course be changed later
     auto spellInfo = proto != nullptr ? getMutableSpellInfo(proto->getId()) : nullptr;
+
+    if (spellInfo == nullptr)
+    {
+        LogError("You tried to create an Aura without SpellInfo. This is not possible!");
+        return nullptr;
+    }
 
     // Auras with a script
     if (proto->auraScriptLink != nullptr)
@@ -157,7 +169,7 @@ void SpellMgr::addSpellById(const uint32_t spellId, SpellScriptLinker spellScrip
     auto spellInfo = getMutableSpellInfo(spellId);
     if (spellInfo == nullptr)
     {
-        LogError("SpellMgr::addSpellById : Unknown spell id %u tried to register a spell script, skipped");
+        LogError("SpellMgr::addSpellById : Unknown spell id %u tried to register a spell script, skipped", spellId);
         return;
     }
     addSpellBySpellInfo(spellInfo, spellScript);
@@ -168,7 +180,7 @@ void SpellMgr::addAuraById(const uint32_t spellId, AuraScriptLinker auraScript)
     auto spellInfo = getMutableSpellInfo(spellId);
     if (spellInfo == nullptr)
     {
-        LogError("SpellMgr::addAuraById : Unknown spell id %u tried to register an aura script, skipped");
+        LogError("SpellMgr::addAuraById : Unknown spell id %u tried to register an aura script, skipped", spellId);
         return;
     }
     addAuraBySpellInfo(spellInfo, auraScript);

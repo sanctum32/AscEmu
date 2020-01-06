@@ -260,7 +260,7 @@ bool Master::Run(int /*argc*/, char** /*argv*/)
         sScriptMgr.DumpUnimplementedSpells();
     }
 
-    LogDetail("Server : Ready for connections. Startup time: %u ms", Util::GetTimeDifferenceToNow(startTime));
+    LogDetail("Server : Ready for connections. Startup time: %u ms", static_cast<uint32_t>(Util::GetTimeDifferenceToNow(startTime)));
 
     sGameEventMgrThread.initialize();
 
@@ -269,7 +269,7 @@ bool Master::Run(int /*argc*/, char** /*argv*/)
     WritePidFile();
 
     sChannelMgr.initialize();
-    sChannelMgr.seperatechannels = !worldConfig.player.isInterfactionChannelEnabled;
+    sChannelMgr.setSeperatedChannels(!worldConfig.player.isInterfactionChannelEnabled);
 
     sMailSystem.StartMailSystem();
 

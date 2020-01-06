@@ -1783,7 +1783,7 @@ void Aura::SpellAuraPeriodicDamage(bool apply)
         if (dmg <= 0)
             return; //who would want a negative dmg here ?
 
-        LogDebugFlag(LF_AURA, "Adding periodic dmg aura, spellid: %lu", this->GetSpellId());
+        LogDebugFlag(LF_AURA, "Adding periodic dmg aura, spellid: %u", this->GetSpellId());
         sEventMgr.AddEvent(this, &Aura::EventPeriodicDamage, (uint32)dmg,
                            EVENT_AURA_PERIODIC_DAMAGE, GetSpellInfo()->getEffectAmplitude(mod->m_effectIndex), 0, EVENT_FLAG_DO_NOT_EXECUTE_IN_WORLD_CONTEXT);
 
@@ -2864,7 +2864,8 @@ void Aura::SpellAuraModStealth(bool apply)
         m_target->setStandStateFlags(UNIT_STAND_FLAGS_CREEP);
 #if VERSION_STRING != Mop
         if (m_target->isPlayer())
-            dynamic_cast<Player*>(m_target)->setPlayerFieldBytes2(0x2000);
+            if (const auto player = dynamic_cast<Player*>(m_target))
+                player->setPlayerFieldBytes2(0x2000);
 #endif
 
         m_target->RemoveAurasByInterruptFlag(AURA_INTERRUPT_ON_STEALTH | AURA_INTERRUPT_ON_INVINCIBLE);
@@ -3102,7 +3103,8 @@ void Aura::SpellAuraModInvisibility(bool apply)
         {
 #if VERSION_STRING != Mop
             if (GetSpellId() == 32612)
-                dynamic_cast<Player*>(m_target)->setPlayerFieldBytes2(0x4000);   //Mage Invis self visual
+                if (const auto player = dynamic_cast<Player*>(m_target))
+                    player->setPlayerFieldBytes2(0x4000);   //Mage Invis self visual
 #endif
         }
 

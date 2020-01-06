@@ -255,7 +255,7 @@ bool ChatHandler::HandleKillCommand(const char* args, WorldSession* m_session)
             named_player->KillPlayer();
             RedSystemMessage(named_player->GetSession(), "You were killed by %s with a GM command.", m_session->GetPlayer()->getName().c_str());
             GreenSystemMessage(m_session, "Killed player %s.", args);
-            sGMLog.writefromsession(m_session, "used kill command on Player Name: %s Guid:  " I64FMT " ", m_session->GetPlayer()->getName().c_str(), named_player->getGuid(), named_player->getName().c_str());
+            sGMLog.writefromsession(m_session, "used kill command on Player Name: %s Guid:  " I64FMT " ", named_player->getName().c_str(), named_player->getGuid());
         }
     }
     else
@@ -1240,12 +1240,10 @@ bool ChatHandler::HandleIPBanCommand(const char* args, WorldSession* m_session)
         IP.append("/32");
     }
 
-    char emptystring = 0;
-    if (pReason == NULL)
-        pReason = &emptystring;
+    const std::string reason = pReason;
 
-    SystemMessage(m_session, "Adding [%s] to IP ban table, expires %s.Reason is :%s", pIp, (expire_time == 0) ? "Never" : ctime(&expire_time), pReason);
-    sLogonCommHandler.addIpBan(IP.c_str(), (uint32)expire_time, pReason);
+    SystemMessage(m_session, "Adding [%s] to IP ban table, expires %s.Reason is :%s", pIp, (expire_time == 0) ? "Never" : ctime(&expire_time), reason.c_str());
+    sLogonCommHandler.addIpBan(IP.c_str(), (uint32)expire_time, reason.c_str());
     sWorld.disconnectSessionByIp(IP.substr(0, IP.find("/")).c_str(), m_session);
     sGMLog.writefromsession(m_session, "banned ip address %s, expires %s", pIp, (expire_time == 0) ? "Never" : ctime(&expire_time));
 

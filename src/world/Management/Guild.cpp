@@ -647,7 +647,13 @@ void Guild::handleBuyBankTab(WorldSession* session, uint8_t tabId)
 void Guild::handleAcceptMember(WorldSession* session)
 {
     Player* player = session->GetPlayer();
+    if (player == nullptr)
+        return;
+
     Player* leader = sObjectMgr.GetPlayer(WoWGuid::getGuidLowPartFromUInt64(getLeaderGUID()));
+    if (leader == nullptr)
+        return;
+
     if (worldConfig.player.isInterfactionGuildEnabled == false && player->getTeam() != leader->getTeam())
         return;
 
@@ -732,28 +738,30 @@ void Guild::handleUpdateMemberRank(WorldSession* session, uint64_t guid, bool de
             return;
         }
 
-        GuildMember const* memberMe = getMember(player->getGuid());
-        uint8_t rankId = memberMe->getRankId();
-        if (demote)
+        if (GuildMember const* memberMe = getMember(player->getGuid()))
         {
-            if (member->isRankNotLower(rankId))
+            uint8_t rankId = memberMe->getRankId();
+            if (demote)
             {
-                session->SendPacket(SmsgGuildCommandResult(type, name, GC_ERROR_RANK_TOO_HIGH_S).serialise().get());
-                return;
-            }
+                if (member->isRankNotLower(rankId))
+                {
+                    session->SendPacket(SmsgGuildCommandResult(type, name, GC_ERROR_RANK_TOO_HIGH_S).serialise().get());
+                    return;
+                }
 
-            if (member->getRankId() >= _getLowestRankId())
-            {
-                session->SendPacket(SmsgGuildCommandResult(type, name, GC_ERROR_RANK_TOO_LOW_S).serialise().get());
-                return;
+                if (member->getRankId() >= _getLowestRankId())
+                {
+                    session->SendPacket(SmsgGuildCommandResult(type, name, GC_ERROR_RANK_TOO_LOW_S).serialise().get());
+                    return;
+                }
             }
-        }
-        else
-        {
-            if (member->isRankNotLower(rankId + 1))
+            else
             {
-                session->SendPacket(SmsgGuildCommandResult(type, name, GC_ERROR_RANK_TOO_HIGH_S).serialise().get());
-                return;
+                if (member->isRankNotLower(rankId + 1))
+                {
+                    session->SendPacket(SmsgGuildCommandResult(type, name, GC_ERROR_RANK_TOO_HIGH_S).serialise().get());
+                    return;
+                }
             }
         }
 
@@ -768,7 +776,13 @@ void Guild::handleUpdateMemberRank(WorldSession* session, uint64_t guid, bool de
 void Guild::handleSetMemberRank(WorldSession* session, uint64_t targetGuid, uint64_t setterGuid, uint32_t rank)
 {
     Player* player = session->GetPlayer();
+    if (player == nullptr)
+        return;
+
     GuildMember* member = getMember(targetGuid);
+    if (member == nullptr)
+        return;
+
     GuildRankRights rights = GR_RIGHT_PROMOTE;
     GuildCommandType type = GC_TYPE_PROMOTE;
 
@@ -2307,13 +2321,13 @@ void Guild::swapItemsWithInventory(Player* player, bool toChar, uint8_t tabId, u
     Item* pDestItem = getBankTab(tabId)->getItem(slotId);
     Item* pSourceItem2 = pSourceItem;
 
-    if (pSourceItem != nullptr)
+    if (pSourceItem == nullptr)
+        return;
+
+    if (pSourceItem->isSoulbound() || pSourceItem->getItemProperties()->Class == ITEM_CLASS_QUEST)
     {
-        if (pSourceItem->isSoulbound() || pSourceItem->getItemProperties()->Class == ITEM_CLASS_QUEST)
-        {
-            player->getItemInterface()->BuildInventoryChangeError(nullptr, nullptr, INV_ERR_CANT_DROP_SOULBOUND);
-            return;
-        }
+        player->getItemInterface()->BuildInventoryChangeError(nullptr, nullptr, INV_ERR_CANT_DROP_SOULBOUND);
+        return;
     }
 
     if (!toChar)
@@ -2336,7 +2350,8 @@ void Guild::swapItemsWithInventory(Player* player, bool toChar, uint8_t tabId, u
         {
             if (player->getItemInterface()->SafeRemoveAndRetreiveItemFromSlot(playerBag, playerSlotId, false) == nullptr)
                 return;
-            if(pSourceItem)
+
+            if (pSourceItem)
                 pSourceItem->RemoveFromWorld();
         }
 
@@ -2351,9 +2366,7 @@ void Guild::swapItemsWithInventory(Player* player, bool toChar, uint8_t tabId, u
 
                 pDestItem = sObjectMgr.CreateItem(pSourceItem2->getEntry(), player);
                 if (pDestItem == nullptr)
-                {
                     return;
-                }
 
                 pDestItem->setStackCount(splitedAmount);
                 pDestItem->setCreatorGuid(pSourceItem2->getCreatorGuid());

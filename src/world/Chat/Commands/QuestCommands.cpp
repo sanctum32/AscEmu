@@ -1418,12 +1418,12 @@ bool ChatHandler::HandleQuestFinisherSpawnCommand(const char* args, WorldSession
 
 bool ChatHandler::HandleQuestLoadCommand(const char* /*args*/, WorldSession* m_session)
 {
-    BlueSystemMessage(m_session, "Load of quests from the database has been initiated ...", "");
+    BlueSystemMessage(m_session, "Load of quests from the database has been initiated ...");
     auto startTime = Util::TimeNow();
 
     sQuestMgr.LoadExtraQuestStuff();
 
-    BlueSystemMessage(m_session, "Load completed in %u ms.", Util::GetTimeDifferenceToNow(startTime));
+    BlueSystemMessage(m_session, "Load completed in %u ms.", static_cast<uint32_t>(Util::GetTimeDifferenceToNow(startTime)));
 
     WoWGuid wowGuid;
     wowGuid.Init(m_session->GetPlayer()->GetSelection());
@@ -1466,7 +1466,7 @@ bool ChatHandler::HandleQuestRemoveCommand(const char* args, WorldSession* m_ses
     if (qst)
     {
         recout = RemoveQuestFromPlayer(plr, qst);
-        sGMLog.writefromsession(m_session, "removed quest %u [%s] from player %s%", qst->id, qst->title.c_str(), plr->getName().c_str());
+        sGMLog.writefromsession(m_session, "removed quest %u [%s] from player %s", qst->id, qst->title.c_str(), plr->getName().c_str());
     }
     else
         recout = "Invalid quest selected, unable to remove.\n\n";

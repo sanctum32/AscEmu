@@ -210,7 +210,7 @@ public:
         return false;
     }
 
-    void CastSpell(Unit* /*victim*/, SpellInfo* /*castingSpell*/, int* /*dmgOverwrite*/)
+    void CastSpell(Unit* /*victim*/, SpellInfo const* /*castingSpell*/, int* /*dmgOverwrite*/)
     {
         Unit* caster = mTarget->GetMapMgr()->GetUnit(mCaster);
         if (caster == nullptr)
@@ -796,7 +796,7 @@ public:
 
     static SpellProc* Create() { return new EmpoweredRenewSpellProc(); }
 
-    bool DoEffect(Unit* /*victim*/, SpellInfo* castingSpell, uint32 /*flag*/, uint32 dmg, uint32 /*abs*/, int* dmgOverwrite, uint32 /*weapon_damage_type*/)
+    bool DoEffect(Unit* /*victim*/, SpellInfo const* castingSpell, uint32 /*flag*/, uint32 dmg, uint32 /*abs*/, int* dmgOverwrite, uint32 /*weapon_damage_type*/)
     {
         // Get heal amt for 1 tick
         dmg = castingSpell->getEffectBasePoints(0) + 1;
@@ -810,7 +810,7 @@ public:
         return false;
     }
 
-    void CastSpell(Unit* victim, SpellInfo* CastingSpell, int* dmg_overwrite)
+    void CastSpell(Unit* victim, SpellInfo const* CastingSpell, int* dmg_overwrite)
     {
         SpellCastTargets targets;
         targets.m_unitTarget = victim->getGuid();

@@ -261,6 +261,7 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/MsgTabardvendorActivate.h
    ${PATH_PREFIX}/MsgTalentWipeConfirm.h
    ${PATH_PREFIX}/Opcode.h
+   ${PATH_PREFIX}/SmsgAchievementDeleted.h
    ${PATH_PREFIX}/SmsgActivatetaxireply.h
    ${PATH_PREFIX}/SmsgAreaSpiritHealerTime.h
    ${PATH_PREFIX}/SmsgAreaTriggerMessage.h
@@ -278,6 +279,7 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/SmsgBuyItem.h
    ${PATH_PREFIX}/SmsgCastFailed.h
    ${PATH_PREFIX}/SmsgChannelMemberCount.h
+   ${PATH_PREFIX}/SmsgChannelNotify.h
    ${PATH_PREFIX}/SmsgCharacterLoginFailed.h
    ${PATH_PREFIX}/SmsgCharCreate.h
    ${PATH_PREFIX}/SmsgCharCustomize.h
@@ -292,6 +294,8 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/SmsgCooldownEvent.h
    ${PATH_PREFIX}/SmsgCorpseReclaimDelay.h
    ${PATH_PREFIX}/SmsgCreatureQueryResponse.h
+   ${PATH_PREFIX}/SmsgCriteriaDeleted.h
+   ${PATH_PREFIX}/SmsgCriteriaUpdate.h
    ${PATH_PREFIX}/SmsgCrossedInebriationThreshold.h
    ${PATH_PREFIX}/SmsgDeathReleaseLoc.h
    ${PATH_PREFIX}/SmsgDestoyObject.h
@@ -325,6 +329,7 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/SmsgGuildInvite.h
    ${PATH_PREFIX}/SmsgInitialSpells.h
    ${PATH_PREFIX}/SmsgInstanceDifficulty.h
+   ${PATH_PREFIX}/SmsgInstanceReset.h
    ${PATH_PREFIX}/SmsgInventoryChangeFailure.h
    ${PATH_PREFIX}/SmsgItemNameQueryResponse.h
    ${PATH_PREFIX}/SmsgItemPushResult.h
@@ -369,6 +374,7 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/SmsgPvpCredit.h
    ${PATH_PREFIX}/SmsgPvpOptionsEnabled.h
    ${PATH_PREFIX}/SmsgQueryTimeResponse.h
+   ${PATH_PREFIX}/SmsgQuestgiverQuestComplete.h
    ${PATH_PREFIX}/SmsgQuestgiverStatus.h
    ${PATH_PREFIX}/SmsgQuestgiverStatusMultiple.h
    ${PATH_PREFIX}/SmsgRaidGroupOnly.h
@@ -380,6 +386,7 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/SmsgResurrectFailed.h
    ${PATH_PREFIX}/SmsgSellItem.h
    ${PATH_PREFIX}/SmsgSendMailResult.h
+   ${PATH_PREFIX}/SmsgServerFirstAchievement.h
    ${PATH_PREFIX}/SmsgSetExtraAuraInfo.h
    ${PATH_PREFIX}/SmsgSetFlatSpellModifier.h
    ${PATH_PREFIX}/SmsgSetPctSpellModifier.h
@@ -401,6 +408,8 @@ set(SRC_PACKET_FILES
    ${PATH_PREFIX}/SmsgTutorialFlags.h
    ${PATH_PREFIX}/SmsgUpdateAccountDataComplete.h
    ${PATH_PREFIX}/SmsgUpdateAuraDuration.h
+   ${PATH_PREFIX}/SmsgUpdateInstanceOwnership.h
+   ${PATH_PREFIX}/SmsgUpdateLastInstance.h
    ${PATH_PREFIX}/SmsgUpdateObject.h
    ${PATH_PREFIX}/SmsgWeather.h
    ${PATH_PREFIX}/SmsgWorldStateUiTimerUpdate.h

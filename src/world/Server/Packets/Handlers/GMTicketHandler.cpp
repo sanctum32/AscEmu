@@ -83,9 +83,10 @@ void WorldSession::handleReportLag(WorldPacket& recvPacket)
     {
         CharacterDatabase.Execute("INSERT INTO lag_reports (player, account, lag_type, map_id, position_x, position_y, position_z) VALUES(%u, %u, %u, %u, %f, %f, %f)",
             _player->getGuidLow(), _accountId, srlPacket.lagType, srlPacket.mapId, srlPacket.location.x, srlPacket.location.y, srlPacket.location.z);
+
+        LogDebugFlag(LF_OPCODE, "Player %s has reported a lagreport with Type: %u on Map: %u", _player->getName().c_str(), srlPacket.lagType, srlPacket.mapId);
     }
 
-    LogDebugFlag(LF_OPCODE, "Player %s has reported a lagreport with Type: %u on Map: %u", _player->getName().c_str(), srlPacket.lagType, srlPacket.mapId);
 #endif
 }
 
@@ -110,7 +111,7 @@ void WorldSession::handleGMTicketUpdateOpcode(WorldPacket& recvPacket)
     }
 
 #ifndef GM_TICKET_MY_MASTER_COMPATIBLE
-    Channel* channel = sChannelMgr.GetChannel(sWorld.getGmClientChannel().c_str(), _player);
+    Channel* channel = sChannelMgr.getChannel(sWorld.getGmClientChannel(), _player);
     if (channel != nullptr)
     {
         std::stringstream ss;
@@ -131,7 +132,7 @@ void WorldSession::handleGMTicketDeleteOpcode(WorldPacket& /*recvPacket*/)
 
     SendPacket(SmsgGmTicketDeleteTicket(GMTTicketRemoved).serialise().get());
 
-    Channel* channel = sChannelMgr.GetChannel(worldConfig.getGmClientChannelName().c_str(), _player);
+    Channel* channel = sChannelMgr.getChannel(worldConfig.getGmClientChannelName(), _player);
     if (channel != nullptr && ticket != nullptr)
     {
         std::stringstream ss;
@@ -203,7 +204,7 @@ void WorldSession::handleGMTicketCreateOpcode(WorldPacket& recvPacket)
     SendPacket(SmsgGmTicketCreate(GMTNoErrors).serialise().get());
 
     // send message indicating new ticket
-    Channel* channel = sChannelMgr.GetChannel(worldConfig.getGmClientChannelName().c_str(), _player);
+    Channel* channel = sChannelMgr.getChannel(worldConfig.getGmClientChannelName(), _player);
     if (channel != nullptr)
     {
         std::stringstream ss;

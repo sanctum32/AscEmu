@@ -644,43 +644,45 @@ SpellCastResult Spell::canCast(const bool secondCheck, uint32_t* parameter1, uin
             if (itr == nullptr || !itr->isGameObject())
                 continue;
 
-            const auto obj = dynamic_cast<GameObject*>(itr);
-            if (obj->getGoType() != GAMEOBJECT_TYPE_SPELL_FOCUS)
-                continue;
-
-            // Skip objects from other phases
-            if (!(p_caster->GetPhase() & obj->GetPhase()))
-                continue;
-
-            const auto gameObjectInfo = obj->GetGameObjectProperties();
-            if (gameObjectInfo == nullptr)
+            if (const auto obj = dynamic_cast<GameObject*>(itr))
             {
-                LogDebugFlag(LF_SPELL, "Spell::canCast : Found gameobject entry %u with invalid gameobject properties, spawn id %u", obj->getEntry(), obj->getGuidLow());
-                continue;
-            }
+                if (obj->getGoType() != GAMEOBJECT_TYPE_SPELL_FOCUS)
+                    continue;
 
-            // Prefer to use range from gameobject_properties instead of spell's range
-            // That is required at least for profession spells since their range is set to 0 yards in DBC files
-            float_t distance = 0.0f;
-            if (gameObjectInfo->spell_focus.distance > 0)
-            {
-                // Database seems to already have squared distances
-                distance = static_cast<float_t>(gameObjectInfo->spell_focus.distance);
-            }
-            else
-            {
-                distance = GetMaxRange(sSpellRangeStore.LookupEntry(getSpellInfo()->getRangeIndex()));
-                distance *= distance;
-            }
+                // Skip objects from other phases
+                if (!(p_caster->GetPhase() & obj->GetPhase()))
+                    continue;
 
-            // Skip objects which are out of range
-            if (!p_caster->isInRange(obj->GetPositionX(), obj->GetPositionY(), obj->GetPositionZ(), distance))
-                continue;
+                const auto gameObjectInfo = obj->GetGameObjectProperties();
+                if (gameObjectInfo == nullptr)
+                {
+                    LogDebugFlag(LF_SPELL, "Spell::canCast : Found gameobject entry %u with invalid gameobject properties, spawn id %u", obj->getEntry(), obj->getGuidLow());
+                    continue;
+                }
 
-            if (gameObjectInfo->spell_focus.focus_id == getSpellInfo()->getRequiresSpellFocus())
-            {
-                found = true;
-                break;
+                // Prefer to use range from gameobject_properties instead of spell's range
+                // That is required at least for profession spells since their range is set to 0 yards in DBC files
+                float_t distance = 0.0f;
+                if (gameObjectInfo->spell_focus.distance > 0)
+                {
+                    // Database seems to already have squared distances
+                    distance = static_cast<float_t>(gameObjectInfo->spell_focus.distance);
+                }
+                else
+                {
+                    distance = GetMaxRange(sSpellRangeStore.LookupEntry(getSpellInfo()->getRangeIndex()));
+                    distance *= distance;
+                }
+
+                // Skip objects which are out of range
+                if (!p_caster->isInRange(obj->GetPositionX(), obj->GetPositionY(), obj->GetPositionZ(), distance))
+                    continue;
+
+                if (gameObjectInfo->spell_focus.focus_id == getSpellInfo()->getRequiresSpellFocus())
+                {
+                    found = true;
+                    break;
+                }
             }
         }
 
@@ -1368,10 +1370,10 @@ SpellCastResult Spell::canCast(const bool secondCheck, uint32_t* parameter1, uin
                 }
                 else
                 {
-                    const auto creatureProto = dynamic_cast<Creature*>(target)->GetCreatureProperties();
-                    if (creatureProto->Type != UNIT_TYPE_HUMANOID && creatureProto->Type != UNIT_TYPE_DEMON &&
-                        creatureProto->Type != UNIT_TYPE_GIANT && creatureProto->Type != UNIT_TYPE_UNDEAD)
-                        return SPELL_FAILED_TARGET_NO_WEAPONS;
+                    if (const auto creatureProto = dynamic_cast<Creature*>(target)->GetCreatureProperties())
+                        if (creatureProto->Type != UNIT_TYPE_HUMANOID && creatureProto->Type != UNIT_TYPE_DEMON &&
+                            creatureProto->Type != UNIT_TYPE_GIANT && creatureProto->Type != UNIT_TYPE_UNDEAD)
+                            return SPELL_FAILED_TARGET_NO_WEAPONS;
 
                     // Check if creature is even wielding a weapon
                     if (target->getVirtualItemSlotId(MELEE) == 0)
@@ -2590,13 +2592,15 @@ SpellCastResult Spell::checkPower() const
                     spellModPercentageIntValue(p_caster->SM_FCost, &runeCost[i], getSpellInfo()->getSpellFamilyFlags());
                 }
 
-                const auto dkPlayer = dynamic_cast<DeathKnight*>(p_caster);
-                // Get available runes and subtract them from the power cost
-                // If the outcome is over zero, it means player doesn't have enough runes available
-                const auto missingRunes = dkPlayer->HasRunes(RUNE_BLOOD, runeCost[RUNE_BLOOD]) + dkPlayer->HasRunes(RUNE_FROST, runeCost[RUNE_FROST]) + dkPlayer->HasRunes(RUNE_UNHOLY, runeCost[RUNE_UNHOLY]);
-                // If there aren't enough normal runes available, try death runes
-                if (missingRunes > 0 && dkPlayer->HasRunes(RUNE_DEATH, missingRunes) > 0)
-                    return SPELL_FAILED_NO_POWER;
+                if (const auto dkPlayer = dynamic_cast<DeathKnight*>(p_caster))
+                {
+                    // Get available runes and subtract them from the power cost
+                    // If the outcome is over zero, it means player doesn't have enough runes available
+                    const auto missingRunes = dkPlayer->HasRunes(RUNE_BLOOD, runeCost[RUNE_BLOOD]) + dkPlayer->HasRunes(RUNE_FROST, runeCost[RUNE_FROST]) + dkPlayer->HasRunes(RUNE_UNHOLY, runeCost[RUNE_UNHOLY]);
+                    // If there aren't enough normal runes available, try death runes
+                    if (missingRunes > 0 && dkPlayer->HasRunes(RUNE_DEATH, missingRunes) > 0)
+                        return SPELL_FAILED_NO_POWER;
+                }
             }
         }
     }

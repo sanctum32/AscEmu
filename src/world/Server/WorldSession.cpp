@@ -281,18 +281,21 @@ void WorldSession::LogoutPlayer(bool Save)
                 switch (obj->getObjectTypeId())
                 {
                     case TYPEID_UNIT:
-                        dynamic_cast<Creature*>(obj)->loot.looters.erase(_player->getGuidLow());
-                        break;
+                    {
+                        if (const auto creature = dynamic_cast<Creature*>(obj))
+                            creature->loot.looters.erase(_player->getGuidLow());
+                    } break;
                     case TYPEID_GAMEOBJECT:
-                        GameObject* go = dynamic_cast<GameObject*>(obj);
+                    {
+                        if (const auto go = dynamic_cast<GameObject*>(obj))
+                        {
+                            if (!go->IsLootable())
+                                break;
 
-                        if (!go->IsLootable())
-                            break;
-
-                        GameObject_Lootable* pLGO = dynamic_cast<GameObject_Lootable*>(go);
-                        pLGO->loot.looters.erase(_player->getGuidLow());
-
-                        break;
+                            if (const auto pLGO = dynamic_cast<GameObject_Lootable*>(go))
+                                pLGO->loot.looters.erase(_player->getGuidLow());
+                        }
+                    } break;
                 }
             }
         }
@@ -302,7 +305,7 @@ void WorldSession::LogoutPlayer(bool Save)
         if (ticket != NULL)
         {
             // Send status change to gm_sync_channel
-            Channel* chn = sChannelMgr.GetChannel(sWorld.getGmClientChannel().c_str(), _player);
+            Channel* chn = sChannelMgr.getChannel(sWorld.getGmClientChannel(), _player);
             if (chn)
             {
                 std::stringstream ss;
@@ -700,7 +703,7 @@ void WorldSession::nothingToHandle(WorldPacket& recv_data)
 {
     if (!recv_data.isEmpty())
     {
-        LogDebugFlag(LF_OPCODE, "Opcode %s (0x%.4X) received. Apply nothingToHandle handler but size is %u!",
+        LogDebugFlag(LF_OPCODE, "Opcode %s (0x%.4X) received. Apply nothingToHandle handler but size is %lu!",
             getOpcodeName(recv_data.GetOpcode()).c_str(), recv_data.GetOpcode(), recv_data.size());
     }
 }

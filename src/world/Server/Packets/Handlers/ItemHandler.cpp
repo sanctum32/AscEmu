@@ -225,8 +225,8 @@ void WorldSession::handleUseItemOpcode(WorldPacket& recvPacket)
         Disconnect();
         Anticheat_Log->writefromsession(this, "Player tried to use an item with a spell that didn't match the spell in the database.");
         Anticheat_Log->writefromsession(this, "Possibly corrupted or intentionally altered itemcache.wdb");
-        Anticheat_Log->writefromsession(this, "Itemid: %lu", itemProto->ItemId);
-        Anticheat_Log->writefromsession(this, "Spellid: %lu", srlPacket.spellId);
+        Anticheat_Log->writefromsession(this, "Itemid: %u", itemProto->ItemId);
+        Anticheat_Log->writefromsession(this, "Spellid: %u", srlPacket.spellId);
         Anticheat_Log->writefromsession(this, "Player was disconnected.");
         return;
     }
@@ -565,7 +565,7 @@ void WorldSession::handleSplitOpcode(WorldPacket& recvPacket)
     if (srlPacket.itemCount <= 0 || srlPacket.srcInventorySlot <= 0 && srlPacket.srcSlot < INVENTORY_SLOT_ITEM_START)
     {
         sCheatLog.writefromsession(this,
-            "tried to split item: srcInventorySlot %d, srcSlot %d, destInventorySlot %d, destSlot %d, itemCount %l",
+            "tried to split item: srcInventorySlot %d, srcSlot %d, destInventorySlot %d, destSlot %d, itemCount %ld",
             srlPacket.srcInventorySlot, srlPacket.srcSlot, srlPacket.destInventorySlot, srlPacket.destSlot, srlPacket.itemCount);
         return;
     }
@@ -2309,12 +2309,14 @@ void WorldSession::handleRepairItemOpcode(WorldPacket& recvPacket)
             {
                 if (pItem->isContainer())
                 {
-                    Container* pContainer = dynamic_cast<Container*>(pItem);
-                    for (uint32_t j = 0; j < pContainer->getItemProperties()->ContainerSlots; ++j)
+                    if (const auto pContainer = dynamic_cast<Container*>(pItem))
                     {
-                        pItem = pContainer->GetItem(static_cast<int16_t>(j));
-                        if (pItem != nullptr)
-                            pItem->RepairItem(_player, srlPacket.isInGuild, &totalcost);
+                        for (uint32_t j = 0; j < pContainer->getItemProperties()->ContainerSlots; ++j)
+                        {
+                            pItem = pContainer->GetItem(static_cast<int16_t>(j));
+                            if (pItem != nullptr)
+                                pItem->RepairItem(_player, srlPacket.isInGuild, &totalcost);
+                        }   
                     }
                 }
                 else

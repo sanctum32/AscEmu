@@ -149,7 +149,7 @@ bool ChatHandler::HandleSetOrientationCommand(const char* args, WorldSession* se
 bool ChatHandler::HandleDebugDumpState(const char* /*args*/, WorldSession* session)
 {
     auto state = ServerState::instance();
-    SystemMessage(session, "Delta: %u", state->getDelta());
+    SystemMessage(session, "Delta: %u", static_cast<uint32_t>(state->getDelta()));
     return true;
 }
 
@@ -186,7 +186,7 @@ bool ChatHandler::HandleDebugMoveInfo(const char* /*args*/, WorldSession* m_sess
     SystemMessage(m_session, "Current distance to target: %f", distance_to_creature);
     SystemMessage(m_session, "=== States ===");
     SystemMessage(m_session, "Current state: %u", creature_state);
-    SystemMessage(m_session, "Current AI state: %u | AIType: %u | AIAgent: ", ai_state, ai_type, ai_agent);
+    SystemMessage(m_session, "Current AI state: %u | AIType: %u | AIAgent: %u", ai_state, ai_type, ai_agent);
     SystemMessage(m_session, "Current waypoint id: %u | wp script type: %u", current_wp, wp_script_type);
     SystemMessage(m_session, "Walkmode: %u", walk_mode);
     SystemMessage(m_session, "=== Misc ===");
@@ -493,12 +493,12 @@ bool ChatHandler::HandleSendCastFailed(const char* args, WorldSession* m_session
         return true;
 
     uint32 fail = atol(args);
-    if (fail < SPELL_CANCAST_OK || fail > SPELL_FAILED_UNKNOWN)
+    if (fail > SPELL_FAILED_UNKNOWN)
     {
         RedSystemMessage(m_session, "Argument %u is out of range!", fail);
         return false;
     }
-    selected_player->sendCastFailedPacket(1, (uint8)fail, 0, 0);
+    selected_player->sendCastFailedPacket(1, static_cast<uint8>(fail), 0, 0);
 
     return true;
 }
