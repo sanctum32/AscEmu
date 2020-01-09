@@ -1347,6 +1347,8 @@ void Guild::broadcastToGuild(WorldSession* session, bool officerOnly, std::strin
                 }
             }
         }
+
+        delete data;
     }
 }
 
@@ -1367,6 +1369,8 @@ void Guild::broadcastAddonToGuild(WorldSession* session, bool officerOnly, std::
                 }
             }
         }
+
+        delete data;
     }
 }
 
