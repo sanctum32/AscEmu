@@ -47,79 +47,76 @@ ScriptMgr& ScriptMgr::getInstance()
     return mInstance;
 }
 
-SpellCastResult ScriptMgr::callScriptedSpellCanCast(Spell* spell, uint32_t* parameter1, uint32_t* parameter2) const
+SpellCastResult ScriptMgr::callScriptedSpellCanCast(Spell* spell, uint32_t* parameter1, uint32_t* parameter2)
 {
-    if (spell->getSpellInfo()->spellScript == nullptr)
-        return SPELL_CAST_SUCCESS;
+    if (SpellScript* spellScript = getSpellScript(spell->getSpellInfo()->getId()))
+        return spellScript->onCanCast(spell, parameter1, parameter2);
 
-    return spell->getSpellInfo()->spellScript->onCanCast(spell, parameter1, parameter2);
+    return SPELL_CAST_SUCCESS;
 }
 
 void ScriptMgr::callScriptedSpellAtStartCasting(Spell* spell)
 {
-    if (spell->getSpellInfo()->spellScript == nullptr)
-        return;
-
-    spell->getSpellInfo()->spellScript->doAtStartCasting(spell);
+    if (SpellScript* spellScript = getSpellScript(spell->getSpellInfo()->getId()))
+        spellScript->doAtStartCasting(spell);
 }
 
 void ScriptMgr::callScriptedSpellFilterTargets(Spell* spell, uint8_t effectIndex, std::vector<uint64_t>* effectTargets)
 {
-    if (spell->getSpellInfo()->spellScript == nullptr)
-        return;
-
-    spell->getSpellInfo()->spellScript->filterEffectTargets(spell, effectIndex, effectTargets);
+    if (SpellScript* spellScript = getSpellScript(spell->getSpellInfo()->getId()))
+        spellScript->filterEffectTargets(spell, effectIndex, effectTargets);
 }
 
 void ScriptMgr::callScriptedSpellBeforeHit(Spell* spell, uint8_t effectIndex)
 {
-    if (spell->getSpellInfo()->spellScript == nullptr)
-        return;
-
-    spell->getSpellInfo()->spellScript->doBeforeEffectHit(spell, effectIndex);
+    if (SpellScript* spellScript = getSpellScript(spell->getSpellInfo()->getId()))
+        spellScript->doBeforeEffectHit(spell, effectIndex);
 }
 
 void ScriptMgr::callScriptedSpellAfterMiss(Spell* spell, Unit* unitTarget)
 {
-    if (spell->getSpellInfo()->spellScript == nullptr)
-        return;
-
-    spell->getSpellInfo()->spellScript->doAfterSpellMissed(spell, unitTarget);
+    if (SpellScript* spellScript = getSpellScript(spell->getSpellInfo()->getId()))
+        spellScript->doAfterSpellMissed(spell, unitTarget);
 }
 
-SpellScriptExecuteState ScriptMgr::callScriptedSpellBeforeSpellEffect(Spell* spell, uint32_t effectType, uint8_t effectId) const
+SpellScriptExecuteState ScriptMgr::callScriptedSpellBeforeSpellEffect(Spell* spell, uint32_t effectType, uint8_t effectId)
 {
-    if (!spell->getSpellInfo()->spellScript)
-        return SpellScriptExecuteState::EXECUTE_NOT_HANDLED;
+    if (SpellScript* spellScript = getSpellScript(spell->getSpellInfo()->getId()))
+        return spellScript->beforeSpellEffect(spell, effectType, static_cast<uint8_t>(effectId));
 
-    return spell->getSpellInfo()->spellScript->beforeSpellEffect(spell, effectType, static_cast<uint8_t>(effectId));
+    return SpellScriptExecuteState::EXECUTE_NOT_HANDLED;
 }
 
 void ScriptMgr::callScriptedSpellAfterSpellEffect(Spell* spell, uint32_t effectType, uint8_t effectId)
 {
-    if (!spell->getSpellInfo()->spellScript)
-        return;
-
-    spell->getSpellInfo()->spellScript->afterSpellEffect(spell, effectType, static_cast<uint8_t>(effectId));
+    if (SpellScript* spellScript = getSpellScript(spell->getSpellInfo()->getId()))
+        spellScript->afterSpellEffect(spell, effectType, static_cast<uint8_t>(effectId));
 }
 
-void ScriptMgr::register_spell_script(uint32_t spellId, SpellScript* ss)
+SpellScript* ScriptMgr::getSpellScript(uint32_t entry)
 {
-    const auto spellInfo = sSpellMgr.getSpellInfo(spellId);
-    if (spellInfo == nullptr)
+    std::map<uint32, SpellScript*>::iterator itr = _spellscripts.find(entry);
+    if (itr != _spellscripts.end())
+        return itr->second;
+
+    return nullptr;
+}
+
+void ScriptMgr::register_spell_script(uint32_t spellId, SpellScript* script)
+{
+    if (!sSpellMgr.getSpellInfo(spellId))
     {
         LogError("ScriptMgr tried to register a script for spell id %u but spell does not exist!", spellId);
         return;
     }
 
-    if (spellInfo->spellScript != nullptr)
+    if (_spellscripts.find(spellId) != _spellscripts.end())
     {
         LogDebugFlag(LF_SCRIPT_MGR, "ScriptMgr tried to register a script for spell id %u but this spell has already one.", spellId);
         return;
     }
 
-    const_cast<SpellInfo*>(spellInfo)->spellScript = ss;
-    _spellscripts.insert(ss);
+    _spellscripts[spellId] = script;
 }
 
 // MIT End
@@ -250,6 +247,7 @@ void ScriptMgr::UnloadScripts()
 {
     for (CustomGossipScripts::iterator itr = _customgossipscripts.begin(); itr != _customgossipscripts.end(); ++itr)
         (*itr)->destroy();
+
     _customgossipscripts.clear();
 
     for (QuestScripts::iterator itr = _questscripts.begin(); itr != _questscripts.end(); ++itr)
@@ -257,7 +255,8 @@ void ScriptMgr::UnloadScripts()
     _questscripts.clear();
 
     for (auto itr : _spellscripts)
-        delete itr;
+        delete itr.second;
+
     _spellscripts.clear();
 
     UnloadScriptEngines();

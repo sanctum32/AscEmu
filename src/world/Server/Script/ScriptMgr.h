@@ -158,7 +158,6 @@ typedef std::set<GossipScript*> CustomGossipScripts;
 typedef std::unordered_map<uint32, GossipScript*> GossipMap;
 typedef std::set<EventScript*> EventScripts;
 typedef std::set<QuestScript*> QuestScripts;
-typedef std::set<SpellScript*> SpellScripts;
 typedef std::set<void*> ServerHookList;
 typedef std::list< Arcemu::DynLib* > DynamicLibraryMap;
 
@@ -179,14 +178,16 @@ class SERVER_DECL ScriptMgr
         ScriptMgr& operator=(ScriptMgr&&) = delete;
         ScriptMgr& operator=(ScriptMgr const&) = delete;
 
-        SpellCastResult callScriptedSpellCanCast(Spell* spell, uint32_t* parameter1, uint32_t* parameter2) const;
+        SpellCastResult callScriptedSpellCanCast(Spell* spell, uint32_t* parameter1, uint32_t* parameter2);
         void callScriptedSpellAtStartCasting(Spell* spell);
         void callScriptedSpellFilterTargets(Spell* spell, uint8_t effectIndex, std::vector<uint64_t>* effectTargets);
         void callScriptedSpellBeforeHit(Spell* spell, uint8_t effectIndex);
         void callScriptedSpellAfterMiss(Spell* spell, Unit* unitTarget);
-        SpellScriptExecuteState callScriptedSpellBeforeSpellEffect(Spell* /*spell*/, uint32_t /*effectType*/, uint8_t /*effectId*/) const;
+        SpellScriptExecuteState callScriptedSpellBeforeSpellEffect(Spell* /*spell*/, uint32_t /*effectType*/, uint8_t /*effectId*/);
         void callScriptedSpellAfterSpellEffect(Spell* /*spell*/, uint32_t /*effectType*/, uint8_t /*effectId*/);
-        void register_spell_script(uint32_t spellId, SpellScript* ss);
+
+        SpellScript* getSpellScript(uint32_t spellId);
+        void register_spell_script(uint32_t spellId, SpellScript* script);
 
         // MIT End
         // APGL Start
@@ -327,7 +328,7 @@ class SERVER_DECL ScriptMgr
         CustomGossipScripts _customgossipscripts;
         EventScripts _eventscripts;
         QuestScripts _questscripts;
-        SpellScripts _spellscripts;
+        std::map<uint32_t, SpellScript*> _spellscripts;
         GossipMap creaturegossip_, gogossip_, itemgossip_;
 };
 

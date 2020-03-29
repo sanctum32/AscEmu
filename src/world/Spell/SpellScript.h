@@ -27,7 +27,7 @@ public:
     virtual ~SpellScript() {}
 
     // Called at the end of spell check cast function
-    virtual SpellCastResult onCanCast(Spell* /*spell*/, uint32_t* /*parameter1*/, uint32_t* /*parameter2*/) const { return SPELL_CAST_SUCCESS; }
+    virtual SpellCastResult onCanCast(Spell* /*spell*/, uint32_t* /*parameter1*/, uint32_t* /*parameter2*/) { return SPELL_CAST_SUCCESS; }
     // Called when cast bar is sent to client (NOT called for instant spells)
     virtual void doAtStartCasting(Spell* /*spell*/) {}
     // Called after spell targets for this effect have been initialized
@@ -37,7 +37,7 @@ public:
     // Called after target missed/resisted the spell
     virtual void doAfterSpellMissed(Spell* /*spell*/, Unit* /*unitTarget*/) {}
     // Called before spell effect type handling
-    virtual SpellScriptExecuteState beforeSpellEffect(Spell* /*spell*/, uint32_t /*effectType*/, uint8_t /*effectId*/) const { return SpellScriptExecuteState::EXECUTE_NOT_HANDLED; }
+    virtual SpellScriptExecuteState beforeSpellEffect(Spell* /*spell*/, uint32_t /*effectType*/, uint8_t /*effectId*/) { return SpellScriptExecuteState::EXECUTE_NOT_HANDLED; }
     // Called after spell effect type handling
     virtual void afterSpellEffect(Spell* /*spell*/, uint32_t /*effectType*/, uint8_t /*effectId*/) {}
 };

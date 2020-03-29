@@ -174,9 +174,6 @@ SpellInfo::SpellInfo()
     // Script linkers
     spellScriptLink = nullptr;
     auraScriptLink = nullptr;
-
-    // New script system
-    spellScript = nullptr;
 }
 
 SpellInfo::~SpellInfo() {}
