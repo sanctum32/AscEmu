@@ -43,7 +43,6 @@ public:
 
     void onHello(Object* pObject, Player* Plr) override;
     void onSelectOption(Object* pObject, Player* Plr, uint32 Id, const char* EnteredCode, uint32 gossipId) override;
-    void destroy() override { delete this; }
 };
 
 void ProspectorAnvilwardGossip::onHello(Object* pObject, Player * Plr)

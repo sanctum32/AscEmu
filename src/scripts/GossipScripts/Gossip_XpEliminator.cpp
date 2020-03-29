@@ -37,9 +37,6 @@ public:
         }
         GossipMenu::senGossipComplete(plr);
     }
-
-    void destroy() override { delete this; }
-
 };
 
 void SetupXpEliminatorGossip(ScriptMgr* mgr)

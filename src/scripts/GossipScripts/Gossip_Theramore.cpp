@@ -32,9 +32,6 @@ public:
         plr->TaxiStart(sTaxiMgr.GetTaxiPath(724), 1147, 0);     // Gryph
         GossipMenu::senGossipComplete(plr);
     }
-
-    void destroy() override { delete this; }
-
 };
 
 class CaptainGarranVimes_Gossip : public GossipScript
@@ -60,9 +57,6 @@ public:
     {
         GossipMenu::sendSimpleMenu(pObject->getGuid(), 1794, plr);
     }
-
-    void destroy() override { delete this; }
-
 };
 
 void SetupTheramoreGossip(ScriptMgr* mgr)

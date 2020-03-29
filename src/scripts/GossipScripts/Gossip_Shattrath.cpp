@@ -30,8 +30,6 @@ public:
             plr->BroadcastMessage(plr->GetSession()->LocalizedWorldSrv(ServerString::SHATT_ZEPH_KOT)); // Dunno what the correct text is ^^
         GossipMenu::senGossipComplete(plr);
     }
-
-    void destroy() override { delete this; }
 };
 
 void SetupShattrathGossip(ScriptMgr* mgr)

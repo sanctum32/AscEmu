@@ -31,8 +31,6 @@ public:
         static_cast<Creature*>(pObject)->castSpell(plr, sSpellMgr.getSpellInfo(42711), true);
         GossipMenu::senGossipComplete(plr);
     }
-
-    void destroy() override { delete this; }
 };
 
 //This is when you talk to Thargold Ironwing...He will fly you through Stormwind Harbor to check it out.
@@ -48,14 +46,13 @@ public:
 
         menu.sendGossipPacket(Plr);
     }
+
     void onSelectOption(Object* /*pObject*/, Player* Plr, uint32 Id, const char* /*Code*/, uint32 /*gossipId*/) override
     {
         GossipMenu::senGossipComplete(Plr);
         if (1 == Id)
             Plr->TaxiStart(sTaxiMgr.GetTaxiPath(1041), 25679, 0);
     }
-
-    void destroy() override { delete this; }
 };
 
 void SetupStormwindGossip(ScriptMgr* mgr)

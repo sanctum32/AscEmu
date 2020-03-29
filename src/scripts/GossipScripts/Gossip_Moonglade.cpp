@@ -38,9 +38,6 @@ public:
             return;
         plr->TaxiStart(sTaxiMgr.GetTaxiPath(315), 479, 0);     // Hippogryph
     }
-
-    void destroy() override { delete this; }
-
 };
 
 class BunthenPlainswind_Gossip : public GossipScript

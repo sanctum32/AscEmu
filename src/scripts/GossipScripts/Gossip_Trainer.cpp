@@ -73,9 +73,6 @@ public:
         }
         GossipMenu::sendSimpleMenu(pObject->getGuid(), textid, plr);
     }
-
-    void destroy() override { delete this; }
-
 };
 
 class MasterSwordsmith : public GossipScript
