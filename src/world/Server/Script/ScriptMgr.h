@@ -178,6 +178,7 @@ class SERVER_DECL ScriptMgr
         ScriptMgr& operator=(ScriptMgr&&) = delete;
         ScriptMgr& operator=(ScriptMgr const&) = delete;
 
+        // Spell scripts
         SpellCastResult callScriptedSpellCanCast(Spell* spell, uint32_t* parameter1, uint32_t* parameter2);
         void callScriptedSpellAtStartCasting(Spell* spell);
         void callScriptedSpellFilterTargets(Spell* spell, uint8_t effectIndex, std::vector<uint64_t>* effectTargets);
@@ -325,11 +326,12 @@ class SERVER_DECL ScriptMgr
         HandleScriptEffectMap SpellScriptEffects;
         DynamicLibraryMap dynamiclibs;
         ServerHookList _hooks[NUM_SERVER_HOOKS];
-        CustomGossipScripts _customgossipscripts;
         EventScripts _eventscripts;
         QuestScripts _questscripts;
-        std::map<uint32_t, SpellScript*> _spellscripts;
-        GossipMap creaturegossip_, gogossip_, itemgossip_;
+        std::unordered_map<uint32, SpellScript*> _spellscripts;
+        std::unordered_map<uint32, GossipScript*> creaturegossip_;
+        std::unordered_map<uint32, GossipScript*> gogossip_;
+        std::unordered_map<uint32, GossipScript*> itemgossip_;
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////

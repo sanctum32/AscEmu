@@ -95,7 +95,7 @@ void ScriptMgr::callScriptedSpellAfterSpellEffect(Spell* spell, uint32_t effectT
 
 SpellScript* ScriptMgr::getSpellScript(uint32_t entry)
 {
-    std::map<uint32, SpellScript*>::iterator itr = _spellscripts.find(entry);
+    std::unordered_map<uint32, SpellScript*>::iterator itr = _spellscripts.find(entry);
     if (itr != _spellscripts.end())
         return itr->second;
 
@@ -245,16 +245,27 @@ void ScriptMgr::LoadScripts()
 
 void ScriptMgr::UnloadScripts()
 {
-    for (CustomGossipScripts::iterator itr = _customgossipscripts.begin(); itr != _customgossipscripts.end(); ++itr)
-        (*itr)->destroy();
+    for (auto& itr : creaturegossip_)
+        delete itr.second;
 
-    _customgossipscripts.clear();
+    creaturegossip_.clear();
 
-    for (QuestScripts::iterator itr = _questscripts.begin(); itr != _questscripts.end(); ++itr)
-        delete *itr;
+    for (auto& itr : gogossip_)
+        delete itr.second;
+
+    gogossip_.clear();
+
+    for (auto& itr : itemgossip_)
+        delete itr.second;
+
+    itemgossip_.clear();
+
+    for (auto& itr : _questscripts)
+        delete itr;
+
     _questscripts.clear();
 
-    for (auto itr : _spellscripts)
+    for (auto& itr : _spellscripts)
         delete itr.second;
 
     _spellscripts.clear();
@@ -1132,8 +1143,6 @@ void ScriptMgr::register_creature_gossip(uint32 entry, GossipScript* script)
     const auto itr = creaturegossip_.find(entry);
     if (itr == creaturegossip_.end())
         creaturegossip_.insert(std::make_pair(entry, script));
-    //keeping track of all created gossips to delete them all on shutdown
-    _customgossipscripts.insert(script);
 }
 
 bool ScriptMgr::has_creature_gossip(uint32 entry) const
@@ -1154,8 +1163,6 @@ void ScriptMgr::register_item_gossip(uint32 entry, GossipScript* script)
     const auto itr = itemgossip_.find(entry);
     if (itr == itemgossip_.end())
         itemgossip_.insert(std::make_pair(entry, script));
-    //keeping track of all created gossips to delete them all on shutdown
-    _customgossipscripts.insert(script);
 }
 
 void ScriptMgr::register_go_gossip(uint32 entry, GossipScript* script)
@@ -1163,8 +1170,6 @@ void ScriptMgr::register_go_gossip(uint32 entry, GossipScript* script)
     const auto itr = gogossip_.find(entry);
     if (itr == gogossip_.end())
         gogossip_.insert(std::make_pair(entry, script));
-    //keeping track of all created gossips to delete them all on shutdown
-    _customgossipscripts.insert(script);
 }
 
 bool ScriptMgr::has_item_gossip(uint32 entry) const

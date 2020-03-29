@@ -11,11 +11,6 @@ This file is released under the MIT license. See README-MIT for more information
 #include "Management/Item.h"
 #include "GossipScript.h"
 
-void GossipScript::destroy()
-{
-    delete this;
-}
-
 GossipScript* GossipScript::getInterface(Creature* creature)
 {
     if (const auto script = sScriptMgr.get_creature_gossip(creature->getEntry()))

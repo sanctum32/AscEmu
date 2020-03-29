@@ -23,7 +23,6 @@ public:
     virtual void onHello(Object* object, Player* player) = 0;
     virtual void onSelectOption(Object* /*object*/, Player* /*player*/, uint32_t /*id*/, const char* /*enteredCode*/, uint32_t /*gossipId*/ = 0) {}
     virtual void onEnd(Object* /*object*/, Player* /*player*/) {}
-    virtual void destroy();
 
     static GossipScript* getInterface(Creature* creature);
     static GossipScript* getInterface(Item* item);
