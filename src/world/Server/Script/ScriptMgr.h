@@ -159,7 +159,6 @@ typedef std::unordered_map<uint32, GossipScript*> GossipMap;
 typedef std::set<EventScript*> EventScripts;
 typedef std::set<QuestScript*> QuestScripts;
 typedef std::set<void*> ServerHookList;
-typedef std::list< Arcemu::DynLib* > DynamicLibraryMap;
 
 
 class SERVER_DECL ScriptMgr
@@ -324,7 +323,7 @@ class SERVER_DECL ScriptMgr
         HandleDummyAuraMap _auras;
         HandleDummySpellMap _spells;
         HandleScriptEffectMap SpellScriptEffects;
-        DynamicLibraryMap dynamiclibs;
+        std::list<Arcemu::DynLib*> dynamiclibs;
         ServerHookList _hooks[NUM_SERVER_HOOKS];
         EventScripts _eventscripts;
         QuestScripts _questscripts;

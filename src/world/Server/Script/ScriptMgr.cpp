@@ -272,8 +272,8 @@ void ScriptMgr::UnloadScripts()
 
     UnloadScriptEngines();
 
-    for (DynamicLibraryMap::iterator itr = dynamiclibs.begin(); itr != dynamiclibs.end(); ++itr)
-        delete *itr;
+    for (Arcemu::DynLib* lib : dynamiclibs)
+        delete lib;
 
     dynamiclibs.clear();
 }
@@ -1204,18 +1204,19 @@ void ScriptMgr::ReloadScriptEngines()
     exp_get_script_type version_function;
     exp_engine_reload engine_reloadfunc;
 
-    for (DynamicLibraryMap::iterator itr = dynamiclibs.begin(); itr != dynamiclibs.end(); ++itr)
+    for (Arcemu::DynLib* dl : dynamiclibs)
     {
-        Arcemu::DynLib* dl = *itr;
+        if (!dl)
+            continue;
 
         version_function = reinterpret_cast<exp_get_script_type>(dl->GetAddressForSymbol("_exp_get_script_type"));
-        if (version_function == NULL)
+        if (!version_function)
             continue;
 
         if ((version_function() & SCRIPT_TYPE_SCRIPT_ENGINE) != 0)
         {
             engine_reloadfunc = reinterpret_cast<exp_engine_reload>(dl->GetAddressForSymbol("_export_engine_reload"));
-            if (engine_reloadfunc != NULL)
+            if (engine_reloadfunc)
                 engine_reloadfunc();
         }
     }
@@ -1227,18 +1228,19 @@ void ScriptMgr::UnloadScriptEngines()
     exp_get_script_type version_function;
     exp_engine_unload engine_unloadfunc;
 
-    for (DynamicLibraryMap::iterator itr = dynamiclibs.begin(); itr != dynamiclibs.end(); ++itr)
+    for (Arcemu::DynLib* dl : dynamiclibs)
     {
-        Arcemu::DynLib* dl = *itr;
+        if (!dl)
+            continue;
 
         version_function = reinterpret_cast<exp_get_script_type>(dl->GetAddressForSymbol("_exp_get_script_type"));
-        if (version_function == NULL)
+        if (!version_function)
             continue;
 
         if ((version_function() & SCRIPT_TYPE_SCRIPT_ENGINE) != 0)
         {
             engine_unloadfunc = reinterpret_cast<exp_engine_unload>(dl->GetAddressForSymbol("_exp_engine_unload"));
-            if (engine_unloadfunc != NULL)
+            if (engine_unloadfunc)
                 engine_unloadfunc();
         }
     }
