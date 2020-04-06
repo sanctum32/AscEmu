@@ -209,8 +209,3 @@ StructFactory& StructFactory::getInstance()
     static StructFactory mInstance;
     return mInstance;
 }
-
-Movement::WayPoint* StructFactory::CreateWaypoint()
-{
-    return new Movement::WayPoint;
-}

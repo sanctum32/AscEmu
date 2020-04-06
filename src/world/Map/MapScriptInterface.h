@@ -93,7 +93,6 @@ class SERVER_DECL MapScriptInterface
         GameObject* SpawnGameObject(MySQLStructure::GameobjectSpawn* gs, bool AddToWorld);
         Creature* SpawnCreature(uint32 Entry, float cX, float cY, float cZ, float cO, bool AddToWorld, bool tmplate, uint32 Misc1, uint32 Misc2, uint32 phase = 0xFFFFFFF);
         Creature* SpawnCreature(MySQLStructure::CreatureSpawn* sp, bool AddToWorld);
-        Movement::WayPoint* CreateWaypoint();
 
         void DeleteGameObject(GameObject* ptr);
         void DeleteCreature(Creature* ptr);
